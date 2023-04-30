@@ -22,7 +22,10 @@
             "@/*": [
                 "./*"
             ]
-        }
+        },
+        "types": [
+            "babylonjs"
+        ]
     },
     "ts-node": {
         "compilerOptions": {

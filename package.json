@@ -39,5 +39,8 @@
         "webpack-cli": "^5.0.2",
         "webpack-dev-server": "^4.13.3"
     },
-    "sideEffects": false
+    "sideEffects": false,
+    "dependencies": {
+        "babylonjs": "^6.1.0"
+    }
 }
