@@ -3,9 +3,9 @@
     "version": "1.0.0",
     "description": "babylon mmd runtime",
     "scripts": {
-        "start": "webpack serve --mode development",
+        "start": "cross-env NODE_ENV=development webpack serve --mode development",
         "watch": "webpack --watch",
-        "build": "webpack --mode production",
+        "build": "cross-env NODE_ENV=production webpack --mode production",
         "lint": "eslint --ext .ts,.tsx . --fix --cache"
     },
     "repository": {
