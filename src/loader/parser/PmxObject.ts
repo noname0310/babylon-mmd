@@ -5,8 +5,8 @@ export type PmxObject = Readonly<{
     vertices: PmxObject.Vertex[];
     faces: PmxObject.Face[];
     textures: string[];
-    materials: PmxMaterialInfo[];
-    bones: PmxBoneInfo[];
+    materials: PmxObject.Material[];
+    bones: PmxObject.Bone[];
     morphs: PmxMorphInfo[];
     frames: PmxFrameInfo[];
     rigidBodies: PmxRigidBodyInfo[];
@@ -111,5 +111,45 @@ namespace PmxObject {
                 upperLimitationAngle?: [number, number, number];
             }[];
         }
+    }>;
+
+    export type Morph = Readonly<{
+        name: string;
+        englishName: string;
+        panel: number;
+        type: number;
+        offsets: {
+            index: number;
+            position?: BABYLON.Vector3;
+            normal?: BABYLON.Vector3;
+            uv?: BABYLON.Vector2;
+            additionalUv?: BABYLON.Vector4;
+            bone?: {
+                index: number;
+                position?: BABYLON.Vector3;
+                rotation?: BABYLON.Vector4;
+            };
+            material?: {
+                index: number;
+                operation: number;
+                diffuse?: [number, number, number, number];
+                specular?: [number, number, number];
+                shininess?: number;
+                ambient?: [number, number, number];
+                edgeColor?: [number, number, number, number];
+                edgeSize?: number;
+                texture?: number;
+                sphereTexture?: number;
+                sphereMode?: number;
+                toonTexture?: number;
+            };
+            group?: {
+                index: number;
+                morphs: {
+                    index: number;
+                    ratio: number;
+                }[];
+            };
+        }[];
     }>;
 }
