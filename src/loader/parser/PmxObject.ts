@@ -7,10 +7,10 @@ export type PmxObject = Readonly<{
     textures: PmxObject.Texture[];
     materials: PmxObject.Material[];
     bones: PmxObject.Bone[];
-    morphs: PmxMorphInfo[];
-    frames: PmxFrameInfo[];
-    rigidBodies: PmxRigidBodyInfo[];
-    constraints: PmxConstraintInfo[];
+    morphs: PmxObject.Morph[];
+    display: PmxObject.Display[];
+    rigidBodies: PmxObject.RigidBody[];
+    constraints: PmxObject.Constraint[];
 }>;
 
 export namespace PmxObject {
@@ -33,15 +33,15 @@ export namespace PmxObject {
         comment: string;
         englishComment: string;
 
-        vertexCount: number;
-        faceCount: number;
-        textureCount: number;
-        materialCount: number;
-        boneCount: number;
-        morphCount: number;
-        displayCount: number;
-        rigidBodyCount: number;
-        jointCount: number; // (a.k.a. constraintCount)
+        // vertexCount: number;
+        // faceCount: number;
+        // textureCount: number;
+        // materialCount: number;
+        // boneCount: number;
+        // morphCount: number;
+        // displayCount: number;
+        // rigidBodyCount: number;
+        // jointCount: number; // (a.k.a. constraintCount)
     }>;
 
     export type Vertex = Readonly<{
@@ -56,10 +56,10 @@ export namespace PmxObject {
 
     export namespace Vertex {    
         export enum BoneWeightType {
-            BDEF1 = 0,
-            BDEF2 = 1,
-            BDEF4 = 2,
-            SDEF = 3
+            bdef1 = 0,
+            bdef2 = 1,
+            bdef4 = 2,
+            sdef = 3
         }
 
         export type BoneWeightSDEF = Readonly<{
@@ -69,25 +69,23 @@ export namespace PmxObject {
         }>;
 
         export type BoneWeight<T extends BoneWeightType = Vertex.BoneWeightType> = Readonly<{
-            boneIndices: T extends BoneWeightType.BDEF1 ? [number] 
-                : T extends BoneWeightType.BDEF2 ? [number, number]
-                : T extends BoneWeightType.BDEF4 ? [number, number, number, number]
-                : T extends BoneWeightType.SDEF ? [number, number]
+            boneIndices: T extends BoneWeightType.bdef1 ? [number] 
+                : T extends BoneWeightType.bdef2 ? [number, number]
+                : T extends BoneWeightType.bdef4 ? [number, number, number, number]
+                : T extends BoneWeightType.sdef ? [number, number]
                 : never;
 
-            boneWeights: T extends BoneWeightType.BDEF1 ? never
-                : T extends BoneWeightType.BDEF2 ? [number]
-                : T extends BoneWeightType.BDEF4 ? [number, number, number, number]
-                : T extends BoneWeightType.SDEF ? BoneWeightSDEF
+            boneWeights: T extends BoneWeightType.bdef1 ? never
+                : T extends BoneWeightType.bdef2 ? [number]
+                : T extends BoneWeightType.bdef4 ? [number, number, number, number]
+                : T extends BoneWeightType.sdef ? BoneWeightSDEF
                 : never;
         }>;
     }
 
     export type Texture = string;
 
-    export type Face = Readonly<{
-        indices: [number, number, number];
-    }>;
+    export type Face = Readonly<[number, number, number]>; // indices
 
     export type Material = Readonly<{
         name: string;
@@ -105,7 +103,7 @@ export namespace PmxObject {
         
         textureIndex: number;
         sphereTextureIndex: number;
-        sphereTextureMode: number;
+        sphereTextureMode: Material.SphereTextureMode;
 
         isSharedToonTexture: boolean;
         toonTextureIndex: number;
@@ -116,11 +114,18 @@ export namespace PmxObject {
 
     export namespace Material {
         export enum Flag {
-            IsDoubleSided = 1 << 0,
-            EnabledGroundShadow = 1 << 1,
-            EnabledSelfShadowMap = 1 << 2,
-            EnabledSelfShadow = 1 << 3,
-            EnabledToonEdge = 1 << 4
+            isDoubleSided = 1 << 0,
+            enabledGroundShadow = 1 << 1, 
+            enabledSelfShadowMap = 1 << 2,
+            enabledSelfShadow = 1 << 3,
+            enabledToonEdge = 1 << 4
+        }
+
+        export enum SphereTextureMode {
+            off = 0,
+            multiply = 1,
+            add = 2,
+            subTexture = 3
         }
     }
 
@@ -130,8 +135,9 @@ export namespace PmxObject {
 
         position: BABYLON.Vector3;
         parentIndex: number;
-        transformOrder: number;
+        transformOrder: number; // (a.k.a. Deform) todo: need to check
         
+        flag: number;
         displayConnection: number | BABYLON.Vector3; // (a.k.a. Link to)
 
         additionalMove?: {
@@ -141,62 +147,121 @@ export namespace PmxObject {
             parentIndex: number;
             ratio: number;
         };
-        fixAxis?: [number, number, number];
-        localXVector?: BABYLON.Vector3;
-        localZVector?: BABYLON.Vector3;
-        key?: number;
+        axisLimit?: [number, number, number];
+        localVector?: {
+            x: BABYLON.Vector3;
+            z: BABYLON.Vector3;
+        };
+        transformAfterPhysics?: boolean;
+        externalParentTransform?: number;
         ik?: {
-            effector: number;
-            target: any;
-            iteration: number;
-            maxAngle: number;
-            linkCount: number;
-            links: {
-                index: number;
-                angleLimitation: number;
-                lowerLimitationAngle?: [number, number, number];
-                upperLimitationAngle?: [number, number, number];
-            }[];
+            target: number;
+            iteration: number; // (a.k.a. Loop)
+            rotationConstraint: number; // (a.k.a. Angle)
+            links: Bone.IKLink[];
         }
     }>;
+
+    export namespace Bone {
+        export enum Flag {
+            useBoneIndexAsConnection = 0x0001,
+            isRotatable = 0x0002,
+            isMovable = 0x0004,
+            isVisible = 0x0008,
+            isControllable = 0x0010,
+            isIkEnabled = 0x0020,
+            hasAdditionalRotate = 0x0100,
+            hasAdditionalMove = 0x0200,
+            hasAxisLimit = 0x0400,
+            hasLocalVector = 0x0800,
+            transformAfterPhysics = 0x1000,
+            isExternalParentTransformed = 0x2000,
+        }
+
+        export type IKLink = Readonly<{
+            target: number;
+            limitation?: {
+                maximumAngle: [number, number, number];
+                minimumAngle: [number, number, number];
+            };
+        }>;
+    }
 
     export type Morph = Readonly<{
         name: string;
         englishName: string;
-        panel: number;
-        type: number;
-        offsets: {
-            index: number;
-            position?: BABYLON.Vector3;
-            normal?: BABYLON.Vector3;
-            uv?: BABYLON.Vector2;
-            additionalUv?: BABYLON.Vector4;
-            bone?: {
-                index: number;
-                position?: BABYLON.Vector3;
-                rotation?: BABYLON.Vector4;
-            };
-            material?: {
-                index: number;
-                operation: number;
-                diffuse?: [number, number, number, number];
-                specular?: [number, number, number];
-                shininess?: number;
-                ambient?: [number, number, number];
-                edgeColor?: [number, number, number, number];
-                edgeSize?: number;
-                texture?: number;
-                sphereTexture?: number;
-                sphereMode?: number;
-                toonTexture?: number;
-            };
-            group?: {
-                index: number;
-                morphs: {
-                    index: number;
-                    ratio: number;
-                }[];
-            };
-        }[];
+
+        category: Morph.Category;
+        type: Morph.Type;
+
+        elements: Morph.GroupMorph[]
+            | Morph.VertexMorph[]
+            | Morph.BoneMorph[]
+            | Morph.UvMorph[]
+            | Morph.MaterialMorph[];
     }>;
+
+    export namespace Morph {
+        export enum Category {
+            system = 0,
+            eyebrow = 1,
+            eye = 2,
+            lip = 3,
+            other = 4
+        }
+
+        export enum Type {
+            groupMorph = 0,
+            vertexMorph = 1,
+            boneMorph = 2,
+            uvMorph = 3,
+            additionalUvMorph1 = 4,
+            additionalUvMorph2 = 5,
+            additionalUvMorph3 = 6,
+            additionalUvMorph4 = 7,
+            materialMorph = 8
+        }
+
+        export type GroupMorph = Readonly<{
+            index: number;
+            ratio: number;
+        }>;
+
+        export type VertexMorph = Readonly<{
+            index: number;
+            position: BABYLON.Vector3;
+        }>;
+
+        export type BoneMorph = Readonly<{
+            index: number;
+            position: BABYLON.Vector3;
+            rotation: BABYLON.Quaternion;
+        }>;
+
+        export type UvMorph = Readonly<{
+            index: number;
+            offset: [number, number, number, number]
+        }>;
+
+        export type MaterialMorph = Readonly<{
+            index: number;
+            type: MaterialMorph.Type;
+            diffuse: [number, number, number, number];
+            specular: [number, number, number];
+            shininess: number;
+            ambient: [number, number, number];
+            edgeColor: [number, number, number, number];
+            edgeSize: number;
+            textureColor: [number, number, number, number];
+            sphereTextureColor: [number, number, number, number];
+            toonTextureColor: [number, number, number, number];
+        }>;
+
+        export namespace MaterialMorph {
+            export enum Type {
+                multiply = 0,
+                add = 1
+            }
+        }
+    }
 }
