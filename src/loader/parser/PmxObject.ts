@@ -319,11 +319,151 @@ export namespace PmxObject {
     }
 
     export type RigidBody = Readonly<{
+        name: string;
+        englishName: string;
+
+        boneIndex: number;
+        collisionGroup: number;
+        collisionMask: number;
+        shapeType: RigidBody.ShapeType;
+        shapeSize: BABYLON.Vector3;
+        shapePosition: BABYLON.Vector3;
+        shapeRotation: BABYLON.Vector3;
+        mass: number;
+        linearDamping: number;
+        angularDamping: number;
+        repulsion: number;
+        friction: number;
+        physicsMode: RigidBody.PhysicsMode;
     }>;
+
+    export namespace RigidBody {
+        export enum ShapeType {
+            sphere = 0,
+            box = 1,
+            capsule = 2
+        }
+
+        export enum PhysicsMode {
+            followBone = 0,
+            physics = 1,
+            physicsWithBone = 2
+        }
+    }
 
     export type Joint = Readonly<{
+        name: string;
+        englishName: string;
+
+        type: Joint.Type;
+        rigidbodyIndexA: number;
+        rigidbodyIndexB: number;
+        position: BABYLON.Vector3;
+        rotation: BABYLON.Vector3;
+        positionMin: BABYLON.Vector3;
+        positionMax: BABYLON.Vector3;
+        rotationMin: BABYLON.Vector3;
+        rotationMax: BABYLON.Vector3;
+        springPosition: BABYLON.Vector3;
+        springRotation: BABYLON.Vector3;
     }>;
 
+    export namespace Joint {
+        export enum Type {
+            spring6dof = 0,
+            sixdof = 1,
+            p2p = 2,
+            coneTwist = 3,
+            slider = 4,
+            hinge = 5
+        }
+    }
+
     export type SoftBody = Readonly<{
+        name: string;
+        englishName: string;
+
+        type: SoftBody.Type;
+        materialIndex: number;
+        collisionGroup: number;
+        collisionMask: number;
+        flags: SoftBody.Flag;
+        bLinkDistance: number;
+        clusterCount: number;
+        totalMass: number;
+        collisionMargin: number;
+        aeroModel: SoftBody.AeroDynamicModel;
+
+        config: SoftBody.Config;
+        cluster: SoftBody.Cluster;
+        interation: SoftBody.Interation;
+        material: SoftBody.Material;
+
+        anchors: SoftBody.AnchorRigidBody[];
+        vertexPins: number[];
     }>;
+
+    export namespace SoftBody {
+        export enum Type {
+            triMesh = 0,
+            rope = 1
+        }
+
+        export enum Flag {
+            bLink = 0x0001,
+            clusterCreation = 0x0002,
+            linkCrossing = 0x0004
+        }
+
+        export enum AeroDynamicModel {
+            vertexPoint = 0,
+            vertexTwoSided = 1,
+            vertexOneSided = 2,
+            faceTwoSided = 3,
+            faceOneSided = 4
+        }
+
+        export type AnchorRigidBody = Readonly<{
+            rigidbodyIndex: number;
+            vertexIndex: number;
+            nearMode: number;
+        }>;
+
+        export type Config = Readonly<{
+            vcf: number; // Velocities correction factor (Baumgarte)
+            dp: number; // Damping coefficient
+            dg: number; // Drag coefficient
+            lf: number; // Lift coefficient
+            pr: number; // Pressure coefficient
+            vc: number; // Volume conversation coefficient
+            df: number; // Dynamic friction coefficient
+            mt: number; // Pose matching coefficient
+            chr: number; // Rigid contacts hardness
+            khr: number; // Kinetic contacts hardness
+            shr: number; // Soft contacts hardness
+            ahr: number; // Anchors hardness
+        }>;
+
+        export type Cluster = Readonly<{
+            srhr_cl: number; // Soft vs rigid hardness
+            skhr_cl: number; // Soft vs kinetic hardness
+            sshr_cl: number; // Soft vs soft hardness
+            sr_splt_cl: number; // Soft vs rigid impulse split
+            sk_splt_cl: number; // Soft vs rigid impulse split
+            ss_splt_cl: number; // Soft vs rigid impulse split
+        }>;
+
+        export type Interation = Readonly<{
+            v_it: number; // Velocities iteration
+            p_it: number; // Positions iteration
+            d_it: number; // Drift iteration
+            c_it: number; // Cluster iteration
+        }>;
+
+        export type Material = Readonly<{
+            lst: number; // Linear stiffness coefficient
+            ast: number; // Area/Angular stiffness coefficient
+            vst: number; // Volume stiffness coefficient
+        }>;
+    }
 }
