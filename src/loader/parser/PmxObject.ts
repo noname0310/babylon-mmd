@@ -8,25 +8,26 @@ export type PmxObject = Readonly<{
     materials: PmxObject.Material[];
     bones: PmxObject.Bone[];
     morphs: PmxObject.Morph[];
-    display: PmxObject.Display[];
+    displayFrame: PmxObject.DisplayFrame[];
     rigidBodies: PmxObject.RigidBody[];
-    constraints: PmxObject.Constraint[];
+    joints: PmxObject.Joint[];
+    softBodies: PmxObject.SoftBody[];
 }>;
 
 export namespace PmxObject {
     export type Header = Readonly<{
-        sign: string;
+        signature: string;
         version: number;
 
-        encoding: number;
-        additionalUvCount: number;
+        encoding: Header.Encoding;
+        additionalUvCount: 0 | 1 | 2 | 3 | 4;
 
-        vertexIndexSize: number;
-        textureIndexSize: number;
-        materialIndexSize: number;
-        boneIndexSize: number;
-        morphIndexSize: number;
-        rigidBodyIndexSize: number;
+        vertexIndexSize: 1 | 2 | 4;
+        textureIndexSize: 1 | 2 | 4;
+        materialIndexSize: 1 | 2 | 4;
+        boneIndexSize: 1 | 2 | 4;
+        morphIndexSize: 1 | 2 | 4;
+        rigidBodyIndexSize: 1 | 2 | 4;
         
         modelName: string;
         englishModelName: string;
@@ -44,11 +45,18 @@ export namespace PmxObject {
         // jointCount: number; // (a.k.a. constraintCount)
     }>;
 
+    export namespace Header {
+        export enum Encoding {
+            utf16le = 0,
+            utf8 = 1
+        }
+    }
+
     export type Vertex = Readonly<{
         position: BABYLON.Vector3;
         normal: BABYLON.Vector3;
         uv: BABYLON.Vector2;
-        additionalUvs: [number, number, number, number];
+        additionalVec4: [number, number, number, number];
         weightType: Vertex.BoneWeightType;
         boneWeight: Vertex.BoneWeight;
         edgeRatio: number;
@@ -59,10 +67,12 @@ export namespace PmxObject {
             bdef1 = 0,
             bdef2 = 1,
             bdef4 = 2,
-            sdef = 3
+            sdef = 3,
+            qdef = 4
         }
 
         export type BoneWeightSDEF = Readonly<{
+            bone1Weight: number;
             c: BABYLON.Vector3;
             r0: BABYLON.Vector3;
             r1: BABYLON.Vector3;
@@ -73,12 +83,14 @@ export namespace PmxObject {
                 : T extends BoneWeightType.bdef2 ? [number, number]
                 : T extends BoneWeightType.bdef4 ? [number, number, number, number]
                 : T extends BoneWeightType.sdef ? [number, number]
+                : T extends BoneWeightType.qdef ? [number, number, number, number]
                 : never;
 
             boneWeights: T extends BoneWeightType.bdef1 ? never
                 : T extends BoneWeightType.bdef2 ? [number]
                 : T extends BoneWeightType.bdef4 ? [number, number, number, number]
                 : T extends BoneWeightType.sdef ? BoneWeightSDEF
+                : T extends BoneWeightType.qdef ? [number, number, number, number]
                 : never;
         }>;
     }
@@ -109,16 +121,19 @@ export namespace PmxObject {
         toonTextureIndex: number;
         
         comment: string;
-        vertexCount: number;
+        faceCount: number;
     }>;
 
     export namespace Material {
         export enum Flag {
             isDoubleSided = 1 << 0,
             enabledGroundShadow = 1 << 1, 
-            enabledSelfShadowMap = 1 << 2,
-            enabledSelfShadow = 1 << 3,
-            enabledToonEdge = 1 << 4
+            enabledDrawShadow = 1 << 2,
+            enabledReceiveShadow = 1 << 3,
+            enabledToonEdge = 1 << 4,
+            enabledVertexColor = 1 << 5,
+            enabledPointDraw = 1 << 6,
+            enabledLineDraw = 1 << 7
         }
 
         export enum SphereTextureMode {
@@ -157,7 +172,7 @@ export namespace PmxObject {
         ik?: {
             target: number;
             iteration: number; // (a.k.a. Loop)
-            rotationConstraint: number; // (a.k.a. Angle)
+            rotationConstraint: number; // (a.k.a. Angle) radians
             links: Bone.IKLink[];
         }
     }>;
@@ -198,7 +213,9 @@ export namespace PmxObject {
             | Morph.VertexMorph[]
             | Morph.BoneMorph[]
             | Morph.UvMorph[]
-            | Morph.MaterialMorph[];
+            | Morph.MaterialMorph[]
+            | Morph.FlipMorph[]
+            | Morph.ImpulseMorph[];
     }>;
 
     export namespace Morph {
@@ -219,32 +236,34 @@ export namespace PmxObject {
             additionalUvMorph2 = 5,
             additionalUvMorph3 = 6,
             additionalUvMorph4 = 7,
-            materialMorph = 8
+            materialMorph = 8,
+            flipMorph = 9,
+            impulseMorph = 10
         }
 
         export type GroupMorph = Readonly<{
-            index: number;
+            index: number; // morph index (cannot be group morph)
             ratio: number;
         }>;
 
         export type VertexMorph = Readonly<{
-            index: number;
+            index: number; // vertex index
             position: BABYLON.Vector3;
         }>;
 
         export type BoneMorph = Readonly<{
-            index: number;
+            index: number; // bone index
             position: BABYLON.Vector3;
             rotation: BABYLON.Quaternion;
         }>;
 
         export type UvMorph = Readonly<{
-            index: number;
+            index: number; // vertex index
             offset: [number, number, number, number]
         }>;
 
         export type MaterialMorph = Readonly<{
-            index: number;
+            index: number; // material index
             type: MaterialMorph.Type;
             diffuse: [number, number, number, number];
             specular: [number, number, number];
@@ -263,5 +282,48 @@ export namespace PmxObject {
                 add = 1
             }
         }
+
+        export type FlipMorph = Readonly<{
+            index: number; // morph index
+            value: number;
+        }>;
+
+        export type ImpulseMorph = Readonly<{
+            index: number; // rigidbody index
+            isLocal: boolean;
+            velocity: BABYLON.Vector3;
+            torque: BABYLON.Vector3;
+        }>;
     }
+
+    export type DisplayFrame = Readonly<{
+        name: string;
+        englishName: string;
+
+        isSpecialFrame: boolean;
+        data: DisplayFrame.FrameData[];
+    }>;
+
+    export namespace DisplayFrame {
+        export type FrameData = Readonly<{
+            type: FrameData.FrameType;
+            index: number; // bone or morph index
+        }>;
+
+        export namespace FrameData {
+            export enum FrameType {
+                Bone = 0,
+                Morph = 1
+            }
+        }
+    }
+
+    export type RigidBody = Readonly<{
+    }>;
+
+    export type Joint = Readonly<{
+    }>;
+
+    export type SoftBody = Readonly<{
+    }>;
 }
