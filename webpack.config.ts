@@ -2,6 +2,7 @@ import CssMinimizerWebpackPlugin from "css-minimizer-webpack-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
 import ExtractCssChunks from "extract-css-chunks-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import CopyWebpackPlugin from "copy-webpack-plugin";
 import path from "path";
 import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
@@ -98,6 +99,11 @@ const config: webpack.Configuration & { devServer?: WebpackDevServerConfiguratio
             extensions: ["ts", "tsx"],
             fix: true,
             cache: true
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: "res", to: "res" }
+            ]
         })
     ],
     devServer: {
