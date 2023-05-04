@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs";
+import type * as BABYLON from "babylonjs";
 
 export type PmxObject = Readonly<{
     header: PmxObject.Header;
@@ -28,7 +28,7 @@ export namespace PmxObject {
         boneIndexSize: 1 | 2 | 4;
         morphIndexSize: 1 | 2 | 4;
         rigidBodyIndexSize: 1 | 2 | 4;
-        
+
         modelName: string;
         englishModelName: string;
         comment: string;
@@ -62,7 +62,7 @@ export namespace PmxObject {
         edgeRatio: number;
     }>;
 
-    export namespace Vertex {    
+    export namespace Vertex {
         export enum BoneWeightType {
             bdef1 = 0,
             bdef2 = 1,
@@ -79,7 +79,7 @@ export namespace PmxObject {
         }>;
 
         export type BoneWeight<T extends BoneWeightType = Vertex.BoneWeightType> = Readonly<{
-            boneIndices: T extends BoneWeightType.bdef1 ? [number] 
+            boneIndices: T extends BoneWeightType.bdef1 ? [number]
                 : T extends BoneWeightType.bdef2 ? [number, number]
                 : T extends BoneWeightType.bdef4 ? [number, number, number, number]
                 : T extends BoneWeightType.sdef ? [number, number]
@@ -107,19 +107,19 @@ export namespace PmxObject {
         specular: [number, number, number];
         shininess: number;
         ambient: [number, number, number];
-        
+
         flag: number;
-        
+
         edgeColor: [number, number, number, number];
         edgeSize: number;
-        
+
         textureIndex: number;
         sphereTextureIndex: number;
         sphereTextureMode: Material.SphereTextureMode;
 
         isSharedToonTexture: boolean;
         toonTextureIndex: number;
-        
+
         comment: string;
         faceCount: number;
     }>;
@@ -127,7 +127,7 @@ export namespace PmxObject {
     export namespace Material {
         export enum Flag {
             isDoubleSided = 1 << 0,
-            enabledGroundShadow = 1 << 1, 
+            enabledGroundShadow = 1 << 1,
             enabledDrawShadow = 1 << 2,
             enabledReceiveShadow = 1 << 3,
             enabledToonEdge = 1 << 4,
@@ -151,7 +151,7 @@ export namespace PmxObject {
         position: BABYLON.Vector3;
         parentIndex: number;
         transformOrder: number; // (a.k.a. Deform) todo: need to check
-        
+
         flag: number;
         displayConnection: number | BABYLON.Vector3; // (a.k.a. Link to)
 
@@ -445,19 +445,19 @@ export namespace PmxObject {
         }>;
 
         export type Cluster = Readonly<{
-            srhr_cl: number; // Soft vs rigid hardness
-            skhr_cl: number; // Soft vs kinetic hardness
-            sshr_cl: number; // Soft vs soft hardness
-            sr_splt_cl: number; // Soft vs rigid impulse split
-            sk_splt_cl: number; // Soft vs rigid impulse split
-            ss_splt_cl: number; // Soft vs rigid impulse split
+            srhrCl: number; // Soft vs rigid hardness
+            skhrCl: number; // Soft vs kinetic hardness
+            sshrCl: number; // Soft vs soft hardness
+            srSpltCl: number; // Soft vs rigid impulse split
+            skSpltCl: number; // Soft vs rigid impulse split
+            ssSpltCl: number; // Soft vs rigid impulse split
         }>;
 
         export type Interation = Readonly<{
-            v_it: number; // Velocities iteration
-            p_it: number; // Positions iteration
-            d_it: number; // Drift iteration
-            c_it: number; // Cluster iteration
+            vIt: number; // Velocities iteration
+            pIt: number; // Positions iteration
+            dIt: number; // Drift iteration
+            cIt: number; // Cluster iteration
         }>;
 
         export type Material = Readonly<{
