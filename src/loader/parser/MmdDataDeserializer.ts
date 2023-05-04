@@ -1,3 +1,5 @@
+import { PmxObject } from "./PmxObject";
+
 type TupleOf<T, N extends number, R extends unknown[]> =
     R["length"] extends N ? R : TupleOf<T, N, [T, ...R]>;
 
@@ -9,12 +11,12 @@ export class MmdDataDeserializer {
     private static readonly _littleEndian = true;
 
     private readonly _dataView: DataView;
-    private readonly _decoder: TextDecoder;
+    private _decoder: TextDecoder | null;
     private _offset: number;
 
     public constructor(arrayBuffer: ArrayBufferLike) {
         this._dataView = new DataView(arrayBuffer);
-        this._decoder = new TextDecoder("shift-jis");
+        this._decoder = null;
         this._offset = 0;
     }
 
@@ -56,6 +58,12 @@ export class MmdDataDeserializer {
         return value;
     }
 
+    public getInt32(): number {
+        const value = this._dataView.getInt32(this._offset, MmdDataDeserializer._littleEndian);
+        this._offset += 4;
+        return value;
+    }
+
     public getFloat32(): number {
         const value = this._dataView.getFloat32(this._offset, MmdDataDeserializer._littleEndian);
         this._offset += 4;
@@ -70,10 +78,26 @@ export class MmdDataDeserializer {
         return result as Tuple<number, N>;
     }
 
-    public getShiftJisString(length: number): string {
+    public initializeTextDecoder(encoding: PmxObject.Header.Encoding): void {
+        this._decoder = new TextDecoder(encoding === PmxObject.Header.Encoding.utf8 ? "utf-8" : "utf-16le");
+    }
+
+    public getDecoderString(length: number): string {
+        if (this._decoder === null) {
+            throw new Error("TextDecoder is not initialized.");
+        }
+
         const bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
         this._offset += length;
 
         return this._decoder.decode(bytes);
+    }
+
+    public getSignatureString(length: number): string {
+        const decoder = new TextDecoder("utf-8");
+        const bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
+        this._offset += length;
+
+        return decoder.decode(bytes);
     }
 }
