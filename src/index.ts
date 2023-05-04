@@ -106,30 +106,30 @@ async function deserializerTest(): Promise<void> {
         return header;
     }
     const header = parseHeader();
-    
+
     function getBoneIndex(): number {
         switch (header.boneIndexSize) {
-            case 1:
-                return dataDeserializer.getUint8();
-            case 2:
-                return dataDeserializer.getUint16();
-            case 4:
-                return dataDeserializer.getInt32();
-            default:
-                throw new Error(`Invalid boneIndexSize: ${header.boneIndexSize}`);
+        case 1:
+            return dataDeserializer.getUint8();
+        case 2:
+            return dataDeserializer.getUint16();
+        case 4:
+            return dataDeserializer.getInt32();
+        default:
+            throw new Error(`Invalid boneIndexSize: ${header.boneIndexSize}`);
         }
     }
 
     function getNonBoneIndex(indexSize: number): number {
         switch (indexSize) {
-            case 1:
-                return dataDeserializer.getInt8();
-            case 2:
-                return dataDeserializer.getInt16();
-            case 4:
-                return dataDeserializer.getInt32();
-            default:
-                throw new Error(`Invalid indexSize: ${indexSize}`);
+        case 1:
+            return dataDeserializer.getInt8();
+        case 2:
+            return dataDeserializer.getInt16();
+        case 4:
+            return dataDeserializer.getInt32();
+        default:
+            throw new Error(`Invalid indexSize: ${indexSize}`);
         }
     }
 
@@ -153,54 +153,56 @@ async function deserializerTest(): Promise<void> {
         let boneWeight: PmxObject.Vertex.BoneWeight;
 
         switch (weightDeformType) {
-            case PmxObject.Vertex.BoneWeightType.bdef1:
-                boneWeight = {
-                    boneIndices: [getBoneIndex()],
-                    boneWeights: [1.0]
-                } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
-                break;
-            case PmxObject.Vertex.BoneWeightType.bdef2:
-                boneWeight = {
-                    boneIndices: [getBoneIndex(), getBoneIndex()],
-                    boneWeights: [dataDeserializer.getFloat32(), 1.0 - dataDeserializer.getFloat32()]
-                } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
-                break;
-            case PmxObject.Vertex.BoneWeightType.bdef4:
-                boneWeight = {
-                    boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
-                    boneWeights: [
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32()
-                    ]
-                } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4>;
-                break;
-            case PmxObject.Vertex.BoneWeightType.sdef:
-                boneWeight = {
-                    boneIndices: [getBoneIndex(), getBoneIndex()],
-                    boneWeights: [
-                        dataDeserializer.getFloat32(),
-                        1.0 - dataDeserializer.getFloat32()
-                    ],
+        case PmxObject.Vertex.BoneWeightType.bdef1:
+            boneWeight = {
+                boneIndices: [getBoneIndex()],
+                boneWeights: [1.0]
+            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
+            break;
+
+        case PmxObject.Vertex.BoneWeightType.bdef2:
+            boneWeight = {
+                boneIndices: [getBoneIndex(), getBoneIndex()],
+                boneWeights: [dataDeserializer.getFloat32()]
+            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
+            break;
+
+        case PmxObject.Vertex.BoneWeightType.bdef4:
+            boneWeight = {
+                boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
+                boneWeights: [
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32()
+                ]
+            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4>;
+            break;
+
+        case PmxObject.Vertex.BoneWeightType.sdef:
+            boneWeight = {
+                boneIndices: [getBoneIndex(), getBoneIndex()],
+                boneWeights: {
+                    boneWeight0: dataDeserializer.getFloat32(),
                     c: dataDeserializer.getFloat32Array(3),
                     r0: dataDeserializer.getFloat32Array(3),
                     r1: dataDeserializer.getFloat32Array(3)
-                } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
-                break;
-            case PmxObject.Vertex.BoneWeightType.qdef:
-                boneWeight = {
-                    boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
-                    boneWeights: [
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32(),
-                        dataDeserializer.getFloat32()
-                    ]
-                } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef>;
-                break;
-            default:
-                throw new Error(`Invalid weightDeformType: ${weightDeformType}`);
+                }
+            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
+            break;
+        case PmxObject.Vertex.BoneWeightType.qdef:
+            boneWeight = {
+                boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
+                boneWeights: [
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32(),
+                    dataDeserializer.getFloat32()
+                ]
+            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef>;
+            break;
+        default:
+            throw new Error(`Invalid weightDeformType: ${weightDeformType}`);
         }
 
         const edgeScale = dataDeserializer.getFloat32();
@@ -209,10 +211,10 @@ async function deserializerTest(): Promise<void> {
             position: position,
             normal: normal,
             uv: uv,
-            additionalVec4: additionalVec4
-            weightType: weightDeformType
-            boneWeight: boneWeight
-            edgeScale: edgeScale
+            additionalVec4: additionalVec4,
+            weightType: weightDeformType,
+            boneWeight: boneWeight,
+            edgeRatio: edgeScale
         });
     }
 }

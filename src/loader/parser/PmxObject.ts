@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Vec4 } from "./MmdTypes";
+import type { Vec2, Vec3, Vec4 } from "./MmdTypes";
 
 export type PmxObject = Readonly<{
     header: PmxObject.Header;
@@ -62,7 +62,7 @@ export namespace PmxObject {
         }
 
         export type BoneWeightSDEF = Readonly<{
-            bone1Weight: number;
+            boneWeight0: number;
             c: Vec3;
             r0: Vec3;
             r1: Vec3;
@@ -76,7 +76,7 @@ export namespace PmxObject {
                 : T extends BoneWeightType.qdef ? Vec4
                 : never;
 
-            boneWeights: T extends BoneWeightType.bdef1 ? never
+            boneWeights: T extends BoneWeightType.bdef1 ? [number]
                 : T extends BoneWeightType.bdef2 ? [number]
                 : T extends BoneWeightType.bdef4 ? Vec4
                 : T extends BoneWeightType.sdef ? BoneWeightSDEF
