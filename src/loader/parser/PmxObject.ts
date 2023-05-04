@@ -1,4 +1,4 @@
-import type * as BABYLON from "babylonjs";
+import { Vec2, Vec3, Vec4 } from "./MmdTypes";
 
 export type PmxObject = Readonly<{
     header: PmxObject.Header;
@@ -20,29 +20,19 @@ export namespace PmxObject {
         version: number;
 
         encoding: Header.Encoding;
-        additionalUvCount: 0 | 1 | 2 | 3 | 4;
+        additionalVec4Count: number; // 0 | 1 | 2 | 3 | 4;
 
-        vertexIndexSize: 1 | 2 | 4;
-        textureIndexSize: 1 | 2 | 4;
-        materialIndexSize: 1 | 2 | 4;
-        boneIndexSize: 1 | 2 | 4;
-        morphIndexSize: 1 | 2 | 4;
-        rigidBodyIndexSize: 1 | 2 | 4;
+        vertexIndexSize: number; // 1 | 2 | 4;
+        textureIndexSize: number; // 1 | 2 | 4;
+        materialIndexSize: number; // 1 | 2 | 4;
+        boneIndexSize: number; // 1 | 2 | 4;
+        morphIndexSize: number; // 1 | 2 | 4;
+        rigidBodyIndexSize: number; // 1 | 2 | 4;
 
         modelName: string;
         englishModelName: string;
         comment: string;
         englishComment: string;
-
-        // vertexCount: number;
-        // faceCount: number;
-        // textureCount: number;
-        // materialCount: number;
-        // boneCount: number;
-        // morphCount: number;
-        // displayCount: number;
-        // rigidBodyCount: number;
-        // jointCount: number; // (a.k.a. constraintCount)
     }>;
 
     export namespace Header {
@@ -53,10 +43,10 @@ export namespace PmxObject {
     }
 
     export type Vertex = Readonly<{
-        position: BABYLON.Vector3;
-        normal: BABYLON.Vector3;
-        uv: BABYLON.Vector2;
-        additionalVec4: [number, number, number, number];
+        position: Vec3;
+        normal: Vec3;
+        uv: Vec2;
+        additionalVec4: Vec4[];
         weightType: Vertex.BoneWeightType;
         boneWeight: Vertex.BoneWeight;
         edgeRatio: number;
@@ -73,44 +63,44 @@ export namespace PmxObject {
 
         export type BoneWeightSDEF = Readonly<{
             bone1Weight: number;
-            c: BABYLON.Vector3;
-            r0: BABYLON.Vector3;
-            r1: BABYLON.Vector3;
+            c: Vec3;
+            r0: Vec3;
+            r1: Vec3;
         }>;
 
         export type BoneWeight<T extends BoneWeightType = Vertex.BoneWeightType> = Readonly<{
             boneIndices: T extends BoneWeightType.bdef1 ? [number]
-                : T extends BoneWeightType.bdef2 ? [number, number]
-                : T extends BoneWeightType.bdef4 ? [number, number, number, number]
-                : T extends BoneWeightType.sdef ? [number, number]
-                : T extends BoneWeightType.qdef ? [number, number, number, number]
+                : T extends BoneWeightType.bdef2 ? Vec2
+                : T extends BoneWeightType.bdef4 ? Vec4
+                : T extends BoneWeightType.sdef ? Vec2
+                : T extends BoneWeightType.qdef ? Vec4
                 : never;
 
             boneWeights: T extends BoneWeightType.bdef1 ? never
                 : T extends BoneWeightType.bdef2 ? [number]
-                : T extends BoneWeightType.bdef4 ? [number, number, number, number]
+                : T extends BoneWeightType.bdef4 ? Vec4
                 : T extends BoneWeightType.sdef ? BoneWeightSDEF
-                : T extends BoneWeightType.qdef ? [number, number, number, number]
+                : T extends BoneWeightType.qdef ? Vec4
                 : never;
         }>;
     }
 
     export type Texture = string;
 
-    export type Face = Readonly<[number, number, number]>; // indices
+    export type Face = Readonly<Vec3>; // indices
 
     export type Material = Readonly<{
         name: string;
         englishName: string;
 
-        diffuse: [number, number, number, number];
-        specular: [number, number, number];
+        diffuse: Vec4;
+        specular: Vec3;
         shininess: number;
-        ambient: [number, number, number];
+        ambient: Vec3;
 
         flag: number;
 
-        edgeColor: [number, number, number, number];
+        edgeColor: Vec4;
         edgeSize: number;
 
         textureIndex: number;
@@ -148,12 +138,12 @@ export namespace PmxObject {
         name: string;
         englishName: string;
 
-        position: BABYLON.Vector3;
+        position: Vec3;
         parentIndex: number;
         transformOrder: number; // (a.k.a. Deform) todo: need to check
 
         flag: number;
-        displayConnection: number | BABYLON.Vector3; // (a.k.a. Link to)
+        displayConnection: number | Vec3; // (a.k.a. Link to)
 
         additionalMove?: {
             isLocal: boolean;
@@ -162,10 +152,10 @@ export namespace PmxObject {
             parentIndex: number;
             ratio: number;
         };
-        axisLimit?: [number, number, number];
+        axisLimit?: Vec3;
         localVector?: {
-            x: BABYLON.Vector3;
-            z: BABYLON.Vector3;
+            x: Vec3;
+            z: Vec3;
         };
         transformAfterPhysics?: boolean;
         externalParentTransform?: number;
@@ -196,8 +186,8 @@ export namespace PmxObject {
         export type IKLink = Readonly<{
             target: number;
             limitation?: {
-                maximumAngle: [number, number, number];
-                minimumAngle: [number, number, number];
+                maximumAngle: Vec3;
+                minimumAngle: Vec3;
             };
         }>;
     }
@@ -248,32 +238,32 @@ export namespace PmxObject {
 
         export type VertexMorph = Readonly<{
             index: number; // vertex index
-            position: BABYLON.Vector3;
+            position: Vec3;
         }>;
 
         export type BoneMorph = Readonly<{
             index: number; // bone index
-            position: BABYLON.Vector3;
+            position: Vec3;
             rotation: BABYLON.Quaternion;
         }>;
 
         export type UvMorph = Readonly<{
             index: number; // vertex index
-            offset: [number, number, number, number]
+            offset: Vec4;
         }>;
 
         export type MaterialMorph = Readonly<{
             index: number; // material index
             type: MaterialMorph.Type;
-            diffuse: [number, number, number, number];
-            specular: [number, number, number];
+            diffuse: Vec4;
+            specular: Vec3;
             shininess: number;
-            ambient: [number, number, number];
-            edgeColor: [number, number, number, number];
+            ambient: Vec3;
+            edgeColor: Vec4;
             edgeSize: number;
-            textureColor: [number, number, number, number];
-            sphereTextureColor: [number, number, number, number];
-            toonTextureColor: [number, number, number, number];
+            textureColor: Vec4;
+            sphereTextureColor: Vec4;
+            toonTextureColor: Vec4;
         }>;
 
         export namespace MaterialMorph {
@@ -291,8 +281,8 @@ export namespace PmxObject {
         export type ImpulseMorph = Readonly<{
             index: number; // rigidbody index
             isLocal: boolean;
-            velocity: BABYLON.Vector3;
-            torque: BABYLON.Vector3;
+            velocity: Vec3;
+            torque: Vec3;
         }>;
     }
 
@@ -326,9 +316,9 @@ export namespace PmxObject {
         collisionGroup: number;
         collisionMask: number;
         shapeType: RigidBody.ShapeType;
-        shapeSize: BABYLON.Vector3;
-        shapePosition: BABYLON.Vector3;
-        shapeRotation: BABYLON.Vector3;
+        shapeSize: Vec3;
+        shapePosition: Vec3;
+        shapeRotation: Vec3;
         mass: number;
         linearDamping: number;
         angularDamping: number;
@@ -358,14 +348,14 @@ export namespace PmxObject {
         type: Joint.Type;
         rigidbodyIndexA: number;
         rigidbodyIndexB: number;
-        position: BABYLON.Vector3;
-        rotation: BABYLON.Vector3;
-        positionMin: BABYLON.Vector3;
-        positionMax: BABYLON.Vector3;
-        rotationMin: BABYLON.Vector3;
-        rotationMax: BABYLON.Vector3;
-        springPosition: BABYLON.Vector3;
-        springRotation: BABYLON.Vector3;
+        position: Vec3;
+        rotation: Vec3;
+        positionMin: Vec3;
+        positionMax: Vec3;
+        rotationMin: Vec3;
+        rotationMax: Vec3;
+        springPosition: Vec3;
+        springRotation: Vec3;
     }>;
 
     export namespace Joint {
