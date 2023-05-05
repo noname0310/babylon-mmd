@@ -85,9 +85,9 @@ export namespace PmxObject {
         }>;
     }
 
-    export type Texture = string;
-
     export type Face = Readonly<Vec3>; // indices
+
+    export type Texture = string;
 
     export type Material = Readonly<{
         name: string;

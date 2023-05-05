@@ -107,7 +107,7 @@ async function deserializerTest(): Promise<void> {
     }
     const header = parseHeader();
 
-    function getBoneIndex(): number {
+    function getVertexIndex(): number {
         switch (header.boneIndexSize) {
         case 1:
             return dataDeserializer.getUint8();
@@ -120,7 +120,7 @@ async function deserializerTest(): Promise<void> {
         }
     }
 
-    function getNonBoneIndex(indexSize: number): number {
+    function getNonVertexIndex(indexSize: number): number {
         switch (indexSize) {
         case 1:
             return dataDeserializer.getInt8();
@@ -133,7 +133,25 @@ async function deserializerTest(): Promise<void> {
         }
     }
 
-    getNonBoneIndex;
+    function getTextureIndex(): number {
+        return getNonVertexIndex(header.textureIndexSize);
+    }
+
+    // function getMaterialIndex(): number {
+    //     return getNonVertexIndex(header.materialIndexSize);
+    // }
+
+    // function getBoneIndex(): number {
+    //     return getNonVertexIndex(header.boneIndexSize);
+    // }
+
+    // function getMorphIndex(): number {
+    //     return getNonVertexIndex(header.morphIndexSize);
+    // }
+
+    // function getRigidBodyIndex(): number {
+    //     return getNonVertexIndex(header.rigidBodyIndexSize);
+    // }
 
     const verticesCount = dataDeserializer.getUint32();
     console.log(`verticesCount: ${verticesCount}`);
@@ -155,21 +173,21 @@ async function deserializerTest(): Promise<void> {
         switch (weightDeformType) {
         case PmxObject.Vertex.BoneWeightType.bdef1:
             boneWeight = {
-                boneIndices: [getBoneIndex()],
+                boneIndices: [getVertexIndex()],
                 boneWeights: [1.0]
             } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
             break;
 
         case PmxObject.Vertex.BoneWeightType.bdef2:
             boneWeight = {
-                boneIndices: [getBoneIndex(), getBoneIndex()],
+                boneIndices: [getVertexIndex(), getVertexIndex()],
                 boneWeights: [dataDeserializer.getFloat32()]
             } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
             break;
 
         case PmxObject.Vertex.BoneWeightType.bdef4:
             boneWeight = {
-                boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
+                boneIndices: [getVertexIndex(), getVertexIndex(), getVertexIndex(), getVertexIndex()],
                 boneWeights: [
                     dataDeserializer.getFloat32(),
                     dataDeserializer.getFloat32(),
@@ -181,7 +199,7 @@ async function deserializerTest(): Promise<void> {
 
         case PmxObject.Vertex.BoneWeightType.sdef:
             boneWeight = {
-                boneIndices: [getBoneIndex(), getBoneIndex()],
+                boneIndices: [getVertexIndex(), getVertexIndex()],
                 boneWeights: {
                     boneWeight0: dataDeserializer.getFloat32(),
                     c: dataDeserializer.getFloat32Array(3),
@@ -192,7 +210,7 @@ async function deserializerTest(): Promise<void> {
             break;
         case PmxObject.Vertex.BoneWeightType.qdef:
             boneWeight = {
-                boneIndices: [getBoneIndex(), getBoneIndex(), getBoneIndex(), getBoneIndex()],
+                boneIndices: [getVertexIndex(), getVertexIndex(), getVertexIndex(), getVertexIndex()],
                 boneWeights: [
                     dataDeserializer.getFloat32(),
                     dataDeserializer.getFloat32(),
@@ -217,6 +235,86 @@ async function deserializerTest(): Promise<void> {
             edgeRatio: edgeScale
         });
     }
+
+    console.log(vertices);
+
+    const facesCount = dataDeserializer.getUint32();
+    console.log(`facesCount: ${facesCount}`);
+
+    const faces: PmxObject.Face[] = [];
+    for (let i = 0; i < facesCount; i += 3) {
+        faces.push([getVertexIndex(), getVertexIndex(), getVertexIndex()]);
+    }
+
+    console.log(faces);
+
+    const texturesCount = dataDeserializer.getUint32();
+    console.log(`texturesCount: ${texturesCount}`);
+
+    const textures: PmxObject.Texture[] = [];
+    for (let i = 0; i < texturesCount; i++) {
+        const textureName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        textures.push(textureName);
+    }
+
+    console.log(textures);
+
+    const materialsCount = dataDeserializer.getUint32();
+    console.log(`materialsCount: ${materialsCount}`);
+
+    const materials: PmxObject.Material[] = [];
+    for (let i = 0; i < materialsCount; i++) {
+        const materialName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const materialNameEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+
+        const diffuse = dataDeserializer.getFloat32Array(4);
+        const specular = dataDeserializer.getFloat32Array(3);
+        const shininess = dataDeserializer.getFloat32();
+        const ambient = dataDeserializer.getFloat32Array(3);
+
+        const drawFlag = dataDeserializer.getUint8();
+
+        const edgeColor = dataDeserializer.getFloat32Array(4);
+        const edgeSize = dataDeserializer.getFloat32();
+
+        const textureIndex = getTextureIndex();
+        const sphereTextureIndex = getTextureIndex();
+        const sphereMode = dataDeserializer.getUint8();
+
+        const isSharedToonTexture = dataDeserializer.getUint8() === 1;
+        const toonTextureIndex = isSharedToonTexture ? dataDeserializer.getUint8() : getTextureIndex();
+
+        const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const faceCount = dataDeserializer.getUint32();
+
+        const material: PmxObject.Material = {
+            name: materialName,
+            englishName: materialNameEn,
+
+            diffuse: diffuse,
+            specular: specular,
+            shininess: shininess,
+            ambient: ambient,
+
+            flag: drawFlag,
+
+            edgeColor: edgeColor,
+            edgeSize: edgeSize,
+
+            textureIndex: textureIndex,
+            sphereTextureIndex: sphereTextureIndex,
+            sphereTextureMode: sphereMode,
+
+            isSharedToonTexture: isSharedToonTexture,
+            toonTextureIndex: toonTextureIndex,
+
+            comment: comment,
+            faceCount: faceCount
+        };
+        materials.push(material);
+    }
+
+    console.log(materials);
 }
 
 deserializerTest();
