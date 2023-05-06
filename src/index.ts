@@ -38,7 +38,7 @@ function engineStartup(): void {
 engineStartup;
 
 async function deserializerTest(): Promise<void> {
-    const data = await fetch("res/bone_flag_test.pmx")
+    const data = await fetch("res/private_test/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx")
         .then((response) => response.arrayBuffer());
     const dataDeserializer = new MmdDataDeserializer(data);
 
@@ -78,16 +78,25 @@ async function deserializerTest(): Promise<void> {
         const rigidBodyIndexSize = dataDeserializer.getUint8();
         console.log(`rigidBodyIndexSize: ${rigidBodyIndexSize}`);
 
-        const modelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        if (globalsCount < 8) {
+            throw new Error(`Invalid globalsCount: ${globalsCount}`);
+        } else if (8 < globalsCount) {
+            console.warn(`globalsCount is greater than 8: ${globalsCount} files may be corrupted or higher version`);
+            for (let i = 8; i < globalsCount; i++) {
+                dataDeserializer.getUint8();
+            }
+        }
+
+        const modelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         console.log(`modelName: ${modelName}`);
 
-        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         console.log(`englishModelName: ${englishModelName}`);
 
-        const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         console.log(`comment: ${comment}`);
 
-        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         console.log(`englishComment: ${englishComment}`);
 
         const header: PmxObject.Header = {
@@ -161,7 +170,7 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse vertices
 
-    const verticesCount = dataDeserializer.getUint32();
+    const verticesCount = dataDeserializer.getInt32();
     console.log(`verticesCount: ${verticesCount}`);
 
     const vertices: PmxObject.Vertex[] = [];
@@ -257,7 +266,7 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse faces
 
-    const facesCount = dataDeserializer.getUint32();
+    const facesCount = dataDeserializer.getInt32();
     console.log(`facesCount: ${facesCount}`);
 
     const faces: PmxObject.Face[] = [];
@@ -271,12 +280,12 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse textures
 
-    const texturesCount = dataDeserializer.getUint32();
+    const texturesCount = dataDeserializer.getInt32();
     console.log(`texturesCount: ${texturesCount}`);
 
     const textures: PmxObject.Texture[] = [];
     for (let i = 0; i < texturesCount; i++) {
-        const textureName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const textureName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         textures.push(textureName);
     }
 
@@ -286,13 +295,13 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse materials
 
-    const materialsCount = dataDeserializer.getUint32();
+    const materialsCount = dataDeserializer.getInt32();
     console.log(`materialsCount: ${materialsCount}`);
 
     const materials: PmxObject.Material[] = [];
     for (let i = 0; i < materialsCount; i++) {
-        const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
         const diffuse = dataDeserializer.getFloat32Array(4);
         const specular = dataDeserializer.getFloat32Array(3);
@@ -311,8 +320,8 @@ async function deserializerTest(): Promise<void> {
         const isSharedToonTexture = dataDeserializer.getUint8() === 1;
         const toonTextureIndex = isSharedToonTexture ? dataDeserializer.getUint8() : getTextureIndex();
 
-        const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        const faceCount = dataDeserializer.getUint32();
+        const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const faceCount = dataDeserializer.getInt32();
 
         const material: PmxObject.Material = {
             name,
@@ -347,17 +356,17 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse bones
 
-    const bonesCount = dataDeserializer.getUint32();
+    const bonesCount = dataDeserializer.getInt32();
     console.log(`bonesCount: ${bonesCount}`);
 
     const bones: PmxObject.Bone[] = [];
     for (let i = 0; i < bonesCount; i++) {
-        const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
         const position = dataDeserializer.getFloat32Array(3);
         const parentBoneIndex = getBoneIndex();
-        const transformOrder = dataDeserializer.getUint32();
+        const transformOrder = dataDeserializer.getInt32();
 
         const flag = dataDeserializer.getUint16();
 
@@ -380,8 +389,6 @@ async function deserializerTest(): Promise<void> {
                 ratio: dataDeserializer.getFloat32()
             };
         }
-
-        console.log(additionalTransform?.isLocal);
 
         let axisLimit: Vec3 | undefined;
 
@@ -464,6 +471,30 @@ async function deserializerTest(): Promise<void> {
     console.log(bones);
 
     // #endregion
+
+    // #region parse morphs
+
+    const morphsCount = dataDeserializer.getInt32();
+    console.log(`morphsCount: ${morphsCount}`);
+
+    const morphs: PmxObject.Morph[] = [];
+    for (let i = 0; i < morphsCount; i++) {
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+
+        const category: PmxObject.Morph.Category = dataDeserializer.getInt8();
+        const type: PmxObject.Morph.Type = dataDeserializer.getInt8();
+
+        const morphOffsetCount = dataDeserializer.getInt32();
+
+        name;
+        englishName;
+        category;
+        type;
+        morphOffsetCount;
+    }
+
+    console.log(morphs);
 }
 
 deserializerTest();
