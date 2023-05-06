@@ -139,42 +139,43 @@ export namespace PmxObject {
         englishName: string;
 
         position: Vec3;
-        parentIndex: number;
+        parentBoneIndex: number;
         transformOrder: number; // (a.k.a. Deform) todo: need to check
 
         flag: number;
-        displayConnection: number | Vec3; // (a.k.a. Link to)
+        tailPosition: number | Vec3; // (a.k.a. Link to)
 
-        additionalMove?: {
+        additionalTransform: {
             isLocal: boolean;
             affectRotation: boolean;
             affectPosition: boolean;
             parentIndex: number;
             ratio: number;
-        };
-        axisLimit?: Vec3;
-        localVector?: {
+        } | undefined;
+        axisLimit: Vec3 | undefined;
+        localVector: {
             x: Vec3;
             z: Vec3;
-        };
-        transformAfterPhysics?: boolean;
-        externalParentTransform?: number;
-        ik?: {
+        } | undefined;
+        transformAfterPhysics: boolean | undefined;
+        externalParentTransform: number | undefined;
+        ik: {
             target: number;
             iteration: number; // (a.k.a. Loop)
             rotationConstraint: number; // (a.k.a. Angle) radians
             links: Bone.IKLink[];
-        }
+        } | undefined;
     }>;
 
     export namespace Bone {
         export enum Flag {
-            useBoneIndexAsConnection = 0x0001,
+            useBoneIndexAsTailPosition = 0x0001,
             isRotatable = 0x0002,
             isMovable = 0x0004,
             isVisible = 0x0008,
             isControllable = 0x0010,
             isIkEnabled = 0x0020,
+            localAdditionTransform = 0x0080,
             hasAdditionalRotate = 0x0100,
             hasAdditionalMove = 0x0200,
             hasAxisLimit = 0x0400,
@@ -185,10 +186,10 @@ export namespace PmxObject {
 
         export type IKLink = Readonly<{
             target: number;
-            limitation?: {
-                maximumAngle: Vec3;
+            limitation: {
                 minimumAngle: Vec3;
-            };
+                maximumAngle: Vec3;
+            } | undefined;
         }>;
     }
 

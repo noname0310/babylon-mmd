@@ -4,7 +4,7 @@ css;
 import * as BABYLON from "babylonjs";
 
 import { MmdDataDeserializer } from "./loader/parser/MmdDataDeserializer";
-import type { Vec4 } from "./loader/parser/MmdTypes";
+import type { Vec3, Vec4 } from "./loader/parser/MmdTypes";
 import { PmxObject } from "./loader/parser/PmxObject";
 import { RuntimeBuilder } from "./runtime/base/RuntimeBuilder";
 import { SceneBuilder } from "./runtime/instance/SceneBuilder";
@@ -38,7 +38,7 @@ function engineStartup(): void {
 engineStartup;
 
 async function deserializerTest(): Promise<void> {
-    const data = await fetch("res/private_test/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx")
+    const data = await fetch("res/bone_flag_test.pmx")
         .then((response) => response.arrayBuffer());
     const dataDeserializer = new MmdDataDeserializer(data);
 
@@ -352,21 +352,113 @@ async function deserializerTest(): Promise<void> {
 
     const bones: PmxObject.Bone[] = [];
     for (let i = 0; i < bonesCount; i++) {
-        const boneName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        const boneNameEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
 
-        const bonePosition = dataDeserializer.getFloat32Array(3);
+        const position = dataDeserializer.getFloat32Array(3);
         const parentBoneIndex = getBoneIndex();
-        const boneLevel = dataDeserializer.getUint32();
+        const transformOrder = dataDeserializer.getUint32();
 
-        const boneFlag = dataDeserializer.getUint16();
+        const flag = dataDeserializer.getUint16();
 
-        boneName;
-        boneNameEn;
-        bonePosition;
-        parentBoneIndex;
-        boneLevel;
-        boneFlag;
+        let tailPosition: number | Vec3;
+
+        if (flag & PmxObject.Bone.Flag.useBoneIndexAsTailPosition) {
+            tailPosition = getBoneIndex();
+        } else {
+            tailPosition = dataDeserializer.getFloat32Array(3);
+        }
+
+        let additionalTransform;
+
+        if (flag & PmxObject.Bone.Flag.hasAdditionalMove || flag & PmxObject.Bone.Flag.hasAdditionalRotate) {
+            additionalTransform = {
+                isLocal: (flag & PmxObject.Bone.Flag.localAdditionTransform) !== 0,
+                affectRotation: (flag & PmxObject.Bone.Flag.hasAdditionalRotate) !== 0,
+                affectPosition: (flag & PmxObject.Bone.Flag.hasAdditionalMove) !== 0,
+                parentIndex: getBoneIndex(),
+                ratio: dataDeserializer.getFloat32()
+            };
+        }
+
+        console.log(additionalTransform?.isLocal);
+
+        let axisLimit: Vec3 | undefined;
+
+        if (flag & PmxObject.Bone.Flag.hasAxisLimit) {
+            axisLimit = dataDeserializer.getFloat32Array(3);
+        }
+
+        let localVector;
+
+        if (flag & PmxObject.Bone.Flag.hasLocalVector) {
+            localVector = {
+                x: dataDeserializer.getFloat32Array(3),
+                z: dataDeserializer.getFloat32Array(3)
+            };
+        }
+
+        const transformAfterPhysics = (flag & PmxObject.Bone.Flag.transformAfterPhysics) !== 0;
+
+        let externalParentTransform: number | undefined;
+
+        if (flag & PmxObject.Bone.Flag.isExternalParentTransformed) {
+            externalParentTransform = dataDeserializer.getInt32();
+        }
+
+        let ik;
+
+        if (flag & PmxObject.Bone.Flag.isIkEnabled) {
+            const target = getBoneIndex();
+            const iteration = dataDeserializer.getInt32();
+            const rotationConstraint = dataDeserializer.getFloat32();
+
+            const links: PmxObject.Bone.IKLink[] = [];
+
+            const linksCount = dataDeserializer.getInt32();
+            for (let i = 0; i < linksCount; i++) {
+                const ikLinkTarget = getBoneIndex();
+                const hasLimit = dataDeserializer.getUint8() === 1;
+
+                const link: PmxObject.Bone.IKLink = {
+                    target: ikLinkTarget,
+                    limitation: hasLimit ? {
+                        minimumAngle: dataDeserializer.getFloat32Array(3),
+                        maximumAngle: dataDeserializer.getFloat32Array(3)
+                    } : undefined
+                };
+                links.push(link);
+            }
+
+            ik = {
+                target,
+                iteration,
+                rotationConstraint,
+                links
+            };
+        }
+
+
+        const bone: PmxObject.Bone = {
+            name,
+            englishName,
+
+            position,
+            parentBoneIndex,
+            transformOrder,
+
+            flag,
+            tailPosition,
+
+            additionalTransform,
+            axisLimit,
+
+            localVector,
+            transformAfterPhysics,
+            externalParentTransform,
+            ik
+        };
+        bones.push(bone);
     }
 
     console.log(bones);
