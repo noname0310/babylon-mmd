@@ -8,7 +8,7 @@ export type PmxObject = Readonly<{
     materials: PmxObject.Material[];
     bones: PmxObject.Bone[];
     morphs: PmxObject.Morph[];
-    displayFrame: PmxObject.DisplayFrame[];
+    displayFrames: PmxObject.DisplayFrame[];
     rigidBodies: PmxObject.RigidBody[];
     joints: PmxObject.Joint[];
     softBodies: PmxObject.SoftBody[];
