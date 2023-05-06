@@ -11,7 +11,9 @@ import { SceneBuilder } from "./runtime/instance/SceneBuilder";
 import { TickRunner } from "./runtime/instance/TickRunner";
 
 function engineStartup(): void {
-    const canvas = document.getElementById("render-canvas") as HTMLCanvasElement;
+    const canvas = document.getElementById("render-canvas");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Invalid canvas element");
+
     const engine = new BABYLON.WebGPUEngine(canvas, {
         powerPreference: "high-performance",
         antialias: true,
@@ -25,11 +27,15 @@ function engineStartup(): void {
 
     runtime.run();
 
-    (globalThis as any).runtime = runtime;
+    Object.defineProperty(globalThis, "runtime", {
+        value: runtime,
+        writable: false,
+        enumerable: true,
+        configurable: false
+    });
 }
 
 engineStartup;
-
 
 async function deserializerTest(): Promise<void> {
     const data = await fetch("res/private_test/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx")
@@ -46,10 +52,10 @@ async function deserializerTest(): Promise<void> {
         const globalsCount = dataDeserializer.getUint8();
         console.log(`globalsCount: ${globalsCount}`);
 
-        const textIncoding = dataDeserializer.getUint8();
-        console.log(`textIncoding: ${textIncoding} ${textIncoding === PmxObject.Header.Encoding.utf8 ? "utf8" : "utf16le"}`);
+        const encoding = dataDeserializer.getUint8();
+        console.log(`encoding: ${encoding} ${encoding === PmxObject.Header.Encoding.utf8 ? "utf8" : "utf16le"}`);
 
-        dataDeserializer.initializeTextDecoder(textIncoding);
+        dataDeserializer.initializeTextDecoder(encoding);
 
         const additionalVec4Count = dataDeserializer.getUint8();
         console.log(`additionalVec4Count: ${additionalVec4Count}`);
@@ -75,33 +81,33 @@ async function deserializerTest(): Promise<void> {
         const modelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
         console.log(`modelName: ${modelName}`);
 
-        const modelNameEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        console.log(`modelNameEn: ${modelNameEn}`);
+        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        console.log(`englishModelName: ${englishModelName}`);
 
         const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
         console.log(`comment: ${comment}`);
 
-        const commentEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        console.log(`commentEn: ${commentEn}`);
+        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        console.log(`englishComment: ${englishComment}`);
 
         const header: PmxObject.Header = {
-            signature: signature,
-            version: version,
+            signature,
+            version,
 
-            encoding: textIncoding,
-            additionalVec4Count: additionalVec4Count,
+            encoding,
+            additionalVec4Count,
 
-            vertexIndexSize: vertexIndexSize,
-            textureIndexSize: textureIndexSize,
-            materialIndexSize: materialIndexSize,
-            boneIndexSize: boneIndexSize,
-            morphIndexSize: morphIndexSize,
-            rigidBodyIndexSize: rigidBodyIndexSize,
+            vertexIndexSize,
+            textureIndexSize,
+            materialIndexSize,
+            boneIndexSize,
+            morphIndexSize,
+            rigidBodyIndexSize,
 
-            modelName: modelName,
-            englishModelName: modelNameEn,
-            comment: comment,
-            englishComment: commentEn
+            modelName,
+            englishModelName,
+            comment,
+            englishComment
         };
         return header;
     }
@@ -141,9 +147,9 @@ async function deserializerTest(): Promise<void> {
     //     return getNonVertexIndex(header.materialIndexSize);
     // }
 
-    // function getBoneIndex(): number {
-    //     return getNonVertexIndex(header.boneIndexSize);
-    // }
+    function getBoneIndex(): number {
+        return getNonVertexIndex(header.boneIndexSize);
+    }
 
     // function getMorphIndex(): number {
     //     return getNonVertexIndex(header.morphIndexSize);
@@ -152,6 +158,8 @@ async function deserializerTest(): Promise<void> {
     // function getRigidBodyIndex(): number {
     //     return getNonVertexIndex(header.rigidBodyIndexSize);
     // }
+
+    // #region parse vertices
 
     const verticesCount = dataDeserializer.getUint32();
     console.log(`verticesCount: ${verticesCount}`);
@@ -166,27 +174,29 @@ async function deserializerTest(): Promise<void> {
         for (let j = 0; j < header.additionalVec4Count; j++) {
             additionalVec4.push(dataDeserializer.getFloat32Array(4));
         }
-        const weightDeformType = dataDeserializer.getUint8() as PmxObject.Vertex.BoneWeightType;
+        const weightType: PmxObject.Vertex.BoneWeightType = dataDeserializer.getUint8();
 
         let boneWeight: PmxObject.Vertex.BoneWeight;
 
-        switch (weightDeformType) {
-        case PmxObject.Vertex.BoneWeightType.bdef1:
-            boneWeight = {
+        switch (weightType) {
+        case PmxObject.Vertex.BoneWeightType.bdef1: {
+            const bdef1weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1> = {
                 boneIndices: [getVertexIndex()],
                 boneWeights: [1.0]
-            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
+            };
+            boneWeight = bdef1weight;
             break;
-
-        case PmxObject.Vertex.BoneWeightType.bdef2:
-            boneWeight = {
+        }
+        case PmxObject.Vertex.BoneWeightType.bdef2: {
+            const bdef2weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2> = {
                 boneIndices: [getVertexIndex(), getVertexIndex()],
                 boneWeights: [dataDeserializer.getFloat32()]
-            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
+            };
+            boneWeight = bdef2weight;
             break;
-
-        case PmxObject.Vertex.BoneWeightType.bdef4:
-            boneWeight = {
+        }
+        case PmxObject.Vertex.BoneWeightType.bdef4: {
+            const bdef4weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4> = {
                 boneIndices: [getVertexIndex(), getVertexIndex(), getVertexIndex(), getVertexIndex()],
                 boneWeights: [
                     dataDeserializer.getFloat32(),
@@ -194,11 +204,12 @@ async function deserializerTest(): Promise<void> {
                     dataDeserializer.getFloat32(),
                     dataDeserializer.getFloat32()
                 ]
-            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4>;
+            };
+            boneWeight = bdef4weight;
             break;
-
-        case PmxObject.Vertex.BoneWeightType.sdef:
-            boneWeight = {
+        }
+        case PmxObject.Vertex.BoneWeightType.sdef: {
+            const sdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef> = {
                 boneIndices: [getVertexIndex(), getVertexIndex()],
                 boneWeights: {
                     boneWeight0: dataDeserializer.getFloat32(),
@@ -206,10 +217,12 @@ async function deserializerTest(): Promise<void> {
                     r0: dataDeserializer.getFloat32Array(3),
                     r1: dataDeserializer.getFloat32Array(3)
                 }
-            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
+            };
+            boneWeight = sdefweight;
             break;
-        case PmxObject.Vertex.BoneWeightType.qdef:
-            boneWeight = {
+        }
+        case PmxObject.Vertex.BoneWeightType.qdef: {
+            const qdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef> = {
                 boneIndices: [getVertexIndex(), getVertexIndex(), getVertexIndex(), getVertexIndex()],
                 boneWeights: [
                     dataDeserializer.getFloat32(),
@@ -217,26 +230,32 @@ async function deserializerTest(): Promise<void> {
                     dataDeserializer.getFloat32(),
                     dataDeserializer.getFloat32()
                 ]
-            } as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef>;
+            };
+            boneWeight = qdefweight;
             break;
+        }
         default:
-            throw new Error(`Invalid weightDeformType: ${weightDeformType}`);
+            throw new Error(`Invalid weightType: ${weightType}`);
         }
 
-        const edgeScale = dataDeserializer.getFloat32();
+        const edgeRatio = dataDeserializer.getFloat32();
 
         vertices.push({
-            position: position,
-            normal: normal,
-            uv: uv,
-            additionalVec4: additionalVec4,
-            weightType: weightDeformType,
-            boneWeight: boneWeight,
-            edgeRatio: edgeScale
+            position,
+            normal,
+            uv,
+            additionalVec4,
+            weightType,
+            boneWeight,
+            edgeRatio
         });
     }
 
     console.log(vertices);
+
+    // #endregion
+
+    // #region parse faces
 
     const facesCount = dataDeserializer.getUint32();
     console.log(`facesCount: ${facesCount}`);
@@ -247,6 +266,10 @@ async function deserializerTest(): Promise<void> {
     }
 
     console.log(faces);
+
+    // #endregion
+
+    // #region parse textures
 
     const texturesCount = dataDeserializer.getUint32();
     console.log(`texturesCount: ${texturesCount}`);
@@ -259,27 +282,31 @@ async function deserializerTest(): Promise<void> {
 
     console.log(textures);
 
+    // #endregion
+
+    // #region parse materials
+
     const materialsCount = dataDeserializer.getUint32();
     console.log(`materialsCount: ${materialsCount}`);
 
     const materials: PmxObject.Material[] = [];
     for (let i = 0; i < materialsCount; i++) {
-        const materialName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
-        const materialNameEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
 
         const diffuse = dataDeserializer.getFloat32Array(4);
         const specular = dataDeserializer.getFloat32Array(3);
         const shininess = dataDeserializer.getFloat32();
         const ambient = dataDeserializer.getFloat32Array(3);
 
-        const drawFlag = dataDeserializer.getUint8();
+        const flag = dataDeserializer.getUint8();
 
         const edgeColor = dataDeserializer.getFloat32Array(4);
         const edgeSize = dataDeserializer.getFloat32();
 
         const textureIndex = getTextureIndex();
         const sphereTextureIndex = getTextureIndex();
-        const sphereMode = dataDeserializer.getUint8();
+        const sphereTextureMode = dataDeserializer.getUint8();
 
         const isSharedToonTexture = dataDeserializer.getUint8() === 1;
         const toonTextureIndex = isSharedToonTexture ? dataDeserializer.getUint8() : getTextureIndex();
@@ -288,33 +315,63 @@ async function deserializerTest(): Promise<void> {
         const faceCount = dataDeserializer.getUint32();
 
         const material: PmxObject.Material = {
-            name: materialName,
-            englishName: materialNameEn,
+            name,
+            englishName,
 
-            diffuse: diffuse,
-            specular: specular,
-            shininess: shininess,
-            ambient: ambient,
+            diffuse,
+            specular,
+            shininess,
+            ambient,
 
-            flag: drawFlag,
+            flag,
 
-            edgeColor: edgeColor,
-            edgeSize: edgeSize,
+            edgeColor,
+            edgeSize,
 
-            textureIndex: textureIndex,
-            sphereTextureIndex: sphereTextureIndex,
-            sphereTextureMode: sphereMode,
+            textureIndex,
+            sphereTextureIndex,
+            sphereTextureMode,
 
-            isSharedToonTexture: isSharedToonTexture,
-            toonTextureIndex: toonTextureIndex,
+            isSharedToonTexture,
+            toonTextureIndex,
 
-            comment: comment,
-            faceCount: faceCount
+            comment,
+            faceCount
         };
         materials.push(material);
     }
 
     console.log(materials);
+
+    // #endregion
+
+    // #region parse bones
+
+    const bonesCount = dataDeserializer.getUint32();
+    console.log(`bonesCount: ${bonesCount}`);
+
+    const bones: PmxObject.Bone[] = [];
+    for (let i = 0; i < bonesCount; i++) {
+        const boneName = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+        const boneNameEn = dataDeserializer.getDecoderString(dataDeserializer.getUint32());
+
+        const bonePosition = dataDeserializer.getFloat32Array(3);
+        const parentBoneIndex = getBoneIndex();
+        const boneLevel = dataDeserializer.getUint32();
+
+        const boneFlag = dataDeserializer.getUint16();
+
+        boneName;
+        boneNameEn;
+        bonePosition;
+        parentBoneIndex;
+        boneLevel;
+        boneFlag;
+    }
+
+    console.log(bones);
+
+    // #endregion
 }
 
 deserializerTest();
