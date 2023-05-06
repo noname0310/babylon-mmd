@@ -131,7 +131,7 @@ async function deserializerTest(): Promise<void> {
         case 4:
             return dataDeserializer.getInt32();
         default:
-            throw new Error(`Invalid boneIndexSize: ${header.boneIndexSize}`);
+            throw new Error(`Invalid vertexIndexSize: ${header.boneIndexSize}`);
         }
     }
 
@@ -266,12 +266,32 @@ async function deserializerTest(): Promise<void> {
 
     // #region parse faces
 
-    const facesCount = dataDeserializer.getInt32();
-    console.log(`facesCount: ${facesCount}`);
+    const facesindicesCount = dataDeserializer.getInt32();
+    console.log(`facesindicesCount: ${facesindicesCount}`);
 
-    const faces: PmxObject.Face[] = [];
-    for (let i = 0; i < facesCount; i += 3) {
-        faces.push([getVertexIndex(), getVertexIndex(), getVertexIndex()]);
+    // const faces: PmxObject.Face[] = [];
+    // for (let i = 0; i < facesIndiceCount; i += 3) {
+    //     faces.push([getVertexIndex(), getVertexIndex(), getVertexIndex()]);
+    // }
+    const faceArrayBuffer = new ArrayBuffer(facesindicesCount * header.vertexIndexSize);
+
+    let faces: Uint8Array | Uint16Array | Int32Array;
+    switch (header.vertexIndexSize) {
+    case 1:
+        faces = new Uint8Array(faceArrayBuffer);
+        break;
+    case 2:
+        faces = new Uint16Array(faceArrayBuffer);
+        break;
+    case 4:
+        faces = new Int32Array(faceArrayBuffer);
+        break;
+    default:
+        throw new Error(`Invalid vertexIndexSize: ${header.vertexIndexSize}`);
+    }
+
+    for (let i = 0; i < facesindicesCount; i++) {
+        faces[i] = getVertexIndex();
     }
 
     console.log(faces);

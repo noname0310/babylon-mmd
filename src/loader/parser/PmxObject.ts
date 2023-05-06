@@ -3,7 +3,7 @@ import type { Vec2, Vec3, Vec4 } from "./MmdTypes";
 export type PmxObject = Readonly<{
     header: PmxObject.Header;
     vertices: PmxObject.Vertex[];
-    faces: PmxObject.Face[];
+    faces: RelativeIndexable<number>;
     textures: PmxObject.Texture[];
     materials: PmxObject.Material[];
     bones: PmxObject.Bone[];
@@ -85,7 +85,7 @@ export namespace PmxObject {
         }>;
     }
 
-    export type Face = Readonly<Vec3>; // indices
+    // export type Face = Readonly<Vec3>; // indices replaced to RelativeIndexable<number>
 
     export type Texture = string;
 
