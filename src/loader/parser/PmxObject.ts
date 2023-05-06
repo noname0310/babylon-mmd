@@ -170,11 +170,13 @@ export namespace PmxObject {
     export namespace Bone {
         export enum Flag {
             useBoneIndexAsTailPosition = 0x0001,
+
             isRotatable = 0x0002,
             isMovable = 0x0004,
             isVisible = 0x0008,
             isControllable = 0x0010,
             isIkEnabled = 0x0020,
+
             localAdditionTransform = 0x0080,
             hasAdditionalRotate = 0x0100,
             hasAdditionalMove = 0x0200,
