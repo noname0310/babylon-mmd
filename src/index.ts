@@ -515,6 +515,8 @@ async function deserializerTest(): Promise<void> {
     }
 
     console.log(morphs);
+
+    // #endregion
 }
 
 deserializerTest();
