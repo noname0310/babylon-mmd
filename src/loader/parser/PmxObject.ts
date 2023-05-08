@@ -247,7 +247,7 @@ export namespace PmxObject {
         export type BoneMorph = Readonly<{
             index: number; // bone index
             position: Vec3;
-            rotation: BABYLON.Quaternion;
+            rotation: Vec4;
         }>;
 
         export type UvMorph = Readonly<{
@@ -278,7 +278,7 @@ export namespace PmxObject {
 
         export type FlipMorph = Readonly<{
             index: number; // morph index
-            value: number;
+            ratio: number;
         }>;
 
         export type ImpulseMorph = Readonly<{

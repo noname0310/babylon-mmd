@@ -152,21 +152,21 @@ async function deserializerTest(): Promise<void> {
         return getNonVertexIndex(header.textureIndexSize);
     }
 
-    // function getMaterialIndex(): number {
-    //     return getNonVertexIndex(header.materialIndexSize);
-    // }
+    function getMaterialIndex(): number {
+        return getNonVertexIndex(header.materialIndexSize);
+    }
 
     function getBoneIndex(): number {
         return getNonVertexIndex(header.boneIndexSize);
     }
 
-    // function getMorphIndex(): number {
-    //     return getNonVertexIndex(header.morphIndexSize);
-    // }
+    function getMorphIndex(): number {
+        return getNonVertexIndex(header.morphIndexSize);
+    }
 
-    // function getRigidBodyIndex(): number {
-    //     return getNonVertexIndex(header.rigidBodyIndexSize);
-    // }
+    function getRigidBodyIndex(): number {
+        return getNonVertexIndex(header.rigidBodyIndexSize);
+    }
 
     // #region parse vertices
 
@@ -507,16 +507,143 @@ async function deserializerTest(): Promise<void> {
 
         const morphOffsetCount = dataDeserializer.getInt32();
 
-        name;
-        englishName;
-        category;
-        type;
-        morphOffsetCount;
+        const elements = [];
+
+        switch (type) {
+        case PmxObject.Morph.Type.groupMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const morphIndex = getMorphIndex();
+                const morphRatio = dataDeserializer.getFloat32();
+
+                const element: PmxObject.Morph.GroupMorph = {
+                    index: morphIndex,
+                    ratio: morphRatio
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.vertexMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const vertexIndex = getVertexIndex();
+                const positionOffset = dataDeserializer.getFloat32Array(3);
+
+                const element: PmxObject.Morph.VertexMorph = {
+                    index: vertexIndex,
+                    position: positionOffset
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.boneMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const boneIndex = getBoneIndex();
+                const position = dataDeserializer.getFloat32Array(3);
+                const rotation = dataDeserializer.getFloat32Array(4);
+
+                const element: PmxObject.Morph.BoneMorph = {
+                    index: boneIndex,
+                    position,
+                    rotation
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.uvMorph:
+        case PmxObject.Morph.Type.additionalUvMorph1:
+        case PmxObject.Morph.Type.additionalUvMorph2:
+        case PmxObject.Morph.Type.additionalUvMorph3:
+        case PmxObject.Morph.Type.additionalUvMorph4:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const vertexIndex = getVertexIndex();
+                const uvOffset = dataDeserializer.getFloat32Array(4);
+
+                const element: PmxObject.Morph.UvMorph = {
+                    index: vertexIndex,
+                    offset: uvOffset
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.materialMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const materialIndex = getMaterialIndex();
+                const type = dataDeserializer.getUint8();
+                const diffuse = dataDeserializer.getFloat32Array(4);
+                const specular = dataDeserializer.getFloat32Array(3);
+                const shininess = dataDeserializer.getFloat32();
+                const ambient = dataDeserializer.getFloat32Array(3);
+                const edgeColor = dataDeserializer.getFloat32Array(4);
+                const edgeSize = dataDeserializer.getFloat32();
+                const textureColor = dataDeserializer.getFloat32Array(4);
+                const sphereTextureColor = dataDeserializer.getFloat32Array(4);
+                const toonTextureColor = dataDeserializer.getFloat32Array(4);
+
+                const element: PmxObject.Morph.MaterialMorph = {
+                    index: materialIndex,
+                    type,
+                    diffuse,
+                    specular,
+                    shininess,
+                    ambient,
+                    edgeColor,
+                    edgeSize,
+                    textureColor,
+                    sphereTextureColor,
+                    toonTextureColor
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.flipMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const morphIndex = getMorphIndex();
+                const morphRatio = dataDeserializer.getFloat32();
+
+                const element: PmxObject.Morph.FlipMorph = {
+                    index: morphIndex,
+                    ratio: morphRatio
+                };
+                elements.push(element);
+            }
+            break;
+        case PmxObject.Morph.Type.impulseMorph:
+            for (let i = 0; i < morphOffsetCount; i++) {
+                const rigidBodyIndex = getRigidBodyIndex();
+                const isLocal = dataDeserializer.getUint8() === 1;
+                const velocity = dataDeserializer.getFloat32Array(3);
+                const torque = dataDeserializer.getFloat32Array(3);
+
+                const element: PmxObject.Morph.ImpulseMorph = {
+                    index: rigidBodyIndex,
+                    isLocal,
+                    velocity,
+                    torque
+                };
+                elements.push(element);
+            }
+            break;
+        default:
+            throw new Error(`Unknown morph type: ${type}`);
+        }
+
+        const morph: PmxObject.Morph = {
+            name,
+            englishName,
+            category,
+            type,
+            elements: elements as PmxObject.Morph["elements"]
+        };
+        morphs.push(morph);
     }
 
     console.log(morphs);
 
     // #endregion
+
+    // #region parse display frames
+
+    const displayFramesCount = dataDeserializer.getInt32();
+    console.log(`displayFramesCount: ${displayFramesCount}`);
 }
 
 deserializerTest();
