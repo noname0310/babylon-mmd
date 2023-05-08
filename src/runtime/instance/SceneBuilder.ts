@@ -1,5 +1,6 @@
 import * as BABYLON from "babylonjs";
-import { ISceneBuilder } from "../base/ISceneBuilder";
+
+import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
     public build(canvas: HTMLCanvasElement, engine: BABYLON.Engine): BABYLON.Scene {
