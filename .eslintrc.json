@@ -133,6 +133,12 @@
         ],
         "no-debugger": "warn",
         "no-inner-declarations": "off",
+        "no-plusplus": [
+            "error",
+            {
+                "allowForLoopAfterthoughts": true
+            }
+        ],
         "no-trailing-spaces": [
             "error"
         ],
