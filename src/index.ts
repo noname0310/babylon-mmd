@@ -38,7 +38,7 @@ function engineStartup(): void {
 engineStartup;
 
 async function deserializerTest(): Promise<void> {
-    const data = await fetch("res/private_test/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx")
+    const data = await fetch("res/private_test/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02_2.1t.pmx")
         .then((response) => response.arrayBuffer());
     const dataDeserializer = new MmdDataDeserializer(data);
 
@@ -686,12 +686,231 @@ async function deserializerTest(): Promise<void> {
 
     const rigidBodies: PmxObject.RigidBody[] = [];
     for (let i = 0; i < rigidBodiesCount; ++i) {
-        let a = 1;
-        a++;
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
-        rigidBodies;
-        a;
+        const boneIndex = getBoneIndex();
+
+        const collisionGroup = dataDeserializer.getUint8();
+        const collisionMask = dataDeserializer.getUint16();
+
+        const shapeType: PmxObject.RigidBody.ShapeType = dataDeserializer.getUint8();
+        const shapeSize = dataDeserializer.getFloat32Array(3);
+        const shapePosition = dataDeserializer.getFloat32Array(3);
+        const shapeRotation = dataDeserializer.getFloat32Array(3);
+
+        const mass = dataDeserializer.getFloat32();
+        const linearDamping = dataDeserializer.getFloat32();
+        const angularDamping = dataDeserializer.getFloat32();
+        const repulsion = dataDeserializer.getFloat32();
+        const friction = dataDeserializer.getFloat32();
+
+        const physicsMode: PmxObject.RigidBody.PhysicsMode = dataDeserializer.getUint8();
+
+        const rigidBody: PmxObject.RigidBody = {
+            name,
+            englishName,
+            boneIndex,
+            collisionGroup,
+            collisionMask,
+            shapeType,
+            shapeSize,
+            shapePosition,
+            shapeRotation,
+            mass,
+            linearDamping,
+            angularDamping,
+            repulsion,
+            friction,
+            physicsMode
+        };
+        rigidBodies.push(rigidBody);
     }
+
+    console.log(rigidBodies);
+
+    // #endregion
+
+    // #region parse joints
+
+    const jointsCount = dataDeserializer.getInt32();
+    console.log(`jointsCount: ${jointsCount}`);
+
+    const joints: PmxObject.Joint[] = [];
+    for (let i = 0; i < jointsCount; ++i) {
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+
+        const type: PmxObject.Joint.Type = dataDeserializer.getUint8();
+        const rigidbodyIndexA = getRigidBodyIndex();
+        const rigidbodyIndexB = getRigidBodyIndex();
+        const position = dataDeserializer.getFloat32Array(3);
+        const rotation = dataDeserializer.getFloat32Array(3);
+        const positionMin = dataDeserializer.getFloat32Array(3);
+        const positionMax = dataDeserializer.getFloat32Array(3);
+        const rotationMin = dataDeserializer.getFloat32Array(3);
+        const rotationMax = dataDeserializer.getFloat32Array(3);
+        const springPosition = dataDeserializer.getFloat32Array(3);
+        const springRotation = dataDeserializer.getFloat32Array(3);
+
+        const joint: PmxObject.Joint = {
+            name,
+            englishName,
+
+            type,
+            rigidbodyIndexA,
+            rigidbodyIndexB,
+            position,
+            rotation,
+            positionMin,
+            positionMax,
+            rotationMin,
+            rotationMax,
+            springPosition,
+            springRotation
+        };
+        joints.push(joint);
+    }
+
+    console.log(joints);
+
+    // #endregion
+
+    // #region parse soft bodies
+
+    if (header.version <= 2.0) {
+        return;
+    }
+
+    const softBodiesCount = dataDeserializer.getInt32();
+    console.log(`softBodiesCount: ${softBodiesCount}`);
+
+    const softBodies: PmxObject.SoftBody[] = [];
+    for (let i = 0; i < softBodiesCount; ++i) {
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+
+        const type: PmxObject.SoftBody.Type = dataDeserializer.getUint8();
+        const materialIndex = getMaterialIndex();
+        const collisionGroup = dataDeserializer.getUint8();
+        const collisionMask = dataDeserializer.getUint16();
+        const flags = dataDeserializer.getUint8();
+
+        const bLinkDistance = dataDeserializer.getInt32();
+        const clusterCount = dataDeserializer.getInt32();
+        const totalMass = dataDeserializer.getFloat32();
+        const collisionMargin = dataDeserializer.getFloat32();
+        const aeroModel: PmxObject.SoftBody.AeroDynamicModel = dataDeserializer.getInt32();
+
+        const config: PmxObject.SoftBody.Config = {
+            vcf: dataDeserializer.getFloat32(),
+            dp: dataDeserializer.getFloat32(),
+            dg: dataDeserializer.getFloat32(),
+            lf: dataDeserializer.getFloat32(),
+            pr: dataDeserializer.getFloat32(),
+            vc: dataDeserializer.getFloat32(),
+            df: dataDeserializer.getFloat32(),
+            mt: dataDeserializer.getFloat32(),
+            chr: dataDeserializer.getFloat32(),
+            khr: dataDeserializer.getFloat32(),
+            shr: dataDeserializer.getFloat32(),
+            ahr: dataDeserializer.getFloat32()
+        };
+
+        const cluster: PmxObject.SoftBody.Cluster = {
+            srhrCl: dataDeserializer.getFloat32(),
+            skhrCl: dataDeserializer.getFloat32(),
+            sshrCl: dataDeserializer.getFloat32(),
+            srSpltCl: dataDeserializer.getFloat32(),
+            skSpltCl: dataDeserializer.getFloat32(),
+            ssSpltCl: dataDeserializer.getFloat32()
+        };
+
+        const interation: PmxObject.SoftBody.Interation = {
+            vIt: dataDeserializer.getInt32(),
+            pIt: dataDeserializer.getInt32(),
+            dIt: dataDeserializer.getInt32(),
+            cIt: dataDeserializer.getInt32()
+        };
+
+        const material: PmxObject.SoftBody.Material = {
+            lst: dataDeserializer.getInt32(),
+            ast: dataDeserializer.getInt32(),
+            vst: dataDeserializer.getInt32()
+        };
+
+        const anchorsCount = dataDeserializer.getInt32();
+        const anchors: PmxObject.SoftBody.AnchorRigidBody[] = [];
+        for (let j = 0; j < anchorsCount; ++j) {
+            const rigidbodyIndex = getRigidBodyIndex();
+            const vertexIndex = getVertexIndex();
+            const isNearMode = dataDeserializer.getUint8() !== 0;
+
+            const anchorRigidBody: PmxObject.SoftBody.AnchorRigidBody = {
+                rigidbodyIndex,
+                vertexIndex,
+                isNearMode
+            };
+            anchors.push(anchorRigidBody);
+        }
+
+        const vertexPinCount = dataDeserializer.getInt32();
+        const vertexPins: number[] = [];
+        for (let j = 0; j < vertexPinCount; ++j) {
+            const vertexIndex = getVertexIndex();
+            vertexPins.push(vertexIndex);
+        }
+
+        const softBody: PmxObject.SoftBody = {
+            name,
+            englishName,
+
+            type,
+            materialIndex,
+            collisionGroup,
+            collisionMask,
+            flags,
+            bLinkDistance,
+            clusterCount,
+            totalMass,
+            collisionMargin,
+            aeroModel,
+
+            config,
+            cluster,
+            interation,
+            material,
+
+            anchors,
+            vertexPins
+        };
+
+        softBodies.push(softBody);
+    }
+
+    console.log(softBodies);
+
+    // #endregion
+
+    const pmxObject: PmxObject = {
+        header,
+        vertices,
+        faces,
+        textures,
+        materials,
+        bones,
+        morphs,
+        displayFrames,
+        rigidBodies,
+        joints,
+        softBodies
+    };
+
+    if (dataDeserializer.bytesAvailable > 0) {
+        console.warn(`dataDeserializer.bytesAvailable: ${dataDeserializer.bytesAvailable}`);
+    }
+
+    console.log(pmxObject);
 }
 
 deserializerTest();

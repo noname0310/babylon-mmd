@@ -97,7 +97,10 @@ export class MmdDataDeserializer {
         const decoder = new TextDecoder("utf-8");
         const bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
         this._offset += length;
-
         return decoder.decode(bytes);
+    }
+
+    public get bytesAvailable(): number {
+        return this._dataView.byteLength - this._offset;
     }
 }

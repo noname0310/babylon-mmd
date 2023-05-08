@@ -419,7 +419,7 @@ export namespace PmxObject {
         export type AnchorRigidBody = Readonly<{
             rigidbodyIndex: number;
             vertexIndex: number;
-            nearMode: number;
+            isNearMode: boolean;
         }>;
 
         export type Config = Readonly<{
