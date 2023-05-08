@@ -124,7 +124,26 @@ export class PmxReader {
     }
 
     private static parseHeader(dataDeserializer: MmdDataDeserializer): PmxObject.Header {
+        if (dataDeserializer.bytesAvailable < (
+            4 // signature
+            + 4 // version (float32)
+            + 1 // globalsCount (uint8)
+            + 1 // encoding (uint8)
+            + 1 // additionalVec4Count (uint8)
+            + 1 // vertexIndexSize (uint8)
+            + 1 // textureIndexSize (uint8)
+            + 1 // materialIndexSize (uint8)
+            + 1 // boneIndexSize (uint8)
+            + 1 // morphIndexSize (uint8)
+            + 1 // rigidBodyIndexSize (uint8)
+        )) {
+            throw new RangeError("is not pmx file");
+        }
         const signature = dataDeserializer.getSignatureString(4);
+        if (signature !== "PMX ") {
+            throw new RangeError("is not pmx file");
+        }
+
         const version = dataDeserializer.getFloat32();
 
         const globalsCount = dataDeserializer.getUint8();
