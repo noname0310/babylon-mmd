@@ -393,7 +393,7 @@ export namespace PmxObject {
         material: SoftBody.Material;
 
         anchors: SoftBody.AnchorRigidBody[];
-        vertexPins: number[];
+        vertexPins: Uint8Array | Uint16Array | Int32Array;
     }>;
 
     export namespace SoftBody {

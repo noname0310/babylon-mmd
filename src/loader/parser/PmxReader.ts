@@ -100,7 +100,7 @@ export class PmxReader {
         const joints = this.parseJoints(dataDeserializer, indexReader);
         const softBodies = header.version <= 2.0
             ? []
-            : this.parseSoftBodies(dataDeserializer, indexReader);
+            : this.parseSoftBodies(dataDeserializer, indexReader, header);
 
         if (dataDeserializer.bytesAvailable > 0) {
             console.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
@@ -815,7 +815,8 @@ export class PmxReader {
 
     private static parseSoftBodies(
         dataDeserializer: MmdDataDeserializer,
-        indexReader: IndexReader
+        indexReader: IndexReader,
+        header: PmxObject.Header
     ): PmxObject.SoftBody[] {
         const softBodiesCount = dataDeserializer.getInt32();
 
@@ -889,10 +890,25 @@ export class PmxReader {
             }
 
             const vertexPinCount = dataDeserializer.getInt32();
-            const vertexPins: number[] = [];
-            for (let j = 0; j < vertexPinCount; ++j) {
-                const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
-                vertexPins.push(vertexIndex);
+
+            const vertexPinArrayBuffer = new ArrayBuffer(vertexPinCount * header.vertexIndexSize);
+            let vertexPins: Uint8Array | Uint16Array | Int32Array;
+            switch (header.vertexIndexSize) {
+            case 1:
+                vertexPins = new Uint8Array(vertexPinArrayBuffer);
+                break;
+            case 2:
+                vertexPins = new Uint16Array(vertexPinArrayBuffer);
+                break;
+            case 4:
+                vertexPins = new Int32Array(vertexPinArrayBuffer);
+                break;
+            default:
+                throw new Error(`Invalid vertexIndexSize: ${header.vertexIndexSize}`);
+            }
+
+            for (let i = 0; i < vertexPinCount; ++i) {
+                vertexPins[i] = indexReader.getVertexIndex(dataDeserializer);
             }
 
             const softBody: PmxObject.SoftBody = {
