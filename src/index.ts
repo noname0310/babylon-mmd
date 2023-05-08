@@ -82,7 +82,7 @@ async function deserializerTest(): Promise<void> {
             throw new Error(`Invalid globalsCount: ${globalsCount}`);
         } else if (8 < globalsCount) {
             console.warn(`globalsCount is greater than 8: ${globalsCount} files may be corrupted or higher version`);
-            for (let i = 8; i < globalsCount; i++) {
+            for (let i = 8; i < globalsCount; ++i) {
                 dataDeserializer.getUint8();
             }
         }
@@ -175,7 +175,7 @@ async function deserializerTest(): Promise<void> {
 
     const vertices: PmxObject.Vertex[] = [];
 
-    for (let i = 0; i < verticesCount; i++) {
+    for (let i = 0; i < verticesCount; ++i) {
         const position = dataDeserializer.getFloat32Array(3);
         const normal = dataDeserializer.getFloat32Array(3);
         const uv = dataDeserializer.getFloat32Array(2);
@@ -290,7 +290,7 @@ async function deserializerTest(): Promise<void> {
         throw new Error(`Invalid vertexIndexSize: ${header.vertexIndexSize}`);
     }
 
-    for (let i = 0; i < facesindicesCount; i++) {
+    for (let i = 0; i < facesindicesCount; ++i) {
         faces[i] = getVertexIndex();
     }
 
@@ -304,7 +304,7 @@ async function deserializerTest(): Promise<void> {
     console.log(`texturesCount: ${texturesCount}`);
 
     const textures: PmxObject.Texture[] = [];
-    for (let i = 0; i < texturesCount; i++) {
+    for (let i = 0; i < texturesCount; ++i) {
         const textureName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         textures.push(textureName);
     }
@@ -319,7 +319,7 @@ async function deserializerTest(): Promise<void> {
     console.log(`materialsCount: ${materialsCount}`);
 
     const materials: PmxObject.Material[] = [];
-    for (let i = 0; i < materialsCount; i++) {
+    for (let i = 0; i < materialsCount; ++i) {
         const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
@@ -380,7 +380,7 @@ async function deserializerTest(): Promise<void> {
     console.log(`bonesCount: ${bonesCount}`);
 
     const bones: PmxObject.Bone[] = [];
-    for (let i = 0; i < bonesCount; i++) {
+    for (let i = 0; i < bonesCount; ++i) {
         const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
@@ -443,7 +443,7 @@ async function deserializerTest(): Promise<void> {
             const links: PmxObject.Bone.IKLink[] = [];
 
             const linksCount = dataDeserializer.getInt32();
-            for (let i = 0; i < linksCount; i++) {
+            for (let i = 0; i < linksCount; ++i) {
                 const ikLinkTarget = getBoneIndex();
                 const hasLimit = dataDeserializer.getUint8() === 1;
 
@@ -498,7 +498,7 @@ async function deserializerTest(): Promise<void> {
     console.log(`morphsCount: ${morphsCount}`);
 
     const morphs: PmxObject.Morph[] = [];
-    for (let i = 0; i < morphsCount; i++) {
+    for (let i = 0; i < morphsCount; ++i) {
         const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
         const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
 
@@ -511,7 +511,7 @@ async function deserializerTest(): Promise<void> {
 
         switch (type) {
         case PmxObject.Morph.Type.groupMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const morphIndex = getMorphIndex();
                 const morphRatio = dataDeserializer.getFloat32();
 
@@ -523,7 +523,7 @@ async function deserializerTest(): Promise<void> {
             }
             break;
         case PmxObject.Morph.Type.vertexMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const vertexIndex = getVertexIndex();
                 const positionOffset = dataDeserializer.getFloat32Array(3);
 
@@ -535,7 +535,7 @@ async function deserializerTest(): Promise<void> {
             }
             break;
         case PmxObject.Morph.Type.boneMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const boneIndex = getBoneIndex();
                 const position = dataDeserializer.getFloat32Array(3);
                 const rotation = dataDeserializer.getFloat32Array(4);
@@ -553,7 +553,7 @@ async function deserializerTest(): Promise<void> {
         case PmxObject.Morph.Type.additionalUvMorph2:
         case PmxObject.Morph.Type.additionalUvMorph3:
         case PmxObject.Morph.Type.additionalUvMorph4:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const vertexIndex = getVertexIndex();
                 const uvOffset = dataDeserializer.getFloat32Array(4);
 
@@ -565,7 +565,7 @@ async function deserializerTest(): Promise<void> {
             }
             break;
         case PmxObject.Morph.Type.materialMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const materialIndex = getMaterialIndex();
                 const type = dataDeserializer.getUint8();
                 const diffuse = dataDeserializer.getFloat32Array(4);
@@ -595,7 +595,7 @@ async function deserializerTest(): Promise<void> {
             }
             break;
         case PmxObject.Morph.Type.flipMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const morphIndex = getMorphIndex();
                 const morphRatio = dataDeserializer.getFloat32();
 
@@ -607,7 +607,7 @@ async function deserializerTest(): Promise<void> {
             }
             break;
         case PmxObject.Morph.Type.impulseMorph:
-            for (let i = 0; i < morphOffsetCount; i++) {
+            for (let i = 0; i < morphOffsetCount; ++i) {
                 const rigidBodyIndex = getRigidBodyIndex();
                 const isLocal = dataDeserializer.getUint8() === 1;
                 const velocity = dataDeserializer.getFloat32Array(3);
@@ -644,6 +644,54 @@ async function deserializerTest(): Promise<void> {
 
     const displayFramesCount = dataDeserializer.getInt32();
     console.log(`displayFramesCount: ${displayFramesCount}`);
+
+    const displayFrames: PmxObject.DisplayFrame[] = [];
+    for (let i = 0; i < displayFramesCount; ++i) {
+        const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+
+        const isSpecialFrame = dataDeserializer.getUint8() === 1;
+
+        const elementsCount = dataDeserializer.getInt32();
+        const frames: PmxObject.DisplayFrame.FrameData[] = [];
+        for (let i = 0; i < elementsCount; ++i) {
+            const frameType = dataDeserializer.getUint8();
+            const frameIndex = frameType === PmxObject.DisplayFrame.FrameData.FrameType.Bone
+                ? getBoneIndex() : getMorphIndex();
+
+            const frame: PmxObject.DisplayFrame.FrameData = {
+                type: frameType,
+                index: frameIndex
+            };
+            frames.push(frame);
+        }
+
+        const displayFrame: PmxObject.DisplayFrame = {
+            name,
+            englishName,
+            isSpecialFrame,
+            frames
+        };
+        displayFrames.push(displayFrame);
+    }
+
+    console.log(displayFrames);
+
+    // #endregion
+
+    // #region parse rigid bodies
+
+    const rigidBodiesCount = dataDeserializer.getInt32();
+    console.log(`rigidBodiesCount: ${rigidBodiesCount}`);
+
+    const rigidBodies: PmxObject.RigidBody[] = [];
+    for (let i = 0; i < rigidBodiesCount; ++i) {
+        let a = 1;
+        a++;
+
+        rigidBodies;
+        a;
+    }
 }
 
 deserializerTest();

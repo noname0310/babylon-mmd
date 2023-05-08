@@ -294,7 +294,7 @@ export namespace PmxObject {
         englishName: string;
 
         isSpecialFrame: boolean;
-        data: DisplayFrame.FrameData[];
+        frames: DisplayFrame.FrameData[];
     }>;
 
     export namespace DisplayFrame {
