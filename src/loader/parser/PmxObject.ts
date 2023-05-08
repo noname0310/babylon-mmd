@@ -145,26 +145,26 @@ export namespace PmxObject {
         flag: number;
         tailPosition: number | Vec3; // (a.k.a. Link to)
 
-        additionalTransform: {
+        additionalTransform: Readonly<{
             isLocal: boolean;
             affectRotation: boolean;
             affectPosition: boolean;
             parentIndex: number;
             ratio: number;
-        } | undefined;
+        }> | undefined;
         axisLimit: Vec3 | undefined;
-        localVector: {
+        localVector: Readonly<{
             x: Vec3;
             z: Vec3;
-        } | undefined;
+        }> | undefined;
         transformAfterPhysics: boolean | undefined;
         externalParentTransform: number | undefined;
-        ik: {
+        ik: Readonly<{
             target: number;
             iteration: number; // (a.k.a. Loop)
             rotationConstraint: number; // (a.k.a. Angle) radians
             links: Bone.IKLink[];
-        } | undefined;
+        }> | undefined;
     }>;
 
     export namespace Bone {
