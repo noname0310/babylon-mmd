@@ -76,7 +76,7 @@ class IndexReader {
 export class PmxReader {
     private constructor() { /* block constructor */ }
 
-    public static parse(data: ArrayBuffer): PmxObject {
+    public static parse(data: ArrayBufferLike): PmxObject {
         const dataDeserializer = new MmdDataDeserializer(data);
 
         const header = this.parseHeader(dataDeserializer);
