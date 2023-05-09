@@ -2,16 +2,16 @@ import type { Vec2, Vec3, Vec4 } from "./MmdTypes";
 
 export type PmxObject = Readonly<{
     header: PmxObject.Header;
-    vertices: PmxObject.Vertex[];
+    vertices: readonly PmxObject.Vertex[];
     faces: Uint8Array | Uint16Array | Int32Array;
-    textures: PmxObject.Texture[];
-    materials: PmxObject.Material[];
-    bones: PmxObject.Bone[];
-    morphs: PmxObject.Morph[];
-    displayFrames: PmxObject.DisplayFrame[];
-    rigidBodies: PmxObject.RigidBody[];
-    joints: PmxObject.Joint[];
-    softBodies: PmxObject.SoftBody[];
+    textures: readonly PmxObject.Texture[];
+    materials: readonly PmxObject.Material[];
+    bones: readonly PmxObject.Bone[];
+    morphs: readonly PmxObject.Morph[];
+    displayFrames: readonly PmxObject.DisplayFrame[];
+    rigidBodies: readonly PmxObject.RigidBody[];
+    joints: readonly PmxObject.Joint[];
+    softBodies: readonly PmxObject.SoftBody[];
 }>;
 
 export namespace PmxObject {
@@ -46,7 +46,7 @@ export namespace PmxObject {
         position: Vec3;
         normal: Vec3;
         uv: Vec2;
-        additionalVec4: Vec4[];
+        additionalVec4: readonly Vec4[];
         weightType: Vertex.BoneWeightType;
         boneWeight: Vertex.BoneWeight;
         edgeRatio: number;
@@ -163,7 +163,7 @@ export namespace PmxObject {
             target: number;
             iteration: number; // (a.k.a. Loop)
             rotationConstraint: number; // (a.k.a. Angle) radians
-            links: Bone.IKLink[];
+            links: readonly Bone.IKLink[];
         }> | undefined;
     }>;
 
@@ -202,13 +202,13 @@ export namespace PmxObject {
         category: Morph.Category;
         type: Morph.Type;
 
-        elements: Morph.GroupMorph[]
-            | Morph.VertexMorph[]
-            | Morph.BoneMorph[]
-            | Morph.UvMorph[]
-            | Morph.MaterialMorph[]
-            | Morph.FlipMorph[]
-            | Morph.ImpulseMorph[];
+        elements: readonly Morph.GroupMorph[]
+            | readonly Morph.VertexMorph[]
+            | readonly Morph.BoneMorph[]
+            | readonly Morph.UvMorph[]
+            | readonly Morph.MaterialMorph[]
+            | readonly Morph.FlipMorph[]
+            | readonly Morph.ImpulseMorph[];
     }>;
 
     export namespace Morph {
@@ -294,7 +294,7 @@ export namespace PmxObject {
         englishName: string;
 
         isSpecialFrame: boolean;
-        frames: DisplayFrame.FrameData[];
+        frames: readonly DisplayFrame.FrameData[];
     }>;
 
     export namespace DisplayFrame {
@@ -392,7 +392,7 @@ export namespace PmxObject {
         interation: SoftBody.Interation;
         material: SoftBody.Material;
 
-        anchors: SoftBody.AnchorRigidBody[];
+        anchors: readonly SoftBody.AnchorRigidBody[];
         vertexPins: Uint8Array | Uint16Array | Int32Array;
     }>;
 
