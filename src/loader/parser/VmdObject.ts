@@ -340,8 +340,7 @@ export namespace VmdObject {
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(4);
             
-            const interpolationBuffer = new ArrayBuffer(64);
-            this.interpolation = new Int8Array(interpolationBuffer);
+            this.interpolation = new Int8Array(64);
             for (let i = 0; i < 64; i++) {
                 this.interpolation[i] = dataDeserializer.getInt8();
             }
@@ -409,8 +408,7 @@ export namespace VmdObject {
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(3);
 
-            const interpolationBuffer = new ArrayBuffer(24);
-            this.interpolation = new Int8Array(interpolationBuffer);
+            this.interpolation = new Int8Array(24);
             for (let i = 0; i < 24; i++) {
                 this.interpolation[i] = dataDeserializer.getInt8();
             }
