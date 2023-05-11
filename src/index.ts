@@ -1,7 +1,7 @@
 import css from "./index.css";
 css;
 
-import * as BABYLON from "babylonjs";
+import * as BABYLON from "@babylonjs/core";
 
 import { RuntimeBuilder } from "./runtime/base/RuntimeBuilder";
 import { SceneBuilder } from "./runtime/instance/SceneBuilder";

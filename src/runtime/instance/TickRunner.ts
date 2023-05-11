@@ -1,10 +1,12 @@
-import * as BABYLON from "babylonjs";
+import * as BABYLON from "@babylonjs/core";
+import { Inspector } from "@babylonjs/inspector";
 
 import type { IRuntimeContext } from "../base/BaseRuntime";
 import type { ITickRunner } from "../base/ITickRunner";
 
 export class TickRunner implements ITickRunner {
     public afterBuild(context: IRuntimeContext): void {
+        Inspector.Show(context.scene, { });
         context;
         BABYLON;
     }

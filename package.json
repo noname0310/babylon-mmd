@@ -41,7 +41,8 @@
     },
     "sideEffects": false,
     "dependencies": {
-        "babylonjs": "^6.1.0",
+        "@babylonjs/core": "^6.3.0",
+        "@babylonjs/inspector": "^6.3.0",
         "copy-webpack-plugin": "^11.0.0"
     }
 }

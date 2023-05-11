@@ -1,4 +1,4 @@
-import type * as BABYLON from "babylonjs";
+import type * as BABYLON from "@babylonjs/core";
 
 import type { ISceneBuilder } from "./ISceneBuilder";
 import type { ITickRunner } from "./ITickRunner";

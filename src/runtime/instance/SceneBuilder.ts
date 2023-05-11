@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs";
+import * as BABYLON from "@babylonjs/core";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
