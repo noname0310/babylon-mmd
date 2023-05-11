@@ -1,13 +1,13 @@
 import { MmdDataDeserializer } from "./MmdDataDeserializer";
-import { Vec3, Vec4 } from "./MmdTypes";
+import type { Vec3, Vec4 } from "./MmdTypes";
 import { PmxObject } from "./PmxObject";
 
 export class VmdData {
-    private static readonly signature = "Vocaloid Motion Data 0002";
+    private static readonly _signature = "Vocaloid Motion Data 0002";
     public static readonly signatureBytes = 30;
     public static readonly modelNameBytes = 20;
 
-    public static readonly boneKeyFrameBytes = 
+    public static readonly boneKeyFrameBytes =
         15 + // bone name (uint8[15])
         4 + // frame number (uint32)
         4 * 3 + // position (float32[3])
@@ -27,7 +27,7 @@ export class VmdData {
         24 + // interpolation (int8[24])
         4 + // angle of view (uint32)
         1; // perspective (uint8)
-    
+
     public static readonly lightKeyFrameBytes =
         4 + // frame number (uint32)
         4 * 3 + // color (float32[3])
@@ -38,11 +38,11 @@ export class VmdData {
         1 + // mode (uint8)
         4; // distance (float32)
 
-    public static readonly _propertyKeyFrameBytes =
+    public static readonly propertyKeyFrameBytes =
         4 + // frame number (uint32)
         1; // visibility (uint8)
 
-    public static readonly _propertyKeyFrameIkStateBytes =
+    public static readonly propertyKeyFrameIkStateBytes =
         20 + // bone name (uint8[20])
         1; // ik enabled (uint8)
 
@@ -81,8 +81,7 @@ export class VmdData {
         }
 
         const signature = dataDeserializer.getSignatureString(this.signatureBytes);
-        console.log(signature, VmdData.signature);
-        if (signature !== VmdData.signature) {
+        if (signature.substring(0, this._signature.length) !== this._signature) {
             return null;
         }
         dataDeserializer.offset += VmdData.modelNameBytes;
@@ -91,7 +90,7 @@ export class VmdData {
         const boneKeyFrameCount = dataDeserializer.getUint32();
         if (dataDeserializer.bytesAvailable < boneKeyFrameCount * VmdData.boneKeyFrameBytes) return null;
         dataDeserializer.offset += boneKeyFrameCount * VmdData.boneKeyFrameBytes;
-        
+
         if (dataDeserializer.bytesAvailable < 4) return null;
         const morphKeyFrameCount = dataDeserializer.getUint32();
         if (dataDeserializer.bytesAvailable < morphKeyFrameCount * VmdData.morphKeyFrameBytes) return null;
@@ -115,13 +114,13 @@ export class VmdData {
         if (dataDeserializer.bytesAvailable < 4) return null;
         const propertyKeyFrameCount = dataDeserializer.getUint32();
         for (let i = 0; i < propertyKeyFrameCount; i++) {
-            if (dataDeserializer.bytesAvailable < VmdData._propertyKeyFrameBytes) return null;
-            dataDeserializer.offset += VmdData._propertyKeyFrameBytes;
+            if (dataDeserializer.bytesAvailable < VmdData.propertyKeyFrameBytes) return null;
+            dataDeserializer.offset += VmdData.propertyKeyFrameBytes;
 
             if (dataDeserializer.bytesAvailable < 4) return null;
             const propertyKeyFrameIkStateCount = dataDeserializer.getUint32();
-            if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData._propertyKeyFrameIkStateBytes) return null;
-            dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData._propertyKeyFrameIkStateBytes;
+            if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData.propertyKeyFrameIkStateBytes) return null;
+            dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData.propertyKeyFrameIkStateBytes;
         }
 
         if (dataDeserializer.bytesAvailable > 0) {
@@ -195,7 +194,7 @@ export class VmdObject {
     public static parseFromBuffer(buffer: ArrayBufferLike): VmdObject {
         const vmdData = VmdData.checkedCreate(buffer);
         if (vmdData === null) {
-            throw new Error('Invalid VMD data');
+            throw new Error("Invalid VMD data");
         }
 
         return VmdObject.parse(vmdData);
@@ -285,7 +284,7 @@ export class VmdObject {
             this._vmdData.selfShadowKeyFrameCount
         );
     }
-};
+}
 
 export namespace VmdObject {
     export abstract class BufferArrayReader<T> {
@@ -303,7 +302,7 @@ export namespace VmdObject {
             this._length = length;
         }
 
-        public get length() {
+        public get length(): number {
             return this._length;
         }
 
@@ -339,7 +338,7 @@ export namespace VmdObject {
             this.frameNumber = dataDeserializer.getUint32();
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(4);
-            
+
             this.interpolation = new Int8Array(64);
             for (let i = 0; i < 64; i++) {
                 this.interpolation[i] = dataDeserializer.getInt8();
@@ -355,7 +354,7 @@ export namespace VmdObject {
         ) {
             super(dataDeserializer, startOffset, length);
         }
-        
+
         public get(index: number): MorphKeyFrame {
             const offset = this._startOffset + index * VmdData.morphKeyFrameBytes;
             return new MorphKeyFrame(this._dataDeserializer, offset);
@@ -384,7 +383,7 @@ export namespace VmdObject {
         ) {
             super(dataDeserializer, startOffset, length);
         }
-        
+
         public get(index: number): CameraKeyFrame {
             const offset = this._startOffset + index * VmdData.cameraKeyFrameBytes;
             return new CameraKeyFrame(this._dataDeserializer, offset);
@@ -440,7 +439,7 @@ export namespace VmdObject {
 
         public constructor(dataDeserializer: MmdDataDeserializer, offset: number) {
             dataDeserializer.offset = offset;
-            
+
             this.frameNumber = dataDeserializer.getUint32();
             this.color = dataDeserializer.getFloat32Array(3);
             this.direction = dataDeserializer.getFloat32Array(3);
