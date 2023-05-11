@@ -149,7 +149,7 @@ export class PmxReader {
         const globalsCount = dataDeserializer.getUint8();
 
         const encoding = dataDeserializer.getUint8();
-        dataDeserializer.initializeTextDecoder(encoding);
+        dataDeserializer.initializeTextDecoder(encoding === PmxObject.Header.Encoding.utf8 ? "utf-8" : "utf-16le");
 
         const additionalVec4Count = dataDeserializer.getUint8();
         const vertexIndexSize = dataDeserializer.getUint8();

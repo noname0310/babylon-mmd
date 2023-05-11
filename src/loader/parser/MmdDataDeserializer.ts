@@ -1,5 +1,3 @@
-import { PmxObject } from "./PmxObject";
-
 type TupleOf<T, N extends number, R extends unknown[]> =
     R["length"] extends N ? R : TupleOf<T, N, [T, ...R]>;
 
@@ -78,8 +76,8 @@ export class MmdDataDeserializer {
         return result as Tuple<number, N>;
     }
 
-    public initializeTextDecoder(encoding: PmxObject.Header.Encoding): void {
-        this._decoder = new TextDecoder(encoding === PmxObject.Header.Encoding.utf8 ? "utf-8" : "utf-16le");
+    public initializeTextDecoder(encoding: string): void {
+        this._decoder = new TextDecoder(encoding);
     }
 
     public getDecoderString(length: number): string {

@@ -1,6 +1,5 @@
 import { MmdDataDeserializer } from "./MmdDataDeserializer";
 import type { Vec3, Vec4 } from "./MmdTypes";
-import { PmxObject } from "./PmxObject";
 
 export class VmdData {
     private static readonly _signature = "Vocaloid Motion Data 0002";
@@ -74,7 +73,7 @@ export class VmdData {
 
     public static checkedCreate(buffer: ArrayBufferLike): VmdData | null {
         const dataDeserializer = new MmdDataDeserializer(buffer);
-        dataDeserializer.initializeTextDecoder(PmxObject.Header.Encoding.utf16le);
+        dataDeserializer.initializeTextDecoder("utf-16le");
 
         if (dataDeserializer.bytesAvailable < VmdData.signatureBytes + VmdData.modelNameBytes) {
             return null;
