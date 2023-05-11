@@ -18,15 +18,15 @@ export interface IRuntimeContext {
 export class BaseRuntime {
     private readonly _canvas: HTMLCanvasElement;
     private readonly _engine: BABYLON.Engine;
-    private readonly _scene: BABYLON.Scene;
     private readonly _tickRunner: ITickRunner;
+    private readonly _scene: BABYLON.Scene;
     private readonly _onTick: () => void;
 
     public constructor(params: BaseRuntimeInitParams) {
         this._canvas = params.canvas;
         this._engine = params.engine;
-        this._scene =  this.initialize(params.sceneBuilder);
         this._tickRunner = params.tickRunner;
+        this._scene =  this.initialize(params.sceneBuilder);
 
         this._onTick = this.makeOnTick();
     }
