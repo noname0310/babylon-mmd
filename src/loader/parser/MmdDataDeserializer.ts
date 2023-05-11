@@ -89,8 +89,8 @@ export class MmdDataDeserializer {
         this._offset += length;
 
         if (trim) {
-            for (let i = 0; i < length; i += 2) {
-                if (bytes[i] === 0x00 && bytes[i + 1] === 0x00) {
+            for (let i = 0; i < bytes.length; i++) {
+                if (bytes[i] === 0) {
                     bytes = bytes.subarray(0, i);
                     break;
                 }
