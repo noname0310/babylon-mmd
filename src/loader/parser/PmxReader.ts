@@ -168,10 +168,10 @@ export class PmxReader {
             }
         }
 
-        const modelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-        const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+        const modelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+        const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
         const header: PmxObject.Header = {
             signature,
@@ -342,7 +342,7 @@ export class PmxReader {
 
         const textures: PmxObject.Texture[] = [];
         for (let i = 0; i < texturesCount; ++i) {
-            const textureName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const textureName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
             textures.push(textureName);
         }
 
@@ -357,8 +357,8 @@ export class PmxReader {
 
         const materials: PmxObject.Material[] = [];
         for (let i = 0; i < materialsCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const diffuse = dataDeserializer.getFloat32Array(4);
             const specular = dataDeserializer.getFloat32Array(3);
@@ -377,7 +377,7 @@ export class PmxReader {
             const isSharedToonTexture = dataDeserializer.getUint8() === 1;
             const toonTextureIndex = isSharedToonTexture ? dataDeserializer.getUint8() : indexReader.getTextureIndex(dataDeserializer);
 
-            const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
             const faceCount = dataDeserializer.getInt32();
 
             const material: PmxObject.Material = {
@@ -418,8 +418,8 @@ export class PmxReader {
 
         const bones: PmxObject.Bone[] = [];
         for (let i = 0; i < bonesCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const position = dataDeserializer.getFloat32Array(3);
             const parentBoneIndex = indexReader.getBoneIndex(dataDeserializer);
@@ -536,8 +536,8 @@ export class PmxReader {
 
         const morphs: PmxObject.Morph[] = [];
         for (let i = 0; i < morphsCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const category: PmxObject.Morph.Category = dataDeserializer.getInt8();
             const type: PmxObject.Morph.Type = dataDeserializer.getInt8();
@@ -684,8 +684,8 @@ export class PmxReader {
 
         const displayFrames: PmxObject.DisplayFrame[] = [];
         for (let i = 0; i < displayFramesCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const isSpecialFrame = dataDeserializer.getUint8() === 1;
 
@@ -724,8 +724,8 @@ export class PmxReader {
 
         const rigidBodies: PmxObject.RigidBody[] = [];
         for (let i = 0; i < rigidBodiesCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const boneIndex = indexReader.getBoneIndex(dataDeserializer);
 
@@ -776,8 +776,8 @@ export class PmxReader {
 
         const joints: PmxObject.Joint[] = [];
         for (let i = 0; i < jointsCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const type: PmxObject.Joint.Type = dataDeserializer.getUint8();
             const rigidbodyIndexA = indexReader.getRigidBodyIndex(dataDeserializer);
@@ -822,8 +822,8 @@ export class PmxReader {
 
         const softBodies: PmxObject.SoftBody[] = [];
         for (let i = 0; i < softBodiesCount; ++i) {
-            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
-            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
             const type: PmxObject.SoftBody.Type = dataDeserializer.getUint8();
             const materialIndex = indexReader.getMaterialIndex(dataDeserializer);

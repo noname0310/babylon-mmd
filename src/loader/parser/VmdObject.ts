@@ -73,7 +73,7 @@ export class VmdData {
 
     public static checkedCreate(buffer: ArrayBufferLike): VmdData | null {
         const dataDeserializer = new MmdDataDeserializer(buffer);
-        dataDeserializer.initializeTextDecoder("utf-16le");
+        dataDeserializer.initializeTextDecoder("shift-jis");
 
         if (dataDeserializer.bytesAvailable < VmdData.signatureBytes + VmdData.modelNameBytes) {
             return null;
@@ -174,7 +174,7 @@ export class VmdObject {
             const ikStateCount = dataDeserializer.getUint32();
             const ikStates: VmdObject.PropertyKeyFrame.IKState[] = [];
             for (let j = 0; j < ikStateCount; j++) {
-                const ikName = dataDeserializer.getDecoderString(20);
+                const ikName = dataDeserializer.getDecoderString(20, true);
                 const ikEnabled = dataDeserializer.getUint8() !== 0;
                 ikStates.push([ikName, ikEnabled]);
             }
@@ -333,7 +333,7 @@ export namespace VmdObject {
         public constructor(dataDeserializer: MmdDataDeserializer, offset: number) {
             dataDeserializer.offset = offset;
 
-            this.boneName = dataDeserializer.getDecoderString(15);
+            this.boneName = dataDeserializer.getDecoderString(15, true);
             this.frameNumber = dataDeserializer.getUint32();
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(4);
@@ -368,7 +368,7 @@ export namespace VmdObject {
         public constructor(dataDeserializer: MmdDataDeserializer, offset: number) {
             dataDeserializer.offset = offset;
 
-            this.morphName = dataDeserializer.getDecoderString(15);
+            this.morphName = dataDeserializer.getDecoderString(15, true);
             this.frameNumber = dataDeserializer.getUint32();
             this.weight = dataDeserializer.getFloat32();
         }

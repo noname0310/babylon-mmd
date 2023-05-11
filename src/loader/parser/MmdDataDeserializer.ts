@@ -80,13 +80,22 @@ export class MmdDataDeserializer {
         this._decoder = new TextDecoder(encoding);
     }
 
-    public getDecoderString(length: number): string {
+    public getDecoderString(length: number, trim: boolean): string {
         if (this._decoder === null) {
             throw new Error("TextDecoder is not initialized.");
         }
 
-        const bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
+        let bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
         this._offset += length;
+
+        if (trim) {
+            for (let i = 0; i < length; i += 2) {
+                if (bytes[i] === 0x00 && bytes[i + 1] === 0x00) {
+                    bytes = bytes.subarray(0, i);
+                    break;
+                }
+            }
+        }
 
         return this._decoder.decode(bytes);
     }
@@ -95,6 +104,7 @@ export class MmdDataDeserializer {
         const decoder = new TextDecoder("utf-8");
         const bytes = new Uint8Array(this._dataView.buffer, this._offset, length);
         this._offset += length;
+
         return decoder.decode(bytes);
     }
 
