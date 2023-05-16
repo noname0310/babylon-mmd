@@ -7,9 +7,7 @@ import path from "path";
 import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
 
-const devMode = process.env.NODE_ENV !== "production";
-
-const config: webpack.Configuration & { devServer?: WebpackDevServerConfiguration } = {
+export default (env: any): webpack.Configuration & { devServer?: WebpackDevServerConfiguration } => ({
     entry: "./src/index.ts",
     output: {
         path: path.join(__dirname, "/dist"),
@@ -17,7 +15,7 @@ const config: webpack.Configuration & { devServer?: WebpackDevServerConfiguratio
         clean: true
     },
     optimization: {
-        minimize: devMode ? false : true,
+        minimize: env.production,
         minimizer: [
             "...",
             new CssMinimizerWebpackPlugin()
@@ -116,7 +114,5 @@ const config: webpack.Configuration & { devServer?: WebpackDevServerConfiguratio
         hot: true,
         watchFiles: ["src/**/*"]
     },
-    mode: devMode ? "development" : "production"
-};
-
-export default config;
+    mode: env.production ? "production" : "development"
+});
