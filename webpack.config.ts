@@ -30,7 +30,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             }
         }
     },
-    cache: false,
+    cache: true,
     module: {
         rules: [
             {
