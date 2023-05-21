@@ -51,10 +51,11 @@ export class SceneBuilder implements ISceneBuilder {
         imageProcessingPostProcess.exposure = 1.0;
         imageProcessingPostProcess.contrast = 1.0;
         imageProcessingPostProcess.toneMappingEnabled = true;
-        imageProcessingPostProcess.vignetteEnabled = true;
+
         imageProcessingPostProcess.vignetteWeight = 0.5;
         imageProcessingPostProcess.vignetteStretch = 0.5;
         imageProcessingPostProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+        imageProcessingPostProcess.vignetteEnabled = true;
         (globalThis as any).imageProcessingPostProcess = imageProcessingPostProcess;
 
         const ssaoRatio = {
