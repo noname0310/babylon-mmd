@@ -16,14 +16,14 @@ export class SceneBuilder implements ISceneBuilder {
         camera.keysRight.push("D".charCodeAt(0));
 
         const hemisphericLight = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.2;
+        hemisphericLight.intensity = 0.4;
         hemisphericLight.specular = new BABYLON.Color3(0, 0, 0);
+        hemisphericLight.groundColor = new BABYLON.Color3(1, 1, 1);
 
         const directionalLight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(-1, -1, 1), scene);
         directionalLight.intensity = 0.8;
 
         const csmShadowGenerator = new BABYLON.CascadedShadowGenerator(1024, directionalLight);
-        csmShadowGenerator.useContactHardeningShadow = true;
         csmShadowGenerator.forceBackFacesOnly = true;
         csmShadowGenerator.numCascades = 4;
         csmShadowGenerator.autoCalcDepthBounds = true;
@@ -42,21 +42,20 @@ export class SceneBuilder implements ISceneBuilder {
         csmShadowGenerator.addShadowCaster(sphere);
         csmShadowGenerator.addShadowCaster(ground);
 
-        // new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Reinhard, 1.8, camera);
-
-        const fxaaPostProcess = new BABYLON.FxaaPostProcess("fxaa", 1.0, camera);
-        fxaaPostProcess.samples = 8;
-
-        const imageProcessingPostProcess = new BABYLON.ImageProcessingPostProcess("imageProcessing", 1.0, camera);
-        imageProcessingPostProcess.exposure = 1.0;
-        imageProcessingPostProcess.contrast = 1.0;
-        imageProcessingPostProcess.toneMappingEnabled = true;
-
-        imageProcessingPostProcess.vignetteWeight = 0.5;
-        imageProcessingPostProcess.vignetteStretch = 0.5;
-        imageProcessingPostProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
-        imageProcessingPostProcess.vignetteEnabled = true;
-        (globalThis as any).imageProcessingPostProcess = imageProcessingPostProcess;
+        const defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
+        defaultPipeline.samples = 4;
+        defaultPipeline.bloomEnabled = true;
+        defaultPipeline.chromaticAberrationEnabled = true;
+        defaultPipeline.chromaticAberration.aberrationAmount = 1;
+        defaultPipeline.depthOfFieldEnabled = false;
+        defaultPipeline.fxaaEnabled = true;
+        defaultPipeline.imageProcessingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+        defaultPipeline.imageProcessing.vignetteWeight = 0.5;
+        defaultPipeline.imageProcessing.vignetteStretch = 0.5;
+        defaultPipeline.imageProcessing.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+        defaultPipeline.imageProcessing.vignetteEnabled = true;
 
         const ssaoRatio = {
             ssaoRatio: 0.5, // Ratio of the SSAO post-process, in a lower resolution
@@ -66,9 +65,12 @@ export class SceneBuilder implements ISceneBuilder {
         ssao.fallOff = 0.000001;
         ssao.area = 1;
         ssao.radius = 0.0001;
-        ssao.totalStrength = 1.0;
+        ssao.totalStrength = 0.5;
         ssao.base = 0.5;
         scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera);
+
+        const motionBlur = new BABYLON.MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
+        motionBlur.motionStrength = 1;
 
         return scene;
     }
