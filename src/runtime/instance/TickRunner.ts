@@ -7,7 +7,7 @@ import type { ITickRunner } from "../base/ITickRunner";
 export class TickRunner implements ITickRunner {
     public afterBuild(context: IRuntimeContext): void {
         Inspector.Show(context.scene, { });
-        Inspector.Hide();
+        // Inspector.Hide();
         context.engine.setHardwareScalingLevel(1.5);
         BABYLON;
     }

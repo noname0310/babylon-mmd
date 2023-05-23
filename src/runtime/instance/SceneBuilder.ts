@@ -40,12 +40,7 @@ export class SceneBuilder implements ISceneBuilder {
         // sphere.position.y = 1;
         // sphere.receiveShadows = true;
 
-        BABYLON.SceneLoader.Append(
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-            undefined,
-            scene,
-            () => console.log("loaded")
-        );
+        BABYLON.SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx");
 
         BABYLON.SceneLoader.ImportMesh(
             "sans",

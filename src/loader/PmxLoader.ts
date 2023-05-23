@@ -1,4 +1,7 @@
-import type * as BABYLON from "@babylonjs/core";
+import * as BABYLON from "@babylonjs/core";
+
+import type { PmxObject } from "./parser/PmxObject";
+import { PmxReader } from "./parser/PmxReader";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
     /**
@@ -25,6 +28,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
         skeletons: BABYLON.Skeleton[],
         onError?: ((message: string, exception?: any) => void) | undefined
     ): boolean {
+        // meshesNames type is string | string[] | any
+        // you can select
         meshesNames;
         scene;
         data;
@@ -43,12 +48,55 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
         rootUrl: string,
         onError?: ((message: string, exception?: any) => void) | undefined
     ): boolean {
-        scene;
-        data;
+        // data must be ArrayBuffer
+        let pmxObject: PmxObject;
+        try {
+            pmxObject = PmxReader.parse(data);
+        } catch (e: any) {
+            onError?.(e.message, e);
+            return false;
+        }
+        const vertexData = new BABYLON.VertexData();
+        {
+            const vertices = pmxObject.vertices;
+            const positions = new Float32Array(vertices.length * 3);
+            const normals = new Float32Array(vertices.length * 3);
+            const uvs = new Float32Array(vertices.length * 2);
+            let indices = pmxObject.faces;
+            if (indices instanceof Uint8Array) {
+                indices = new Uint16Array(indices);
+            }
+
+            for (let i = 0; i < vertices.length; i++) {
+                const vertex = vertices[i];
+                positions[i * 3 + 0] = vertex.position[0];
+                positions[i * 3 + 1] = vertex.position[1];
+                positions[i * 3 + 2] = vertex.position[2];
+
+                normals[i * 3 + 0] = vertex.normal[0];
+                normals[i * 3 + 1] = vertex.normal[1];
+                normals[i * 3 + 2] = vertex.normal[2];
+
+                uvs[i * 2 + 0] = vertex.uv[0];
+                uvs[i * 2 + 1] = vertex.uv[1];
+            }
+
+            vertexData.positions = positions;
+            vertexData.normals = normals;
+            vertexData.uvs = uvs;
+            vertexData.indices = indices;
+
+        }
+        const geometry = new BABYLON.Geometry(pmxObject.header.modelName, scene, vertexData, false);
+        scene.pushGeometry(geometry, true);
+        const mesh = new BABYLON.Mesh(pmxObject.header.modelName, scene);
+        geometry.applyToMesh(mesh);
+
+        mesh.material = new BABYLON.StandardMaterial(pmxObject.header.modelName, scene);
+        mesh.material.backFaceCulling = false;
+
         rootUrl;
-        onError;
-        console.log("load");
-        throw new Error("Method not implemented.");
+        return true;
     }
 
     public loadAssetContainer(
@@ -57,12 +105,11 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
         rootUrl: string,
         onError?: ((message: string, exception?: any) => void) | undefined
     ): BABYLON.AssetContainer {
-        scene;
+        const assetContainer = new BABYLON.AssetContainer(scene);
         data;
         rootUrl;
         onError;
-        console.log("loadAssetContainer");
-        throw new Error("Method not implemented.");
+        return assetContainer;
     }
 
     public loadFile(
