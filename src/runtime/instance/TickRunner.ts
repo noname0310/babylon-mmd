@@ -8,7 +8,7 @@ export class TickRunner implements ITickRunner {
     public afterBuild(context: IRuntimeContext): void {
         Inspector.Show(context.scene, { });
         Inspector.Hide();
-        context;
+        context.engine.setHardwareScalingLevel(1.5);
         BABYLON;
     }
     public beforeRender(context: IRuntimeContext): void {
