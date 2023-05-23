@@ -1,9 +1,13 @@
 import * as BABYLON from "@babylonjs/core";
 
+import { PmxLoader } from "@/loader/PmxLoader";
+
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
     public build(canvas: HTMLCanvasElement, engine: BABYLON.Engine): BABYLON.Scene {
+        BABYLON.SceneLoader.RegisterPlugin(new PmxLoader());
+
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(1, 1, 1, 1.0);
 
@@ -32,14 +36,26 @@ export class SceneBuilder implements ISceneBuilder {
         csmShadowGenerator.filteringQuality = BABYLON.ShadowGenerator.QUALITY_HIGH;
         csmShadowGenerator.normalBias = 0.02;
 
-        const sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", {segments: 16, diameter: 2, sideOrientation: BABYLON.Mesh.FRONTSIDE}, scene);
-        sphere.position.y = 1;
-        sphere.receiveShadows = true;
+        // const sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", {segments: 16, diameter: 2, sideOrientation: BABYLON.Mesh.FRONTSIDE}, scene);
+        // sphere.position.y = 1;
+        // sphere.receiveShadows = true;
+
+        BABYLON.SceneLoader.Append(
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            undefined,
+            scene,
+            () => console.log("loaded")
+        );
+
+        BABYLON.SceneLoader.ImportMesh(
+            "sans",
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"
+        );
 
         const ground = BABYLON.MeshBuilder.CreateGround("ground1", { width: 6, height: 6, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
 
-        csmShadowGenerator.addShadowCaster(sphere);
+        //csmShadowGenerator.addShadowCaster(sphere);
         csmShadowGenerator.addShadowCaster(ground);
 
         const motionBlur = new BABYLON.MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
