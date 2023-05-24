@@ -56,6 +56,7 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
             onError?.(e.message, e);
             return false;
         }
+
         const vertexData = new BABYLON.VertexData();
         {
             const vertices = pmxObject.vertices;
@@ -85,8 +86,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
             vertexData.normals = normals;
             vertexData.uvs = uvs;
             vertexData.indices = indices;
-
         }
+
         const geometry = new BABYLON.Geometry(pmxObject.header.modelName, scene, vertexData, false);
         scene.pushGeometry(geometry, true);
         const mesh = new BABYLON.Mesh(pmxObject.header.modelName, scene);
