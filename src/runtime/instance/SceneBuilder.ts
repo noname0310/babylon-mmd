@@ -11,8 +11,9 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(1, 1, 1, 1.0);
 
-        const camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 5, -10), scene);
-        camera.setTarget(BABYLON.Vector3.Zero());
+        const camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 15, -40), scene);
+        console.log(camera.minZ, camera.maxZ);
+        camera.setTarget(new BABYLON.Vector3(0, 10, 0));
         camera.attachControl(canvas, false);
         camera.keysUp.push("W".charCodeAt(0));
         camera.keysDown.push("S".charCodeAt(0));
@@ -42,17 +43,28 @@ export class SceneBuilder implements ISceneBuilder {
 
         // BABYLON.SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb");
 
-        BABYLON.SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx");
-
-        BABYLON.SceneLoader.ImportMesh(
-            "sans",
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"
+        BABYLON.SceneLoader.Append(
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            undefined,
+            scene,
+            (scene) => {
+                scene.meshes.forEach((mesh) => {
+                    mesh.receiveShadows = true;
+                    csmShadowGenerator.addShadowCaster(mesh);
+                });
+            }
         );
 
-        const ground = BABYLON.MeshBuilder.CreateGround("ground1", { width: 6, height: 6, subdivisions: 2, updatable: false }, scene);
+        // BABYLON.SceneLoader.ImportMesh(
+        //     "sans",
+        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"
+        // );
+
+        const ground = BABYLON.MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
 
         //csmShadowGenerator.addShadowCaster(sphere);
+        // csmShadowGenerator.addShadowCaster(
         csmShadowGenerator.addShadowCaster(ground);
 
         const motionBlur = new BABYLON.MotionBlurPostProcess("motionBlur", scene, 1.0, camera);

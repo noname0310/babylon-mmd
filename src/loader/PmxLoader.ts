@@ -2,8 +2,9 @@ import * as BABYLON from "@babylonjs/core";
 
 import type { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
+import { ISceneLoaderProgressEvent } from "@babylonjs/core";
 
-export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
+export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
     /**
      * Name of the loader ("pmx")
      */
@@ -18,16 +19,14 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
         };
     }
 
-    public importMesh(
+    public importMeshAsync(
         meshesNames: any,
         scene: BABYLON.Scene,
         data: any,
         rootUrl: string,
-        meshes: BABYLON.AbstractMesh[],
-        particleSystems: BABYLON.IParticleSystem[],
-        skeletons: BABYLON.Skeleton[],
-        onError?: ((message: string, exception?: any) => void) | undefined
-    ): boolean {
+        onProgress?: (event: ISceneLoaderProgressEvent) => void,
+        fileName?: string) | undefined
+    ): Promise<BABYLON.AbstractMesh[]> {
         // meshesNames type is string | string[] | any
         // you can select
         meshesNames;
@@ -93,8 +92,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPlugin {
         const mesh = new BABYLON.Mesh(pmxObject.header.modelName, scene);
         geometry.applyToMesh(mesh);
 
-        mesh.material = new BABYLON.StandardMaterial(pmxObject.header.modelName, scene);
-        mesh.material.backFaceCulling = false;
+        const material = new BABYLON.StandardMaterial(pmxObject.header.modelName, scene);
+        material.backFaceCulling = false;
+        material.specularColor = new BABYLON.Color3(0, 0, 0);
+        mesh.material = material;
 
         rootUrl;
         return true;
