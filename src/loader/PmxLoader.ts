@@ -2,7 +2,6 @@ import * as BABYLON from "@babylonjs/core";
 
 import type { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
-import { ISceneLoaderProgressEvent } from "@babylonjs/core";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
     /**
@@ -24,36 +23,34 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         scene: BABYLON.Scene,
         data: any,
         rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        fileName?: string) | undefined
-    ): Promise<BABYLON.AbstractMesh[]> {
+        onProgress?: (event: BABYLON.ISceneLoaderProgressEvent) => void,
+        fileName?: string
+    ): Promise<BABYLON.ISceneLoaderAsyncResult> {
         // meshesNames type is string | string[] | any
         // you can select
         meshesNames;
         scene;
         data;
         rootUrl;
-        meshes;
-        particleSystems;
-        skeletons;
-        onError;
+        onProgress;
+        fileName;
         console.log("importMesh");
         throw new Error("Method not implemented.");
     }
 
-    public load(
+    public async loadAsync(
         scene: BABYLON.Scene,
         data: any,
         rootUrl: string,
-        onError?: ((message: string, exception?: any) => void) | undefined
-    ): boolean {
+        onProgress?: (event: BABYLON.ISceneLoaderProgressEvent) => void,
+        fileName?: string
+    ): Promise<void> {
         // data must be ArrayBuffer
         let pmxObject: PmxObject;
         try {
             pmxObject = PmxReader.parse(data);
         } catch (e: any) {
-            onError?.(e.message, e);
-            return false;
+            return Promise.reject(e);
         }
 
         const vertexData = new BABYLON.VertexData();
@@ -79,6 +76,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
 
                 uvs[i * 2 + 0] = vertex.uv[0];
                 uvs[i * 2 + 1] = vertex.uv[1];
+
+                if (i % 1000 === 0) await BABYLON.Tools.DelayAsync(0);
             }
 
             vertexData.positions = positions;
@@ -98,20 +97,23 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         mesh.material = material;
 
         rootUrl;
-        return true;
+        onProgress;
+        fileName;
     }
 
-    public loadAssetContainer(
+    public loadAssetContainerAsync(
         scene: BABYLON.Scene,
         data: any,
         rootUrl: string,
-        onError?: ((message: string, exception?: any) => void) | undefined
-    ): BABYLON.AssetContainer {
+        onProgress?: (event: BABYLON.ISceneLoaderProgressEvent) => void,
+        fileName?: string
+    ): Promise<BABYLON.AssetContainer> {
         const assetContainer = new BABYLON.AssetContainer(scene);
         data;
         rootUrl;
-        onError;
-        return assetContainer;
+        onProgress;
+        fileName;
+        return Promise.resolve(assetContainer);
     }
 
     public loadFile(

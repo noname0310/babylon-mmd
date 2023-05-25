@@ -12,7 +12,6 @@ export class SceneBuilder implements ISceneBuilder {
         scene.clearColor = new BABYLON.Color4(1, 1, 1, 1.0);
 
         const camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 15, -40), scene);
-        console.log(camera.minZ, camera.maxZ);
         camera.setTarget(new BABYLON.Vector3(0, 10, 0));
         camera.attachControl(canvas, false);
         camera.keysUp.push("W".charCodeAt(0));
