@@ -76,7 +76,7 @@ class IndexReader {
 export class PmxReader {
     private constructor() { /* block constructor */ }
 
-    public static parse(data: ArrayBufferLike): PmxObject {
+    public static async parseAsync(data: ArrayBufferLike): Promise<PmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
 
         const header = this.parseHeader(dataDeserializer);
@@ -89,7 +89,7 @@ export class PmxReader {
             header.rigidBodyIndexSize
         );
 
-        const vertices = this.parseVertices(dataDeserializer, indexReader, header);
+        const vertices = await this.parseVerticesAsync(dataDeserializer, indexReader, header);
         const faces = this.parseFaces(dataDeserializer, indexReader, header);
         const textures = this.parseTextures(dataDeserializer);
         const materials = this.parseMaterials(dataDeserializer, indexReader);
@@ -195,11 +195,11 @@ export class PmxReader {
         return header;
     }
 
-    private static parseVertices(
+    private static async parseVerticesAsync(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader,
         header: PmxObject.Header
-    ): PmxObject.Vertex[] {
+    ): Promise<PmxObject.Vertex[]> {
         const verticesCount = dataDeserializer.getInt32();
 
         const vertices: PmxObject.Vertex[] = [];
@@ -297,6 +297,10 @@ export class PmxReader {
                 boneWeight,
                 edgeRatio
             });
+
+            if (i % 10000 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
 
         return vertices;

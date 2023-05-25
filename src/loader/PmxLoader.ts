@@ -1,6 +1,5 @@
 import * as BABYLON from "@babylonjs/core";
 
-import type { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
@@ -46,12 +45,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         fileName?: string
     ): Promise<void> {
         // data must be ArrayBuffer
-        let pmxObject: PmxObject;
-        try {
-            pmxObject = PmxReader.parse(data);
-        } catch (e: any) {
-            return Promise.reject(e);
-        }
+        const pmxObject = await PmxReader.parseAsync(data)
+            .catch((e: any) => {
+                return Promise.reject(e);
+            });
 
         const vertexData = new BABYLON.VertexData();
         {
