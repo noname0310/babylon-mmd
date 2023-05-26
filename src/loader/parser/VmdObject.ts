@@ -159,11 +159,11 @@ export class VmdObject {
         dataDeserializer.offset =
             VmdData.signatureBytes +
             VmdData.modelNameBytes +
-            vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
-            vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
-            vmdData.cameraKeyFrameCount * VmdData.cameraKeyFrameBytes +
-            vmdData.lightKeyFrameCount * VmdData.lightKeyFrameBytes +
-            vmdData.selfShadowKeyFrameCount * VmdData.selfShadowKeyFrameBytes +
+            4 + vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
+            4 + vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
+            4 + vmdData.cameraKeyFrameCount * VmdData.cameraKeyFrameBytes +
+            4 + vmdData.lightKeyFrameCount * VmdData.lightKeyFrameBytes +
+            4 + vmdData.selfShadowKeyFrameCount * VmdData.selfShadowKeyFrameBytes +
             4;
 
         const propertyKeyFrameCount = vmdData.propertyKeyFrameCount;
