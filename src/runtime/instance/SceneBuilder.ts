@@ -12,6 +12,7 @@ export class SceneBuilder implements ISceneBuilder {
         scene.clearColor = new BABYLON.Color4(1, 1, 1, 1.0);
 
         const camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 15, -40), scene);
+        camera.maxZ = 1000;
         camera.setTarget(new BABYLON.Vector3(0, 10, 0));
         camera.attachControl(canvas, false);
         camera.keysUp.push("W".charCodeAt(0));
@@ -24,7 +25,7 @@ export class SceneBuilder implements ISceneBuilder {
         hemisphericLight.specular = new BABYLON.Color3(0, 0, 0);
         hemisphericLight.groundColor = new BABYLON.Color3(1, 1, 1);
 
-        const directionalLight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(-1, -1, 1), scene);
+        const directionalLight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0.5, -1, 1), scene);
         directionalLight.intensity = 0.8;
 
         const csmShadowGenerator = new BABYLON.CascadedShadowGenerator(1024, directionalLight);
