@@ -11,7 +11,7 @@ export type PmxObject = Readonly<{
     displayFrames: readonly PmxObject.DisplayFrame[];
     rigidBodies: readonly PmxObject.RigidBody[];
     joints: readonly PmxObject.Joint[];
-    softBodies: readonly PmxObject.SoftBody[];
+    softBodies: readonly PmxObject.SoftBody[]; // pmx 2.1 spec (which is not supported by mmd)
 }>;
 
 export namespace PmxObject {
@@ -58,7 +58,7 @@ export namespace PmxObject {
             bdef2 = 1,
             bdef4 = 2,
             sdef = 3,
-            qdef = 4
+            qdef = 4 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export type BoneWeightSDEF = Readonly<{
@@ -121,9 +121,9 @@ export namespace PmxObject {
             enabledDrawShadow = 1 << 2,
             enabledReceiveShadow = 1 << 3,
             enabledToonEdge = 1 << 4,
-            enabledVertexColor = 1 << 5,
-            enabledPointDraw = 1 << 6,
-            enabledLineDraw = 1 << 7
+            enabledVertexColor = 1 << 5, // pmx 2.1 spec (which is not supported by mmd)
+            enabledPointDraw = 1 << 6, // pmx 2.1 spec (which is not supported by mmd)
+            enabledLineDraw = 1 << 7 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export enum SphereTextureMode {
@@ -230,8 +230,8 @@ export namespace PmxObject {
             additionalUvMorph3 = 6,
             additionalUvMorph4 = 7,
             materialMorph = 8,
-            flipMorph = 9,
-            impulseMorph = 10
+            flipMorph = 9, // pmx 2.1 spec (which is not supported by mmd)
+            impulseMorph = 10 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export type GroupMorph = Readonly<{
@@ -364,11 +364,11 @@ export namespace PmxObject {
     export namespace Joint {
         export enum Type {
             spring6dof = 0,
-            sixdof = 1,
-            p2p = 2,
-            coneTwist = 3,
-            slider = 4,
-            hinge = 5
+            sixdof = 1, // pmx 2.1 spec (which is not supported by mmd)
+            p2p = 2, // pmx 2.1 spec (which is not supported by mmd)
+            coneTwist = 3, // pmx 2.1 spec (which is not supported by mmd)
+            slider = 4, // pmx 2.1 spec (which is not supported by mmd)
+            hinge = 5 // pmx 2.1 spec (which is not supported by mmd)
         }
     }
 
