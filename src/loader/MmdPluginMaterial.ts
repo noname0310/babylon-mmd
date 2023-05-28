@@ -89,11 +89,24 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
     public override getCustomCode(shaderType: string): BABYLON.Nullable<{ [pointName: string]: string; }> {
         if (shaderType === "fragment") return {
             /* eslint-disable @typescript-eslint/naming-convention */
-            "CUSTOM_FRAGMENT_MAIN_END": `
+            "CUSTOM_FRAGMENT_DEFINITIONS": `
                 #ifdef SPHERE_MAP
-                    vec3 reflectionVector = normalize(vPositionW - cameraPosition);
-                    vec3 reflectionColor = textureCube(sphereSampler, reflectionVector).rgb;
-                    diffuseColor.rgb = reflectionColor;
+                    uniform sampler2D sphereSampler;
+                #endif
+            `,
+            "CUSTOM_FRAGMENT_BEFORE_FOG": `
+                #ifdef SPHERE_MAP
+                    vec3 reflectedDirection = reflect(viewDirectionW, normalW);
+                    float m = 2. * sqrt(
+                        pow(reflectedDirection.x, 2.) +
+                        pow(reflectedDirection.y, 2.) +
+                        pow(reflectedDirection.z + 1., 2.)
+                    );
+                    vec2 vN = reflectedDirection.xy / m + .5;
+                
+                    vec3 baseSphereReflectionColor = texture2D( sphereSampler, vN).rgb;
+            
+                    color += vec4(baseSphereReflectionColor, 1.);
                 #endif
             `
             /* eslint-enable @typescript-eslint/naming-convention */
