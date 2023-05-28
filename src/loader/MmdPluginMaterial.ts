@@ -41,7 +41,7 @@ export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
 }
 
 export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
-    public sphereMap: BABYLON.Texture | null = null;
+    private _sphereTexture: BABYLON.Texture | null = null;
 
     private _isEnabled = false;
 
@@ -56,15 +56,29 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         this._enable(value);
     }
 
+    public get sphereTexture(): BABYLON.Texture | null {
+        return this._sphereTexture;
+    }
+
+    public set sphereTexture(value: BABYLON.Texture | null) {
+        if (this._sphereTexture === value) return;
+        this._sphereTexture = value;
+        this._markAllSubMeshesAsTexturesDirty();
+    }
+
+    private readonly _markAllSubMeshesAsTexturesDirty: () => void;
+
     public constructor(material: BABYLON.StandardMaterial, addtoPluginList = true) {
         super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList);
+
+        this._markAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[BABYLON.Constants.MATERIAL_TextureDirtyFlag];
     }
 
     public override isReadyForSubMesh(defines: BABYLON.MaterialDefines, scene: BABYLON.Scene): boolean {
         if (!this._isEnabled) return true;
 
         if (defines._areTexturesDirty && scene.texturesEnabled) {
-            if (this.sphereMap && !this.sphereMap.isReadyOrNotBlocking()) {
+            if (this._sphereTexture && !this._sphereTexture.isReadyOrNotBlocking()) {
                 return false;
             }
         }
@@ -76,16 +90,16 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (!this._isEnabled) return;
 
         if (scene.texturesEnabled) {
-            if (this.sphereMap) {
-                uniformBuffer.setTexture("sphereSampler", this.sphereMap);
+            if (this._sphereTexture) {
+                uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
             }
         }
     }
 
     public override dispose(forceDisposeTextures?: boolean | undefined): void {
         if (forceDisposeTextures) {
-            this.sphereMap?.dispose();
-            this.sphereMap = null;
+            this._sphereTexture?.dispose();
+            this._sphereTexture = null;
         }
     }
 
@@ -115,25 +129,25 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
 
     public override prepareDefines(defines: MmdPluginMererialDefines): void {
         if (this._isEnabled) {
-            defines.SPHERE_MAP = this.sphereMap !== null;
+            defines.SPHERE_MAP = this._sphereTexture !== null;
         } else {
             defines.SPHERE_MAP = false;
         }
     }
 
     public override hasTexture(texture: BABYLON.BaseTexture): boolean {
-        return this.sphereMap === texture;
+        return this._sphereTexture === texture;
     }
 
     public override getActiveTextures(activeTextures: BABYLON.BaseTexture[]): void {
-        if (this.sphereMap) {
-            activeTextures.push(this.sphereMap);
+        if (this._sphereTexture) {
+            activeTextures.push(this._sphereTexture);
         }
     }
 
     public override getAnimatables(animatables: BABYLON.IAnimatable[]): void {
-        if (this.sphereMap && this.sphereMap.animations && 0 < this.sphereMap.animations.length) {
-            animatables.push(this.sphereMap);
+        if (this._sphereTexture && this._sphereTexture.animations && 0 < this._sphereTexture.animations.length) {
+            animatables.push(this._sphereTexture);
         }
     }
 
