@@ -31,6 +31,9 @@ import * as BABYLON from "@babylonjs/core";
 
 // https://cyos.babylonjs.com/
 
+// spherical environment mapping reference:
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/spherical-environment-mapping
+
 export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
     /* eslint-disable @typescript-eslint/naming-convention */
     public SPHERE_MAP = false;
@@ -96,17 +99,13 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
             `,
             "CUSTOM_FRAGMENT_BEFORE_FOG": `
                 #ifdef SPHERE_MAP
-                    vec3 reflectedDirection = reflect(viewDirectionW, normalW);
-                    float m = 2. * sqrt(
-                        pow(reflectedDirection.x, 2.) +
-                        pow(reflectedDirection.y, 2.) +
-                        pow(reflectedDirection.z + 1., 2.)
-                    );
-                    vec2 vN = reflectedDirection.xy / m + .5;
-                
-                    vec3 baseSphereReflectionColor = texture2D( sphereSampler, vN).rgb;
-            
-                    color += vec4(baseSphereReflectionColor, 1.);
+                    vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
+
+                    vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
+
+                    vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
+
+                    color += sphereReflectionColor;
                 #endif
             `
             /* eslint-enable @typescript-eslint/naming-convention */
