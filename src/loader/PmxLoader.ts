@@ -1,5 +1,7 @@
 import * as BABYLON from "@babylonjs/core";
 
+import { MmdStandardMaterial } from "./MmdStandardMaterial";
+import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
@@ -50,6 +52,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 return Promise.reject(e);
             });
 
+        const mesh = new BABYLON.Mesh(pmxObject.header.modelName, scene);
+
         const vertexData = new BABYLON.VertexData();
         {
             const vertices = pmxObject.vertices;
@@ -61,7 +65,9 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 indices = new Uint16Array(indices);
             }
 
-            for (let i = 0; i < vertices.length; i++) {
+            const boneIndecesSet = new Set<number>();
+
+            for (let i = 0; i < vertices.length; ++i) {
                 const vertex = vertices[i];
                 positions[i * 3 + 0] = vertex.position[0];
                 positions[i * 3 + 1] = vertex.position[1];
@@ -72,9 +78,16 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 normals[i * 3 + 2] = vertex.normal[2];
 
                 uvs[i * 2 + 0] = vertex.uv[0];
-                uvs[i * 2 + 1] = vertex.uv[1];
+                uvs[i * 2 + 1] = -vertex.uv[1]; // flip y axis
 
                 if (i % 1000 === 0) await BABYLON.Tools.DelayAsync(0);
+                if (vertex.weightType === PmxObject.Vertex.BoneWeightType.sdef) {
+                    if (boneIndecesSet.has(vertex.boneWeight.boneIndices[0])) {
+                        continue;
+                    }
+                    boneIndecesSet.add(vertex.boneWeight.boneIndices[0]);
+                    //console.log("sdef", vertex);
+                }
             }
 
             vertexData.positions = positions;
@@ -84,14 +97,51 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         }
 
         const geometry = new BABYLON.Geometry(pmxObject.header.modelName, scene, vertexData, false);
-        scene.pushGeometry(geometry, true);
-        const mesh = new BABYLON.Mesh(pmxObject.header.modelName, scene);
         geometry.applyToMesh(mesh);
 
-        const material = new BABYLON.StandardMaterial(pmxObject.header.modelName, scene);
-        material.backFaceCulling = false;
-        material.specularColor = new BABYLON.Color3(0, 0, 0);
-        mesh.material = material;
+        const multiMaterial = new BABYLON.MultiMaterial(pmxObject.header.modelName + "_multi", scene);
+        {
+            const materials = pmxObject.materials;
+
+            let offset = 0;
+            for (let i = 0; i < materials.length; ++i) {
+                const materialInfo = materials[i];
+
+                const material = new MmdStandardMaterial(materialInfo.name, scene);
+                {
+                    const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
+                    if (diffuseTexturePath !== undefined) {
+                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene);
+                        material.diffuseTexture = diffuseTexture;
+                    }
+
+                    const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
+                    if (sphereTexturePath !== undefined) {
+                        const sphereTexture = new BABYLON.Texture(rootUrl + sphereTexturePath, scene);
+                        material.sphereTexture = sphereTexture;
+                    }
+                }
+
+                multiMaterial.subMaterials.push(material);
+
+                new BABYLON.SubMesh(
+                    i, // materialIndex
+                    0, // verticesStart
+                    pmxObject.vertices.length, // verticesCount
+                    offset, // indexStart
+                    materialInfo.faceCount, // indexCount
+                    mesh
+                );
+
+                offset += materialInfo.faceCount;
+
+                // const material = new MmdStandardMaterial("material1");
+                // mesh.material = material;
+                // material.sphereTexture = new BABYLON.Texture("res/private_test/spheremap.png", scene);
+            }
+        }
+
+        mesh.material = multiMaterial;
 
         rootUrl;
         onProgress;
