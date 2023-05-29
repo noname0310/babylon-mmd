@@ -86,7 +86,6 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                         continue;
                     }
                     boneIndecesSet.add(vertex.boneWeight.boneIndices[0]);
-                    //console.log("sdef", vertex);
                 }
             }
 
@@ -134,16 +133,11 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 );
 
                 offset += materialInfo.faceCount;
-
-                // const material = new MmdStandardMaterial("material1");
-                // mesh.material = material;
-                // material.sphereTexture = new BABYLON.Texture("res/private_test/spheremap.png", scene);
             }
         }
 
         mesh.material = multiMaterial;
 
-        rootUrl;
         onProgress;
         fileName;
     }
