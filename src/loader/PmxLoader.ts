@@ -111,7 +111,6 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         {
             const materials = pmxObject.materials;
 
-            let offset = 0;
             for (let i = 0; i < materials.length; ++i) {
                 const materialInfo = materials[i];
 
@@ -119,31 +118,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 {
                     const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                     if (diffuseTexturePath !== undefined) {
-                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene, undefined, undefined, undefined, async() => {
-                            const arrayBufferView = await diffuseTexture.readPixels(undefined, undefined, undefined, false, false);
-                            let hasAlpha = false;
-
-                            if (arrayBufferView !== null) {
-                                const uint8Array = new Uint8Array(arrayBufferView.buffer, arrayBufferView.byteOffset, arrayBufferView.byteLength);
-                                for (let i = 3; i < uint8Array.length; i += 4) {
-                                    if (uint8Array[i] !== 255) {
-                                        hasAlpha = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // diffuseTexture.hasAlpha = hasAlpha;
-                            // material.useAlphaFromDiffuseTexture = true;
-                            material.opacityTexture = diffuseTexture;
-                            material.transparencyMode = hasAlpha
-                                ? BABYLON.Material.MATERIAL_ALPHATESTANDBLEND
-                                : BABYLON.Material.MATERIAL_OPAQUE;
-                            console.log("hasAlpha", hasAlpha, diffuseTexturePath);
-                        });
+                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene);
                         material.diffuseTexture = diffuseTexture;
-                    } else {
-                        console.log(diffuseTexturePath);
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
@@ -155,6 +131,17 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
 
                 multiMaterial.subMaterials.push(material);
 
+            }
+        }
+        mesh.material = multiMaterial;
+
+        mesh.subMeshes.length = 0;
+        {
+            const materials = pmxObject.materials;
+            let offset = 0;
+            for (let i = 0; i < materials.length; ++i) {
+                const materialInfo = materials[i];
+
                 new BABYLON.SubMesh(
                     i, // materialIndex
                     0, // verticesStart
@@ -163,14 +150,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                     materialInfo.surfaceCount, // indexCount
                     mesh
                 );
-                console.log(offset, materialInfo.surfaceCount);
 
                 offset += materialInfo.surfaceCount;
             }
         }
-
-        mesh.material = multiMaterial;
-        console.log(mesh.subMeshes);
 
         onProgress;
         fileName;
