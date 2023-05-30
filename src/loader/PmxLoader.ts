@@ -5,6 +5,8 @@ import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
+    private readonly _textureCache = new Map<string, WeakRef<BABYLON.Texture>>();
+
     /**
      * Name of the loader ("pmx")
      */
@@ -109,8 +111,6 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
 
         const multiMaterial = new BABYLON.MultiMaterial(pmxObject.header.modelName + "_multi", scene);
         {
-            const textureCache = new Map<string, BABYLON.Texture>();
-
             const materials = pmxObject.materials;
             let offset = 0;
             for (let i = 0; i < materials.length; ++i) {
@@ -121,10 +121,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                     const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                     if (diffuseTexturePath !== undefined) {
                         const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
-                        let diffuseTexture = textureCache.get(requestString);
+                        let diffuseTexture = this._textureCache.get(requestString)?.deref();
                         if (diffuseTexture === undefined) {
                             diffuseTexture = new BABYLON.Texture(requestString, scene);
-                            textureCache.set(requestString, diffuseTexture);
+                            this._textureCache.set(requestString, new WeakRef(diffuseTexture));
                         }
                         material.diffuseTexture = diffuseTexture;
                         material.useAlphaFromDiffuseTexture = await this.textureHasAlphaOnGeometry(
@@ -139,10 +139,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                     if (sphereTexturePath !== undefined) {
                         const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
-                        let sphereTexture = textureCache.get(requestString);
+                        let sphereTexture = this._textureCache.get(requestString)?.deref();
                         if (sphereTexture === undefined) {
                             sphereTexture = new BABYLON.Texture(requestString, scene);
-                            textureCache.set(requestString, sphereTexture);
+                            this._textureCache.set(requestString, new WeakRef(sphereTexture));
                         }
                         material.sphereTexture = sphereTexture;
                     }
