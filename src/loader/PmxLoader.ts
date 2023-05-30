@@ -109,8 +109,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
 
         const multiMaterial = new BABYLON.MultiMaterial(pmxObject.header.modelName + "_multi", scene);
         {
-            const materials = pmxObject.materials;
+            const textureCache = new Map<string, BABYLON.Texture>();
 
+            const materials = pmxObject.materials;
+            let offset = 0;
             for (let i = 0; i < materials.length; ++i) {
                 const materialInfo = materials[i];
 
@@ -118,19 +120,37 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 {
                     const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                     if (diffuseTexturePath !== undefined) {
-                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene);
+                        const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
+                        let diffuseTexture = textureCache.get(requestString);
+                        if (diffuseTexture === undefined) {
+                            diffuseTexture = new BABYLON.Texture(requestString, scene);
+                            textureCache.set(requestString, diffuseTexture);
+                        }
                         material.diffuseTexture = diffuseTexture;
+                        material.useAlphaFromDiffuseTexture = await this.textureHasAlphaOnGeometry(
+                            diffuseTexture,
+                            vertexData.indices,
+                            vertexData.uvs,
+                            offset,
+                            materialInfo.surfaceCount
+                        );
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                     if (sphereTexturePath !== undefined) {
-                        const sphereTexture = new BABYLON.Texture(rootUrl + sphereTexturePath, scene);
+                        const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
+                        let sphereTexture = textureCache.get(requestString);
+                        if (sphereTexture === undefined) {
+                            sphereTexture = new BABYLON.Texture(requestString, scene);
+                            textureCache.set(requestString, sphereTexture);
+                        }
                         material.sphereTexture = sphereTexture;
                     }
                 }
 
                 multiMaterial.subMaterials.push(material);
 
+                offset += materialInfo.surfaceCount;
             }
         }
         mesh.material = multiMaterial;
@@ -191,5 +211,59 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             onError
         );
         return request;
+    }
+
+    private pathNormalize(path: string): string {
+        path = path.replace(/\\/g, "/");
+        const pathArray = path.split("/");
+        const resultArray = [];
+        for (let i = 0; i < pathArray.length; ++i) {
+            const pathElement = pathArray[i];
+            if (pathElement === ".") {
+                continue;
+            } else if (pathElement === "..") {
+                resultArray.pop();
+            } else {
+                resultArray.push(pathElement);
+            }
+        }
+        return resultArray.join("/");
+    }
+
+    private async textureHasAlphaOnGeometry(
+        texture: BABYLON.Texture,
+        indices: Uint16Array | Uint32Array,
+        uvs: Float32Array,
+        startOffset: number,
+        length: number
+    ): Promise<boolean> {
+        if (!texture.isReady()) {
+            await new Promise<void>((resolve) => {
+                texture.onLoadObservable.addOnce(() => {
+                    resolve();
+                });
+            });
+        }
+
+        console.log(texture, texture.getSize());
+        // const canvas = document.createElement("canvas");
+        // const textureSize = texture.getSize();
+        // canvas.width = texture.getSize().width;
+        // document.body.appendChild(canvas);
+
+        // const context = canvas.getContext("webgl2", {
+        //     alpha: false,
+        //     antialias: false,
+        //     depth: false,
+        //     stencil: false,
+        //     preserveDrawingBuffer: false
+        // });
+
+        indices;
+        uvs;
+        startOffset;
+        length;
+
+        return false;
     }
 }
