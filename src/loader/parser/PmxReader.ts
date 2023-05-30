@@ -382,7 +382,7 @@ export class PmxReader {
             const toonTextureIndex = isSharedToonTexture ? dataDeserializer.getUint8() : indexReader.getTextureIndex(dataDeserializer);
 
             const comment = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
-            const faceCount = dataDeserializer.getInt32();
+            const surfaceCount = dataDeserializer.getInt32();
 
             const material: PmxObject.Material = {
                 name,
@@ -406,7 +406,7 @@ export class PmxReader {
                 toonTextureIndex,
 
                 comment,
-                faceCount
+                surfaceCount
             };
             materials.push(material);
         }

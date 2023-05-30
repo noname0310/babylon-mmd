@@ -111,7 +111,7 @@ export namespace PmxObject {
         toonTextureIndex: number;
 
         comment: string;
-        faceCount: number;
+        surfaceCount: number;
     }>;
 
     export namespace Material {
