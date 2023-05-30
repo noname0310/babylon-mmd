@@ -1,5 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
+import type { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdPluginMaterial } from "./MmdPluginMaterial";
 
 export class MmdStandardMaterial extends BABYLON.StandardMaterial {
@@ -19,5 +20,13 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
 
     public set sphereTexture(value: BABYLON.Texture | null) {
         this._pluginMaterial.sphereTexture = value;
+    }
+
+    public get sphereTextureBlendMode(): MmdPluginMaterialSphereTextureBlendMode {
+        return this._pluginMaterial.sphereTextureBlendMode;
+    }
+
+    public set sphereTextureBlendMode(value: MmdPluginMaterialSphereTextureBlendMode) {
+        this._pluginMaterial.sphereTextureBlendMode = value;
     }
 }

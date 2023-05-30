@@ -1,5 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
+import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
@@ -150,15 +151,20 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                         });
                     }
 
-                    const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
-                    if (sphereTexturePath !== undefined) {
-                        const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
-                        let sphereTexture = this._textureCache.get(requestString)?.deref();
-                        if (sphereTexture === undefined) {
-                            sphereTexture = new BABYLON.Texture(requestString, scene);
-                            this._textureCache.set(requestString, new WeakRef(sphereTexture));
+                    if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.off) {
+                        const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
+                        if (sphereTexturePath !== undefined) {
+                            const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
+                            let sphereTexture = this._textureCache.get(requestString)?.deref();
+                            if (sphereTexture === undefined) {
+                                sphereTexture = new BABYLON.Texture(requestString, scene);
+                                this._textureCache.set(requestString, new WeakRef(sphereTexture));
+                            }
+                            material.sphereTexture = sphereTexture;
+                            material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
+                                ? MmdPluginMaterialSphereTextureBlendMode.Multiply
+                                : MmdPluginMaterialSphereTextureBlendMode.Add;
                         }
-                        material.sphereTexture = sphereTexture;
                     }
                 }
 

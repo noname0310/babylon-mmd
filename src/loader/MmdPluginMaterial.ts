@@ -36,12 +36,20 @@ import * as BABYLON from "@babylonjs/core";
 
 export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
     /* eslint-disable @typescript-eslint/naming-convention */
-    public SPHERE_MAP = false;
+    public SPHERE_TEXTURE = false;
+    public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
+    public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
     /* eslint-enable @typescript-eslint/naming-convention */
+}
+
+export enum MmdPluginMaterialSphereTextureBlendMode {
+    Multiply = 1,
+    Add = 2
 }
 
 export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
     private _sphereTexture: BABYLON.Texture | null = null;
+    private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
 
     private _isEnabled = false;
 
@@ -64,6 +72,16 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (this._sphereTexture === value) return;
         this._sphereTexture = value;
         this._markAllSubMeshesAsTexturesDirty();
+    }
+
+    public get sphereTextureBlendMode(): MmdPluginMaterialSphereTextureBlendMode {
+        return this._sphereTextureBlendMode;
+    }
+
+    public set sphereTextureBlendMode(value: MmdPluginMaterialSphereTextureBlendMode) {
+        if (this._sphereTextureBlendMode === value) return;
+        this._sphereTextureBlendMode = value;
+        this.markAllDefinesAsDirty();
     }
 
     private readonly _markAllSubMeshesAsTexturesDirty: () => void;
@@ -107,19 +125,23 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (shaderType === "fragment") return {
             /* eslint-disable @typescript-eslint/naming-convention */
             "CUSTOM_FRAGMENT_DEFINITIONS": /* glsl */`
-                #ifdef SPHERE_MAP
+                #ifdef SPHERE_TEXTURE
                     uniform sampler2D sphereSampler;
                 #endif
             `,
             "CUSTOM_FRAGMENT_BEFORE_FOG": /* glsl */`
-                #ifdef SPHERE_MAP
+                #ifdef SPHERE_TEXTURE
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
                     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
                     vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
 
-                    color += vec4(sphereReflectionColor.rgb, sphereReflectionColor.a * alpha);
+                    #ifdef SPHERE_TEXTURE_BLEND_MODE_MULTIPLY
+                        color *= sphereReflectionColor;
+                    #elif defined(SPHERE_TEXTURE_BLEND_MODE_ADD)
+                        color += vec4(sphereReflectionColor.rgb, sphereReflectionColor.a * alpha);
+                    #endif
                 #endif
             `
             /* eslint-enable @typescript-eslint/naming-convention */
@@ -129,9 +151,13 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
 
     public override prepareDefines(defines: MmdPluginMererialDefines): void {
         if (this._isEnabled) {
-            defines.SPHERE_MAP = this._sphereTexture !== null;
+            defines.SPHERE_TEXTURE = this._sphereTexture !== null;
+            defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply;
+            defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
         } else {
-            defines.SPHERE_MAP = false;
+            defines.SPHERE_TEXTURE = false;
+            defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
+            defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
         }
     }
 
