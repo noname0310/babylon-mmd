@@ -214,11 +214,4 @@ export class TextureAlphaChecker {
 
         return context;
     }
-
-    // private static getAlphaAt(textureSize: BABYLON.ISize, pixels: Uint8Array, u: number, v: number): number {
-    //     const x = Math.floor(u * textureSize.width);
-    //     const y = Math.floor(v * textureSize.height);
-    //     const i = (y * textureSize.width + x) * 4;
-    //     return pixels[i + 3];
-    // }
 }
