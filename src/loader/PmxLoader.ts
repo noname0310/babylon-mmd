@@ -139,7 +139,7 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                         );
                         diffuseTexture.hasAlpha = hasAlpha;
                         material.useAlphaFromDiffuseTexture = hasAlpha;
-                        material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHATEST : BABYLON.Material.MATERIAL_OPAQUE;
+                        material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHATESTANDBLEND : BABYLON.Material.MATERIAL_OPAQUE;
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
