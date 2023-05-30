@@ -60,9 +60,18 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             const positions = new Float32Array(vertices.length * 3);
             const normals = new Float32Array(vertices.length * 3);
             const uvs = new Float32Array(vertices.length * 2);
-            let indices = pmxObject.faces;
-            if (indices instanceof Uint8Array) {
-                indices = new Uint16Array(indices);
+            let indices;
+            if (pmxObject.faces instanceof Uint8Array || pmxObject.faces instanceof Uint16Array) {
+                indices = new Uint16Array(pmxObject.faces.length);
+            } else {
+                indices = new Uint32Array(pmxObject.faces.length);
+            }
+            for (let i = 0; i < indices.length; i += 3) { // reverse winding order
+                indices[i + 0] = pmxObject.faces[i + 0];
+                indices[i + 1] = pmxObject.faces[i + 2];
+                indices[i + 2] = pmxObject.faces[i + 1];
+
+                if (i % 10000 === 0) await BABYLON.Tools.DelayAsync(0);
             }
 
             const boneIndecesSet = new Set<number>();
@@ -80,7 +89,7 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 uvs[i * 2 + 0] = vertex.uv[0];
                 uvs[i * 2 + 1] = -vertex.uv[1]; // flip y axis
 
-                if (i % 1000 === 0) await BABYLON.Tools.DelayAsync(0);
+                if (i % 10000 === 0) await BABYLON.Tools.DelayAsync(0);
                 if (vertex.weightType === PmxObject.Vertex.BoneWeightType.sdef) {
                     if (boneIndecesSet.has(vertex.boneWeight.boneIndices[0])) {
                         continue;
@@ -110,8 +119,31 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 {
                     const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                     if (diffuseTexturePath !== undefined) {
-                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene);
+                        const diffuseTexture = new BABYLON.Texture(rootUrl + diffuseTexturePath, scene, undefined, undefined, undefined, async() => {
+                            const arrayBufferView = await diffuseTexture.readPixels(undefined, undefined, undefined, false, false);
+                            let hasAlpha = false;
+
+                            if (arrayBufferView !== null) {
+                                const uint8Array = new Uint8Array(arrayBufferView.buffer, arrayBufferView.byteOffset, arrayBufferView.byteLength);
+                                for (let i = 3; i < uint8Array.length; i += 4) {
+                                    if (uint8Array[i] !== 255) {
+                                        hasAlpha = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // diffuseTexture.hasAlpha = hasAlpha;
+                            // material.useAlphaFromDiffuseTexture = true;
+                            material.opacityTexture = diffuseTexture;
+                            material.transparencyMode = hasAlpha
+                                ? BABYLON.Material.MATERIAL_ALPHATESTANDBLEND
+                                : BABYLON.Material.MATERIAL_OPAQUE;
+                            console.log("hasAlpha", hasAlpha, diffuseTexturePath);
+                        });
                         material.diffuseTexture = diffuseTexture;
+                    } else {
+                        console.log(diffuseTexturePath);
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
@@ -128,15 +160,17 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                     0, // verticesStart
                     pmxObject.vertices.length, // verticesCount
                     offset, // indexStart
-                    materialInfo.faceCount, // indexCount
+                    materialInfo.surfaceCount, // indexCount
                     mesh
                 );
+                console.log(offset, materialInfo.surfaceCount);
 
-                offset += materialInfo.faceCount;
+                offset += materialInfo.surfaceCount;
             }
         }
 
         mesh.material = multiMaterial;
+        console.log(mesh.subMeshes);
 
         onProgress;
         fileName;

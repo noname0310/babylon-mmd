@@ -7,7 +7,6 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
 
     public constructor(name: string, scene?: BABYLON.Scene) {
         super(name, scene);
-        this.sideOrientation = BABYLON.Material.ClockWiseSideOrientation;
         this.specularColor = new BABYLON.Color3(0, 0, 0);
 
         const pluginMaterial = this._pluginMaterial = new MmdPluginMaterial(this);
