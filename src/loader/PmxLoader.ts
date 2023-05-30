@@ -1,6 +1,7 @@
 import * as BABYLON from "@babylonjs/core";
 
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
+import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
@@ -131,7 +132,10 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                             diffuseTexture = new BABYLON.Texture(requestString, scene);
                             this._textureCache.set(requestString, new WeakRef(diffuseTexture));
                         }
+
                         material.diffuseTexture = diffuseTexture;
+                        material.cullBackFaces = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
+
                         TextureAlphaChecker.textureHasAlphaOnGeometry(
                             alphaEvaluateRenderingContext,
                             diffuseTexture,
