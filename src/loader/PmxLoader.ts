@@ -3,6 +3,7 @@ import * as BABYLON from "@babylonjs/core";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
+import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
     private readonly _textureCache = new Map<string, WeakRef<BABYLON.Texture>>();
@@ -89,7 +90,7 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                 normals[i * 3 + 2] = vertex.normal[2];
 
                 uvs[i * 2 + 0] = vertex.uv[0];
-                uvs[i * 2 + 1] = -vertex.uv[1]; // flip y axis
+                uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
 
                 if (i % 10000 === 0) await BABYLON.Tools.DelayAsync(0);
                 if (vertex.weightType === PmxObject.Vertex.BoneWeightType.sdef) {
@@ -112,6 +113,7 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         const multiMaterial = new BABYLON.MultiMaterial(pmxObject.header.modelName + "_multi", scene);
         {
             const materials = pmxObject.materials;
+            const alphaEvaluateRenderingContext = TextureAlphaChecker.createRenderingContext();
             let offset = 0;
             for (let i = 0; i < materials.length; ++i) {
                 const materialInfo = materials[i];
@@ -127,13 +129,17 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                             this._textureCache.set(requestString, new WeakRef(diffuseTexture));
                         }
                         material.diffuseTexture = diffuseTexture;
-                        material.useAlphaFromDiffuseTexture = await this.textureHasAlphaOnGeometry(
+                        const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
+                            alphaEvaluateRenderingContext,
                             diffuseTexture,
                             vertexData.indices,
                             vertexData.uvs,
                             offset,
                             materialInfo.surfaceCount
                         );
+                        diffuseTexture.hasAlpha = hasAlpha;
+                        material.useAlphaFromDiffuseTexture = hasAlpha;
+                        material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHATEST : BABYLON.Material.MATERIAL_OPAQUE;
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
@@ -228,42 +234,5 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             }
         }
         return resultArray.join("/");
-    }
-
-    private async textureHasAlphaOnGeometry(
-        texture: BABYLON.Texture,
-        indices: Uint16Array | Uint32Array,
-        uvs: Float32Array,
-        startOffset: number,
-        length: number
-    ): Promise<boolean> {
-        if (!texture.isReady()) {
-            await new Promise<void>((resolve) => {
-                texture.onLoadObservable.addOnce(() => {
-                    resolve();
-                });
-            });
-        }
-
-        console.log(texture, texture.getSize());
-        // const canvas = document.createElement("canvas");
-        // const textureSize = texture.getSize();
-        // canvas.width = texture.getSize().width;
-        // document.body.appendChild(canvas);
-
-        // const context = canvas.getContext("webgl2", {
-        //     alpha: false,
-        //     antialias: false,
-        //     depth: false,
-        //     stencil: false,
-        //     preserveDrawingBuffer: false
-        // });
-
-        indices;
-        uvs;
-        startOffset;
-        length;
-
-        return false;
     }
 }
