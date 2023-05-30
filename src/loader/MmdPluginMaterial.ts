@@ -106,12 +106,12 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
     public override getCustomCode(shaderType: string): BABYLON.Nullable<{ [pointName: string]: string; }> {
         if (shaderType === "fragment") return {
             /* eslint-disable @typescript-eslint/naming-convention */
-            "CUSTOM_FRAGMENT_DEFINITIONS": `
+            "CUSTOM_FRAGMENT_DEFINITIONS": /* glsl */`
                 #ifdef SPHERE_MAP
                     uniform sampler2D sphereSampler;
                 #endif
             `,
-            "CUSTOM_FRAGMENT_BEFORE_FOG": `
+            "CUSTOM_FRAGMENT_BEFORE_FOG": /* glsl */`
                 #ifdef SPHERE_MAP
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 

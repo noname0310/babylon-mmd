@@ -40,7 +40,7 @@ export class TextureAlphaChecker {
 
         const vertexShader = context.createShader(context.VERTEX_SHADER);
         if (vertexShader === null) return false;
-        const vertexShaderSource = `
+        const vertexShaderSource = /* glsl */`
             precision highp float;
             attribute vec2 uv;
             varying vec2 vUv;
@@ -64,7 +64,7 @@ export class TextureAlphaChecker {
          * bottom1Alpha | right1Bottom1Alpha | right2Bottom1Alpha
          * bottom2Alpha | right1Bottom2Alpha | right2Bottom2Alpha
          */
-        const fragmentShaderSource = `
+        const fragmentShaderSource = /* glsl */`
             precision highp float;
             uniform sampler2D texture;
             varying vec2 vUv;
