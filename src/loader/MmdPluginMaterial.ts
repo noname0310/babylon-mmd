@@ -119,7 +119,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
 
                     vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
 
-                    color += sphereReflectionColor;
+                    color += vec4(sphereReflectionColor.rgb, sphereReflectionColor.a * alpha);
                 #endif
             `
             /* eslint-enable @typescript-eslint/naming-convention */
