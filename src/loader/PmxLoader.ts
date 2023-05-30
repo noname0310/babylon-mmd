@@ -125,6 +125,32 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
 
                 const material = new MmdStandardMaterial(materialInfo.name, scene);
                 {
+                    const diffuse = materialInfo.diffuse;
+                    material.diffuseColor = new BABYLON.Color3(
+                        diffuse[0],
+                        diffuse[1],
+                        diffuse[2]
+                    );
+
+                    const specular = materialInfo.specular;
+                    material.specularColor = new BABYLON.Color3(
+                        specular[0],
+                        specular[1],
+                        specular[2]
+                    );
+
+                    const ambient = materialInfo.ambient;
+                    material.ambientColor = new BABYLON.Color3(
+                        ambient[0],
+                        ambient[1],
+                        ambient[2]
+                    );
+
+                    const alpha = materialInfo.diffuse[3];
+                    material.alpha = alpha;
+
+                    material.specularPower = materialInfo.shininess;
+
                     const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                     if (diffuseTexturePath !== undefined) {
                         const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
