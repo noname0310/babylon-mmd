@@ -193,7 +193,7 @@ export class TextureAlphaChecker {
         //     }
         // }
 
-        const alphaThreshold = 120;
+        const alphaThreshold = 200;
         return alphaThreshold < maxValue;
     }
 
