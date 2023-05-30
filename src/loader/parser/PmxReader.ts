@@ -204,6 +204,7 @@ export class PmxReader {
 
         const vertices: PmxObject.Vertex[] = [];
 
+        let time = performance.now();
         for (let i = 0; i < verticesCount; ++i) {
             const position = dataDeserializer.getFloat32Array(3);
             const normal = dataDeserializer.getFloat32Array(3);
@@ -298,8 +299,9 @@ export class PmxReader {
                 edgeRatio
             });
 
-            if (i % 10000 === 0) {
+            if (i % 10000 === 0 && 100 < performance.now() - time) {
                 await new Promise(resolve => setTimeout(resolve, 0));
+                time = performance.now();
             }
         }
 

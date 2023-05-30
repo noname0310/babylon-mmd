@@ -1,7 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
-import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
@@ -69,35 +68,39 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             } else {
                 indices = new Uint32Array(pmxObject.faces.length);
             }
-            for (let i = 0; i < indices.length; i += 3) { // reverse winding order
-                indices[i + 0] = pmxObject.faces[i + 0];
-                indices[i + 1] = pmxObject.faces[i + 2];
-                indices[i + 2] = pmxObject.faces[i + 1];
+            {
+                let time = performance.now();
+                for (let i = 0; i < indices.length; i += 3) { // reverse winding order
+                    indices[i + 0] = pmxObject.faces[i + 0];
+                    indices[i + 1] = pmxObject.faces[i + 2];
+                    indices[i + 2] = pmxObject.faces[i + 1];
 
-                if (i % 10000 === 0) await BABYLON.Tools.DelayAsync(0);
+                    if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        await BABYLON.Tools.DelayAsync(0);
+                        time = performance.now();
+                    }
+                }
             }
 
-            const boneIndecesSet = new Set<number>();
+            {
+                let time = performance.now();
+                for (let i = 0; i < vertices.length; ++i) {
+                    const vertex = vertices[i];
+                    positions[i * 3 + 0] = vertex.position[0];
+                    positions[i * 3 + 1] = vertex.position[1];
+                    positions[i * 3 + 2] = vertex.position[2];
 
-            for (let i = 0; i < vertices.length; ++i) {
-                const vertex = vertices[i];
-                positions[i * 3 + 0] = vertex.position[0];
-                positions[i * 3 + 1] = vertex.position[1];
-                positions[i * 3 + 2] = vertex.position[2];
+                    normals[i * 3 + 0] = vertex.normal[0];
+                    normals[i * 3 + 1] = vertex.normal[1];
+                    normals[i * 3 + 2] = vertex.normal[2];
 
-                normals[i * 3 + 0] = vertex.normal[0];
-                normals[i * 3 + 1] = vertex.normal[1];
-                normals[i * 3 + 2] = vertex.normal[2];
+                    uvs[i * 2 + 0] = vertex.uv[0];
+                    uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
 
-                uvs[i * 2 + 0] = vertex.uv[0];
-                uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
-
-                if (i % 10000 === 0) await BABYLON.Tools.DelayAsync(0);
-                if (vertex.weightType === PmxObject.Vertex.BoneWeightType.sdef) {
-                    if (boneIndecesSet.has(vertex.boneWeight.boneIndices[0])) {
-                        continue;
+                    if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        await BABYLON.Tools.DelayAsync(0);
+                        time = performance.now();
                     }
-                    boneIndecesSet.add(vertex.boneWeight.boneIndices[0]);
                 }
             }
 
@@ -129,17 +132,18 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                             this._textureCache.set(requestString, new WeakRef(diffuseTexture));
                         }
                         material.diffuseTexture = diffuseTexture;
-                        const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
+                        TextureAlphaChecker.textureHasAlphaOnGeometry(
                             alphaEvaluateRenderingContext,
                             diffuseTexture,
                             vertexData.indices,
                             vertexData.uvs,
                             offset,
                             materialInfo.surfaceCount
-                        );
-                        diffuseTexture.hasAlpha = hasAlpha;
-                        material.useAlphaFromDiffuseTexture = hasAlpha;
-                        material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHABLEND : BABYLON.Material.MATERIAL_OPAQUE;
+                        ).then((hasAlpha) => {
+                            diffuseTexture!.hasAlpha = hasAlpha;
+                            material.useAlphaFromDiffuseTexture = hasAlpha;
+                            material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHABLEND : BABYLON.Material.MATERIAL_OPAQUE;
+                        });
                     }
 
                     const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
