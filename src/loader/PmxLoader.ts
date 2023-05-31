@@ -1,5 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
+import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
@@ -216,6 +217,22 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                         }
 
                         material.toonTexture = toonTexture;
+                    }
+
+                    if (materialInfo.flag & PmxObject.Material.Flag.enabledToonEdge) {
+                        MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
+
+                        material.renderOutline = true;
+                        material.renderOverlay = true;
+                        material.outlineWidth = materialInfo.edgeSize / 100;
+                        console.log(materialInfo.edgeSize);
+                        const edgeColor = materialInfo.edgeColor;
+                        material.overlayColor = new BABYLON.Color3(
+                            edgeColor[0],
+                            edgeColor[1],
+                            edgeColor[2]
+                        );
+                        material.overlayAlpha = edgeColor[3];
                     }
                 }
 

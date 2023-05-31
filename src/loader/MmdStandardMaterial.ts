@@ -6,6 +6,13 @@ import { MmdPluginMaterial } from "./MmdPluginMaterial";
 export class MmdStandardMaterial extends BABYLON.StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;
 
+    private _renderOutline = false;
+    private _renderOverlay = false;
+    public outlineWidth = 0.01;
+    public outlineColor: BABYLON.Color3 = new BABYLON.Color3(0, 0, 0);
+    public overlayColor: BABYLON.Color3 = new BABYLON.Color3(0, 0, 0);
+    public overlayAlpha = 1.0;
+
     public constructor(name: string, scene?: BABYLON.Scene) {
         super(name, scene);
         this.specularColor = new BABYLON.Color3(0, 0, 0);
@@ -45,5 +52,29 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
 
     public set ignoreDiffuseWhenToonTextureIsNull(value: boolean) {
         this._pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = value;
+    }
+
+    public get renderOutline(): boolean {
+        return this._renderOutline;
+    }
+
+    public set renderOutline(value: boolean) {
+        // Lazy Load the component
+        if (value) {
+            this.getScene().getMmdOutlineRenderer();
+        }
+        this._renderOutline = value;
+    }
+
+    public get renderOverlay(): boolean {
+        return this._renderOverlay;
+    }
+
+    public set renderOverlay(value: boolean) {
+        // Lazy Load the component
+        if (value) {
+            this.getScene().getMmdOutlineRenderer();
+        }
+        this._renderOverlay = value;
     }
 }
