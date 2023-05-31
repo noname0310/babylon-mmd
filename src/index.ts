@@ -13,7 +13,8 @@ function engineStartup(): void {
 
     const engine = new BABYLON.Engine(canvas, true, {
         preserveDrawingBuffer: true,
-        stencil: true
+        stencil: true,
+        antialias: true
     }, true);
 
     const runtime = new RuntimeBuilder(canvas, engine)
