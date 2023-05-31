@@ -150,21 +150,29 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
                 #endif
             `;
 
-            codes[`!${this.escapeRegExp("vec3 finalDiffuse=clamp(diffuseBase*diffuseColor+emissiveColor+vAmbientColor,0.0,1.0)*baseColor.rgb;")}`] = /* glsl */`
+            codes["CUSTOM_FRAGMENT_MAIN_BEGIN"] = /* glsl */`
                 #ifdef TOON_TEXTURE
-                    vec3 clampedDiffuseBase = clamp(diffuseBase, 0.0, 1.0);
-                    float toonDiffuseBaseR = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.r)).r;
-                    float toonDiffuseBaseG = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.g)).g;
-                    float toonDiffuseBaseB = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.b)).b;
+                    vec3 clampedInfoDiffuse;
+                    float infoToonDiffuseR;
+                    float infoToonDiffuseG;
+                    float infoToonDiffuseB;
 
-                    vec3 toonDiffuseBase = vec3(toonDiffuseBaseR, toonDiffuseBaseG, toonDiffuseBaseB);
+                    vec3 infoToonDiffuse;
+                #endif
+            `;
 
-                    diffuseBase += toonDiffuseBase - clampedDiffuseBase;
+            codes[`!${this.escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
+                #ifdef TOON_TEXTURE
+                    clampedInfoDiffuse = clamp(info.diffuse, 0.0, 1.0);
+                    infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
+                    infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g;
+                    infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b;
+                    
+                    infoToonDiffuse = vec3(infoToonDiffuseR, infoToonDiffuseG, infoToonDiffuseB);
 
-                    vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor + vAmbientColor, 0.0, 1.0) * baseColor.rgb;
-                    //vec3 finalDiffuse = toonDiffuseBase;
+                    diffuseBase += infoToonDiffuse * shadow;
                 #else
-                    vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor + vAmbientColor, 0.0, 1.0) * baseColor.rgb;
+                    diffuseBase += info.diffuse * shadow;
                 #endif
             `;
 
