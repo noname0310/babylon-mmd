@@ -7,11 +7,9 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;
 
     private _renderOutline = false;
-    private _renderOverlay = false;
     public outlineWidth = 0.01;
     public outlineColor: BABYLON.Color3 = new BABYLON.Color3(0, 0, 0);
-    public overlayColor: BABYLON.Color3 = new BABYLON.Color3(0, 0, 0);
-    public overlayAlpha = 1.0;
+    public outlineAlpha = 1.0;
 
     public constructor(name: string, scene?: BABYLON.Scene) {
         super(name, scene);
@@ -64,17 +62,5 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
             this.getScene().getMmdOutlineRenderer();
         }
         this._renderOutline = value;
-    }
-
-    public get renderOverlay(): boolean {
-        return this._renderOverlay;
-    }
-
-    public set renderOverlay(value: boolean) {
-        // Lazy Load the component
-        if (value) {
-            this.getScene().getMmdOutlineRenderer();
-        }
-        this._renderOverlay = value;
     }
 }

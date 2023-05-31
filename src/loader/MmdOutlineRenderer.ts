@@ -133,7 +133,7 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
         }
 
         effect.setFloat("offset", useOverlay ? 0 : material.outlineWidth);
-        effect.setColor4("color", useOverlay ? material.overlayColor : material.outlineColor, material.overlayAlpha);
+        effect.setColor4("color", material.outlineColor, material.outlineAlpha);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
@@ -329,16 +329,16 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
         const material = subMesh.getMaterial() as MmdStandardMaterial | null;
         if (material === null) return;
 
-        // Overlay
-        if (material.renderOverlay) {
-            const currentMode = this._engine.getAlphaMode();
-            const alphaBlendState = this._engine.alphaState.alphaBlend;
-            this._engine.setAlphaMode(BABYLON.Constants.ALPHA_COMBINE);
-            this.render(subMesh, batch, true, this._passIdForDrawWrapper[3]);
-            this._engine.setAlphaMode(currentMode);
-            this._engine.setDepthWrite(this._savedDepthWrite);
-            this._engine.alphaState.alphaBlend = alphaBlendState;
-        }
+        // // Overlay
+        // if (material.renderOverlay) {
+        //     const currentMode = this._engine.getAlphaMode();
+        //     const alphaBlendState = this._engine.alphaState.alphaBlend;
+        //     this._engine.setAlphaMode(BABYLON.Constants.ALPHA_COMBINE);
+        //     this.render(subMesh, batch, true, this._passIdForDrawWrapper[3]);
+        //     this._engine.setAlphaMode(currentMode);
+        //     this._engine.setDepthWrite(this._savedDepthWrite);
+        //     this._engine.alphaState.alphaBlend = alphaBlendState;
+        // }
 
         // Outline - step 2
         if (material.renderOutline && this._savedDepthWrite) {
