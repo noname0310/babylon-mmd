@@ -263,6 +263,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         ? SharedToonTextures.data[materialInfo.toonTextureIndex]
                         : requestString;
                     toonTexture = new BABYLON.Texture(blobOrUrl, scene);
+                    if (materialInfo.isSharedToonTexture) {
+                        toonTexture.name = requestString;
+                    }
                     this.textureCache.set(requestString, new WeakRef(toonTexture));
                 }
 
