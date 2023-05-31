@@ -29,6 +29,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         uvs: Float32Array,
         multiMaterial: MultiMaterial
     ): void {
+        // Block the marking of materials dirty until all materials are built.
+        const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
+        scene.blockMaterialDirtyMechanism = true;
+
         const materials = pmxObject.materials;
         const alphaEvaluateRenderingContext = this.useAlphaEvaluation
             ? TextureAlphaChecker.createRenderingContext()
@@ -118,6 +122,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
             offset += materialInfo.surfaceCount;
         }
+
+        // Restore the blocking of material dirty.
+        scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
     }
 
     public loadGeneralScalarProperties: (
