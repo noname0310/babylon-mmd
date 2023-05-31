@@ -39,7 +39,7 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
     /**
      * Defines a zOffset default Factor to prevent zFighting between the overlay and the mesh.
      */
-    public zOffset = -1;
+    public zOffset = -5;
 
     /**
      * Defines a zOffset default Unit to prevent zFighting between the overlay and the mesh.
