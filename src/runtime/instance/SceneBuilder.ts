@@ -71,52 +71,54 @@ export class SceneBuilder implements ISceneBuilder {
         ground.receiveShadows = true;
 
         //csmShadowGenerator.addShadowCaster(sphere);
-        // csmShadowGenerator.addShadowCaster(
         csmShadowGenerator.addShadowCaster(ground);
 
-        const motionBlur = new BABYLON.MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
-        motionBlur.motionStrength = 1;
+        const usePostProcess = false;
+        if (usePostProcess) {
+            const motionBlur = new BABYLON.MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
+            motionBlur.motionStrength = 1;
 
-        const ssaoRatio = {
-            ssaoRatio: 0.5, // Ratio of the SSAO post-process, in a lower resolution
-            combineRatio: 1.0 // Ratio of the combine post-process (combines the SSAO and the scene)
-        };
-        const ssao = new BABYLON.SSAORenderingPipeline("ssao", scene, ssaoRatio);
-        ssao.fallOff = 0.000001;
-        ssao.area = 1;
-        ssao.radius = 0.0001;
-        ssao.totalStrength = 0.5;
-        ssao.base = 0.5;
-        scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera);
+            const ssaoRatio = {
+                ssaoRatio: 0.5, // Ratio of the SSAO post-process, in a lower resolution
+                combineRatio: 1.0 // Ratio of the combine post-process (combines the SSAO and the scene)
+            };
+            const ssao = new BABYLON.SSAORenderingPipeline("ssao", scene, ssaoRatio);
+            ssao.fallOff = 0.000001;
+            ssao.area = 1;
+            ssao.radius = 0.0001;
+            ssao.totalStrength = 0.5;
+            ssao.base = 0.5;
+            scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera);
 
-        const ssr = new BABYLON.SSRRenderingPipeline(
-            "ssr",
-            scene,
-            [camera],
-            false,
-            BABYLON.Constants.TEXTURETYPE_UNSIGNED_BYTE
-        );
-        ssr.thickness = 0.1;
-        ssr.selfCollisionNumSkip = 2;
-        ssr.enableAutomaticThicknessComputation = true;
-        ssr.blurDispersionStrength = 0.03;
-        ssr.roughnessFactor = 0.1;
-        ssr.samples = 4;
+            const ssr = new BABYLON.SSRRenderingPipeline(
+                "ssr",
+                scene,
+                [camera],
+                false,
+                BABYLON.Constants.TEXTURETYPE_UNSIGNED_BYTE
+            );
+            ssr.thickness = 0.1;
+            ssr.selfCollisionNumSkip = 2;
+            ssr.enableAutomaticThicknessComputation = true;
+            ssr.blurDispersionStrength = 0.03;
+            ssr.roughnessFactor = 0.1;
+            ssr.samples = 4;
 
-        const defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
-        defaultPipeline.samples = 4;
-        defaultPipeline.bloomEnabled = true;
-        defaultPipeline.chromaticAberrationEnabled = true;
-        defaultPipeline.chromaticAberration.aberrationAmount = 1;
-        defaultPipeline.depthOfFieldEnabled = false;
-        defaultPipeline.fxaaEnabled = true;
-        defaultPipeline.imageProcessingEnabled = true;
-        defaultPipeline.imageProcessing.toneMappingEnabled = true;
-        defaultPipeline.imageProcessing.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
-        defaultPipeline.imageProcessing.vignetteWeight = 0.5;
-        defaultPipeline.imageProcessing.vignetteStretch = 0.5;
-        defaultPipeline.imageProcessing.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
-        defaultPipeline.imageProcessing.vignetteEnabled = true;
+            const defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
+            defaultPipeline.samples = 4;
+            defaultPipeline.bloomEnabled = true;
+            defaultPipeline.chromaticAberrationEnabled = true;
+            defaultPipeline.chromaticAberration.aberrationAmount = 1;
+            defaultPipeline.depthOfFieldEnabled = false;
+            defaultPipeline.fxaaEnabled = true;
+            defaultPipeline.imageProcessingEnabled = true;
+            defaultPipeline.imageProcessing.toneMappingEnabled = true;
+            defaultPipeline.imageProcessing.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+            defaultPipeline.imageProcessing.vignetteWeight = 0.5;
+            defaultPipeline.imageProcessing.vignetteStretch = 0.5;
+            defaultPipeline.imageProcessing.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+            defaultPipeline.imageProcessing.vignetteEnabled = true;
+        }
 
         return scene;
     }
