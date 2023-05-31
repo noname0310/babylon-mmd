@@ -39,6 +39,7 @@ export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
     public SPHERE_TEXTURE = false;
     public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
+    public TOON_TEXTURE = false;
     /* eslint-enable @typescript-eslint/naming-convention */
 }
 
@@ -50,6 +51,8 @@ export enum MmdPluginMaterialSphereTextureBlendMode {
 export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
     private _sphereTexture: BABYLON.Texture | null = null;
     private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
+
+    private _toonTexture: BABYLON.Texture | null = null;
 
     private _isEnabled = false;
 
@@ -84,6 +87,16 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         this.markAllDefinesAsDirty();
     }
 
+    public get toonTexture(): BABYLON.Texture | null {
+        return this._toonTexture;
+    }
+
+    public set toonTexture(value: BABYLON.Texture | null) {
+        if (this._toonTexture === value) return;
+        this._toonTexture = value;
+        this._markAllSubMeshesAsTexturesDirty();
+    }
+
     private readonly _markAllSubMeshesAsTexturesDirty: () => void;
 
     public constructor(material: BABYLON.StandardMaterial, addtoPluginList = true) {
@@ -108,9 +121,9 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (!this._isEnabled) return;
 
         if (scene.texturesEnabled) {
-            if (this._sphereTexture) {
-                uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
-            }
+            if (this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
+
+            if (this._toonTexture) uniformBuffer.setTexture("toonSampler", this._toonTexture);
         }
     }
 
@@ -118,18 +131,44 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (forceDisposeTextures) {
             this._sphereTexture?.dispose();
             this._sphereTexture = null;
+
+            this._toonTexture?.dispose();
+            this._toonTexture = null;
         }
     }
 
     public override getCustomCode(shaderType: string): BABYLON.Nullable<{ [pointName: string]: string; }> {
-        if (shaderType === "fragment") return {
-            /* eslint-disable @typescript-eslint/naming-convention */
-            "CUSTOM_FRAGMENT_DEFINITIONS": /* glsl */`
+        if (shaderType === "fragment") {
+            const codes: { [pointName: string]: string; } = {};
+
+            codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
                 #ifdef SPHERE_TEXTURE
                     uniform sampler2D sphereSampler;
                 #endif
-            `,
-            "CUSTOM_FRAGMENT_BEFORE_FOG": /* glsl */`
+                #ifdef TOON_TEXTURE
+                    uniform sampler2D toonSampler;
+                #endif
+            `;
+
+            codes[`!${this.escapeRegExp("vec3 finalDiffuse=clamp(diffuseBase*diffuseColor+emissiveColor+vAmbientColor,0.0,1.0)*baseColor.rgb;")}`] = /* glsl */`
+                #ifdef TOON_TEXTURE
+                    vec3 clampedDiffuseBase = clamp(diffuseBase, 0.0, 1.0);
+                    float toonDiffuseBaseR = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.r)).r;
+                    float toonDiffuseBaseG = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.g)).g;
+                    float toonDiffuseBaseB = texture2D(toonSampler, vec2(vDiffuseUV.x, clampedDiffuseBase.b)).b;
+
+                    vec3 toonDiffuseBase = vec3(toonDiffuseBaseR, toonDiffuseBaseG, toonDiffuseBaseB);
+
+                    diffuseBase += toonDiffuseBase - clampedDiffuseBase;
+
+                    vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor + vAmbientColor, 0.0, 1.0) * baseColor.rgb;
+                    //vec3 finalDiffuse = toonDiffuseBase;
+                #else
+                    vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor + vAmbientColor, 0.0, 1.0) * baseColor.rgb;
+                #endif
+            `;
+
+            codes["CUSTOM_FRAGMENT_BEFORE_FOG"] = /* glsl */`
                 #ifdef SPHERE_TEXTURE
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
@@ -143,9 +182,10 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
                         color += vec4(sphereReflectionColor.rgb, sphereReflectionColor.a * alpha);
                     #endif
                 #endif
-            `
-            /* eslint-enable @typescript-eslint/naming-convention */
-        };
+            `;
+
+            return codes;
+        }
         return null;
     }
 
@@ -154,36 +194,47 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
             defines.SPHERE_TEXTURE = this._sphereTexture !== null;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
+            defines.TOON_TEXTURE = this._toonTexture !== null;
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
+            defines.TOON_TEXTURE = false;
         }
     }
 
     public override hasTexture(texture: BABYLON.BaseTexture): boolean {
-        return this._sphereTexture === texture;
+        return this._sphereTexture === texture || this._toonTexture === texture;
     }
 
     public override getActiveTextures(activeTextures: BABYLON.BaseTexture[]): void {
-        if (this._sphereTexture) {
-            activeTextures.push(this._sphereTexture);
-        }
+        if (this._sphereTexture) activeTextures.push(this._sphereTexture);
+
+        if (this._toonTexture) activeTextures.push(this._toonTexture);
     }
 
     public override getAnimatables(animatables: BABYLON.IAnimatable[]): void {
         if (this._sphereTexture && this._sphereTexture.animations && 0 < this._sphereTexture.animations.length) {
             animatables.push(this._sphereTexture);
         }
+
+        if (this._toonTexture && this._toonTexture.animations && 0 < this._toonTexture.animations.length) {
+            animatables.push(this._toonTexture);
+        }
     }
 
     public override getSamplers(samplers: string[]): void {
         if (this._isEnabled) {
-            samplers.push("sphereSampler");
+            if (this._sphereTexture) samplers.push("sphereSampler");
+            if (this._toonTexture) samplers.push("toonSampler");
         }
     }
 
     public override getClassName(): string {
         return "MmdPluginMaterial";
+    }
+
+    private escapeRegExp(string: string): string {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 }

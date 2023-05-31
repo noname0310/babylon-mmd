@@ -4,6 +4,7 @@ import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
+import { SharedToonTextures } from "./SharedToonTextures";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
@@ -191,6 +192,30 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                                 ? MmdPluginMaterialSphereTextureBlendMode.Multiply
                                 : MmdPluginMaterialSphereTextureBlendMode.Add;
                         }
+                    }
+
+                    let toonTexturePath;
+                    if (materialInfo.isSharedToonTexture) {
+                        toonTexturePath = materialInfo.toonTextureIndex === -1
+                            ? undefined
+                            : "shared_toon_texture" + materialInfo.toonTextureIndex;
+                    } else {
+                        toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
+                    }
+                    if (toonTexturePath !== undefined) {
+                        const requestString = materialInfo.isSharedToonTexture
+                            ? toonTexturePath
+                            : this.pathNormalize(rootUrl + toonTexturePath);
+                        let toonTexture = this._textureCache.get(requestString)?.deref();
+                        if (toonTexture === undefined) {
+                            const blobOrUrl = materialInfo.isSharedToonTexture
+                                ? SharedToonTextures.data[materialInfo.toonTextureIndex]
+                                : requestString;
+                            toonTexture = new BABYLON.Texture(blobOrUrl, scene);
+                            this._textureCache.set(requestString, new WeakRef(toonTexture));
+                        }
+
+                        material.toonTexture = toonTexture;
                     }
                 }
 

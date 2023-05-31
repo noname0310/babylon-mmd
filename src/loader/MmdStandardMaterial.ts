@@ -29,4 +29,12 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
     public set sphereTextureBlendMode(value: MmdPluginMaterialSphereTextureBlendMode) {
         this._pluginMaterial.sphereTextureBlendMode = value;
     }
+
+    public get toonTexture(): BABYLON.Texture | null {
+        return this._pluginMaterial.toonTexture;
+    }
+
+    public set toonTexture(value: BABYLON.Texture | null) {
+        this._pluginMaterial.toonTexture = value;
+    }
 }
