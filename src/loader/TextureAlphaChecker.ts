@@ -1,11 +1,11 @@
-import type * as BABYLON from "@babylonjs/core";
+import type { Texture } from "@babylonjs/core";
 
 export class TextureAlphaChecker {
     private static readonly _resolution = 512;
 
     public static async textureHasAlphaOnGeometry(
         context: WebGL2RenderingContext | null,
-        texture: BABYLON.Texture,
+        texture: Texture,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         startOffset: number,

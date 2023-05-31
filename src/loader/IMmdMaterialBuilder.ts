@@ -1,14 +1,13 @@
-import * as BABYLON from "@babylonjs/core";
-
+import { MultiMaterial, Scene } from "@babylonjs/core";
 import { PmxObject } from "./parser/PmxObject";
 
 export interface IMmdMaterialBuilder {
     buildMaterials(
         pmxObject: PmxObject,
         rootUrl: string,
-        scene: BABYLON.Scene,
+        scene: Scene,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
-        multiMaterial: BABYLON.MultiMaterial
+        multiMaterial: MultiMaterial
     ): Promise<void> | void;
 }

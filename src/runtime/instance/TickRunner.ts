@@ -1,4 +1,3 @@
-import * as BABYLON from "@babylonjs/core";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { IRuntimeContext } from "../base/BaseRuntime";
@@ -9,7 +8,6 @@ export class TickRunner implements ITickRunner {
         Inspector.Show(context.scene, { });
         // Inspector.Hide();
         context.engine.setHardwareScalingLevel(1);
-        BABYLON;
     }
     public beforeRender(context: IRuntimeContext): void {
         context;

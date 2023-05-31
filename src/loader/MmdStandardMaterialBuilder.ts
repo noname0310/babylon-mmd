@@ -1,4 +1,5 @@
-import * as BABYLON from "@babylonjs/core";
+import type { MultiMaterial, Scene} from "@babylonjs/core";
+import { Color3, Material, Texture } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
@@ -18,15 +19,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public useAlphaEvaluation = true;
 
-    public readonly textureCache = new Map<string, WeakRef<BABYLON.Texture>>();
+    public readonly textureCache = new Map<string, WeakRef<Texture>>();
 
     public buildMaterials(
         pmxObject: PmxObject,
         rootUrl: string,
-        scene: BABYLON.Scene,
+        scene: Scene,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
-        multiMaterial: BABYLON.MultiMaterial
+        multiMaterial: MultiMaterial
     ): void {
         const materials = pmxObject.materials;
         const alphaEvaluateRenderingContext = this.useAlphaEvaluation
@@ -127,21 +128,21 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             materialInfo
         ): void => {
             const diffuse = materialInfo.diffuse;
-            material.diffuseColor = new BABYLON.Color3(
+            material.diffuseColor = new Color3(
                 diffuse[0],
                 diffuse[1],
                 diffuse[2]
             );
 
             const specular = materialInfo.specular;
-            material.specularColor = new BABYLON.Color3(
+            material.specularColor = new Color3(
                 specular[0],
                 specular[1],
                 specular[2]
             );
 
             const ambient = materialInfo.ambient;
-            material.ambientColor = new BABYLON.Color3(
+            material.ambientColor = new Color3(
                 ambient[0],
                 ambient[1],
                 ambient[2]
@@ -157,7 +158,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
-        scene: BABYLON.Scene,
+        scene: Scene,
         rootUrl: string,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
@@ -179,7 +180,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
                 let diffuseTexture = this.textureCache.get(requestString)?.deref();
                 if (diffuseTexture === undefined) {
-                    diffuseTexture = new BABYLON.Texture(requestString, scene);
+                    diffuseTexture = new Texture(requestString, scene);
                     this.textureCache.set(requestString, new WeakRef(diffuseTexture));
                 }
 
@@ -198,7 +199,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 diffuseTexture.hasAlpha = hasAlpha;
                 material.useAlphaFromDiffuseTexture = hasAlpha;
-                material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHABLEND : BABYLON.Material.MATERIAL_OPAQUE;
+                material.transparencyMode = hasAlpha ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
             }
         };
 
@@ -206,7 +207,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
-        scene: BABYLON.Scene,
+        scene: Scene,
         rootUrl: string
     ) => Promise<void> | void = (
             material,
@@ -221,7 +222,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
                     let sphereTexture = this.textureCache.get(requestString)?.deref();
                     if (sphereTexture === undefined) {
-                        sphereTexture = new BABYLON.Texture(requestString, scene);
+                        sphereTexture = new Texture(requestString, scene);
                         this.textureCache.set(requestString, new WeakRef(sphereTexture));
                     }
                     material.sphereTexture = sphereTexture;
@@ -236,7 +237,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
-        scene: BABYLON.Scene,
+        scene: Scene,
         rootUrl: string
     ) => Promise<void> | void = (
             material,
@@ -262,7 +263,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     const blobOrUrl = materialInfo.isSharedToonTexture
                         ? SharedToonTextures.data[materialInfo.toonTextureIndex]
                         : requestString;
-                    toonTexture = new BABYLON.Texture(blobOrUrl, scene);
+                    toonTexture = new Texture(blobOrUrl, scene);
                     if (materialInfo.isSharedToonTexture) {
                         toonTexture.name = requestString;
                     }
@@ -286,7 +287,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 material.renderOutline = true;
                 material.outlineWidth = materialInfo.edgeSize * 0.01;
                 const edgeColor = materialInfo.edgeColor;
-                material.outlineColor = new BABYLON.Color3(
+                material.outlineColor = new Color3(
                     edgeColor[0], edgeColor[1], edgeColor[2]
                 );
                 material.outlineAlpha = edgeColor[3];
@@ -297,9 +298,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         material: MmdStandardMaterial,
         materialIndex: number,
         materialInfo: PmxObject.Material,
-        multiMaterial: BABYLON.MultiMaterial,
+        multiMaterial: MultiMaterial,
         pmxObject: PmxObject,
-        scene: BABYLON.Scene,
+        scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };
 

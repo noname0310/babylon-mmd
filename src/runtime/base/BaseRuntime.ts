@@ -1,25 +1,25 @@
-import type * as BABYLON from "@babylonjs/core";
+import type { Engine, Scene } from "@babylonjs/core";
 
 import type { ISceneBuilder } from "./ISceneBuilder";
 import type { ITickRunner } from "./ITickRunner";
 
 export interface BaseRuntimeInitParams {
     canvas: HTMLCanvasElement;
-    engine: BABYLON.Engine;
+    engine: Engine;
     sceneBuilder: ISceneBuilder;
     tickRunner: ITickRunner;
 }
 
 export interface IRuntimeContext {
-    readonly engine: BABYLON.Engine;
-    readonly scene: BABYLON.Scene;
+    readonly engine: Engine;
+    readonly scene: Scene;
 }
 
 export class BaseRuntime {
     private readonly _canvas: HTMLCanvasElement;
-    private readonly _engine: BABYLON.Engine;
+    private readonly _engine: Engine;
     private readonly _tickRunner: ITickRunner;
-    private readonly _scene: BABYLON.Scene;
+    private readonly _scene: Scene;
     private readonly _onTick: () => void;
 
     public constructor(params: BaseRuntimeInitParams) {
@@ -47,7 +47,7 @@ export class BaseRuntime {
         this._engine.resize();
     };
 
-    private initialize(sceneBuilder: ISceneBuilder): BABYLON.Scene {
+    private initialize(sceneBuilder: ISceneBuilder): Scene {
         const scene = sceneBuilder.build(this._canvas, this._engine);
         this._tickRunner.afterBuild({
             engine: this._engine,

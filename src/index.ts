@@ -1,7 +1,7 @@
+import { Engine } from "@babylonjs/core";
+
 import css from "./index.css";
 css;
-
-import * as BABYLON from "@babylonjs/core";
 
 import { RuntimeBuilder } from "./runtime/base/RuntimeBuilder";
 import { SceneBuilder } from "./runtime/instance/SceneBuilder";
@@ -11,7 +11,7 @@ function engineStartup(): void {
     const canvas = document.getElementById("render-canvas");
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Invalid canvas element");
 
-    const engine = new BABYLON.Engine(canvas, true, {
+    const engine = new Engine(canvas, true, {
         preserveDrawingBuffer: true,
         stencil: true,
         antialias: true

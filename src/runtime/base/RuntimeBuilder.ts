@@ -1,4 +1,4 @@
-import type * as BABYLON from "@babylonjs/core";
+import type { Engine } from "@babylonjs/core";
 
 import { BaseRuntime } from "./BaseRuntime";
 import type { ISceneBuilder } from "./ISceneBuilder";
@@ -6,11 +6,11 @@ import type { ITickRunner } from "./ITickRunner";
 
 export class RuntimeBuilder {
     private readonly _canvas: HTMLCanvasElement;
-    private readonly _engine: BABYLON.Engine;
+    private readonly _engine: Engine;
     private _sceneBuilder: ISceneBuilder | null;
     private _tickRunner: ITickRunner | null;
 
-    public constructor(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
+    public constructor(canvas: HTMLCanvasElement, engine: Engine) {
         this._canvas = canvas;
         this._engine = engine;
         this._sceneBuilder = null;

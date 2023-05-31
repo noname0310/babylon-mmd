@@ -1,4 +1,5 @@
-import * as BABYLON from "@babylonjs/core";
+import type { BaseTexture, IAnimatable, Nullable, Scene, StandardMaterial, Texture, UniformBuffer } from "@babylonjs/core";
+import { Constants, MaterialDefines, MaterialPluginBase } from "@babylonjs/core";
 
 /**
  * for convert MMD material to Babylon material
@@ -34,7 +35,7 @@ import * as BABYLON from "@babylonjs/core";
 // spherical environment mapping reference:
 // https://learn.microsoft.com/en-us/windows/win32/direct3d9/spherical-environment-mapping
 
-export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
+export class MmdPluginMererialDefines extends MaterialDefines {
     /* eslint-disable @typescript-eslint/naming-convention */
     public SPHERE_TEXTURE = false;
     public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -49,11 +50,11 @@ export enum MmdPluginMaterialSphereTextureBlendMode {
     Add = 2
 }
 
-export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
-    private _sphereTexture: BABYLON.Texture | null = null;
+export class MmdPluginMaterial extends MaterialPluginBase {
+    private _sphereTexture: Texture | null = null;
     private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
 
-    private _toonTexture: BABYLON.Texture | null = null;
+    private _toonTexture: Texture | null = null;
     private _ignoreDiffuseWhenToonTextureIsNull = false;
 
     private _isEnabled = false;
@@ -69,11 +70,11 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         this._enable(value);
     }
 
-    public get sphereTexture(): BABYLON.Texture | null {
+    public get sphereTexture(): Texture | null {
         return this._sphereTexture;
     }
 
-    public set sphereTexture(value: BABYLON.Texture | null) {
+    public set sphereTexture(value: Texture | null) {
         if (this._sphereTexture === value) return;
         this._sphereTexture = value;
         this._markAllSubMeshesAsTexturesDirty();
@@ -89,11 +90,11 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         this.markAllDefinesAsDirty();
     }
 
-    public get toonTexture(): BABYLON.Texture | null {
+    public get toonTexture(): Texture | null {
         return this._toonTexture;
     }
 
-    public set toonTexture(value: BABYLON.Texture | null) {
+    public set toonTexture(value: Texture | null) {
         if (this._toonTexture === value) return;
         this._toonTexture = value;
         this._markAllSubMeshesAsTexturesDirty();
@@ -111,13 +112,13 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
 
     private readonly _markAllSubMeshesAsTexturesDirty: () => void;
 
-    public constructor(material: BABYLON.StandardMaterial, addtoPluginList = true) {
+    public constructor(material: StandardMaterial, addtoPluginList = true) {
         super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList);
 
-        this._markAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[BABYLON.Constants.MATERIAL_TextureDirtyFlag];
+        this._markAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
     }
 
-    public override isReadyForSubMesh(defines: BABYLON.MaterialDefines, scene: BABYLON.Scene): boolean {
+    public override isReadyForSubMesh(defines: MaterialDefines, scene: Scene): boolean {
         if (!this._isEnabled) return true;
 
         if (defines._areTexturesDirty && scene.texturesEnabled) {
@@ -129,7 +130,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         return true;
     }
 
-    public override bindForSubMesh(uniformBuffer: BABYLON.UniformBuffer, scene: BABYLON.Scene): void {
+    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene): void {
         if (!this._isEnabled) return;
 
         if (scene.texturesEnabled) {
@@ -149,7 +150,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         }
     }
 
-    public override getCustomCode(shaderType: string): BABYLON.Nullable<{ [pointName: string]: string; }> {
+    public override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }> {
         if (shaderType === "fragment") {
             const codes: { [pointName: string]: string; } = {};
 
@@ -227,17 +228,17 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         }
     }
 
-    public override hasTexture(texture: BABYLON.BaseTexture): boolean {
+    public override hasTexture(texture: BaseTexture): boolean {
         return this._sphereTexture === texture || this._toonTexture === texture;
     }
 
-    public override getActiveTextures(activeTextures: BABYLON.BaseTexture[]): void {
+    public override getActiveTextures(activeTextures: BaseTexture[]): void {
         if (this._sphereTexture) activeTextures.push(this._sphereTexture);
 
         if (this._toonTexture) activeTextures.push(this._toonTexture);
     }
 
-    public override getAnimatables(animatables: BABYLON.IAnimatable[]): void {
+    public override getAnimatables(animatables: IAnimatable[]): void {
         if (this._sphereTexture && this._sphereTexture.animations && 0 < this._sphereTexture.animations.length) {
             animatables.push(this._sphereTexture);
         }

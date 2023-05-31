@@ -1,30 +1,31 @@
-import * as BABYLON from "@babylonjs/core";
+import type { Scene, Texture } from "@babylonjs/core";
+import { Color3, StandardMaterial } from "@babylonjs/core";
 
 import type { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdPluginMaterial } from "./MmdPluginMaterial";
 
-export class MmdStandardMaterial extends BABYLON.StandardMaterial {
+export class MmdStandardMaterial extends StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;
 
     private _renderOutline = false;
     public outlineWidth = 0.01;
-    public outlineColor: BABYLON.Color3 = new BABYLON.Color3(0, 0, 0);
+    public outlineColor: Color3 = new Color3(0, 0, 0);
     public outlineAlpha = 1.0;
 
-    public constructor(name: string, scene?: BABYLON.Scene) {
+    public constructor(name: string, scene?: Scene) {
         super(name, scene);
-        this.specularColor = new BABYLON.Color3(0, 0, 0);
+        this.specularColor = new Color3(0, 0, 0);
 
         const pluginMaterial = this._pluginMaterial = new MmdPluginMaterial(this);
         pluginMaterial.isEnabled = true;
         pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = true;
     }
 
-    public get sphereTexture(): BABYLON.Texture | null {
+    public get sphereTexture(): Texture | null {
         return this._pluginMaterial.sphereTexture;
     }
 
-    public set sphereTexture(value: BABYLON.Texture | null) {
+    public set sphereTexture(value: Texture | null) {
         this._pluginMaterial.sphereTexture = value;
     }
 
@@ -36,11 +37,11 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
         this._pluginMaterial.sphereTextureBlendMode = value;
     }
 
-    public get toonTexture(): BABYLON.Texture | null {
+    public get toonTexture(): Texture | null {
         return this._pluginMaterial.toonTexture;
     }
 
-    public set toonTexture(value: BABYLON.Texture | null) {
+    public set toonTexture(value: Texture | null) {
         this._pluginMaterial.toonTexture = value;
     }
 
