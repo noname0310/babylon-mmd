@@ -9,7 +9,8 @@ export class TextureAlphaChecker {
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         startOffset: number,
-        length: number
+        length: number,
+        alphaThreshold = 200
     ): Promise<boolean> {
         if (context === null) return false;
 
@@ -193,7 +194,6 @@ export class TextureAlphaChecker {
         //     }
         // }
 
-        const alphaThreshold = 200;
         return alphaThreshold < maxValue;
     }
 

@@ -1,21 +1,17 @@
 import * as BABYLON from "@babylonjs/core";
 
-import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
-import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
-import { MmdStandardMaterial } from "./MmdStandardMaterial";
-import { PmxObject } from "./parser/PmxObject";
+import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
+import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import { PmxReader } from "./parser/PmxReader";
-import { SharedToonTextures } from "./SharedToonTextures";
-import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
-    private readonly _textureCache = new Map<string, WeakRef<BABYLON.Texture>>();
-
     /**
      * Name of the loader ("pmx")
      */
     public name: string;
     public extensions: BABYLON.ISceneLoaderPluginExtensions;
+
+    public materialBuilder: IMmdMaterialBuilder;
 
     public constructor() {
         this.name = "pmx";
@@ -23,6 +19,8 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             ".pmx": { isBinary: true }
         };
+
+        this.materialBuilder = new MmdStandardMaterialBuilder();
     }
 
     public importMeshAsync(
@@ -118,125 +116,18 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         geometry.applyToMesh(mesh);
 
         const multiMaterial = new BABYLON.MultiMaterial(pmxObject.header.modelName + "_multi", scene);
-        {
-            const materials = pmxObject.materials;
-            const alphaEvaluateRenderingContext = TextureAlphaChecker.createRenderingContext();
-            let offset = 0;
-            for (let i = 0; i < materials.length; ++i) {
-                const materialInfo = materials[i];
-
-                const material = new MmdStandardMaterial(materialInfo.name, scene);
-                {
-                    const diffuse = materialInfo.diffuse;
-                    material.diffuseColor = new BABYLON.Color3(
-                        diffuse[0],
-                        diffuse[1],
-                        diffuse[2]
-                    );
-
-                    const specular = materialInfo.specular;
-                    material.specularColor = new BABYLON.Color3(
-                        specular[0],
-                        specular[1],
-                        specular[2]
-                    );
-
-                    const ambient = materialInfo.ambient;
-                    material.ambientColor = new BABYLON.Color3(
-                        ambient[0],
-                        ambient[1],
-                        ambient[2]
-                    );
-
-                    const alpha = materialInfo.diffuse[3];
-                    material.alpha = alpha;
-
-                    material.specularPower = materialInfo.shininess;
-
-                    const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
-                    if (diffuseTexturePath !== undefined) {
-                        const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
-                        let diffuseTexture = this._textureCache.get(requestString)?.deref();
-                        if (diffuseTexture === undefined) {
-                            diffuseTexture = new BABYLON.Texture(requestString, scene);
-                            this._textureCache.set(requestString, new WeakRef(diffuseTexture));
-                        }
-
-                        material.diffuseTexture = diffuseTexture;
-                        material.cullBackFaces = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
-
-                        TextureAlphaChecker.textureHasAlphaOnGeometry(
-                            alphaEvaluateRenderingContext,
-                            diffuseTexture,
-                            vertexData.indices,
-                            vertexData.uvs,
-                            offset,
-                            materialInfo.surfaceCount
-                        ).then((hasAlpha) => {
-                            diffuseTexture!.hasAlpha = hasAlpha;
-                            material.useAlphaFromDiffuseTexture = hasAlpha;
-                            material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHABLEND : BABYLON.Material.MATERIAL_OPAQUE;
-                        });
-                    }
-
-                    if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.off) {
-                        const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
-                        if (sphereTexturePath !== undefined) {
-                            const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
-                            let sphereTexture = this._textureCache.get(requestString)?.deref();
-                            if (sphereTexture === undefined) {
-                                sphereTexture = new BABYLON.Texture(requestString, scene);
-                                this._textureCache.set(requestString, new WeakRef(sphereTexture));
-                            }
-                            material.sphereTexture = sphereTexture;
-                            material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
-                                ? MmdPluginMaterialSphereTextureBlendMode.Multiply
-                                : MmdPluginMaterialSphereTextureBlendMode.Add;
-                        }
-                    }
-
-                    let toonTexturePath;
-                    if (materialInfo.isSharedToonTexture) {
-                        toonTexturePath = materialInfo.toonTextureIndex === -1
-                            ? undefined
-                            : "shared_toon_texture" + materialInfo.toonTextureIndex;
-                    } else {
-                        toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
-                    }
-                    if (toonTexturePath !== undefined) {
-                        const requestString = materialInfo.isSharedToonTexture
-                            ? toonTexturePath
-                            : this.pathNormalize(rootUrl + toonTexturePath);
-                        let toonTexture = this._textureCache.get(requestString)?.deref();
-                        if (toonTexture === undefined) {
-                            const blobOrUrl = materialInfo.isSharedToonTexture
-                                ? SharedToonTextures.data[materialInfo.toonTextureIndex]
-                                : requestString;
-                            toonTexture = new BABYLON.Texture(blobOrUrl, scene);
-                            this._textureCache.set(requestString, new WeakRef(toonTexture));
-                        }
-
-                        material.toonTexture = toonTexture;
-                    }
-
-                    if (materialInfo.flag & PmxObject.Material.Flag.enabledToonEdge) {
-                        MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
-
-                        material.renderOutline = true;
-                        material.outlineWidth = materialInfo.edgeSize * 0.01;
-                        const edgeColor = materialInfo.edgeColor;
-                        material.outlineColor = new BABYLON.Color3(
-                            edgeColor[0], edgeColor[1], edgeColor[2]
-                        );
-                        material.outlineAlpha = edgeColor[3];
-                    }
-                }
-
-                multiMaterial.subMaterials.push(material);
-
-                offset += materialInfo.surfaceCount;
-            }
+        const buildMaterialsPromise = this.materialBuilder.buildMaterials(
+            pmxObject,
+            rootUrl,
+            scene,
+            vertexData.indices,
+            vertexData.uvs,
+            multiMaterial
+        );
+        if (buildMaterialsPromise !== undefined) {
+            await buildMaterialsPromise;
         }
+
         mesh.material = multiMaterial;
 
         mesh.subMeshes.length = 0;
@@ -295,22 +186,5 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
             onError
         );
         return request;
-    }
-
-    private pathNormalize(path: string): string {
-        path = path.replace(/\\/g, "/");
-        const pathArray = path.split("/");
-        const resultArray = [];
-        for (let i = 0; i < pathArray.length; ++i) {
-            const pathElement = pathArray[i];
-            if (pathElement === ".") {
-                continue;
-            } else if (pathElement === "..") {
-                resultArray.pop();
-            } else {
-                resultArray.push(pathElement);
-            }
-        }
-        return resultArray.join("/");
     }
 }
