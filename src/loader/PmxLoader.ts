@@ -223,14 +223,11 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
                         MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
 
                         material.renderOutline = true;
-                        material.renderOverlay = true;
-                        material.outlineWidth = materialInfo.edgeSize / 100;
-                        console.log(materialInfo.edgeSize);
+                        material.renderOverlay = false;
+                        material.outlineWidth = materialInfo.edgeSize * 0.01;
                         const edgeColor = materialInfo.edgeColor;
-                        material.overlayColor = new BABYLON.Color3(
-                            edgeColor[0],
-                            edgeColor[1],
-                            edgeColor[2]
+                        material.outlineColor = new BABYLON.Color3(
+                            edgeColor[0], edgeColor[1], edgeColor[2]
                         );
                         material.overlayAlpha = edgeColor[3];
                     }

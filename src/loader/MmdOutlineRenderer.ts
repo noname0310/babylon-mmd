@@ -39,7 +39,7 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
     /**
      * Defines a zOffset default Factor to prevent zFighting between the overlay and the mesh.
      */
-    public zOffset = 1;
+    public zOffset = -1;
 
     /**
      * Defines a zOffset default Unit to prevent zFighting between the overlay and the mesh.
@@ -133,7 +133,7 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
         }
 
         effect.setFloat("offset", useOverlay ? 0 : material.outlineWidth);
-        effect.setColor4("color", useOverlay ? material.overlayColor : material.outlineColor, useOverlay ? material.overlayAlpha : material.alpha);
+        effect.setColor4("color", useOverlay ? material.overlayColor : material.outlineColor, material.overlayAlpha);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
