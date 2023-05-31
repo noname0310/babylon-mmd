@@ -12,6 +12,7 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
 
         const pluginMaterial = this._pluginMaterial = new MmdPluginMaterial(this);
         pluginMaterial.isEnabled = true;
+        pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = true;
     }
 
     public get sphereTexture(): BABYLON.Texture | null {
@@ -36,5 +37,13 @@ export class MmdStandardMaterial extends BABYLON.StandardMaterial {
 
     public set toonTexture(value: BABYLON.Texture | null) {
         this._pluginMaterial.toonTexture = value;
+    }
+
+    public get ignoreDiffuseWhenToonTextureIsNull(): boolean {
+        return this._pluginMaterial.ignoreDiffuseWhenToonTextureIsNull;
+    }
+
+    public set ignoreDiffuseWhenToonTextureIsNull(value: boolean) {
+        this._pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = value;
     }
 }

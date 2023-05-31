@@ -40,6 +40,7 @@ export class MmdPluginMererialDefines extends BABYLON.MaterialDefines {
     public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
     public TOON_TEXTURE = false;
+    public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
     /* eslint-enable @typescript-eslint/naming-convention */
 }
 
@@ -53,6 +54,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
     private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
 
     private _toonTexture: BABYLON.Texture | null = null;
+    private _ignoreDiffuseWhenToonTextureIsNull = false;
 
     private _isEnabled = false;
 
@@ -95,6 +97,16 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
         if (this._toonTexture === value) return;
         this._toonTexture = value;
         this._markAllSubMeshesAsTexturesDirty();
+    }
+
+    public get ignoreDiffuseWhenToonTextureIsNull(): boolean {
+        return this._ignoreDiffuseWhenToonTextureIsNull;
+    }
+
+    public set ignoreDiffuseWhenToonTextureIsNull(value: boolean) {
+        if (this._ignoreDiffuseWhenToonTextureIsNull === value) return;
+        this._ignoreDiffuseWhenToonTextureIsNull = value;
+        this.markAllDefinesAsDirty();
     }
 
     private readonly _markAllSubMeshesAsTexturesDirty: () => void;
@@ -171,6 +183,8 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
                     infoToonDiffuse = vec3(infoToonDiffuseR, infoToonDiffuseG, infoToonDiffuseB);
 
                     diffuseBase += infoToonDiffuse * shadow;
+                #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)
+                    diffuseBase += vec3(1.0, 1.0, 1.0) * shadow;
                 #else
                     diffuseBase += info.diffuse * shadow;
                 #endif
@@ -203,11 +217,13 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null;
+            defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
             defines.TOON_TEXTURE = false;
+            defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
         }
     }
 
