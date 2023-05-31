@@ -19,6 +19,9 @@ export class SceneBuilder implements ISceneBuilder {
         camera.keysDown.push("S".charCodeAt(0));
         camera.keysLeft.push("A".charCodeAt(0));
         camera.keysRight.push("D".charCodeAt(0));
+        camera.inertia = 0;
+        camera.angularSensibility = 500;
+        camera.speed = 10;
 
         const hemisphericLight = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
