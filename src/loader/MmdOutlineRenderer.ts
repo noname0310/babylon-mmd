@@ -60,7 +60,7 @@ export class MmdOutlineRenderer implements BABYLON.ISceneComponent {
         this.scene._addComponent(this);
         this._passIdForDrawWrapper = [];
         for (let i = 0; i < 4; ++i) {
-            this._passIdForDrawWrapper[i] = this._engine.createRenderPassId(`Outline Renderer (${i})`);
+            this._passIdForDrawWrapper[i] = this._engine.createRenderPassId(`Mmd Outline Renderer (${i})`);
         }
 
         this._savedDepthWrite = false;
