@@ -154,7 +154,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
             const codes: { [pointName: string]: string; } = {};
 
             codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
-                #ifdef SPHERE_TEXTURE
+                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
                     uniform sampler2D sphereSampler;
                 #endif
                 #ifdef TOON_TEXTURE
@@ -191,7 +191,7 @@ export class MmdPluginMaterial extends BABYLON.MaterialPluginBase {
             `;
 
             codes["CUSTOM_FRAGMENT_BEFORE_FOG"] = /* glsl */`
-                #ifdef SPHERE_TEXTURE
+                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
                     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
