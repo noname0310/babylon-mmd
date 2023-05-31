@@ -127,7 +127,6 @@ export class PmxLoader implements BABYLON.ISceneLoaderPluginAsync {
         if (buildMaterialsPromise !== undefined) {
             await buildMaterialsPromise;
         }
-
         mesh.material = multiMaterial;
 
         mesh.subMeshes.length = 0;
