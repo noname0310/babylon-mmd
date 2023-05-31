@@ -27,7 +27,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const directionalLight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0.5, -1, 1), scene);
         directionalLight.intensity = 0.8;
-        // directionalLight.intensity = 0;
 
         const csmShadowGenerator = new BABYLON.CascadedShadowGenerator(1024, directionalLight);
         csmShadowGenerator.forceBackFacesOnly = true;
@@ -37,16 +36,6 @@ export class SceneBuilder implements ISceneBuilder {
         csmShadowGenerator.depthClamp = true;
         csmShadowGenerator.filteringQuality = BABYLON.ShadowGenerator.QUALITY_HIGH;
         csmShadowGenerator.normalBias = 0.02;
-
-        // const sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", {segments: 64, diameter: 16, sideOrientation: BABYLON.Mesh.FRONTSIDE}, scene);
-        // const sphereMaterial = new BABYLON.StandardMaterial("sphere1", scene);
-        // sphereMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-        // const spherePluginMaterial = new MmdPluginMaterial(sphereMaterial);
-        // spherePluginMaterial.isEnabled = true;
-        // spherePluginMaterial.sphereMap = new BABYLON.Texture("res/private_test/spheremap.png", scene);
-        // sphere.material = sphereMaterial;
-        // sphere.position.y = 8;
-        // sphere.receiveShadows = true;
 
         // BABYLON.SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb");
 
@@ -70,7 +59,6 @@ export class SceneBuilder implements ISceneBuilder {
         const ground = BABYLON.MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
 
-        //csmShadowGenerator.addShadowCaster(sphere);
         csmShadowGenerator.addShadowCaster(ground);
 
         const usePostProcess = false;
