@@ -196,7 +196,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     this.alpheblendThreshold
                 );
 
-                diffuseTexture!.hasAlpha = hasAlpha;
+                diffuseTexture.hasAlpha = hasAlpha;
                 material.useAlphaFromDiffuseTexture = hasAlpha;
                 material.transparencyMode = hasAlpha ? BABYLON.Material.MATERIAL_ALPHABLEND : BABYLON.Material.MATERIAL_OPAQUE;
             }
