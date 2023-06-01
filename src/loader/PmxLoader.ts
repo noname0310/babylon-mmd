@@ -296,6 +296,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         {
             const morphsInfo = pmxObject.morphs;
 
+            const morphTargets: MorphTarget[] = [];
+            const morphIndexMap = new Map<string, number>();
+
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
                 if (
@@ -306,11 +309,22 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                     continue;
                 }
 
-                const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+                const morphIndex = morphIndexMap.get(morphInfo.name);
+                let morphTarget: MorphTarget;
+                if (morphIndex === undefined) {
+                    morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+                    morphTargets.push(morphTarget);
+                    morphIndexMap.set(morphInfo.name, morphTargets.length - 1);
+                } else {
+                    morphTarget = morphTargets[morphIndex];
+                }
 
                 if (morphInfo.type === PmxObject.Morph.Type.vertexMorph) {
-                    const positions = new Float32Array(pmxObject.vertices.length * 3);
-                    positions.set(vertexData.positions);
+                    let positions = morphTarget.getPositions();
+                    if (positions === null) {
+                        positions = new Float32Array(pmxObject.vertices.length * 3);
+                        positions.set(vertexData.positions);
+                    }
 
                     const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
                     let time = performance.now();
@@ -330,8 +344,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
                     morphTarget.setPositions(positions);
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
-                    const uvs = new Float32Array(pmxObject.vertices.length * 2);
-                    uvs.set(vertexData.uvs);
+                    let uvs = morphTarget.getUVs();
+                    if (uvs === null) {
+                        uvs = new Float32Array(pmxObject.vertices.length * 2);
+                        uvs.set(vertexData.uvs);
+                    }
 
                     const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
                     let time = performance.now();
@@ -353,8 +370,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                         }
                     }
                 }
+            }
 
-                morphTargetManager.addTarget(morphTarget);
+            for (let i = 0; i < morphTargets.length; ++i) {
+                morphTargetManager.addTarget(morphTargets[i]);
             }
         }
         mesh.morphTargetManager = morphTargetManager;
