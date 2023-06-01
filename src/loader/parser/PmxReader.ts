@@ -220,8 +220,8 @@ export class PmxReader {
             switch (weightType) {
             case PmxObject.Vertex.BoneWeightType.bdef1: {
                 const bdef1weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1> = {
-                    boneIndices: [indexReader.getVertexIndex(dataDeserializer)],
-                    boneWeights: [1.0]
+                    boneIndices: indexReader.getVertexIndex(dataDeserializer),
+                    boneWeights: null
                 };
                 boneWeight = bdef1weight;
                 break;
@@ -229,7 +229,7 @@ export class PmxReader {
             case PmxObject.Vertex.BoneWeightType.bdef2: {
                 const bdef2weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2> = {
                     boneIndices: [indexReader.getVertexIndex(dataDeserializer), indexReader.getVertexIndex(dataDeserializer)],
-                    boneWeights: [dataDeserializer.getFloat32()]
+                    boneWeights: dataDeserializer.getFloat32()
                 };
                 boneWeight = bdef2weight;
                 break;

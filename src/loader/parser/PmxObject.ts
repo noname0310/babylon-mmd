@@ -69,15 +69,15 @@ export namespace PmxObject {
         }>;
 
         export type BoneWeight<T extends BoneWeightType = Vertex.BoneWeightType> = Readonly<{
-            boneIndices: T extends BoneWeightType.bdef1 ? [number]
+            boneIndices: T extends BoneWeightType.bdef1 ? number
                 : T extends BoneWeightType.bdef2 ? Vec2
                 : T extends BoneWeightType.bdef4 ? Vec4
                 : T extends BoneWeightType.sdef ? Vec2
                 : T extends BoneWeightType.qdef ? Vec4
                 : never;
 
-            boneWeights: T extends BoneWeightType.bdef1 ? [number]
-                : T extends BoneWeightType.bdef2 ? [number]
+            boneWeights: T extends BoneWeightType.bdef1 ? null
+                : T extends BoneWeightType.bdef2 ? number
                 : T extends BoneWeightType.bdef4 ? Vec4
                 : T extends BoneWeightType.sdef ? BoneWeightSDEF
                 : T extends BoneWeightType.qdef ? Vec4
