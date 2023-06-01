@@ -1,3 +1,6 @@
+import "@babylonjs/core/Shaders/outline.fragment";
+import "@babylonjs/core/Shaders/outline.vertex";
+
 import type { _InstancesBatch, Engine, ISceneComponent, Mesh, SubMesh} from "@babylonjs/core";
 import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
 
