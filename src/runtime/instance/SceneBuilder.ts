@@ -1,4 +1,5 @@
-import type { Engine } from "@babylonjs/core";
+import type { Engine} from "@babylonjs/core";
+import { SkeletonViewer } from "@babylonjs/core";
 import {
     CascadedShadowGenerator,
     Color3,
@@ -19,13 +20,20 @@ import {
     Vector3
 } from "@babylonjs/core";
 
+import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { PmxLoader } from "@/loader/PmxLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
     public build(canvas: HTMLCanvasElement, engine: Engine): Scene {
-        SceneLoader.RegisterPlugin(new PmxLoader());
+        const pmxLoader = new PmxLoader();
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
+        materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
+        materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
@@ -69,6 +77,21 @@ export class SceneBuilder implements ISceneBuilder {
                 scene.meshes.forEach((mesh) => {
                     mesh.receiveShadows = true;
                     csmShadowGenerator.addShadowCaster(mesh);
+
+                    if (!mesh.skeleton) {
+                        return;
+                    }
+
+                    const boneWeightShader = SkeletonViewer.CreateBoneWeightShader({
+                        skeleton: mesh.skeleton!
+                    }, scene);
+                    boneWeightShader.setFloat("targetBoneIndex", 4);
+                    mesh.material = boneWeightShader;
+
+                    const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
+                        displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+                    });
+                    viewer.isEnabled = true;
                 });
             }
         );

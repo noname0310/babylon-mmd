@@ -1,4 +1,7 @@
 import type { IFileRequest, ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent, LoadFileError, Scene, WebRequest } from "@babylonjs/core";
+import { Quaternion, Vector3 } from "@babylonjs/core";
+import { Bone, Matrix } from "@babylonjs/core";
+import { Skeleton } from "@babylonjs/core";
 import { AssetContainer, Geometry, Mesh, MultiMaterial, SubMesh, Tools, VertexData } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
@@ -149,6 +152,47 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 offset += materialInfo.surfaceCount;
             }
         }
+
+        const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
+        {
+            const bonesInfo = pmxObject.bones;
+            {
+                const bones: Bone[] = [];
+
+                for (let i = 0; i < bonesInfo.length; ++i) {
+                    const boneInfo = bonesInfo[i];
+                    const boneWorldPosition = boneInfo.position;
+
+                    const boneMatrix = Matrix.Compose(
+                        new Vector3(1, 1, 1),
+                        Quaternion.FromArray([0, 0, 0, 1]),
+                        Vector3.FromArray(boneWorldPosition)
+                    );
+
+
+                    const bone = new Bone(
+                        boneInfo.name,
+                        skeleton,
+                        undefined,
+                        boneMatrix,
+                        undefined,
+                        undefined,
+                        i // bone index
+                    );
+                    bones.push(bone);
+                }
+
+                for (let i = 0; i < bones.length; ++i) {
+                    const boneInfo = bonesInfo[i];
+                    const bone = bones[i];
+
+                    if (boneInfo.parentBoneIndex !== -1) {
+                        bone.setParent(bones[boneInfo.parentBoneIndex]);
+                    }
+                }
+            }
+        }
+        mesh.skeleton = skeleton;
 
         onProgress;
         fileName;
