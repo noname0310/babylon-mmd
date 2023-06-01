@@ -1,10 +1,28 @@
-import type { IFileRequest, ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent, LoadFileError, Scene, WebRequest } from "@babylonjs/core";
-import { MorphTarget } from "@babylonjs/core";
-import { MorphTargetManager } from "@babylonjs/core";
-import { Vector3 } from "@babylonjs/core";
-import { Bone, Matrix } from "@babylonjs/core";
-import { Skeleton } from "@babylonjs/core";
-import { AssetContainer, Geometry, Mesh, MultiMaterial, SubMesh, Tools, VertexData } from "@babylonjs/core";
+import type {
+    IFileRequest,
+    ISceneLoaderAsyncResult,
+    ISceneLoaderPluginAsync,
+    ISceneLoaderPluginExtensions,
+    ISceneLoaderProgressEvent,
+    LoadFileError,
+    Scene,
+    WebRequest
+} from "@babylonjs/core";
+import {
+    AssetContainer,
+    Bone,
+    Geometry,
+    Matrix,
+    Mesh,
+    MorphTarget,
+    MorphTargetManager,
+    MultiMaterial,
+    Skeleton,
+    SubMesh,
+    Tools,
+    Vector3,
+    VertexData
+} from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";

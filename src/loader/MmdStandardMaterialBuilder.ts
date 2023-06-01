@@ -1,4 +1,4 @@
-import type { MultiMaterial, Scene} from "@babylonjs/core";
+import type { MultiMaterial, Scene } from "@babylonjs/core";
 import { Color3, Material, Texture } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
