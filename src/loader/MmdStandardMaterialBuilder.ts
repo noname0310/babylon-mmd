@@ -42,31 +42,17 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         for (let i = 0; i < materials.length; ++i) {
             const materialInfo = materials[i];
 
-            let totalAsyncTasks = 0;
-            const onAsyncTaskComplete = (): void => {
-                totalAsyncTasks -= 1;
-                if (totalAsyncTasks === 0) {
-                    this.afterBuildSingleMaterial(
-                        material,
-                        i, // materialIndex
-                        materialInfo,
-                        multiMaterial,
-                        pmxObject,
-                        scene,
-                        rootUrl
-                    );
-                }
-            };
 
             const material = new MmdStandardMaterial(materialInfo.name, scene);
             {
+                const promises: Promise<void>[] = [];
+
                 const loadScalarPropertiesPromise = this.loadGeneralScalarProperties(
                     material,
                     materialInfo
                 );
                 if (loadScalarPropertiesPromise !== undefined) {
-                    totalAsyncTasks += 1;
-                    loadScalarPropertiesPromise.then(onAsyncTaskComplete);
+                    promises.push(loadScalarPropertiesPromise);
                 }
 
                 const loadDiffuseTexturePromise = this.loadDiffuseTexture(
@@ -81,8 +67,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     alphaEvaluateRenderingContext
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
-                    totalAsyncTasks += 1;
-                    loadDiffuseTexturePromise.then(onAsyncTaskComplete);
+                    promises.push(loadDiffuseTexturePromise);
                 }
 
                 const loadSphereTexturePromise = this.loadSphereTexture(
@@ -93,8 +78,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl
                 );
                 if (loadSphereTexturePromise !== undefined) {
-                    totalAsyncTasks += 1;
-                    loadSphereTexturePromise.then(onAsyncTaskComplete);
+                    promises.push(loadSphereTexturePromise);
                 }
 
                 const loadToonTexturePromise = this.loadToonTexture(
@@ -105,8 +89,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl
                 );
                 if (loadToonTexturePromise !== undefined) {
-                    totalAsyncTasks += 1;
-                    loadToonTexturePromise.then(onAsyncTaskComplete);
+                    promises.push(loadToonTexturePromise);
                 }
 
                 const loadOutlineRenderingPropertiesPromise = this.loadOutlineRenderingProperties(
@@ -114,9 +97,20 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     materialInfo
                 );
                 if (loadOutlineRenderingPropertiesPromise !== undefined) {
-                    totalAsyncTasks += 1;
-                    loadOutlineRenderingPropertiesPromise.then(onAsyncTaskComplete);
+                    promises.push(loadOutlineRenderingPropertiesPromise);
                 }
+
+                Promise.all(promises).then(() => {
+                    this.afterBuildSingleMaterial(
+                        material,
+                        i, // materialIndex
+                        materialInfo,
+                        multiMaterial,
+                        pmxObject,
+                        scene,
+                        rootUrl
+                    );
+                });
             }
             multiMaterial.subMaterials.push(material);
 
