@@ -1,5 +1,5 @@
 import type { IFileRequest, ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent, LoadFileError, Scene, WebRequest } from "@babylonjs/core";
-import { Quaternion, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { Bone, Matrix } from "@babylonjs/core";
 import { Skeleton } from "@babylonjs/core";
 import { AssetContainer, Geometry, Mesh, MultiMaterial, SubMesh, Tools, VertexData } from "@babylonjs/core";
@@ -163,12 +163,15 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                     const boneInfo = bonesInfo[i];
                     const boneWorldPosition = boneInfo.position;
 
-                    const boneMatrix = Matrix.Compose(
-                        new Vector3(1, 1, 1),
-                        Quaternion.FromArray([0, 0, 0, 1]),
-                        Vector3.FromArray(boneWorldPosition)
-                    );
-
+                    const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
+                    if (boneInfo.parentBoneIndex !== -1) {
+                        const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
+                        bonePosition.x -= parentBoneInfo.position[0];
+                        bonePosition.y -= parentBoneInfo.position[1];
+                        bonePosition.z -= parentBoneInfo.position[2];
+                    }
+                    const boneMatrix = Matrix.Identity()
+                        .setTranslation(bonePosition);
 
                     const bone = new Bone(
                         boneInfo.name,
