@@ -6,6 +6,7 @@ import { AssetContainer, Geometry, Mesh, MultiMaterial, SubMesh, Tools, VertexDa
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
+import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 
 export class PmxLoader implements ISceneLoaderPluginAsync {
@@ -68,6 +69,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             const positions = new Float32Array(vertices.length * 3);
             const normals = new Float32Array(vertices.length * 3);
             const uvs = new Float32Array(vertices.length * 2);
+            const boneIndices = new Float32Array(vertices.length * 4);
+            const boneWeights = new Float32Array(vertices.length * 4);
+
             let indices;
             if (pmxObject.faces instanceof Uint8Array || pmxObject.faces instanceof Uint16Array) {
                 indices = new Uint16Array(pmxObject.faces.length);
@@ -103,6 +107,75 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                     uvs[i * 2 + 0] = vertex.uv[0];
                     uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
 
+                    switch (vertex.weightType) {
+                    case PmxObject.Vertex.BoneWeightType.bdef1:
+                        {
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
+
+                            boneIndices[i * 4 + 0] = boneWeight.boneIndices;
+                            boneIndices[i * 4 + 1] = 0;
+                            boneIndices[i * 4 + 2] = 0;
+                            boneIndices[i * 4 + 3] = 0;
+
+                            boneWeights[i * 4 + 0] = 1;
+                            boneWeights[i * 4 + 1] = 0;
+                            boneWeights[i * 4 + 2] = 0;
+                            boneWeights[i * 4 + 3] = 0;
+                        }
+                        break;
+
+                    case PmxObject.Vertex.BoneWeightType.bdef2:
+                        {
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
+
+                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                            boneIndices[i * 4 + 2] = 0;
+                            boneIndices[i * 4 + 3] = 0;
+
+                            boneWeights[i * 4 + 0] = boneWeight.boneWeights;
+                            boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights;
+                            boneWeights[i * 4 + 2] = 0;
+                            boneWeights[i * 4 + 3] = 0;
+                        }
+                        break;
+
+                    case PmxObject.Vertex.BoneWeightType.bdef4:
+                    case PmxObject.Vertex.BoneWeightType.qdef: // pmx 2.1 not support fallback to bdef4
+                        {
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4>;
+
+                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                            boneIndices[i * 4 + 2] = boneWeight.boneIndices[2];
+                            boneIndices[i * 4 + 3] = boneWeight.boneIndices[3];
+
+                            boneWeights[i * 4 + 0] = boneWeight.boneWeights[0];
+                            boneWeights[i * 4 + 1] = boneWeight.boneWeights[1];
+                            boneWeights[i * 4 + 2] = boneWeight.boneWeights[2];
+                            boneWeights[i * 4 + 3] = boneWeight.boneWeights[3];
+                        }
+                        break;
+
+                    case PmxObject.Vertex.BoneWeightType.sdef:
+                        {
+                            // todo: implement sdef
+
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
+
+                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                            boneIndices[i * 4 + 2] = 0;
+                            boneIndices[i * 4 + 3] = 0;
+
+                            boneWeights[i * 4 + 0] = boneWeight.boneWeights.boneWeight0;
+                            boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights.boneWeight0;
+                            boneWeights[i * 4 + 2] = 0;
+                            boneWeights[i * 4 + 3] = 0;
+                        }
+                        break;
+                    }
+
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
                         await Tools.DelayAsync(0);
                         time = performance.now();
@@ -114,6 +187,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             vertexData.normals = normals;
             vertexData.uvs = uvs;
             vertexData.indices = indices;
+            vertexData.matricesIndices = boneIndices;
+            vertexData.matricesWeights = boneWeights;
         }
 
         const geometry = new Geometry(pmxObject.header.modelName, scene, vertexData, false);
