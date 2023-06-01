@@ -2,6 +2,7 @@ import "@babylonjs/core/Shaders/outline.fragment";
 import "@babylonjs/core/Shaders/outline.vertex";
 
 import type { _InstancesBatch, Engine, ISceneComponent, Mesh, SubMesh} from "@babylonjs/core";
+import { EffectFallbacks} from "@babylonjs/core";
 import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
@@ -143,7 +144,20 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
         // Bones
         if (renderingMesh.useBones && renderingMesh.computeBonesUsingShaders && renderingMesh.skeleton) {
-            effect.setMatrices("mBones", renderingMesh.skeleton.getTransformMatrices(renderingMesh));
+            const skeleton = renderingMesh.skeleton;
+
+            if (skeleton.isUsingTextureForMatrices) {
+                const boneTexture = skeleton.getTransformMatrixTexture(renderingMesh);
+
+                if (!boneTexture) {
+                    return;
+                }
+
+                effect.setTexture("boneSampler", boneTexture);
+                effect.setFloat("boneTextureWidth", 4.0 * (skeleton.bones.length + 1));
+            } else {
+                effect.setMatrices("mBones", skeleton.getTransformMatrices(renderingMesh));
+            }
         }
 
         if (renderingMesh.morphTargetManager && renderingMesh.morphTargetManager.isUsingTextureForTargets) {
@@ -223,15 +237,25 @@ export class MmdOutlineRenderer implements ISceneComponent {
         prepareStringDefinesForClipPlanes(material, scene, defines);
 
         // Bones
-        if (mesh.useBones && mesh.computeBonesUsingShaders) {
+        const fallbacks = new EffectFallbacks();
+        if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton) {
             attribs.push(VertexBuffer.MatricesIndicesKind);
             attribs.push(VertexBuffer.MatricesWeightsKind);
             if (mesh.numBoneInfluencers > 4) {
                 attribs.push(VertexBuffer.MatricesIndicesExtraKind);
                 attribs.push(VertexBuffer.MatricesWeightsExtraKind);
             }
+            const skeleton = mesh.skeleton;
             defines.push("#define NUM_BONE_INFLUENCERS " + mesh.numBoneInfluencers);
-            defines.push("#define BonesPerMesh " + (mesh.skeleton ? mesh.skeleton.bones.length + 1 : 0));
+            if (mesh.numBoneInfluencers > 0) {
+                fallbacks.addCPUSkinningFallback(0, mesh);
+            }
+
+            if (skeleton.isUsingTextureForMatrices) {
+                defines.push("#define BONETEXTURE");
+            } else {
+                defines.push("#define BonesPerMesh " + (skeleton.bones.length + 1));
+            }
         } else {
             defines.push("#define NUM_BONE_INFLUENCERS 0");
         }
@@ -278,13 +302,16 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 "color",
                 "logarithmicDepthConstant",
                 "morphTargetInfluences",
+                "boneTextureWidth",
                 "morphTargetTextureInfo",
                 "morphTargetTextureIndices"
             ];
+            const samplers = ["diffuseSampler", "boneSampler", "morphTargets"];
+
             addClipPlaneUniforms(uniforms);
 
             drawWrapper.setEffect(
-                this.scene.getEngine().createEffect("outline", attribs, uniforms, ["diffuseSampler", "morphTargets"], join, undefined, undefined, undefined, {
+                this.scene.getEngine().createEffect("outline", attribs, uniforms, samplers, join, undefined, undefined, undefined, {
                     maxSimultaneousMorphTargets: numMorphInfluencers
                 }),
                 join
