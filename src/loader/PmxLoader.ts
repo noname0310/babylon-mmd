@@ -1,4 +1,6 @@
 import type { IFileRequest, ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent, LoadFileError, Scene, WebRequest } from "@babylonjs/core";
+import { MorphTarget } from "@babylonjs/core";
+import { MorphTargetManager } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core";
 import { Bone, Matrix } from "@babylonjs/core";
 import { Skeleton } from "@babylonjs/core";
@@ -271,6 +273,73 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             }
         }
         mesh.skeleton = skeleton;
+
+        const morphTargetManager = new MorphTargetManager();
+        {
+            const morphsInfo = pmxObject.morphs;
+
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphInfo = morphsInfo[i];
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.vertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.uvMorph
+                ) {
+                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                    continue;
+                }
+
+                const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+
+                if (morphInfo.type === PmxObject.Morph.Type.vertexMorph) {
+                    const positions = new Float32Array(pmxObject.vertices.length * 3);
+                    positions.set(vertexData.positions);
+
+                    const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
+                    let time = performance.now();
+                    for (let i = 0; i < elements.length; ++i) {
+                        const element = elements[i];
+                        const elementIndex = element.index;
+                        const elementPosition = element.position;
+                        positions[elementIndex * 3 + 0] += elementPosition[0];
+                        positions[elementIndex * 3 + 1] += elementPosition[1];
+                        positions[elementIndex * 3 + 2] += elementPosition[2];
+
+                        if (i % 10000 === 0 && 100 < performance.now() - time) {
+                            await Tools.DelayAsync(0);
+                            time = performance.now();
+                        }
+                    }
+
+                    morphTarget.setPositions(positions);
+                } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
+                    const uvs = new Float32Array(pmxObject.vertices.length * 2);
+                    uvs.set(vertexData.uvs);
+
+                    const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
+                    let time = performance.now();
+                    for (let i = 0; i < elements.length; ++i) {
+                        const element = elements[i];
+                        const elementIndex = element.index;
+                        const elementUvOffset = element.offset;
+
+                        // todo: fix uv morph
+                        uvs[elementIndex * 2 + 0] += elementUvOffset[0];
+                        uvs[elementIndex * 2 + 0] *= elementUvOffset[1];
+
+                        uvs[elementIndex * 2 + 1] += elementUvOffset[2];
+                        uvs[elementIndex * 2 + 1] *= elementUvOffset[3];
+
+                        if (i % 10000 === 0 && 100 < performance.now() - time) {
+                            await Tools.DelayAsync(0);
+                            time = performance.now();
+                        }
+                    }
+                }
+
+                morphTargetManager.addTarget(morphTarget);
+            }
+        }
+        mesh.morphTargetManager = morphTargetManager;
 
         onProgress;
         fileName;
