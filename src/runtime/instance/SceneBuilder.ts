@@ -96,8 +96,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         csmShadowGenerator.addShadowCaster(ground);
 
-        const usePostProcess = false;
-        if (usePostProcess) {
+        const useHavyPostProcess = false;
+        const useBasicPostProcess = true;
+
+        if (useHavyPostProcess) {
             const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
             motionBlur.motionStrength = 1;
 
@@ -126,7 +128,9 @@ export class SceneBuilder implements ISceneBuilder {
             ssr.blurDispersionStrength = 0.03;
             ssr.roughnessFactor = 0.1;
             ssr.samples = 4;
+        }
 
+        if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
             defaultPipeline.samples = 4;
             defaultPipeline.bloomEnabled = true;
