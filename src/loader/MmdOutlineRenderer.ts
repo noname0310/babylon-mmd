@@ -63,7 +63,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         this._engine = scene.getEngine();
         this.scene._addComponent(this);
         this._passIdForDrawWrapper = [];
-        for (let i = 0; i < 4; ++i) {
+        for (let i = 0; i < 3; ++i) {
             this._passIdForDrawWrapper[i] = this._engine.createRenderPassId(`Mmd Outline Renderer (${i})`);
         }
 
@@ -99,10 +99,10 @@ export class MmdOutlineRenderer implements ISceneComponent {
      * Renders the outline in the canvas.
      * @param subMesh Defines the sumesh to render
      * @param batch Defines the batch of meshes in case of instances
-     * @param useOverlay Defines if the rendering is for the overlay or the outline
+     * @param vertexOffset Forcing the vertex offset value
      * @param renderPassId Render pass id to use to render the mesh
      */
-    public render(subMesh: SubMesh, batch: _InstancesBatch, useOverlay = false, renderPassId?: number): void {
+    public render(subMesh: SubMesh, batch: _InstancesBatch, vertexOffset?: number, renderPassId?: number): void {
         renderPassId = renderPassId ?? this._passIdForDrawWrapper[0];
 
         const scene = this.scene;
@@ -136,7 +136,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             effect.setFloat("logarithmicDepthConstant", 2.0 / (Math.log(scene.activeCamera.maxZ + 1.0) / Math.LN2));
         }
 
-        effect.setFloat("offset", useOverlay ? 0 : material.outlineWidth);
+        effect.setFloat("offset", vertexOffset ?? material.outlineWidth);
         effect.setColor4("color", material.outlineColor, material.outlineAlpha);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
@@ -322,7 +322,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 this._engine.setStencilMask(MmdOutlineRenderer._stencilReference);
                 this._engine.setStencilFunctionReference(MmdOutlineRenderer._stencilReference);
                 this._engine.stencilStateComposer.useStencilGlobalOnly = true;
-                this.render(subMesh, batch, /* This sets offset to 0 */ true, this._passIdForDrawWrapper[1]);
+                this.render(subMesh, batch, 0, this._passIdForDrawWrapper[1]);
 
                 this._engine.setColorWrite(true);
                 this._engine.setStencilFunction(Constants.NOTEQUAL);
@@ -330,8 +330,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             // Draw the outline using the above stencil if needed to avoid drawing within the mesh
             this._engine.setDepthWrite(false);
-            this.render(subMesh, batch, false, this._passIdForDrawWrapper[0]);
+            const currentMode = this._engine.getAlphaMode();
+            const alphaBlendState = this._engine.alphaState.alphaBlend;
+            this._engine.setAlphaMode(Constants.ALPHA_COMBINE);
+            this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[0]);
+            this._engine.setAlphaMode(currentMode);
             this._engine.setDepthWrite(this._savedDepthWrite);
+            this._engine.alphaState.alphaBlend = alphaBlendState;
 
             if (material.needAlphaBlendingForMesh(mesh)) {
                 this._engine.stencilStateComposer.useStencilGlobalOnly = false;
@@ -355,11 +360,11 @@ export class MmdOutlineRenderer implements ISceneComponent {
         //     this._engine.alphaState.alphaBlend = alphaBlendState;
         // }
 
-        // Outline - step 2
+        // Outline - step 2 (draw only depth for the outline)
         if (material.renderOutline && this._savedDepthWrite) {
             this._engine.setDepthWrite(true);
             this._engine.setColorWrite(false);
-            this.render(subMesh, batch, false, this._passIdForDrawWrapper[2]);
+            this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[2]);
             this._engine.setColorWrite(true);
         }
     }
