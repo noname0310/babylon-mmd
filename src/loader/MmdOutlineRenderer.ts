@@ -143,22 +143,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
         // Bones
-        if (renderingMesh.useBones && renderingMesh.computeBonesUsingShaders && renderingMesh.skeleton) {
-            const skeleton = renderingMesh.skeleton;
-
-            if (skeleton.isUsingTextureForMatrices) {
-                const boneTexture = skeleton.getTransformMatrixTexture(renderingMesh);
-
-                if (!boneTexture) {
-                    return;
-                }
-
-                effect.setTexture("boneSampler", boneTexture);
-                effect.setFloat("boneTextureWidth", 4.0 * (skeleton.bones.length + 1));
-            } else {
-                effect.setMatrices("mBones", skeleton.getTransformMatrices(renderingMesh));
-            }
-        }
+        MaterialHelper.BindBonesParameters(effectiveMesh, effect);
 
         if (renderingMesh.morphTargetManager && renderingMesh.morphTargetManager.isUsingTextureForTargets) {
             renderingMesh.morphTargetManager._bind(effect);
