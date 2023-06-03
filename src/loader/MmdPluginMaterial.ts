@@ -1,5 +1,21 @@
-import type { BaseTexture, IAnimatable, Nullable, Scene, StandardMaterial, Texture, UniformBuffer } from "@babylonjs/core";
-import { Constants, MaterialDefines, MaterialPluginBase } from "@babylonjs/core";
+import type {
+    BaseTexture,
+    Engine,
+    IAnimatable,
+    Mesh,
+    Nullable,
+    Scene,
+    StandardMaterial,
+    SubMesh,
+    Texture,
+    UniformBuffer} from "@babylonjs/core";
+import {
+    Constants,
+    MaterialDefines,
+    MaterialPluginBase
+} from "@babylonjs/core";
+
+import { SdefVertexBufferKind } from "./SdefVertexBufferKind";
 
 /**
  * for convert MMD material to Babylon material
@@ -42,6 +58,7 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
     public TOON_TEXTURE = false;
     public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+    public SDEF = false;
     /* eslint-enable @typescript-eslint/naming-convention */
 }
 
@@ -130,13 +147,18 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return true;
     }
 
-    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene): void {
+    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, subMesh: SubMesh): void {
         if (!this._isEnabled) return;
 
         if (scene.texturesEnabled) {
             if (this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
 
             if (this._toonTexture) uniformBuffer.setTexture("toonSampler", this._toonTexture);
+        }
+
+        const mesh = subMesh.getMesh();
+        if (mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefVertexBufferKind.sdef)) {
+            //uniformBuffer.updateMatrix("uBones", mesh.skeleton.getTransformMatrices(mesh));
         }
     }
 
@@ -151,6 +173,17 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     }
 
     public override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }> {
+        if (shaderType === "vertex") {
+            const codes: { [pointName: string]: string; } = {};
+
+            codes["CUSTOM_VERTEX_DEFINITIONS"] = /* glsl */`
+                #ifdef SDEF
+                #endif
+            `;
+
+            return codes;
+        }
+
         if (shaderType === "fragment") {
             const codes: { [pointName: string]: string; } = {};
 
@@ -212,19 +245,22 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return null;
     }
 
-    public override prepareDefines(defines: MmdPluginMererialDefines): void {
+    public override prepareDefines(defines: MmdPluginMererialDefines, scene: Scene, mesh: Mesh): void {
         if (this._isEnabled) {
-            defines.SPHERE_TEXTURE = this._sphereTexture !== null;
+            const texturesEnabled = scene.texturesEnabled;
+            defines.SPHERE_TEXTURE = this._sphereTexture !== null && texturesEnabled;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
-            defines.TOON_TEXTURE = this._toonTexture !== null;
+            defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
+            defines.SDEF = mesh.isVerticesDataPresent(SdefVertexBufferKind.sdef);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
             defines.TOON_TEXTURE = false;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+            defines.SDEF = false;
         }
     }
 
