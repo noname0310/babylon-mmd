@@ -15,7 +15,7 @@ import {
     MaterialPluginBase
 } from "@babylonjs/core";
 
-import { SdefVertexBufferKind } from "./SdefVertexBufferKind";
+import { SdefBufferExtension } from "./SdefBufferExtension";
 
 /**
  * for convert MMD material to Babylon material
@@ -157,7 +157,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         }
 
         const mesh = subMesh.getMesh();
-        if (mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefVertexBufferKind.sdef)) {
+        if (mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefBufferExtension.matricesSdefC0)) {
             //uniformBuffer.updateMatrix("uBones", mesh.skeleton.getTransformMatrices(mesh));
         }
     }
@@ -253,7 +253,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
-            defines.SDEF = mesh.isVerticesDataPresent(SdefVertexBufferKind.sdef);
+            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferExtension.matricesSdefC0);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;

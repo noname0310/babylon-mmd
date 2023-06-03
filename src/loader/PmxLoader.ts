@@ -27,6 +27,7 @@ import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
+import { SdefBufferExtension } from "./SdefBufferExtension";
 import { SdefMesh } from "./SdefMesh";
 
 export class PmxLoader implements ISceneLoaderPluginAsync {
@@ -37,6 +38,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
     public extensions: ISceneLoaderPluginExtensions;
 
     public materialBuilder: IMmdMaterialBuilder;
+    public useSdef = true;
 
     public constructor() {
         this.name = "pmx";
@@ -81,9 +83,18 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 return Promise.reject(e);
             });
 
+        const useSdef = this.useSdef;
+        if (useSdef) {
+            SdefBufferExtension.injectIfNeeded();
+        }
+
         const mesh = new SdefMesh(pmxObject.header.modelName, scene);
 
         const vertexData = new VertexData();
+        const boneSdefC0 = useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
+        const boneSdefRW0 = useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
+        const boneSdefRW1 = useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
+        let hasSdef = false;
         {
             const vertices = pmxObject.vertices;
             const positions = new Float32Array(vertices.length * 3);
@@ -100,10 +111,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             }
             {
                 let time = performance.now();
+                const faces = pmxObject.faces;
                 for (let i = 0; i < indices.length; i += 3) { // reverse winding order
-                    indices[i + 0] = pmxObject.faces[i + 0];
-                    indices[i + 1] = pmxObject.faces[i + 2];
-                    indices[i + 2] = pmxObject.faces[i + 1];
+                    indices[i + 0] = faces[i + 0];
+                    indices[i + 1] = faces[i + 2];
+                    indices[i + 2] = faces[i + 1];
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
                         await Tools.DelayAsync(0);
@@ -179,8 +191,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
                     case PmxObject.Vertex.BoneWeightType.sdef:
                         {
-                            // todo: implement sdef
-
                             const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
 
                             boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
@@ -188,10 +198,35 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                             boneIndices[i * 4 + 2] = 0;
                             boneIndices[i * 4 + 3] = 0;
 
-                            boneWeights[i * 4 + 0] = boneWeight.boneWeights.boneWeight0;
-                            boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights.boneWeight0;
+                            const sdefWeights = boneWeight.boneWeights;
+                            const boneWeight0 = sdefWeights.boneWeight0;
+                            const boneWeight1 = 1 - boneWeight0;
+
+                            boneWeights[i * 4 + 0] = boneWeight0;
+                            boneWeights[i * 4 + 1] = boneWeight1;
                             boneWeights[i * 4 + 2] = 0;
                             boneWeights[i * 4 + 3] = 0;
+
+                            if (useSdef) {
+                                boneSdefC0![i * 3 + 0] = sdefWeights.c[0];
+                                boneSdefC0![i * 3 + 1] = sdefWeights.c[1];
+                                boneSdefC0![i * 3 + 2] = sdefWeights.c[2];
+
+                                // calculate rw0 and rw1
+                                const vectorX = boneWeight0 * sdefWeights.r0[0] + boneWeight1 * sdefWeights.r1[0];
+                                const vectorY = boneWeight0 * sdefWeights.r0[1] + boneWeight1 * sdefWeights.r1[1];
+                                const vectorZ = boneWeight0 * sdefWeights.r0[2] + boneWeight1 * sdefWeights.r1[2];
+
+                                boneSdefRW0![i * 3 + 0] = sdefWeights.r0[0] - vectorX;
+                                boneSdefRW0![i * 3 + 1] = sdefWeights.r0[1] - vectorY;
+                                boneSdefRW0![i * 3 + 2] = sdefWeights.r0[2] - vectorZ;
+
+                                boneSdefRW1![i * 3 + 0] = sdefWeights.r1[0] - vectorX;
+                                boneSdefRW1![i * 3 + 1] = sdefWeights.r1[1] - vectorY;
+                                boneSdefRW1![i * 3 + 2] = sdefWeights.r1[2] - vectorZ;
+
+                                hasSdef = true;
+                            }
                         }
                         break;
                     }
@@ -212,6 +247,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
 
         const geometry = new Geometry(pmxObject.header.modelName, scene, vertexData, false);
+        if (useSdef && hasSdef) {
+            geometry.setVerticesData(SdefBufferExtension.matricesSdefC0, boneSdefC0!, false);
+            geometry.setVerticesData(SdefBufferExtension.matricesSdefRW0, boneSdefRW0!, false);
+            geometry.setVerticesData(SdefBufferExtension.matricesSdefRW1, boneSdefRW1!, false);
+        }
         geometry.applyToMesh(mesh);
 
         const multiMaterial = new MultiMaterial(pmxObject.header.modelName + "_multi", scene);
