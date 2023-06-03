@@ -13,7 +13,6 @@ import {
     Bone,
     Geometry,
     Matrix,
-    Mesh,
     MorphTarget,
     MorphTargetManager,
     MultiMaterial,
@@ -28,6 +27,7 @@ import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
+import { SdefMesh } from "./SdefMesh";
 
 export class PmxLoader implements ISceneLoaderPluginAsync {
     /**
@@ -81,7 +81,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 return Promise.reject(e);
             });
 
-        const mesh = new Mesh(pmxObject.header.modelName, scene);
+        const mesh = new SdefMesh(pmxObject.header.modelName, scene);
 
         const vertexData = new VertexData();
         {
@@ -377,6 +377,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             }
         }
         mesh.morphTargetManager = morphTargetManager;
+
+        mesh.computeBonesUsingShaders = false;
 
         onProgress;
         fileName;
