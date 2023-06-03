@@ -27,7 +27,7 @@ import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
-import { SdefBufferExtension } from "./SdefBufferExtension";
+import { SdefBufferKind } from "./SdefBufferExtension";
 import { SdefMesh } from "./SdefMesh";
 
 export class PmxLoader implements ISceneLoaderPluginAsync {
@@ -84,9 +84,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             });
 
         const useSdef = this.useSdef;
-        if (useSdef) {
-            SdefBufferExtension.injectIfNeeded();
-        }
 
         const mesh = new SdefMesh(pmxObject.header.modelName, scene);
 
@@ -248,9 +245,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         const geometry = new Geometry(pmxObject.header.modelName, scene, vertexData, false);
         if (useSdef && hasSdef) {
-            geometry.setVerticesData(SdefBufferExtension.matricesSdefC0, boneSdefC0!, false);
-            geometry.setVerticesData(SdefBufferExtension.matricesSdefRW0, boneSdefRW0!, false);
-            geometry.setVerticesData(SdefBufferExtension.matricesSdefRW1, boneSdefRW1!, false);
+            geometry.setVerticesData(SdefBufferKind.matricesSdefC0Kind, boneSdefC0!, false, 3);
+            geometry.setVerticesData(SdefBufferKind.matricesSdefRW0Kind, boneSdefRW0!, false, 3);
+            geometry.setVerticesData(SdefBufferKind.matricesSdefRW1Kind, boneSdefRW1!, false, 3);
         }
         geometry.applyToMesh(mesh);
 
@@ -418,7 +415,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        mesh.computeBonesUsingShaders = false;
+        // mesh.computeBonesUsingShaders = false;
 
         onProgress;
         fileName;

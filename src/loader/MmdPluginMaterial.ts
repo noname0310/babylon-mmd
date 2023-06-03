@@ -1,4 +1,5 @@
 import type {
+    AbstractMesh,
     BaseTexture,
     Engine,
     IAnimatable,
@@ -15,7 +16,7 @@ import {
     MaterialPluginBase
 } from "@babylonjs/core";
 
-import { SdefBufferExtension } from "./SdefBufferExtension";
+import { SdefBufferKind } from "./SdefBufferExtension";
 
 /**
  * for convert MMD material to Babylon material
@@ -147,18 +148,13 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return true;
     }
 
-    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, subMesh: SubMesh): void {
+    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, _subMesh: SubMesh): void {
         if (!this._isEnabled) return;
 
         if (scene.texturesEnabled) {
             if (this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
 
             if (this._toonTexture) uniformBuffer.setTexture("toonSampler", this._toonTexture);
-        }
-
-        const mesh = subMesh.getMesh();
-        if (mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefBufferExtension.matricesSdefC0)) {
-            //uniformBuffer.updateMatrix("uBones", mesh.skeleton.getTransformMatrices(mesh));
         }
     }
 
@@ -177,8 +173,15 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             const codes: { [pointName: string]: string; } = {};
 
             codes["CUSTOM_VERTEX_DEFINITIONS"] = /* glsl */`
-                #ifdef SDEF
+                #if NUM_BONE_INFLUENCERS > 0 && defined(SDEF)
+                    attribute vec3 matricesSdefC0;
+                    attribute vec3 matricesSdefRW0;
+                    attribute vec3 matricesSdefRW1;
                 #endif
+            `;
+
+            codes["bone transform injection point"] = /* glsl */`
+                // todo: SDEF support
             `;
 
             return codes;
@@ -253,7 +256,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
-            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferExtension.matricesSdefC0);
+            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefC0Kind);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -288,6 +291,16 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         if (this._isEnabled) {
             if (this._sphereTexture) samplers.push("sphereSampler");
             if (this._toonTexture) samplers.push("toonSampler");
+        }
+    }
+
+    public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
+        if (this._isEnabled) {
+            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefC0Kind)) {
+                attributes.push(SdefBufferKind.matricesSdefC0Kind);
+                attributes.push(SdefBufferKind.matricesSdefRW0Kind);
+                attributes.push(SdefBufferKind.matricesSdefRW1Kind);
+            }
         }
     }
 
