@@ -13,6 +13,7 @@ import {
     Bone,
     Geometry,
     Matrix,
+    Mesh,
     MorphTarget,
     MorphTargetManager,
     MultiMaterial,
@@ -85,7 +86,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         const useSdef = this.useSdef;
 
-        const mesh = new SdefMesh(pmxObject.header.modelName, scene);
+        const mesh = new (useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
 
         const vertexData = new VertexData();
         const boneSdefC0 = useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
