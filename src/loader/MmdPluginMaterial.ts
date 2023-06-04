@@ -16,7 +16,7 @@ import {
     MaterialPluginBase
 } from "@babylonjs/core";
 
-import { SdefBufferKind } from "./SdefBufferExtension";
+import { SdefBufferKind } from "./SdefBufferKind";
 
 /**
  * for convert MMD material to Babylon material

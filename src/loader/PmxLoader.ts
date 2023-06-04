@@ -28,7 +28,7 @@ import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
-import { SdefBufferKind } from "./SdefBufferExtension";
+import { SdefBufferKind } from "./SdefBufferKind";
 import { SdefMesh } from "./SdefMesh";
 
 export class PmxLoader implements ISceneLoaderPluginAsync {
@@ -416,7 +416,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        // mesh.computeBonesUsingShaders = false;
+        mesh.computeBonesUsingShaders = false;
 
         onProgress;
         fileName;
