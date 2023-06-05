@@ -175,8 +175,8 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             codes["CUSTOM_VERTEX_DEFINITIONS"] = /* glsl */`
                 #if NUM_BONE_INFLUENCERS > 0 && defined(SDEF)
                     attribute vec3 matricesSdefC0;
-                    attribute vec3 matricesSdefRW0;
-                    attribute vec3 matricesSdefRW1;
+                    attribute vec3 matricesSdefR0;
+                    attribute vec3 matricesSdefR1;
                 #endif
             `;
 
@@ -256,7 +256,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
-            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefC0Kind);
+            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -296,10 +296,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
         if (this._isEnabled) {
-            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefC0Kind)) {
-                attributes.push(SdefBufferKind.matricesSdefC0Kind);
-                attributes.push(SdefBufferKind.matricesSdefRW0Kind);
-                attributes.push(SdefBufferKind.matricesSdefRW1Kind);
+            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind)) {
+                attributes.push(SdefBufferKind.matricesSdefCKind);
+                attributes.push(SdefBufferKind.matricesSdefR0Kind);
+                attributes.push(SdefBufferKind.matricesSdefR1Kind);
             }
         }
     }

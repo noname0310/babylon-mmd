@@ -108,14 +108,14 @@ export class SdefMesh extends Mesh {
             }
         }
 
-        const hasSdefParams = this.isVerticesDataPresent(SdefBufferKind.matricesSdefC0Kind);
+        const hasSdefParams = this.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
         let sdefC0Data: Nullable<FloatArray> = null;
-        let sdefRW0Data: Nullable<FloatArray> = null;
-        let sdefRW1Data: Nullable<FloatArray> = null;
+        let sdefR0Data: Nullable<FloatArray> = null;
+        let sdefR1Data: Nullable<FloatArray> = null;
         if (hasSdefParams) {
-            sdefC0Data = this.getVerticesData(SdefBufferKind.matricesSdefC0Kind);
-            sdefRW0Data = this.getVerticesData(SdefBufferKind.matricesSdefRW0Kind);
-            sdefRW1Data = this.getVerticesData(SdefBufferKind.matricesSdefRW1Kind);
+            sdefC0Data = this.getVerticesData(SdefBufferKind.matricesSdefCKind);
+            sdefR0Data = this.getVerticesData(SdefBufferKind.matricesSdefR0Kind);
+            sdefR1Data = this.getVerticesData(SdefBufferKind.matricesSdefR1Kind);
         }
 
         const matricesIndicesData = this.getVerticesData(VertexBuffer.MatricesIndicesKind);
@@ -135,21 +135,17 @@ export class SdefMesh extends Mesh {
         const tempMatrix = new Matrix();
 
         // sdef temp variables
-        const localMatrix0 = Matrix.Identity();
-        const localMatrix1 = Matrix.Identity();
         const transformMatrix0 = new Matrix();
         const transformMatrix1 = new Matrix();
-
-        const tempVector = Vector3.Zero();
-        const tnVector = Vector3.Zero();
-        const tcVector = Vector3.Zero();
 
         const tempQuaternion0 = new Quaternion();
         const tempQuaternion1 = new Quaternion();
 
-        const resultPosition = new Vector3();
-        const resultNormal = new Vector3();
+        const finalVector = new Vector3();
         // end sdef temp variables
+
+        const sourcePositions = internalDataInfo._sourcePositions;
+        const sourceNormals = internalDataInfo._sourceNormals;
 
         let matWeightIdx = 0;
         let inf: number;
@@ -183,9 +179,9 @@ export class SdefMesh extends Mesh {
                 }
 
                 Vector3.TransformCoordinatesFromFloatsToRef(
-                    internalDataInfo._sourcePositions![index],
-                    internalDataInfo._sourcePositions![index + 1],
-                    internalDataInfo._sourcePositions![index + 2],
+                    sourcePositions![index],
+                    sourcePositions![index + 1],
+                    sourcePositions![index + 2],
                     finalMatrix,
                     tempVector3
                 );
@@ -193,9 +189,9 @@ export class SdefMesh extends Mesh {
 
                 if (hasNormals) {
                     Vector3.TransformNormalFromFloatsToRef(
-                        internalDataInfo._sourceNormals![index],
-                        internalDataInfo._sourceNormals![index + 1],
-                        internalDataInfo._sourceNormals![index + 2],
+                        sourceNormals![index],
+                        sourceNormals![index + 1],
+                        sourceNormals![index + 2],
                         finalMatrix,
                         tempVector3
                     );
@@ -204,62 +200,70 @@ export class SdefMesh extends Mesh {
 
                 finalMatrix.reset();
             } else { // SDEF transform
+                /*
+
+                // https://github.com/benikabocha/saba/blob/master/src/Saba/Model/MMD/PMXModel.cpp#L1032
+                auto& nodes = (*m_nodeMan.GetNodes());
+				const auto i0 = vtxInfo->m_sdef.m_boneIndex[0];
+				const auto i1 = vtxInfo->m_sdef.m_boneIndex[1];
+				const auto w0 = vtxInfo->m_sdef.m_boneWeight;
+				const auto w1 = 1.0f - w0;
+				const auto center = vtxInfo->m_sdef.m_sdefC;
+				const auto cr0 = vtxInfo->m_sdef.m_sdefR0;
+				const auto cr1 = vtxInfo->m_sdef.m_sdefR1;
+				const auto q0 = glm::quat_cast(nodes[i0]->GetGlobalTransform());
+				const auto q1 = glm::quat_cast(nodes[i1]->GetGlobalTransform());
+				const auto m0 = transforms[i0];
+				const auto m1 = transforms[i1];
+
+				const auto pos = *position + *morphPos;
+				const auto rot_mat = glm::mat3_cast(glm::slerp(q0, q1, w1));
+
+				*updatePosition = glm::mat3(rot_mat) * (pos - center) + glm::vec3(m0 * glm::vec4(cr0, 1)) * w0 + glm::vec3(m1 * glm::vec4(cr1, 1)) * w1;
+				*updateNormal = rot_mat * *normal;
+
+                 */
                 const weight0 = matricesWeightsData[matWeightIdx + 0];
                 const weight1 = matricesWeightsData[matWeightIdx + 1];
 
-                Matrix.FromFloat32ArrayToRefScaled(skeletonMatrices, Math.floor(matricesIndicesData[matWeightIdx + 0] * 16), 1.0, transformMatrix0);
-                Matrix.FromFloat32ArrayToRefScaled(skeletonMatrices, Math.floor(matricesIndicesData[matWeightIdx + 1] * 16), 1.0, transformMatrix1);
+                Matrix.FromArrayToRef(skeletonMatrices, Math.floor(matricesIndicesData[matWeightIdx + 0] * 16), transformMatrix0);
+                Matrix.FromArrayToRef(skeletonMatrices, Math.floor(matricesIndicesData[matWeightIdx + 1] * 16), transformMatrix1);
 
-                // equivalent to Vector3.TransformNormalToRef(rw0, localMatrix0, tcVector).scaleInPlace(0.5);
-                Vector3.TransformNormalFromFloatsToRef(
-                    sdefRW0Data![index],
-                    sdefRW0Data![index + 1],
-                    sdefRW0Data![index + 2],
-                    localMatrix0,
-                    tcVector
-                ).scaleInPlace(0.5);
-                // equivalent to Vector3.TransformCoordinatesToRef(c0, transformMatrix0, tcVector).subtractInPlace(c0);
-                Vector3.TransformCoordinatesFromFloatsToRef(c0x, c0y, c0z, transformMatrix0, tcVector).addInPlaceFromFloats(-c0x, -c0y, -c0z);
-                tempVector.copyFrom(tcVector.addInPlace(tnVector).scaleInPlace(weight0));
+                Quaternion.FromRotationMatrixToRef(transformMatrix0, tempQuaternion0);
+                Quaternion.FromRotationMatrixToRef(transformMatrix1, tempQuaternion1);
 
-                // equivalent to Vector3.TransformNormalToRef(rw1, localMatrix1, tnVector).scaleInPlace(0.5);
-                Vector3.TransformNormalFromFloatsToRef(
-                    sdefRW1Data![index],
-                    sdefRW1Data![index + 1],
-                    sdefRW1Data![index + 2],
-                    localMatrix1,
-                    tnVector
-                ).scaleInPlace(0.5);
-                // equivalent to Vector3.TransformCoordinatesToRef(c0, transformMatrix1, tcVector).subtractInPlace(c0);
-                Vector3.TransformCoordinatesFromFloatsToRef(c0x, c0y, c0z, transformMatrix1, tcVector).addInPlaceFromFloats(-c0x, -c0y, -c0z);
-                tempVector.addInPlace(tcVector.addInPlace(tnVector).scaleInPlace(weight1));
-
-                // equivalent to tempVector.addInPlace(c0);
-                tempVector.addInPlaceFromFloats(c0x, c0y, c0z);
-
-                Quaternion.FromRotationMatrixToRef(localMatrix0, tempQuaternion0);
-                Quaternion.FromRotationMatrixToRef(localMatrix1, tempQuaternion1);
                 Matrix.FromQuaternionToRef(Quaternion.SlerpToRef(tempQuaternion0, tempQuaternion1, weight1, tempQuaternion0), tempMatrix);
 
-                // equivalent to Vector3.TransformNormalToRef(outPosition.copyFrom(inPosition).subtractInPlace(c0), tempMatrix, outPosition).addInPlace(tempVector);
-                Vector3.TransformNormalFromFloatsToRef(
-                    internalDataInfo._sourcePositions![index] - c0x,
-                    internalDataInfo._sourcePositions![index + 1] - c0y,
-                    internalDataInfo._sourcePositions![index + 2] - c0z,
+                // glm::mat3(rot_mat) * (pos - center)
+                Vector3.TransformCoordinatesFromFloatsToRef(
+                    sourcePositions![index] - c0x,
+                    sourcePositions![index + 1] - c0y,
+                    sourcePositions![index + 2] - c0z,
                     tempMatrix,
-                    resultPosition
-                ).addInPlace(tempVector);
-                resultPosition.toArray(positionsData, index);
+                    finalVector
+                );
+
+                // + glm::vec3(m0 * glm::vec4(cr0, 1)) * w0
+                Vector3.TransformCoordinatesFromFloatsToRef(
+                    sdefR0Data![index], sdefR0Data![index + 1], sdefR0Data![index + 2], transformMatrix0, tempVector3
+                ).scaleAndAddToRef(weight0, finalVector);
+
+                // + glm::vec3(m1 * glm::vec4(cr1, 1)) * w1
+                Vector3.TransformCoordinatesFromFloatsToRef(
+                    sdefR1Data![index], sdefR1Data![index + 1], sdefR1Data![index + 2], transformMatrix1, tempVector3
+                ).scaleAndAddToRef(weight1, finalVector);
+
+                finalVector.toArray(positionsData, index);
 
                 if (hasNormals) {
+                    // rot_mat * *normal
                     Vector3.TransformNormalFromFloatsToRef(
-                        internalDataInfo._sourceNormals![index],
-                        internalDataInfo._sourceNormals![index + 1],
-                        internalDataInfo._sourceNormals![index + 2],
-                        tempMatrix,
-                        resultNormal
+                        sourceNormals![index],
+                        sourceNormals![index + 1],
+                        sourceNormals![index + 2],
+                        tempMatrix, finalVector
                     );
-                    resultNormal.toArray(normalsData!, index);
+                    finalVector.toArray(normalsData!, index);
                 }
             }
         }
@@ -271,50 +275,4 @@ export class SdefMesh extends Mesh {
 
         return this;
     }
-
-    /*
-    private static TransformPositionSDEF(
-        weight0: number,
-        weight1: number,
-        c0: DeepImmutable<Vector3>,
-        rw0: DeepImmutable<Vector3>,
-        rw1: DeepImmutable<Vector3>,
-        localMatrix0: DeepImmutable<Matrix>,
-        localMatrix1: DeepImmutable<Matrix>,
-        transformMatrix0: DeepImmutable<Matrix>,
-        transformMatrix1: DeepImmutable<Matrix>,
-        inPosition: DeepImmutable<Vector3>,
-        inNormal: DeepImmutable<Vector3>,
-
-        outPosition: Vector3,
-        outNormal: Vector3
-    ): void {
-        const tnVector = Vector3.Zero();
-        const tcVector = Vector3.Zero();
-
-        const tempVector = new Vector3();
-
-        const tempQuaternion0 = new Quaternion();
-        const tempQuaternion1 = new Quaternion();
-
-        const tempMatrix = new Matrix();
-
-        Vector3.TransformNormalToRef(rw0, localMatrix0, tcVector).scaleInPlace(0.5);
-        Vector3.TransformCoordinatesToRef(c0, transformMatrix0, tcVector).subtractInPlace(c0);
-        tempVector.copyFrom(tcVector.addInPlace(tnVector).scaleInPlace(weight0));
-
-        Vector3.TransformNormalToRef(rw1, localMatrix1, tnVector).scaleInPlace(0.5);
-        Vector3.TransformCoordinatesToRef(c0, transformMatrix1, tcVector).subtractInPlace(c0);
-        tempVector.addInPlace(tcVector.addInPlace(tnVector).scaleInPlace(weight1));
-
-        tempVector.addInPlace(c0);
-
-        Quaternion.FromRotationMatrixToRef(localMatrix0, tempQuaternion0);
-        Quaternion.FromRotationMatrixToRef(localMatrix1, tempQuaternion1);
-        Matrix.FromQuaternionToRef(Quaternion.SlerpToRef(tempQuaternion0, tempQuaternion1, weight1, tempQuaternion0), tempMatrix);
-
-        Vector3.TransformNormalToRef(outPosition.copyFrom(inPosition).subtractInPlace(c0), tempMatrix, outPosition).addInPlace(tempVector);
-        Vector3.TransformNormalToRef(inNormal, tempMatrix, outNormal);
-    }
-    */
 }
