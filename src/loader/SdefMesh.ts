@@ -150,16 +150,12 @@ export class SdefMesh extends Mesh {
         let matWeightIdx = 0;
         let inf: number;
         for (let index = 0; index < positionsData.length; index += 3, matWeightIdx += 4) {
-            let c0x = 0;
-            let c0y = 0;
-            let c0z = 0;
+            let r0x = 0;
             if (hasSdefParams) {
-                c0x = sdefC0Data![index];
-                c0y = sdefC0Data![index + 1];
-                c0z = sdefC0Data![index + 2];
+                r0x = sdefR0Data![index];
             }
 
-            if (c0x === 0 || c0y === 0 || c0z === 0) { // Linear transform
+            if (r0x === 0) { // Linear transform
                 let weight: number;
                 for (inf = 0; inf < 4; inf++) {
                     weight = matricesWeightsData[matWeightIdx + inf];
@@ -236,7 +232,9 @@ export class SdefMesh extends Mesh {
 
                 // glm::mat3(rot_mat) * (pos - center)
                 Vector3.TransformCoordinatesFromFloatsToRef(
-                    sourcePositions![index] - c0x, sourcePositions![index + 1] - c0y, sourcePositions![index + 2] - c0z,
+                    sourcePositions![index] - sdefC0Data![index],
+                    sourcePositions![index + 1] - sdefC0Data![index + 1],
+                    sourcePositions![index + 2] - sdefC0Data![index + 2],
                     tempMatrix,
                     finalVector
                 );

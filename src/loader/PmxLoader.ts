@@ -444,8 +444,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        mesh.computeBonesUsingShaders = false;
-
         onProgress;
         fileName;
     }
