@@ -236,9 +236,7 @@ export class SdefMesh extends Mesh {
 
                 // glm::mat3(rot_mat) * (pos - center)
                 Vector3.TransformCoordinatesFromFloatsToRef(
-                    sourcePositions![index] - c0x,
-                    sourcePositions![index + 1] - c0y,
-                    sourcePositions![index + 2] - c0z,
+                    sourcePositions![index] - c0x, sourcePositions![index + 1] - c0y, sourcePositions![index + 2] - c0z,
                     tempMatrix,
                     finalVector
                 );
@@ -258,11 +256,10 @@ export class SdefMesh extends Mesh {
                 if (hasNormals) {
                     // rot_mat * *normal
                     Vector3.TransformNormalFromFloatsToRef(
-                        sourceNormals![index],
-                        sourceNormals![index + 1],
-                        sourceNormals![index + 2],
+                        sourceNormals![index], sourceNormals![index + 1], sourceNormals![index + 2],
                         tempMatrix, finalVector
                     );
+
                     finalVector.toArray(normalsData!, index);
                 }
             }
