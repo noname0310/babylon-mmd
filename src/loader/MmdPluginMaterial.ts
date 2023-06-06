@@ -161,10 +161,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public override dispose(forceDisposeTextures?: boolean | undefined): void {
         if (forceDisposeTextures) {
             this._sphereTexture?.dispose();
-            this._sphereTexture = null;
-
             this._toonTexture?.dispose();
-            this._toonTexture = null;
         }
     }
 
@@ -173,15 +170,43 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             const codes: { [pointName: string]: string; } = {};
 
             codes["CUSTOM_VERTEX_DEFINITIONS"] = /* glsl */`
-                #if NUM_BONE_INFLUENCERS > 0 && defined(SDEF)
-                    attribute vec3 matricesSdefC0;
+                #if defined(SDEF)
+                    attribute vec3 matricesSdefC;
                     attribute vec3 matricesSdefR0;
                     attribute vec3 matricesSdefR1;
+
+                    vec4 rotationMatrixToQuaternion(mat4 matrix) {
+                        
+                    }
                 #endif
             `;
 
-            codes["bone transform injection point"] = /* glsl */`
-                // todo: SDEF support
+            codes[`!${this.escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
+                #if defined(SDEF)
+                    mat4 sdefInflunce;
+
+                    float weight0 = matricesWeights[0];
+                    float weight1 = matricesWeights[1];
+
+                    #ifdef BONETEXTURE
+                        mat4 transformMatrix0 = readMatrixFromRawSampler(boneSampler, matricesIndices[0]);
+                        mat4 transformMatrix1 = readMatrixFromRawSampler(boneSampler, matricesIndices[1]);
+                    #else
+                        mat4 transformMatrix0 = mBones[int(matricesIndices[0])];
+                        mat4 transformMatrix1 = mBones[int(matricesIndices[1])];
+                    #endif
+
+                    vec4 slerpedRotationMatrix = slerp(
+                        rotationMatrixToQuaternion(transformMatrix0), 
+                        rotationMatrixToQuaternion(transformMatrix1),
+                        weight1
+                    );
+
+                    // float useSdef = step(0.0, matricesSdefR0.x);
+                    // influence = mix(influence, sdefInflunce, useSdef);
+                #endif
+                
+                finalWorld = finalWorld * influence;
             `;
 
             return codes;
@@ -256,7 +281,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
-            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
+            defines.SDEF = mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind) && 1 < mesh.numBoneInfluencers;
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -296,7 +321,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
         if (this._isEnabled) {
-            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind)) {
+            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind) && 1 < mesh.numBoneInfluencers) {
                 attributes.push(SdefBufferKind.matricesSdefCKind);
                 attributes.push(SdefBufferKind.matricesSdefR0Kind);
                 attributes.push(SdefBufferKind.matricesSdefR1Kind);
