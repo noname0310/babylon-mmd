@@ -256,7 +256,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                         //     cosTheta = -cosTheta;
                         // }
                         q1 = mix(-q1, q1, step(0.0, cosTheta));
-                        cosTheta = mix(-cosTheta, cosTheta, step(0.0, cosTheta));
+                        cosTheta = abs(cosTheta);
                         
                         if (cosTheta > 0.999999) {
                             return normalize(mix(q0, q1, t));
