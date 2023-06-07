@@ -244,7 +244,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                             cosTheta = -cosTheta;
                         }
 
-                        if (cosTheta > 0.9995) {
+                        if (cosTheta > 0.999999) {
                             return normalize(mix(q0, q1, t));
                         }
 
@@ -279,16 +279,30 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                         weight1
                     ));
 
-                    vec3 positionOffset = -matricesSdefC * vec3(1.0, 1.0, 1.0) +
+                    // -center transform
+                    mat4 sdefInflunce = mat4(
+                        vec4(1.0, 0.0, 0.0, 0.0),
+                        vec4(0.0, 1.0, 0.0, 0.0),
+                        vec4(0.0, 0.0, 1.0, 0.0),
+                        vec4(-matricesSdefC, 1.0)
+                    );
+
+                    // rotation
+                    mat4 rotationMatrix = mat4(
+                        vec4(slerpedRotationMatrix[0], 0.0),
+                        vec4(slerpedRotationMatrix[1], 0.0),
+                        vec4(slerpedRotationMatrix[2], 0.0),
+                        vec4(0.0, 0.0, 0.0, 1.0)
+                    );
+                    sdefInflunce = rotationMatrix * sdefInflunce;
+
+                    // add position offset
+                    vec3 positionOffset =
                         vec3(transformMatrix0 * vec4(matricesSdefR0, 1)) * weight0 +
                         vec3(transformMatrix1 * vec4(matricesSdefR1, 1)) * weight1;
+
+                    sdefInflunce[3] += vec4(positionOffset, 0.0);
                     
-                    mat4 sdefInflunce = mat4(slerpedRotationMatrix);
-                    sdefInflunce[3][0] = positionOffset.x;
-                    sdefInflunce[3][1] = positionOffset.y;
-                    sdefInflunce[3][2] = positionOffset.z;
-                    sdefInflunce[3][3] = 1.0;
-                        
                     float useLinearDeform = step(0.0, -abs(matricesSdefR0.x));
 
                     influence = mat4(
