@@ -179,8 +179,20 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                         float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
                         float s;
 
+                        float sqrtParam;
                         if (trace > 0.0) {
-                            s = 0.5 / sqrt(trace + 1.0);
+                            sqrtParam = trace + 1.0;
+                        } else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
+                            sqrtParam = 1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2];
+                        } else if (matrix[1][1] > matrix[2][2]) {
+                            sqrtParam = 1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2];
+                        } else {
+                            sqrtParam = 1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1];
+                        }
+                        float sqrtValue = sqrt(sqrtParam);
+
+                        if (trace > 0.0) {
+                            s = 0.5 / sqrtValue;
 
                             return vec4(
                                 (matrix[1][2] - matrix[2][1]) * s,
@@ -189,7 +201,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                                 0.25 / s
                             );
                         } else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
-                            s = 2.0 * sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2]);
+                            s = 2.0 * sqrtValue;
 
                             return vec4(
                                 0.25 * s,
@@ -198,7 +210,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                                 (matrix[1][2] - matrix[2][1]) / s
                             );
                         } else if (matrix[1][1] > matrix[2][2]) {
-                            s = 2.0 * sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]);
+                            s = 2.0 * sqrtValue;
                             
                             return vec4(
                                 (matrix[0][1] + matrix[1][0]) / s,
@@ -207,7 +219,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                                 (matrix[2][0] - matrix[0][2]) / s
                             );
                         } else {
-                            s = 2.0 * sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]);
+                            s = 2.0 * sqrtValue;
 
                             return vec4(
                                 (matrix[2][0] + matrix[0][2]) / s,
@@ -239,10 +251,12 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     vec4 slerp(vec4 q0, vec4 q1, float t) {
                         float cosTheta = dot(q0, q1);
 
-                        if (cosTheta < 0.0) {
-                            q1 = -q1;
-                            cosTheta = -cosTheta;
-                        }
+                        // if (cosTheta < 0.0) {
+                        //     q1 = -q1;
+                        //     cosTheta = -cosTheta;
+                        // }
+                        q1 = mix(-q1, q1, step(0.0, cosTheta));
+                        cosTheta = mix(-cosTheta, cosTheta, step(0.0, cosTheta));
                         
                         if (cosTheta > 0.999999) {
                             return normalize(mix(q0, q1, t));
