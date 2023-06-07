@@ -82,6 +82,10 @@ export class SceneBuilder implements ISceneBuilder {
                         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
                         // });
                         // viewer.isEnabled = true;
+
+                        const skeleton = mesh.skeleton;
+
+                        skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI, 0));
                     }
                 });
             }
