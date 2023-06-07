@@ -85,7 +85,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                         const skeleton = mesh.skeleton;
 
-                        skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI, 0));
+                        skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI / 2, 0));
                     }
                 });
             }

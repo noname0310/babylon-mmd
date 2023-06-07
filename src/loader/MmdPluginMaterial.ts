@@ -183,9 +183,9 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                             s = 0.5 / sqrt(trace + 1.0);
 
                             return vec4(
-                                (matrix[2][1] - matrix[1][2]) * s,
-                                (matrix[0][2] - matrix[2][0]) * s,
-                                (matrix[1][0] - matrix[0][1]) * s,
+                                (matrix[1][2] - matrix[2][1]) * s,
+                                (matrix[2][0] - matrix[0][2]) * s,
+                                (matrix[0][1] - matrix[1][0]) * s,
                                 0.25 / s
                             );
                         } else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
@@ -194,26 +194,26 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                             return vec4(
                                 0.25 * s,
                                 (matrix[0][1] + matrix[1][0]) / s,
-                                (matrix[0][2] + matrix[2][0]) / s,
-                                (matrix[2][1] - matrix[1][2]) / s
+                                (matrix[2][0] + matrix[0][2]) / s,
+                                (matrix[1][2] - matrix[2][1]) / s
                             );
                         } else if (matrix[1][1] > matrix[2][2]) {
                             s = 2.0 * sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]);
-
+                            
                             return vec4(
                                 (matrix[0][1] + matrix[1][0]) / s,
                                 0.25 * s,
                                 (matrix[1][2] + matrix[2][1]) / s,
-                                (matrix[0][2] - matrix[2][0]) / s
+                                (matrix[2][0] - matrix[0][2]) / s
                             );
                         } else {
                             s = 2.0 * sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]);
 
                             return vec4(
-                                (matrix[0][2] + matrix[2][0]) / s,
+                                (matrix[2][0] + matrix[0][2]) / s,
                                 (matrix[1][2] + matrix[2][1]) / s,
                                 0.25 * s,
-                                (matrix[1][0] - matrix[0][1]) / s
+                                (matrix[0][1] - matrix[1][0]) / s
                             );
                         }
                     }
@@ -243,7 +243,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                             q1 = -q1;
                             cosTheta = -cosTheta;
                         }
-
+                        
                         if (cosTheta > 0.999999) {
                             return normalize(mix(q0, q1, t));
                         }
