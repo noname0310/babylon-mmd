@@ -1,10 +1,10 @@
-import "@babylonjs/core/Shaders/outline.fragment";
-import "@babylonjs/core/Shaders/outline.vertex";
-
 import type { _InstancesBatch, Engine, ISceneComponent, Mesh, SubMesh} from "@babylonjs/core";
 import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, EffectFallbacks, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
+import * as SdefDeclaration from "./shader/include/SdefDeclaration";
+import * as SdefVertex from "./shader/include/SdefVertex";
+import * as OutlineSdefVertex from "./shader/OutlineSdef.vertex";
 
 declare module "@babylonjs/core" {
     export interface Scene {
@@ -68,6 +68,10 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
 
         this._savedDepthWrite = false;
+
+        SdefDeclaration.registerShaderIncludeIfNeeded();
+        SdefVertex.registerShaderIncludeIfNeeded();
+        OutlineSdefVertex.registerShaderIncludeIfNeeded();
     }
 
     /**

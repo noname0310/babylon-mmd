@@ -19,7 +19,6 @@ import {
     Vector3
 } from "@babylonjs/core";
 
-import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { PmxLoader } from "@/loader/PmxLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
@@ -27,11 +26,11 @@ import type { ISceneBuilder } from "../base/ISceneBuilder";
 export class SceneBuilder implements ISceneBuilder {
     public build(canvas: HTMLCanvasElement, engine: Engine): Scene {
         const pmxLoader = new PmxLoader();
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);

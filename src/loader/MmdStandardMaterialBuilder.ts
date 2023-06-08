@@ -286,7 +286,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
 
                 material.renderOutline = true;
-                material.outlineWidth = materialInfo.edgeSize * 0.01;
+                material.outlineWidth = materialInfo.edgeSize * 0.1;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(
                     edgeColor[0], edgeColor[1], edgeColor[2]
