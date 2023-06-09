@@ -1,5 +1,3 @@
-import { Effect } from "@babylonjs/core";
-
 export const sdefVertex = /* glsl */`
 #if !defined(BAKED_VERTEX_ANIMATION_TEXTURE) && defined(SDEF)
 
@@ -59,10 +57,3 @@ export const sdefVertex = /* glsl */`
 
 #endif
 `;
-
-export function registerShaderIncludeIfNeeded(): void {
-    if (Effect.IncludesShadersStore["sdefVertex"]) {
-        return;
-    }
-    Effect.IncludesShadersStore["sdefVertex"] = sdefVertex;
-}

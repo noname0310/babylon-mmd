@@ -18,8 +18,8 @@ import {
 } from "@babylonjs/core";
 
 import { SdefBufferKind } from "./SdefBufferKind";
-import * as SdefDeclaration from "./shader/include/SdefDeclaration";
-import * as SdefVertex from "./shader/include/SdefVertex";
+import { sdefDeclaration } from "./shader/SdefDeclaration";
+import { sdefVertex } from "./shader/SdefVertex";
 
 /**
  * for convert MMD material to Babylon material
@@ -172,12 +172,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};
 
-            codes["CUSTOM_VERTEX_DEFINITIONS"] = /* glsl */`
-                ${SdefDeclaration.sdefDeclaration}
-            `;
+            codes["CUSTOM_VERTEX_DEFINITIONS"] = sdefDeclaration;
 
             codes[`!${this.escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
-                ${SdefVertex.sdefVertex}
+                ${sdefVertex}
                 
                 finalWorld = finalWorld * influence;
             `;

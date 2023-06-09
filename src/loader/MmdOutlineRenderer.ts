@@ -1,10 +1,10 @@
-import type { _InstancesBatch, Engine, ISceneComponent, Mesh, SubMesh} from "@babylonjs/core";
+import type { _InstancesBatch, Engine, IEffectCreationOptions, ISceneComponent, Mesh, SubMesh } from "@babylonjs/core";
 import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, EffectFallbacks, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
-import * as SdefDeclaration from "./shader/include/SdefDeclaration";
-import * as SdefVertex from "./shader/include/SdefVertex";
-import * as OutlineSdefVertex from "./shader/OutlineSdef.vertex";
+import { SdefBufferKind } from "./SdefBufferKind";
+import { sdefDeclaration } from "./shader/SdefDeclaration";
+import { sdefVertex } from "./shader/SdefVertex";
 
 declare module "@babylonjs/core" {
     export interface Scene {
@@ -68,10 +68,6 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
 
         this._savedDepthWrite = false;
-
-        SdefDeclaration.registerShaderIncludeIfNeeded();
-        SdefVertex.registerShaderIncludeIfNeeded();
-        OutlineSdefVertex.registerShaderIncludeIfNeeded();
     }
 
     /**
@@ -233,6 +229,12 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 attribs.push(VertexBuffer.MatricesIndicesExtraKind);
                 attribs.push(VertexBuffer.MatricesWeightsExtraKind);
             }
+            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind)) {
+                attribs.push(SdefBufferKind.matricesSdefCKind);
+                attribs.push(SdefBufferKind.matricesSdefR0Kind);
+                attribs.push(SdefBufferKind.matricesSdefR1Kind);
+                defines.push("#define SDEF");
+            }
             const skeleton = mesh.skeleton;
             defines.push("#define NUM_BONE_INFLUENCERS " + mesh.numBoneInfluencers);
             if (mesh.numBoneInfluencers > 0) {
@@ -299,9 +301,28 @@ export class MmdOutlineRenderer implements ISceneComponent {
             addClipPlaneUniforms(uniforms);
 
             drawWrapper.setEffect(
-                this.scene.getEngine().createEffect("outline", attribs, uniforms, samplers, join, undefined, undefined, undefined, {
-                    maxSimultaneousMorphTargets: numMorphInfluencers
-                }),
+                this.scene.getEngine().createEffect(
+                    "outline",
+                    <IEffectCreationOptions>{
+                        attributes: attribs,
+                        uniformsNames: uniforms,
+                        samplers: samplers,
+                        defines: join,
+                        indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
+                        processCodeAfterIncludes: (shaderType: string, code: string): string => {
+                            if (shaderType !== "vertex") return code;
+
+                            const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
+                            code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${sdefDeclaration}`);
+
+                            const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
+                            code = code.replace(sdefVertexInjectionPoint, `${sdefVertex}\nfinalWorld=finalWorld*influence;`);
+
+                            return code;
+                        }
+                    },
+                    this.scene.getEngine()
+                ),
                 join
             );
         }
