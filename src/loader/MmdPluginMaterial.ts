@@ -98,7 +98,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set sphereTexture(value: Texture | null) {
         if (this._sphereTexture === value) return;
         this._sphereTexture = value;
-        this._markAllSubMeshesAsTexturesDirty();
+        this.markAllSubMeshesAsTexturesDirty();
     }
 
     public get sphereTextureBlendMode(): MmdPluginMaterialSphereTextureBlendMode {
@@ -118,7 +118,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set toonTexture(value: Texture | null) {
         if (this._toonTexture === value) return;
         this._toonTexture = value;
-        this._markAllSubMeshesAsTexturesDirty();
+        this.markAllSubMeshesAsTexturesDirty();
     }
 
     public get ignoreDiffuseWhenToonTextureIsNull(): boolean {
@@ -131,12 +131,17 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this.markAllDefinesAsDirty();
     }
 
-    private readonly _markAllSubMeshesAsTexturesDirty: () => void;
+    private readonly _internalMarkAllSubMeshesAsTexturesDirty: () => void;
+
+    public markAllSubMeshesAsTexturesDirty(): void {
+        this._enable(this._isEnabled);
+        this._internalMarkAllSubMeshesAsTexturesDirty();
+    }
 
     public constructor(material: StandardMaterial, addtoPluginList = true) {
         super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList);
 
-        this._markAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
+        this._internalMarkAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
     }
 
     public override isReadyForSubMesh(defines: MaterialDefines, scene: Scene): boolean {
@@ -284,10 +289,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     }
 
     public override getSamplers(samplers: string[]): void {
-        if (this._isEnabled) {
-            if (this._sphereTexture) samplers.push("sphereSampler");
-            if (this._toonTexture) samplers.push("toonSampler");
-        }
+        samplers.push("sphereSampler", "toonSampler");
     }
 
     public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
