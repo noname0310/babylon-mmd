@@ -75,7 +75,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         fileName?: string
     ): Promise<void> {
         const useSdef = this.useSdef;
-        
+
         // data must be ArrayBuffer
         const pmxObject = await PmxReader.parseAsync(data)
             .catch((e: any) => {
