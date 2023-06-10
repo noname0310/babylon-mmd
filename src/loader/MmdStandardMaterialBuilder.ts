@@ -186,7 +186,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
 
                 material.diffuseTexture = diffuseTexture;
-                material.cullBackFaces = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
+                material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
 
                 const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
                     alphaEvaluateRenderingContext,
