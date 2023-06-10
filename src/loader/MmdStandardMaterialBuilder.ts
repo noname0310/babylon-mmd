@@ -1,12 +1,12 @@
 import type { MultiMaterial, Scene } from "@babylonjs/core";
-import { Color3, Material, Texture } from "@babylonjs/core";
+import { Color3, Material } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
+import { MmdAsyncTextureLoader } from "./MmdAsyncTextureLoader";
 import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
-import { SharedToonTextures } from "./SharedToonTextures";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
@@ -19,15 +19,17 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public useAlphaEvaluation = true;
 
-    public readonly textureCache = new Map<string, WeakRef<Texture>>();
+    private readonly _textureLoader = new MmdAsyncTextureLoader();
 
     public buildMaterials(
+        uniqueId: number,
         pmxObject: PmxObject,
         rootUrl: string,
         scene: Scene,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
-        multiMaterial: MultiMaterial
+        multiMaterial: MultiMaterial,
+        onComplete?: () => void
     ): void {
         // Block the marking of materials dirty until all materials are built.
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
@@ -38,24 +40,26 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             ? TextureAlphaChecker.createRenderingContext()
             : null;
 
+        const promises: Promise<void>[] = [];
+
         let offset = 0;
         for (let i = 0; i < materials.length; ++i) {
             const materialInfo = materials[i];
 
-
             const material = new MmdStandardMaterial(materialInfo.name, scene);
             {
-                const promises: Promise<void>[] = [];
+                const singleMaterialPromises: Promise<void>[] = [];
 
                 const loadScalarPropertiesPromise = this.loadGeneralScalarProperties(
                     material,
                     materialInfo
                 );
                 if (loadScalarPropertiesPromise !== undefined) {
-                    promises.push(loadScalarPropertiesPromise);
+                    singleMaterialPromises.push(loadScalarPropertiesPromise);
                 }
 
                 const loadDiffuseTexturePromise = this.loadDiffuseTexture(
+                    uniqueId,
                     material,
                     materialInfo,
                     pmxObject,
@@ -67,10 +71,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     alphaEvaluateRenderingContext
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
-                    promises.push(loadDiffuseTexturePromise);
+                    singleMaterialPromises.push(loadDiffuseTexturePromise);
                 }
 
                 const loadSphereTexturePromise = this.loadSphereTexture(
+                    uniqueId,
                     material,
                     materialInfo,
                     pmxObject,
@@ -78,10 +83,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl
                 );
                 if (loadSphereTexturePromise !== undefined) {
-                    promises.push(loadSphereTexturePromise);
+                    singleMaterialPromises.push(loadSphereTexturePromise);
                 }
 
                 const loadToonTexturePromise = this.loadToonTexture(
+                    uniqueId,
                     material,
                     materialInfo,
                     pmxObject,
@@ -89,7 +95,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl
                 );
                 if (loadToonTexturePromise !== undefined) {
-                    promises.push(loadToonTexturePromise);
+                    singleMaterialPromises.push(loadToonTexturePromise);
                 }
 
                 const loadOutlineRenderingPropertiesPromise = this.loadOutlineRenderingProperties(
@@ -97,10 +103,12 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     materialInfo
                 );
                 if (loadOutlineRenderingPropertiesPromise !== undefined) {
-                    promises.push(loadOutlineRenderingPropertiesPromise);
+                    singleMaterialPromises.push(loadOutlineRenderingPropertiesPromise);
                 }
 
-                Promise.all(promises).then(() => {
+                promises.push(...singleMaterialPromises);
+
+                Promise.all(singleMaterialPromises).then(() => {
                     this.afterBuildSingleMaterial(
                         material,
                         i, // materialIndex
@@ -117,8 +125,22 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             offset += materialInfo.surfaceCount;
         }
 
-        // Restore the blocking of material dirty.
-        scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
+        const onModelTextureLoadedObservable = this._textureLoader.onModelTextureLoadedObservable.get(uniqueId);
+        if (onModelTextureLoadedObservable !== undefined) {
+            onModelTextureLoadedObservable.addOnce(() => {
+                Promise.all(promises).then(() => {
+                    // Restore the blocking of material dirty.
+                    scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
+                    onComplete?.();
+                });
+            });
+        } else {
+            Promise.all(promises).then(() => {
+                // Restore the blocking of material dirty.
+                scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
+                onComplete?.();
+            });
+        }
     }
 
     public loadGeneralScalarProperties: (
@@ -156,6 +178,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         };
 
     public loadDiffuseTexture: (
+        uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
@@ -166,6 +189,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialIndexOffset: number,
         alphaEvaluateRenderingContext: WebGL2RenderingContext | null
     ) => Promise<void> | void = async(
+            uniqueId,
             material,
             materialInfo,
             pmxObject,
@@ -176,102 +200,106 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             offset,
             alphaEvaluateRenderingContext
         ): Promise<void> => {
+            material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
+
             const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
-                const requestString = this.pathNormalize(rootUrl + diffuseTexturePath);
-                let diffuseTexture = this.textureCache.get(requestString)?.deref();
-                if (diffuseTexture === undefined) {
-                    diffuseTexture = new Texture(requestString, scene);
-                    this.textureCache.set(requestString, new WeakRef(diffuseTexture));
-                }
-
-                material.diffuseTexture = diffuseTexture;
-                material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
-
-                const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
-                    alphaEvaluateRenderingContext,
-                    diffuseTexture,
-                    indices,
-                    uvs,
-                    offset,
-                    materialInfo.surfaceCount,
-                    this.alpheblendThreshold
+                const diffuseTexture = await this._textureLoader.loadTextureAsync(
+                    uniqueId,
+                    rootUrl,
+                    diffuseTexturePath,
+                    scene
                 );
 
-                diffuseTexture.hasAlpha = hasAlpha;
-                material.useAlphaFromDiffuseTexture = hasAlpha;
-                material.transparencyMode = hasAlpha ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                if (diffuseTexture !== null) {
+                    material.diffuseTexture = diffuseTexture;
+
+                    const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
+                        alphaEvaluateRenderingContext,
+                        diffuseTexture,
+                        indices,
+                        uvs,
+                        offset,
+                        materialInfo.surfaceCount,
+                        this.alpheblendThreshold
+                    );
+
+                    diffuseTexture.hasAlpha = hasAlpha;
+                    material.useAlphaFromDiffuseTexture = hasAlpha;
+                    material.transparencyMode = hasAlpha ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                }
             }
         };
 
     public loadSphereTexture: (
+        uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
         scene: Scene,
         rootUrl: string
-    ) => Promise<void> | void = (
+    ) => Promise<void> | void = async(
+            uniqueId,
             material,
             materialInfo,
             pmxObject,
             scene,
             rootUrl
-        ): void => {
+        ): Promise<void> => {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.off) {
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
-                    const requestString = this.pathNormalize(rootUrl + sphereTexturePath);
-                    let sphereTexture = this.textureCache.get(requestString)?.deref();
-                    if (sphereTexture === undefined) {
-                        sphereTexture = new Texture(requestString, scene);
-                        this.textureCache.set(requestString, new WeakRef(sphereTexture));
+                    const sphereTexture = await this._textureLoader.loadTextureAsync(
+                        uniqueId,
+                        rootUrl,
+                        sphereTexturePath,
+                        scene
+                    );
+
+                    if (sphereTexture !== null) {
+                        material.sphereTexture = sphereTexture;
+                        material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
+                            ? MmdPluginMaterialSphereTextureBlendMode.Multiply
+                            : MmdPluginMaterialSphereTextureBlendMode.Add;
                     }
-                    material.sphereTexture = sphereTexture;
-                    material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
-                        ? MmdPluginMaterialSphereTextureBlendMode.Multiply
-                        : MmdPluginMaterialSphereTextureBlendMode.Add;
                 }
             }
         };
 
     public loadToonTexture: (
+        uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
         scene: Scene,
         rootUrl: string
-    ) => Promise<void> | void = (
+    ) => Promise<void> | void = async(
+            uniqueId,
             material,
             materialInfo,
             pmxObject,
             scene,
             rootUrl
-        ): void => {
+        ): Promise<void> => {
             let toonTexturePath;
             if (materialInfo.isSharedToonTexture) {
                 toonTexturePath = materialInfo.toonTextureIndex === -1
                     ? undefined
-                    : "shared_toon_texture" + materialInfo.toonTextureIndex;
+                    : materialInfo.toonTextureIndex;
             } else {
                 toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
             }
             if (toonTexturePath !== undefined) {
-                const requestString = materialInfo.isSharedToonTexture
-                    ? toonTexturePath
-                    : this.pathNormalize(rootUrl + toonTexturePath);
-                let toonTexture = this.textureCache.get(requestString)?.deref();
-                if (toonTexture === undefined) {
-                    const blobOrUrl = materialInfo.isSharedToonTexture
-                        ? SharedToonTextures.data[materialInfo.toonTextureIndex]
-                        : requestString;
-                    toonTexture = new Texture(blobOrUrl, scene);
-                    if (materialInfo.isSharedToonTexture) {
-                        toonTexture.name = requestString;
-                    }
-                    this.textureCache.set(requestString, new WeakRef(toonTexture));
-                }
+                const toonTexture = await this._textureLoader.loadTextureAsync(
+                    uniqueId,
+                    rootUrl,
+                    toonTexturePath,
+                    scene
+                );
 
-                material.toonTexture = toonTexture;
+                if (toonTexture !== null) {
+                    material.toonTexture = toonTexture;
+                }
             }
         };
 
@@ -304,21 +332,4 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };
-
-    public pathNormalize(path: string): string {
-        path = path.replace(/\\/g, "/");
-        const pathArray = path.split("/");
-        const resultArray = [];
-        for (let i = 0; i < pathArray.length; ++i) {
-            const pathElement = pathArray[i];
-            if (pathElement === ".") {
-                continue;
-            } else if (pathElement === "..") {
-                resultArray.pop();
-            } else {
-                resultArray.push(pathElement);
-            }
-        }
-        return resultArray.join("/");
-    }
 }

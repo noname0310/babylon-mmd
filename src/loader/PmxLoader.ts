@@ -51,24 +51,20 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         this.materialBuilder = new MmdStandardMaterialBuilder();
     }
 
-    public importMeshAsync(
-        meshesNames: any,
+    public async importMeshAsync(
+        _meshesNames: any,
         scene: Scene,
         data: any,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         fileName?: string
     ): Promise<ISceneLoaderAsyncResult> {
-        // meshesNames type is string | string[] | any
-        // you can select
-        meshesNames;
         scene;
         data;
         rootUrl;
         onProgress;
         fileName;
-        console.log("importMesh");
-        throw new Error("Method not implemented.");
+        return Promise.reject("not implemented");
     }
 
     public async loadAsync(
@@ -282,6 +278,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         const multiMaterial = new MultiMaterial(pmxObject.header.modelName + "_multi", scene);
         const buildMaterialsPromise = this.materialBuilder.buildMaterials(
+            mesh.uniqueId,
             pmxObject,
             rootUrl,
             scene,
