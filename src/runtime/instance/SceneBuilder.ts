@@ -50,7 +50,7 @@ export class SceneBuilder implements ISceneBuilder {
         camera.angularSensibility = 500;
         camera.speed = 10;
 
-        const hemisphericLight = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
+        const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
         hemisphericLight.specular = new Color3(0, 0, 0);
         hemisphericLight.groundColor = new Color3(1, 1, 1);
