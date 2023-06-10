@@ -420,12 +420,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                         const elementIndex = element.index;
                         const elementUvOffset = element.offset;
 
-                        // todo: fix uv morph
                         uvs[elementIndex * 2 + 0] += elementUvOffset[0];
-                        uvs[elementIndex * 2 + 0] *= elementUvOffset[1];
-
-                        uvs[elementIndex * 2 + 1] += elementUvOffset[2];
-                        uvs[elementIndex * 2 + 1] *= elementUvOffset[3];
+                        uvs[elementIndex * 2 + 1] += elementUvOffset[1];
 
                         if (i % 10000 === 0 && 100 < performance.now() - time) {
                             await Tools.DelayAsync(0);
