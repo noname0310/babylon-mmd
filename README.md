@@ -8,13 +8,10 @@ mmd loader and runtime for Babylon.js
 
 **Parser**
 
-[x] PMX Parser
-
-[x] VMD Parser
-
-[ ] Optimized Custom PMX like format
-
-[ ] Optimized Custom VMD like format
+- [x] PMX Parser
+- [x] VMD Parser
+- [ ] Optimized Custom PMX like format
+- [ ] Optimized Custom VMD like format
 
 **PMX Loader**
 
