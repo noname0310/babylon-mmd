@@ -11,11 +11,18 @@ import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
-     * The threshold of material alpha to use alpha blend.
+     * The threshold of material alpha to use transparency mode.
      *
-     * lower value is more likely to use alpha blend. (0 - 255) default is 200.
+     * lower value is more likely to use transparency mode. (0 - 255) default is 200.
      */
-    public alpheblendThreshold = 200;
+    public alphaThreshold = 200;
+
+    /**
+     * The threshold of transparency mode to use alpha blend.
+     *
+     * lower value is more likely to use alpha blend mode. otherwise use alpha test mode. default is 50.
+     */
+    public alphaBlendThreshold = 50;
 
     public useAlphaEvaluation = true;
 
@@ -214,19 +221,22 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
-                    const hasAlpha = await TextureAlphaChecker.textureHasAlphaOnGeometry(
+                    const transparencyMode = await TextureAlphaChecker.textureHasAlphaOnGeometry(
                         alphaEvaluateRenderingContext,
                         diffuseTexture,
                         indices,
                         uvs,
                         offset,
                         materialInfo.surfaceCount,
-                        this.alpheblendThreshold
+                        this.alphaThreshold,
+                        this.alphaBlendThreshold
                     );
+                    const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
 
                     diffuseTexture.hasAlpha = hasAlpha;
                     material.useAlphaFromDiffuseTexture = hasAlpha;
-                    material.transparencyMode = hasAlpha ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                    material.transparencyMode = transparencyMode;
+                    if (hasAlpha) material.backFaceCulling = false;
                 }
             }
         };

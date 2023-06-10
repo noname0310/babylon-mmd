@@ -1,4 +1,10 @@
-import type { Texture } from "@babylonjs/core";
+import { Material, type Texture } from "@babylonjs/core";
+
+export enum TransparencyMode {
+    Opaque = Material.MATERIAL_OPAQUE,
+    AlphaTest = Material.MATERIAL_ALPHATEST,
+    AlphaBlend = Material.MATERIAL_ALPHABLEND
+}
 
 export class TextureAlphaChecker {
     private static readonly _resolution = 512;
@@ -10,9 +16,10 @@ export class TextureAlphaChecker {
         uvs: Float32Array,
         startOffset: number,
         length: number,
-        alphaThreshold = 200
-    ): Promise<boolean> {
-        if (context === null) return false;
+        alphaThreshold: number,
+        alphaBlendThreshold: number
+    ): Promise<TransparencyMode> {
+        if (context === null) return TransparencyMode.Opaque;
 
         if (!texture.isReady()) {
             await new Promise<void>((resolve) => {
@@ -34,13 +41,13 @@ export class TextureAlphaChecker {
             textureSize.width, // width
             textureSize.height // height
         );
-        if (pixelsBufferView === null) return false;
+        if (pixelsBufferView === null) return TransparencyMode.Opaque;
 
         context.clearColor(0, 0, 0, 0);
         context.clear(context.COLOR_BUFFER_BIT);
 
         const vertexShader = context.createShader(context.VERTEX_SHADER);
-        if (vertexShader === null) return false;
+        if (vertexShader === null) return TransparencyMode.Opaque;
         const vertexShaderSource = /* glsl */`
             precision highp float;
             attribute vec2 uv;
@@ -55,11 +62,11 @@ export class TextureAlphaChecker {
         context.compileShader(vertexShader);
         if (!context.getShaderParameter(vertexShader, context.COMPILE_STATUS)) {
             console.error(context.getShaderInfoLog(vertexShader));
-            return false;
+            return TransparencyMode.Opaque;
         }
 
         const fragmentShader = context.createShader(context.FRAGMENT_SHADER);
-        if (fragmentShader === null) return false;
+        if (fragmentShader === null) return TransparencyMode.Opaque;
         /**
          * centerAlpha | right1Alpha | right2Alpha
          * bottom1Alpha | right1Bottom1Alpha | right2Bottom1Alpha
@@ -87,23 +94,23 @@ export class TextureAlphaChecker {
         context.compileShader(fragmentShader);
         if (!context.getShaderParameter(fragmentShader, context.COMPILE_STATUS)) {
             console.error(context.getShaderInfoLog(fragmentShader));
-            return false;
+            return TransparencyMode.Opaque;
         }
 
         const program = context.createProgram();
-        if (program === null) return false;
+        if (program === null) return TransparencyMode.Opaque;
         context.attachShader(program, vertexShader);
         context.attachShader(program, fragmentShader);
         context.linkProgram(program);
         if (!context.getProgramParameter(program, context.LINK_STATUS)) {
             console.error(context.getProgramInfoLog(program));
-            return false;
+            return TransparencyMode.Opaque;
         }
 
         context.useProgram(program);
 
         const webGlTexture = context.createTexture();
-        if (webGlTexture === null) return false;
+        if (webGlTexture === null) return TransparencyMode.Opaque;
 
         context.bindTexture(context.TEXTURE_2D, webGlTexture);
         context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.NEAREST);
@@ -123,7 +130,7 @@ export class TextureAlphaChecker {
         );
 
         const uvBuffer = context.createBuffer();
-        if (uvBuffer === null) return false;
+        if (uvBuffer === null) return TransparencyMode.Opaque;
 
         context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
         context.bufferData(context.ARRAY_BUFFER, uvs, context.STATIC_DRAW);
@@ -138,7 +145,7 @@ export class TextureAlphaChecker {
         context.uniform1i(textureLocation, 0);
 
         const indexBuffer = context.createBuffer();
-        if (indexBuffer === null) return false;
+        if (indexBuffer === null) return TransparencyMode.Opaque;
 
         context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexBuffer);
         context.bufferData(context.ELEMENT_ARRAY_BUFFER, indices, context.STATIC_DRAW);
@@ -166,13 +173,22 @@ export class TextureAlphaChecker {
         );
 
         let maxValue = 0;
+        let averageMidddleAlpha = 0;
+        let averageMidddleAlphaCount = 0;
+
         for (let i = 0; i < resolution; i += 2) {
             for (let j = 0; j < resolution; j += 2) {
                 const index = (i * resolution + j) * 4;
                 const r = resultPixelsBufferView[index];
                 maxValue = Math.max(maxValue, r);
+                if (0 < r && r < 255) {
+                    averageMidddleAlpha += r;
+                    averageMidddleAlphaCount += 1;
+                }
             }
         }
+
+        averageMidddleAlpha /= averageMidddleAlphaCount;
 
         // const div = document.createElement("div");
         // div.innerText = texture.name + " " + maxValue;
@@ -194,7 +210,15 @@ export class TextureAlphaChecker {
         //     }
         // }
 
-        return alphaThreshold < maxValue;
+        if (maxValue < alphaThreshold) {
+            return TransparencyMode.Opaque;
+        }
+
+        if (averageMidddleAlpha + alphaBlendThreshold < maxValue) {
+            return TransparencyMode.AlphaTest;
+        } else {
+            return TransparencyMode.AlphaBlend;
+        }
     }
 
     public static createRenderingContext(): WebGL2RenderingContext | null {
