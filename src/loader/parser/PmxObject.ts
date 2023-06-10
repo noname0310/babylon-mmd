@@ -140,7 +140,7 @@ export namespace PmxObject {
 
         position: Vec3;
         parentBoneIndex: number;
-        transformOrder: number; // (a.k.a. Deform) todo: need to check
+        transformOrder: number; // (a.k.a. Deform)
 
         flag: number;
         tailPosition: number | Vec3; // (a.k.a. Link to)
