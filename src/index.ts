@@ -23,13 +23,6 @@ function engineStartup(): void {
         .make();
 
     runtime.run();
-
-    Object.defineProperty(globalThis, "runtime", {
-        value: runtime,
-        writable: false,
-        enumerable: true,
-        configurable: false
-    });
 }
 
 engineStartup();
