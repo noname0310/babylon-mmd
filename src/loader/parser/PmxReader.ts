@@ -220,7 +220,7 @@ export class PmxReader {
             switch (weightType) {
             case PmxObject.Vertex.BoneWeightType.bdef1: {
                 const bdef1weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1> = {
-                    boneIndices: indexReader.getVertexIndex(dataDeserializer),
+                    boneIndices: indexReader.getBoneIndex(dataDeserializer),
                     boneWeights: null
                 };
                 boneWeight = bdef1weight;
@@ -228,7 +228,7 @@ export class PmxReader {
             }
             case PmxObject.Vertex.BoneWeightType.bdef2: {
                 const bdef2weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2> = {
-                    boneIndices: [indexReader.getVertexIndex(dataDeserializer), indexReader.getVertexIndex(dataDeserializer)],
+                    boneIndices: [indexReader.getBoneIndex(dataDeserializer), indexReader.getBoneIndex(dataDeserializer)],
                     boneWeights: dataDeserializer.getFloat32()
                 };
                 boneWeight = bdef2weight;
@@ -237,10 +237,10 @@ export class PmxReader {
             case PmxObject.Vertex.BoneWeightType.bdef4: {
                 const bdef4weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4> = {
                     boneIndices: [
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer)
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer)
                     ],
                     boneWeights: [
                         dataDeserializer.getFloat32(),
@@ -254,7 +254,7 @@ export class PmxReader {
             }
             case PmxObject.Vertex.BoneWeightType.sdef: {
                 const sdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef> = {
-                    boneIndices: [indexReader.getVertexIndex(dataDeserializer), indexReader.getVertexIndex(dataDeserializer)],
+                    boneIndices: [indexReader.getBoneIndex(dataDeserializer), indexReader.getBoneIndex(dataDeserializer)],
                     boneWeights: {
                         boneWeight0: dataDeserializer.getFloat32(),
                         c: dataDeserializer.getFloat32Array(3),
@@ -268,10 +268,10 @@ export class PmxReader {
             case PmxObject.Vertex.BoneWeightType.qdef: {
                 const qdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef> = {
                     boneIndices: [
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer),
-                        indexReader.getVertexIndex(dataDeserializer)
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer),
+                        indexReader.getBoneIndex(dataDeserializer)
                     ],
                     boneWeights: [
                         dataDeserializer.getFloat32(),
