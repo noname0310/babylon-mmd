@@ -74,13 +74,13 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         fileName?: string
     ): Promise<void> {
+        const useSdef = this.useSdef;
+        
         // data must be ArrayBuffer
         const pmxObject = await PmxReader.parseAsync(data)
             .catch((e: any) => {
                 return Promise.reject(e);
             });
-
-        const useSdef = this.useSdef;
 
         const mesh = new (useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
 
