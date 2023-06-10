@@ -75,10 +75,10 @@ export class SceneBuilder implements ISceneBuilder {
             scene,
             (scene) => {
                 scene.meshes.forEach((mesh) => {
-                    mesh.receiveShadows = true;
-                    csmShadowGenerator.addShadowCaster(mesh);
-
                     if (mesh.skeleton) {
+                        mesh.receiveShadows = true;
+                        csmShadowGenerator.addShadowCaster(mesh);
+
                         // const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
                         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
                         // });
