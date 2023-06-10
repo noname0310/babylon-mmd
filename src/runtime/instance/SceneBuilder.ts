@@ -139,12 +139,12 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = true;
-            defaultPipeline.chromaticAberrationEnabled = true;
+            defaultPipeline.bloomEnabled = false;
+            defaultPipeline.chromaticAberrationEnabled = false;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = false;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = true;
+            defaultPipeline.imageProcessingEnabled = false;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
