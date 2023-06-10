@@ -20,11 +20,13 @@ import {
 } from "@babylonjs/core";
 
 import { PmxLoader } from "@/loader/PmxLoader";
+import { SdefInjector } from "@/loader/SdefInjector";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
     public build(canvas: HTMLCanvasElement, engine: Engine): Scene {
+        SdefInjector.overrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };

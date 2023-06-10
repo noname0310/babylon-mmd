@@ -3,8 +3,7 @@ import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, EffectFall
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { SdefBufferKind } from "./SdefBufferKind";
-import { sdefDeclaration } from "./shader/SdefDeclaration";
-import { sdefVertex } from "./shader/SdefVertex";
+import { SdefInjector } from "./SdefInjector";
 
 declare module "@babylonjs/core" {
     export interface Scene {
@@ -309,17 +308,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
                         samplers: samplers,
                         defines: join,
                         indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
-                        processCodeAfterIncludes: (shaderType: string, code: string): string => {
-                            if (shaderType !== "vertex") return code;
-
-                            const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
-                            code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${sdefDeclaration}`);
-
-                            const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
-                            code = code.replace(sdefVertexInjectionPoint, `${sdefVertex}\nfinalWorld=finalWorld*influence;`);
-
-                            return code;
-                        }
+                        processCodeAfterIncludes: SdefInjector.processSdefCode
                     },
                     this.scene.getEngine()
                 ),
