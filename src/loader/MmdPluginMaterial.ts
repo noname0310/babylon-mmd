@@ -63,7 +63,6 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public TOON_TEXTURE = false;
     public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
     public SDEF = false;
-    public NONSDEF = true;
     /* eslint-enable @typescript-eslint/naming-convention */
 }
 
@@ -259,7 +258,6 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
             defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
-            defines.NONSDEF = !defines.SDEF;
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -267,7 +265,6 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.TOON_TEXTURE = false;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
             defines.SDEF = false;
-            defines.NONSDEF = true;
         }
     }
 

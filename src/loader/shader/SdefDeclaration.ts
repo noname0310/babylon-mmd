@@ -1,6 +1,9 @@
 import { Effect } from "@babylonjs/core";
 
 export const sdefDeclaration = /* glsl */`
+#ifndef SDEFDECLARATION
+#define SDEFDECLARATION
+
 #if NUM_BONE_INFLUENCERS > 0 && defined(SDEF)
 attribute vec3 matricesSdefC;
 attribute vec3 matricesSdefR0;
@@ -101,6 +104,8 @@ vec4 slerp(vec4 q0, vec4 q1, float t) {
 
     return q0 * w0 + q1 * w1;
 }
+#endif
+
 #endif
 `;
 

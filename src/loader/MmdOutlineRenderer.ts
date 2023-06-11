@@ -233,8 +233,6 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 attribs.push(SdefBufferKind.matricesSdefR0Kind);
                 attribs.push(SdefBufferKind.matricesSdefR1Kind);
                 defines.push("#define SDEF");
-            } else {
-                defines.push("#define NONSDEF");
             }
             const skeleton = mesh.skeleton;
             defines.push("#define NUM_BONE_INFLUENCERS " + mesh.numBoneInfluencers);

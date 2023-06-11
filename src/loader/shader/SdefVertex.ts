@@ -1,4 +1,7 @@
 export const sdefVertex = /* glsl */`
+#ifndef SDEFVERTEX
+#define SDEFVERTEX
+
 #if !defined(BAKED_VERTEX_ANIMATION_TEXTURE) && defined(SDEF)
 
 #if NUM_BONE_INFLUENCERS > 0
@@ -53,6 +56,8 @@ export const sdefVertex = /* glsl */`
         mix(sdefInflunce[3], influence[3], useLinearDeform)
     );
 }
+#endif
+
 #endif
 
 #endif
