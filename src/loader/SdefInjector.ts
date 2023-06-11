@@ -40,7 +40,7 @@ export class SdefInjector {
 
             if (effectCreationOptions.shaderLanguage === ShaderLanguage.GLSL || effectCreationOptions.shaderLanguage === undefined) {
                 if (effectCreationOptions.uniformsNames.includes("mBones") || effectCreationOptions.samplers.includes("boneSampler")) {
-                    if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
+                    if (effectCreationOptions.defines.indexOf("#define SDEF") === -1 && effectCreationOptions.defines.indexOf("#define NONSDEF") === -1) {
 
                         effectCreationOptions.attributes.push(SdefBufferKind.matricesSdefCKind);
                         effectCreationOptions.attributes.push(SdefBufferKind.matricesSdefR0Kind);

@@ -70,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
         // SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb");
 
         SceneLoader.Append(
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            "res/private_test/model/YYB Symphony Miku by HB-Squiddy/yyb Symphony Miku by HB-Squiddy.pmx",
             undefined,
             scene,
             (scene) => {
