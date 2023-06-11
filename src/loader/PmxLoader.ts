@@ -72,7 +72,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         data: any,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        fileName?: string
+        _fileName?: string
     ): Promise<void> {
         const useSdef = this.useSdef;
 
@@ -81,6 +81,36 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             .catch((e: any) => {
                 return Promise.reject(e);
             });
+
+        const parseCost = Math.floor(data.byteLength / 100);
+        const buildMaterialCost = 100 * pmxObject.materials.length;
+        const buildSkeletonCost = 100 * pmxObject.bones.length;
+        let buildMorphCost = 0;
+        {
+            const morphsInfo = pmxObject.morphs;
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphInfo = morphsInfo[i];
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.vertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.uvMorph
+                ) {
+                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                    continue;
+                }
+
+                buildMorphCost += morphInfo.elements.length;
+            }
+        }
+
+        const progressEvent = {
+            lengthComputable: true,
+            loaded: parseCost,
+            total: parseCost + pmxObject.faces.length + pmxObject.vertices.length + buildMaterialCost + buildSkeletonCost + buildMorphCost
+        };
+
+        onProgress?.({...progressEvent});
+
+        let lastStageLoaded = parseCost;
 
         const mesh = new (useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
 
@@ -112,10 +142,17 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                     indices[i + 2] = faces[i + 1];
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        progressEvent.loaded = lastStageLoaded + i;
+                        onProgress?.({...progressEvent});
+
                         await Tools.DelayAsync(0);
                         time = performance.now();
                     }
                 }
+
+                progressEvent.loaded = lastStageLoaded + indices.length;
+                onProgress?.({...progressEvent});
+                lastStageLoaded += indices.length;
             }
 
             {
@@ -254,10 +291,17 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                     }
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        progressEvent.loaded = lastStageLoaded + i;
+                        onProgress?.({...progressEvent});
+
                         await Tools.DelayAsync(0);
                         time = performance.now();
                     }
                 }
+
+                progressEvent.loaded = lastStageLoaded + vertices.length;
+                onProgress?.({...progressEvent});
+                lastStageLoaded += vertices.length;
             }
 
             vertexData.positions = positions;
@@ -311,6 +355,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             }
         }
 
+        progressEvent.loaded = lastStageLoaded + buildMaterialCost;
+        onProgress?.({...progressEvent});
+        lastStageLoaded += buildMaterialCost;
+
         const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
         {
             const bonesInfo = pmxObject.bones;
@@ -355,6 +403,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         mesh.skeleton = skeleton;
 
+        progressEvent.loaded = lastStageLoaded + buildSkeletonCost;
+        onProgress?.({...progressEvent});
+        lastStageLoaded += buildSkeletonCost;
+
         const morphTargetManager = new MorphTargetManager();
         {
             const morphsInfo = pmxObject.morphs;
@@ -391,19 +443,23 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
                     const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
                     let time = performance.now();
-                    for (let i = 0; i < elements.length; ++i) {
-                        const element = elements[i];
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
                         const elementIndex = element.index;
                         const elementPosition = element.position;
                         positions[elementIndex * 3 + 0] += elementPosition[0];
                         positions[elementIndex * 3 + 1] += elementPosition[1];
                         positions[elementIndex * 3 + 2] += elementPosition[2];
 
-                        if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        if (j % 10000 === 0 && 100 < performance.now() - time) {
+                            progressEvent.loaded = lastStageLoaded + j;
+                            onProgress?.({...progressEvent});
+
                             await Tools.DelayAsync(0);
                             time = performance.now();
                         }
                     }
+                    lastStageLoaded += elements.length;
 
                     morphTarget.setPositions(positions);
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
@@ -415,19 +471,25 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
                     const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
                     let time = performance.now();
-                    for (let i = 0; i < elements.length; ++i) {
-                        const element = elements[i];
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
                         const elementIndex = element.index;
                         const elementUvOffset = element.offset;
 
                         uvs[elementIndex * 2 + 0] += elementUvOffset[0];
                         uvs[elementIndex * 2 + 1] += elementUvOffset[1];
 
-                        if (i % 10000 === 0 && 100 < performance.now() - time) {
+                        if (j % 10000 === 0 && 100 < performance.now() - time) {
+                            progressEvent.loaded = lastStageLoaded + j;
+                            onProgress?.({...progressEvent});
+
                             await Tools.DelayAsync(0);
                             time = performance.now();
                         }
                     }
+                    lastStageLoaded += elements.length;
+
+                    morphTarget.setUVs(uvs);
                 }
             }
 
@@ -437,8 +499,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        onProgress;
-        fileName;
+        progressEvent.loaded = lastStageLoaded;
+        onProgress?.({...progressEvent});
     }
 
     public loadAssetContainerAsync(
