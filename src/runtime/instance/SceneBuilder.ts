@@ -60,17 +60,17 @@ export class SceneBuilder implements ISceneBuilder {
 
         const csmShadowGenerator = new CascadedShadowGenerator(1024, directionalLight);
         csmShadowGenerator.forceBackFacesOnly = true;
-        csmShadowGenerator.numCascades = 4;
+        csmShadowGenerator.numCascades = 2;
         csmShadowGenerator.autoCalcDepthBounds = true;
         csmShadowGenerator.lambda = 1;
         csmShadowGenerator.depthClamp = true;
-        csmShadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
+        csmShadowGenerator.filteringQuality = ShadowGenerator.QUALITY_LOW;
         csmShadowGenerator.normalBias = 0.02;
 
         // SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb");
 
         SceneLoader.Append(
-            "res/private_test/model/YYB Symphony Miku by HB-Squiddy/yyb Symphony Miku by HB-Squiddy.pmx",
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene,
             (scene) => {
