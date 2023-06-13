@@ -51,29 +51,69 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         this.materialBuilder = new MmdStandardMaterialBuilder();
     }
 
-    public async importMeshAsync(
+    public importMeshAsync(
         _meshesNames: any,
         scene: Scene,
         data: any,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        fileName?: string
+        _fileName?: string
     ): Promise<ISceneLoaderAsyncResult> {
-        scene;
-        data;
-        rootUrl;
-        onProgress;
-        fileName;
-        return Promise.reject("not implemented");
+        return this.loadAsyncInternal(scene, null, data, rootUrl, onProgress);
     }
 
-    public async loadAsync(
+    public loadAsync(
         scene: Scene,
         data: any,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         _fileName?: string
     ): Promise<void> {
+        return this.loadAsyncInternal(scene, null, data, rootUrl, onProgress).then(() => {
+            return;
+        });
+    }
+
+    public loadAssetContainerAsync(
+        scene: Scene,
+        data: any,
+        rootUrl: string,
+        onProgress?: (event: ISceneLoaderProgressEvent) => void,
+        _fileName?: string
+    ): Promise<AssetContainer> {
+        const assetContainer = new AssetContainer(scene);
+
+        return this.loadAsyncInternal(scene, assetContainer, data, rootUrl, onProgress).then(() => {
+            return assetContainer;
+        });
+    }
+
+    public loadFile(
+        scene: Scene,
+        fileOrUrl: string | File,
+        onSuccess: (data: any, responseURL?: string | undefined) => void,
+        onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
+        useArrayBuffer?: boolean | undefined,
+        onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
+    ): IFileRequest {
+        const request = scene._loadFile(
+            fileOrUrl,
+            onSuccess,
+            onProgress,
+            true,
+            useArrayBuffer,
+            onError
+        );
+        return request;
+    }
+
+    private async loadAsyncInternal(
+        scene: Scene,
+        assetContainer: AssetContainer | null,
+        data: ArrayBuffer,
+        rootUrl: string,
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
+    ): Promise<ISceneLoaderAsyncResult> {
         const useSdef = this.useSdef;
 
         // data must be ArrayBuffer
@@ -112,7 +152,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         let lastStageLoaded = parseCost;
 
+        scene._blockEntityCollection = !!assetContainer;
         const mesh = new (useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
+        mesh._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
 
         const vertexData = new VertexData();
         const boneSdefC = useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
@@ -312,7 +355,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             vertexData.matricesWeights = boneWeights;
         }
 
+        scene._blockEntityCollection = !!assetContainer;
         const geometry = new Geometry(pmxObject.header.modelName, scene, vertexData, false);
+        geometry._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+
         if (useSdef && hasSdef) {
             geometry.setVerticesData(SdefBufferKind.matricesSdefCKind, boneSdefC!, false, 3);
             geometry.setVerticesData(SdefBufferKind.matricesSdefR0Kind, boneSdefR0!, false, 3);
@@ -320,7 +367,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         }
         geometry.applyToMesh(mesh);
 
+        scene._blockEntityCollection = !!assetContainer;
         const multiMaterial = new MultiMaterial(pmxObject.header.modelName + "_multi", scene);
+        multiMaterial._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+
         const buildMaterialsPromise = this.materialBuilder.buildMaterials(
             mesh.uniqueId,
             pmxObject,
@@ -359,7 +410,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         onProgress?.({...progressEvent});
         lastStageLoaded += buildMaterialCost;
 
+        scene._blockEntityCollection = !!assetContainer;
         const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
+        skeleton._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
         {
             const bonesInfo = pmxObject.bones;
             {
@@ -407,7 +461,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         onProgress?.({...progressEvent});
         lastStageLoaded += buildSkeletonCost;
 
-        const morphTargetManager = new MorphTargetManager();
+        scene._blockEntityCollection = !!assetContainer;
+        const morphTargetManager = new MorphTargetManager(scene);
+        morphTargetManager._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
         {
             const morphsInfo = pmxObject.morphs;
 
@@ -503,40 +560,23 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         progressEvent.loaded = lastStageLoaded;
         onProgress?.({...progressEvent});
-    }
 
-    public loadAssetContainerAsync(
-        scene: Scene,
-        data: any,
-        rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        _fileName?: string
-    ): Promise<AssetContainer> {
-        return Promise.resolve().then(() => {
-            const assetContainer = new AssetContainer(scene);
+        if (assetContainer !== null) {
+            assetContainer.meshes.push(mesh);
+            assetContainer.geometries.push(geometry);
+            assetContainer.materials.push(multiMaterial);
+            assetContainer.skeletons.push(skeleton);
+            assetContainer.morphTargetManagers.push(morphTargetManager);
+        }
 
-            return this.importMeshAsync(null, scene, data, rootUrl, onProgress).then(() => {
-                return assetContainer;
-            });
-        });
-    }
-
-    public loadFile(
-        scene: Scene,
-        fileOrUrl: string | File,
-        onSuccess: (data: any, responseURL?: string | undefined) => void,
-        onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
-        useArrayBuffer?: boolean | undefined,
-        onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
-    ): IFileRequest {
-        const request = scene._loadFile(
-            fileOrUrl,
-            onSuccess,
-            onProgress,
-            true,
-            useArrayBuffer,
-            onError
-        );
-        return request;
+        return {
+            meshes: [mesh],
+            particleSystems: [],
+            skeletons: [skeleton],
+            animationGroups: [],
+            transformNodes: [],
+            geometries: [geometry],
+            lights: []
+        };
     }
 }
