@@ -493,9 +493,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 }
             }
 
+            morphTargetManager.areUpdatesFrozen = true;
             for (let i = 0; i < morphTargets.length; ++i) {
                 morphTargetManager.addTarget(morphTargets[i]);
             }
+            morphTargetManager.areUpdatesFrozen = false;
         }
         mesh.morphTargetManager = morphTargetManager;
 
@@ -508,14 +510,15 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         data: any,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        fileName?: string
+        _fileName?: string
     ): Promise<AssetContainer> {
-        const assetContainer = new AssetContainer(scene);
-        data;
-        rootUrl;
-        onProgress;
-        fileName;
-        return Promise.resolve(assetContainer);
+        return Promise.resolve().then(() => {
+            const assetContainer = new AssetContainer(scene);
+
+            return this.importMeshAsync(null, scene, data, rootUrl, onProgress).then(() => {
+                return assetContainer;
+            });
+        });
     }
 
     public loadFile(
