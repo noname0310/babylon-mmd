@@ -77,65 +77,18 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // );
 
-        // const importResultGlb = await SceneLoader.ImportMeshAsync(
-        //     undefined,
-        //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
-        //     undefined,
-        //     scene
-        // );
-        // console.log(importResultGlb);
-
-        // SceneLoader.Append(
-        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-        //     undefined,
-        //     scene,
-        //     (scene) => {
-        //         scene.meshes.forEach((mesh) => {
-        //             if (mesh.skeleton) {
-        //                 mesh.receiveShadows = true;
-        //                 csmShadowGenerator.addShadowCaster(mesh);
-
-        //                 // const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
-        //                 //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-        //                 // });
-        //                 // viewer.isEnabled = true;
-
-        //                 const skeleton = mesh.skeleton;
-
-        //                 skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI / 2, 0));
-        //             }
-        //         });
-        //     }
-        // );
-
-        const importResult = await SceneLoader.ImportMeshAsync(
+        const model = await SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene
-        );
-        console.log(importResult);
+        ).then((result) => result.meshes[0]);
+        model.receiveShadows = true;
+        csmShadowGenerator.addShadowCaster(model);
 
-        // await SceneLoader.AppendAsync(
-        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-        //     undefined,
-        //     scene
-        // );
-
-        const container = await SceneLoader.LoadAssetContainerAsync(
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-            undefined,
-            scene
-        );
-        console.log("container", container);
-        container.addAllToScene();
-
-        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
-
-        scene.meshes.forEach((mesh) => {
-            mesh.receiveShadows = true;
-            csmShadowGenerator.addShadowCaster(mesh);
-        });
+        const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+        ground.receiveShadows = true;
+        csmShadowGenerator.addShadowCaster(ground);
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;
