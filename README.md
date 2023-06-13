@@ -75,7 +75,7 @@ Since there is no npm build uploaded yet, in order to use the loader, you will n
 
 Here is the code to build a scene with a simple MMD model:
 ```typescript
-function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
+async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.
     SdefInjector.overrideEngineCreateEffect(engine);
 
@@ -119,27 +119,21 @@ function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
     const csmShadowGenerator = new CascadedShadowGenerator(1024, directionalLight);
     csmShadowGenerator.forceBackFacesOnly = true;
-    csmShadowGenerator.numCascades = 4;
+    csmShadowGenerator.numCascades = 3;
     csmShadowGenerator.autoCalcDepthBounds = true;
     csmShadowGenerator.lambda = 1;
     csmShadowGenerator.depthClamp = true;
     csmShadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
     csmShadowGenerator.normalBias = 0.02;
 
-    SceneLoader.Append(
-        "your_model_path.pmx",
-        undefined,
-        scene,
-        (scene) => {
-            scene.meshes.forEach((mesh) => {
-                mesh.receiveShadows = true;
-                csmShadowGenerator.addShadowCaster(mesh);
-            });
-        }
-    );
+    const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene)
+        .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
+    model.receiveShadows = true;
+    csmShadowGenerator.addShadowCaster(model);
 
     const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     ground.receiveShadows = true;
+    csmShadowGenerator.addShadowCaster(ground);
 
     // for anti-aliasing
     const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
