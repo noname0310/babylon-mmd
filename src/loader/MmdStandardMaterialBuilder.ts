@@ -132,6 +132,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             offset += materialInfo.surfaceCount;
         }
 
+        this._textureLoader.loadModelTexturesEnd(uniqueId);
+
         const onModelTextureLoadedObservable = this._textureLoader.onModelTextureLoadedObservable.get(uniqueId);
         if (onModelTextureLoadedObservable !== undefined) {
             onModelTextureLoadedObservable.addOnce(() => {

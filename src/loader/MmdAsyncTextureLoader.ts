@@ -6,10 +6,12 @@ import { SharedToonTextures } from "./SharedToonTextures";
 class TextureLoadingModel {
     public readonly uniqueId: number;
     public leftLoadCount: number;
+    public isRequesting: boolean;
 
     public constructor(uniqueId: number) {
         this.uniqueId = uniqueId;
         this.leftLoadCount = 0;
+        this.isRequesting = true;
     }
 }
 
@@ -50,12 +52,26 @@ export class MmdAsyncTextureLoader {
 
     private decrementLeftLoadCount(model: TextureLoadingModel): void {
         model.leftLoadCount -= 1;
-        if (model.leftLoadCount === 0) {
+        if (!model.isRequesting && model.leftLoadCount === 0) {
             this._loadingModels.delete(model.uniqueId);
             const observable = this.onModelTextureLoadedObservable.get(model.uniqueId);
             observable?.notifyObservers();
             observable?.clear();
             this.onModelTextureLoadedObservable.delete(model.uniqueId);
+        }
+    }
+
+    public loadModelTexturesEnd(uniqueId: number): void {
+        const model = this._loadingModels.get(uniqueId);
+        if (model === undefined) return;
+
+        model.isRequesting = false;
+        if (model.leftLoadCount === 0) {
+            this._loadingModels.delete(uniqueId);
+            const observable = this.onModelTextureLoadedObservable.get(uniqueId);
+            observable?.notifyObservers();
+            observable?.clear();
+            this.onModelTextureLoadedObservable.delete(uniqueId);
         }
     }
 
