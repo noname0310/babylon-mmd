@@ -1,4 +1,4 @@
-import { MultiMaterial, Scene } from "@babylonjs/core";
+import { AssetContainer, MultiMaterial, Scene } from "@babylonjs/core";
 import { PmxObject } from "./parser/PmxObject";
 
 export interface IMmdMaterialBuilder {
@@ -7,6 +7,7 @@ export interface IMmdMaterialBuilder {
         pmxObject: PmxObject,
         rootUrl: string,
         scene: Scene,
+        assetContainer: AssetContainer | null,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,

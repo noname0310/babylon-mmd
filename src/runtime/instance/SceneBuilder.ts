@@ -72,9 +72,18 @@ export class SceneBuilder implements ISceneBuilder {
         //     undefined,
         //     scene,
         //     (container) => {
-        //         container.addAllToScene();
+        //         container;
+        //         //container.addAllToScene();
         //     }
         // );
+
+        // const importResultGlb = await SceneLoader.ImportMeshAsync(
+        //     undefined,
+        //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
+        //     undefined,
+        //     scene
+        // );
+        // console.log(importResultGlb);
 
         // SceneLoader.Append(
         //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
@@ -99,16 +108,34 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // );
 
-        await SceneLoader.AppendAsync(
+        const importResult = await SceneLoader.ImportMeshAsync(
+            undefined,
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene
         );
+        console.log(importResult);
 
-        const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
-        ground.receiveShadows = true;
+        // await SceneLoader.AppendAsync(
+        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+        //     undefined,
+        //     scene
+        // );
 
-        csmShadowGenerator.addShadowCaster(ground);
+        const container = await SceneLoader.LoadAssetContainerAsync(
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            undefined,
+            scene
+        );
+        console.log("container", container);
+        container.addAllToScene();
+
+        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+
+        scene.meshes.forEach((mesh) => {
+            mesh.receiveShadows = true;
+            csmShadowGenerator.addShadowCaster(mesh);
+        });
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;

@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core";
+import type { AssetContainer, Scene } from "@babylonjs/core";
 import { Observable, Texture } from "@babylonjs/core";
 
 import { SharedToonTextures } from "./SharedToonTextures";
@@ -79,7 +79,8 @@ export class MmdAsyncTextureLoader {
         uniqueId: number,
         rootUrl: string,
         relativeTexturePathOrIndex: string | number,
-        scene: Scene
+        scene: Scene,
+        assetContainer: AssetContainer | null
     ): Promise<Texture | null> {
         const model = this.incrementLeftLoadCount(uniqueId);
 
@@ -105,6 +106,7 @@ export class MmdAsyncTextureLoader {
                 ? SharedToonTextures.data[relativeTexturePathOrIndex as number]
                 : requestString;
 
+            scene._blockEntityCollection = !!assetContainer;
             texture = new Texture(
                 blobOrUrl,
                 scene,
@@ -125,6 +127,10 @@ export class MmdAsyncTextureLoader {
                     textureLoadInfo!.observable.clear();
                 }
             );
+            texture._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
+            assetContainer?.textures.push(texture);
+
             if (isSharedToonTexture) texture.name = finalRelativeTexturePath;
 
             this.textureCache.set(requestString, new WeakRef(texture));

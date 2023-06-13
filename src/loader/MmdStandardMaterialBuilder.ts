@@ -1,4 +1,4 @@
-import type { MultiMaterial, Scene } from "@babylonjs/core";
+import type { AssetContainer, MultiMaterial, Scene } from "@babylonjs/core";
 import { Color3, Material } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
@@ -33,6 +33,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         pmxObject: PmxObject,
         rootUrl: string,
         scene: Scene,
+        assetContainer: AssetContainer | null,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,
@@ -53,7 +54,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         for (let i = 0; i < materials.length; ++i) {
             const materialInfo = materials[i];
 
+            scene._blockEntityCollection = !!assetContainer;
             const material = new MmdStandardMaterial(materialInfo.name, scene);
+            material._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
+            assetContainer?.materials.push(material);
             {
                 const singleMaterialPromises: Promise<void>[] = [];
 
@@ -71,6 +76,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     materialInfo,
                     pmxObject,
                     scene,
+                    assetContainer,
                     rootUrl,
                     indices,
                     uvs,
@@ -87,6 +93,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     materialInfo,
                     pmxObject,
                     scene,
+                    assetContainer,
                     rootUrl
                 );
                 if (loadSphereTexturePromise !== undefined) {
@@ -99,6 +106,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     materialInfo,
                     pmxObject,
                     scene,
+                    assetContainer,
                     rootUrl
                 );
                 if (loadToonTexturePromise !== undefined) {
@@ -192,6 +200,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
         scene: Scene,
+        assetContainer: AssetContainer | null,
         rootUrl: string,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
@@ -203,6 +212,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             materialInfo,
             pmxObject,
             scene,
+            assetContainer,
             rootUrl,
             indices,
             uvs,
@@ -217,7 +227,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     rootUrl,
                     diffuseTexturePath,
-                    scene
+                    scene,
+                    assetContainer
                 );
 
                 if (diffuseTexture !== null) {
@@ -249,6 +260,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
         scene: Scene,
+        assetContainer: AssetContainer | null,
         rootUrl: string
     ) => Promise<void> | void = async(
             uniqueId,
@@ -256,6 +268,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             materialInfo,
             pmxObject,
             scene,
+            assetContainer,
             rootUrl
         ): Promise<void> => {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.off) {
@@ -265,7 +278,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         uniqueId,
                         rootUrl,
                         sphereTexturePath,
-                        scene
+                        scene,
+                        assetContainer
                     );
 
                     if (sphereTexture !== null) {
@@ -284,6 +298,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: PmxObject.Material,
         pmxObject: PmxObject,
         scene: Scene,
+        assetContainer: AssetContainer | null,
         rootUrl: string
     ) => Promise<void> | void = async(
             uniqueId,
@@ -291,6 +306,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             materialInfo,
             pmxObject,
             scene,
+            assetContainer,
             rootUrl
         ): Promise<void> => {
             let toonTexturePath;
@@ -306,7 +322,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     rootUrl,
                     toonTexturePath,
-                    scene
+                    scene,
+                    assetContainer
                 );
 
                 if (toonTexture !== null) {

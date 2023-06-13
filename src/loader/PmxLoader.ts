@@ -372,15 +372,22 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         multiMaterial._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
 
-        const buildMaterialsPromise = this.materialBuilder.buildMaterials(
-            mesh.uniqueId,
-            pmxObject,
-            rootUrl,
-            scene,
-            vertexData.indices,
-            vertexData.uvs,
-            multiMaterial
-        );
+
+        let buildMaterialsPromise: void | Promise<void> = undefined;
+
+        const textureLoadPromise = new Promise<void>((resolve) => {
+            buildMaterialsPromise = this.materialBuilder.buildMaterials(
+                mesh.uniqueId,
+                pmxObject,
+                rootUrl,
+                scene,
+                assetContainer,
+                vertexData.indices as Uint16Array | Uint32Array,
+                vertexData.uvs as Float32Array,
+                multiMaterial,
+                () => resolve()
+            );
+        });
         if (buildMaterialsPromise !== undefined) {
             await buildMaterialsPromise;
         }
@@ -560,6 +567,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
 
         progressEvent.loaded = lastStageLoaded;
         onProgress?.({...progressEvent});
+
+        await textureLoadPromise;
 
         if (assetContainer !== null) {
             assetContainer.meshes.push(mesh);
