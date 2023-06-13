@@ -27,7 +27,7 @@ export class RuntimeBuilder {
         return this;
     }
 
-    public make(): BaseRuntime {
+    public async make(): Promise<BaseRuntime> {
         if (this._sceneBuilder === null) {
             throw new Error("Scene builder is not set");
         }
@@ -40,7 +40,7 @@ export class RuntimeBuilder {
             };
         }
 
-        return new BaseRuntime({
+        return BaseRuntime.create({
             canvas: this._canvas,
             engine: this._engine,
             sceneBuilder: this._sceneBuilder,

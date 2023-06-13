@@ -7,7 +7,7 @@ import { RuntimeBuilder } from "./runtime/base/RuntimeBuilder";
 import { SceneBuilder } from "./runtime/instance/SceneBuilder";
 import { TickRunner } from "./runtime/instance/TickRunner";
 
-function engineStartup(): void {
+async function engineStartup(): Promise<void> {
     const canvas = document.getElementById("render-canvas");
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Invalid canvas element");
 
@@ -17,7 +17,7 @@ function engineStartup(): void {
         antialias: true
     }, true);
 
-    const runtime = new RuntimeBuilder(canvas, engine)
+    const runtime = await new RuntimeBuilder(canvas, engine)
         .withSceneBuilder(new SceneBuilder())
         .withTickRunner(new TickRunner())
         .make();

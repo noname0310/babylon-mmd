@@ -19,16 +19,23 @@ export class BaseRuntime {
     private readonly _canvas: HTMLCanvasElement;
     private readonly _engine: Engine;
     private readonly _tickRunner: ITickRunner;
-    private readonly _scene: Scene;
-    private readonly _onTick: () => void;
+    private _scene: Scene;
+    private _onTick: () => void;
 
-    public constructor(params: BaseRuntimeInitParams) {
+    private constructor(params: BaseRuntimeInitParams) {
         this._canvas = params.canvas;
         this._engine = params.engine;
         this._tickRunner = params.tickRunner;
-        this._scene =  this.initialize(params.sceneBuilder);
 
-        this._onTick = this.makeOnTick();
+        this._scene = null!;
+        this._onTick = null!;
+    }
+
+    public static async create(params: BaseRuntimeInitParams): Promise<BaseRuntime> {
+        const runtime = new BaseRuntime(params);
+        runtime._scene = await runtime.initialize(params.sceneBuilder);
+        runtime._onTick = runtime.makeOnTick();
+        return runtime;
     }
 
     public run(): void {
@@ -47,8 +54,8 @@ export class BaseRuntime {
         this._engine.resize();
     };
 
-    private initialize(sceneBuilder: ISceneBuilder): Scene {
-        const scene = sceneBuilder.build(this._canvas, this._engine);
+    private async initialize(sceneBuilder: ISceneBuilder): Promise<Scene> {
+        const scene = await sceneBuilder.build(this._canvas, this._engine);
         this._tickRunner.afterBuild({
             engine: this._engine,
             scene: scene

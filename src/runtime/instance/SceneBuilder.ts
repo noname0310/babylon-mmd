@@ -25,7 +25,7 @@ import { SdefInjector } from "@/loader/SdefInjector";
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
-    public build(canvas: HTMLCanvasElement, engine: Engine): Scene {
+    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.overrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
@@ -67,35 +67,43 @@ export class SceneBuilder implements ISceneBuilder {
         csmShadowGenerator.filteringQuality = ShadowGenerator.QUALITY_LOW;
         csmShadowGenerator.normalBias = 0.02;
 
-        // SceneLoader.Append("res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb");
+        // SceneLoader.LoadAssetContainer(
+        //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
+        //     undefined,
+        //     scene,
+        //     (container) => {
+        //         container.addAllToScene();
+        //     }
+        // );
 
-        SceneLoader.Append(
+        // SceneLoader.Append(
+        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+        //     undefined,
+        //     scene,
+        //     (scene) => {
+        //         scene.meshes.forEach((mesh) => {
+        //             if (mesh.skeleton) {
+        //                 mesh.receiveShadows = true;
+        //                 csmShadowGenerator.addShadowCaster(mesh);
+
+        //                 // const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
+        //                 //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+        //                 // });
+        //                 // viewer.isEnabled = true;
+
+        //                 const skeleton = mesh.skeleton;
+
+        //                 skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI / 2, 0));
+        //             }
+        //         });
+        //     }
+        // );
+
+        await SceneLoader.AppendAsync(
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
-            scene,
-            (scene) => {
-                scene.meshes.forEach((mesh) => {
-                    if (mesh.skeleton) {
-                        mesh.receiveShadows = true;
-                        csmShadowGenerator.addShadowCaster(mesh);
-
-                        // const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
-                        //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-                        // });
-                        // viewer.isEnabled = true;
-
-                        const skeleton = mesh.skeleton;
-
-                        skeleton.bones[skeleton.getBoneIndexByName("左ひざD")].setRotation(new Vector3(0, Math.PI / 2, 0));
-                    }
-                });
-            }
+            scene
         );
-
-        // SceneLoader.ImportMesh(
-        //     "sans",
-        //     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"
-        // );
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
