@@ -77,18 +77,19 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // );
 
-        const model = await SceneLoader.ImportMeshAsync(
-            undefined,
+        await SceneLoader.AppendAsync(
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
-            scene
-        ).then((result) => result.meshes[0]);
-        model.receiveShadows = true;
-        csmShadowGenerator.addShadowCaster(model);
+            scene,
+            (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+        );
 
-        const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
-        ground.receiveShadows = true;
-        csmShadowGenerator.addShadowCaster(ground);
+        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+
+        scene.meshes.forEach((mesh) => {
+            mesh.receiveShadows = true;
+            csmShadowGenerator.addShadowCaster(mesh);
+        });
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;

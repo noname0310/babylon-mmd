@@ -141,11 +141,14 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 buildMorphCost += morphInfo.elements.length;
             }
         }
+        const textureLoadCost = 30000 * pmxObject.textures.length;
+
+        let applyTextureLoading = false;
 
         const progressEvent = {
             lengthComputable: true,
             loaded: parseCost,
-            total: parseCost + pmxObject.faces.length + pmxObject.vertices.length + buildMaterialCost + buildSkeletonCost + buildMorphCost
+            total: parseCost + pmxObject.faces.length + pmxObject.vertices.length + buildMaterialCost + buildSkeletonCost + buildMorphCost + textureLoadCost
         };
 
         onProgress?.({...progressEvent});
@@ -385,6 +388,12 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
                 vertexData.indices as Uint16Array | Uint32Array,
                 vertexData.uvs as Float32Array,
                 multiMaterial,
+                (event) => {
+                    if (!applyTextureLoading) return;
+                    const loadedRatio = event.loaded / event.total;
+                    progressEvent.loaded = lastStageLoaded + Math.floor(textureLoadCost * loadedRatio);
+                    onProgress?.({...progressEvent});
+                },
                 () => resolve()
             );
         });
@@ -568,6 +577,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         progressEvent.loaded = lastStageLoaded;
         onProgress?.({...progressEvent});
 
+        applyTextureLoading = true;
         await textureLoadPromise;
 
         if (assetContainer !== null) {

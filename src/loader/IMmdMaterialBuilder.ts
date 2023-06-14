@@ -1,4 +1,4 @@
-import { AssetContainer, MultiMaterial, Scene } from "@babylonjs/core";
+import { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene } from "@babylonjs/core";
 import { PmxObject } from "./parser/PmxObject";
 
 export interface IMmdMaterialBuilder {
@@ -11,6 +11,7 @@ export interface IMmdMaterialBuilder {
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,
-        onComplete?: () => void
+        onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
+        onTextureLoadComplete?: () => void
     ): Promise<void> | void;
 }
