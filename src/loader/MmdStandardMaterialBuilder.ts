@@ -15,14 +15,14 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      *
      * lower value is more likely to use transparency mode. (0 - 255) default is 200.
      */
-    public alphaThreshold = 200;
+    public alphaThreshold = 195;
 
     /**
      * The threshold of transparency mode to use alpha blend.
      *
-     * lower value is more likely to use alpha blend mode. otherwise use alpha test mode. default is 50.
+     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode. default is 50.
      */
-    public alphaBlendThreshold = 50;
+    public alphaBlendThreshold = 100;
 
     public useAlphaEvaluation = true;
 
