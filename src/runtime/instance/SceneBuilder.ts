@@ -81,7 +81,7 @@ export class SceneBuilder implements ISceneBuilder {
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene,
-            (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+            (event) => engine.loadingUIText = `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
         );
 
         MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
