@@ -441,13 +441,13 @@ export class PmxReader {
                 tailPosition = dataDeserializer.getFloat32Array(3);
             }
 
-            let additionalTransform;
+            let appendTransform;
 
-            if (flag & PmxObject.Bone.Flag.hasAdditionalMove || flag & PmxObject.Bone.Flag.hasAdditionalRotate) {
-                additionalTransform = {
-                    isLocal: (flag & PmxObject.Bone.Flag.localAdditionTransform) !== 0,
-                    affectRotation: (flag & PmxObject.Bone.Flag.hasAdditionalRotate) !== 0,
-                    affectPosition: (flag & PmxObject.Bone.Flag.hasAdditionalMove) !== 0,
+            if (flag & PmxObject.Bone.Flag.hasAppendMove || flag & PmxObject.Bone.Flag.hasAppendRotate) {
+                appendTransform = {
+                    isLocal: (flag & PmxObject.Bone.Flag.localAppendTransform) !== 0,
+                    affectRotation: (flag & PmxObject.Bone.Flag.hasAppendRotate) !== 0,
+                    affectPosition: (flag & PmxObject.Bone.Flag.hasAppendMove) !== 0,
                     parentIndex: indexReader.getBoneIndex(dataDeserializer),
                     ratio: dataDeserializer.getFloat32()
                 };
@@ -520,7 +520,7 @@ export class PmxReader {
                 flag,
                 tailPosition,
 
-                additionalTransform,
+                appendTransform,
                 axisLimit,
 
                 localVector,
