@@ -24,10 +24,8 @@ export class TickRunner implements ITickRunner {
         // Inspector.Hide();
         context.engine.setHardwareScalingLevel(1);
     }
-    public beforeRender(context: IRuntimeContext): void {
-        context;
+    public beforeRender(/* context: IRuntimeContext */): void {
+        this._mmdRuntime.update();
     }
-    public afterRender(context: IRuntimeContext): void {
-        context;
-    }
+    public afterRender(/* context: IRuntimeContext */): void { /* do nothing */ }
 }

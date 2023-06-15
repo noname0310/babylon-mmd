@@ -10,4 +10,8 @@ export class MmdMorphController {
         morphTargetManager;
         morphs;
     }
+
+    public update(): void {
+
+    }
 }
