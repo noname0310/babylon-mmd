@@ -1,6 +1,7 @@
 import { PmxObject } from "./parser/PmxObject";
 
 export interface MmdModelMetadata {
+    isMmdModel: true;
     header: MmdModelMetadata.Header;
     morphs: readonly MmdModelMetadata.Morph[];
     rigidBodies: PmxObject["rigidBodies"]
