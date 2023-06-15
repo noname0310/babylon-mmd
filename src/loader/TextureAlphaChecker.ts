@@ -188,7 +188,9 @@ export class TextureAlphaChecker {
             }
         }
 
-        averageMidddleAlpha /= averageMidddleAlphaCount;
+        if (averageMidddleAlphaCount != 0) {
+            averageMidddleAlpha /= averageMidddleAlphaCount;
+        }
 
         // const div = document.createElement("div");
         // div.innerText = texture.name + " " + maxValue;
