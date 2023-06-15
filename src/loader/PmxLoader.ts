@@ -92,6 +92,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
     public loadFile(
         scene: Scene,
         fileOrUrl: string | File,
+        _rootUrl: string,
         onSuccess: (data: any, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
