@@ -262,7 +262,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     );
                     const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
 
-                    diffuseTexture.hasAlpha = hasAlpha;
+                    if (hasAlpha) diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = hasAlpha;
                     material.transparencyMode = transparencyMode;
                     if (hasAlpha) material.backFaceCulling = false;
