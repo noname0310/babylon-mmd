@@ -1,5 +1,6 @@
-import { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene } from "@babylonjs/core";
-import { PmxObject } from "./parser/PmxObject";
+import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene } from "@babylonjs/core";
+
+import type { PmxObject } from "./parser/PmxObject";
 
 export interface IMmdMaterialBuilder {
     buildMaterials(
