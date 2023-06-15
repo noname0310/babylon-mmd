@@ -145,7 +145,7 @@ export namespace PmxObject {
         flag: number;
         tailPosition: number | Vec3; // (a.k.a. Link to)
 
-        additionalTransform: Readonly<{
+        appendTransform: Readonly<{
             isLocal: boolean;
             affectRotation: boolean;
             affectPosition: boolean;
@@ -177,9 +177,9 @@ export namespace PmxObject {
             isControllable = 0x0010,
             isIkEnabled = 0x0020,
 
-            localAdditionTransform = 0x0080,
-            hasAdditionalRotate = 0x0100,
-            hasAdditionalMove = 0x0200,
+            localAppendTransform = 0x0080,
+            hasAppendRotate = 0x0100,
+            hasAppendMove = 0x0200,
             hasAxisLimit = 0x0400,
             hasLocalVector = 0x0800,
             transformAfterPhysics = 0x1000,
