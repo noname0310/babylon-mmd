@@ -12,6 +12,6 @@ export class MmdMorphController {
     }
 
     public update(): void {
-
+        //
     }
 }
