@@ -12,6 +12,7 @@ import {
     AssetContainer,
     Bone,
     Geometry,
+    Logger,
     Matrix,
     Mesh,
     MorphTarget,
@@ -27,12 +28,13 @@ import {
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import type { MmdModelBoneMetadata, MmdModelMetadata } from "./MmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
+import type { ILogger } from "./parser/ILogger";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
 import { SdefBufferKind } from "./SdefBufferKind";
 import { SdefMesh } from "./SdefMesh";
 
-export class PmxLoader implements ISceneLoaderPluginAsync {
+export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Name of the loader ("pmx")
      */
@@ -40,7 +42,22 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
     public extensions: ISceneLoaderPluginExtensions;
 
     public materialBuilder: IMmdMaterialBuilder;
-    public useSdef = true;
+    public useSdef: boolean;
+
+    private _loggingEnabled: boolean;
+
+    /**
+     * @internal
+     */
+    public log: (message: string) => void;
+    /**
+     * @internal
+     */
+    public warn: (message: string) => void;
+    /**
+     * @internal
+     */
+    public error: (message: string) => void;
 
     public constructor() {
         this.name = "pmx";
@@ -50,6 +67,12 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         };
 
         this.materialBuilder = new MmdStandardMaterialBuilder();
+        this.useSdef = true;
+
+        this._loggingEnabled = false;
+        this.log = this.logDisabled;
+        this.warn = this.warnDisabled;
+        this.error = this.errorDisabled;
     }
 
     public importMeshAsync(
@@ -119,7 +142,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
         const useSdef = this.useSdef;
 
         // data must be ArrayBuffer
-        const pmxObject = await PmxReader.parseAsync(data)
+        const pmxObject = await PmxReader.parseAsync(data, this)
             .catch((e: any) => {
                 return Promise.reject(e);
             });
@@ -666,5 +689,47 @@ export class PmxLoader implements ISceneLoaderPluginAsync {
             geometries: [geometry],
             lights: []
         };
+    }
+
+    public get loggingEnabled(): boolean {
+        return this._loggingEnabled;
+    }
+
+    public set loggingEnabled(value: boolean) {
+        this._loggingEnabled = value;
+
+        if (value) {
+            this.log = this.logEnabled;
+            this.warn = this.warnEnabled;
+            this.error = this.errorEnabled;
+        } else {
+            this.log = this.logDisabled;
+            this.warn = this.warnDisabled;
+            this.error = this.errorDisabled;
+        }
+    }
+
+    private logEnabled(message: string): void {
+        Logger.Log(message);
+    }
+
+    private logDisabled(): void {
+        // do nothing
+    }
+
+    private warnEnabled(message: string): void {
+        Logger.Warn(message);
+    }
+
+    private warnDisabled(): void {
+        // do nothing
+    }
+
+    private errorEnabled(message: string): void {
+        Logger.Error(message);
+    }
+
+    private errorDisabled(): void {
+        // do nothing
     }
 }

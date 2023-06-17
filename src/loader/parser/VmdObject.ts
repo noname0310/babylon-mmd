@@ -1,3 +1,4 @@
+import { ConsoleLogger, ILogger } from "./ILogger";
 import { MmdDataDeserializer } from "./MmdDataDeserializer";
 import type { Vec3, Vec4 } from "./MmdTypes";
 
@@ -71,7 +72,7 @@ export class VmdData {
         this.propertyKeyFrameCount = propertyKeyFrameCount;
     }
 
-    public static checkedCreate(buffer: ArrayBufferLike): VmdData | null {
+    public static checkedCreate(buffer: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): VmdData | null {
         const dataDeserializer = new MmdDataDeserializer(buffer);
         dataDeserializer.initializeTextDecoder("shift-jis");
 
@@ -123,7 +124,7 @@ export class VmdData {
         }
 
         if (dataDeserializer.bytesAvailable > 0) {
-            console.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
+            logger.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
         }
 
         dataDeserializer.offset = 0;

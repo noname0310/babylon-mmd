@@ -1,3 +1,4 @@
+import { ConsoleLogger, type ILogger } from "./ILogger";
 import { MmdDataDeserializer } from "./MmdDataDeserializer";
 import type { Vec3, Vec4 } from "./MmdTypes";
 import { PmxObject } from "./PmxObject";
@@ -76,10 +77,10 @@ class IndexReader {
 export class PmxReader {
     private constructor() { /* block constructor */ }
 
-    public static async parseAsync(data: ArrayBufferLike): Promise<PmxObject> {
+    public static async parseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<PmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
 
-        const header = this.parseHeader(dataDeserializer);
+        const header = this.parseHeader(dataDeserializer, logger);
         const indexReader = new IndexReader(
             header.vertexIndexSize,
             header.textureIndexSize,
@@ -103,7 +104,7 @@ export class PmxReader {
             : this.parseSoftBodies(dataDeserializer, indexReader, header);
 
         if (dataDeserializer.bytesAvailable > 0) {
-            console.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
+            logger.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
         }
 
         const pmxObject: PmxObject = {
@@ -123,7 +124,7 @@ export class PmxReader {
         return pmxObject;
     }
 
-    private static parseHeader(dataDeserializer: MmdDataDeserializer): PmxObject.Header {
+    private static parseHeader(dataDeserializer: MmdDataDeserializer, logger: ILogger): PmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
             4 // signature
             + 4 // version (float32)
@@ -162,7 +163,7 @@ export class PmxReader {
         if (globalsCount < 8) {
             throw new Error(`Invalid globalsCount: ${globalsCount}`);
         } else if (8 < globalsCount) {
-            console.warn(`globalsCount is greater than 8: ${globalsCount} files may be corrupted or higher version`);
+            logger.warn(`globalsCount is greater than 8: ${globalsCount} files may be corrupted or higher version`);
             for (let i = 8; i < globalsCount; ++i) {
                 dataDeserializer.getUint8();
             }
