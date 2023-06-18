@@ -474,14 +474,14 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                         while (parentBoneIndex !== -1) {
                             if (parentBoneIndex === i) {
                                 isLooped = true;
-                                this.warn(`Bone loop detected. Bone index: ${i}`);
+                                this.warn(`Bone loop detected. Ignore Parenting. Bone index: ${i}`);
                                 break;
                             }
                             parentBoneIndex = bonesInfo[parentBoneIndex].parentBoneIndex;
                         }
 
-                        if (i < boneInfo.parentBoneIndex) {
-                            this.warn(`Parent bone index is greater than child bone index. Bone index: ${i}`);
+                        if (i <= boneInfo.parentBoneIndex) {
+                            this.warn(`Parent bone index is greater equal than child bone index. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
                         }
                     }
 
