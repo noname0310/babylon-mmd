@@ -463,13 +463,32 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             const bonesInfo = pmxObject.bones;
             {
                 const bones: Bone[] = [];
+                const looped: boolean[] = [];
 
                 for (let i = 0; i < bonesInfo.length; ++i) {
                     const boneInfo = bonesInfo[i];
+
+                    let isLooped = false;
+                    if (boneInfo.parentBoneIndex !== -1) {
+                        let parentBoneIndex = boneInfo.parentBoneIndex;
+                        while (parentBoneIndex !== -1) {
+                            if (parentBoneIndex === i) {
+                                isLooped = true;
+                                this.warn(`Bone loop detected. Bone index: ${i}`);
+                                break;
+                            }
+                            parentBoneIndex = bonesInfo[parentBoneIndex].parentBoneIndex;
+                        }
+
+                        if (i < boneInfo.parentBoneIndex) {
+                            this.warn(`Parent bone index is greater than child bone index. Bone index: ${i}`);
+                        }
+                    }
+
                     const boneWorldPosition = boneInfo.position;
 
                     const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
-                    if (boneInfo.parentBoneIndex !== -1) {
+                    if (boneInfo.parentBoneIndex !== -1 && !isLooped) {
                         const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
                         bonePosition.x -= parentBoneInfo.position[0];
                         bonePosition.y -= parentBoneInfo.position[1];
@@ -499,13 +518,14 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     };
 
                     bones.push(bone);
+                    looped.push(isLooped);
                 }
 
                 for (let i = 0; i < bones.length; ++i) {
                     const boneInfo = bonesInfo[i];
                     const bone = bones[i];
 
-                    if (boneInfo.parentBoneIndex !== -1) {
+                    if (boneInfo.parentBoneIndex !== -1 && !looped[i]) {
                         bone.setParent(bones[boneInfo.parentBoneIndex]);
                     }
                 }
