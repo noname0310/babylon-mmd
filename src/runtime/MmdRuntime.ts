@@ -59,9 +59,9 @@ export class MmdRuntime implements ILogger {
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
             const model = models[i];
-
-            model.mesh.skeleton.returnToRest();
-            model.morph.update();
+            model.beforePhysics();
+            // todo: physics
+            model.afterPhysics();
         }
     }
 
