@@ -1,3 +1,4 @@
+import type { ILogger } from "./ILogger";
 import type { MmdMesh } from "./MmdMesh";
 import { MmdMorphController } from "./MmdMorphController";
 
@@ -6,9 +7,10 @@ export class MmdModel {
     public readonly morph: MmdMorphController;
 
     public constructor(
-        mmdMesh: MmdMesh
+        mmdMesh: MmdMesh,
+        logger: ILogger
     ) {
         this.mesh = mmdMesh;
-        this.morph = new MmdMorphController(mmdMesh.morphTargetManager, mmdMesh.metadata.morphs);
+        this.morph = new MmdMorphController(mmdMesh.morphTargetManager, mmdMesh.metadata.morphs, logger);
     }
 }
