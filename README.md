@@ -29,10 +29,10 @@ mmd loader and runtime for Babylon.js
 - [ ] WebGPU support
 
 > MMD runtime parameters
-- [X] Transform order
-- [X] Additional transform parameters load
-- [X] IK parameters load
-- [X] Rigid body / Joint parameters load
+- [x] Transform order
+- [x] Additional transform parameters load
+- [x] IK parameters load
+- [x] Rigid body / Joint parameters load
 
 **VMD Loader**
 
@@ -42,7 +42,7 @@ mmd loader and runtime for Babylon.js
 **Animation Runtime**
 
 - [ ] Basic animation load
-- [ ] MMD morph system support
+- [x] MMD morph system support
 - [ ] Solve Append transform
 - [ ] Solve IK
 - [ ] Play audio / sync with animation
