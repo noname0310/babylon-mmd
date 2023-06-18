@@ -1,5 +1,5 @@
 import type { Material } from "@babylonjs/core";
-import { type MorphTargetManager, Quaternion, Vector3 } from "@babylonjs/core";
+import { type MorphTargetManager, Quaternion, Space, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 import { PmxObject } from "@/loader/parser/PmxObject";
@@ -257,6 +257,7 @@ export class MmdMorphController {
 
     private readonly _tempVector3 = new Vector3();
     private readonly _tempQuaternion = new Quaternion();
+    private readonly _tempQuaternion2 = new Quaternion();
 
     private _applyMorph(morph: RuntimeMorph, weight: number): void {
         switch (morph.type) {
@@ -281,24 +282,25 @@ export class MmdMorphController {
                     const bone = bones[element.index];
 
                     const elementPosition = element.position;
-                    const weightedElementPosition = this._tempVector3.copyFromFloats(
+                    bone.getPositionToRef(Space.LOCAL, null, this._tempVector3);
+                    bone.setPosition(this._tempVector3.addInPlaceFromFloats(
                         elementPosition[0] * weight,
                         elementPosition[1] * weight,
                         elementPosition[2] * weight
-                    );
-                    bone.position.addInPlace(weightedElementPosition);
+                    ), Space.LOCAL);
 
-                    Quaternion.SlerpToRef(
-                        bone.rotationQuaternion,
-                        this._tempQuaternion.copyFromFloats(
+                    bone.getRotationQuaternionToRef(Space.LOCAL, null, this._tempQuaternion);
+                    bone.setRotationQuaternion(Quaternion.SlerpToRef(
+                        this._tempQuaternion,
+                        this._tempQuaternion2.copyFromFloats(
                             element.rotation[0],
                             element.rotation[1],
                             element.rotation[2],
                             element.rotation[3]
                         ),
                         weight,
-                        bone.rotationQuaternion
-                    );
+                        this._tempQuaternion
+                    ), Space.LOCAL);
                 }
             }
             break;
