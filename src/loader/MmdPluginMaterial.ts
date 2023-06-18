@@ -12,6 +12,7 @@ import type {
     UniformBuffer
 } from "@babylonjs/core";
 import {
+    Color4,
     Constants,
     MaterialDefines,
     MaterialPluginBase
@@ -62,6 +63,9 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
     public TOON_TEXTURE = false;
     public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+    public TEXTURE_COLOR = false;
+    public SPHERE_TEXTURE_COLOR = false;
+    public TOON_TEXTURE_COLOR = false;
     public SDEF = false;
     /* eslint-enable @typescript-eslint/naming-convention */
 }
@@ -77,6 +81,14 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     private _toonTexture: Texture | null = null;
     private _ignoreDiffuseWhenToonTextureIsNull = false;
+
+    public textureColor = new Color4(1, 1, 1, 1);
+    public sphereTextureColor = new Color4(1, 1, 1, 1);
+    public toonTextureColor = new Color4(1, 1, 1, 1);
+
+    private _useTextureColor = false;
+    private _useSphereTextureColor = false;
+    private _useToonTextureColor = false;
 
     private _isEnabled = false;
 
@@ -131,6 +143,36 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this.markAllDefinesAsDirty();
     }
 
+    public get useTextureColor(): boolean {
+        return this._useTextureColor;
+    }
+
+    public set useTextureColor(value: boolean) {
+        if (this._useTextureColor === value) return;
+        this._useTextureColor = value;
+        this.markAllDefinesAsDirty();
+    }
+
+    public get useSphereTextureColor(): boolean {
+        return this._useSphereTextureColor;
+    }
+
+    public set useSphereTextureColor(value: boolean) {
+        if (this._useSphereTextureColor === value) return;
+        this._useSphereTextureColor = value;
+        this.markAllDefinesAsDirty();
+    }
+
+    public get useToonTextureColor(): boolean {
+        return this._useToonTextureColor;
+    }
+
+    public set useToonTextureColor(value: boolean) {
+        if (this._useToonTextureColor === value) return;
+        this._useToonTextureColor = value;
+        this.markAllDefinesAsDirty();
+    }
+
     private readonly _internalMarkAllSubMeshesAsTexturesDirty: () => void;
 
     public markAllSubMeshesAsTexturesDirty(): void {
@@ -156,8 +198,25 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return true;
     }
 
-    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, _subMesh: SubMesh): void {
+    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, subMesh: SubMesh): void {
         if (!this._isEnabled) return;
+
+        const defines = subMesh!.materialDefines as MmdPluginMererialDefines;
+        const isFrozen = this._material.isFrozen;
+
+        if (!uniformBuffer.useUbo || !isFrozen || !uniformBuffer.isSync) {
+            if (defines.TEXTURE_COLOR && this._useTextureColor) {
+                uniformBuffer.updateDirectColor4("textureColor", this.textureColor);
+            }
+
+            if (defines.SPHERE_TEXTURE_COLOR && this._useSphereTextureColor) {
+                uniformBuffer.updateDirectColor4("sphereTextureColor", this.sphereTextureColor);
+            }
+
+            if (defines.TOON_TEXTURE_COLOR && this._useToonTextureColor) {
+                uniformBuffer.updateDirectColor4("toonTextureColor", this.toonTextureColor);
+            }
+        }
 
         if (scene.texturesEnabled) {
             if (this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
@@ -211,12 +270,27 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            codes[`!${this._escapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
+                #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
+                    baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset) * textureColor;
+                #else
+                    baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset);
+                #endif
+            `;
+
             codes[`!${this._escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
                     clampedInfoDiffuse = clamp(info.diffuse, 0.0, 1.0);
-                    infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
-                    infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g;
-                    infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b;
+
+                    #ifdef TOON_TEXTURE_COLOR
+                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r * toonTextureColor.r * toolTextureColor.a;
+                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g * toonTextureColor.g * toolTextureColor.a;
+                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b * toonTextureColor.b * toolTextureColor.a;
+                    #else
+                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
+                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g;
+                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b;
+                    #endif
                     
                     infoToonDiffuse = vec3(infoToonDiffuseR, infoToonDiffuseG, infoToonDiffuseB);
 
@@ -235,6 +309,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
                     vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
+
+                    #ifdef SPHERE_TEXTURE_COLOR
+                        sphereReflectionColor *= sphereTextureColor;
+                    #endif
 
                     #ifdef SPHERE_TEXTURE_BLEND_MODE_MULTIPLY
                         color *= sphereReflectionColor;
@@ -257,6 +335,9 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
+            defines.TEXTURE_COLOR = this._useTextureColor;
+            defines.SPHERE_TEXTURE_COLOR = this._useSphereTextureColor;
+            defines.TOON_TEXTURE_COLOR = this._useToonTextureColor;
             defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind);
         } else {
             defines.SPHERE_TEXTURE = false;
@@ -264,6 +345,9 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
             defines.TOON_TEXTURE = false;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+            defines.TEXTURE_COLOR = false;
+            defines.SPHERE_TEXTURE_COLOR = false;
+            defines.TOON_TEXTURE_COLOR = false;
             defines.SDEF = false;
         }
     }
@@ -300,6 +384,30 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 attributes.push(SdefBufferKind.MatricesSdefR1Kind);
             }
         }
+    }
+
+    public override getUniforms(): {
+        ubo: { name: string; size: number; type: string; }[];
+        fragment: string;
+        } {
+        return {
+            "ubo": [
+                { name: "textureColor", size: 4, type: "vec4" },
+                { name: "sphereTextureColor", size: 4, type: "vec4" },
+                { name: "toonTextureColor", size: 4, type: "vec4" }
+            ],
+            "fragment": /* glsl */`
+                #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
+                    uniform vec4 textureColor;
+                #endif
+                #if defined(SPHERE_TEXTURE) && defined(SPHERE_TEXTURE_COLOR)
+                    uniform vec4 sphereTextureColor;
+                #endif
+                #if defined(TOON_TEXTURE) && defined(TOON_TEXTURE_COLOR)
+                    uniform vec4 toonTextureColor;
+                #endif
+            `
+        };
     }
 
     public override getClassName(): string {

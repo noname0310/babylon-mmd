@@ -1,3 +1,5 @@
+import { Material } from "@babylonjs/core";
+
 import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
@@ -26,6 +28,9 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     private readonly _initialTextureColor: Vec4;
     private readonly _initialSphereTextureColor: Vec4;
     private readonly _initialToonTextureColor: Vec4;
+
+    private readonly _initialTransparencyMode: number | null;
+    private readonly _initialBackFaceCulling: boolean;
 
     public constructor(material: MmdStandardMaterial) {
         this._material = material;
@@ -59,6 +64,9 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         this._initialTextureColor = [...this.textureColor];
         this._initialSphereTextureColor = [...this.sphereTextureColor];
         this._initialToonTextureColor = [...this.toonTextureColor];
+
+        this._initialTransparencyMode = material.transparencyMode;
+        this._initialBackFaceCulling = material.backFaceCulling;
     }
 
     public reset(): void {
@@ -85,6 +93,13 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
 
         material.diffuseColor.set(this.diffuse[0], this.diffuse[1], this.diffuse[2]);
         material.alpha = this.diffuse[3];
+        if (this.diffuse[3] === 1) {
+            material.transparencyMode = this._initialTransparencyMode;
+            material.backFaceCulling = this._initialBackFaceCulling;
+        } else {
+            material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+            material.backFaceCulling = false;
+        }
 
         material.specularColor.set(this.specular[0], this.specular[1], this.specular[2]);
         material.specularPower = this.shininess;
@@ -96,8 +111,10 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
 
         material.outlineWidth = this.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
 
-        // material.textureColor.set(this.textureColor[0], this.textureColor[1], this.textureColor[2], this.textureColor[3]);
-        // material.sphereTextureColor.set(this.sphereTextureColor[0], this.sphereTextureColor[1], this.sphereTextureColor[2], this.sphereTextureColor[3]);
-        // material.toonTextureColor.set(this.toonTextureColor[0], this.toonTextureColor[1], this.toonTextureColor[2], this.toonTextureColor[3]);r[2], this.toonTextureColor[3]);s.toonTextureColor[0], this.toonTextureColor[1], this.toonTextureColor[2], this.toonTextureColor[3]);
+        material.textureColor.set(this.textureColor[0], this.textureColor[1], this.textureColor[2], this.textureColor[3]);
+
+        material.sphereTextureColor.set(this.sphereTextureColor[0], this.sphereTextureColor[1], this.sphereTextureColor[2], this.sphereTextureColor[3]);
+
+        material.toonTextureColor.set(this.toonTextureColor[0], this.toonTextureColor[1], this.toonTextureColor[2], this.toonTextureColor[3]);
     }
 }
