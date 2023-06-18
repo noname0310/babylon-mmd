@@ -40,7 +40,7 @@ export class RuntimeBuilder {
             };
         }
 
-        return BaseRuntime.create({
+        return BaseRuntime.Create({
             canvas: this._canvas,
             engine: this._engine,
             sceneBuilder: this._sceneBuilder,

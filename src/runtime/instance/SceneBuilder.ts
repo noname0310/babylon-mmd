@@ -26,7 +26,7 @@ import type { ISceneBuilder } from "../base/ISceneBuilder";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
-        SdefInjector.overrideEngineCreateEffect(engine);
+        SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
         // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;

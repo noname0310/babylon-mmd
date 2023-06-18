@@ -23,7 +23,7 @@
         "@typescript-eslint/parser": "^5.59.11",
         "css-loader": "^6.8.1",
         "css-minimizer-webpack-plugin": "^5.0.1",
-        "eslint": "^8.42.0",
+        "eslint": "^8.43.0",
         "eslint-plugin-simple-import-sort": "^10.0.0",
         "eslint-webpack-plugin": "^4.0.1",
         "extract-css-chunks-webpack-plugin": "^4.9.0",

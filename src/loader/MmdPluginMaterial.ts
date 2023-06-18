@@ -179,7 +179,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
             codes["CUSTOM_VERTEX_DEFINITIONS"] = sdefDeclaration;
 
-            codes[`!${this.escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
+            codes[`!${this._escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
                 ${sdefVertex}
                 
                 finalWorld = finalWorld * influence;
@@ -211,7 +211,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
-            codes[`!${this.escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
+            codes[`!${this._escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
                     clampedInfoDiffuse = clamp(info.diffuse, 0.0, 1.0);
                     infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
@@ -257,7 +257,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
-            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
+            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -294,10 +294,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
         if (this._isEnabled) {
-            if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind)) {
-                attributes.push(SdefBufferKind.matricesSdefCKind);
-                attributes.push(SdefBufferKind.matricesSdefR0Kind);
-                attributes.push(SdefBufferKind.matricesSdefR1Kind);
+            if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind)) {
+                attributes.push(SdefBufferKind.MatricesSdefCKind);
+                attributes.push(SdefBufferKind.MatricesSdefR0Kind);
+                attributes.push(SdefBufferKind.MatricesSdefR1Kind);
             }
         }
     }
@@ -306,7 +306,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return "MmdPluginMaterial";
     }
 
-    private escapeRegExp(string: string): string {
+    private _escapeRegExp(string: string): string {
         return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 }

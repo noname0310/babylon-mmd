@@ -1,5 +1,6 @@
-import { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
-import { Material } from "@babylonjs/core";
+import type { Material } from "@babylonjs/core";
+
+import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
 
 export interface IMmdMaterialProxy {
     reset(): void;

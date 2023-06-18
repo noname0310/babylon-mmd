@@ -70,9 +70,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         this.useSdef = true;
 
         this._loggingEnabled = false;
-        this.log = this.logDisabled;
-        this.warn = this.warnDisabled;
-        this.error = this.errorDisabled;
+        this.log = this._logDisabled;
+        this.warn = this._warnDisabled;
+        this.error = this._errorDisabled;
     }
 
     public importMeshAsync(
@@ -83,7 +83,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         _fileName?: string
     ): Promise<ISceneLoaderAsyncResult> {
-        return this.loadAsyncInternal(scene, null, data, rootUrl, onProgress);
+        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress);
     }
 
     public loadAsync(
@@ -93,7 +93,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         _fileName?: string
     ): Promise<void> {
-        return this.loadAsyncInternal(scene, null, data, rootUrl, onProgress).then(() => {
+        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress).then(() => {
             return;
         });
     }
@@ -107,7 +107,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
     ): Promise<AssetContainer> {
         const assetContainer = new AssetContainer(scene);
 
-        return this.loadAsyncInternal(scene, assetContainer, data, rootUrl, onProgress).then(() => {
+        return this._loadAsyncInternal(scene, assetContainer, data, rootUrl, onProgress).then(() => {
             return assetContainer;
         });
     }
@@ -132,7 +132,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         return request;
     }
 
-    private async loadAsyncInternal(
+    private async _loadAsyncInternal(
         scene: Scene,
         assetContainer: AssetContainer | null,
         data: ArrayBuffer,
@@ -142,7 +142,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const useSdef = this.useSdef;
 
         // data must be ArrayBuffer
-        const pmxObject = await PmxReader.parseAsync(data, this)
+        const pmxObject = await PmxReader.ParseAsync(data, this)
             .catch((e: any) => {
                 return Promise.reject(e);
             });
@@ -156,12 +156,12 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
                 if (
-                    morphInfo.type !== PmxObject.Morph.Type.vertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.uvMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.additionalUvMorph1 &&
-                    morphInfo.type !== PmxObject.Morph.Type.additionalUvMorph2 &&
-                    morphInfo.type !== PmxObject.Morph.Type.additionalUvMorph3 &&
-                    morphInfo.type !== PmxObject.Morph.Type.additionalUvMorph4
+                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
                 ) {
                     // group morph, bone morph, material morph will be handled by cpu bound custom runtime
                     continue;
@@ -246,9 +246,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
 
                     switch (vertex.weightType) {
-                    case PmxObject.Vertex.BoneWeightType.bdef1:
+                    case PmxObject.Vertex.BoneWeightType.Bdef1:
                         {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1>;
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
 
                             boneIndices[i * 4 + 0] = boneWeight.boneIndices;
                             boneIndices[i * 4 + 1] = 0;
@@ -262,9 +262,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                         }
                         break;
 
-                    case PmxObject.Vertex.BoneWeightType.bdef2:
+                    case PmxObject.Vertex.BoneWeightType.Bdef2:
                         {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2>;
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
 
                             boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
                             boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
@@ -278,10 +278,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                         }
                         break;
 
-                    case PmxObject.Vertex.BoneWeightType.bdef4:
-                    case PmxObject.Vertex.BoneWeightType.qdef: // pmx 2.1 not support fallback to bdef4
+                    case PmxObject.Vertex.BoneWeightType.Bdef4:
+                    case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
                         {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4>;
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
 
                             boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
                             boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
@@ -295,9 +295,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                         }
                         break;
 
-                    case PmxObject.Vertex.BoneWeightType.sdef:
+                    case PmxObject.Vertex.BoneWeightType.Sdef:
                         {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef>;
+                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
 
                             boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
                             boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
@@ -393,9 +393,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         scene._blockEntityCollection = false;
 
         if (useSdef && hasSdef) {
-            geometry.setVerticesData(SdefBufferKind.matricesSdefCKind, boneSdefC!, false, 3);
-            geometry.setVerticesData(SdefBufferKind.matricesSdefR0Kind, boneSdefR0!, false, 3);
-            geometry.setVerticesData(SdefBufferKind.matricesSdefR1Kind, boneSdefR1!, false, 3);
+            geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
+            geometry.setVerticesData(SdefBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+            geometry.setVerticesData(SdefBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
         }
         geometry.applyToMesh(mesh);
 
@@ -553,17 +553,17 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
                 // create morph metadata
                 if (
-                    morphInfo.type !== PmxObject.Morph.Type.flipMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.impulseMorph
+                    morphInfo.type !== PmxObject.Morph.Type.FlipMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.ImpulseMorph
                 ) {
                     let elements: readonly PmxObject.Morph.GroupMorph[]
                         | readonly PmxObject.Morph.BoneMorph[]
                         | readonly PmxObject.Morph.MaterialMorph[]
                         | number = morphTargets.length;
                     if (
-                        morphInfo.type === PmxObject.Morph.Type.groupMorph ||
-                        morphInfo.type === PmxObject.Morph.Type.boneMorph ||
-                        morphInfo.type === PmxObject.Morph.Type.materialMorph
+                        morphInfo.type === PmxObject.Morph.Type.GroupMorph ||
+                        morphInfo.type === PmxObject.Morph.Type.BoneMorph ||
+                        morphInfo.type === PmxObject.Morph.Type.MaterialMorph
                     ) {
                         elements = morphInfo.elements as (
                             readonly PmxObject.Morph.GroupMorph[]
@@ -583,8 +583,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 }
 
                 if (
-                    morphInfo.type !== PmxObject.Morph.Type.vertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.uvMorph
+                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph
                 ) {
                     // group morph, bone morph, material morph will be handled by cpu bound custom runtime
                     continue;
@@ -593,7 +593,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
                 morphTargets.push(morphTarget);
 
-                if (morphInfo.type === PmxObject.Morph.Type.vertexMorph) {
+                if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
                     let positions = morphTarget.getPositions();
                     if (positions === null) {
                         positions = new Float32Array(pmxObject.vertices.length * 3);
@@ -706,37 +706,37 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         this._loggingEnabled = value;
 
         if (value) {
-            this.log = this.logEnabled;
-            this.warn = this.warnEnabled;
-            this.error = this.errorEnabled;
+            this.log = this._logEnabled;
+            this.warn = this._warnEnabled;
+            this.error = this._errorEnabled;
         } else {
-            this.log = this.logDisabled;
-            this.warn = this.warnDisabled;
-            this.error = this.errorDisabled;
+            this.log = this._logDisabled;
+            this.warn = this._warnDisabled;
+            this.error = this._errorDisabled;
         }
     }
 
-    private logEnabled(message: string): void {
+    private _logEnabled(message: string): void {
         Logger.Log(message);
     }
 
-    private logDisabled(): void {
+    private _logDisabled(): void {
         // do nothing
     }
 
-    private warnEnabled(message: string): void {
+    private _warnEnabled(message: string): void {
         Logger.Warn(message);
     }
 
-    private warnDisabled(): void {
+    private _warnDisabled(): void {
         // do nothing
     }
 
-    private errorEnabled(message: string): void {
+    private _errorEnabled(message: string): void {
         Logger.Error(message);
     }
 
-    private errorDisabled(): void {
+    private _errorDisabled(): void {
         // do nothing
     }
 }

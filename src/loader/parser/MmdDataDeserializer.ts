@@ -6,7 +6,7 @@ type Tuple<T, N extends number> = N extends N
     : never;
 
 export class MmdDataDeserializer {
-    private static readonly _littleEndian = true;
+    private static readonly _LittleEndian = true;
 
     private readonly _dataView: DataView;
     private _decoder: TextDecoder | null;
@@ -39,31 +39,31 @@ export class MmdDataDeserializer {
     }
 
     public getUint16(): number {
-        const value = this._dataView.getUint16(this._offset, MmdDataDeserializer._littleEndian);
+        const value = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 2;
         return value;
     }
 
     public getInt16(): number {
-        const value = this._dataView.getInt16(this._offset, MmdDataDeserializer._littleEndian);
+        const value = this._dataView.getInt16(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 2;
         return value;
     }
 
     public getUint32(): number {
-        const value = this._dataView.getUint32(this._offset, MmdDataDeserializer._littleEndian);
+        const value = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 4;
         return value;
     }
 
     public getInt32(): number {
-        const value = this._dataView.getInt32(this._offset, MmdDataDeserializer._littleEndian);
+        const value = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 4;
         return value;
     }
 
     public getFloat32(): number {
-        const value = this._dataView.getFloat32(this._offset, MmdDataDeserializer._littleEndian);
+        const value = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 4;
         return value;
     }

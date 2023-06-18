@@ -24,7 +24,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      */
     public alphaBlendThreshold = 100;
 
-    public static edgeSizeScaleFactor = 0.01;
+    public static EdgeSizeScaleFactor = 0.01;
 
     public useAlphaEvaluation = true;
 
@@ -48,7 +48,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
         const materials = pmxObject.materials;
         const alphaEvaluateRenderingContext = this.useAlphaEvaluation
-            ? TextureAlphaChecker.createRenderingContext()
+            ? TextureAlphaChecker.CreateRenderingContext()
             : null;
 
         const promises: Promise<void>[] = [];
@@ -237,7 +237,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             alphaEvaluateRenderingContext,
             onTextureLoadComplete
         ): Promise<void> => {
-            material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.isDoubleSided ? false : true;
+            material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
 
             const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
@@ -252,7 +252,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
-                    const transparencyMode = await TextureAlphaChecker.textureHasAlphaOnGeometry(
+                    const transparencyMode = await TextureAlphaChecker.TextureHasAlphaOnGeometry(
                         alphaEvaluateRenderingContext,
                         diffuseTexture,
                         indices,
@@ -297,7 +297,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             rootUrl,
             onTextureLoadComplete
         ): Promise<void> => {
-            if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.off) {
+            if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
                     const sphereTexture = await this._textureLoader.loadTextureAsync(
@@ -377,11 +377,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             material,
             materialInfo
         ): void => {
-            if (materialInfo.flag & PmxObject.Material.Flag.enabledToonEdge) {
-                MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
+            if (materialInfo.flag & PmxObject.Material.Flag.EnabledToonEdge) {
+                MmdOutlineRenderer.RegisterMmdOutlineRendererIfNeeded();
 
                 material.renderOutline = true;
-                material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.edgeSizeScaleFactor;
+                material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(
                     edgeColor[0], edgeColor[1], edgeColor[2]

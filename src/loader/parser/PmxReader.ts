@@ -40,7 +40,7 @@ class IndexReader {
         }
     }
 
-    private getNonVertexIndex(dataDeserializer: MmdDataDeserializer, indexSize: number): number {
+    private _getNonVertexIndex(dataDeserializer: MmdDataDeserializer, indexSize: number): number {
         switch (indexSize) {
         case 1:
             return dataDeserializer.getInt8();
@@ -54,33 +54,33 @@ class IndexReader {
     }
 
     public getTextureIndex(dataDeserializer: MmdDataDeserializer): number {
-        return this.getNonVertexIndex(dataDeserializer, this._textureIndexSize);
+        return this._getNonVertexIndex(dataDeserializer, this._textureIndexSize);
     }
 
     public getMaterialIndex(dataDeserializer: MmdDataDeserializer): number {
-        return this.getNonVertexIndex(dataDeserializer, this._materialIndexSize);
+        return this._getNonVertexIndex(dataDeserializer, this._materialIndexSize);
     }
 
     public getBoneIndex(dataDeserializer: MmdDataDeserializer): number {
-        return this.getNonVertexIndex(dataDeserializer, this._boneIndexSize);
+        return this._getNonVertexIndex(dataDeserializer, this._boneIndexSize);
     }
 
     public getMorphIndex(dataDeserializer: MmdDataDeserializer): number {
-        return this.getNonVertexIndex(dataDeserializer, this._morphIndexSize);
+        return this._getNonVertexIndex(dataDeserializer, this._morphIndexSize);
     }
 
     public getRigidBodyIndex(dataDeserializer: MmdDataDeserializer): number {
-        return this.getNonVertexIndex(dataDeserializer, this._rigidBodyIndexSize);
+        return this._getNonVertexIndex(dataDeserializer, this._rigidBodyIndexSize);
     }
 }
 
 export class PmxReader {
     private constructor() { /* block constructor */ }
 
-    public static async parseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<PmxObject> {
+    public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<PmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
 
-        const header = this.parseHeader(dataDeserializer, logger);
+        const header = this._ParseHeader(dataDeserializer, logger);
         const indexReader = new IndexReader(
             header.vertexIndexSize,
             header.textureIndexSize,
@@ -90,18 +90,18 @@ export class PmxReader {
             header.rigidBodyIndexSize
         );
 
-        const vertices = await this.parseVerticesAsync(dataDeserializer, indexReader, header);
-        const faces = this.parseFaces(dataDeserializer, indexReader, header);
-        const textures = this.parseTextures(dataDeserializer);
-        const materials = this.parseMaterials(dataDeserializer, indexReader);
-        const bones = this.parseBones(dataDeserializer, indexReader);
-        const morphs = this.parseMorphs(dataDeserializer, indexReader);
-        const displayFrames = this.parseDisplayFrames(dataDeserializer, indexReader);
-        const rigidBodies = this.parseRigidBodies(dataDeserializer, indexReader);
-        const joints = this.parseJoints(dataDeserializer, indexReader);
+        const vertices = await this._ParseVerticesAsync(dataDeserializer, indexReader, header);
+        const faces = this._ParseFaces(dataDeserializer, indexReader, header);
+        const textures = this._ParseTextures(dataDeserializer);
+        const materials = this._ParseMaterials(dataDeserializer, indexReader);
+        const bones = this._ParseBones(dataDeserializer, indexReader);
+        const morphs = this._ParseMorphs(dataDeserializer, indexReader);
+        const displayFrames = this._ParseDisplayFrames(dataDeserializer, indexReader);
+        const rigidBodies = this._ParseRigidBodies(dataDeserializer, indexReader);
+        const joints = this._ParseJoints(dataDeserializer, indexReader);
         const softBodies = header.version <= 2.0
             ? []
-            : this.parseSoftBodies(dataDeserializer, indexReader, header);
+            : this._ParseSoftBodies(dataDeserializer, indexReader, header);
 
         if (dataDeserializer.bytesAvailable > 0) {
             logger.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
@@ -124,7 +124,7 @@ export class PmxReader {
         return pmxObject;
     }
 
-    private static parseHeader(dataDeserializer: MmdDataDeserializer, logger: ILogger): PmxObject.Header {
+    private static _ParseHeader(dataDeserializer: MmdDataDeserializer, logger: ILogger): PmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
             4 // signature
             + 4 // version (float32)
@@ -150,7 +150,7 @@ export class PmxReader {
         const globalsCount = dataDeserializer.getUint8();
 
         const encoding = dataDeserializer.getUint8();
-        dataDeserializer.initializeTextDecoder(encoding === PmxObject.Header.Encoding.utf8 ? "utf-8" : "utf-16le");
+        dataDeserializer.initializeTextDecoder(encoding === PmxObject.Header.Encoding.Utf8 ? "utf-8" : "utf-16le");
 
         const additionalVec4Count = dataDeserializer.getUint8();
         const vertexIndexSize = dataDeserializer.getUint8();
@@ -196,7 +196,7 @@ export class PmxReader {
         return header;
     }
 
-    private static async parseVerticesAsync(
+    private static async _ParseVerticesAsync(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader,
         header: PmxObject.Header
@@ -219,24 +219,24 @@ export class PmxReader {
             let boneWeight: PmxObject.Vertex.BoneWeight;
 
             switch (weightType) {
-            case PmxObject.Vertex.BoneWeightType.bdef1: {
-                const bdef1weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef1> = {
+            case PmxObject.Vertex.BoneWeightType.Bdef1: {
+                const bdef1weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1> = {
                     boneIndices: indexReader.getBoneIndex(dataDeserializer),
                     boneWeights: null
                 };
                 boneWeight = bdef1weight;
                 break;
             }
-            case PmxObject.Vertex.BoneWeightType.bdef2: {
-                const bdef2weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef2> = {
+            case PmxObject.Vertex.BoneWeightType.Bdef2: {
+                const bdef2weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2> = {
                     boneIndices: [indexReader.getBoneIndex(dataDeserializer), indexReader.getBoneIndex(dataDeserializer)],
                     boneWeights: dataDeserializer.getFloat32()
                 };
                 boneWeight = bdef2weight;
                 break;
             }
-            case PmxObject.Vertex.BoneWeightType.bdef4: {
-                const bdef4weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.bdef4> = {
+            case PmxObject.Vertex.BoneWeightType.Bdef4: {
+                const bdef4weight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4> = {
                     boneIndices: [
                         indexReader.getBoneIndex(dataDeserializer),
                         indexReader.getBoneIndex(dataDeserializer),
@@ -253,8 +253,8 @@ export class PmxReader {
                 boneWeight = bdef4weight;
                 break;
             }
-            case PmxObject.Vertex.BoneWeightType.sdef: {
-                const sdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.sdef> = {
+            case PmxObject.Vertex.BoneWeightType.Sdef: {
+                const sdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef> = {
                     boneIndices: [indexReader.getBoneIndex(dataDeserializer), indexReader.getBoneIndex(dataDeserializer)],
                     boneWeights: {
                         boneWeight0: dataDeserializer.getFloat32(),
@@ -266,8 +266,8 @@ export class PmxReader {
                 boneWeight = sdefweight;
                 break;
             }
-            case PmxObject.Vertex.BoneWeightType.qdef: {
-                const qdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.qdef> = {
+            case PmxObject.Vertex.BoneWeightType.Qdef: {
+                const qdefweight: PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Qdef> = {
                     boneIndices: [
                         indexReader.getBoneIndex(dataDeserializer),
                         indexReader.getBoneIndex(dataDeserializer),
@@ -309,7 +309,7 @@ export class PmxReader {
         return vertices;
     }
 
-    private static parseFaces(
+    private static _ParseFaces(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader,
         header: PmxObject.Header
@@ -344,7 +344,7 @@ export class PmxReader {
         return faces;
     }
 
-    private static parseTextures(dataDeserializer: MmdDataDeserializer): PmxObject.Texture[] {
+    private static _ParseTextures(dataDeserializer: MmdDataDeserializer): PmxObject.Texture[] {
         const texturesCount = dataDeserializer.getInt32();
 
         const textures: PmxObject.Texture[] = [];
@@ -356,7 +356,7 @@ export class PmxReader {
         return textures;
     }
 
-    private static parseMaterials(
+    private static _ParseMaterials(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.Material[] {
@@ -417,7 +417,7 @@ export class PmxReader {
         return materials;
     }
 
-    private static parseBones(
+    private static _ParseBones(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.Bone[] {
@@ -436,7 +436,7 @@ export class PmxReader {
 
             let tailPosition: number | Vec3;
 
-            if (flag & PmxObject.Bone.Flag.useBoneIndexAsTailPosition) {
+            if (flag & PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) {
                 tailPosition = indexReader.getBoneIndex(dataDeserializer);
             } else {
                 tailPosition = dataDeserializer.getFloat32Array(3);
@@ -444,11 +444,11 @@ export class PmxReader {
 
             let appendTransform;
 
-            if (flag & PmxObject.Bone.Flag.hasAppendMove || flag & PmxObject.Bone.Flag.hasAppendRotate) {
+            if (flag & PmxObject.Bone.Flag.HasAppendMove || flag & PmxObject.Bone.Flag.HasAppendRotate) {
                 appendTransform = {
-                    isLocal: (flag & PmxObject.Bone.Flag.localAppendTransform) !== 0,
-                    affectRotation: (flag & PmxObject.Bone.Flag.hasAppendRotate) !== 0,
-                    affectPosition: (flag & PmxObject.Bone.Flag.hasAppendMove) !== 0,
+                    isLocal: (flag & PmxObject.Bone.Flag.LocalAppendTransform) !== 0,
+                    affectRotation: (flag & PmxObject.Bone.Flag.HasAppendRotate) !== 0,
+                    affectPosition: (flag & PmxObject.Bone.Flag.HasAppendMove) !== 0,
                     parentIndex: indexReader.getBoneIndex(dataDeserializer),
                     ratio: dataDeserializer.getFloat32()
                 };
@@ -456,30 +456,30 @@ export class PmxReader {
 
             let axisLimit: Vec3 | undefined;
 
-            if (flag & PmxObject.Bone.Flag.hasAxisLimit) {
+            if (flag & PmxObject.Bone.Flag.HasAxisLimit) {
                 axisLimit = dataDeserializer.getFloat32Array(3);
             }
 
             let localVector;
 
-            if (flag & PmxObject.Bone.Flag.hasLocalVector) {
+            if (flag & PmxObject.Bone.Flag.HasLocalVector) {
                 localVector = {
                     x: dataDeserializer.getFloat32Array(3),
                     z: dataDeserializer.getFloat32Array(3)
                 };
             }
 
-            const transformAfterPhysics = (flag & PmxObject.Bone.Flag.transformAfterPhysics) !== 0;
+            const transformAfterPhysics = (flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
             let externalParentTransform: number | undefined;
 
-            if (flag & PmxObject.Bone.Flag.isExternalParentTransformed) {
+            if (flag & PmxObject.Bone.Flag.IsExternalParentTransformed) {
                 externalParentTransform = dataDeserializer.getInt32();
             }
 
             let ik;
 
-            if (flag & PmxObject.Bone.Flag.isIkEnabled) {
+            if (flag & PmxObject.Bone.Flag.IsIkEnabled) {
                 const target = indexReader.getBoneIndex(dataDeserializer);
                 const iteration = dataDeserializer.getInt32();
                 const rotationConstraint = dataDeserializer.getFloat32();
@@ -535,7 +535,7 @@ export class PmxReader {
         return bones;
     }
 
-    private static parseMorphs(
+    private static _ParseMorphs(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.Morph[] {
@@ -554,7 +554,7 @@ export class PmxReader {
             const elements = [];
 
             switch (type) {
-            case PmxObject.Morph.Type.groupMorph:
+            case PmxObject.Morph.Type.GroupMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const morphIndex = indexReader.getMorphIndex(dataDeserializer);
                     const morphRatio = dataDeserializer.getFloat32();
@@ -566,7 +566,7 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.vertexMorph:
+            case PmxObject.Morph.Type.VertexMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
                     const positionOffset = dataDeserializer.getFloat32Array(3);
@@ -578,7 +578,7 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.boneMorph:
+            case PmxObject.Morph.Type.BoneMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const boneIndex = indexReader.getBoneIndex(dataDeserializer);
                     const position = dataDeserializer.getFloat32Array(3);
@@ -592,11 +592,11 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.uvMorph:
-            case PmxObject.Morph.Type.additionalUvMorph1:
-            case PmxObject.Morph.Type.additionalUvMorph2:
-            case PmxObject.Morph.Type.additionalUvMorph3:
-            case PmxObject.Morph.Type.additionalUvMorph4:
+            case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.AdditionalUvMorph1:
+            case PmxObject.Morph.Type.AdditionalUvMorph2:
+            case PmxObject.Morph.Type.AdditionalUvMorph3:
+            case PmxObject.Morph.Type.AdditionalUvMorph4:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
                     const uvOffset = dataDeserializer.getFloat32Array(4);
@@ -608,7 +608,7 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.materialMorph:
+            case PmxObject.Morph.Type.MaterialMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const materialIndex = indexReader.getMaterialIndex(dataDeserializer);
                     const type = dataDeserializer.getUint8();
@@ -638,7 +638,7 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.flipMorph:
+            case PmxObject.Morph.Type.FlipMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const morphIndex = indexReader.getMorphIndex(dataDeserializer);
                     const morphRatio = dataDeserializer.getFloat32();
@@ -650,7 +650,7 @@ export class PmxReader {
                     elements.push(element);
                 }
                 break;
-            case PmxObject.Morph.Type.impulseMorph:
+            case PmxObject.Morph.Type.ImpulseMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const rigidBodyIndex = indexReader.getRigidBodyIndex(dataDeserializer);
                     const isLocal = dataDeserializer.getUint8() === 1;
@@ -683,7 +683,7 @@ export class PmxReader {
         return morphs;
     }
 
-    private static parseDisplayFrames(
+    private static _ParseDisplayFrames(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.DisplayFrame[] {
@@ -723,7 +723,7 @@ export class PmxReader {
         return displayFrames;
     }
 
-    private static parseRigidBodies(
+    private static _ParseRigidBodies(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.RigidBody[] {
@@ -775,7 +775,7 @@ export class PmxReader {
         return rigidBodies;
     }
 
-    private static parseJoints(
+    private static _ParseJoints(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader
     ): PmxObject.Joint[] {
@@ -820,7 +820,7 @@ export class PmxReader {
         return joints;
     }
 
-    private static parseSoftBodies(
+    private static _ParseSoftBodies(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader,
         header: PmxObject.Header

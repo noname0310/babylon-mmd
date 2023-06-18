@@ -108,14 +108,14 @@ export class SdefMesh extends Mesh {
             }
         }
 
-        const hasSdefParams = this.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind);
+        const hasSdefParams = this.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind);
         let sdefC0Data: Nullable<FloatArray> = null;
         let sdefR0Data: Nullable<FloatArray> = null;
         let sdefR1Data: Nullable<FloatArray> = null;
         if (hasSdefParams) {
-            sdefC0Data = this.getVerticesData(SdefBufferKind.matricesSdefCKind);
-            sdefR0Data = this.getVerticesData(SdefBufferKind.matricesSdefR0Kind);
-            sdefR1Data = this.getVerticesData(SdefBufferKind.matricesSdefR1Kind);
+            sdefC0Data = this.getVerticesData(SdefBufferKind.MatricesSdefCKind);
+            sdefR0Data = this.getVerticesData(SdefBufferKind.MatricesSdefR0Kind);
+            sdefR1Data = this.getVerticesData(SdefBufferKind.MatricesSdefR1Kind);
         }
 
         const matricesIndicesData = this.getVerticesData(VertexBuffer.MatricesIndicesKind);

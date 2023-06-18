@@ -7,9 +7,9 @@ export enum TransparencyMode {
 }
 
 export class TextureAlphaChecker {
-    private static readonly _resolution = 512;
+    private static readonly _Resolution = 512;
 
-    public static async textureHasAlphaOnGeometry(
+    public static async TextureHasAlphaOnGeometry(
         context: WebGL2RenderingContext | null,
         texture: Texture,
         indices: Uint16Array | Uint32Array,
@@ -78,7 +78,7 @@ export class TextureAlphaChecker {
             varying vec2 vUv;
 
             void main() {
-                vec2 onePixel = vec2(1.0 / ${TextureAlphaChecker._resolution.toFixed(1)});
+                vec2 onePixel = vec2(1.0 / ${TextureAlphaChecker._Resolution.toFixed(1)});
 
                 float minAlpha = 1.0;
                 for (int i = 0; i < 2; ++i) {
@@ -160,7 +160,7 @@ export class TextureAlphaChecker {
         context.deleteShader(vertexShader);
         context.deleteShader(fragmentShader);
 
-        const resolution = TextureAlphaChecker._resolution;
+        const resolution = TextureAlphaChecker._Resolution;
         const resultPixelsBufferView = new Uint8Array(resolution * resolution * 4);
         context.readPixels(
             0, // x
@@ -223,10 +223,10 @@ export class TextureAlphaChecker {
         }
     }
 
-    public static createRenderingContext(): WebGL2RenderingContext | null {
+    public static CreateRenderingContext(): WebGL2RenderingContext | null {
         const canvas = document.createElement("canvas");
-        canvas.width = TextureAlphaChecker._resolution;
-        canvas.height = TextureAlphaChecker._resolution;
+        canvas.width = TextureAlphaChecker._Resolution;
+        canvas.height = TextureAlphaChecker._Resolution;
 
         // document.body.appendChild(canvas);
 

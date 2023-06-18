@@ -61,7 +61,7 @@ export class MmdMorphController {
             materials[i] = new materialProxyConstructor(subMaterials[i]);
         }
 
-        const morphs = this._morphs = this.createRuntimeMorphData(morphsMetadata);
+        const morphs = this._morphs = this._createRuntimeMorphData(morphsMetadata);
 
         const morphIndexMap = this._morphIndexMap = new Map<string, number[]>();
         for (let i = 0; i < morphs.length; ++i) {
@@ -117,7 +117,7 @@ export class MmdMorphController {
         for (const morphName of activeMorphs) {
             const morphIndices = morphIndexMap.get(morphName)!;
             for (let i = 0; i < morphIndices.length; ++i) {
-                this.resetMorph(morphs[morphIndices[i]]);
+                this._resetMorph(morphs[morphIndices[i]]);
             }
         }
 
@@ -127,7 +127,7 @@ export class MmdMorphController {
                 const morphIndex = morphIndices[i];
                 const morphWeight = morphWeights[morphIndex];
 
-                this.applyMorph(morphs[morphIndex], morphWeight);
+                this._applyMorph(morphs[morphIndex], morphWeight);
 
                 if (morphWeight === 0) {
                     activeMorphs.delete(morphName);
@@ -146,7 +146,7 @@ export class MmdMorphController {
         return this._morphs;
     }
 
-    private createRuntimeMorphData(morphsMetadata: readonly MmdModelMetadata.Morph[]): RuntimeMorph[] {
+    private _createRuntimeMorphData(morphsMetadata: readonly MmdModelMetadata.Morph[]): RuntimeMorph[] {
         const morphs: RuntimeMorph[] = [];
 
         for (let i = 0; i < morphsMetadata.length; ++i) {
@@ -158,7 +158,7 @@ export class MmdMorphController {
                 elements: morphMetadata.elements as RuntimeMorph["elements"]
             };
 
-            if (morphMetadata.type === PmxObject.Morph.Type.groupMorph) {
+            if (morphMetadata.type === PmxObject.Morph.Type.GroupMorph) {
                 const elements: RemoveReadonly<PmxObject.Morph.GroupMorph>[] = [];
                 const groupMorphs = morphMetadata.elements as PmxObject.Morph.GroupMorph[];
                 for (let j = 0; j < groupMorphs.length; ++j) {
@@ -178,7 +178,7 @@ export class MmdMorphController {
             const groupMorphStack: number[] = [];
             const fixLoopingGroupMorphs = (morphIndex: number): void => {
                 const morph = morphs[morphIndex];
-                if (morph.type !== PmxObject.Morph.Type.groupMorph) return;
+                if (morph.type !== PmxObject.Morph.Type.GroupMorph) return;
 
                 const elements = morph.elements as readonly RemoveReadonly<PmxObject.Morph.GroupMorph>[];
                 for (let i = 0; i < elements.length; ++i) {
@@ -206,7 +206,7 @@ export class MmdMorphController {
         return morphs;
     }
 
-    private groupMorphFlatForeach(
+    private _groupMorphFlatForeach(
         groupMorph: RuntimeMorph,
         callback: (index: number, ratio: number) => void,
         ratio = 1
@@ -218,27 +218,27 @@ export class MmdMorphController {
             const element = elements[i];
 
             const childMorph = morphs[element.index];
-            if (childMorph.type === PmxObject.Morph.Type.groupMorph) {
-                this.groupMorphFlatForeach(childMorph, callback, element.ratio * ratio);
+            if (childMorph.type === PmxObject.Morph.Type.GroupMorph) {
+                this._groupMorphFlatForeach(childMorph, callback, element.ratio * ratio);
             } else {
                 callback(element.index, element.ratio * ratio);
             }
         }
     }
 
-    private resetMorph(morph: RuntimeMorph): void {
+    private _resetMorph(morph: RuntimeMorph): void {
         switch (morph.type) {
-        case PmxObject.Morph.Type.groupMorph:
+        case PmxObject.Morph.Type.GroupMorph:
             {
                 const morphs = this._morphs;
-                this.groupMorphFlatForeach(morph, (index, _ratio) => {
+                this._groupMorphFlatForeach(morph, (index, _ratio) => {
                     const childMorph = morphs[index];
-                    if (childMorph !== undefined) this.resetMorph(childMorph);
+                    if (childMorph !== undefined) this._resetMorph(childMorph);
                 });
             }
             break;
 
-        case PmxObject.Morph.Type.materialMorph:
+        case PmxObject.Morph.Type.MaterialMorph:
             {
                 const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
                 for (let i = 0; i < elements.length; ++i) {
@@ -248,8 +248,8 @@ export class MmdMorphController {
             }
             break;
 
-        case PmxObject.Morph.Type.vertexMorph:
-        case PmxObject.Morph.Type.uvMorph:
+        case PmxObject.Morph.Type.VertexMorph:
+        case PmxObject.Morph.Type.UvMorph:
             this._morphTargetManager.getTarget(morph.elements as number).influence = 0;
             break;
         }
@@ -258,19 +258,19 @@ export class MmdMorphController {
     private readonly _tempVector3 = new Vector3();
     private readonly _tempQuaternion = new Quaternion();
 
-    private applyMorph(morph: RuntimeMorph, weight: number): void {
+    private _applyMorph(morph: RuntimeMorph, weight: number): void {
         switch (morph.type) {
-        case PmxObject.Morph.Type.groupMorph:
+        case PmxObject.Morph.Type.GroupMorph:
             {
                 const morphs = this._morphs;
-                this.groupMorphFlatForeach(morph, (index, ratio) => {
+                this._groupMorphFlatForeach(morph, (index, ratio) => {
                     const childMorph = morphs[index];
-                    if (childMorph !== undefined) this.applyMorph(childMorph, weight * ratio);
+                    if (childMorph !== undefined) this._applyMorph(childMorph, weight * ratio);
                 });
             }
             break;
 
-        case PmxObject.Morph.Type.boneMorph:
+        case PmxObject.Morph.Type.BoneMorph:
             {
                 const bones = this._skeleton.bones;
 
@@ -303,14 +303,14 @@ export class MmdMorphController {
             }
             break;
 
-        case PmxObject.Morph.Type.materialMorph:
+        case PmxObject.Morph.Type.MaterialMorph:
             {
                 const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     const material = this._materials[element.index];
 
-                    if (element.type === PmxObject.Morph.MaterialMorph.Type.multiply) {
+                    if (element.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
                         const diffuse = material.diffuse;
                         for (let i = 0; i < 4; ++i) {
                             diffuse[i] = diffuse[i] + (diffuse[i] * element.diffuse[i] - diffuse[i]) * weight;
@@ -395,14 +395,10 @@ export class MmdMorphController {
             }
             break;
 
-        case PmxObject.Morph.Type.vertexMorph:
-        case PmxObject.Morph.Type.uvMorph:
+        case PmxObject.Morph.Type.VertexMorph:
+        case PmxObject.Morph.Type.UvMorph:
             this._morphTargetManager.getTarget(morph.elements as number).influence += weight;
             break;
         }
-    }
-
-    public lerpNumber(a: number, b: number, t: number): number {
-        return a + (b - a) * t;
     }
 }

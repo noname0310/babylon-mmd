@@ -1,6 +1,7 @@
-import { Material } from "@babylonjs/core";
+import type { Material } from "@babylonjs/core";
+
 import type { ILogger } from "./ILogger";
-import { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
+import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdMesh } from "./MmdMesh";
 import { MmdMorphController } from "./MmdMorphController";
 

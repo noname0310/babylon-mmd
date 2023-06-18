@@ -30,9 +30,9 @@ export class MmdRuntime implements ILogger {
         this._models = [];
 
         this._loggingEnabled = false;
-        this.log = this.logDisabled;
-        this.warn = this.warnDisabled;
-        this.error = this.errorDisabled;
+        this.log = this._logDisabled;
+        this.warn = this._warnDisabled;
+        this.error = this._errorDisabled;
     }
 
     public createMmdModel(
@@ -83,37 +83,37 @@ export class MmdRuntime implements ILogger {
         this._loggingEnabled = value;
 
         if (value) {
-            this.log = this.logEnabled;
-            this.warn = this.warnEnabled;
-            this.error = this.errorEnabled;
+            this.log = this._logEnabled;
+            this.warn = this._warnEnabled;
+            this.error = this._errorEnabled;
         } else {
-            this.log = this.logDisabled;
-            this.warn = this.warnDisabled;
-            this.error = this.errorDisabled;
+            this.log = this._logDisabled;
+            this.warn = this._warnDisabled;
+            this.error = this._errorDisabled;
         }
     }
 
-    private logEnabled(message: string): void {
+    private _logEnabled(message: string): void {
         Logger.Log(message);
     }
 
-    private logDisabled(): void {
+    private _logDisabled(): void {
         // do nothing
     }
 
-    private warnEnabled(message: string): void {
+    private _warnEnabled(message: string): void {
         Logger.Warn(message);
     }
 
-    private warnDisabled(): void {
+    private _warnDisabled(): void {
         // do nothing
     }
 
-    private errorEnabled(message: string): void {
+    private _errorEnabled(message: string): void {
         Logger.Error(message);
     }
 
-    private errorDisabled(): void {
+    private _errorDisabled(): void {
         // do nothing
     }
 }

@@ -44,7 +44,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         const materialOutlineColor = material.outlineColor;
         this.edgeColor = [materialOutlineColor.r, materialOutlineColor.g, materialOutlineColor.b, material.outlineAlpha];
 
-        this.edgeSize = material.outlineWidth / MmdStandardMaterialBuilder.edgeSizeScaleFactor;
+        this.edgeSize = material.outlineWidth / MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
 
         this.textureColor = [1, 1, 1, 1];
         this.sphereTextureColor = [1, 1, 1, 1];
@@ -94,7 +94,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         material.outlineColor.set(this.edgeColor[0], this.edgeColor[1], this.edgeColor[2]);
         material.outlineAlpha = this.edgeColor[3];
 
-        material.outlineWidth = this.edgeSize * MmdStandardMaterialBuilder.edgeSizeScaleFactor;
+        material.outlineWidth = this.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
 
         // material.textureColor.set(this.textureColor[0], this.textureColor[1], this.textureColor[2], this.textureColor[3]);
         // material.sphereTextureColor.set(this.sphereTextureColor[0], this.sphereTextureColor[1], this.sphereTextureColor[2], this.sphereTextureColor[3]);

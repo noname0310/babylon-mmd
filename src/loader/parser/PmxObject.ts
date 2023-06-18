@@ -37,8 +37,8 @@ export namespace PmxObject {
 
     export namespace Header {
         export enum Encoding {
-            utf16le = 0,
-            utf8 = 1
+            Utf16le = 0,
+            Utf8 = 1
         }
     }
 
@@ -54,11 +54,11 @@ export namespace PmxObject {
 
     export namespace Vertex {
         export enum BoneWeightType {
-            bdef1 = 0,
-            bdef2 = 1,
-            bdef4 = 2,
-            sdef = 3,
-            qdef = 4 // pmx 2.1 spec (which is not supported by mmd)
+            Bdef1 = 0,
+            Bdef2 = 1,
+            Bdef4 = 2,
+            Sdef = 3,
+            Qdef = 4 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export type BoneWeightSDEF = Readonly<{
@@ -69,18 +69,18 @@ export namespace PmxObject {
         }>;
 
         export type BoneWeight<T extends BoneWeightType = Vertex.BoneWeightType> = Readonly<{
-            boneIndices: T extends BoneWeightType.bdef1 ? number
-                : T extends BoneWeightType.bdef2 ? Vec2
-                : T extends BoneWeightType.bdef4 ? Vec4
-                : T extends BoneWeightType.sdef ? Vec2
-                : T extends BoneWeightType.qdef ? Vec4
+            boneIndices: T extends BoneWeightType.Bdef1 ? number
+                : T extends BoneWeightType.Bdef2 ? Vec2
+                : T extends BoneWeightType.Bdef4 ? Vec4
+                : T extends BoneWeightType.Sdef ? Vec2
+                : T extends BoneWeightType.Qdef ? Vec4
                 : never;
 
-            boneWeights: T extends BoneWeightType.bdef1 ? null
-                : T extends BoneWeightType.bdef2 ? number
-                : T extends BoneWeightType.bdef4 ? Vec4
-                : T extends BoneWeightType.sdef ? BoneWeightSDEF
-                : T extends BoneWeightType.qdef ? Vec4
+            boneWeights: T extends BoneWeightType.Bdef1 ? null
+                : T extends BoneWeightType.Bdef2 ? number
+                : T extends BoneWeightType.Bdef4 ? Vec4
+                : T extends BoneWeightType.Sdef ? BoneWeightSDEF
+                : T extends BoneWeightType.Qdef ? Vec4
                 : never;
         }>;
     }
@@ -116,21 +116,21 @@ export namespace PmxObject {
 
     export namespace Material {
         export enum Flag {
-            isDoubleSided = 1 << 0,
-            enabledGroundShadow = 1 << 1,
-            enabledDrawShadow = 1 << 2,
-            enabledReceiveShadow = 1 << 3,
-            enabledToonEdge = 1 << 4,
-            enabledVertexColor = 1 << 5, // pmx 2.1 spec (which is not supported by mmd)
-            enabledPointDraw = 1 << 6, // pmx 2.1 spec (which is not supported by mmd)
-            enabledLineDraw = 1 << 7 // pmx 2.1 spec (which is not supported by mmd)
+            IsDoubleSided = 1 << 0,
+            EnabledGroundShadow = 1 << 1,
+            EnabledDrawShadow = 1 << 2,
+            EnabledReceiveShadow = 1 << 3,
+            EnabledToonEdge = 1 << 4,
+            EnabledVertexColor = 1 << 5, // pmx 2.1 spec (which is not supported by mmd)
+            EnabledPointDraw = 1 << 6, // pmx 2.1 spec (which is not supported by mmd)
+            EnabledLineDraw = 1 << 7 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export enum SphereTextureMode {
-            off = 0,
-            multiply = 1,
-            add = 2,
-            subTexture = 3
+            Off = 0,
+            Multiply = 1,
+            Add = 2,
+            SubTexture = 3
         }
     }
 
@@ -169,21 +169,21 @@ export namespace PmxObject {
 
     export namespace Bone {
         export enum Flag {
-            useBoneIndexAsTailPosition = 0x0001,
+            UseBoneIndexAsTailPosition = 0x0001,
 
-            isRotatable = 0x0002,
-            isMovable = 0x0004,
-            isVisible = 0x0008,
-            isControllable = 0x0010,
-            isIkEnabled = 0x0020,
+            IsRotatable = 0x0002,
+            IsMovable = 0x0004,
+            IsVisible = 0x0008,
+            IsControllable = 0x0010,
+            IsIkEnabled = 0x0020,
 
-            localAppendTransform = 0x0080,
-            hasAppendRotate = 0x0100,
-            hasAppendMove = 0x0200,
-            hasAxisLimit = 0x0400,
-            hasLocalVector = 0x0800,
-            transformAfterPhysics = 0x1000,
-            isExternalParentTransformed = 0x2000,
+            LocalAppendTransform = 0x0080,
+            HasAppendRotate = 0x0100,
+            HasAppendMove = 0x0200,
+            HasAxisLimit = 0x0400,
+            HasLocalVector = 0x0800,
+            TransformAfterPhysics = 0x1000,
+            IsExternalParentTransformed = 0x2000,
         }
 
         export type IKLink = Readonly<{
@@ -213,25 +213,25 @@ export namespace PmxObject {
 
     export namespace Morph {
         export enum Category {
-            system = 0,
-            eyebrow = 1,
-            eye = 2,
-            lip = 3,
-            other = 4
+            System = 0,
+            Eyebrow = 1,
+            Eye = 2,
+            Lip = 3,
+            Other = 4
         }
 
         export enum Type {
-            groupMorph = 0,
-            vertexMorph = 1,
-            boneMorph = 2,
-            uvMorph = 3,
-            additionalUvMorph1 = 4,
-            additionalUvMorph2 = 5,
-            additionalUvMorph3 = 6,
-            additionalUvMorph4 = 7,
-            materialMorph = 8,
-            flipMorph = 9, // pmx 2.1 spec (which is not supported by mmd)
-            impulseMorph = 10 // pmx 2.1 spec (which is not supported by mmd)
+            GroupMorph = 0,
+            VertexMorph = 1,
+            BoneMorph = 2,
+            UvMorph = 3,
+            AdditionalUvMorph1 = 4,
+            AdditionalUvMorph2 = 5,
+            AdditionalUvMorph3 = 6,
+            AdditionalUvMorph4 = 7,
+            MaterialMorph = 8,
+            FlipMorph = 9, // pmx 2.1 spec (which is not supported by mmd)
+            ImpulseMorph = 10 // pmx 2.1 spec (which is not supported by mmd)
         }
 
         export type GroupMorph = Readonly<{
@@ -271,8 +271,8 @@ export namespace PmxObject {
 
         export namespace MaterialMorph {
             export enum Type {
-                multiply = 0,
-                add = 1
+                Multiply = 0,
+                Add = 1
             }
         }
 
@@ -332,15 +332,15 @@ export namespace PmxObject {
 
     export namespace RigidBody {
         export enum ShapeType {
-            sphere = 0,
-            box = 1,
-            capsule = 2
+            Sphere = 0,
+            Box = 1,
+            Capsule = 2
         }
 
         export enum PhysicsMode {
-            followBone = 0,
-            physics = 1,
-            physicsWithBone = 2
+            FollowBone = 0,
+            Physics = 1,
+            PhysicsWithBone = 2
         }
     }
 
@@ -363,12 +363,12 @@ export namespace PmxObject {
 
     export namespace Joint {
         export enum Type {
-            spring6dof = 0,
-            sixdof = 1, // pmx 2.1 spec (which is not supported by mmd)
-            p2p = 2, // pmx 2.1 spec (which is not supported by mmd)
-            coneTwist = 3, // pmx 2.1 spec (which is not supported by mmd)
-            slider = 4, // pmx 2.1 spec (which is not supported by mmd)
-            hinge = 5 // pmx 2.1 spec (which is not supported by mmd)
+            Spring6dof = 0,
+            Sixdof = 1, // pmx 2.1 spec (which is not supported by mmd)
+            P2p = 2, // pmx 2.1 spec (which is not supported by mmd)
+            ConeTwist = 3, // pmx 2.1 spec (which is not supported by mmd)
+            Slider = 4, // pmx 2.1 spec (which is not supported by mmd)
+            Hinge = 5 // pmx 2.1 spec (which is not supported by mmd)
         }
     }
 
@@ -398,22 +398,22 @@ export namespace PmxObject {
 
     export namespace SoftBody {
         export enum Type {
-            triMesh = 0,
-            rope = 1
+            TriMesh = 0,
+            Rope = 1
         }
 
         export enum Flag {
-            bLink = 0x0001,
-            clusterCreation = 0x0002,
-            linkCrossing = 0x0004
+            Blink = 0x0001,
+            ClusterCreation = 0x0002,
+            LinkCrossing = 0x0004
         }
 
         export enum AeroDynamicModel {
-            vertexPoint = 0,
-            vertexTwoSided = 1,
-            vertexOneSided = 2,
-            faceTwoSided = 3,
-            faceOneSided = 4
+            VertexPoint = 0,
+            VertexTwoSided = 1,
+            VertexOneSided = 2,
+            FaceTwoSided = 3,
+            FaceOneSided = 4
         }
 
         export type AnchorRigidBody = Readonly<{

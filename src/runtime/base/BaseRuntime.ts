@@ -31,30 +31,30 @@ export class BaseRuntime {
         this._onTick = null!;
     }
 
-    public static async create(params: BaseRuntimeInitParams): Promise<BaseRuntime> {
+    public static async Create(params: BaseRuntimeInitParams): Promise<BaseRuntime> {
         const runtime = new BaseRuntime(params);
-        runtime._scene = await runtime.initialize(params.sceneBuilder);
-        runtime._onTick = runtime.makeOnTick();
+        runtime._scene = await runtime._initialize(params.sceneBuilder);
+        runtime._onTick = runtime._makeOnTick();
         return runtime;
     }
 
     public run(): void {
         const engine = this._engine;
 
-        window.addEventListener("resize", this.onResize);
+        window.addEventListener("resize", this._onResize);
         engine.runRenderLoop(this._onTick);
     }
 
     public dispose(): void {
-        window.removeEventListener("resize", this.onResize);
+        window.removeEventListener("resize", this._onResize);
         this._engine.dispose();
     }
 
-    private readonly onResize = (): void => {
+    private readonly _onResize = (): void => {
         this._engine.resize();
     };
 
-    private async initialize(sceneBuilder: ISceneBuilder): Promise<Scene> {
+    private async _initialize(sceneBuilder: ISceneBuilder): Promise<Scene> {
         const scene = await sceneBuilder.build(this._canvas, this._engine);
         this._tickRunner.afterBuild({
             engine: this._engine,
@@ -63,7 +63,7 @@ export class BaseRuntime {
         return scene;
     }
 
-    private makeOnTick(): () => void {
+    private _makeOnTick(): () => void {
         const scene = this._scene;
         const tickRunner = this._tickRunner;
 

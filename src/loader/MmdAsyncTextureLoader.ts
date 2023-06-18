@@ -33,7 +33,7 @@ export class MmdAsyncTextureLoader {
     private readonly _textureLoadInfoMap = new Map<string, TextureLoadInfo>(); // key: requestString
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
 
-    private incrementLeftLoadCount(uniqueId: number): TextureLoadingModel {
+    private _incrementLeftLoadCount(uniqueId: number): TextureLoadingModel {
         let model = this._loadingModels.get(uniqueId);
         if (model === undefined) {
             model = new TextureLoadingModel(uniqueId);
@@ -50,7 +50,7 @@ export class MmdAsyncTextureLoader {
         return model;
     }
 
-    private decrementLeftLoadCount(model: TextureLoadingModel): void {
+    private _decrementLeftLoadCount(model: TextureLoadingModel): void {
         model.leftLoadCount -= 1;
         if (!model.isRequesting && model.leftLoadCount === 0) {
             this._loadingModels.delete(model.uniqueId);
@@ -82,7 +82,7 @@ export class MmdAsyncTextureLoader {
         scene: Scene,
         assetContainer: AssetContainer | null
     ): Promise<Texture | null> {
-        const model = this.incrementLeftLoadCount(uniqueId);
+        const model = this._incrementLeftLoadCount(uniqueId);
 
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
@@ -103,7 +103,7 @@ export class MmdAsyncTextureLoader {
         let texture = this.textureCache.get(requestString)?.deref();
         if (texture === undefined && !textureLoadInfo.hasLoadError) {
             const blobOrUrl = isSharedToonTexture
-                ? SharedToonTextures.data[relativeTexturePathOrIndex as number]
+                ? SharedToonTextures.Data[relativeTexturePathOrIndex as number]
                 : requestString;
 
             scene._blockEntityCollection = !!assetContainer;
@@ -137,14 +137,14 @@ export class MmdAsyncTextureLoader {
         }
 
         if (texture === undefined || texture.isReady()) {
-            this.decrementLeftLoadCount(model!);
+            this._decrementLeftLoadCount(model!);
             if (textureLoadInfo.hasLoadError) return null;
             return texture!;
         }
 
         return new Promise((resolve) => {
             textureLoadInfo!.observable.addOnce((hasLoadError) => {
-                this.decrementLeftLoadCount(model!);
+                this._decrementLeftLoadCount(model!);
                 resolve(hasLoadError ? null : texture!);
             });
         });

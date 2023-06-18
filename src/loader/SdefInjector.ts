@@ -6,7 +6,7 @@ import { sdefDeclaration } from "./shader/SdefDeclaration";
 import { sdefVertex } from "./shader/SdefVertex";
 
 export class SdefInjector {
-    public static overrideEngineCreateEffect(engine: ThinEngine): void {
+    public static OverrideEngineCreateEffect(engine: ThinEngine): void {
         const originalCreateEffect = engine.createEffect.bind(engine);
         engine.createEffect = function(
             baseName: any,
@@ -42,18 +42,18 @@ export class SdefInjector {
                 if (effectCreationOptions.uniformsNames.includes("mBones") || effectCreationOptions.samplers.includes("boneSampler")) {
                     if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
 
-                        effectCreationOptions.attributes.push(SdefBufferKind.matricesSdefCKind);
-                        effectCreationOptions.attributes.push(SdefBufferKind.matricesSdefR0Kind);
-                        effectCreationOptions.attributes.push(SdefBufferKind.matricesSdefR1Kind);
+                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefCKind);
+                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefR0Kind);
+                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefR1Kind);
                         effectCreationOptions.defines += "\n#define SDEF";
 
                         const originalProcessCodeAfterIncludes = effectCreationOptions.processCodeAfterIncludes;
                         effectCreationOptions.processCodeAfterIncludes = originalProcessCodeAfterIncludes
                             ? function(shaderType: string, code: string): string {
                                 code = originalProcessCodeAfterIncludes!(shaderType, code);
-                                return SdefInjector.processSdefCode(shaderType, code);
+                                return SdefInjector.ProcessSdefCode(shaderType, code);
                             }
-                            : SdefInjector.processSdefCode;
+                            : SdefInjector.ProcessSdefCode;
                     }
                 }
             }
@@ -66,7 +66,7 @@ export class SdefInjector {
         };
     }
 
-    public static processSdefCode(shaderType: string, code: string): string {
+    public static ProcessSdefCode(shaderType: string, code: string): string {
         if (shaderType !== "vertex") return code;
 
         const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";

@@ -28,7 +28,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     /**
      * Stencil value used to avoid outline being seen within the mesh when the mesh is transparent
      */
-    private static readonly _stencilReference = 0x04;
+    private static readonly _StencilReference = 0x04;
     /**
      * The name of the component. Each component must have a unique name.
      */
@@ -73,8 +73,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
      * Register the component to one instance of a scene.
      */
     public register(): void {
-        this.scene._beforeRenderingMeshStage.registerStep(SceneComponentConstants.STEP_BEFORERENDERINGMESH_OUTLINE, this, this.beforeRenderingMesh);
-        this.scene._afterRenderingMeshStage.registerStep(SceneComponentConstants.STEP_AFTERRENDERINGMESH_OUTLINE, this, this.afterRenderingMesh);
+        this.scene._beforeRenderingMeshStage.registerStep(SceneComponentConstants.STEP_BEFORERENDERINGMESH_OUTLINE, this, this._beforeRenderingMesh);
+        this.scene._afterRenderingMeshStage.registerStep(SceneComponentConstants.STEP_AFTERRENDERINGMESH_OUTLINE, this, this._afterRenderingMesh);
     }
 
     /**
@@ -228,10 +228,10 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 attribs.push(VertexBuffer.MatricesIndicesExtraKind);
                 attribs.push(VertexBuffer.MatricesWeightsExtraKind);
             }
-            if (mesh.isVerticesDataPresent(SdefBufferKind.matricesSdefCKind)) {
-                attribs.push(SdefBufferKind.matricesSdefCKind);
-                attribs.push(SdefBufferKind.matricesSdefR0Kind);
-                attribs.push(SdefBufferKind.matricesSdefR1Kind);
+            if (mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind)) {
+                attribs.push(SdefBufferKind.MatricesSdefCKind);
+                attribs.push(SdefBufferKind.MatricesSdefR0Kind);
+                attribs.push(SdefBufferKind.MatricesSdefR1Kind);
                 defines.push("#define SDEF");
             }
             const skeleton = mesh.skeleton;
@@ -308,7 +308,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
                         samplers: samplers,
                         defines: join,
                         indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
-                        processCodeAfterIncludes: SdefInjector.processSdefCode
+                        processCodeAfterIncludes: SdefInjector.ProcessSdefCode
                     },
                     this.scene.getEngine()
                 ),
@@ -319,7 +319,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         return drawWrapper.effect!.isReady();
     }
 
-    private beforeRenderingMesh(mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
+    private _beforeRenderingMesh(mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
         // Outline - step 1
         this._savedDepthWrite = this._engine.getDepthWrite();
         const material = subMesh.getMaterial() as MmdStandardMaterial | null;
@@ -333,8 +333,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 this._engine.setStencilBuffer(true);
                 this._engine.setStencilOperationPass(Constants.REPLACE);
                 this._engine.setStencilFunction(Constants.ALWAYS);
-                this._engine.setStencilMask(MmdOutlineRenderer._stencilReference);
-                this._engine.setStencilFunctionReference(MmdOutlineRenderer._stencilReference);
+                this._engine.setStencilMask(MmdOutlineRenderer._StencilReference);
+                this._engine.setStencilFunctionReference(MmdOutlineRenderer._StencilReference);
                 this._engine.stencilStateComposer.useStencilGlobalOnly = true;
                 this.render(subMesh, batch, 0, this._passIdForDrawWrapper[1]);
 
@@ -359,7 +359,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
     }
 
-    private afterRenderingMesh(_mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
+    private _afterRenderingMesh(_mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
         const material = subMesh.getMaterial() as MmdStandardMaterial | null;
         if (material === null) return;
 
@@ -383,7 +383,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
     }
 
-    public static registerMmdOutlineRendererIfNeeded(): void {
+    public static RegisterMmdOutlineRendererIfNeeded(): void {
         if (Scene.prototype.getMmdOutlineRenderer as unknown) {
             return;
         }

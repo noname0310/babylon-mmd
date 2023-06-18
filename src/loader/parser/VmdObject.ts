@@ -4,23 +4,23 @@ import { MmdDataDeserializer } from "./MmdDataDeserializer";
 import type { Vec3, Vec4 } from "./MmdTypes";
 
 export class VmdData {
-    private static readonly _signature = "Vocaloid Motion Data 0002";
-    public static readonly signatureBytes = 30;
-    public static readonly modelNameBytes = 20;
+    private static readonly _Signature = "Vocaloid Motion Data 0002";
+    public static readonly SignatureBytes = 30;
+    public static readonly ModelNameBytes = 20;
 
-    public static readonly boneKeyFrameBytes =
+    public static readonly BoneKeyFrameBytes =
         15 + // bone name (uint8[15])
         4 + // frame number (uint32)
         4 * 3 + // position (float32[3])
         4 * 4 + // rotation (float32[4])
         64; // interpolation (int8[64])
 
-    public static readonly morphKeyFrameBytes =
+    public static readonly MorphKeyFrameBytes =
         15 + // morph name (uint8[15])
         4 + // frame number (uint32)
         4; // weight (float32)
 
-    public static readonly cameraKeyFrameBytes =
+    public static readonly CameraKeyFrameBytes =
         4 + // frame number (uint32)
         4 + // distance (float32)
         4 * 3 + // position (float32[3])
@@ -29,21 +29,21 @@ export class VmdData {
         4 + // angle of view (uint32)
         1; // perspective (uint8)
 
-    public static readonly lightKeyFrameBytes =
+    public static readonly LightKeyFrameBytes =
         4 + // frame number (uint32)
         4 * 3 + // color (float32[3])
         4 * 3; // direction (float32[3])
 
-    public static readonly selfShadowKeyFrameBytes =
+    public static readonly SelfShadowKeyFrameBytes =
         4 + // frame number (uint32)
         1 + // mode (uint8)
         4; // distance (float32)
 
-    public static readonly propertyKeyFrameBytes =
+    public static readonly PropertyKeyFrameBytes =
         4 + // frame number (uint32)
         1; // visibility (uint8)
 
-    public static readonly propertyKeyFrameIkStateBytes =
+    public static readonly PropertyKeyFrameIkStateBytes =
         20 + // bone name (uint8[20])
         1; // ik enabled (uint8)
 
@@ -73,55 +73,55 @@ export class VmdData {
         this.propertyKeyFrameCount = propertyKeyFrameCount;
     }
 
-    public static checkedCreate(buffer: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): VmdData | null {
+    public static CheckedCreate(buffer: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): VmdData | null {
         const dataDeserializer = new MmdDataDeserializer(buffer);
         dataDeserializer.initializeTextDecoder("shift-jis");
 
-        if (dataDeserializer.bytesAvailable < VmdData.signatureBytes + VmdData.modelNameBytes) {
+        if (dataDeserializer.bytesAvailable < VmdData.SignatureBytes + VmdData.ModelNameBytes) {
             return null;
         }
 
-        const signature = dataDeserializer.getSignatureString(this.signatureBytes);
-        if (signature.substring(0, this._signature.length) !== this._signature) {
+        const signature = dataDeserializer.getSignatureString(this.SignatureBytes);
+        if (signature.substring(0, this._Signature.length) !== this._Signature) {
             return null;
         }
-        dataDeserializer.offset += VmdData.modelNameBytes;
+        dataDeserializer.offset += VmdData.ModelNameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const boneKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < boneKeyFrameCount * VmdData.boneKeyFrameBytes) return null;
-        dataDeserializer.offset += boneKeyFrameCount * VmdData.boneKeyFrameBytes;
+        if (dataDeserializer.bytesAvailable < boneKeyFrameCount * VmdData.BoneKeyFrameBytes) return null;
+        dataDeserializer.offset += boneKeyFrameCount * VmdData.BoneKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const morphKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < morphKeyFrameCount * VmdData.morphKeyFrameBytes) return null;
-        dataDeserializer.offset += morphKeyFrameCount * VmdData.morphKeyFrameBytes;
+        if (dataDeserializer.bytesAvailable < morphKeyFrameCount * VmdData.MorphKeyFrameBytes) return null;
+        dataDeserializer.offset += morphKeyFrameCount * VmdData.MorphKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const cameraKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < cameraKeyFrameCount * VmdData.cameraKeyFrameBytes) return null;
-        dataDeserializer.offset += cameraKeyFrameCount * VmdData.cameraKeyFrameBytes;
+        if (dataDeserializer.bytesAvailable < cameraKeyFrameCount * VmdData.CameraKeyFrameBytes) return null;
+        dataDeserializer.offset += cameraKeyFrameCount * VmdData.CameraKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const lightKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < lightKeyFrameCount * VmdData.lightKeyFrameBytes) return null;
-        dataDeserializer.offset += lightKeyFrameCount * VmdData.lightKeyFrameBytes;
+        if (dataDeserializer.bytesAvailable < lightKeyFrameCount * VmdData.LightKeyFrameBytes) return null;
+        dataDeserializer.offset += lightKeyFrameCount * VmdData.LightKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const selfShadowKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < selfShadowKeyFrameCount * VmdData.selfShadowKeyFrameBytes) return null;
-        dataDeserializer.offset += selfShadowKeyFrameCount * VmdData.selfShadowKeyFrameBytes;
+        if (dataDeserializer.bytesAvailable < selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes) return null;
+        dataDeserializer.offset += selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const propertyKeyFrameCount = dataDeserializer.getUint32();
         for (let i = 0; i < propertyKeyFrameCount; i++) {
-            if (dataDeserializer.bytesAvailable < VmdData.propertyKeyFrameBytes) return null;
-            dataDeserializer.offset += VmdData.propertyKeyFrameBytes;
+            if (dataDeserializer.bytesAvailable < VmdData.PropertyKeyFrameBytes) return null;
+            dataDeserializer.offset += VmdData.PropertyKeyFrameBytes;
 
             if (dataDeserializer.bytesAvailable < 4) return null;
             const propertyKeyFrameIkStateCount = dataDeserializer.getUint32();
-            if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData.propertyKeyFrameIkStateBytes) return null;
-            dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData.propertyKeyFrameIkStateBytes;
+            if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes) return null;
+            dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes;
         }
 
         if (dataDeserializer.bytesAvailable > 0) {
@@ -154,18 +154,18 @@ export class VmdObject {
         this.propertyKeyFrames = propertyKeyFrames;
     }
 
-    public static parse(vmdData: VmdData): VmdObject {
+    public static Parse(vmdData: VmdData): VmdObject {
         const dataDeserializer = vmdData.dataDeserializer;
 
         const propertyKeyFrames: VmdObject.PropertyKeyFrame[] = [];
         dataDeserializer.offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
-            4 + vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
-            4 + vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
-            4 + vmdData.cameraKeyFrameCount * VmdData.cameraKeyFrameBytes +
-            4 + vmdData.lightKeyFrameCount * VmdData.lightKeyFrameBytes +
-            4 + vmdData.selfShadowKeyFrameCount * VmdData.selfShadowKeyFrameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
+            4 + vmdData.boneKeyFrameCount * VmdData.BoneKeyFrameBytes +
+            4 + vmdData.morphKeyFrameCount * VmdData.MorphKeyFrameBytes +
+            4 + vmdData.cameraKeyFrameCount * VmdData.CameraKeyFrameBytes +
+            4 + vmdData.lightKeyFrameCount * VmdData.LightKeyFrameBytes +
+            4 + vmdData.selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes +
             4;
 
         const propertyKeyFrameCount = vmdData.propertyKeyFrameCount;
@@ -192,19 +192,19 @@ export class VmdObject {
         return new VmdObject(vmdData, propertyKeyFrames);
     }
 
-    public static parseFromBuffer(buffer: ArrayBufferLike): VmdObject {
-        const vmdData = VmdData.checkedCreate(buffer);
+    public static ParseFromBuffer(buffer: ArrayBufferLike): VmdObject {
+        const vmdData = VmdData.CheckedCreate(buffer);
         if (vmdData === null) {
             throw new Error("Invalid VMD data");
         }
 
-        return VmdObject.parse(vmdData);
+        return VmdObject.Parse(vmdData);
     }
 
     public get boneKeyFrames(): VmdObject.BoneKeyFrames {
         const offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
             4;
 
         return new VmdObject.BoneKeyFrames(
@@ -216,10 +216,10 @@ export class VmdObject {
 
     public get morphKeyFrames(): VmdObject.MorphKeyFrames {
         const offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
             4 +
-            this._vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
+            this._vmdData.boneKeyFrameCount * VmdData.BoneKeyFrameBytes +
             4;
 
         return new VmdObject.MorphKeyFrames(
@@ -231,12 +231,12 @@ export class VmdObject {
 
     public get cameraKeyFrames(): VmdObject.CameraKeyFrames {
         const offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
             4 +
-            this._vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
+            this._vmdData.boneKeyFrameCount * VmdData.BoneKeyFrameBytes +
             4 +
-            this._vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
+            this._vmdData.morphKeyFrameCount * VmdData.MorphKeyFrameBytes +
             4;
 
         return new VmdObject.CameraKeyFrames(
@@ -248,14 +248,14 @@ export class VmdObject {
 
     public get lightKeyFrames(): VmdObject.LightKeyFrames {
         const offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
             4 +
-            this._vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
+            this._vmdData.boneKeyFrameCount * VmdData.BoneKeyFrameBytes +
             4 +
-            this._vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
+            this._vmdData.morphKeyFrameCount * VmdData.MorphKeyFrameBytes +
             4 +
-            this._vmdData.cameraKeyFrameCount * VmdData.cameraKeyFrameBytes +
+            this._vmdData.cameraKeyFrameCount * VmdData.CameraKeyFrameBytes +
             4;
 
         return new VmdObject.LightKeyFrames(
@@ -267,16 +267,16 @@ export class VmdObject {
 
     public get selfShadowKeyFrames(): VmdObject.SelfShadowKeyFrames {
         const offset =
-            VmdData.signatureBytes +
-            VmdData.modelNameBytes +
+            VmdData.SignatureBytes +
+            VmdData.ModelNameBytes +
             4 +
-            this._vmdData.boneKeyFrameCount * VmdData.boneKeyFrameBytes +
+            this._vmdData.boneKeyFrameCount * VmdData.BoneKeyFrameBytes +
             4 +
-            this._vmdData.morphKeyFrameCount * VmdData.morphKeyFrameBytes +
+            this._vmdData.morphKeyFrameCount * VmdData.MorphKeyFrameBytes +
             4 +
-            this._vmdData.cameraKeyFrameCount * VmdData.cameraKeyFrameBytes +
+            this._vmdData.cameraKeyFrameCount * VmdData.CameraKeyFrameBytes +
             4 +
-            this._vmdData.lightKeyFrameCount * VmdData.lightKeyFrameBytes +
+            this._vmdData.lightKeyFrameCount * VmdData.LightKeyFrameBytes +
             4;
 
         return new VmdObject.SelfShadowKeyFrames(
@@ -320,7 +320,7 @@ export namespace VmdObject {
         }
 
         public get(index: number): BoneKeyFrame {
-            const offset = this._startOffset + index * VmdData.boneKeyFrameBytes;
+            const offset = this._startOffset + index * VmdData.BoneKeyFrameBytes;
             return new BoneKeyFrame(this._dataDeserializer, offset);
         }
     }
@@ -357,7 +357,7 @@ export namespace VmdObject {
         }
 
         public get(index: number): MorphKeyFrame {
-            const offset = this._startOffset + index * VmdData.morphKeyFrameBytes;
+            const offset = this._startOffset + index * VmdData.MorphKeyFrameBytes;
             return new MorphKeyFrame(this._dataDeserializer, offset);
         }
     }
@@ -386,7 +386,7 @@ export namespace VmdObject {
         }
 
         public get(index: number): CameraKeyFrame {
-            const offset = this._startOffset + index * VmdData.cameraKeyFrameBytes;
+            const offset = this._startOffset + index * VmdData.CameraKeyFrameBytes;
             return new CameraKeyFrame(this._dataDeserializer, offset);
         }
     }
@@ -428,7 +428,7 @@ export namespace VmdObject {
         }
 
         public get(index: number): LightKeyFrame {
-            const offset = this._startOffset + index * VmdData.lightKeyFrameBytes;
+            const offset = this._startOffset + index * VmdData.LightKeyFrameBytes;
             return new LightKeyFrame(this._dataDeserializer, offset);
         }
     }
@@ -457,7 +457,7 @@ export namespace VmdObject {
         }
 
         public get(index: number): SelfShadowKeyFrame {
-            const offset = this._startOffset + index * VmdData.selfShadowKeyFrameBytes;
+            const offset = this._startOffset + index * VmdData.SelfShadowKeyFrameBytes;
             return new SelfShadowKeyFrame(this._dataDeserializer, offset);
         }
     }
