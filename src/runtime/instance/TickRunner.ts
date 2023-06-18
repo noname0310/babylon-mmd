@@ -11,6 +11,11 @@ export class TickRunner implements ITickRunner {
     public afterBuild(context: IRuntimeContext): void {
         const mmdRuntime = this._mmdRuntime;
         mmdRuntime.loggingEnabled = true;
+        Object.defineProperty(globalThis, "mmdModels", {
+            configurable: true,
+            enumerable: true,
+            get: () => mmdRuntime.models
+        });
 
         const meshes = context.scene.meshes;
         for (let i = 0; i < meshes.length; ++i) {

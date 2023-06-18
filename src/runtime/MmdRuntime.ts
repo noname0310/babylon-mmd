@@ -1,9 +1,12 @@
+import type { Material} from "@babylonjs/core";
 import { Logger, type Mesh } from "@babylonjs/core";
 
 import type { ILogger } from "./ILogger";
+import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { RuntimeMmdMesh } from "./MmdMesh";
 import { MmdMesh } from "./MmdMesh";
 import { MmdModel } from "./MmdModel";
+import { MmdStandardMaterialProxy } from "./MmdStandardMaterialProxy";
 
 export class MmdRuntime implements ILogger {
     private readonly _models: MmdModel[];
@@ -32,10 +35,13 @@ export class MmdRuntime implements ILogger {
         this.error = this.errorDisabled;
     }
 
-    public createMmdModel(mmdMesh: Mesh): MmdModel {
+    public createMmdModel(
+        mmdMesh: Mesh,
+        materialProxyConstructor: IMmdMaterialProxyConstructor<Material> = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>
+    ): MmdModel {
         if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
 
-        const model = new MmdModel(mmdMesh, this);
+        const model = new MmdModel(mmdMesh, materialProxyConstructor, this);
         this._models.push(model);
 
         const runtimeMesh = mmdMesh as unknown as RuntimeMmdMesh;
@@ -47,12 +53,26 @@ export class MmdRuntime implements ILogger {
         return model;
     }
 
+    public destroyMmdModel(mmModel: MmdModel): void {
+        const models = this._models;
+        const index = models.indexOf(mmModel);
+        if (index < 0) throw new Error("Model not found.");
+
+        models.splice(index, 1);
+    }
+
     public update(): void {
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
             const model = models[i];
+
+            model.mesh.skeleton.returnToRest();
             model.morph.update();
         }
+    }
+
+    public get models(): readonly MmdModel[] {
+        return this._models;
     }
 
     public get loggingEnabled(): boolean {

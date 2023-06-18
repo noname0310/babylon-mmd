@@ -24,6 +24,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      */
     public alphaBlendThreshold = 100;
 
+    public static edgeSizeScaleFactor = 0.01;
+
     public useAlphaEvaluation = true;
 
     private readonly _textureLoader = new MmdAsyncTextureLoader();
@@ -379,7 +381,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 MmdOutlineRenderer.registerMmdOutlineRendererIfNeeded();
 
                 material.renderOutline = true;
-                material.outlineWidth = materialInfo.edgeSize * 0.01;
+                material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.edgeSizeScaleFactor;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(
                     edgeColor[0], edgeColor[1], edgeColor[2]

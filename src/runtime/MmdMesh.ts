@@ -1,12 +1,16 @@
-import type { Bone, Mesh, MorphTargetManager, MultiMaterial, Skeleton } from "@babylonjs/core";
+import type { Bone, Material, Mesh, MorphTargetManager, MultiMaterial, Skeleton } from "@babylonjs/core";
 
 import type { MmdModelBoneMetadata, MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 export interface MmdMesh extends Mesh {
     metadata: MmdModelMetadata;
-    material: MultiMaterial;
+    material: MmdMultiMaterial;
     skeleton: MmdSkeleton;
     morphTargetManager: MorphTargetManager;
+}
+
+export interface MmdMultiMaterial extends MultiMaterial {
+    subMaterials: Material[];
 }
 
 export interface MmdSkeleton extends Skeleton {
@@ -19,7 +23,7 @@ export interface MmdBone extends Bone {
 
 export interface RuntimeMmdMesh extends Mesh {
     metadata: RuntimeMmdModelMetadata;
-    material: MultiMaterial;
+    material: MmdMultiMaterial;
     skeleton: MmdSkeleton;
     morphTargetManager: MorphTargetManager;
 }
@@ -33,6 +37,9 @@ export namespace MmdMesh {
     export function isMmdMesh(mesh: Mesh): mesh is MmdMesh {
         if (mesh.metadata == null || !mesh.metadata.isMmdModel) return false;
         if (mesh.material == null || !(mesh.material as MultiMaterial).subMaterials) return false;
+        for (const material of (mesh.material as MultiMaterial).subMaterials) {
+            if (material == null) return false;
+        }
         if (mesh.skeleton == null) return false;
         if (mesh.morphTargetManager == null) return false;
 
