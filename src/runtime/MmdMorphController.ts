@@ -41,6 +41,7 @@ export class MmdMorphController {
         skeleton: MmdSkeleton,
         material: MmdMultiMaterial,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
+        sortedBoneIndexMap: Int32Array,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         logger: ILogger
     ) {
@@ -55,7 +56,7 @@ export class MmdMorphController {
             materials[i] = new materialProxyConstructor(subMaterials[i]);
         }
 
-        const morphs = this._morphs = this._createRuntimeMorphData(morphsMetadata);
+        const morphs = this._morphs = this._createRuntimeMorphData(sortedBoneIndexMap, morphsMetadata);
 
         const morphIndexMap = this._morphIndexMap = new Map<string, number[]>();
         for (let i = 0; i < morphs.length; ++i) {
@@ -140,7 +141,10 @@ export class MmdMorphController {
         return this._morphs;
     }
 
-    private _createRuntimeMorphData(morphsMetadata: readonly MmdModelMetadata.Morph[]): RuntimeMorph[] {
+    private _createRuntimeMorphData(
+        sortedBoneIndexMap: Int32Array,
+        morphsMetadata: readonly MmdModelMetadata.Morph[]
+    ): RuntimeMorph[] {
         const morphs: RuntimeMorph[] = [];
 
         for (let i = 0; i < morphsMetadata.length; ++i) {
@@ -174,7 +178,7 @@ export class MmdMorphController {
                     for (let j = 0; j < elements.length; ++j) {
                         const element = elements[j];
 
-                        runtimeMorphElements[j] = element.index;
+                        runtimeMorphElements[j] = sortedBoneIndexMap[element.index];
 
                         runtimeMorphElements2[j * 3 + 0] = element.position[0];
                         runtimeMorphElements2[j * 3 + 1] = element.position[1];

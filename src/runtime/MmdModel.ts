@@ -20,6 +20,7 @@ export class MmdModel {
             mmdMesh.skeleton,
             mmdMesh.material,
             materialProxyConstructor,
+            mmdMesh.metadata.sortedBoneIndexMap,
             mmdMesh.metadata.morphs,
             logger
         );

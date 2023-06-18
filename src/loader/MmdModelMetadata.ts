@@ -3,6 +3,7 @@ import type { PmxObject } from "./parser/PmxObject";
 export interface MmdModelMetadata {
     isMmdModel: true;
     header: MmdModelMetadata.Header;
+    sortedBoneIndexMap: Int32Array;
     morphs: readonly MmdModelMetadata.Morph[];
     rigidBodies: PmxObject["rigidBodies"];
     joints: PmxObject["joints"];
@@ -31,7 +32,6 @@ export namespace MmdModelMetadata {
 }
 
 export interface MmdModelBoneMetadata {
-    transformOrder: PmxObject.Bone["transformOrder"];
     flag: PmxObject.Bone["flag"];
     appendTransform: PmxObject.Bone["appendTransform"];
     axisLimit: PmxObject.Bone["axisLimit"];

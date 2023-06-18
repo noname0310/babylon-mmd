@@ -453,76 +453,84 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
         skeleton._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
+        const sortedBoneIndexMap = new Int32Array(pmxObject.bones.length);
         {
             const bonesInfo = pmxObject.bones;
-            {
-                const bones: Bone[] = [];
-                const looped: boolean[] = [];
+            const bones: Bone[] = [];
+            const looped: boolean[] = [];
 
-                for (let i = 0; i < bonesInfo.length; ++i) {
-                    const boneInfo = bonesInfo[i];
+            for (let i = 0; i < bonesInfo.length; ++i) {
+                const boneInfo = bonesInfo[i];
 
-                    let isLooped = false;
-                    if (boneInfo.parentBoneIndex !== -1) {
-                        let parentBoneIndex = boneInfo.parentBoneIndex;
-                        while (parentBoneIndex !== -1) {
-                            if (parentBoneIndex === i) {
-                                isLooped = true;
-                                this.warn(`Bone loop detected. Ignore Parenting. Bone index: ${i}`);
-                                break;
-                            }
-                            parentBoneIndex = bonesInfo[parentBoneIndex].parentBoneIndex;
+                let isLooped = false;
+                if (boneInfo.parentBoneIndex !== -1) {
+                    let parentBoneIndex = boneInfo.parentBoneIndex;
+                    while (parentBoneIndex !== -1) {
+                        if (parentBoneIndex === i) {
+                            isLooped = true;
+                            this.warn(`Bone loop detected. Ignore Parenting. Bone index: ${i}`);
+                            break;
                         }
-
-                        if (i <= boneInfo.parentBoneIndex) {
-                            this.warn(`Parent bone index is greater equal than child bone index. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
-                        }
+                        parentBoneIndex = bonesInfo[parentBoneIndex].parentBoneIndex;
                     }
 
-                    const boneWorldPosition = boneInfo.position;
-
-                    const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
-                    if (boneInfo.parentBoneIndex !== -1 && !isLooped) {
-                        const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
-                        bonePosition.x -= parentBoneInfo.position[0];
-                        bonePosition.y -= parentBoneInfo.position[1];
-                        bonePosition.z -= parentBoneInfo.position[2];
+                    if (i <= boneInfo.parentBoneIndex) {
+                        this.warn(`Parent bone index is greater equal than child bone index. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
                     }
-                    const boneMatrix = Matrix.Identity()
-                        .setTranslation(bonePosition);
-
-                    const bone = new Bone(
-                        boneInfo.name,
-                        skeleton,
-                        undefined,
-                        boneMatrix,
-                        undefined,
-                        undefined,
-                        i // bone index
-                    );
-                    bone.metadata = <MmdModelBoneMetadata>{
-                        transformOrder: boneInfo.transformOrder,
-                        flag: boneInfo.flag,
-                        appendTransform: boneInfo.appendTransform,
-                        axisLimit: boneInfo.axisLimit,
-                        localVector: boneInfo.localVector,
-                        transformAfterPhysics: boneInfo.transformAfterPhysics,
-                        externalParentTransform: boneInfo.externalParentTransform,
-                        ik: boneInfo.ik
-                    };
-
-                    bones.push(bone);
-                    looped.push(isLooped);
                 }
 
-                for (let i = 0; i < bones.length; ++i) {
-                    const boneInfo = bonesInfo[i];
-                    const bone = bones[i];
+                const boneWorldPosition = boneInfo.position;
 
-                    if (boneInfo.parentBoneIndex !== -1 && !looped[i]) {
-                        bone.setParent(bones[boneInfo.parentBoneIndex]);
-                    }
+                const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
+                if (boneInfo.parentBoneIndex !== -1 && !isLooped) {
+                    const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
+                    bonePosition.x -= parentBoneInfo.position[0];
+                    bonePosition.y -= parentBoneInfo.position[1];
+                    bonePosition.z -= parentBoneInfo.position[2];
                 }
+                const boneMatrix = Matrix.Identity()
+                    .setTranslation(bonePosition);
+
+                const bone = new Bone(
+                    boneInfo.name,
+                    skeleton,
+                    undefined,
+                    boneMatrix,
+                    undefined,
+                    undefined,
+                    i // bone index
+                );
+                bone.metadata = <MmdModelBoneMetadata>{
+                    flag: boneInfo.flag,
+                    appendTransform: boneInfo.appendTransform,
+                    axisLimit: boneInfo.axisLimit,
+                    localVector: boneInfo.localVector,
+                    transformAfterPhysics: boneInfo.transformAfterPhysics,
+                    externalParentTransform: boneInfo.externalParentTransform,
+                    ik: boneInfo.ik
+                };
+
+                bones.push(bone);
+                looped.push(isLooped);
+            }
+
+            for (let i = 0; i < bones.length; ++i) {
+                const boneInfo = bonesInfo[i];
+                const bone = bones[i];
+
+                if (boneInfo.parentBoneIndex !== -1 && !looped[i]) {
+                    bone.setParent(bones[boneInfo.parentBoneIndex]);
+                }
+            }
+
+            // sort must be stable (require ES2019)
+            skeleton.bones.sort((a, b) => {
+                return bonesInfo[a.getIndex()].transformOrder - bonesInfo[b.getIndex()].transformOrder;
+            });
+
+            const skeletonBones = skeleton.bones;
+            for (let i = 0; i < skeletonBones.length; ++i) {
+                sortedBoneIndexMap[skeletonBones[i].getIndex()] = i;
             }
         }
         mesh.skeleton = skeleton;
@@ -662,6 +670,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 comment: pmxObject.header.comment,
                 englishComment: pmxObject.header.englishComment
             },
+            sortedBoneIndexMap: sortedBoneIndexMap,
             morphs: morphsMetadata,
             rigidBodies: pmxObject.rigidBodies,
             joints: pmxObject.joints
