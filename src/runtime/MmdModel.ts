@@ -75,27 +75,36 @@ export class MmdModel {
         }
     }
 
+    private readonly _boneStack: MmdBone[] = [];
+
     private _updateWorldTransform(bone: MmdBone): void {
         const initialSkinMatrix = this.mesh.getPoseMatrix();
 
-        bone._childUpdateId += 1;
-        const parentBone = bone.getParent();
+        const stack: MmdBone[] = this._boneStack;
+        stack.length = 0;
+        stack.push(bone);
 
-        if (parentBone) {
-            bone.getLocalMatrix().multiplyToRef(parentBone.getWorldMatrix(), bone.getWorldMatrix());
-        } else {
-            if (initialSkinMatrix) {
-                bone.getLocalMatrix().multiplyToRef(initialSkinMatrix, bone.getWorldMatrix());
+        while (stack.length > 0) {
+            const bone = stack.pop()!;
+            bone._childUpdateId += 1;
+            const parentBone = bone.getParent();
+
+            if (parentBone) {
+                bone.getLocalMatrix().multiplyToRef(parentBone.getWorldMatrix(), bone.getWorldMatrix());
             } else {
-                bone.getWorldMatrix().copyFrom(bone.getLocalMatrix());
+                if (initialSkinMatrix) {
+                    bone.getLocalMatrix().multiplyToRef(initialSkinMatrix, bone.getWorldMatrix());
+                } else {
+                    bone.getWorldMatrix().copyFrom(bone.getLocalMatrix());
+                }
             }
-        }
 
-        const chindren = bone.children;
-        for (let index = 0; index < chindren.length; index++) {
-            const child = chindren[index];
-            if (child._childUpdateId !== bone._childUpdateId) {
-                this._updateWorldTransform(child);
+            const chindren = bone.children;
+            for (let index = 0; index < chindren.length; index++) {
+                const child = chindren[index];
+                if (child._childUpdateId !== bone._childUpdateId) {
+                    stack.push(child);
+                }
             }
         }
     }
