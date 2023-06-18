@@ -1,4 +1,5 @@
-import { ConsoleLogger, ILogger } from "./ILogger";
+import type { ILogger } from "./ILogger";
+import { ConsoleLogger } from "./ILogger";
 import { MmdDataDeserializer } from "./MmdDataDeserializer";
 import type { Vec3, Vec4 } from "./MmdTypes";
 
