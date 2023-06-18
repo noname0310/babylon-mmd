@@ -62,7 +62,7 @@ export class MmdModel {
             }
         }
 
-        if (!afterPhysicsStage) {
+        if (!afterPhysicsStage /* && this.physicsEnabled */) {
             for (let i = 0; i < bones.length; ++i) {
                 const bone = bones[i];
                 const isTransformAfterPhysics = (bone.metadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
