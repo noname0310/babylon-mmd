@@ -8,26 +8,20 @@ import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdMultiMaterial, MmdSkeleton } from "./MmdMesh";
 
-type RemoveReadonly<T> = {
-    -readonly [K in keyof T]: T[K];
-};
-
 interface RuntimeMorph {
     name: string;
     type: PmxObject.Morph.Type;
-    elements: readonly RemoveReadonly<PmxObject.Morph.GroupMorph>[]
-        | readonly PmxObject.Morph.BoneMorph[]
+    readonly elements: Int32Array // group morph / bone morph indices
         | readonly PmxObject.Morph.MaterialMorph[]
         | number; // MorphTargetManager morph target index
+
+    readonly elements2: Float32Array | undefined; // group morph ratios / bone morph positions [..., x, y, z, ...]
+    readonly elements3: Float32Array | undefined; // bone morph rotations [..., x, y, z, w, ...]
 }
 
 export interface ReadonlyRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
-    readonly elements: readonly PmxObject.Morph.GroupMorph[]
-        | readonly PmxObject.Morph.BoneMorph[]
-        | readonly PmxObject.Morph.MaterialMorph[]
-        | number; // MorphTargetManager morph target index
 }
 
 export class MmdMorphController {
@@ -152,25 +146,68 @@ export class MmdMorphController {
         for (let i = 0; i < morphsMetadata.length; ++i) {
             const morphMetadata = morphsMetadata[i];
 
-            const morph: RuntimeMorph = {
-                name: morphMetadata.name,
-                type: morphMetadata.type,
-                elements: morphMetadata.elements as RuntimeMorph["elements"]
-            };
+            let runtimeMorphElements: RuntimeMorph["elements"];
+            let runtimeMorphElements2: Float32Array | undefined = undefined;
+            let runtimeMorphElements3: Float32Array | undefined = undefined;
 
-            if (morphMetadata.type === PmxObject.Morph.Type.GroupMorph) {
-                const elements: RemoveReadonly<PmxObject.Morph.GroupMorph>[] = [];
-                const groupMorphs = morphMetadata.elements as PmxObject.Morph.GroupMorph[];
-                for (let j = 0; j < groupMorphs.length; ++j) {
-                    const groupMorph = groupMorphs[j];
+            switch (morphMetadata.type) {
+            case PmxObject.Morph.Type.GroupMorph:
+                {
+                    const elements = morphMetadata.elements as readonly PmxObject.Morph.GroupMorph[];
+                    runtimeMorphElements = new Int32Array(elements.length);
+                    runtimeMorphElements2 = new Float32Array(elements.length);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
 
-                    elements.push({
-                        index: groupMorph.index,
-                        ratio: groupMorph.ratio
-                    });
+                        runtimeMorphElements[j] = element.index;
+                        runtimeMorphElements2[j] = element.ratio;
+                    }
                 }
+                break;
+
+            case PmxObject.Morph.Type.BoneMorph:
+                {
+                    const elements = morphMetadata.elements as readonly PmxObject.Morph.BoneMorph[];
+                    runtimeMorphElements = new Int32Array(elements.length);
+                    runtimeMorphElements2 = new Float32Array(elements.length * 3);
+                    runtimeMorphElements3 = new Float32Array(elements.length * 4);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+
+                        runtimeMorphElements[j] = element.index;
+
+                        runtimeMorphElements2[j * 3 + 0] = element.position[0];
+                        runtimeMorphElements2[j * 3 + 1] = element.position[1];
+                        runtimeMorphElements2[j * 3 + 2] = element.position[2];
+
+                        runtimeMorphElements3[j * 4 + 0] = element.rotation[0];
+                        runtimeMorphElements3[j * 4 + 1] = element.rotation[1];
+                        runtimeMorphElements3[j * 4 + 2] = element.rotation[2];
+                        runtimeMorphElements3[j * 4 + 3] = element.rotation[3];
+                    }
+                }
+                break;
+
+            case PmxObject.Morph.Type.MaterialMorph:
+                runtimeMorphElements = morphMetadata.elements as readonly PmxObject.Morph.MaterialMorph[];
+                break;
+
+            case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.VertexMorph:
+                runtimeMorphElements = morphMetadata.elements as number;
+                break;
+
+            default:
+                throw new Error(`Unknown morph type: ${morphMetadata.type}`);
             }
 
+            const morph: RuntimeMorph = <RuntimeMorph>{
+                name: morphMetadata.name,
+                type: morphMetadata.type,
+                elements: runtimeMorphElements,
+                elements2: runtimeMorphElements2,
+                elements3: runtimeMorphElements3
+            };
             morphs.push(morph);
         }
 
@@ -180,17 +217,17 @@ export class MmdMorphController {
                 const morph = morphs[morphIndex];
                 if (morph.type !== PmxObject.Morph.Type.GroupMorph) return;
 
-                const elements = morph.elements as readonly RemoveReadonly<PmxObject.Morph.GroupMorph>[];
-                for (let i = 0; i < elements.length; ++i) {
-                    const element = elements[i];
+                const indices = morph.elements as Int32Array;
+                for (let i = 0; i < indices.length; ++i) {
+                    const index = indices[i];
 
-                    if (groupMorphStack.includes(element.index)) {
-                        this._logger.warn(`Looping group morph detected resolves to -1: ${morph.name} -> ${morphs[element.index].name}`);
-                        element.index = -1;
+                    if (groupMorphStack.includes(index)) {
+                        this._logger.warn(`Looping group morph detected resolves to -1: ${morph.name} -> ${morphs[index].name}`);
+                        indices[i] = -1;
                     } else {
-                        if (0 <= element.index) {
+                        if (0 <= index) {
                             groupMorphStack.push(morphIndex);
-                            fixLoopingGroupMorphs(element.index);
+                            fixLoopingGroupMorphs(index);
                             groupMorphStack.pop();
                         }
                     }
@@ -209,19 +246,21 @@ export class MmdMorphController {
     private _groupMorphFlatForeach(
         groupMorph: RuntimeMorph,
         callback: (index: number, ratio: number) => void,
-        ratio = 1
+        accumulatedRatio = 1
     ): void {
         const morphs = this._morphs;
 
-        const elements = groupMorph.elements as readonly PmxObject.Morph.GroupMorph[];
-        for (let i = 0; i < elements.length; ++i) {
-            const element = elements[i];
+        const indices = groupMorph.elements as Int32Array;
+        const ratios = groupMorph.elements2 as Float32Array;
+        for (let i = 0; i < indices.length; ++i) {
+            const index = indices[i];
+            const ratio = ratios[i];
 
-            const childMorph = morphs[element.index];
+            const childMorph = morphs[index];
             if (childMorph.type === PmxObject.Morph.Type.GroupMorph) {
-                this._groupMorphFlatForeach(childMorph, callback, element.ratio * ratio);
+                this._groupMorphFlatForeach(childMorph, callback, ratio * accumulatedRatio);
             } else {
-                callback(element.index, element.ratio * ratio);
+                callback(index, ratio * accumulatedRatio);
             }
         }
     }
@@ -275,28 +314,29 @@ export class MmdMorphController {
             {
                 const bones = this._skeleton.bones;
 
-                const elements = morph.elements as readonly PmxObject.Morph.BoneMorph[];
-                for (let i = 0; i < elements.length; ++i) {
-                    const element = elements[i];
+                const indices = morph.elements as Int32Array;
+                const positions = morph.elements2 as Float32Array;
+                const rotations = morph.elements3 as Float32Array;
+                for (let i = 0; i < indices.length; ++i) {
+                    const index = indices[i];
 
-                    const bone = bones[element.index];
+                    const bone = bones[index];
 
-                    const elementPosition = element.position;
                     bone.getPositionToRef(Space.LOCAL, null, this._tempVector3);
                     bone.setPosition(this._tempVector3.addInPlaceFromFloats(
-                        elementPosition[0] * weight,
-                        elementPosition[1] * weight,
-                        elementPosition[2] * weight
+                        positions[i * 3 + 0] * weight,
+                        positions[i * 3 + 1] * weight,
+                        positions[i * 3 + 2] * weight
                     ), Space.LOCAL);
 
                     bone.getRotationQuaternionToRef(Space.LOCAL, null, this._tempQuaternion);
                     bone.setRotationQuaternion(Quaternion.SlerpToRef(
                         this._tempQuaternion,
                         this._tempQuaternion2.copyFromFloats(
-                            element.rotation[0],
-                            element.rotation[1],
-                            element.rotation[2],
-                            element.rotation[3]
+                            rotations[i * 4 + 0],
+                            rotations[i * 4 + 1],
+                            rotations[i * 4 + 2],
+                            rotations[i * 4 + 3]
                         ),
                         weight,
                         this._tempQuaternion
