@@ -545,7 +545,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             const morphsInfo = pmxObject.morphs;
 
             const morphTargets: MorphTarget[] = [];
-            const morphIndexMap = new Map<string, number>();
 
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
@@ -557,15 +556,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     continue;
                 }
 
-                const morphIndex = morphIndexMap.get(morphInfo.name);
-                let morphTarget: MorphTarget;
-                if (morphIndex === undefined) {
-                    morphTarget = new MorphTarget(morphInfo.name, 0, scene);
-                    morphTargets.push(morphTarget);
-                    morphIndexMap.set(morphInfo.name, morphTargets.length - 1);
-                } else {
-                    morphTarget = morphTargets[morphIndex];
-                }
+                const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+                morphTargets.push(morphTarget);
 
                 if (morphInfo.type === PmxObject.Morph.Type.vertexMorph) {
                     let positions = morphTarget.getPositions();
