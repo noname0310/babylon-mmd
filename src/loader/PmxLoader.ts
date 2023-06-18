@@ -46,17 +46,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
     private _loggingEnabled: boolean;
 
-    /**
-     * @internal
-     */
+    /** @internal */
     public log: (message: string) => void;
-    /**
-     * @internal
-     */
+    /** @internal */
     public warn: (message: string) => void;
-    /**
-     * @internal
-     */
+    /** @internal */
     public error: (message: string) => void;
 
     public constructor() {
