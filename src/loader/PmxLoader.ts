@@ -541,6 +541,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const morphTargetManager = new MorphTargetManager(scene);
         morphTargetManager._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
+
+        const morphsMetadata: MmdModelMetadata.Morph[] = [];
         {
             const morphsInfo = pmxObject.morphs;
 
@@ -548,6 +550,38 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
+
+                // create morph metadata
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.flipMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.impulseMorph
+                ) {
+                    let elements: readonly PmxObject.Morph.GroupMorph[]
+                        | readonly PmxObject.Morph.BoneMorph[]
+                        | readonly PmxObject.Morph.MaterialMorph[]
+                        | number = morphTargets.length;
+                    if (
+                        morphInfo.type === PmxObject.Morph.Type.groupMorph ||
+                        morphInfo.type === PmxObject.Morph.Type.boneMorph ||
+                        morphInfo.type === PmxObject.Morph.Type.materialMorph
+                    ) {
+                        elements = morphInfo.elements as (
+                            readonly PmxObject.Morph.GroupMorph[]
+                            | readonly PmxObject.Morph.BoneMorph[]
+                            | readonly PmxObject.Morph.MaterialMorph[]);
+                    }
+
+                    morphsMetadata.push({
+                        name: morphInfo.name,
+                        englishName: morphInfo.englishName,
+
+                        category: morphInfo.category,
+                        type: morphInfo.type,
+
+                        elements: elements
+                    });
+                }
+
                 if (
                     morphInfo.type !== PmxObject.Morph.Type.vertexMorph &&
                     morphInfo.type !== PmxObject.Morph.Type.uvMorph
@@ -626,57 +660,18 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        {
-            const morphs: MmdModelMetadata.Morph[] = [];
-            const morphsInfo = pmxObject.morphs;
-            for (let i = 0; i < morphsInfo.length; ++i) {
-                const morphInfo = morphsInfo[i];
-                if (
-                    morphInfo.type === PmxObject.Morph.Type.flipMorph ||
-                    morphInfo.type === PmxObject.Morph.Type.impulseMorph
-                ) {
-                    continue;
-                }
-
-                let elements: readonly PmxObject.Morph.GroupMorph[]
-                    | readonly PmxObject.Morph.BoneMorph[]
-                    | readonly PmxObject.Morph.MaterialMorph[]
-                    | undefined = undefined;
-                if (
-                    morphInfo.type === PmxObject.Morph.Type.groupMorph ||
-                    morphInfo.type === PmxObject.Morph.Type.boneMorph ||
-                    morphInfo.type === PmxObject.Morph.Type.materialMorph
-                ) {
-                    elements = morphInfo.elements as (
-                        readonly PmxObject.Morph.GroupMorph[]
-                        | readonly PmxObject.Morph.BoneMorph[]
-                        | readonly PmxObject.Morph.MaterialMorph[]);
-                }
-
-                morphs.push({
-                    name: morphInfo.name,
-                    englishName: morphInfo.englishName,
-
-                    category: morphInfo.category,
-                    type: morphInfo.type,
-
-                    elements: elements
-                });
-            }
-
-            mesh.metadata = <MmdModelMetadata>{
-                isMmdModel: true,
-                header: {
-                    modelName: pmxObject.header.modelName,
-                    englishModelName: pmxObject.header.englishModelName,
-                    comment: pmxObject.header.comment,
-                    englishComment: pmxObject.header.englishComment
-                },
-                morphs: morphs,
-                rigidBodies: pmxObject.rigidBodies,
-                joints: pmxObject.joints
-            };
-        }
+        mesh.metadata = <MmdModelMetadata>{
+            isMmdModel: true,
+            header: {
+                modelName: pmxObject.header.modelName,
+                englishModelName: pmxObject.header.englishModelName,
+                comment: pmxObject.header.comment,
+                englishComment: pmxObject.header.englishComment
+            },
+            morphs: morphsMetadata,
+            rigidBodies: pmxObject.rigidBodies,
+            joints: pmxObject.joints
+        };
 
         progressEvent.loaded = lastStageLoaded;
         onProgress?.({...progressEvent});

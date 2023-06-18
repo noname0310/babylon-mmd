@@ -26,7 +26,7 @@ export namespace MmdModelMetadata {
         elements: readonly PmxObject.Morph.GroupMorph[]
             | readonly PmxObject.Morph.BoneMorph[]
             | readonly PmxObject.Morph.MaterialMorph[]
-            | undefined;
+            | number; // MorphTargetManager morph target index
     }
 }
 
