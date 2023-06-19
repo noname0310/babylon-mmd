@@ -453,7 +453,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
         skeleton._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        const sortedBoneIndexMap = new Int32Array(pmxObject.bones.length);
+        let sortedBones: Bone[] | undefined = undefined;
         {
             const bonesInfo = pmxObject.bones;
             const bones: Bone[] = [];
@@ -524,14 +524,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             }
 
             // sort must be stable (require ES2019)
-            skeleton.bones.sort((a, b) => {
+            bones.sort((a, b) => {
                 return bonesInfo[a.getIndex()].transformOrder - bonesInfo[b.getIndex()].transformOrder;
             });
-
-            const skeletonBones = skeleton.bones;
-            for (let i = 0; i < skeletonBones.length; ++i) {
-                sortedBoneIndexMap[skeletonBones[i].getIndex()] = i;
-            }
+            sortedBones = bones;
         }
         mesh.skeleton = skeleton;
 
@@ -670,7 +666,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 comment: pmxObject.header.comment,
                 englishComment: pmxObject.header.englishComment
             },
-            sortedBoneIndexMap: sortedBoneIndexMap,
+            sortedBones: sortedBones,
             morphs: morphsMetadata,
             rigidBodies: pmxObject.rigidBodies,
             joints: pmxObject.joints

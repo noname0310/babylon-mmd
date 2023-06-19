@@ -1,9 +1,10 @@
+import { MmdBone } from "@/runtime/MmdMesh";
 import type { PmxObject } from "./parser/PmxObject";
 
 export interface MmdModelMetadata {
     isMmdModel: true;
     header: MmdModelMetadata.Header;
-    sortedBoneIndexMap: Int32Array;
+    sortedBones: MmdBone[];
     morphs: readonly MmdModelMetadata.Morph[];
     rigidBodies: PmxObject["rigidBodies"];
     joints: PmxObject["joints"];

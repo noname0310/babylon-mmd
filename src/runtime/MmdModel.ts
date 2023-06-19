@@ -2,6 +2,7 @@ import type { Material } from "@babylonjs/core";
 
 import { PmxObject } from "@/loader/parser/PmxObject";
 
+import { AppendTransformSolver } from "./AppendTransformSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdBone, MmdMesh } from "./MmdMesh";
@@ -10,6 +11,8 @@ import { MmdMorphController } from "./MmdMorphController";
 export class MmdModel {
     public readonly mesh: MmdMesh;
     public readonly morph: MmdMorphController;
+
+    private readonly _appendTransformSolver: AppendTransformSolver;
 
     public constructor(
         mmdMesh: MmdMesh,
@@ -22,10 +25,11 @@ export class MmdModel {
             mmdMesh.skeleton,
             mmdMesh.material,
             materialProxyConstructor,
-            mmdMesh.metadata.sortedBoneIndexMap,
             mmdMesh.metadata.morphs,
             logger
         );
+
+        this._appendTransformSolver = new AppendTransformSolver(mmdMesh.skeleton);
     }
 
     public beforePhysics(): void {
@@ -51,7 +55,7 @@ export class MmdModel {
             if (isTransformAfterPhysics !== afterPhysicsStage) continue;
 
             if (boneMetadata.appendTransform !== undefined) {
-                // todo: solve append transform
+                this._appendTransformSolver.update(bone);
             }
 
             if (boneMetadata.ik !== undefined) {
