@@ -4,7 +4,7 @@ import type { PmxObject } from "./parser/PmxObject";
 export interface MmdModelMetadata {
     isMmdModel: true;
     header: MmdModelMetadata.Header;
-    sortedBones: MmdBone[];
+    sortedBones: readonly MmdBone[];
     morphs: readonly MmdModelMetadata.Morph[];
     rigidBodies: PmxObject["rigidBodies"];
     joints: PmxObject["joints"];

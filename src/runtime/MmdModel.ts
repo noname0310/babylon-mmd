@@ -12,6 +12,7 @@ export class MmdModel {
     public readonly mesh: MmdMesh;
     public readonly morph: MmdMorphController;
 
+    private readonly _sortedBones: readonly MmdBone[];
     private readonly _appendTransformSolver: AppendTransformSolver;
 
     public constructor(
@@ -29,6 +30,7 @@ export class MmdModel {
             logger
         );
 
+        this._sortedBones = mmdMesh.metadata.sortedBones;
         this._appendTransformSolver = new AppendTransformSolver(mmdMesh.skeleton);
     }
 
@@ -44,12 +46,12 @@ export class MmdModel {
     }
 
     private _update(afterPhysicsStage: boolean): void {
-        const bones = this.mesh.skeleton.bones;
+        const sortedBones = this._sortedBones;
 
         // todo: apply bone animation
 
-        for (let i = 0; i < bones.length; ++i) {
-            const bone = bones[i];
+        for (let i = 0; i < sortedBones.length; ++i) {
+            const bone = sortedBones[i];
             const boneMetadata = bone.metadata;
             const isTransformAfterPhysics = (bone.metadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
             if (isTransformAfterPhysics !== afterPhysicsStage) continue;
@@ -67,8 +69,8 @@ export class MmdModel {
         }
 
         if (!afterPhysicsStage /* && this.physicsEnabled */) {
-            for (let i = 0; i < bones.length; ++i) {
-                const bone = bones[i];
+            for (let i = 0; i < sortedBones.length; ++i) {
+                const bone = sortedBones[i];
                 const isTransformAfterPhysics = (bone.metadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
                 if (isTransformAfterPhysics) continue;
 
