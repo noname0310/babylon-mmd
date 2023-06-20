@@ -26,6 +26,8 @@ mmd loader and runtime for Babylon.js
 - [x] Sphere texture support
 - [x] Edge(outline) rendering support
 - [x] Spherical Deformation support
+- [x] WebGL 1.0 support
+- [x] WebGL 2.0 support
 - [ ] WebGPU support
 
 > MMD runtime parameters
@@ -59,7 +61,6 @@ mmd loader and runtime for Babylon.js
 - PMD format support
 - Self shadow, Ground shadow spec support
 - Additional UV support
-- WebGL 1.0 support
 
 ## Screenshots
 
