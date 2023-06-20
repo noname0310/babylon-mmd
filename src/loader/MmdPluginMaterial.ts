@@ -7,6 +7,7 @@ import type {
     Nullable,
     Scene,
     StandardMaterial,
+    StandardMaterialDefines,
     SubMesh,
     Texture,
     UniformBuffer
@@ -201,25 +202,29 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, subMesh: SubMesh): void {
         if (!this._isEnabled) return;
 
-        const defines = subMesh!.materialDefines as MmdPluginMererialDefines;
+        const defines = subMesh!.materialDefines as StandardMaterialDefines & MmdPluginMererialDefines;
         const isFrozen = this._material.isFrozen;
 
         if (!uniformBuffer.useUbo || !isFrozen || !uniformBuffer.isSync) {
-            if (defines.TEXTURE_COLOR && this._useTextureColor) {
+            if (defines.DIFFUSE && defines.TEXTURE_COLOR) {
                 uniformBuffer.updateDirectColor4("textureColor", this.textureColor);
             }
 
-            if (defines.SPHERE_TEXTURE_COLOR && this._useSphereTextureColor) {
+            if (defines.NORMAL && defines.SPHERE_TEXTURE && defines.SPHERE_TEXTURE_COLOR) {
                 uniformBuffer.updateDirectColor4("sphereTextureColor", this.sphereTextureColor);
             }
 
-            if (defines.TOON_TEXTURE_COLOR && this._useToonTextureColor) {
+            if (defines.TOON_TEXTURE && defines.TOON_TEXTURE_COLOR) {
                 uniformBuffer.updateDirectColor4("toonTextureColor", this.toonTextureColor);
+            }
+
+            if (defines.SPHERE_TEXTURE && subMesh.effect !== null) {
+                this._material.bindView(subMesh.effect);
             }
         }
 
         if (scene.texturesEnabled) {
-            if (this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
+            if (defines.NORMAL && this._sphereTexture) uniformBuffer.setTexture("sphereSampler", this._sphereTexture);
 
             if (this._toonTexture) uniformBuffer.setTexture("toonSampler", this._toonTexture);
         }
@@ -270,6 +275,14 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            codes[`!${this._escapeRegExp("#if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)\nuniform mat4 view;\n#endif")}`] = /* glsl */`
+                #if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)
+                    uniform mat4 view;
+                #elif defined(NORMAL) && defined(SPHERE_TEXTURE)
+                    uniform mat4 view;
+                #endif
+            `;
+
             codes[`!${this._escapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
                     baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset) * textureColor;
@@ -303,7 +316,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             `;
 
             codes["CUSTOM_FRAGMENT_BEFORE_FOG"] = /* glsl */`
-                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
+                #if defined(NORMAL) && defined(SPHERE_TEXTURE)
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
                     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
