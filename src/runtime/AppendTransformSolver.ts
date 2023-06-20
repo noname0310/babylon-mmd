@@ -1,4 +1,4 @@
-import { Quaternion } from "@babylonjs/core";
+import { Quaternion, Space } from "@babylonjs/core";
 
 import type { MmdBone, MmdSkeleton } from "./MmdMesh";
 
@@ -9,34 +9,27 @@ export class AppendTransformSolver {
         this._skeleton = skeleton;
     }
 
+    private _tempQuaternion = new Quaternion();
+
     public update(bone: MmdBone): void {
         const appendTransformMetadata = bone.metadata.appendTransform;
+        if (appendTransformMetadata === undefined) return;
 
-        appendTransformMetadata;
-        this._skeleton;
-        Quaternion;
+        const bones = this._skeleton.bones;
 
-        // if (appendTransformMetadata === undefined) return;
-
-        // if (appendTransformMetadata.affectRotation) {
-        // 	glm::quat appendRotate;
-        // 	if (appendTransformMetadata.isLocal) {
-        // 		appendRotate = appendTransformMetadata.
-        // 	} else {
-        // 		if (m_appendNode->GetAppendNode() != nullptr)
-        // 		{
-        // 			appendRotate = m_appendNode->GetAppendRotate();
-        // 		}
-        // 		else
-        // 		{
-        // 			appendRotate = m_appendNode->AnimateRotate();
-        // 		}
-        // 	}
-
-        // 	if (m_appendNode->m_enableIK)
-        // 	{
-        // 		appendRotate = m_appendNode->GetIKRotate() * appendRotate;
-        // 	}
+        if (appendTransformMetadata.affectRotation) {
+            const appendRotation = this._tempQuaternion;
+        	if (appendTransformMetadata.isLocal) {
+                bone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
+        	} else {
+                const appendBone = bones[appendTransformMetadata.parentIndex];
+        		if (appendBone !== undefined) {
+                    appendBone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
+        		} else {
+                    bone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
+                }
+        	}
+        }
 
         // 	glm::quat appendQ = Quaternion.SlerpToRef(
         // 		glm::quat(1, 0, 0, 0),
@@ -44,7 +37,7 @@ export class AppendTransformSolver {
         //         appendTransformMetadata.ratio
         // 	);
         // 	m_appendRotate = appendQ;
-        // }
+        }
 
         // if (appendTransformMetadata.affectPosition) {
         // 	glm::vec3 appendTranslate(0.0f);
