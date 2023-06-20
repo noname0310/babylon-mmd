@@ -1,5 +1,3 @@
-import { Effect } from "@babylonjs/core";
-
 export const sdefDeclaration = /* glsl */`
 #ifndef SDEFDECLARATION
 #define SDEFDECLARATION
@@ -108,10 +106,3 @@ vec4 slerp(vec4 q0, vec4 q1, float t) {
 
 #endif
 `;
-
-export function registerShaderIncludeIfNeeded(): void {
-    if (Effect.IncludesShadersStore["sdefDeclaration"]) {
-        return;
-    }
-    Effect.IncludesShadersStore["sdefDeclaration"] = sdefDeclaration;
-}
