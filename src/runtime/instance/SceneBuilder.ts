@@ -82,6 +82,7 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
+        shadowGenerator.frustumEdgeFalloff = 0.1;
 
         // SceneLoader.LoadAssetContainer(
         //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
