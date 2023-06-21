@@ -1,10 +1,9 @@
-import { MmdBone } from "@/runtime/MmdMesh";
 import type { PmxObject } from "./parser/PmxObject";
 
 export interface MmdModelMetadata {
     isMmdModel: true;
     header: MmdModelMetadata.Header;
-    sortedBones: readonly MmdBone[];
+    bones: readonly MmdModelMetadata.Bone[];
     morphs: readonly MmdModelMetadata.Morph[];
     rigidBodies: PmxObject["rigidBodies"];
     joints: PmxObject["joints"];
@@ -30,14 +29,17 @@ export namespace MmdModelMetadata {
             | readonly PmxObject.Morph.MaterialMorph[]
             | number; // MorphTargetManager morph target index
     }
-}
 
-export interface MmdModelBoneMetadata {
-    flag: PmxObject.Bone["flag"];
-    appendTransform: PmxObject.Bone["appendTransform"];
-    axisLimit: PmxObject.Bone["axisLimit"];
-    localVector: PmxObject.Bone["localVector"];
-    transformAfterPhysics: PmxObject.Bone["transformAfterPhysics"];
-    externalParentTransform: PmxObject.Bone["externalParentTransform"];
-    ik: PmxObject.Bone["ik"];
+    export interface Bone {
+        name: PmxObject.Bone["name"];
+        parentBoneIndex: PmxObject.Bone["parentBoneIndex"];
+        transformOrder: PmxObject.Bone["transformOrder"];
+        flag: PmxObject.Bone["flag"];
+        appendTransform: PmxObject.Bone["appendTransform"];
+        axisLimit: PmxObject.Bone["axisLimit"];
+        localVector: PmxObject.Bone["localVector"];
+        transformAfterPhysics: PmxObject.Bone["transformAfterPhysics"];
+        externalParentTransform: PmxObject.Bone["externalParentTransform"];
+        ik: PmxObject.Bone["ik"];
+    }
 }

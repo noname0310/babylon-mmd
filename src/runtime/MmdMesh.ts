@@ -1,11 +1,11 @@
-import type { Bone, Material, Mesh, MorphTargetManager, MultiMaterial, Skeleton } from "@babylonjs/core";
+import type { Material, Mesh, MorphTargetManager, MultiMaterial, Skeleton } from "@babylonjs/core";
 
-import type { MmdModelBoneMetadata, MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 export interface MmdMesh extends Mesh {
     metadata: MmdModelMetadata;
     material: MmdMultiMaterial;
-    skeleton: MmdSkeleton;
+    skeleton: Skeleton;
     morphTargetManager: MorphTargetManager;
 }
 
@@ -13,18 +13,10 @@ export interface MmdMultiMaterial extends MultiMaterial {
     subMaterials: Material[];
 }
 
-export interface MmdSkeleton extends Skeleton {
-    bones: MmdBone[];
-}
-
-export interface MmdBone extends Bone {
-    metadata: MmdModelBoneMetadata;
-}
-
 export interface RuntimeMmdMesh extends Mesh {
     metadata: RuntimeMmdModelMetadata;
     material: MmdMultiMaterial;
-    skeleton: MmdSkeleton;
+    skeleton: Skeleton;
     morphTargetManager: MorphTargetManager;
 }
 

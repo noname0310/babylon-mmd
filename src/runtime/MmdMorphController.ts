@@ -1,12 +1,13 @@
 import type { Material } from "@babylonjs/core";
-import { type MorphTargetManager, Quaternion, Space, Vector3 } from "@babylonjs/core";
+import { type MorphTargetManager, Quaternion, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 import { PmxObject } from "@/loader/parser/PmxObject";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMultiMaterial, MmdSkeleton } from "./MmdMesh";
+import type { MmdMultiMaterial } from "./MmdMesh";
+import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 interface RuntimeMorph {
     name: string;
@@ -28,7 +29,7 @@ export class MmdMorphController {
     private readonly _logger: ILogger;
 
     private readonly _morphTargetManager: MorphTargetManager;
-    private readonly _skeleton: MmdSkeleton;
+    private readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _materials: IMmdMaterialProxy[];
 
     private readonly _morphs: RuntimeMorph[];
@@ -38,7 +39,7 @@ export class MmdMorphController {
 
     public constructor(
         morphTargetManager: MorphTargetManager,
-        skeleton: MmdSkeleton,
+        runtimeBones: readonly MmdRuntimeBone[],
         material: MmdMultiMaterial,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
@@ -47,7 +48,7 @@ export class MmdMorphController {
         this._logger = logger;
 
         this._morphTargetManager = morphTargetManager;
-        this._skeleton = skeleton;
+        this._runtimeBones = runtimeBones;
 
         const subMaterials = material.subMaterials;
         const materials = this._materials = new Array<IMmdMaterialProxy>(subMaterials.length);
@@ -312,7 +313,7 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.BoneMorph:
             {
-                const bones = this._skeleton.bones;
+                const bones = this._runtimeBones;
 
                 const indices = morph.elements as Int32Array;
                 const positions = morph.elements2 as Float32Array;
@@ -322,25 +323,32 @@ export class MmdMorphController {
 
                     const bone = bones[index];
 
-                    bone.getPositionToRef(Space.LOCAL, null, this._tempVector3);
-                    bone.setPosition(this._tempVector3.addInPlaceFromFloats(
-                        positions[i * 3 + 0] * weight,
-                        positions[i * 3 + 1] * weight,
-                        positions[i * 3 + 2] * weight
-                    ), Space.LOCAL);
+                    positions;
+                    rotations;
+                    bone;
+                    this._tempVector3;
+                    this._tempQuaternion;
+                    this._tempQuaternion2;
 
-                    bone.getRotationQuaternionToRef(Space.LOCAL, null, this._tempQuaternion);
-                    bone.setRotationQuaternion(Quaternion.SlerpToRef(
-                        this._tempQuaternion,
-                        this._tempQuaternion2.copyFromFloats(
-                            rotations[i * 4 + 0],
-                            rotations[i * 4 + 1],
-                            rotations[i * 4 + 2],
-                            rotations[i * 4 + 3]
-                        ),
-                        weight,
-                        this._tempQuaternion
-                    ), Space.LOCAL);
+                    // bone.getPositionToRef(Space.LOCAL, null, this._tempVector3);
+                    // bone.setPosition(this._tempVector3.addInPlaceFromFloats(
+                    //     positions[i * 3 + 0] * weight,
+                    //     positions[i * 3 + 1] * weight,
+                    //     positions[i * 3 + 2] * weight
+                    // ), Space.LOCAL);
+
+                    // bone.getRotationQuaternionToRef(Space.LOCAL, null, this._tempQuaternion);
+                    // bone.setRotationQuaternion(Quaternion.SlerpToRef(
+                    //     this._tempQuaternion,
+                    //     this._tempQuaternion2.copyFromFloats(
+                    //         rotations[i * 4 + 0],
+                    //         rotations[i * 4 + 1],
+                    //         rotations[i * 4 + 2],
+                    //         rotations[i * 4 + 3]
+                    //     ),
+                    //     weight,
+                    //     this._tempQuaternion
+                    // ), Space.LOCAL);
                 }
             }
             break;

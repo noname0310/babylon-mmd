@@ -26,7 +26,7 @@ import {
 } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
-import type { MmdModelBoneMetadata, MmdModelMetadata } from "./MmdModelMetadata";
+import type { MmdModelMetadata } from "./MmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
 import type { ILogger } from "./parser/ILogger";
 import { PmxObject } from "./parser/PmxObject";
@@ -453,7 +453,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
         skeleton._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        let sortedBones: Bone[] | undefined = undefined;
+        const bonesMetadata: MmdModelMetadata.Bone[] = [];
         {
             const bonesInfo = pmxObject.bones;
             const bones: Bone[] = [];
@@ -500,7 +500,14 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     undefined,
                     i // bone index
                 );
-                bone.metadata = <MmdModelBoneMetadata>{
+
+                bones.push(bone);
+                looped.push(isLooped);
+
+                const boneMetadata = <MmdModelMetadata.Bone>{
+                    name: boneInfo.name,
+                    parentBoneIndex: boneInfo.parentBoneIndex,
+                    transformOrder: boneInfo.transformOrder,
                     flag: boneInfo.flag,
                     appendTransform: boneInfo.appendTransform,
                     axisLimit: boneInfo.axisLimit,
@@ -509,9 +516,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     externalParentTransform: boneInfo.externalParentTransform,
                     ik: boneInfo.ik
                 };
-
-                bones.push(bone);
-                looped.push(isLooped);
+                bonesMetadata.push(boneMetadata);
             }
 
             for (let i = 0; i < bones.length; ++i) {
@@ -522,12 +527,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     bone.setParent(bones[boneInfo.parentBoneIndex]);
                 }
             }
-
-            // sort must be stable (require ES2019)
-            bones.sort((a, b) => {
-                return bonesInfo[a.getIndex()].transformOrder - bonesInfo[b.getIndex()].transformOrder;
-            });
-            sortedBones = bones;
         }
         mesh.skeleton = skeleton;
 
@@ -666,7 +665,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 comment: pmxObject.header.comment,
                 englishComment: pmxObject.header.englishComment
             },
-            sortedBones: sortedBones,
+            bones: bonesMetadata,
             morphs: morphsMetadata,
             rigidBodies: pmxObject.rigidBodies,
             joints: pmxObject.joints
