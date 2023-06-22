@@ -47,8 +47,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene.blockMaterialDirtyMechanism = true;
 
         const materials = pmxObject.materials;
-        const alphaEvaluateRenderingContext = this.useAlphaEvaluation
-            ? TextureAlphaChecker.CreateRenderingContext()
+        const textureAlphaChecker = this.useAlphaEvaluation
+            ? new TextureAlphaChecker(uvs, indices)
             : null;
 
         const promises: Promise<void>[] = [];
@@ -91,10 +91,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     scene,
                     assetContainer,
                     rootUrl,
-                    indices,
-                    uvs,
                     offset,
-                    alphaEvaluateRenderingContext,
+                    textureAlphaChecker,
                     incrementProgress
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
@@ -162,6 +160,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         if (onModelTextureLoadedObservable !== undefined) {
             onModelTextureLoadedObservable.addOnce(() => {
                 Promise.all(promises).then(() => {
+                    textureAlphaChecker?.dispose();
                     // Restore the blocking of material dirty.
                     scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
                     onTextureLoadComplete?.();
@@ -169,6 +168,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             });
         } else {
             Promise.all(promises).then(() => {
+                textureAlphaChecker?.dispose();
                 // Restore the blocking of material dirty.
                 scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
                 onTextureLoadComplete?.();
@@ -218,10 +218,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: AssetContainer | null,
         rootUrl: string,
-        indices: Uint16Array | Uint32Array,
-        uvs: Float32Array,
         materialIndexOffset: number,
-        alphaEvaluateRenderingContext: WebGL2RenderingContext | null,
+        textureAlphaChecker: TextureAlphaChecker | null,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -231,10 +229,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             scene,
             assetContainer,
             rootUrl,
-            indices,
-            uvs,
             offset,
-            alphaEvaluateRenderingContext,
+            textureAlphaChecker,
             onTextureLoadComplete
         ): Promise<void> => {
             material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
@@ -252,22 +248,21 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
-                    const transparencyMode = await TextureAlphaChecker.TextureHasAlphaOnGeometry(
-                        alphaEvaluateRenderingContext,
-                        diffuseTexture,
-                        indices,
-                        uvs,
-                        offset,
-                        materialInfo.surfaceCount,
-                        this.alphaThreshold,
-                        this.alphaBlendThreshold
-                    );
-                    const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
+                    if (textureAlphaChecker !== null) {
+                        const transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                            diffuseTexture,
+                            offset,
+                            materialInfo.surfaceCount,
+                            this.alphaThreshold,
+                            this.alphaBlendThreshold
+                        );
+                        const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
 
-                    if (hasAlpha) diffuseTexture.hasAlpha = true;
-                    material.useAlphaFromDiffuseTexture = hasAlpha;
-                    material.transparencyMode = transparencyMode;
-                    if (hasAlpha) material.backFaceCulling = false;
+                        if (hasAlpha) diffuseTexture.hasAlpha = true;
+                        material.useAlphaFromDiffuseTexture = hasAlpha;
+                        material.transparencyMode = transparencyMode;
+                        if (hasAlpha) material.backFaceCulling = false;
+                    }
 
                     onTextureLoadComplete?.();
                 } else {
