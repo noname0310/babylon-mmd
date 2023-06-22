@@ -7,9 +7,10 @@ export enum TransparencyMode {
 }
 
 export class TextureAlphaChecker {
-    private readonly _context: WebGL2RenderingContext | null;
     private readonly _resolution: number;
     private readonly _textureCache: Map<Texture, WebGLTexture>;
+
+    private _context: WebGL2RenderingContext | null;
 
     private _vertexShader: WebGLShader | null;
     private _fragmentShader: WebGLShader | null;
@@ -20,9 +21,10 @@ export class TextureAlphaChecker {
     private readonly _indicesBytePerElement: number;
 
     public constructor(uvs: Float32Array, indices: Uint16Array | Uint32Array, resolution = 512) {
-        this._context = this._createRenderingContext();
         this._resolution = resolution;
         this._textureCache = new Map();
+
+        this._context = this._createRenderingContext();
 
         this._vertexShader = null;
         this._fragmentShader = null;
@@ -32,14 +34,10 @@ export class TextureAlphaChecker {
 
         this._indicesBytePerElement = indices.BYTES_PER_ELEMENT;
 
-        if (this._prepareContext() === false) {
+        if (this._prepareContext() === false ||
+            this._bindUvAndIndexBuffer(uvs, indices) === false
+        ) {
             this.dispose();
-            this._context = null;
-        }
-
-        if (this._createUvAndIndexBuffer(uvs, indices) === false) {
-            this.dispose();
-            this._context = null;
         }
     }
 
@@ -48,7 +46,7 @@ export class TextureAlphaChecker {
         canvas.width = this._resolution;
         canvas.height = this._resolution;
 
-        document.body.appendChild(canvas);
+        // document.body.appendChild(canvas);
 
         const context = canvas.getContext("webgl2", {
             alpha: false,
@@ -137,6 +135,9 @@ export class TextureAlphaChecker {
         const context = this._context;
         if (context === null) return null;
 
+        const cachedWebGlTexture = this._textureCache.get(texture);
+        if (cachedWebGlTexture !== undefined) return cachedWebGlTexture;
+
         if (!texture.isReady()) {
             await new Promise<void>((resolve) => {
                 texture.onLoadObservable.addOnce(() => {
@@ -144,9 +145,6 @@ export class TextureAlphaChecker {
                 });
             });
         }
-
-        const cachedWebGlTexture = this._textureCache.get(texture);
-        if (cachedWebGlTexture !== undefined) return cachedWebGlTexture;
 
         const textureSize = texture.getSize();
         const pixelsBufferView = await texture.readPixels(
@@ -187,7 +185,7 @@ export class TextureAlphaChecker {
         return webGlTexture;
     }
 
-    private _createUvAndIndexBuffer(
+    private _bindUvAndIndexBuffer(
         uvs: Float32Array,
         indices: Uint16Array | Uint32Array
     ): boolean {
@@ -237,8 +235,6 @@ export class TextureAlphaChecker {
         context.bindTexture(context.TEXTURE_2D, webGlTexture);
         context.uniform1i(textureLocation, 0);
 
-        context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-
         context.drawElements(context.TRIANGLES, length, this._indicesBytePerElement === 2 ? context.UNSIGNED_SHORT : context.UNSIGNED_INT, startOffset * this._indicesBytePerElement);
 
         const resolution = this._resolution;
@@ -273,25 +269,25 @@ export class TextureAlphaChecker {
             averageMidddleAlpha /= averageMidddleAlphaCount;
         }
 
-        const div = document.createElement("div");
-        div.innerText = texture.name + " " + maxValue;
-        const debugCanvas = document.createElement("canvas");
-        debugCanvas.width = resolution / 2;
-        debugCanvas.height = resolution / 2;
-        debugCanvas.style.outline = "1px solid red";
+        // const div = document.createElement("div");
+        // div.innerText = texture.name + " " + maxValue;
+        // const debugCanvas = document.createElement("canvas");
+        // debugCanvas.width = resolution / 2;
+        // debugCanvas.height = resolution / 2;
+        // debugCanvas.style.outline = "1px solid red";
 
-        div.appendChild(debugCanvas);
-        document.body.appendChild(div);
+        // div.appendChild(debugCanvas);
+        // document.body.appendChild(div);
 
-        const debugContext = debugCanvas.getContext("2d");
-        for (let i = 0; i < resolution; i += 2) {
-            for (let j = 0; j < resolution; j += 2) {
-                const index = (i * resolution + j) * 4;
-                const r = resultPixelsBufferView[index + 0];
-                debugContext!.fillStyle = `rgba(${r}, ${r}, ${r}, 1.0)`;
-                debugContext!.fillRect(i / 2, j / 2, 1, 1);
-            }
-        }
+        // const debugContext = debugCanvas.getContext("2d");
+        // for (let i = 0; i < resolution; i += 2) {
+        //     for (let j = 0; j < resolution; j += 2) {
+        //         const index = (i * resolution + j) * 4;
+        //         const r = resultPixelsBufferView[index + 0];
+        //         debugContext!.fillStyle = `rgba(${r}, ${r}, ${r}, 1.0)`;
+        //         debugContext!.fillRect(i / 2, j / 2, 1, 1);
+        //     }
+        // }
 
         if (maxValue < alphaThreshold) {
             return TransparencyMode.Opaque;
@@ -308,6 +304,11 @@ export class TextureAlphaChecker {
         const context = this._context;
         if (context === null) return;
 
+        context.bindBuffer(context.ARRAY_BUFFER, null);
+        context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, null);
+        context.bindTexture(context.TEXTURE_2D, null);
+        context.useProgram(null);
+
         context.deleteBuffer(this._uvBuffer);
         context.deleteBuffer(this._indexBuffer);
         for (const webGlTexture of this._textureCache.values()) {
@@ -316,5 +317,12 @@ export class TextureAlphaChecker {
         context.deleteProgram(this._program);
         context.deleteShader(this._vertexShader);
         context.deleteShader(this._fragmentShader);
+
+        this._context = null;
+        this._vertexShader = null;
+        this._fragmentShader = null;
+        this._program = null;
+        this._uvBuffer = null;
+        this._indexBuffer = null;
     }
 }
