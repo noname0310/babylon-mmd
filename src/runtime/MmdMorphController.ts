@@ -286,8 +286,8 @@ export class MmdMorphController {
                 for (let i = 0; i < indices.length; ++i) {
                     const index = indices[i];
                     const bone = bones[index];
-                    bone.morphLocalPositionOffset.set(0, 0, 0);
-                    bone.morphLocalRotationOffset.set(0, 0, 0, 1);
+                    bone.morphPositionOffset.set(0, 0, 0);
+                    bone.morphRotationOffset.set(0, 0, 0, 1);
                     bone.disableMorph();
                 }
             }
@@ -336,14 +336,14 @@ export class MmdMorphController {
 
                     const bone = bones[index];
 
-                    bone.morphLocalPositionOffset.addInPlaceFromFloats(
+                    bone.morphPositionOffset.addInPlaceFromFloats(
                         positions[i * 3 + 0] * weight,
                         positions[i * 3 + 1] * weight,
                         positions[i * 3 + 2] * weight
                     );
 
                     Quaternion.SlerpToRef(
-                        bone.morphLocalRotationOffset,
+                        bone.morphRotationOffset,
                         this._tempQuaternion.copyFromFloats(
                             rotations[i * 4 + 0],
                             rotations[i * 4 + 1],
@@ -351,7 +351,7 @@ export class MmdMorphController {
                             rotations[i * 4 + 3]
                         ),
                         weight,
-                        bone.morphLocalRotationOffset
+                        bone.morphRotationOffset
                     );
 
                     if (weight !== 0) bone.enableMorph();

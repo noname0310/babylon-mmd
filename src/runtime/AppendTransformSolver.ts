@@ -1,69 +1,80 @@
-import { Quaternion, Space } from "@babylonjs/core";
+import { Quaternion, Vector3 } from "@babylonjs/core";
+
+import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
-export class AppendTransformSolver {
-    private readonly _runtimeBones: readonly MmdRuntimeBone[];
+type RemoveUndefined<T> = T extends undefined ? never : T;
+type AppendTransformMetadata = RemoveUndefined<MmdModelMetadata.Bone["appendTransform"]>;
 
-    public constructor(runtimeBones: readonly MmdRuntimeBone[]) {
-        this._runtimeBones = runtimeBones;
+export class AppendTransformSolver {
+    public readonly isLocal: boolean;
+    public readonly affectRotation: boolean;
+    public readonly affectPosition: boolean;
+    public readonly ratio: number;
+
+    public readonly bone: MmdRuntimeBone;
+    public readonly targetBone: MmdRuntimeBone;
+
+    public readonly appendPositionOffset = Vector3.Zero();
+    public readonly appendRotationOffset = Quaternion.Identity();
+
+    public constructor(
+        boneMetadata: AppendTransformMetadata,
+        bone: MmdRuntimeBone,
+        targetBone: MmdRuntimeBone
+    ) {
+        this.isLocal = boneMetadata.isLocal;
+        this.affectRotation = boneMetadata.affectRotation;
+        this.affectPosition = boneMetadata.affectPosition;
+        this.ratio = boneMetadata.ratio;
+
+        this.bone = bone;
+        this.targetBone = targetBone;
     }
 
-    private readonly _tempQuaternion = new Quaternion();
+    private static readonly _IdentityQuaternion = Quaternion.Identity();
 
-    public update(bone: MmdRuntimeBone): void {
-        bone;
-        this._tempQuaternion;
-        this._runtimeBones;
-        Space;
-        // const appendTransformMetadata = bone.metadata.appendTransform;
-        // if (appendTransformMetadata === undefined) return;
+    public update(): void {
+        const targetBone = this.targetBone;
 
-        // const bones = this._skeleton.bones;
+        if (this.affectRotation) {
+            const appendRotationOffset = this.appendRotationOffset;
+            if (this.isLocal) {
+                targetBone.getAnimatedRotationToRef(appendRotationOffset);
+            } else {
+                if (targetBone.appendTransformSolver != null) {
+                    appendRotationOffset.copyFrom(targetBone.appendTransformSolver.appendRotationOffset);
+                } else {
+                    targetBone.getAnimatedRotationToRef(appendRotationOffset);
+                }
+            }
 
-        // if (appendTransformMetadata.affectRotation) {
-        //     const appendRotation = this._tempQuaternion;
-        //     if (appendTransformMetadata.isLocal) {
-        //         bone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
-        //     } else {
-        //         const appendBone = bones[appendTransformMetadata.parentIndex];
-        //         if (appendBone !== undefined) {
-        //             appendBone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
-        //         } else {
-        //             bone.getRotationQuaternionToRef(Space.LOCAL, undefined, appendRotation);
-        //         }
-        //     }
-        // }
+            if (targetBone.ikSolver != null && targetBone.ikSolver.enabled) {
+                appendRotationOffset.multiplyInPlace(targetBone.ikSolver.ikRotation);
+            }
 
-        //     glm::quat appendQ = Quaternion.SlerpToRef(
-        //         glm::quat(1, 0, 0, 0),
-        //         appendRotate,
-        //         appendTransformMetadata.ratio
-        //     );
-        //     m_appendRotate = appendQ;
-        // }
+            Quaternion.SlerpToRef(
+                AppendTransformSolver._IdentityQuaternion,
+                appendRotationOffset,
+                this.ratio,
+                appendRotationOffset
+            );
+        }
 
-        // if (appendTransformMetadata.affectPosition) {
-        //     glm::vec3 appendTranslate(0.0f);
-        //     if (m_isAppendLocal)
-        //     {
-        //         appendTranslate = m_appendNode->GetTranslate() - m_appendNode->GetInitialTranslate();
-        //     }
-        //     else
-        //     {
-        //         if (m_appendNode->GetAppendNode() != nullptr)
-        //         {
-        //             appendTranslate = m_appendNode->GetAppendTranslate();
-        //         }
-        //         else
-        //         {
-        //             appendTranslate = m_appendNode->GetTranslate() - m_appendNode->GetInitialTranslate();
-        //         }
-        //     }
+        if (this.affectPosition) {
+            const appendPositionOffset = this.appendPositionOffset;
+            if (this.isLocal) {
+                targetBone.getAnimatedPositionToRef(appendPositionOffset);
+            } else {
+                if (targetBone.appendTransformSolver != null) {
+                    appendPositionOffset.copyFrom(targetBone.appendTransformSolver.appendPositionOffset);
+                } else {
+                    targetBone.getAnimatedPositionToRef(appendPositionOffset);
+                }
+            }
 
-        //     m_appendTranslate = appendTranslate * GetAppendWeight();
-        // }
-
-        // UpdateLocalTransform();
+            appendPositionOffset.scaleInPlace(this.ratio);
+        }
     }
 }

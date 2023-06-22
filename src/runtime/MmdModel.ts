@@ -1,4 +1,4 @@
-import type { Material } from "@babylonjs/core";
+import type { Bone, Material } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
@@ -16,8 +16,6 @@ export class MmdModel {
     private readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
 
-    private readonly _appendTransformSolver: AppendTransformSolver;
-
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
@@ -25,7 +23,10 @@ export class MmdModel {
     ) {
         this.mesh = mmdMesh;
 
-        const runtimeBones = this._runtimeBones = this._buildRuntimeSkeleton(mmdMesh.metadata.bones);
+        const runtimeBones = this._runtimeBones = this._buildRuntimeSkeleton(
+            mmdMesh.skeleton.bones,
+            mmdMesh.metadata.bones
+        );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
         // sort must be stable (require ES2019)
@@ -43,7 +44,6 @@ export class MmdModel {
         );
 
         // this._sortedBones = mmdMesh.metadata.sortedBones;
-        this._appendTransformSolver = new AppendTransformSolver(runtimeBones);
     }
 
     public beforePhysics(): void {
@@ -60,7 +60,6 @@ export class MmdModel {
     private _update(afterPhysicsStage: boolean): void {
         afterPhysicsStage;
         this._updateWorldTransform;
-        this._appendTransformSolver;
         const sortedBones = this._sortedRuntimeBones;
         this._runtimeBones;
 
@@ -130,13 +129,39 @@ export class MmdModel {
         }
     }
 
-    private _buildRuntimeSkeleton(bonesMetadata: readonly MmdModelMetadata.Bone[]): readonly MmdRuntimeBone[] {
-        const bones: MmdRuntimeBone[] = [];
+    private _buildRuntimeSkeleton(
+        bones: Bone[],
+        bonesMetadata: readonly MmdModelMetadata.Bone[]
+    ): readonly MmdRuntimeBone[] {
+        const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
             const boneMetadata = bonesMetadata[i];
-            bones.push(new MmdRuntimeBone(boneMetadata));
+            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata));
         }
 
-        return bones;
+        for (let i = 0; i < bonesMetadata.length; ++i) {
+            const boneMetadata = bonesMetadata[i];
+            const bone = runtimeBones[i];
+
+            const parentBoneIndex = boneMetadata.parentBoneIndex;
+            if (0 <= parentBoneIndex) {
+                const parentBone = runtimeBones[parentBoneIndex];
+                bone.parentBone = parentBone;
+                parentBone.childrenBones.push(bone);
+            }
+
+            if (boneMetadata.appendTransform !== undefined) {
+                const targetBoneIndex = boneMetadata.appendTransform.parentIndex;
+                if (0 <= targetBoneIndex) {
+                    bone.appendTransformSolver = new AppendTransformSolver(
+                        boneMetadata.appendTransform,
+                        bone,
+                        runtimeBones[targetBoneIndex]
+                    );
+                }
+            }
+        }
+
+        return runtimeBones;
     }
 }

@@ -1,57 +1,130 @@
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core";
+import type { Bone} from "@babylonjs/core";
+import { Matrix, Quaternion, Space, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
+import type { AppendTransformSolver } from "./AppendTransformSolver";
+import type { IkSolver } from "./IkSolver";
+
 export class MmdRuntimeBone {
+    public readonly babylonBone: Bone;
+
     public readonly name: string;
-    public readonly parentBoneIndex: number;
+    public parentBone: MmdRuntimeBone | null;
+    public readonly childrenBones: MmdRuntimeBone[];
+
     public readonly transformOrder: number;
     public readonly flag: number;
-    public readonly appendTransform: MmdModelMetadata.Bone["appendTransform"];
+    public readonly transformAfterPhysics: boolean;
 
-    public readonly morphLocalPositionOffset = Vector3.Zero();
-    public readonly morphLocalRotationOffset = Quaternion.Identity();
+    public appendTransformSolver: AppendTransformSolver | null;
+    public ikSolver: IkSolver | null;
 
-    public readonly localMatrix = Matrix.Identity();
-    public readonly worldMatrix = Matrix.Identity();
+    public readonly morphPositionOffset: Vector3;
+    public readonly morphRotationOffset: Quaternion;
 
-    public applyMorphToLocalPositionToRef: (localPosition: Vector3, target: Vector3) => Vector3;
-    public applyMorphToLocalRotationToRef: (localRotation: Quaternion, target: Quaternion) => Quaternion;
+    public readonly localMatrix: Matrix;
+    public readonly worldMatrix: Matrix;
 
-    public constructor(boneMetadata: MmdModelMetadata.Bone) {
+    public getAnimatedPositionToRef: (target: Vector3) => Vector3;
+    public getAnimatedRotationToRef: (target: Quaternion) => Quaternion;
+
+    public constructor(babylonBone: Bone, boneMetadata: MmdModelMetadata.Bone) {
+        this.babylonBone = babylonBone;
+
         this.name = boneMetadata.name;
-        this.parentBoneIndex = boneMetadata.parentBoneIndex;
+        this.parentBone = null;
+        this.childrenBones = [];
+
         this.transformOrder = boneMetadata.transformOrder;
         this.flag = boneMetadata.flag;
-        this.appendTransform = boneMetadata.appendTransform;
+        this.transformAfterPhysics = boneMetadata.transformAfterPhysics;
 
-        this.applyMorphToLocalPositionToRef = this._applyMorphToLocalPositionToRefDisabled;
-        this.applyMorphToLocalRotationToRef = this._applyMorphToLocalRotationToRefDisabled;
+        this.appendTransformSolver = null;
+        this.ikSolver = null;
+
+        this.morphPositionOffset = Vector3.Zero();
+        this.morphRotationOffset = Quaternion.Identity();
+
+        this.localMatrix = Matrix.Identity();
+        this.worldMatrix = babylonBone.getWorldMatrix();
+
+        this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
+        this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
     }
 
-    private _applyMorphToLocalPositionToRefEnabled(localPosition: Vector3, target: Vector3): Vector3 {
-        return localPosition.addToRef(this.morphLocalPositionOffset!, target);
+    private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
+        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        return target.addInPlace(this.morphPositionOffset);
     }
 
-    private _applyMorphToLocalPositionToRefDisabled(localPosition: Vector3, target: Vector3): Vector3 {
-        return target.copyFrom(localPosition);
+    private _getAnimatedPositionToRef(target: Vector3): Vector3 {
+        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        return target;
     }
 
-    private _applyMorphToLocalRotationToRefEnabled(localRotation: Quaternion, target: Quaternion): Quaternion {
-        return localRotation.multiplyToRef(this.morphLocalRotationOffset!, target);
+    private _getAnimatedRotationWithMorphToRef(target: Quaternion): Quaternion {
+        this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
+        return target.multiplyInPlace(this.morphRotationOffset);
     }
 
-    private _applyMorphToLocalRotationToRefDisabled(localRotation: Quaternion, target: Quaternion): Quaternion {
-        return target.copyFrom(localRotation);
+    private _getAnimatedRotationToRef(target: Quaternion): Quaternion {
+        this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
+        return target;
     }
 
     public enableMorph(): void {
-        this.applyMorphToLocalPositionToRef = this._applyMorphToLocalPositionToRefEnabled;
-        this.applyMorphToLocalRotationToRef = this._applyMorphToLocalRotationToRefEnabled;
+        this.getAnimatedPositionToRef = this._getAnimatedPositionWithMorphToRef;
+        this.getAnimatedRotationToRef = this._getAnimatedRotationWithMorphToRef;
     }
 
     public disableMorph(): void {
-        this.applyMorphToLocalPositionToRef = this._applyMorphToLocalPositionToRefDisabled;
-        this.applyMorphToLocalRotationToRef = this._applyMorphToLocalRotationToRefDisabled;
+        this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
+        this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
+    }
+
+    private static readonly _TempScale = Vector3.Zero();
+    private static readonly _TempRotation = Quaternion.Identity();
+    private static readonly _TempPosition = Vector3.Zero();
+
+    public updateLocalMatrix(): void {
+        this.babylonBone.getScaleToRef(MmdRuntimeBone._TempScale);
+        const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
+        const position = this.getAnimatedPositionToRef(MmdRuntimeBone._TempPosition);
+
+        if (this.ikSolver !== null) {
+            this.ikSolver.ikRotation.multiplyToRef(rotation, rotation);
+        }
+
+        Matrix.ComposeToRef(
+            MmdRuntimeBone._TempScale,
+            rotation,
+            position,
+            this.localMatrix
+        );
+    }
+
+    private static readonly _Stack: MmdRuntimeBone[] = [];
+
+    public updateWorldMatrix(): void {
+        const stack = MmdRuntimeBone._Stack;
+        stack.length = 0;
+        stack.push(this);
+
+        while (stack.length > 0) {
+            const bone = stack.pop()!;
+
+            const parentBone = bone.parentBone;
+            if (parentBone !== null) {
+                bone.localMatrix.multiplyToRef(parentBone.worldMatrix, bone.worldMatrix);
+            } else {
+                bone.worldMatrix.copyFrom(bone.localMatrix);
+            }
+
+            const childrenBones = bone.childrenBones;
+            for (let i = 0, l = childrenBones.length; i < l; ++i) {
+                stack.push(childrenBones[i]);
+            }
+        }
     }
 }
