@@ -510,10 +510,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     transformOrder: boneInfo.transformOrder,
                     flag: boneInfo.flag,
                     appendTransform: boneInfo.appendTransform,
-                    axisLimit: boneInfo.axisLimit,
-                    localVector: boneInfo.localVector,
+                    // axisLimit: boneInfo.axisLimit,
+                    // localVector: boneInfo.localVector,
                     transformAfterPhysics: boneInfo.transformAfterPhysics,
-                    externalParentTransform: boneInfo.externalParentTransform,
+                    // externalParentTransform: boneInfo.externalParentTransform,
                     ik: boneInfo.ik
                 };
                 bonesMetadata.push(boneMetadata);

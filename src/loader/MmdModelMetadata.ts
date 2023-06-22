@@ -36,10 +36,10 @@ export namespace MmdModelMetadata {
         transformOrder: PmxObject.Bone["transformOrder"];
         flag: PmxObject.Bone["flag"];
         appendTransform: PmxObject.Bone["appendTransform"];
-        axisLimit: PmxObject.Bone["axisLimit"];
-        localVector: PmxObject.Bone["localVector"];
+        // axisLimit: PmxObject.Bone["axisLimit"];
+        // localVector: PmxObject.Bone["localVector"];
         transformAfterPhysics: PmxObject.Bone["transformAfterPhysics"];
-        externalParentTransform: PmxObject.Bone["externalParentTransform"];
+        // externalParentTransform: PmxObject.Bone["externalParentTransform"];
         ik: PmxObject.Bone["ik"];
     }
 }
