@@ -89,11 +89,21 @@ export class MmdRuntimeBone {
 
     public updateLocalMatrix(): void {
         this.babylonBone.getScaleToRef(MmdRuntimeBone._TempScale);
-        const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
-        const position = this.getAnimatedPositionToRef(MmdRuntimeBone._TempPosition);
 
+        const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
         if (this.ikSolver !== null) {
             this.ikSolver.ikRotation.multiplyToRef(rotation, rotation);
+        }
+
+        const position = this.getAnimatedPositionToRef(MmdRuntimeBone._TempPosition);
+
+        if (this.appendTransformSolver !== null) {
+            if (this.appendTransformSolver.affectRotation) {
+                rotation.multiplyInPlace(this.appendTransformSolver.appendRotationOffset);
+            }
+            if (this.appendTransformSolver.affectPosition) {
+                position.addInPlace(this.appendTransformSolver.appendPositionOffset);
+            }
         }
 
         Matrix.ComposeToRef(

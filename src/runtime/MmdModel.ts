@@ -13,8 +13,8 @@ export class MmdModel {
     public readonly mesh: MmdMesh;
     public readonly morph: MmdMorphController;
 
-    private readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
+    private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
     public constructor(
         mmdMesh: MmdMesh,
@@ -23,7 +23,7 @@ export class MmdModel {
     ) {
         this.mesh = mmdMesh;
 
-        const runtimeBones = this._runtimeBones = this._buildRuntimeSkeleton(
+        const runtimeBones = this._buildRuntimeSkeleton(
             mmdMesh.skeleton.bones,
             mmdMesh.metadata.bones
         );
@@ -34,6 +34,13 @@ export class MmdModel {
             return a.transformOrder - b.transformOrder;
         });
 
+        const sortedRootBones: MmdRuntimeBone[] = [];
+        for (let i = 0; i < sortedBones.length; ++i) {
+            const bone = sortedBones[i];
+            if (bone.parentBone === null) sortedRootBones.push(bone);
+        }
+        this._sortedRuntimeRootBones = sortedRootBones;
+
         this.morph = new MmdMorphController(
             mmdMesh.morphTargetManager,
             runtimeBones,
@@ -42,12 +49,11 @@ export class MmdModel {
             mmdMesh.metadata.morphs,
             logger
         );
-
-        // this._sortedBones = mmdMesh.metadata.sortedBones;
     }
 
     public beforePhysics(): void {
-        this.mesh.skeleton.returnToRest();
+        // todo: apply bone animation
+
         this.morph.update();
 
         this._update(false);
@@ -58,74 +64,42 @@ export class MmdModel {
     }
 
     private _update(afterPhysicsStage: boolean): void {
-        afterPhysicsStage;
-        this._updateWorldTransform;
         const sortedBones = this._sortedRuntimeBones;
-        this._runtimeBones;
+        for (let i = 0; i < sortedBones.length; ++i) {
+            const bone = sortedBones[i];
+            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
 
-        // todo: apply bone animation
+            bone.updateLocalMatrix();
+        }
+
+        const sortedRootBones = this._sortedRuntimeRootBones;
+        for (let i = 0; i < sortedRootBones.length; ++i) {
+            const bone = sortedRootBones[i];
+            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
+
+            bone.updateWorldMatrix();
+        }
 
         for (let i = 0; i < sortedBones.length; ++i) {
             const bone = sortedBones[i];
-            bone;
-            // const isTransformAfterPhysics = (bone.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
-            // if (isTransformAfterPhysics !== afterPhysicsStage) continue;
+            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
 
-            // if (bone.appendTransform !== undefined) {
-            //     this._appendTransformSolver.update(bone);
-            // }
+            if (bone.appendTransformSolver != null) {
+                bone.appendTransformSolver.update();
+                bone.updateLocalMatrix();
+                bone.updateWorldMatrix();
+            }
 
-            // if (bone.ik !== undefined) {
-            //     this._updateWorldTransform(bone);
-
-            //     // todo: solve ik
-            //     // optimize: skip ik if affected bones are physically simulated
-            // }
+            if (bone.ikSolver != null) {
+                // todo: IK
+            }
         }
 
-        if (!afterPhysicsStage /* && this.physicsEnabled */) {
-            // for (let i = 0; i < sortedBones.length; ++i) {
-            //     const bone = sortedBones[i];
-            //     const isTransformAfterPhysics = (bone.metadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
-            //     if (isTransformAfterPhysics) continue;
+        for (let i = 0; i < sortedRootBones.length; ++i) {
+            const bone = sortedRootBones[i];
+            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
 
-            //     if (bone.getParent() === null) {
-            //         this._updateWorldTransform(bone);
-            //     }
-            // }
-        }
-    }
-
-    private readonly _boneStack: MmdRuntimeBone[] = [];
-
-    private _updateWorldTransform(bone: MmdRuntimeBone): void {
-        const stack: MmdRuntimeBone[] = this._boneStack;
-        stack.length = 0;
-        stack.push(bone);
-
-        while (stack.length > 0) {
-            const bone = stack.pop()!;
-            bone;
-            // bone._childUpdateId += 1;
-            // const parentBone = bone.getParent();
-
-            // if (parentBone) {
-            //     bone.getLocalMatrix().multiplyToRef(parentBone.getWorldMatrix(), bone.getWorldMatrix());
-            // } else {
-            //     if (initialSkinMatrix) {
-            //         bone.getLocalMatrix().multiplyToRef(initialSkinMatrix, bone.getWorldMatrix());
-            //     } else {
-            //         bone.getWorldMatrix().copyFrom(bone.getLocalMatrix());
-            //     }
-            // }
-
-            // const chindren = bone.children;
-            // for (let index = 0; index < chindren.length; index++) {
-            //     const child = chindren[index];
-            //     if (child._childUpdateId !== bone._childUpdateId) {
-            //         stack.push(child);
-            //     }
-            // }
+            bone.updateWorldMatrix();
         }
     }
 
