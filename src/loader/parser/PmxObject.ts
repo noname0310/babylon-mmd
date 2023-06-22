@@ -157,7 +157,7 @@ export namespace PmxObject {
             x: Vec3;
             z: Vec3;
         }> | undefined;
-        transformAfterPhysics: boolean | undefined;
+        transformAfterPhysics: boolean;
         externalParentTransform: number | undefined;
         ik: Readonly<{
             target: number;
