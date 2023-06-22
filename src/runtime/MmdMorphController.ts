@@ -1,5 +1,5 @@
 import type { Material } from "@babylonjs/core";
-import { type MorphTargetManager, Quaternion, Vector3 } from "@babylonjs/core";
+import { type MorphTargetManager, Quaternion } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 import { PmxObject } from "@/loader/parser/PmxObject";
@@ -278,6 +278,21 @@ export class MmdMorphController {
             }
             break;
 
+        case PmxObject.Morph.Type.BoneMorph:
+            {
+                const bones = this._runtimeBones;
+                const indices = morph.elements as Int32Array;
+
+                for (let i = 0; i < indices.length; ++i) {
+                    const index = indices[i];
+                    const bone = bones[index];
+                    bone.morphLocalPositionOffset.set(0, 0, 0);
+                    bone.morphLocalRotationOffset.set(0, 0, 0, 1);
+                    bone.disableMorph();
+                }
+            }
+            break;
+
         case PmxObject.Morph.Type.MaterialMorph:
             {
                 const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
@@ -295,9 +310,7 @@ export class MmdMorphController {
         }
     }
 
-    private readonly _tempVector3 = new Vector3();
     private readonly _tempQuaternion = new Quaternion();
-    private readonly _tempQuaternion2 = new Quaternion();
 
     private _applyMorph(morph: RuntimeMorph, weight: number): void {
         switch (morph.type) {
@@ -323,32 +336,25 @@ export class MmdMorphController {
 
                     const bone = bones[index];
 
-                    positions;
-                    rotations;
-                    bone;
-                    this._tempVector3;
-                    this._tempQuaternion;
-                    this._tempQuaternion2;
+                    bone.morphLocalPositionOffset.addInPlaceFromFloats(
+                        positions[i * 3 + 0] * weight,
+                        positions[i * 3 + 1] * weight,
+                        positions[i * 3 + 2] * weight
+                    );
 
-                    // bone.getPositionToRef(Space.LOCAL, null, this._tempVector3);
-                    // bone.setPosition(this._tempVector3.addInPlaceFromFloats(
-                    //     positions[i * 3 + 0] * weight,
-                    //     positions[i * 3 + 1] * weight,
-                    //     positions[i * 3 + 2] * weight
-                    // ), Space.LOCAL);
+                    Quaternion.SlerpToRef(
+                        bone.morphLocalRotationOffset,
+                        this._tempQuaternion.copyFromFloats(
+                            rotations[i * 4 + 0],
+                            rotations[i * 4 + 1],
+                            rotations[i * 4 + 2],
+                            rotations[i * 4 + 3]
+                        ),
+                        weight,
+                        bone.morphLocalRotationOffset
+                    );
 
-                    // bone.getRotationQuaternionToRef(Space.LOCAL, null, this._tempQuaternion);
-                    // bone.setRotationQuaternion(Quaternion.SlerpToRef(
-                    //     this._tempQuaternion,
-                    //     this._tempQuaternion2.copyFromFloats(
-                    //         rotations[i * 4 + 0],
-                    //         rotations[i * 4 + 1],
-                    //         rotations[i * 4 + 2],
-                    //         rotations[i * 4 + 3]
-                    //     ),
-                    //     weight,
-                    //     this._tempQuaternion
-                    // ), Space.LOCAL);
+                    if (weight !== 0) bone.enableMorph();
                 }
             }
             break;
