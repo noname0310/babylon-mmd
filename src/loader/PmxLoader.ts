@@ -524,7 +524,14 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 const bone = bones[i];
 
                 if (boneInfo.parentBoneIndex !== -1 && !looped[i]) {
-                    bone.setParent(bones[boneInfo.parentBoneIndex]);
+                    bone.setParent(bones[boneInfo.parentBoneIndex], false);
+                }
+            }
+
+            for (let i = 0; i < bones.length; ++i) {
+                const bone = bones[i];
+                if (bone.getParent() === null) {
+                    bone._updateDifferenceMatrix();
                 }
             }
         }
