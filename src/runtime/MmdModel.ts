@@ -1,4 +1,4 @@
-import type { Bone, Material } from "@babylonjs/core";
+import type { Bone, Material, Matrix, Nullable, Skeleton } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
@@ -21,6 +21,8 @@ export class MmdModel {
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
         logger: ILogger
     ) {
+        this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
+
         this.mesh = mmdMesh;
 
         const runtimeBones = this._buildRuntimeSkeleton(
@@ -61,6 +63,7 @@ export class MmdModel {
 
     public afterPhysics(): void {
         this._update(true);
+        this.mesh.skeleton._markAsDirty();
     }
 
     private _update(afterPhysicsStage: boolean): void {
@@ -137,5 +140,32 @@ export class MmdModel {
         }
 
         return runtimeBones;
+    }
+
+    private _originalComputeTransformMatrices: ((targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void) | null = null;
+
+    private _disableSkeletonWorldMatrixUpdate(skeleton: Skeleton): void {
+        if (this._originalComputeTransformMatrices != null) return;
+
+        this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
+
+        (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
+            for (let index = 0; index < this.bones.length; index++) {
+                const bone = this.bones[index] as Bone;
+                bone._childUpdateId += 1;
+
+                if (bone._index !== -1) {
+                    const mappedIndex = bone._index === null ? index : bone._index;
+                    bone.getInvertedAbsoluteTransform().multiplyToArray(bone.getWorldMatrix(), targetMatrix, mappedIndex * 16);
+                }
+            }
+
+            this._identity.copyToArray(targetMatrix, this.bones.length * 16);
+        };
+    }
+
+    public enableSkeletonWorldMatrixUpdate(): void {
+        if (this._originalComputeTransformMatrices == null) return;
+        (this.mesh.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
     }
 }

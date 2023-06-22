@@ -47,9 +47,11 @@ export class MmdRuntime implements ILogger {
         return model;
     }
 
-    public destroyMmdModel(mmModel: MmdModel): void {
+    public destroyMmdModel(mmdModel: MmdModel): void {
+        mmdModel.enableSkeletonWorldMatrixUpdate();
+
         const models = this._models;
-        const index = models.indexOf(mmModel);
+        const index = models.indexOf(mmdModel);
         if (index < 0) throw new Error("Model not found.");
 
         models.splice(index, 1);
