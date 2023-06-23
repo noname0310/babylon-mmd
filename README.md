@@ -46,7 +46,7 @@ mmd loader and runtime for Babylon.js
 - [ ] Basic animation load
 - [x] MMD morph system support
 - [x] Solve Append transform
-- [ ] Solve IK
+- [x] Solve IK
 - [ ] Play audio / sync with animation
 - [ ] Basic animation player UI
 
