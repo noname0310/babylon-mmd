@@ -1,4 +1,4 @@
-import type { Material} from "@babylonjs/core";
+import type { Material, Scene} from "@babylonjs/core";
 import { Logger, type Mesh } from "@babylonjs/core";
 
 import type { ILogger } from "./ILogger";
@@ -20,6 +20,11 @@ export class MmdRuntime implements ILogger {
     /** @internal */
     public error: (message: string) => void;
 
+    private _isRegistered: boolean;
+
+    private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
+    private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
+
     public constructor() {
         this._models = [];
 
@@ -27,6 +32,8 @@ export class MmdRuntime implements ILogger {
         this.log = this._logDisabled;
         this.warn = this._warnDisabled;
         this.error = this._errorDisabled;
+
+        this._isRegistered = false;
     }
 
     public createMmdModel(
@@ -57,13 +64,33 @@ export class MmdRuntime implements ILogger {
         models.splice(index, 1);
     }
 
-    public update(): void {
+    public register(scene: Scene): void {
+        if (this._isRegistered) return;
+        this._isRegistered = true;
+
+        scene.onBeforeAnimationsObservable.add(this._beforePhysicsBinded);
+        scene.onBeforeRenderObservable.add(this._afterPhysicsBinded);
+    }
+
+    public unregister(scene: Scene): void {
+        if (!this._isRegistered) return;
+        this._isRegistered = false;
+
+        scene.onBeforeAnimationsObservable.removeCallback(this._beforePhysicsBinded);
+        scene.onBeforeRenderObservable.removeCallback(this._afterPhysicsBinded);
+    }
+
+    public beforePhysics(): void {
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
-            const model = models[i];
-            model.beforePhysics();
-            // todo: physics
-            model.afterPhysics();
+            models[i].beforePhysics();
+        }
+    }
+
+    public afterPhysics(): void {
+        const models = this._models;
+        for (let i = 0; i < models.length; ++i) {
+            models[i].afterPhysics();
         }
     }
 

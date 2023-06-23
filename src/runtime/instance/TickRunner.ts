@@ -26,12 +26,12 @@ export class TickRunner implements ITickRunner {
             mmdRuntime.createMmdModel(mesh);
         }
 
+        mmdRuntime.register(context.scene);
+
         Inspector.Show(context.scene, { });
         // Inspector.Hide();
         context.engine.setHardwareScalingLevel(1);
     }
-    public beforeRender(/* context: IRuntimeContext */): void {
-        this._mmdRuntime.update();
-    }
+    public beforeRender(/* context: IRuntimeContext */): void { /* do nothing */ }
     public afterRender(/* context: IRuntimeContext */): void { /* do nothing */ }
 }
