@@ -147,6 +147,17 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     defaultPipeline.samples = 4;
     defaultPipeline.fxaaEnabled = true;
 
+    // register the model to the MMD runtime for solving morph, append transform, IK.
+    const mmdRuntime = new MmdRuntime();
+    mmdRuntime.createMmdModel(model);
+
+    // register update function to the scene
+    mmdRuntime.register(scene);
+    
+    // or you can update manually
+    // scene.onBeforeAnimationsObservable.add(() => mmdRuntime.beforePhysics());
+    // scene.onBeforeRenderObservable.add(() => mmdRuntime.afterPhysics());
+
     return scene;
 }
 ```
