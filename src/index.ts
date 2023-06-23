@@ -17,6 +17,12 @@ async function engineStartup(): Promise<void> {
         antialias: true
     }, true);
 
+    // const webGPUEngine = new WebGPUEngine(canvas, {
+    //     stencil: true,
+    //     antialias: true
+    // });
+    // await webGPUEngine.initAsync();
+
     const runtime = await new RuntimeBuilder(canvas, engine)
         .withSceneBuilder(new SceneBuilder())
         .withTickRunner(new TickRunner())
