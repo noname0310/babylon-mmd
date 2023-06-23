@@ -28,7 +28,7 @@ mmd loader and runtime for Babylon.js
 - [x] Spherical Deformation support
 - [x] WebGL 1.0 support
 - [x] WebGL 2.0 support
-- [ ] WebGPU support
+- [x] WebGPU support
 
 > MMD runtime parameters
 - [x] Transform order
