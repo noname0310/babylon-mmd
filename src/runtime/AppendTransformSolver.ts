@@ -50,8 +50,8 @@ export class AppendTransformSolver {
                 }
             }
 
-            if (targetBone.ikSolver != null && targetBone.ikSolver.enabled) {
-                appendRotationOffset.multiplyInPlace(targetBone.ikSolver.ikRotation);
+            if (targetBone.ikRotation != null) {
+                appendRotationOffset.multiplyInPlace(targetBone.ikRotation);
             }
 
             Quaternion.SlerpToRef(

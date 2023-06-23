@@ -1,8 +1,9 @@
-import type { Bone, Material, Matrix, Nullable, Skeleton } from "@babylonjs/core";
+import { type Bone, type Material, type Matrix, type Nullable, type Skeleton, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 import { AppendTransformSolver } from "./AppendTransformSolver";
+import { IkSolver } from "./IkSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdMesh } from "./MmdMesh";
@@ -94,7 +95,8 @@ export class MmdModel {
             }
 
             if (bone.ikSolver != null) {
-                // todo: IK
+                bone.ikSolver.solve();
+                bone.updateWorldMatrix();
             }
         }
 
@@ -135,6 +137,31 @@ export class MmdModel {
                         bone,
                         runtimeBones[targetBoneIndex]
                     );
+                }
+            }
+
+            if (boneMetadata.ik !== undefined) {
+                const ikMetadata = boneMetadata.ik;
+                const targetBoneIndex = ikMetadata.target;
+                if (0 <= targetBoneIndex) {
+                    const ikSolver = bone.ikSolver = new IkSolver(
+                        bone,
+                        runtimeBones[targetBoneIndex]
+                    );
+                    ikSolver.iteration = ikMetadata.iteration;
+                    ikSolver.limitAngle = ikMetadata.rotationConstraint;
+                    for (let j = 0; j < ikMetadata.links.length; ++j) {
+                        const link = ikMetadata.links[j];
+                        const linkBoneIndex = link.target;
+                        if (0 <= linkBoneIndex) {
+                            const linkBone = runtimeBones[linkBoneIndex];
+                            ikSolver.addIkChain(
+                                linkBone,
+                                link.limitation?.minimumAngle ? Vector3.FromArray(link.limitation.minimumAngle) : null,
+                                link.limitation?.maximumAngle ? Vector3.FromArray(link.limitation.maximumAngle) : null
+                            );
+                        }
+                    }
                 }
             }
         }

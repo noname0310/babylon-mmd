@@ -23,6 +23,8 @@ export class MmdRuntimeBone {
     public readonly morphPositionOffset: Vector3;
     public readonly morphRotationOffset: Quaternion;
 
+    public ikRotation: Quaternion | null;
+
     public readonly localMatrix: Matrix;
     public readonly worldMatrix: Matrix;
 
@@ -45,6 +47,8 @@ export class MmdRuntimeBone {
 
         this.morphPositionOffset = Vector3.Zero();
         this.morphRotationOffset = Quaternion.Identity();
+
+        this.ikRotation = null;
 
         this.localMatrix = Matrix.Identity();
         this.worldMatrix = babylonBone.getWorldMatrix();
@@ -91,8 +95,8 @@ export class MmdRuntimeBone {
         this.babylonBone.getScaleToRef(MmdRuntimeBone._TempScale);
 
         const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
-        if (this.ikSolver !== null) {
-            this.ikSolver.ikRotation.multiplyToRef(rotation, rotation);
+        if (this.ikRotation !== null) {
+            this.ikRotation.multiplyToRef(rotation, rotation);
         }
 
         const position = this.getAnimatedPositionToRef(MmdRuntimeBone._TempPosition);
