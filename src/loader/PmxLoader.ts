@@ -687,7 +687,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         if (assetContainer !== null) {
             assetContainer.meshes.push(mesh);
             assetContainer.geometries.push(geometry);
-            assetContainer.materials.push(multiMaterial);
+            assetContainer.multiMaterials.push(multiMaterial);
             assetContainer.skeletons.push(skeleton);
             assetContainer.morphTargetManagers.push(morphTargetManager);
         }
