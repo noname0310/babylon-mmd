@@ -117,24 +117,30 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
     directionalLight.intensity = 0.8;
+    directionalLight.autoCalcShadowZBounds = false;
+    directionalLight.autoUpdateExtends = false;
+    directionalLight.shadowMaxZ = 20;
+    directionalLight.shadowMinZ = -15;
+    directionalLight.orthoTop = 19;
+    directionalLight.orthoBottom = -1;
+    directionalLight.orthoLeft = -9;
+    directionalLight.orthoRight = 9;
+    directionalLight.shadowOrthoScale = 0;
 
-    const csmShadowGenerator = new CascadedShadowGenerator(1024, directionalLight);
-    csmShadowGenerator.forceBackFacesOnly = true;
-    csmShadowGenerator.numCascades = 3;
-    csmShadowGenerator.autoCalcDepthBounds = true;
-    csmShadowGenerator.lambda = 1;
-    csmShadowGenerator.depthClamp = true;
-    csmShadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
-    csmShadowGenerator.normalBias = 0.02;
+    const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
+    shadowGenerator.usePercentageCloserFiltering = true;
+    shadowGenerator.forceBackFacesOnly = true;
+    shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
+    shadowGenerator.frustumEdgeFalloff = 0.1;
 
     const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene)
         .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
     model.receiveShadows = true;
-    csmShadowGenerator.addShadowCaster(model);
+    shadowGenerator.addShadowCaster(model);
 
     const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     ground.receiveShadows = true;
-    csmShadowGenerator.addShadowCaster(ground);
+    shadowGenerator.addShadowCaster(ground);
 
     // for anti-aliasing
     const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
