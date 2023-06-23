@@ -10,7 +10,7 @@ import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev
 export default (env: any): webpack.Configuration & { devServer?: WebpackDevServerConfiguration } => ({
     entry: "./src/index.ts",
     output: {
-        path: path.join(__dirname, "/dist"),
+        path: path.join(__dirname, "/test_dist"),
         filename: "[name].bundle.js",
         clean: true
     },

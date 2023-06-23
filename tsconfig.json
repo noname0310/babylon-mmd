@@ -24,6 +24,9 @@
             ]
         }
     },
+    "exclude": [
+        "dist"
+    ],
     "ts-node": {
         "compilerOptions": {
             "module": "commonjs"

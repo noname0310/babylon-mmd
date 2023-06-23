@@ -18,6 +18,9 @@
         "@typescript-eslint",
         "simple-import-sort"
     ],
+    "ignorePatterns": [
+        "dist"
+    ],
     "rules": {
         "@typescript-eslint/consistent-type-imports": [
             "error",
