@@ -1,14 +1,14 @@
 /**
  * BabylonPMX(BPMX) representation
- * 
+ *
  * signature: uint8[4] "BPMX"
  * version: int8[3] - major, minor, patch
- * 
+ *
  * modelName: uint32, uint8[] - length, string
  * englishModelName: uint32, uint8[] - length, string
  * comment: uint32, uint8[] - length, string
  * englishComment: uint32, uint8[] - length, string
- * 
+ *
  * vertexCount: uint32
  * positions: float32[vertexCount * 3]
  * normals: float32[vertexCount * 3]
@@ -21,11 +21,11 @@
  * sdefC: float32[vertexCount * 3]
  * sdefR0: float32[vertexCount * 3]
  * sdefR1: float32[vertexCount * 3]
- * 
+ *
  * textureCount: uint32
  * textureLookupTable: uint32[textureCount] - data offset in the file
  * textures: uint8[texturesCount][] - arraybuffers
- * 
+ *
  * materialCount: uint32
  * {
  *  materialName: uint32, uint8[] - length, string
@@ -46,7 +46,7 @@
  *  comment: uint32, uint8[] - length, string
  *  surfaceCount: uint32
  * }[materialCount]
- * 
+ *
  * boneCount: uint32
  * {
  *  boneName: uint32, uint8[] - length, string
@@ -77,16 +77,16 @@
  *   }[linkCount]
  *  }
  * }
- * 
+ *
  * morphCount: uint32
  * {
  *  morphName: uint32, uint8[] - length, string
  *  englishMorphName: uint32, uint8[] - length, string
  *  category: uint8
  *  type: uint8
- *  
+ *
  *  elementCount: uint32
- * 
+ *
  *  { // if type is material
  *   index: int32
  *   type: uint8
@@ -100,29 +100,29 @@
  *   sphereTextureColor: float32[4]
  *   toonTextureColor: float32[4]
  *  }[elementCount]
- * 
+ *
  *  { // if type is group
  *   indices: int32[elementCount]
  *   ratios: float32[elementCount]
  *  }
- * 
+ *
  *  { // if type is bone
  *   indices: int32[elementCount]
  *   positions: float32[elementCount * 3]
  *   rotations: float32[elementCount * 4]
  *  }
- * 
+ *
  *  { // if type is uv
  *   indices: int32[elementCount]
  *   uvs: float32[elementCount * 4]
  *  }
- * 
+ *
  *  { // if type is vertex
  *   indices: int32[elementCount]
  *   positions: float32[elementCount * 3]
  *  }
  * }
- * 
+ *
  * displayFrameCount: uint32
  * {
  *  name: uint32, uint8[] - length, string
@@ -134,7 +134,7 @@
  *   frameIndex: int32
  *  }[elementCount]
  * }
- * 
+ *
  * rigidBodyCount: uint32
  * {
  *  name: uint32, uint8[] - length, string
@@ -153,7 +153,7 @@
  *  friction: float32
  *  physicsMode: uint8
  * }
- * 
+ *
  * jointCount: uint32
  * {
  *  name: uint32, uint8[] - length, string
