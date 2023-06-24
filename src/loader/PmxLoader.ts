@@ -463,7 +463,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 const boneInfo = bonesInfo[i];
 
                 let isLooped = false;
-                if (boneInfo.parentBoneIndex !== -1) {
+                if (0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bonesInfo.length) {
                     let parentBoneIndex = boneInfo.parentBoneIndex;
                     while (parentBoneIndex !== -1) {
                         if (parentBoneIndex === i) {
@@ -477,12 +477,16 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     if (i <= boneInfo.parentBoneIndex) {
                         this.warn(`Parent bone index is greater equal than child bone index. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
                     }
+                } else {
+                    if (boneInfo.parentBoneIndex !== -1) {
+                        this.error(`Parent bone index is out of range. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
+                    }
                 }
 
                 const boneWorldPosition = boneInfo.position;
 
                 const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
-                if (boneInfo.parentBoneIndex !== -1 && !isLooped) {
+                if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bones.length) && !isLooped) {
                     const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
                     bonePosition.x -= parentBoneInfo.position[0];
                     bonePosition.y -= parentBoneInfo.position[1];
@@ -523,7 +527,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 const boneInfo = bonesInfo[i];
                 const bone = bones[i];
 
-                if (boneInfo.parentBoneIndex !== -1 && !looped[i]) {
+                if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bones.length) && !looped[i]) {
                     bone.setParent(bones[boneInfo.parentBoneIndex], false);
                 }
             }

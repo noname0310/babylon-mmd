@@ -28,7 +28,8 @@ export class MmdModel {
 
         const runtimeBones = this._buildRuntimeSkeleton(
             mmdMesh.skeleton.bones,
-            mmdMesh.metadata.bones
+            mmdMesh.metadata.bones,
+            logger
         );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
@@ -110,7 +111,8 @@ export class MmdModel {
 
     private _buildRuntimeSkeleton(
         bones: Bone[],
-        bonesMetadata: readonly MmdModelMetadata.Bone[]
+        bonesMetadata: readonly MmdModelMetadata.Bone[],
+        logger: ILogger
     ): readonly MmdRuntimeBone[] {
         const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
@@ -123,7 +125,7 @@ export class MmdModel {
             const bone = runtimeBones[i];
 
             const parentBoneIndex = boneMetadata.parentBoneIndex;
-            if (0 <= parentBoneIndex) {
+            if (0 <= parentBoneIndex && parentBoneIndex < runtimeBones.length) {
                 const parentBone = runtimeBones[parentBoneIndex];
                 bone.parentBone = parentBone;
                 parentBone.childrenBones.push(bone);
@@ -131,19 +133,21 @@ export class MmdModel {
 
             if (boneMetadata.appendTransform !== undefined) {
                 const targetBoneIndex = boneMetadata.appendTransform.parentIndex;
-                if (0 <= targetBoneIndex) {
+                if (0 <= targetBoneIndex && targetBoneIndex < runtimeBones.length) {
                     bone.appendTransformSolver = new AppendTransformSolver(
                         boneMetadata.appendTransform,
                         bone,
                         runtimeBones[targetBoneIndex]
                     );
+                } else {
+                    logger.error(`Invalid append transform target bone index: ${targetBoneIndex}`);
                 }
             }
 
             if (boneMetadata.ik !== undefined) {
                 const ikMetadata = boneMetadata.ik;
                 const targetBoneIndex = ikMetadata.target;
-                if (0 <= targetBoneIndex) {
+                if (0 <= targetBoneIndex && targetBoneIndex < runtimeBones.length) {
                     const ikSolver = bone.ikSolver = new IkSolver(
                         bone,
                         runtimeBones[targetBoneIndex]
@@ -162,6 +166,8 @@ export class MmdModel {
                             );
                         }
                     }
+                } else {
+                    logger.error(`Invalid IK target bone index: ${targetBoneIndex}`);
                 }
             }
         }
