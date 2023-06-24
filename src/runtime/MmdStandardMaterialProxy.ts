@@ -70,7 +70,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     }
 
     public reset(): void {
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 4; ++i) {
             this.diffuse[i] = this._initialDiffuse[i];
             this.edgeColor[i] = this._initialEdgeColor[i];
 
@@ -79,7 +79,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
             this.toonTextureColor[i] = this._initialToonTextureColor[i];
         }
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; ++i) {
             this.specular[i] = this._initialSpecular[i];
             this.ambient[i] = this._initialAmbient[i];
         }

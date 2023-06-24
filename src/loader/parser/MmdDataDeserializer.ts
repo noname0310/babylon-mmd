@@ -70,7 +70,7 @@ export class MmdDataDeserializer {
 
     public getFloat32Array<N extends number>(length: N): Tuple<number, N> {
         const result = [];
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; ++i) {
             result.push(this.getFloat32());
         }
         return result as Tuple<number, N>;
@@ -89,7 +89,7 @@ export class MmdDataDeserializer {
         this._offset += length;
 
         if (trim) {
-            for (let i = 0; i < bytes.length; i++) {
+            for (let i = 0; i < bytes.length; ++i) {
                 if (bytes[i] === 0) {
                     bytes = bytes.subarray(0, i);
                     break;

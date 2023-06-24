@@ -114,7 +114,7 @@ export class VmdData {
 
         if (dataDeserializer.bytesAvailable < 4) return null;
         const propertyKeyFrameCount = dataDeserializer.getUint32();
-        for (let i = 0; i < propertyKeyFrameCount; i++) {
+        for (let i = 0; i < propertyKeyFrameCount; ++i) {
             if (dataDeserializer.bytesAvailable < VmdData.PropertyKeyFrameBytes) return null;
             dataDeserializer.offset += VmdData.PropertyKeyFrameBytes;
 
@@ -169,7 +169,7 @@ export class VmdObject {
             4;
 
         const propertyKeyFrameCount = vmdData.propertyKeyFrameCount;
-        for (let i = 0; i < propertyKeyFrameCount; i++) {
+        for (let i = 0; i < propertyKeyFrameCount; ++i) {
             const frameNumber = dataDeserializer.getUint32();
             const visable = dataDeserializer.getUint8() !== 0;
 
@@ -341,7 +341,7 @@ export namespace VmdObject {
             this.rotation = dataDeserializer.getFloat32Array(4);
 
             this.interpolation = new Int8Array(64);
-            for (let i = 0; i < 64; i++) {
+            for (let i = 0; i < 64; ++i) {
                 this.interpolation[i] = dataDeserializer.getInt8();
             }
         }
@@ -409,7 +409,7 @@ export namespace VmdObject {
             this.rotation = dataDeserializer.getFloat32Array(3);
 
             this.interpolation = new Int8Array(24);
-            for (let i = 0; i < 24; i++) {
+            for (let i = 0; i < 24; ++i) {
                 this.interpolation[i] = dataDeserializer.getInt8();
             }
 
