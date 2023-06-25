@@ -89,6 +89,8 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
+        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+
         // SceneLoader.LoadAssetContainer(
         //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
         //     undefined,
@@ -141,8 +143,6 @@ export class SceneBuilder implements ISceneBuilder {
         await Promise.all(promises);
 
         setTimeout(() => engine.hideLoadingUI(), 0);
-
-        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
 
         scene.meshes.forEach((mesh) => {
             mesh.receiveShadows = true;
