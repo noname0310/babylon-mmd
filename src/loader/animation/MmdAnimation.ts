@@ -1,7 +1,7 @@
 import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "./MmdAnimationTrack";
 
 export class MmdModelAnimation {
-    public readonly animationName: string;
+    public readonly name: string;
 
     public readonly boneTracks: readonly MmdBoneAnimationTrack[];
     public readonly morphTracks: readonly MmdMorphAnimationTrack[];
@@ -11,12 +11,12 @@ export class MmdModelAnimation {
     public readonly endFrame: number;
 
     public constructor(
-        animationName: string,
+        name: string,
         boneTracks: readonly MmdBoneAnimationTrack[],
         morphTracks: readonly MmdMorphAnimationTrack[],
         propertyTrack: MmdPropertyAnimationTrack
     ) {
-        this.animationName = animationName;
+        this.name = name;
 
         this.boneTracks = boneTracks;
         this.morphTracks = morphTracks;

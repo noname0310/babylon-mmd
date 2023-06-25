@@ -1,7 +1,9 @@
 import { type Bone, type Material, type Matrix, type Nullable, type Skeleton, Vector3 } from "@babylonjs/core";
 
+import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
+import { MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
 import { AppendTransformSolver } from "./AppendTransformSolver";
 import { IkSolver } from "./IkSolver";
 import type { ILogger } from "./ILogger";
@@ -14,14 +16,21 @@ export class MmdModel {
     public readonly mesh: MmdMesh;
     public readonly morph: MmdMorphController;
 
+    private readonly _logger: ILogger;
+
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
+
+    private readonly _animations: MmdRuntimeModelAnimation[] = [];
+    private readonly _animationIndexMap: Map<string, number> = new Map();
 
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
         logger: ILogger
     ) {
+        this._logger = logger;
+
         this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
 
         this.mesh = mmdMesh;
@@ -53,6 +62,21 @@ export class MmdModel {
             mmdMesh.metadata.morphs,
             logger
         );
+    }
+
+    public addAnimation(animation: MmdModelAnimation): void {
+        const runtimeAnimation = MmdRuntimeModelAnimation.Create(animation, this, this._logger);
+        this._animationIndexMap.set(animation.name, this._animations.length);
+        this._animations.push(runtimeAnimation);
+    }
+
+    public removeAnimation(index: number): void {
+        this._animationIndexMap.delete(this._animations[index].animation.name);
+        this._animations.splice(index, 1);
+    }
+
+    public get animations(): readonly MmdRuntimeModelAnimation[] {
+        return this._animations;
     }
 
     public beforePhysics(): void {

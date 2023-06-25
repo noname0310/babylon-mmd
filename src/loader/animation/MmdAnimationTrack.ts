@@ -1,7 +1,7 @@
 export abstract class MmdAnimationTrack {
     public readonly trackType: string;
 
-    public readonly trackName: string;
+    public readonly name: string;
     public readonly frameNumbers: Uint32Array; // [..., frameNumber, ...]
 
     public constructor(
@@ -11,7 +11,7 @@ export abstract class MmdAnimationTrack {
     ) {
         this.trackType = trackType;
 
-        this.trackName = trackName;
+        this.name = trackName;
         this.frameNumbers = new Uint32Array(frameCount);
     }
 

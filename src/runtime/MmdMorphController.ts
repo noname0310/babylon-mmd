@@ -97,6 +97,26 @@ export class MmdMorphController {
         return this._morphWeights[morphIndices[0]];
     }
 
+    public getMorphIndices(morphName: string): readonly number[] | undefined {
+        const morphIndexMap = this._morphIndexMap;
+        const morphIndices = morphIndexMap.get(morphName);
+        if (morphIndices === undefined) return undefined;
+
+        return morphIndices;
+    }
+
+    public setMorphWeightFromIndex(morphIndex: number, weight: number): void {
+        this._morphWeights[morphIndex] = weight;
+
+        if (weight !== 0) {
+            this._activeMorphs.add(this._morphs[morphIndex].name);
+        }
+    }
+
+    public getMorphWeightFromIndex(morphIndex: number): number {
+        return this._morphWeights[morphIndex];
+    }
+
     public resetMorphWeights(): void {
         this._morphWeights.fill(0);
     }

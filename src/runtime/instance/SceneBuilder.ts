@@ -25,6 +25,7 @@ import {
 import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
+import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
@@ -122,13 +123,14 @@ export class SceneBuilder implements ISceneBuilder {
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
 
+        let modelAnimation: MmdModelAnimation;
         promises.push(vmdLoader.loadAsync("melancholy_night_model", [
             "res/private_test/motion/melancholy_night/motion.vmd",
             "res/private_test/motion/melancholy_night/facial.vmd",
             "res/private_test/motion/melancholy_night/lip.vmd"
         ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
             .then((animation) => {
-                console.log(animation);
+                modelAnimation = animation as MmdModelAnimation;
             })
         );
 
@@ -163,7 +165,8 @@ export class SceneBuilder implements ISceneBuilder {
             if (!(mesh instanceof Mesh)) continue;
             if (!mesh.metadata || !mesh.metadata.isMmdModel) continue;
 
-            mmdRuntime.createMmdModel(mesh);
+            const mmdModel = mmdRuntime.createMmdModel(mesh);
+            mmdModel.addAnimation(modelAnimation!);
         }
 
         mmdRuntime.register(scene);
