@@ -1,6 +1,6 @@
 // loader/animation
 export { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
-export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdCameraAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
+export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
 // loader/parser
 export { ConsoleLogger, ILogger } from "@/loader/parser/ILogger";

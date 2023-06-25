@@ -1,5 +1,5 @@
-import type { Material, Scene} from "@babylonjs/core";
-import { Logger, type Mesh } from "@babylonjs/core";
+import type { Material, Mesh, Scene } from "@babylonjs/core";
+import { Logger } from "@babylonjs/core";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
