@@ -5,6 +5,7 @@ import {
     Constants,
     DefaultRenderingPipeline,
     DirectionalLight,
+    HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
     Matrix,
@@ -21,6 +22,7 @@ import {
     Vector3,
     VertexData
 } from "@babylonjs/core";
+import HavokPhysics from "@babylonjs/havok";
 
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -116,6 +118,12 @@ export class SceneBuilder implements ISceneBuilder {
                 console.log(animation);
             })
         );
+
+        promises.push((async(): Promise<void> => {
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+        })());
 
         await Promise.all(promises);
 
