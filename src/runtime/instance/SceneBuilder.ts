@@ -24,6 +24,7 @@ import {
 
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
+import { VmdLoader } from "@/loader/VmdLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
 
@@ -100,6 +101,13 @@ export class SceneBuilder implements ISceneBuilder {
             scene,
             (event) => engine.loadingUIText = `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
         );
+
+        const vmdLoader = new VmdLoader(scene);
+
+        vmdLoader.loadAsync("flos_model", "res/private_test/motion/melancholy_night/motion.vmd")
+            .then((animation) => {
+                console.log(animation);
+            });
 
         MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
 

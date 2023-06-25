@@ -1,8 +1,8 @@
 export abstract class MmdAnimationTrack {
-    readonly trackType: string;
+    public readonly trackType: string;
 
-    readonly trackName: string;
-    readonly frameNumbers: Uint32Array; // [..., frameNumber, ...]
+    public readonly trackName: string;
+    public readonly frameNumbers: Uint32Array; // [..., frameNumber, ...]
 
     public constructor(
         trackType: string,
@@ -14,20 +14,22 @@ export abstract class MmdAnimationTrack {
         this.trackName = trackName;
         this.frameNumbers = new Uint32Array(frameCount);
     }
-    
+
     public validate(): boolean {
         for (let i = 1; i < this.frameNumbers.length; ++i) {
             if (this.frameNumbers[i - 1] >= this.frameNumbers[i]) return false;
         }
-        
+
         return true;
     }
 
     public get startFrame(): number {
+        if (this.frameNumbers.length === 0) return 0;
         return this.frameNumbers[0];
     }
 
     public get endFrame(): number {
+        if (this.frameNumbers.length === 0) return 0;
         return this.frameNumbers[this.frameNumbers.length - 1];
     }
 }
@@ -35,7 +37,7 @@ export abstract class MmdAnimationTrack {
 export class MmdBoneAnimationTrack extends MmdAnimationTrack {
     public readonly positions: Float32Array; // [..., x, y, z, ...]
     public readonly positionInterpolations: Uint8Array; // [..., x_x1, x_x2, x_y1, x_y2, y_x1, y_x2, y_y1, y_y2, z_x1, z_x2, z_y1, z_y2, ...]
-    
+
     public readonly rotations: Float32Array; // [..., x, y, z, w, ...]
     public readonly rotationInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
 
@@ -69,7 +71,7 @@ export class MmdMorphAnimationTrack extends MmdAnimationTrack {
 export class MmdCameraAnimationTrack extends MmdAnimationTrack {
     public readonly positions: Float32Array; // [..., x, y, z, ...]
     public readonly positionInterpolations: Uint8Array; // [..., x_x1, x_x2, x_y1, x_y2, y_x1, y_x2, y_y1, y_y2, z_x1, z_x2, z_y1, z_y2, ...]
-    
+
     public readonly rotations: Float32Array; // [..., x, y, z, ...]
     public readonly rotationInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
 
@@ -84,16 +86,16 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
         frameCount: number
     ) {
         super("camera", trackName, frameCount);
-        
+
         this.positions = new Float32Array(frameCount * 3);
         this.positionInterpolations = new Uint8Array(frameCount * 12);
-        
+
         this.rotations = new Float32Array(frameCount * 3);
         this.rotationInterpolations = new Uint8Array(frameCount * 4);
 
         this.distances = new Float32Array(frameCount);
         this.distancesInterpolations = new Uint8Array(frameCount * 4);
-        
+
         this.fovs = new Float32Array(frameCount);
         this.fovInterpolations = new Uint8Array(frameCount * 4);
     }

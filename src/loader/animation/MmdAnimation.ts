@@ -1,24 +1,29 @@
-import { MmdBoneAnimationTrack, MmdMorphAnimationTrack } from "./MmdAnimationTrack";
+import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "./MmdAnimationTrack";
 
 export class MmdModelAnimation {
-    public readonly startFrame: number;
-    public readonly endFrame: number;
+    public readonly animationName: string;
 
     public readonly boneTracks: readonly MmdBoneAnimationTrack[];
     public readonly morphTracks: readonly MmdMorphAnimationTrack[];
-    public readonly propertyTrack: MmdMorphAnimationTrack;
+    public readonly propertyTrack: MmdPropertyAnimationTrack;
+
+    public readonly startFrame: number;
+    public readonly endFrame: number;
 
     public constructor(
+        animationName: string,
         boneTracks: readonly MmdBoneAnimationTrack[],
         morphTracks: readonly MmdMorphAnimationTrack[],
-        propertyTrack: MmdMorphAnimationTrack
+        propertyTrack: MmdPropertyAnimationTrack
     ) {
+        this.animationName = animationName;
+
         this.boneTracks = boneTracks;
         this.morphTracks = morphTracks;
         this.propertyTrack = propertyTrack;
 
-        let minStartFrame = Infinity;
-        let maxEndFrame = -Infinity;
+        let minStartFrame = Number.MAX_SAFE_INTEGER;
+        let maxEndFrame = Number.MIN_SAFE_INTEGER;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
             minStartFrame = Math.min(minStartFrame, boneTrack.startFrame);
