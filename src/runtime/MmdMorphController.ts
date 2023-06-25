@@ -2,6 +2,7 @@ import type { Material } from "@babylonjs/core";
 import { type MorphTargetManager, Quaternion } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
 import { PmxObject } from "@/loader/parser/PmxObject";
 
 import type { ILogger } from "./ILogger";
@@ -9,11 +10,25 @@ import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMate
 import type { MmdMultiMaterial } from "./MmdMesh";
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
+interface RuntimeMaterialMorphElement {
+    index: number; // material index
+    type: PmxObject.Morph.MaterialMorph.Type;
+    diffuse: Vec4 | null;
+    specular: Vec3 | null;
+    shininess: number | null;
+    ambient: Vec3 | null;
+    edgeColor: Vec4 | null;
+    edgeSize: number | null;
+    textureColor: Vec4 | null;
+    sphereTextureColor: Vec4 | null;
+    toonTextureColor: Vec4 | null;
+}
+
 interface RuntimeMorph {
     name: string;
     type: PmxObject.Morph.Type;
     readonly elements: Int32Array // group morph / bone morph indices
-        | readonly PmxObject.Morph.MaterialMorph[]
+        | readonly RuntimeMaterialMorphElement[]
         | number; // MorphTargetManager morph target index
 
     readonly elements2: Float32Array | undefined; // group morph ratios / bone morph positions [..., x, y, z, ...]
@@ -210,7 +225,46 @@ export class MmdMorphController {
                 break;
 
             case PmxObject.Morph.Type.MaterialMorph:
-                runtimeMorphElements = morphMetadata.elements as readonly PmxObject.Morph.MaterialMorph[];
+                {
+                    const elements = morphMetadata.elements as readonly PmxObject.Morph.MaterialMorph[];
+                    const morphElements = new Array<RuntimeMaterialMorphElement>(elements.length);
+
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+
+                        if (element.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
+                            morphElements[j] = <RuntimeMaterialMorphElement>{
+                                index: element.index,
+                                type: element.type,
+                                diffuse: element.diffuse[0] !== 1 || element.diffuse[1] !== 1 || element.diffuse[2] !== 1 || element.diffuse[3] !== 1 ? element.diffuse : null,
+                                specular: element.specular[0] !== 1 || element.specular[1] !== 1 || element.specular[2] !== 1 ? element.specular : null,
+                                shininess: element.shininess !== 1 ? element.shininess : null,
+                                ambient: element.ambient[0] !== 1 || element.ambient[1] !== 1 || element.ambient[2] !== 1 ? element.ambient : null,
+                                edgeColor: element.edgeColor[0] !== 1 || element.edgeColor[1] !== 1 || element.edgeColor[2] !== 1 || element.edgeColor[3] !== 1 ? element.edgeColor : null,
+                                edgeSize: element.edgeSize !== 1 ? element.edgeSize : null,
+                                textureColor: element.textureColor[0] !== 1 || element.textureColor[1] !== 1 || element.textureColor[2] !== 1 || element.textureColor[3] !== 1 ? element.textureColor : null,
+                                sphereTextureColor: element.sphereTextureColor[0] !== 1 || element.sphereTextureColor[1] !== 1 || element.sphereTextureColor[2] !== 1 || element.sphereTextureColor[3] !== 1 ? element.sphereTextureColor : null,
+                                toonTextureColor: element.toonTextureColor[0] !== 1 || element.toonTextureColor[1] !== 1 || element.toonTextureColor[2] !== 1 || element.toonTextureColor[3] !== 1 ? element.toonTextureColor : null
+                            };
+                        } else /* if (element.type === PmxObject.Morph.MaterialMorph.Type.Add) */ {
+                            morphElements[j] = <RuntimeMaterialMorphElement>{
+                                index: element.index,
+                                type: element.type,
+                                diffuse: element.diffuse[0] !== 0 || element.diffuse[1] !== 0 || element.diffuse[2] !== 0 || element.diffuse[3] !== 0 ? element.diffuse : null,
+                                specular: element.specular[0] !== 0 || element.specular[1] !== 0 || element.specular[2] !== 0 ? element.specular : null,
+                                shininess: element.shininess !== 0 ? element.shininess : null,
+                                ambient: element.ambient[0] !== 0 || element.ambient[1] !== 0 || element.ambient[2] !== 0 ? element.ambient : null,
+                                edgeColor: element.edgeColor[0] !== 0 || element.edgeColor[1] !== 0 || element.edgeColor[2] !== 0 || element.edgeColor[3] !== 0 ? element.edgeColor : null,
+                                edgeSize: element.edgeSize !== 0 ? element.edgeSize : null,
+                                textureColor: element.textureColor[0] !== 0 || element.textureColor[1] !== 0 || element.textureColor[2] !== 0 || element.textureColor[3] !== 0 ? element.textureColor : null,
+                                sphereTextureColor: element.sphereTextureColor[0] !== 0 || element.sphereTextureColor[1] !== 0 || element.sphereTextureColor[2] !== 0 || element.sphereTextureColor[3] !== 0 ? element.sphereTextureColor : null,
+                                toonTextureColor: element.toonTextureColor[0] !== 0 || element.toonTextureColor[1] !== 0 || element.toonTextureColor[2] !== 0 || element.toonTextureColor[3] !== 0 ? element.toonTextureColor : null
+                            };
+                        }
+                    }
+
+                    runtimeMorphElements = morphElements;
+                }
                 break;
 
             case PmxObject.Morph.Type.UvMorph:
@@ -315,7 +369,7 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
+                const elements = morph.elements as readonly RuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     if (element.index === -1) { // -1 means "all materials"
@@ -389,7 +443,7 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
+                const elements = morph.elements as readonly RuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     const materials = this._materials;
@@ -413,87 +467,123 @@ export class MmdMorphController {
     }
 
     private _applyMaterialMorph(
-        materialMorph: PmxObject.Morph.MaterialMorph,
+        materialMorph: RuntimeMaterialMorphElement,
         material: IMmdMaterialProxy,
         weight: number
     ): void {
         if (materialMorph.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
-            const diffuse = material.diffuse;
-            for (let i = 0; i < 4; ++i) {
-                diffuse[i] = diffuse[i] + (diffuse[i] * materialMorph.diffuse[i] - diffuse[i]) * weight;
+            if (materialMorph.diffuse !== null) {
+                const diffuse = material.diffuse;
+                for (let i = 0; i < 4; ++i) {
+                    diffuse[i] = diffuse[i] + (diffuse[i] * materialMorph.diffuse[i] - diffuse[i]) * weight;
+                }
             }
 
-            const specular = material.specular;
-            for (let i = 0; i < 3; ++i) {
-                specular[i] = specular[i] + (specular[i] * materialMorph.specular[i] - specular[i]) * weight;
+            if (materialMorph.specular !== null) {
+                const specular = material.specular;
+                for (let i = 0; i < 3; ++i) {
+                    specular[i] = specular[i] + (specular[i] * materialMorph.specular[i] - specular[i]) * weight;
+                }
             }
 
-            material.shininess = material.shininess + (material.shininess * materialMorph.shininess - material.shininess) * weight;
-
-            const ambient = material.ambient;
-            for (let i = 0; i < 3; ++i) {
-                ambient[i] = ambient[i] + (ambient[i] * materialMorph.ambient[i] - ambient[i]) * weight;
+            if (materialMorph.shininess !== null) {
+                material.shininess = material.shininess + (material.shininess * materialMorph.shininess - material.shininess) * weight;
             }
 
-            const edgeColor = material.edgeColor;
-            for (let i = 0; i < 4; ++i) {
-                edgeColor[i] = edgeColor[i] + (edgeColor[i] * materialMorph.edgeColor[i] - edgeColor[i]) * weight;
+            if (materialMorph.ambient !== null) {
+                const ambient = material.ambient;
+                for (let i = 0; i < 3; ++i) {
+                    ambient[i] = ambient[i] + (ambient[i] * materialMorph.ambient[i] - ambient[i]) * weight;
+                }
             }
 
-            material.edgeSize = material.edgeSize + (material.edgeSize * materialMorph.edgeSize - material.edgeSize) * weight;
-
-            const textureColor = material.textureColor;
-            for (let i = 0; i < 4; ++i) {
-                textureColor[i] = textureColor[i] + (textureColor[i] * materialMorph.textureColor[i] - textureColor[i]) * weight;
+            if (materialMorph.edgeColor !== null) {
+                const edgeColor = material.edgeColor;
+                for (let i = 0; i < 4; ++i) {
+                    edgeColor[i] = edgeColor[i] + (edgeColor[i] * materialMorph.edgeColor[i] - edgeColor[i]) * weight;
+                }
             }
 
-            const sphereTextureColor = material.sphereTextureColor;
-            for (let i = 0; i < 4; ++i) {
-                sphereTextureColor[i] = sphereTextureColor[i] + (sphereTextureColor[i] * materialMorph.sphereTextureColor[i] - sphereTextureColor[i]) * weight;
+            if (materialMorph.edgeSize !== null) {
+                material.edgeSize = material.edgeSize + (material.edgeSize * materialMorph.edgeSize - material.edgeSize) * weight;
             }
 
-            const toonTextureColor = material.toonTextureColor;
-            for (let i = 0; i < 4; ++i) {
-                toonTextureColor[i] = toonTextureColor[i] + (toonTextureColor[i] * materialMorph.toonTextureColor[i] - toonTextureColor[i]) * weight;
-            }
-        } else /* if (materialMorph.type === PmxObject.Morph.MaterialMorph.Type.add) */ {
-            const diffuse = material.diffuse;
-            for (let i = 0; i < 4; ++i) {
-                diffuse[i] += materialMorph.diffuse[i] * weight;
+            if (materialMorph.textureColor !== null) {
+                const textureColor = material.textureColor;
+                for (let i = 0; i < 4; ++i) {
+                    textureColor[i] = textureColor[i] + (textureColor[i] * materialMorph.textureColor[i] - textureColor[i]) * weight;
+                }
             }
 
-            const specular = material.specular;
-            for (let i = 0; i < 3; ++i) {
-                specular[i] += materialMorph.specular[i] * weight;
+            if (materialMorph.sphereTextureColor !== null) {
+                const sphereTextureColor = material.sphereTextureColor;
+                for (let i = 0; i < 4; ++i) {
+                    sphereTextureColor[i] = sphereTextureColor[i] + (sphereTextureColor[i] * materialMorph.sphereTextureColor[i] - sphereTextureColor[i]) * weight;
+                }
             }
 
-            material.shininess += materialMorph.shininess * weight;
-
-            const ambient = material.ambient;
-            for (let i = 0; i < 3; ++i) {
-                ambient[i] += materialMorph.ambient[i] * weight;
+            if (materialMorph.toonTextureColor !== null) {
+                const toonTextureColor = material.toonTextureColor;
+                for (let i = 0; i < 4; ++i) {
+                    toonTextureColor[i] = toonTextureColor[i] + (toonTextureColor[i] * materialMorph.toonTextureColor[i] - toonTextureColor[i]) * weight;
+                }
+            }
+        } else /* if (materialMorph.type === PmxObject.Morph.MaterialMorph.Type.Add) */ {
+            if (materialMorph.diffuse !== null) {
+                const diffuse = material.diffuse;
+                for (let i = 0; i < 4; ++i) {
+                    diffuse[i] += materialMorph.diffuse[i] * weight;
+                }
             }
 
-            const edgeColor = material.edgeColor;
-            for (let i = 0; i < 4; ++i) {
-                edgeColor[i] += materialMorph.edgeColor[i] * weight;
+            if (materialMorph.specular !== null) {
+                const specular = material.specular;
+                for (let i = 0; i < 3; ++i) {
+                    specular[i] += materialMorph.specular[i] * weight;
+                }
             }
 
-            material.edgeSize += materialMorph.edgeSize * weight;
-
-            const textureColor = material.textureColor;
-            for (let i = 0; i < 4; ++i) {
-                textureColor[i] += materialMorph.textureColor[i] * weight;
+            if (materialMorph.shininess !== null) {
+                material.shininess += materialMorph.shininess * weight;
             }
 
-            const sphereTextureColor = material.sphereTextureColor;
-            for (let i = 0; i < 4; ++i) {
-                sphereTextureColor[i] += materialMorph.sphereTextureColor[i] * weight;
+            if (materialMorph.ambient !== null) {
+                const ambient = material.ambient;
+                for (let i = 0; i < 3; ++i) {
+                    ambient[i] += materialMorph.ambient[i] * weight;
+                }
             }
 
-            const toonTextureColor = material.toonTextureColor;
-            for (let i = 0; i < 4; ++i) {
-                toonTextureColor[i] += materialMorph.toonTextureColor[i] * weight;
+            if (materialMorph.edgeColor !== null) {
+                const edgeColor = material.edgeColor;
+                for (let i = 0; i < 4; ++i) {
+                    edgeColor[i] += materialMorph.edgeColor[i] * weight;
+                }
+            }
+
+            if (materialMorph.edgeSize !== null) {
+                material.edgeSize += materialMorph.edgeSize * weight;
+            }
+
+            if (materialMorph.textureColor !== null) {
+                const textureColor = material.textureColor;
+                for (let i = 0; i < 4; ++i) {
+                    textureColor[i] += materialMorph.textureColor[i] * weight;
+                }
+            }
+
+            if (materialMorph.sphereTextureColor !== null) {
+                const sphereTextureColor = material.sphereTextureColor;
+                for (let i = 0; i < 4; ++i) {
+                    sphereTextureColor[i] += materialMorph.sphereTextureColor[i] * weight;
+                }
+            }
+
+            if (materialMorph.toonTextureColor !== null) {
+                const toonTextureColor = material.toonTextureColor;
+                for (let i = 0; i < 4; ++i) {
+                    toonTextureColor[i] += materialMorph.toonTextureColor[i] * weight;
+                }
             }
         }
 

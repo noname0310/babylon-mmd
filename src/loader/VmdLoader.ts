@@ -256,6 +256,14 @@ export class VmdLoader {
                 }
             }
         }
+        const filteredMorphTracks: MmdMorphAnimationTrack[] = [];
+        for (let i = 0; i < morphTracks.length; ++i) {
+            const morphTrack = morphTracks[i];
+            if (morphTrack.frameNumbers.length === 1 && morphTrack.weights[0] === 0) {
+                continue;
+            }
+            filteredMorphTracks.push(morphTrack);
+        }
 
         progressEvent.loaded = lastStageLoaded + morphLoadCost;
         onProgress?.({ ...progressEvent });
@@ -413,12 +421,12 @@ export class VmdLoader {
         lastStageLoaded += cameraLoadCost;
 
         if (0 < cameraTrack.frameNumbers.length) {
-            if (boneTracks.length !== 0 || morphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
+            if (boneTracks.length !== 0 || filteredMorphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
                 this.warn("animation contains both camera and model animation. model animation will be ignored.");
             }
             return cameraTrack;
         } else {
-            return new MmdModelAnimation(name, boneTracks, morphTracks, propertyTrack);
+            return new MmdModelAnimation(name, boneTracks, filteredMorphTracks, propertyTrack);
         }
     }
 
