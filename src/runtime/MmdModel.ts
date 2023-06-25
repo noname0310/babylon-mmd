@@ -8,12 +8,12 @@ import { AppendTransformSolver } from "./AppendTransformSolver";
 import { IkSolver } from "./IkSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMesh } from "./MmdMesh";
+import type { MmdMesh, RuntimeMmdMesh } from "./MmdMesh";
 import { MmdMorphController } from "./MmdMorphController";
 import { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 export class MmdModel {
-    public readonly mesh: MmdMesh;
+    public readonly mesh: RuntimeMmdMesh;
     public readonly morph: MmdMorphController;
 
     private readonly _logger: ILogger;
@@ -21,8 +21,8 @@ export class MmdModel {
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
-    private readonly _animations: MmdRuntimeModelAnimation[] = [];
-    private readonly _animationIndexMap: Map<string, number> = new Map();
+    private readonly _animations: MmdRuntimeModelAnimation[];
+    private readonly _animationIndexMap: Map<string, number>;
 
     public constructor(
         mmdMesh: MmdMesh,
@@ -31,14 +31,20 @@ export class MmdModel {
     ) {
         this._logger = logger;
 
-        this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
+        const mmdMetadata = mmdMesh.metadata;
 
-        this.mesh = mmdMesh;
+        const runtimeMesh = mmdMesh as unknown as RuntimeMmdMesh;
+        runtimeMesh.metadata = {
+            isRuntimeMmdModel: true,
+            header: mmdMesh.metadata.header
+        };
+        this.mesh = runtimeMesh;
+
+        this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
 
         const runtimeBones = this._buildRuntimeSkeleton(
             mmdMesh.skeleton.bones,
-            mmdMesh.metadata.bones,
-            logger
+            mmdMetadata.bones
         );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
@@ -59,9 +65,12 @@ export class MmdModel {
             runtimeBones,
             mmdMesh.material,
             materialProxyConstructor,
-            mmdMesh.metadata.morphs,
+            mmdMetadata.morphs,
             logger
         );
+
+        this._animations = [];
+        this._animationIndexMap = new Map();
     }
 
     public addAnimation(animation: MmdModelAnimation): void {
@@ -135,8 +144,7 @@ export class MmdModel {
 
     private _buildRuntimeSkeleton(
         bones: Bone[],
-        bonesMetadata: readonly MmdModelMetadata.Bone[],
-        logger: ILogger
+        bonesMetadata: readonly MmdModelMetadata.Bone[]
     ): readonly MmdRuntimeBone[] {
         const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
@@ -164,7 +172,7 @@ export class MmdModel {
                         runtimeBones[targetBoneIndex]
                     );
                 } else {
-                    logger.error(`Invalid append transform target bone index: ${targetBoneIndex}`);
+                    this._logger.error(`Invalid append transform target bone index: ${targetBoneIndex}`);
                 }
             }
 
@@ -191,7 +199,7 @@ export class MmdModel {
                         }
                     }
                 } else {
-                    logger.error(`Invalid IK target bone index: ${targetBoneIndex}`);
+                    this._logger.error(`Invalid IK target bone index: ${targetBoneIndex}`);
                 }
             }
         }

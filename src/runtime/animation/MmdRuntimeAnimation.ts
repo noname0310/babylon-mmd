@@ -4,7 +4,7 @@ import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 
 import type { IkSolver } from "../IkSolver";
 import type { ILogger } from "../ILogger";
-import type { MmdMesh } from "../MmdMesh";
+import type { RuntimeMmdMesh } from "../MmdMesh";
 import type { MmdModel } from "../MmdModel";
 import type { MmdMorphController } from "../MmdMorphController";
 
@@ -16,7 +16,7 @@ export class MmdRuntimeModelAnimation {
     private readonly _boneBindIndexMap: Bone[];
     private readonly _morphController: MmdMorphController;
     private readonly _morphBindIndexMap: MorphIndices[];
-    private readonly _mesh: MmdMesh;
+    private readonly _mesh: RuntimeMmdMesh;
     private readonly _ikSolverBindIndexMap: IkSolver[];
 
     private constructor(
@@ -24,7 +24,7 @@ export class MmdRuntimeModelAnimation {
         boneBindIndexMap: Bone[],
         morphController: MmdMorphController,
         morphBindIndexMap: MorphIndices[],
-        mesh: MmdMesh,
+        mesh: RuntimeMmdMesh,
         ikSolverBindIndexMap: IkSolver[]
     ) {
         this.animation = animation;

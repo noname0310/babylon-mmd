@@ -3,7 +3,6 @@ import { Logger, type Mesh } from "@babylonjs/core";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { RuntimeMmdMesh } from "./MmdMesh";
 import { MmdMesh } from "./MmdMesh";
 import { MmdModel } from "./MmdModel";
 import { MmdStandardMaterialProxy } from "./MmdStandardMaterialProxy";
@@ -44,12 +43,6 @@ export class MmdRuntime implements ILogger {
 
         const model = new MmdModel(mmdMesh, materialProxyConstructor, this);
         this._models.push(model);
-
-        const runtimeMesh = mmdMesh as unknown as RuntimeMmdMesh;
-        runtimeMesh.metadata = {
-            isRuntimeMmdModel: true,
-            header: mmdMesh.metadata.header
-        };
 
         return model;
     }
