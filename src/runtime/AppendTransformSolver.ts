@@ -43,14 +43,14 @@ export class AppendTransformSolver {
             if (this.isLocal) {
                 targetBone.getAnimatedRotationToRef(appendRotationOffset);
             } else {
-                if (targetBone.appendTransformSolver != null) {
+                if (targetBone.appendTransformSolver !== null) {
                     appendRotationOffset.copyFrom(targetBone.appendTransformSolver.appendRotationOffset);
                 } else {
                     targetBone.getAnimatedRotationToRef(appendRotationOffset);
                 }
             }
 
-            if (targetBone.ikRotation != null) {
+            if (targetBone.ikRotation !== null) {
                 appendRotationOffset.multiplyInPlace(targetBone.ikRotation);
             }
 
@@ -67,7 +67,7 @@ export class AppendTransformSolver {
             if (this.isLocal) {
                 targetBone.getAnimatedPositionToRef(appendPositionOffset);
             } else {
-                if (targetBone.appendTransformSolver != null) {
+                if (targetBone.appendTransformSolver !== null) {
                     appendPositionOffset.copyFrom(targetBone.appendTransformSolver.appendPositionOffset);
                 } else {
                     targetBone.getAnimatedPositionToRef(appendPositionOffset);

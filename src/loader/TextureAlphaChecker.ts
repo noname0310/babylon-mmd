@@ -265,7 +265,7 @@ export class TextureAlphaChecker {
             }
         }
 
-        if (averageMidddleAlphaCount != 0) {
+        if (averageMidddleAlphaCount !== 0) {
             averageMidddleAlpha /= averageMidddleAlphaCount;
         }
 

@@ -142,14 +142,14 @@ export class IkSolver implements IIkSolver {
             const chainBone = chain.bone;
             if (chainBone === this.targetBone) continue;
 
-            if (chain.minimumAngle != null /* && chain.minimumAngle != null */) {
+            if (chain.minimumAngle !== null /* && chain.minimumAngle !== null */) {
                 if ((chain.minimumAngle.x !== 0 || chain.maximumAngle!.x !== 0) &&
                     (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0) &&
                     (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
                     this._solvePlane(iteration, chainIndex, SolveAxis.X);
                     continue;
-                } else if ((chain.minimumAngle.y != 0 || chain.maximumAngle!.y !== 0) &&
+                } else if ((chain.minimumAngle.y !== 0 || chain.maximumAngle!.y !== 0) &&
                     (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
                     (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
@@ -187,7 +187,7 @@ export class IkSolver implements IIkSolver {
             const chainRotation = IkSolver._ChainRotation.copyFrom(chainBone.ikRotation!);
             const animatedRotation = chainBone.getAnimatedRotationToRef(IkSolver._AnimatedRotation);
             chainRotation.multiplyInPlace(animatedRotation).multiplyInPlace(rotation);
-            if (chain.minimumAngle != null /* && chain.minimumAngle != null */) {
+            if (chain.minimumAngle !== null /* && chain.minimumAngle !== null */) {
                 const chainRotationMatrix = chainRotation.toRotationMatrix(IkSolver._ChainRotationMatrix);
                 const rotXYZ = this._decomposeToRef(chainRotationMatrix, chain.prevAngle, IkSolver._DecomposedRotation);
                 const clampXYZ = Vector3.ClampToRef(rotXYZ, chain.minimumAngle, chain.maximumAngle!, IkSolver._ClampedRotation).subtractInPlace(chain.prevAngle);
