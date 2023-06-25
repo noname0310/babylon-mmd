@@ -15,6 +15,7 @@ import {
     Scene,
     SceneLoader,
     ShadowGenerator,
+    SkeletonViewer,
     Sound,
     SSAORenderingPipeline,
     SSRRenderingPipeline,
@@ -189,6 +190,11 @@ export class SceneBuilder implements ISceneBuilder {
                 bodyBone!.getWorldMatrix()!.getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
             });
+
+            const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
+                displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+            });
+            viewer.isEnabled = false;
         }
 
         mmdRuntime.register(scene);
