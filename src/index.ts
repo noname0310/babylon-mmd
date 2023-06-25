@@ -5,7 +5,6 @@ css;
 
 import { RuntimeBuilder } from "./runtime/base/RuntimeBuilder";
 import { SceneBuilder } from "./runtime/instance/SceneBuilder";
-import { TickRunner } from "./runtime/instance/TickRunner";
 
 async function engineStartup(): Promise<void> {
     const canvas = document.getElementById("render-canvas");
@@ -25,7 +24,6 @@ async function engineStartup(): Promise<void> {
 
     const runtime = await new RuntimeBuilder(canvas, engine)
         .withSceneBuilder(new SceneBuilder())
-        .withTickRunner(new TickRunner())
         .make();
 
     runtime.run();

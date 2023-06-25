@@ -1,13 +1,11 @@
 import type { Engine, Scene } from "@babylonjs/core";
 
 import type { ISceneBuilder } from "./ISceneBuilder";
-import type { ITickRunner } from "./ITickRunner";
 
 export interface BaseRuntimeInitParams {
     canvas: HTMLCanvasElement;
     engine: Engine;
     sceneBuilder: ISceneBuilder;
-    tickRunner: ITickRunner;
 }
 
 export interface IRuntimeContext {
@@ -18,14 +16,12 @@ export interface IRuntimeContext {
 export class BaseRuntime {
     private readonly _canvas: HTMLCanvasElement;
     private readonly _engine: Engine;
-    private readonly _tickRunner: ITickRunner;
     private _scene: Scene;
     private _onTick: () => void;
 
     private constructor(params: BaseRuntimeInitParams) {
         this._canvas = params.canvas;
         this._engine = params.engine;
-        this._tickRunner = params.tickRunner;
 
         this._scene = null!;
         this._onTick = null!;
@@ -55,27 +51,11 @@ export class BaseRuntime {
     };
 
     private async _initialize(sceneBuilder: ISceneBuilder): Promise<Scene> {
-        const scene = await sceneBuilder.build(this._canvas, this._engine);
-        this._tickRunner.afterBuild({
-            engine: this._engine,
-            scene: scene
-        });
-        return scene;
+        return await sceneBuilder.build(this._canvas, this._engine);
     }
 
     private _makeOnTick(): () => void {
         const scene = this._scene;
-        const tickRunner = this._tickRunner;
-
-        const context: IRuntimeContext = {
-            engine: this._engine,
-            scene: scene
-        };
-
-        return () => {
-            tickRunner.beforeRender(context);
-            scene.render();
-            tickRunner.afterRender(context);
-        };
+        return () => scene.render();
     }
 }

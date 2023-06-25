@@ -23,12 +23,14 @@ import {
     VertexData
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { Inspector } from "@babylonjs/inspector";
 
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
+import { MmdRuntime } from "../MmdRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -97,13 +99,22 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // );
 
+        engine.displayLoadingUI();
+
+        const loadingTexts: string[] = new Array(3).fill("");
+        const updateLoadingText = (updateIndex: number, text: string): void => {
+            loadingTexts[updateIndex] = text;
+            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
+        };
+
         const promises: Promise<any>[] = [];
 
-        promises.push(SceneLoader.AppendAsync(
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene,
-            (event) => engine.loadingUIText = `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+            (event) => updateLoadingText(0, `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         const vmdLoader = new VmdLoader(scene);
@@ -113,19 +124,23 @@ export class SceneBuilder implements ISceneBuilder {
             "res/private_test/motion/melancholy_night/motion.vmd",
             "res/private_test/motion/melancholy_night/facial.vmd",
             "res/private_test/motion/melancholy_night/lip.vmd"
-        ])
+        ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
             .then((animation) => {
                 console.log(animation);
             })
         );
 
         promises.push((async(): Promise<void> => {
+            updateLoadingText(2, "Loading physics engine...");
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            updateLoadingText(2, "Loading physics engine... Done");
         })());
 
         await Promise.all(promises);
+
+        setTimeout(() => engine.hideLoadingUI(), 0);
 
         MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
 
@@ -133,6 +148,28 @@ export class SceneBuilder implements ISceneBuilder {
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
         });
+
+        const mmdRuntime = new MmdRuntime();
+        mmdRuntime.loggingEnabled = true;
+        Object.defineProperty(globalThis, "mmdModels", {
+            configurable: true,
+            enumerable: true,
+            get: () => mmdRuntime.models
+        });
+
+        const meshes = scene.meshes;
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            if (!(mesh instanceof Mesh)) continue;
+            if (!mesh.metadata || !mesh.metadata.isMmdModel) continue;
+
+            mmdRuntime.createMmdModel(mesh);
+        }
+
+        mmdRuntime.register(scene);
+
+        Inspector.Show(scene, { });
+        engine.setHardwareScalingLevel(1);
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;
