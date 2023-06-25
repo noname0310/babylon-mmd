@@ -15,6 +15,7 @@ import {
     Scene,
     SceneLoader,
     ShadowGenerator,
+    Sound,
     SSAORenderingPipeline,
     SSRRenderingPipeline,
     StandardMaterial,
@@ -35,6 +36,8 @@ import { MmdRuntime } from "../MmdRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+        await AudioPermissionSolver.Invoke();
+
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
@@ -181,10 +184,16 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         mmdRuntime.register(scene);
-        mmdRuntime.playAnimation();
+
+        const sound = new Sound("sound", "res/private_test/motion/melancholy_night/melancholy_night.mp3", scene, () => {
+            sound.play();
+            mmdRuntime.playAnimation();
+        }, {
+            loop: false,
+            autoplay: true
+        });
 
         Inspector.Show(scene, { });
-        engine.setHardwareScalingLevel(1);
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;
@@ -372,5 +381,39 @@ class DirectionalLightHelper {
         makePlane("left",   new Color3(0, 0.3, 0),  [near4.x, near4.y, near4.z, far4.x, far4.y, far4.z, far3.x, far3.y, far3.z, near3.x, near3.y, near3.z ]);
         makePlane("top",    new Color3(0, 0, 1),    [near1.x, near1.y, near1.z, far1.x, far1.y, far1.z, far4.x, far4.y, far4.z, near4.x, near4.y, near4.z ]);
         makePlane("bottom", new Color3(0, 0, 0.3),  [near2.x, near2.y, near2.z, far2.x, far2.y, far2.z, far3.x, far3.y, far3.z, near3.x, near3.y, near3.z ]);
+    }
+}
+
+class AudioPermissionSolver {
+    public static async Invoke(): Promise<void> {
+        let audioTest: HTMLAudioElement|null = new Audio("res/audioTest.mp3");
+
+        try {
+            await audioTest.play();
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === "NotAllowedError") {
+                const button = document.createElement("button");
+                button.style.position = "absolute";
+                button.style.left = "0";
+                button.style.top = "0";
+                button.style.width = "100%";
+                button.style.height = "100%";
+                button.style.border = "none";
+                button.style.fontSize = "32px";
+                button.innerText = "Play";
+                document.body.appendChild(button);
+                await new Promise<void>((resolve): void => {
+                    button.onclick = (): void => {
+                        audioTest!.play();
+                        audioTest!.remove();
+                        audioTest = null;
+                        button.remove();
+                        resolve();
+                    };
+                });
+            } else {
+                throw error;
+            }
+        }
     }
 }
