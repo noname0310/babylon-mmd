@@ -127,13 +127,13 @@ export class MmdModel {
             const bone = sortedBones[i];
             if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
 
-            if (bone.appendTransformSolver != null) {
+            if (bone.appendTransformSolver !== null) {
                 bone.appendTransformSolver.update();
                 bone.updateLocalMatrix();
                 bone.updateWorldMatrix();
             }
 
-            if (bone.ikSolver != null) {
+            if (bone.ikSolver !== null) {
                 bone.ikSolver.solve();
                 bone.updateWorldMatrix();
             }
@@ -215,7 +215,7 @@ export class MmdModel {
     private _originalComputeTransformMatrices: ((targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void) | null = null;
 
     private _disableSkeletonWorldMatrixUpdate(skeleton: Skeleton): void {
-        if (this._originalComputeTransformMatrices != null) return;
+        if (this._originalComputeTransformMatrices !== null) return;
 
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
@@ -235,7 +235,7 @@ export class MmdModel {
     }
 
     public enableSkeletonWorldMatrixUpdate(): void {
-        if (this._originalComputeTransformMatrices == null) return;
+        if (this._originalComputeTransformMatrices === null) return;
         (this.mesh.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
     }
 }

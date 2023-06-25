@@ -140,24 +140,24 @@ export class IkSolver implements IIkSolver {
         for (let chainIndex = 0; chainIndex < chains.length; ++chainIndex) {
             const chain = chains[chainIndex];
             const chainBone = chain.bone;
-            if (chainBone == this.targetBone) continue;
+            if (chainBone === this.targetBone) continue;
 
             if (chain.minimumAngle != null /* && chain.minimumAngle != null */) {
-                if ((chain.minimumAngle.x != 0 || chain.maximumAngle!.x != 0) &&
-                    (chain.minimumAngle.y == 0 || chain.maximumAngle!.y == 0) &&
-                    (chain.minimumAngle.z == 0 || chain.maximumAngle!.z == 0)
+                if ((chain.minimumAngle.x !== 0 || chain.maximumAngle!.x !== 0) &&
+                    (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0) &&
+                    (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
                     this._solvePlane(iteration, chainIndex, SolveAxis.X);
                     continue;
-                } else if ((chain.minimumAngle.y != 0 || chain.maximumAngle!.y != 0) &&
-                    (chain.minimumAngle.x == 0 || chain.maximumAngle!.x == 0) &&
-                    (chain.minimumAngle.z == 0 || chain.maximumAngle!.z == 0)
+                } else if ((chain.minimumAngle.y != 0 || chain.maximumAngle!.y !== 0) &&
+                    (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
+                    (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
                     this._solvePlane(iteration, chainIndex, SolveAxis.Y);
                     continue;
-                } else if ((chain.minimumAngle.z != 0 || chain.maximumAngle!.z != 0) &&
-                    (chain.minimumAngle.x == 0 || chain.maximumAngle!.x == 0) &&
-                    (chain.minimumAngle.y == 0 || chain.maximumAngle!.y == 0)
+                } else if ((chain.minimumAngle.z !== 0 || chain.maximumAngle!.z !== 0) &&
+                    (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
+                    (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0)
                 ) {
                     this._solvePlane(iteration, chainIndex, SolveAxis.Z);
                     continue;
@@ -294,7 +294,7 @@ export class IkSolver implements IIkSolver {
         if (dot1 > dot2) newAngle += angle;
         else newAngle -= angle;
 
-        if (iteration == 0) {
+        if (iteration === 0) {
             if (newAngle < minimumAngle || newAngle > maximumAngle) {
                 if (-newAngle > minimumAngle && -newAngle < maximumAngle) newAngle *= -1;
                 else {

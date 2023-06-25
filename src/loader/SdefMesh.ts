@@ -54,7 +54,7 @@ export class SdefMesh extends Mesh {
             return this;
         }
 
-        if (this.geometry._softwareSkinningFrameId == this.getScene().getFrameId()) {
+        if (this.geometry._softwareSkinningFrameId === this.getScene().getFrameId()) {
             return this;
         }
 

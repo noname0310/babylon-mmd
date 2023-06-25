@@ -27,13 +27,13 @@ export interface RuntimeMmdModelMetadata {
 
 export namespace MmdMesh {
     export function isMmdMesh(mesh: Mesh): mesh is MmdMesh {
-        if (mesh.metadata == null || !mesh.metadata.isMmdModel) return false;
-        if (mesh.material == null || !(mesh.material as MultiMaterial).subMaterials) return false;
+        if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
+        if (mesh.material === null || !(mesh.material as MultiMaterial).subMaterials) return false;
         for (const material of (mesh.material as MultiMaterial).subMaterials) {
-            if (material == null) return false;
+            if (material === null) return false;
         }
-        if (mesh.skeleton == null) return false;
-        if (mesh.morphTargetManager == null) return false;
+        if (mesh.skeleton === null) return false;
+        if (mesh.morphTargetManager === null) return false;
 
         return true;
     }
