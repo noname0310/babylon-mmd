@@ -296,9 +296,9 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     clampedInfoDiffuse = clamp(info.diffuse, 0.0, 1.0);
 
                     #ifdef TOON_TEXTURE_COLOR
-                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r * toonTextureColor.r * toolTextureColor.a;
-                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g * toonTextureColor.g * toolTextureColor.a;
-                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b * toonTextureColor.b * toolTextureColor.a;
+                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r * toonTextureColor.r * toonTextureColor.a;
+                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g * toonTextureColor.g * toonTextureColor.a;
+                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b * toonTextureColor.b * toonTextureColor.a;
                     #else
                         infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
                         infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g;
