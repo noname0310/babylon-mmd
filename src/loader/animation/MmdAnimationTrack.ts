@@ -102,18 +102,17 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
 }
 
 export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
-    public readonly visables: Uint8Array; // [..., visable, ...]
+    public readonly visibles: Uint8Array; // [..., visible, ...]
     public readonly ikBoneNames: string[]; // [..., ikBoneName, ...]
     public readonly ikStates: Uint8Array[]; // [..., ikState, ...]
 
     public constructor(
-        trackName: string,
         frameCount: number,
         ikBoneCount: number
     ) {
-        super("property", trackName, frameCount);
+        super("property", "propertyTrack", frameCount);
 
-        this.visables = new Uint8Array(frameCount);
+        this.visibles = new Uint8Array(frameCount);
 
         this.ikBoneNames = new Array(ikBoneCount);
         this.ikStates = new Array(ikBoneCount);

@@ -171,7 +171,7 @@ export class VmdObject {
         const propertyKeyFrameCount = vmdData.propertyKeyFrameCount;
         for (let i = 0; i < propertyKeyFrameCount; ++i) {
             const frameNumber = dataDeserializer.getUint32();
-            const visable = dataDeserializer.getUint8() !== 0;
+            const visible = dataDeserializer.getUint8() !== 0;
 
             const ikStateCount = dataDeserializer.getUint32();
             const ikStates: VmdObject.PropertyKeyFrame.IKState[] = [];
@@ -183,7 +183,7 @@ export class VmdObject {
 
             const propertyKeyFrame: VmdObject.PropertyKeyFrame = {
                 frameNumber,
-                visable,
+                visible,
                 ikStates
             };
             propertyKeyFrames.push(propertyKeyFrame);
@@ -478,7 +478,7 @@ export namespace VmdObject {
 
     export type PropertyKeyFrame = Readonly<{
         frameNumber: number;
-        visable: boolean;
+        visible: boolean;
         ikStates: readonly PropertyKeyFrame.IKState[];
     }>;
 
