@@ -113,7 +113,12 @@ export class MmdModel {
     }
 
     public beforePhysics(frameTime: number | null): void {
-        if (frameTime !== null) this._currentAnimation?.animate(frameTime);
+        if (frameTime !== null) {
+            if (this._currentAnimation !== null) {
+                this.mesh.skeleton.returnToRest();
+                this._currentAnimation.animate(frameTime);
+            }
+        }
 
         this.morph.update();
 
