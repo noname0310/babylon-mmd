@@ -105,6 +105,7 @@ export class SceneBuilder implements ISceneBuilder {
         ));
 
         const vmdLoader = new VmdLoader(scene);
+        vmdLoader.loggingEnabled = true;
 
         promises.push(vmdLoader.loadAsync("melancholy_night_model", [
             "res/private_test/motion/melancholy_night/motion.vmd",
