@@ -2,8 +2,7 @@ import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from 
 import { LoadFileError, Logger, Tools } from "@babylonjs/core";
 
 import { MmdModelAnimation } from "./animation/MmdAnimation";
-import type { MmdBoneAnimationTrack} from "./animation/MmdAnimationTrack";
-import { MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
+import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
 import { VmdData, VmdObject } from "./parser/VmdObject";
 
 export class VmdLoader {
@@ -207,9 +206,14 @@ export class VmdLoader {
             if (isMoveableBone) {
                 filteredMoveableBoneTracks.push(boneTrack);
             } else {
-                filteredBoneTracks.push(boneTrack);
+                const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
+                boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
+                boneAnimationTrack.rotations.set(boneTrack.rotations);
+                boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
+                filteredBoneTracks.push(boneAnimationTrack);
             }
         }
+        boneTracks.length = 0;
 
         progressEvent.loaded = lastStageLoaded + boneLoadCost;
         onProgress?.({ ...progressEvent });
@@ -299,6 +303,7 @@ export class VmdLoader {
             if (isZeroValues) continue;
             filteredMorphTracks.push(morphTrack);
         }
+        morphTracks.length = 0;
 
         progressEvent.loaded = lastStageLoaded + morphLoadCost;
         onProgress?.({ ...progressEvent });
