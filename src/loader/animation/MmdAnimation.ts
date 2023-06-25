@@ -1,9 +1,10 @@
-import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "./MmdAnimationTrack";
+import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./MmdAnimationTrack";
 
 export class MmdModelAnimation {
     public readonly name: string;
 
     public readonly boneTracks: readonly MmdBoneAnimationTrack[];
+    public readonly moveableBoneTracks: readonly MmdMovableBoneAnimationTrack[];
     public readonly morphTracks: readonly MmdMorphAnimationTrack[];
     public readonly propertyTrack: MmdPropertyAnimationTrack;
 
@@ -13,12 +14,14 @@ export class MmdModelAnimation {
     public constructor(
         name: string,
         boneTracks: readonly MmdBoneAnimationTrack[],
+        moveableBoneTracks: readonly MmdMovableBoneAnimationTrack[],
         morphTracks: readonly MmdMorphAnimationTrack[],
         propertyTrack: MmdPropertyAnimationTrack
     ) {
         this.name = name;
 
         this.boneTracks = boneTracks;
+        this.moveableBoneTracks = moveableBoneTracks;
         this.morphTracks = morphTracks;
         this.propertyTrack = propertyTrack;
 
@@ -28,6 +31,11 @@ export class MmdModelAnimation {
             const boneTrack = boneTracks[i];
             minStartFrame = Math.min(minStartFrame, boneTrack.startFrame);
             maxEndFrame = Math.max(maxEndFrame, boneTrack.endFrame);
+        }
+        for (let i = 0; i < moveableBoneTracks.length; ++i) {
+            const moveableBoneTrack = moveableBoneTracks[i];
+            minStartFrame = Math.min(minStartFrame, moveableBoneTrack.startFrame);
+            maxEndFrame = Math.max(maxEndFrame, moveableBoneTrack.endFrame);
         }
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -45,6 +53,11 @@ export class MmdModelAnimation {
         const boneTracks = this.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {
             if (!boneTracks[i].validate()) return false;
+        }
+
+        const moveableBoneTracks = this.moveableBoneTracks;
+        for (let i = 0; i < moveableBoneTracks.length; ++i) {
+            if (!moveableBoneTracks[i].validate()) return false;
         }
 
         const morphTracks = this.morphTracks;

@@ -2,7 +2,8 @@ import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from 
 import { LoadFileError, Logger, Tools } from "@babylonjs/core";
 
 import { MmdModelAnimation } from "./animation/MmdAnimation";
-import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
+import type { MmdBoneAnimationTrack} from "./animation/MmdAnimationTrack";
+import { MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
 import { VmdData, VmdObject } from "./parser/VmdObject";
 
 export class VmdLoader {
@@ -66,7 +67,7 @@ export class VmdLoader {
 
         let time = performance.now();
 
-        const boneTracks: MmdBoneAnimationTrack[] = [];
+        const boneTracks: MmdMovableBoneAnimationTrack[] = [];
         {
             const boneTrackIndexMap = new Map<string, number>();
             const boneTrackFrameCounts: number[] = [];
@@ -109,7 +110,7 @@ export class VmdLoader {
             margedBoneKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
 
             for (let i = 0; i < boneTrackIndexMap.size; ++i) {
-                boneTracks.push(new MmdBoneAnimationTrack(boneNames[i], boneTrackFrameCounts[i]));
+                boneTracks.push(new MmdMovableBoneAnimationTrack(boneNames[i], boneTrackFrameCounts[i]));
             }
 
             if (100 < performance.now() - time) {
@@ -178,6 +179,35 @@ export class VmdLoader {
                     await Tools.DelayAsync(0);
                     time = performance.now();
                 }
+            }
+        }
+        const filteredBoneTracks: MmdBoneAnimationTrack[] = [];
+        const filteredMoveableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
+        for (let i = 0; i < boneTracks.length; ++i) {
+            const boneTrack = boneTracks[i];
+            if (boneTrack.frameNumbers.length === 1 &&
+                boneTrack.positions[0] === 0 &&
+                boneTrack.positions[1] === 0 &&
+                boneTrack.positions[2] === 0 &&
+                boneTrack.rotations[0] === 0 &&
+                boneTrack.rotations[1] === 0 &&
+                boneTrack.rotations[2] === 0 &&
+                boneTrack.rotations[3] === 1
+            ) {
+                continue;
+            }
+
+            let isMoveableBone = false;
+            for (let j = 0; j < boneTrack.positions.length; ++j) {
+                if (boneTrack.positions[j] !== 0) {
+                    isMoveableBone = true;
+                    break;
+                }
+            }
+            if (isMoveableBone) {
+                filteredMoveableBoneTracks.push(boneTrack);
+            } else {
+                filteredBoneTracks.push(boneTrack);
             }
         }
 
@@ -259,9 +289,14 @@ export class VmdLoader {
         const filteredMorphTracks: MmdMorphAnimationTrack[] = [];
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
-            if (morphTrack.frameNumbers.length === 1 && morphTrack.weights[0] === 0) {
-                continue;
+            let isZeroValues = true;
+            for (let j = 0; j < morphTrack.weights.length; ++j) {
+                if (morphTrack.weights[j] !== 0) {
+                    isZeroValues = false;
+                    break;
+                }
             }
+            if (isZeroValues) continue;
             filteredMorphTracks.push(morphTrack);
         }
 
@@ -426,7 +461,7 @@ export class VmdLoader {
             }
             return cameraTrack;
         } else {
-            return new MmdModelAnimation(name, boneTracks, filteredMorphTracks, propertyTrack);
+            return new MmdModelAnimation(name, filteredBoneTracks, filteredMoveableBoneTracks, filteredMorphTracks, propertyTrack);
         }
     }
 

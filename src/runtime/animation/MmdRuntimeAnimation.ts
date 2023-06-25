@@ -15,6 +15,7 @@ export class MmdRuntimeModelAnimation {
     public readonly animation: MmdModelAnimation;
 
     private readonly _boneBindIndexMap: (Bone | null)[];
+    private readonly _moveableBoneBindIndexMap: (Bone | null)[];
     private readonly _morphController: MmdMorphController;
     private readonly _morphBindIndexMap: (MorphIndices | null)[];
     private readonly _mesh: RuntimeMmdMesh;
@@ -23,6 +24,7 @@ export class MmdRuntimeModelAnimation {
     private constructor(
         animation: MmdModelAnimation,
         boneBindIndexMap: (Bone | null)[],
+        moveableBoneBindIndexMap: (Bone | null)[],
         morphController: MmdMorphController,
         morphBindIndexMap: (MorphIndices | null)[],
         mesh: RuntimeMmdMesh,
@@ -31,10 +33,12 @@ export class MmdRuntimeModelAnimation {
         this.animation = animation;
 
         this._boneBindIndexMap = boneBindIndexMap;
+        this._moveableBoneBindIndexMap = moveableBoneBindIndexMap;
         this._morphController = morphController;
         this._morphBindIndexMap = morphBindIndexMap;
         this._mesh = mesh;
         this._ikSolverBindIndexMap = ikSolverBindIndexMap;
+        console.log(this);
     }
 
     private static readonly _BonePositionA = new Vector3();
@@ -53,6 +57,62 @@ export class MmdRuntimeModelAnimation {
                 if (bone === null) continue;
 
                 const boneTrack = boneTracks[i];
+                const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, boneTrack);
+
+                const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
+                if (frameNumberB === frameTime) {
+                    const rotations = boneTrack.rotations;
+                    bone.setRotationQuaternion(
+                        MmdRuntimeModelAnimation._BoneRotationB.set(
+                            rotations[lowerBoundIndex * 4],
+                            rotations[lowerBoundIndex * 4 + 1],
+                            rotations[lowerBoundIndex * 4 + 2],
+                            rotations[lowerBoundIndex * 4 + 3]
+                        ),
+                        Space.LOCAL
+                    );
+                } else {
+                    const frameNumberA = boneTrack.frameNumbers[lowerBoundIndex - 1];
+                    const interpolateTime = (frameTime - frameNumberA) / (frameNumberB - frameNumberA);
+
+                    const rotations = boneTrack.rotations;
+                    const rotationInterpolations = boneTrack.rotationInterpolations;
+
+                    const rotationA = MmdRuntimeModelAnimation._BoneRotationA.set(
+                        rotations[(lowerBoundIndex - 1) * 4],
+                        rotations[(lowerBoundIndex - 1) * 4 + 1],
+                        rotations[(lowerBoundIndex - 1) * 4 + 2],
+                        rotations[(lowerBoundIndex - 1) * 4 + 3]
+                    );
+                    const rotationB = MmdRuntimeModelAnimation._BoneRotationB.set(
+                        rotations[lowerBoundIndex * 4],
+                        rotations[lowerBoundIndex * 4 + 1],
+                        rotations[lowerBoundIndex * 4 + 2],
+                        rotations[lowerBoundIndex * 4 + 3]
+                    );
+
+                    const weight = BezierCurve.Interpolate(
+                        interpolateTime,
+                        rotationInterpolations[lowerBoundIndex * 4] / 127, // x1
+                        rotationInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
+                        rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
+                        rotationInterpolations[lowerBoundIndex * 4 + 3] / 127 // y2
+                    );
+
+                    Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
+                    bone.setRotationQuaternion(rotationA, Space.LOCAL);
+                }
+            }
+        }
+
+        const moveableBoneTracks = animation.moveableBoneTracks;
+        if (0 < moveableBoneTracks.length) {
+            const boneBindIndexMap = this._moveableBoneBindIndexMap;
+            for (let i = 0; i < moveableBoneTracks.length; ++i) {
+                const bone = boneBindIndexMap[i];
+                if (bone === null) continue;
+
+                const boneTrack = moveableBoneTracks[i];
                 const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, boneTrack);
 
                 const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
@@ -244,6 +304,19 @@ export class MmdRuntimeModelAnimation {
             }
         }
 
+        const moveableBoneBindIndexMap: (Bone | null)[] = [];
+        const moveableBoneTracks = animation.moveableBoneTracks;
+        for (let i = 0; i < moveableBoneTracks.length; ++i) {
+            const moveableBoneTrack = moveableBoneTracks[i];
+            const bone = boneIndexMap.get(moveableBoneTrack.name);
+            if (bone === undefined) {
+                logger?.warn(`Binding failed: bone ${moveableBoneTrack.name} not found`);
+                moveableBoneBindIndexMap.push(null);
+            } else {
+                moveableBoneBindIndexMap.push(bone);
+            }
+        }
+
         const morphController = model.morph;
         const morphBindIndexMap: (MorphIndices | null)[] = [];
         const morphTracks = animation.morphTracks;
@@ -286,6 +359,7 @@ export class MmdRuntimeModelAnimation {
         return new MmdRuntimeModelAnimation(
             animation,
             boneBindIndexMap,
+            moveableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
             model.mesh,

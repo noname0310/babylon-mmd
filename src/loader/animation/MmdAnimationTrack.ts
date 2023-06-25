@@ -35,6 +35,21 @@ export abstract class MmdAnimationTrack {
 }
 
 export class MmdBoneAnimationTrack extends MmdAnimationTrack {
+    public readonly rotations: Float32Array; // [..., x, y, z, w, ...]
+    public readonly rotationInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
+
+    public constructor(
+        trackName: string,
+        frameCount: number
+    ) {
+        super("bone", trackName, frameCount);
+
+        this.rotations = new Float32Array(frameCount * 4);
+        this.rotationInterpolations = new Uint8Array(frameCount * 4);
+    }
+}
+
+export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
     public readonly positions: Float32Array; // [..., x, y, z, ...]
     public readonly positionInterpolations: Uint8Array; // [..., x_x1, x_x2, x_y1, x_y2, y_x1, y_x2, y_y1, y_y2, z_x1, z_x2, z_y1, z_y2, ...]
 
@@ -45,7 +60,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack {
         trackName: string,
         frameCount: number
     ) {
-        super("bone", trackName, frameCount);
+        super("moveableBone", trackName, frameCount);
 
         this.positions = new Float32Array(frameCount * 3);
         this.positionInterpolations = new Uint8Array(frameCount * 12);
