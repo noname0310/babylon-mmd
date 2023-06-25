@@ -38,7 +38,7 @@ mmd loader and runtime for Babylon.js
 
 **VMD Loader**
 
-- [ ] Basic animation load
+- [x] Basic animation load
 - [ ] Support custom retargeting
 
 **Animation Runtime**
