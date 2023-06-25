@@ -173,6 +173,7 @@ export class SceneBuilder implements ISceneBuilder {
             if (!(mesh instanceof Mesh)) continue;
             if (!mesh.metadata || !mesh.metadata.isMmdModel) continue;
 
+            mesh.alwaysSelectAsActiveMesh = true;
             const mmdModel = mmdRuntime.createMmdModel(mesh);
             mmdModel.addAnimation(modelAnimation!);
             mmdModel.setAnimation("melancholy_night_model");
