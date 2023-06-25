@@ -1,6 +1,8 @@
+import type { Material } from "@babylonjs/core";
 import { BezierCurve, type Bone, Quaternion, Space, Vector3 } from "@babylonjs/core";
 
-import type { MmdAnimationTrack } from "@/libIndex";
+import type { MmdStandardMaterial } from "@/libIndex";
+import { type MmdAnimationTrack, PmxObject } from "@/libIndex";
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 
 import type { IIkSolver } from "../IkSolver";
@@ -353,6 +355,7 @@ export class MmdRuntimeModelAnimation {
                 morphBindIndexMap.push(morphIndices);
             }
         }
+        MmdRuntimeModelAnimation.InduceMaterialRecompile(model.mesh.material.subMaterials, morphController, morphBindIndexMap);
 
         const runtimeBones = model.sortedRuntimeBones;
         const runtimeBoneIndexMap = new Map<string, number>();
@@ -389,4 +392,73 @@ export class MmdRuntimeModelAnimation {
             ikSolverBindIndexMap
         );
     }
+
+    public static InduceMaterialRecompile = (
+        materials: Material[],
+        morphController: MmdMorphController,
+        morphIndices: (MorphIndices | null)[],
+        logger?: ILogger
+    ): void => {
+        for (let i = 0; i < morphIndices.length; ++i) {
+            const morphIndex = morphIndices[i];
+            if (morphIndex === null) continue;
+
+            let allMaterialWillBeRecompiled = false;
+            const recompiledMaterials = new Set<string>();
+
+            for (let j = 0; j < morphIndex.length; ++j) {
+                const morph = morphController.morphs[morphIndex[j]];
+                if (morph.type === PmxObject.Morph.Type.MaterialMorph) {
+                    const elements = morph.materialElements!;
+                    for (let k = 0; k < elements.length; ++k) {
+                        const element = elements[k];
+                        if (element.textureColor !== null) {
+                            const materialIndex = element.index;
+                            if (element.index === -1) {
+                                for (let l = 0; l < materials.length; ++l) {
+                                    (materials[l] as MmdStandardMaterial).textureColor;
+                                }
+                                allMaterialWillBeRecompiled = true;
+                            } else {
+                                (materials[materialIndex] as MmdStandardMaterial).textureColor;
+                                recompiledMaterials.add(materialIndex.toString());
+                            }
+                        }
+
+                        if (element.sphereTextureColor !== null) {
+                            const materialIndex = element.index;
+                            if (element.index === -1) {
+                                for (let l = 0; l < materials.length; ++l) {
+                                    (materials[l] as MmdStandardMaterial).sphereTextureColor;
+                                }
+                                allMaterialWillBeRecompiled = true;
+                            } else {
+                                (materials[materialIndex] as MmdStandardMaterial).sphereTextureColor;
+                                recompiledMaterials.add(materialIndex.toString());
+                            }
+                        }
+
+                        if (element.toonTextureColor !== null) {
+                            const materialIndex = element.index;
+                            if (element.index === -1) {
+                                for (let l = 0; l < materials.length; ++l) {
+                                    (materials[l] as MmdStandardMaterial).toonTextureColor;
+                                }
+                                allMaterialWillBeRecompiled = true;
+                            } else {
+                                (materials[materialIndex] as MmdStandardMaterial).toonTextureColor;
+                                recompiledMaterials.add(materialIndex.toString());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (allMaterialWillBeRecompiled) {
+                logger?.log("All materials could be recompiled for morph animation");
+            } else {
+                logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
+            }
+        }
+    };
 }

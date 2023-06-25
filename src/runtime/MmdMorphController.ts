@@ -27,17 +27,19 @@ interface RuntimeMaterialMorphElement {
 interface RuntimeMorph {
     name: string;
     type: PmxObject.Morph.Type;
+    readonly materialElements: readonly RuntimeMaterialMorphElement[] | null;
     readonly elements: Int32Array // group morph / bone morph indices
-        | readonly RuntimeMaterialMorphElement[]
-        | number; // MorphTargetManager morph target index
+        | number // MorphTargetManager morph target index
+        | null;
 
-    readonly elements2: Float32Array | undefined; // group morph ratios / bone morph positions [..., x, y, z, ...]
-    readonly elements3: Float32Array | undefined; // bone morph rotations [..., x, y, z, w, ...]
+    readonly elements2: Float32Array | null; // group morph ratios / bone morph positions [..., x, y, z, ...]
+    readonly elements3: Float32Array | null; // bone morph rotations [..., x, y, z, w, ...]
 }
 
 export interface ReadonlyRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
+    readonly materialElements: readonly Readonly<RuntimeMaterialMorphElement>[] | null;
 }
 
 export class MmdMorphController {
@@ -182,9 +184,10 @@ export class MmdMorphController {
         for (let i = 0; i < morphsMetadata.length; ++i) {
             const morphMetadata = morphsMetadata[i];
 
-            let runtimeMorphElements: RuntimeMorph["elements"];
-            let runtimeMorphElements2: Float32Array | undefined = undefined;
-            let runtimeMorphElements3: Float32Array | undefined = undefined;
+            let runtimeMorphMaterialElements: readonly RuntimeMaterialMorphElement[] | null = null;
+            let runtimeMorphElements: RuntimeMorph["elements"] = null;
+            let runtimeMorphElements2: Float32Array | null = null;
+            let runtimeMorphElements3: Float32Array | null = null;
 
             switch (morphMetadata.type) {
             case PmxObject.Morph.Type.GroupMorph:
@@ -263,7 +266,7 @@ export class MmdMorphController {
                         }
                     }
 
-                    runtimeMorphElements = morphElements;
+                    runtimeMorphMaterialElements = morphElements;
                 }
                 break;
 
@@ -279,6 +282,7 @@ export class MmdMorphController {
             const morph: RuntimeMorph = <RuntimeMorph>{
                 name: morphMetadata.name,
                 type: morphMetadata.type,
+                materialElements: runtimeMorphMaterialElements,
                 elements: runtimeMorphElements,
                 elements2: runtimeMorphElements2,
                 elements3: runtimeMorphElements3
@@ -369,7 +373,7 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.elements as readonly RuntimeMaterialMorphElement[];
+                const elements = morph.materialElements as readonly RuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     if (element.index === -1) { // -1 means "all materials"
@@ -443,7 +447,7 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.elements as readonly RuntimeMaterialMorphElement[];
+                const elements = morph.materialElements as readonly RuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     const materials = this._materials;
