@@ -175,10 +175,12 @@ export class SceneBuilder implements ISceneBuilder {
 
             const mmdModel = mmdRuntime.createMmdModel(mesh);
             mmdModel.addAnimation(modelAnimation!);
+            mmdModel.setAnimation("melancholy_night_model");
             // mmdModel.addAnimation(modelAnimation2!);
         }
 
         mmdRuntime.register(scene);
+        mmdRuntime.playAnimation();
 
         Inspector.Show(scene, { });
         engine.setHardwareScalingLevel(1);

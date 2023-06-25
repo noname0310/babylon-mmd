@@ -25,6 +25,8 @@ export class MmdModel {
     private readonly _animations: MmdRuntimeModelAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
+    private _currentAnimation: MmdRuntimeModelAnimation | null;
+
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
@@ -72,6 +74,8 @@ export class MmdModel {
 
         this._animations = [];
         this._animationIndexMap = new Map();
+
+        this._currentAnimation = null;
     }
 
     public get sortedRuntimeBones(): readonly IMmdRuntimeBone[] {
@@ -89,12 +93,27 @@ export class MmdModel {
         this._animations.splice(index, 1);
     }
 
+    public setAnimation(name: string|null): void {
+        if (name === null) {
+            this._currentAnimation = null;
+            return;
+        }
+
+        const index = this._animationIndexMap.get(name);
+        if (index === undefined) {
+            this._logger.error(`Animation not found: ${name}`);
+            return;
+        }
+
+        this._currentAnimation = this._animations[index];
+    }
+
     public get animations(): readonly MmdRuntimeModelAnimation[] {
         return this._animations;
     }
 
-    public beforePhysics(): void {
-        // todo: apply bone animation
+    public beforePhysics(frameTime: number | null): void {
+        if (frameTime !== null) this._currentAnimation?.animate(frameTime);
 
         this.morph.update();
 

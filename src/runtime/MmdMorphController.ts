@@ -318,7 +318,15 @@ export class MmdMorphController {
                 const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
-                    this._materials[element.index].reset();
+                    if (element.index === -1) { // -1 means "all materials"
+                        for (let i = 0; i < this._materials.length; ++i) {
+                            const material = this._materials[i];
+                            if (material !== undefined) material.reset();
+                        }
+                    } else {
+                        const material = this._materials[element.index];
+                        material.reset();
+                    }
                 }
             }
             break;
@@ -384,89 +392,15 @@ export class MmdMorphController {
                 const elements = morph.elements as readonly PmxObject.Morph.MaterialMorph[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
-                    const material = this._materials[element.index];
-
-                    if (element.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
-                        const diffuse = material.diffuse;
-                        for (let i = 0; i < 4; ++i) {
-                            diffuse[i] = diffuse[i] + (diffuse[i] * element.diffuse[i] - diffuse[i]) * weight;
+                    const materials = this._materials;
+                    if (element.index === -1) { // -1 means "all materials"
+                        for (let i = 0; i < materials.length; ++i) {
+                            this._applyMaterialMorph(element, materials[i], weight);
                         }
-
-                        const specular = material.specular;
-                        for (let i = 0; i < 3; ++i) {
-                            specular[i] = specular[i] + (specular[i] * element.specular[i] - specular[i]) * weight;
-                        }
-
-                        material.shininess = material.shininess + (material.shininess * element.shininess - material.shininess) * weight;
-
-                        const ambient = material.ambient;
-                        for (let i = 0; i < 3; ++i) {
-                            ambient[i] = ambient[i] + (ambient[i] * element.ambient[i] - ambient[i]) * weight;
-                        }
-
-                        const edgeColor = material.edgeColor;
-                        for (let i = 0; i < 4; ++i) {
-                            edgeColor[i] = edgeColor[i] + (edgeColor[i] * element.edgeColor[i] - edgeColor[i]) * weight;
-                        }
-
-                        material.edgeSize = material.edgeSize + (material.edgeSize * element.edgeSize - material.edgeSize) * weight;
-
-                        const textureColor = material.textureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            textureColor[i] = textureColor[i] + (textureColor[i] * element.textureColor[i] - textureColor[i]) * weight;
-                        }
-
-                        const sphereTextureColor = material.sphereTextureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            sphereTextureColor[i] = sphereTextureColor[i] + (sphereTextureColor[i] * element.sphereTextureColor[i] - sphereTextureColor[i]) * weight;
-                        }
-
-                        const toonTextureColor = material.toonTextureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            toonTextureColor[i] = toonTextureColor[i] + (toonTextureColor[i] * element.toonTextureColor[i] - toonTextureColor[i]) * weight;
-                        }
-                    } else /* if (element.type === PmxObject.Morph.MaterialMorph.Type.add) */ {
-                        const diffuse = material.diffuse;
-                        for (let i = 0; i < 4; ++i) {
-                            diffuse[i] += element.diffuse[i] * weight;
-                        }
-
-                        const specular = material.specular;
-                        for (let i = 0; i < 3; ++i) {
-                            specular[i] += element.specular[i] * weight;
-                        }
-
-                        material.shininess += element.shininess * weight;
-
-                        const ambient = material.ambient;
-                        for (let i = 0; i < 3; ++i) {
-                            ambient[i] += element.ambient[i] * weight;
-                        }
-
-                        const edgeColor = material.edgeColor;
-                        for (let i = 0; i < 4; ++i) {
-                            edgeColor[i] += element.edgeColor[i] * weight;
-                        }
-
-                        material.edgeSize += element.edgeSize * weight;
-
-                        const textureColor = material.textureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            textureColor[i] += element.textureColor[i] * weight;
-                        }
-
-                        const sphereTextureColor = material.sphereTextureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            sphereTextureColor[i] += element.sphereTextureColor[i] * weight;
-                        }
-
-                        const toonTextureColor = material.toonTextureColor;
-                        for (let i = 0; i < 4; ++i) {
-                            toonTextureColor[i] += element.toonTextureColor[i] * weight;
-                        }
+                    } else {
+                        const material = materials[element.index];
+                        this._applyMaterialMorph(element, material, weight);
                     }
-
-                    this._updatedMaterials.add(material);
                 }
             }
             break;
@@ -476,5 +410,93 @@ export class MmdMorphController {
             this._morphTargetManager.getTarget(morph.elements as number).influence += weight;
             break;
         }
+    }
+
+    private _applyMaterialMorph(
+        materialMorph: PmxObject.Morph.MaterialMorph,
+        material: IMmdMaterialProxy,
+        weight: number
+    ): void {
+        if (materialMorph.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
+            const diffuse = material.diffuse;
+            for (let i = 0; i < 4; ++i) {
+                diffuse[i] = diffuse[i] + (diffuse[i] * materialMorph.diffuse[i] - diffuse[i]) * weight;
+            }
+
+            const specular = material.specular;
+            for (let i = 0; i < 3; ++i) {
+                specular[i] = specular[i] + (specular[i] * materialMorph.specular[i] - specular[i]) * weight;
+            }
+
+            material.shininess = material.shininess + (material.shininess * materialMorph.shininess - material.shininess) * weight;
+
+            const ambient = material.ambient;
+            for (let i = 0; i < 3; ++i) {
+                ambient[i] = ambient[i] + (ambient[i] * materialMorph.ambient[i] - ambient[i]) * weight;
+            }
+
+            const edgeColor = material.edgeColor;
+            for (let i = 0; i < 4; ++i) {
+                edgeColor[i] = edgeColor[i] + (edgeColor[i] * materialMorph.edgeColor[i] - edgeColor[i]) * weight;
+            }
+
+            material.edgeSize = material.edgeSize + (material.edgeSize * materialMorph.edgeSize - material.edgeSize) * weight;
+
+            const textureColor = material.textureColor;
+            for (let i = 0; i < 4; ++i) {
+                textureColor[i] = textureColor[i] + (textureColor[i] * materialMorph.textureColor[i] - textureColor[i]) * weight;
+            }
+
+            const sphereTextureColor = material.sphereTextureColor;
+            for (let i = 0; i < 4; ++i) {
+                sphereTextureColor[i] = sphereTextureColor[i] + (sphereTextureColor[i] * materialMorph.sphereTextureColor[i] - sphereTextureColor[i]) * weight;
+            }
+
+            const toonTextureColor = material.toonTextureColor;
+            for (let i = 0; i < 4; ++i) {
+                toonTextureColor[i] = toonTextureColor[i] + (toonTextureColor[i] * materialMorph.toonTextureColor[i] - toonTextureColor[i]) * weight;
+            }
+        } else /* if (materialMorph.type === PmxObject.Morph.MaterialMorph.Type.add) */ {
+            const diffuse = material.diffuse;
+            for (let i = 0; i < 4; ++i) {
+                diffuse[i] += materialMorph.diffuse[i] * weight;
+            }
+
+            const specular = material.specular;
+            for (let i = 0; i < 3; ++i) {
+                specular[i] += materialMorph.specular[i] * weight;
+            }
+
+            material.shininess += materialMorph.shininess * weight;
+
+            const ambient = material.ambient;
+            for (let i = 0; i < 3; ++i) {
+                ambient[i] += materialMorph.ambient[i] * weight;
+            }
+
+            const edgeColor = material.edgeColor;
+            for (let i = 0; i < 4; ++i) {
+                edgeColor[i] += materialMorph.edgeColor[i] * weight;
+            }
+
+            material.edgeSize += materialMorph.edgeSize * weight;
+
+            const textureColor = material.textureColor;
+            for (let i = 0; i < 4; ++i) {
+                textureColor[i] += materialMorph.textureColor[i] * weight;
+            }
+
+            const sphereTextureColor = material.sphereTextureColor;
+            for (let i = 0; i < 4; ++i) {
+                sphereTextureColor[i] += materialMorph.sphereTextureColor[i] * weight;
+            }
+
+            const toonTextureColor = material.toonTextureColor;
+            for (let i = 0; i < 4; ++i) {
+                toonTextureColor[i] += materialMorph.toonTextureColor[i] * weight;
+            }
+        }
+
+        this._updatedMaterials.add(material);
     }
 }

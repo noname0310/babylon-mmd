@@ -21,6 +21,9 @@ export class MmdRuntime implements ILogger {
 
     private _isRegistered: boolean;
 
+    private _animationStartTime: number;
+    private _isAnimationPlaying: boolean;
+
     private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
     private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
 
@@ -33,6 +36,9 @@ export class MmdRuntime implements ILogger {
         this.error = this._errorDisabled;
 
         this._isRegistered = false;
+
+        this._animationStartTime = 0;
+        this._isAnimationPlaying = false;
     }
 
     public createMmdModel(
@@ -74,9 +80,10 @@ export class MmdRuntime implements ILogger {
     }
 
     public beforePhysics(): void {
+        const elapsed = performance.now() - this._animationStartTime;
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
-            models[i].beforePhysics();
+            models[i].beforePhysics(elapsed);
         }
     }
 
@@ -85,6 +92,23 @@ export class MmdRuntime implements ILogger {
         for (let i = 0; i < models.length; ++i) {
             models[i].afterPhysics();
         }
+    }
+
+    public playAnimation(): void {
+        if (this._isAnimationPlaying) return;
+
+        this._animationStartTime = performance.now();
+        this._isAnimationPlaying = true;
+    }
+
+    public stopAnimation(): void {
+        if (!this._isAnimationPlaying) return;
+
+        this._isAnimationPlaying = false;
+    }
+
+    public get isAnimationPlaying(): boolean {
+        return this._isAnimationPlaying;
     }
 
     public get models(): readonly MmdModel[] {
