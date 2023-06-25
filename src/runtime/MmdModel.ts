@@ -10,6 +10,7 @@ import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdMesh, RuntimeMmdMesh } from "./MmdMesh";
 import { MmdMorphController } from "./MmdMorphController";
+import type { IMmdRuntimeBone} from "./MmdRuntimeBone";
 import { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 export class MmdModel {
@@ -71,6 +72,10 @@ export class MmdModel {
 
         this._animations = [];
         this._animationIndexMap = new Map();
+    }
+
+    public get sortedRuntimeBones(): readonly IMmdRuntimeBone[] {
+        return this._sortedRuntimeBones;
     }
 
     public addAnimation(animation: MmdModelAnimation): void {

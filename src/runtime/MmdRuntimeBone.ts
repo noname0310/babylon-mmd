@@ -4,9 +4,23 @@ import { Matrix, Quaternion, Space, Vector3 } from "@babylonjs/core";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 import type { AppendTransformSolver } from "./AppendTransformSolver";
-import type { IkSolver } from "./IkSolver";
+import type { IIkSolver, IkSolver } from "./IkSolver";
 
-export class MmdRuntimeBone {
+export interface IMmdRuntimeBone {
+    readonly babylonBone: Bone;
+
+    readonly name: string;
+    readonly parentBone: IMmdRuntimeBone | null;
+    readonly childrenBones: readonly IMmdRuntimeBone[];
+
+    readonly transformOrder: number;
+    readonly flag: number;
+    readonly transformAfterPhysics: boolean;
+
+    readonly ikSolver: IIkSolver | null;
+}
+
+export class MmdRuntimeBone implements IMmdRuntimeBone {
     public readonly babylonBone: Bone;
 
     public readonly name: string;

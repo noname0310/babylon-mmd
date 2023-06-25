@@ -36,7 +36,13 @@ enum SolveAxis {
     Z,
 }
 
-export class IkSolver {
+export interface IIkSolver {
+    enabled: boolean;
+
+    iteration: number;
+}
+
+export class IkSolver implements IIkSolver {
     public enabled: boolean;
 
     public iteration: number;

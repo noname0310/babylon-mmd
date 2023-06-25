@@ -134,6 +134,14 @@ export class SceneBuilder implements ISceneBuilder {
             })
         );
 
+        // let modelAnimation2: MmdModelAnimation;
+        // promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/model.vmd",
+        //     (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        //     .then((animation) => {
+        //         modelAnimation2 = animation as MmdModelAnimation;
+        //     })
+        // );
+
         promises.push((async(): Promise<void> => {
             updateLoadingText(2, "Loading physics engine...");
             const havokInstance = await HavokPhysics();
@@ -167,6 +175,7 @@ export class SceneBuilder implements ISceneBuilder {
 
             const mmdModel = mmdRuntime.createMmdModel(mesh);
             mmdModel.addAnimation(modelAnimation!);
+            // mmdModel.addAnimation(modelAnimation2!);
         }
 
         mmdRuntime.register(scene);
