@@ -81,9 +81,10 @@ export class MmdRuntime implements ILogger {
 
     public beforePhysics(): void {
         const elapsed = performance.now() - this._animationStartTime;
+        const elapsedFrameTime = elapsed * 0.001 * 30;
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
-            models[i].beforePhysics(elapsed);
+            models[i].beforePhysics(elapsedFrameTime);
         }
     }
 
