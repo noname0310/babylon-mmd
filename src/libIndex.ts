@@ -1,3 +1,7 @@
+// loader/animation
+export { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdCameraAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
+
 // loader/parser
 export { ConsoleLogger, ILogger } from "@/loader/parser/ILogger";
 export { PmxObject } from "@/loader/parser/PmxObject";
@@ -14,6 +18,10 @@ export { PmxLoader } from "@/loader/PmxLoader";
 export { SdefInjector } from "@/loader/SdefInjector";
 export { SharedToonTextures } from "@/loader/SharedToonTextures";
 export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChecker";
+export { VmdLoader } from "@/loader/VmdLoader";
+
+// runtime/animation
+export { MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
 
 // runtime
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
