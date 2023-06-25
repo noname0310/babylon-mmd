@@ -74,10 +74,10 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20;
         directionalLight.shadowMinZ = -15;
-        directionalLight.orthoTop = 16;
+        directionalLight.orthoTop = 18;
         directionalLight.orthoBottom = -1;
-        directionalLight.orthoLeft = -8;
-        directionalLight.orthoRight = 8;
+        directionalLight.orthoLeft = -10;
+        directionalLight.orthoRight = 10;
         directionalLight.shadowOrthoScale = 0;
 
         DirectionalLightHelper;
@@ -117,33 +117,34 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            //"res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
             undefined,
             scene,
-            (event) => updateLoadingText(0, `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(0, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
 
-        let modelAnimation: MmdModelAnimation;
-        promises.push(vmdLoader.loadAsync("melancholy_night_model", [
-            "res/private_test/motion/melancholy_night/motion.vmd",
-            "res/private_test/motion/melancholy_night/facial.vmd",
-            "res/private_test/motion/melancholy_night/lip.vmd"
-        ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                modelAnimation = animation as MmdModelAnimation;
-            })
-        );
-
-        // let modelAnimation2: MmdModelAnimation;
-        // promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/model.vmd",
-        //     (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        // let modelAnimation: MmdModelAnimation;
+        // promises.push(vmdLoader.loadAsync("melancholy_night_model", [
+        //     "res/private_test/motion/melancholy_night/motion.vmd",
+        //     "res/private_test/motion/melancholy_night/facial.vmd",
+        //     "res/private_test/motion/melancholy_night/lip.vmd"
+        // ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         //     .then((animation) => {
-        //         modelAnimation2 = animation as MmdModelAnimation;
+        //         modelAnimation = animation as MmdModelAnimation;
         //     })
         // );
+
+        let modelAnimation2: MmdModelAnimation;
+        promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
+            (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                modelAnimation2 = animation as MmdModelAnimation;
+            })
+        );
 
         promises.push((async(): Promise<void> => {
             updateLoadingText(2, "Loading physics engine...");
@@ -178,14 +179,22 @@ export class SceneBuilder implements ISceneBuilder {
 
             mesh.alwaysSelectAsActiveMesh = true;
             const mmdModel = mmdRuntime.createMmdModel(mesh);
-            mmdModel.addAnimation(modelAnimation!);
-            mmdModel.setAnimation("melancholy_night_model");
-            // mmdModel.addAnimation(modelAnimation2!);
+            // mmdModel.addAnimation(modelAnimation!);
+            mmdModel.addAnimation(modelAnimation2!);
+            // mmdModel.setAnimation("melancholy_night_model");
+            mmdModel.setAnimation("flos_model");
+
+            const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === "センター");
+            scene.onBeforeRenderObservable.add(() => {
+                bodyBone!.getWorldMatrix()!.getTranslationToRef(directionalLight.position);
+                directionalLight.position.y -= 10;
+            });
         }
 
         mmdRuntime.register(scene);
 
-        const sound = new Sound("sound", "res/private_test/motion/melancholy_night/melancholy_night.mp3", scene, () => {
+
+        const sound = new Sound("sound", "res/private_test/motion/flos/flos_YuNi.mp3", scene, () => {
             sound.play();
             mmdRuntime.playAnimation();
         }, {
