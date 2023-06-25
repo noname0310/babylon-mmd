@@ -95,19 +95,28 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // );
 
-        await SceneLoader.AppendAsync(
+        const promises: Promise<any>[] = [];
+
+        promises.push(SceneLoader.AppendAsync(
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             undefined,
             scene,
             (event) => engine.loadingUIText = `Loading model(YYB Hatsune Miku_10th)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-        );
+        ));
 
         const vmdLoader = new VmdLoader(scene);
 
-        vmdLoader.loadAsync("flos_model", "res/private_test/motion/melancholy_night/motion.vmd")
+        promises.push(vmdLoader.loadAsync("melancholy_night_model", [
+            "res/private_test/motion/melancholy_night/motion.vmd",
+            "res/private_test/motion/melancholy_night/facial.vmd",
+            "res/private_test/motion/melancholy_night/lip.vmd"
+        ])
             .then((animation) => {
                 console.log(animation);
-            });
+            })
+        );
+
+        await Promise.all(promises);
 
         MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
 

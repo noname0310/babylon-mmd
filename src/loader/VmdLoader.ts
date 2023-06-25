@@ -28,21 +28,34 @@ export class VmdLoader {
 
     public loadFromVmdObject(
         name: string,
-        vmdObject: VmdObject,
+        vmdObject: VmdObject | VmdObject[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
         onProgress?: (event: ProgressEvent) => void
     ): void {
+        if (!Array.isArray(vmdObject)) {
+            vmdObject = [vmdObject];
+        }
+
         const boneTracks: MmdBoneAnimationTrack[] = [];
         {
             const boneTrackIndexMap = new Map<string, number>();
             const boneTrackFrameCounts: number[] = [];
             const boneNames: string[] = [];
 
-            const boneKeyFrames = vmdObject.boneKeyFrames;
+            const margedBoneKeyFrames: VmdObject.BoneKeyFrame[] = [];
+            for (let i = 0; i < vmdObject.length; ++i) {
+                const vmdObjectItem = vmdObject[i];
+                const boneKeyFrames = vmdObjectItem.boneKeyFrames;
 
-            const boneKeyFrameCount = boneKeyFrames.length;
-            for (let i = 0; i < boneKeyFrameCount; ++i) {
-                const boneKeyFrame = boneKeyFrames.get(i);
+                const boneKeyFrameCount = boneKeyFrames.length;
+                for (let i = 0; i < boneKeyFrameCount; ++i) {
+                    margedBoneKeyFrames.push(boneKeyFrames.get(i));
+                }
+            }
+
+            const margedBoneKeyFrameCount = margedBoneKeyFrames.length;
+            for (let i = 0; i < margedBoneKeyFrameCount; ++i) {
+                const boneKeyFrame = margedBoneKeyFrames[i];
 
                 const boneName = boneKeyFrame.boneName;
                 let boneTrackIndex = boneTrackIndexMap.get(boneName);
@@ -57,6 +70,8 @@ export class VmdLoader {
                 boneTrackFrameCounts[boneTrackIndex] += 1;
             }
 
+            margedBoneKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
+
             for (let i = 0; i < boneTrackIndexMap.size; ++i) {
                 boneTracks.push(new MmdBoneAnimationTrack(boneNames[i], boneTrackFrameCounts[i]));
             }
@@ -68,11 +83,20 @@ export class VmdLoader {
             const morphTrackFrameCounts: number[] = [];
             const morphNames: string[] = [];
 
-            const morphKeyFrames = vmdObject.morphKeyFrames;
+            const margedMorphKeyFrames: VmdObject.MorphKeyFrame[] = [];
+            for (let i = 0; i < vmdObject.length; ++i) {
+                const vmdObjectItem = vmdObject[i];
+                const morphKeyFrames = vmdObjectItem.morphKeyFrames;
 
-            const morphKeyFrameCount = morphKeyFrames.length;
-            for (let i = 0; i < morphKeyFrameCount; ++i) {
-                const morphKeyFrame = morphKeyFrames.get(i);
+                const morphKeyFrameCount = morphKeyFrames.length;
+                for (let i = 0; i < morphKeyFrameCount; ++i) {
+                    margedMorphKeyFrames.push(morphKeyFrames.get(i));
+                }
+            }
+
+            const margedMorphKeyFrameCount = margedMorphKeyFrames.length;
+            for (let i = 0; i < margedMorphKeyFrameCount; ++i) {
+                const morphKeyFrame = margedMorphKeyFrames[i];
 
                 const morphName = morphKeyFrame.morphName;
                 let morphTrackIndex = morphTrackIndexMap.get(morphName);
@@ -87,30 +111,57 @@ export class VmdLoader {
                 morphTrackFrameCounts[morphTrackIndex] += 1;
             }
 
+            margedMorphKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
+
             for (let i = 0; i < morphTrackIndexMap.size; ++i) {
                 morphTracks.push(new MmdMorphAnimationTrack(morphNames[i], morphTrackFrameCounts[i]));
             }
         }
 
-        const propertyKeyFrames = vmdObject.propertyKeyFrames;
-        let maxIkStateCount = 0;
-        for (let i = 0; i < propertyKeyFrames.length; ++i) {
-            const propertyKeyFrame = propertyKeyFrames[i];
-            maxIkStateCount = Math.max(maxIkStateCount, propertyKeyFrame.ikStates.length);
+        const margedPropertyKeyFrames: VmdObject.PropertyKeyFrame[] = [];
+        for (let i = 0; i < vmdObject.length; ++i) {
+            const vmdObjectItem = vmdObject[i];
+            const propertyKeyFrames = vmdObjectItem.propertyKeyFrames;
+            for (let i = 0; i < propertyKeyFrames.length; ++i) {
+                margedPropertyKeyFrames.push(propertyKeyFrames[i]);
+            }
         }
-        const propertyTrack = new MmdPropertyAnimationTrack("propertyTrack", vmdObject.propertyKeyFrames.length, maxIkStateCount);
+        margedPropertyKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
+        const ikStates = new Set<string>();
+        for (let i = 0; i < vmdObject.length; ++i) {
+            const vmdObjectItem = vmdObject[i];
+            const propertyKeyFrames = vmdObjectItem.propertyKeyFrames;
+            for (let i = 0; i < propertyKeyFrames.length; ++i) {
+                const propertyKeyFrame = propertyKeyFrames[i];
+                for (let j = 0; j < propertyKeyFrame.ikStates.length; ++j) {
+                    ikStates.add(propertyKeyFrame.ikStates[j][0]);
+                }
+            }
+        }
+        const propertyTrack = new MmdPropertyAnimationTrack("propertyTrack", margedPropertyKeyFrames.length, ikStates.size);
         // {
         //     const propertyKeyFrames = vmdObject.propertyKeyFrames;
 
         //     const propertyKeyFrameCount = propertyKeyFrames.length;
-
         // }
 
-        const cameraTrack = new MmdCameraAnimationTrack("cameraTrack", vmdObject.cameraKeyFrames.length);
+        const margedCameraKeyFrames: VmdObject.CameraKeyFrame[] = [];
+        for (let i = 0; i < vmdObject.length; ++i) {
+            const vmdObjectItem = vmdObject[i];
+            const cameraKeyFrames = vmdObjectItem.cameraKeyFrames;
+            for (let i = 0; i < cameraKeyFrames.length; ++i) {
+                margedCameraKeyFrames.push(cameraKeyFrames.get(i));
+            }
+        }
+        margedCameraKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
+        const cameraTrack = new MmdCameraAnimationTrack("cameraTrack", margedCameraKeyFrames.length);
 
         onProgress;
 
         if (0 < cameraTrack.frameNumbers.length) {
+            if (boneTracks.length !== 0 || morphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
+                this.warn("animation contains both camera and model animation. model animation will be ignored.");
+            }
             onLoad(cameraTrack);
         } else {
             onLoad(new MmdModelAnimation(name, boneTracks, morphTracks, propertyTrack));
@@ -119,7 +170,7 @@ export class VmdLoader {
 
     public loadFromVmdObjectAsync(
         name: string,
-        vmdObject: VmdObject,
+        vmdObject: VmdObject | VmdObject[],
         onProgress?: (event: ProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve) => {
@@ -129,16 +180,24 @@ export class VmdLoader {
 
     public loadFromVmdData(
         name: string,
-        vmdData: VmdData,
+        vmdData: VmdData | VmdData[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
         onProgress?: (event: ProgressEvent) => void
     ): void {
-        this.loadFromVmdObject(name, VmdObject.Parse(vmdData), onLoad, onProgress);
+        if (!Array.isArray(vmdData)) {
+            vmdData = [vmdData];
+        }
+
+        const vmdObjects: VmdObject[] = [];
+        for (let i = 0; i < vmdData.length; ++i) {
+            vmdObjects.push(VmdObject.Parse(vmdData[i]));
+        }
+        this.loadFromVmdObject(name, vmdObjects, onLoad, onProgress);
     }
 
     public loadFromVmdDataAsync(
         name: string,
-        vmdData: VmdData,
+        vmdData: VmdData | VmdData[],
         onProgress?: (event: ProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve) => {
@@ -148,22 +207,30 @@ export class VmdLoader {
 
     public loadFromBuffer(
         name: string,
-        buffer: ArrayBufferLike,
+        buffer: ArrayBufferLike | ArrayBufferLike[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
         onProgress?: (event: ProgressEvent) => void,
         onError?: (event: Error) => void
     ): void {
-        const vmdData = VmdData.CheckedCreate(buffer);
-        if (vmdData === null) {
-            onError?.(new Error("VMD data is invalid."));
-            return;
+        if (!Array.isArray(buffer)) {
+            buffer = [buffer];
+        }
+
+        const vmdData: VmdData[] = [];
+        for (let i = 0; i < buffer.length; ++i) {
+            const vmdDatum = VmdData.CheckedCreate(buffer[i]);
+            if (vmdDatum === null) {
+                onError?.(new Error("VMD data validation failed."));
+                return;
+            }
+            vmdData.push(vmdDatum);
         }
         this.loadFromVmdData(name, vmdData, onLoad, onProgress);
     }
 
     public loadFromBufferAsync(
         name: string,
-        buffer: ArrayBufferLike,
+        buffer: ArrayBufferLike | ArrayBufferLike[],
         onProgress?: (event: ProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
@@ -173,33 +240,47 @@ export class VmdLoader {
 
     public load(
         name: string,
-        fileOrUrl: File | string,
+        fileOrUrl: File | string | File[] | string[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
         onProgress?: (event: ProgressEvent) => void,
         onError?: ((request?: WebRequest | undefined, exception?: Error | undefined) => void) | undefined
-    ): IFileRequest {
-        const request = this._scene._loadFile(
-            fileOrUrl,
-            (data: string | ArrayBuffer, _responseURL?: string) => {
-                if (typeof data === "string") {
-                    onError?.(undefined, new LoadFileError("VMD data must be binary."));
-                } else {
-                    this.loadFromBuffer(name, data, onLoad, onProgress, (event) => {
-                        onError?.(undefined, event);
-                    });
-                }
-            },
-            onProgress,
-            true,
-            true,
-            onError
-        );
-        return request;
+    ): typeof fileOrUrl extends any[] ? IFileRequest[] : IFileRequest {
+        if (!Array.isArray(fileOrUrl)) {
+            fileOrUrl = [fileOrUrl as any];
+        }
+
+        const scene = this._scene;
+        const arrayBuffers: ArrayBuffer[] = [];
+        const requests: IFileRequest[] = [];
+        for (let i = 0; i < fileOrUrl.length; ++i) {
+            const item = fileOrUrl[i];
+            requests.push(scene._loadFile(
+                item,
+                (data: string | ArrayBuffer, _responseURL?: string) => {
+                    if (typeof data === "string") {
+                        onError?.(undefined, new LoadFileError("VMD data must be binary."));
+                    } else {
+                        arrayBuffers.push(data);
+                        if (arrayBuffers.length === fileOrUrl.length) {
+                            this.loadFromBuffer(name, arrayBuffers, onLoad, onProgress, (event) => {
+                                onError?.(undefined, event);
+                            });
+                        }
+                    }
+                },
+                onProgress,
+                true,
+                true,
+                onError
+            ));
+        }
+
+        return fileOrUrl.length === 1 ? requests[0] : requests as any;
     }
 
     public loadAsync(
         name: string,
-        fileOrUrl: File | string,
+        fileOrUrl: File | string | File[] | string[],
         onProgress?: (event: ProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
