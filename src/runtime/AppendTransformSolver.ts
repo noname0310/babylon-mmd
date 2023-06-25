@@ -51,7 +51,7 @@ export class AppendTransformSolver {
             }
 
             if (targetBone.ikRotation !== null) {
-                appendRotationOffset.multiplyInPlace(targetBone.ikRotation);
+                targetBone.ikRotation.multiplyToRef(appendRotationOffset, appendRotationOffset);
             }
 
             Quaternion.SlerpToRef(
