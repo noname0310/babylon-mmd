@@ -56,10 +56,11 @@ export class MmdRuntimeModelAnimation {
                 if (bone === null) continue;
 
                 const boneTrack = boneTracks[i];
-                const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, boneTrack);
+                const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
+                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, boneTrack);
 
                 const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
-                if (frameNumberB === frameTime) {
+                if (frameNumberB === clampedFrameTime) {
                     const rotations = boneTrack.rotations;
                     bone.setRotationQuaternion(
                         MmdRuntimeModelAnimation._BoneRotationB.set(
@@ -72,7 +73,7 @@ export class MmdRuntimeModelAnimation {
                     );
                 } else {
                     const frameNumberA = boneTrack.frameNumbers[lowerBoundIndex - 1];
-                    const interpolateTime = (frameTime - frameNumberA) / (frameNumberB - frameNumberA);
+                    const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
                     const rotations = boneTrack.rotations;
                     const rotationInterpolations = boneTrack.rotationInterpolations;
@@ -112,7 +113,8 @@ export class MmdRuntimeModelAnimation {
                 if (bone === null) continue;
 
                 const boneTrack = moveableBoneTracks[i];
-                const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, boneTrack);
+                const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
+                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, boneTrack);
 
                 const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
                 if (frameNumberB === frameTime) {
@@ -138,7 +140,7 @@ export class MmdRuntimeModelAnimation {
                     );
                 } else {
                     const frameNumberA = boneTrack.frameNumbers[lowerBoundIndex - 1];
-                    const interpolateTime = (frameTime - frameNumberA) / (frameNumberB - frameNumberA);
+                    const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
                     const positions = boneTrack.positions;
                     const positionInterpolations = boneTrack.positionInterpolations;
@@ -176,9 +178,9 @@ export class MmdRuntimeModelAnimation {
                         positionInterpolations[lowerBoundIndex * 12 + 11] / 127 // z_y2
                     );
 
-                    Vector3.LerpToRef(positionA, positionB, xWeight, positionA);
-                    Vector3.LerpToRef(positionA, positionB, yWeight, positionA);
-                    Vector3.LerpToRef(positionA, positionB, zWeight, positionA);
+                    positionA.x = positionA.x + (positionB.x - positionA.x) * xWeight;
+                    positionA.y = positionA.y + (positionB.y - positionA.y) * yWeight;
+                    positionA.z = positionA.z + (positionB.z - positionA.z) * zWeight;
                     bone.setPosition(positionA, Space.LOCAL);
 
                     const rotations = boneTrack.rotations;
@@ -221,17 +223,18 @@ export class MmdRuntimeModelAnimation {
 
                 const morphTrack = morphTracks[i];
 
-                const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, morphTrack);
+                const clampedFrameTime = Math.max(morphTrack.startFrame, Math.min(morphTrack.endFrame, frameTime));
+                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, morphTrack);
 
                 const frameNumberB = morphTrack.frameNumbers[lowerBoundIndex];
-                if (frameNumberB === frameTime) {
+                if (frameNumberB === clampedFrameTime) {
                     const weight = morphTrack.weights[lowerBoundIndex];
                     for (let j = 0; j < morphIndices.length; ++j) {
                         morphController.setMorphWeightFromIndex(morphIndices[j], weight);
                     }
                 } else {
                     const frameNumberA = morphTrack.frameNumbers[lowerBoundIndex - 1];
-                    const relativeTime = (frameTime - frameNumberA) / (frameNumberB - frameNumberA);
+                    const relativeTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
                     const weightA = morphTrack.weights[lowerBoundIndex - 1];
                     const weightB = morphTrack.weights[lowerBoundIndex];
@@ -247,9 +250,10 @@ export class MmdRuntimeModelAnimation {
         if (0 < animation.propertyTrack.frameNumbers.length) {
             const propertyTrack = animation.propertyTrack;
 
-            const lowerBoundIndex = this._lowerBoundFrameIndex(frameTime, propertyTrack);
+            const clampedFrameTime = Math.max(propertyTrack.startFrame, Math.min(propertyTrack.endFrame, frameTime));
+            const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, propertyTrack);
             let stepIndex = lowerBoundIndex;
-            if (propertyTrack.frameNumbers[lowerBoundIndex] !== frameTime) {
+            if (propertyTrack.frameNumbers[lowerBoundIndex] !== clampedFrameTime) {
                 stepIndex = lowerBoundIndex - 1;
             }
 
