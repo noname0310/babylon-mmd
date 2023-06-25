@@ -1,4 +1,4 @@
-import type { IFileRequest, Scene, WebRequest } from "@babylonjs/core";
+import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from "@babylonjs/core";
 import { LoadFileError, Logger, Tools } from "@babylonjs/core";
 
 import { MmdModelAnimation } from "./animation/MmdAnimation";
@@ -30,7 +30,7 @@ export class VmdLoader {
         name: string,
         vmdObject: VmdObject | VmdObject[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): void {
         this.loadFromVmdObjectAsync(name, vmdObject, onProgress).then(onLoad);
     }
@@ -38,12 +38,32 @@ export class VmdLoader {
     public async loadFromVmdObjectAsync(
         name: string,
         vmdObject: VmdObject | VmdObject[],
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         if (!Array.isArray(vmdObject)) {
             vmdObject = [vmdObject];
         }
-        
+
+        let boneLoadCost = 0;
+        let morphLoadCost = 0;
+        let propertyLoadCost = 0;
+        let cameraLoadCost = 0;
+        for (let i = 0; i < vmdObject.length; ++i) {
+            const vmdObjectItem = vmdObject[i];
+            boneLoadCost += vmdObjectItem.boneKeyFrames.length;
+            morphLoadCost += vmdObjectItem.morphKeyFrames.length;
+            propertyLoadCost += vmdObjectItem.propertyKeyFrames.length;
+            cameraLoadCost += vmdObjectItem.cameraKeyFrames.length;
+        }
+
+        const progressEvent = {
+            lengthComputable: true,
+            loaded: 0,
+            total: boneLoadCost + morphLoadCost + propertyLoadCost + cameraLoadCost
+        };
+
+        let lastStageLoaded = 0;
+
         let time = performance.now();
 
         const boneTracks: MmdBoneAnimationTrack[] = [];
@@ -60,7 +80,7 @@ export class VmdLoader {
 
                 const boneKeyFrameCount = boneKeyFrames.length;
                 for (let i = 0; i < boneKeyFrameCount; ++i) {
-                    margedBoneKeyFrames.push(boneKeyFrames.get(i));)
+                    margedBoneKeyFrames.push(boneKeyFrames.get(i));
                 }
             }
 
@@ -96,7 +116,74 @@ export class VmdLoader {
                 await Tools.DelayAsync(0);
                 time = performance.now();
             }
+
+            const trackLengths = new Uint32Array(boneTrackIndexMap.size);
+            for (let i = 0; i < margedBoneKeyFrameCount; ++i) {
+                const boneKeyFrame = margedBoneKeyFrames[i];
+                const trackIndex = boneTrackIndexMap.get(boneKeyFrame.boneName)!;
+                const boneTrack = boneTracks[trackIndex];
+                const insertIndex = trackLengths[trackIndex];
+
+                const boneKeyFrameInterpolation = boneKeyFrame.interpolation;
+
+
+                boneTrack.frameNumbers[insertIndex] = boneKeyFrame.frameNumber;
+
+
+                const boneTrackPositions = boneTrack.positions;
+                const boneKeyFramePosition = boneKeyFrame.position;
+                boneTrackPositions[insertIndex * 3 + 0] = boneKeyFramePosition[0];
+                boneTrackPositions[insertIndex * 3 + 1] = boneKeyFramePosition[1];
+                boneTrackPositions[insertIndex * 3 + 2] = boneKeyFramePosition[2];
+
+                //interpolation import references: https://github.com/AiMiDi/C4D_MMD_Tool/blob/main/source/Utility.h#L302-L318
+                const boneTrackPositionInterpolations = boneTrack.positionInterpolations;
+                boneTrackPositionInterpolations[insertIndex * 12 + 0] = boneKeyFrameInterpolation[0 * 16 + 0];// x_x1
+                boneTrackPositionInterpolations[insertIndex * 12 + 1] = boneKeyFrameInterpolation[0 * 16 + 8];// x_x2
+                boneTrackPositionInterpolations[insertIndex * 12 + 2] = boneKeyFrameInterpolation[0 * 16 + 4];// x_y1
+                boneTrackPositionInterpolations[insertIndex * 12 + 3] = boneKeyFrameInterpolation[0 * 16 + 12];// x_y2
+
+                boneTrackPositionInterpolations[insertIndex * 12 + 4] = boneKeyFrameInterpolation[1 * 16 + 0];// y_x1
+                boneTrackPositionInterpolations[insertIndex * 12 + 5] = boneKeyFrameInterpolation[1 * 16 + 8];// y_x2
+                boneTrackPositionInterpolations[insertIndex * 12 + 6] = boneKeyFrameInterpolation[1 * 16 + 4];// y_y1
+                boneTrackPositionInterpolations[insertIndex * 12 + 7] = boneKeyFrameInterpolation[1 * 16 + 12];// y_y2
+
+                boneTrackPositionInterpolations[insertIndex * 12 + 8] = boneKeyFrameInterpolation[2 * 16 + 0];// z_x1
+                boneTrackPositionInterpolations[insertIndex * 12 + 9] = boneKeyFrameInterpolation[2 * 16 + 8];// z_x2
+                boneTrackPositionInterpolations[insertIndex * 12 + 10] = boneKeyFrameInterpolation[2 * 16 + 4];// z_y1
+                boneTrackPositionInterpolations[insertIndex * 12 + 11] = boneKeyFrameInterpolation[2 * 16 + 12];// z_y2
+
+
+                const boneTrackRotations = boneTrack.rotations;
+                const boneKeyFrameRotation = boneKeyFrame.rotation;
+                boneTrackRotations[insertIndex * 4 + 0] = boneKeyFrameRotation[0];
+                boneTrackRotations[insertIndex * 4 + 1] = boneKeyFrameRotation[1];
+                boneTrackRotations[insertIndex * 4 + 2] = boneKeyFrameRotation[2];
+                boneTrackRotations[insertIndex * 4 + 3] = boneKeyFrameRotation[3];
+
+                const boneTrackRotationInterpolations = boneTrack.rotationInterpolations;
+                boneTrackRotationInterpolations[insertIndex * 4 + 0] = boneKeyFrameInterpolation[3 * 16 + 0];// x1
+                boneTrackRotationInterpolations[insertIndex * 4 + 1] = boneKeyFrameInterpolation[3 * 16 + 8];// x2
+                boneTrackRotationInterpolations[insertIndex * 4 + 2] = boneKeyFrameInterpolation[3 * 16 + 4];// y1
+                boneTrackRotationInterpolations[insertIndex * 4 + 3] = boneKeyFrameInterpolation[3 * 16 + 12];// y2
+
+
+                trackLengths[trackIndex] += 1;
+
+
+                if (i % 1000 < performance.now() - time) {
+                    progressEvent.loaded = lastStageLoaded + i;
+                    onProgress?.({ ...progressEvent });
+
+                    await Tools.DelayAsync(0);
+                    time = performance.now();
+                }
+            }
         }
+
+        progressEvent.loaded = lastStageLoaded + boneLoadCost;
+        onProgress?.({ ...progressEvent });
+        lastStageLoaded += boneLoadCost;
 
         const morphTracks: MmdMorphAnimationTrack[] = [];
         {
@@ -142,12 +229,37 @@ export class VmdLoader {
             for (let i = 0; i < morphTrackIndexMap.size; ++i) {
                 morphTracks.push(new MmdMorphAnimationTrack(morphNames[i], morphTrackFrameCounts[i]));
             }
-            
+
             if (100 < performance.now() - time) {
                 await Tools.DelayAsync(0);
                 time = performance.now();
             }
+
+            const trackLengths = new Uint32Array(morphTrackIndexMap.size);
+            for (let i = 0; i < margedMorphKeyFrameCount; ++i) {
+                const morphKeyFrame = margedMorphKeyFrames[i];
+                const trackIndex = morphTrackIndexMap.get(morphKeyFrame.morphName)!;
+                const morphTrack = morphTracks[trackIndex];
+                const insertIndex = trackLengths[trackIndex];
+
+                morphTrack.frameNumbers[insertIndex] = morphKeyFrame.frameNumber;
+                morphTrack.weights[insertIndex] = morphKeyFrame.weight;
+
+                trackLengths[trackIndex] += 1;
+
+                if (i % 1000 < performance.now() - time) {
+                    progressEvent.loaded = lastStageLoaded + i;
+                    onProgress?.({ ...progressEvent });
+
+                    await Tools.DelayAsync(0);
+                    time = performance.now();
+                }
+            }
         }
+
+        progressEvent.loaded = lastStageLoaded + morphLoadCost;
+        onProgress?.({ ...progressEvent });
+        lastStageLoaded += morphLoadCost;
 
         const margedPropertyKeyFrames: VmdObject.PropertyKeyFrame[] = [];
         for (let i = 0; i < vmdObject.length; ++i) {
@@ -169,12 +281,51 @@ export class VmdLoader {
                 }
             }
         }
-        const propertyTrack = new MmdPropertyAnimationTrack("propertyTrack", margedPropertyKeyFrames.length, ikStates.size);
-        // {
-        //     const propertyKeyFrames = vmdObject.propertyKeyFrames;
+        const propertyTrack = new MmdPropertyAnimationTrack(margedPropertyKeyFrames.length, ikStates.size);
+        {
+            const boneNameMap: string[] = new Array(ikStates.size);
+            const boneIndexMap: Map<string, number> = new Map();
+            let ikStateIndex = 0;
+            for (const ikState of ikStates) {
+                boneNameMap[ikStateIndex] = ikState;
+                boneIndexMap.set(ikState, ikStateIndex);
 
-        //     const propertyKeyFrameCount = propertyKeyFrames.length;
-        // }
+                propertyTrack.ikBoneNames[ikStateIndex] = ikState;
+                ikStateIndex += 1;
+            }
+
+            const keyExistsCheckArray = new Uint8Array(ikStates.size);
+
+            for (let i = 0; i < margedPropertyKeyFrames.length; ++i) {
+                const propertyKeyFrame = margedPropertyKeyFrames[i];
+
+                propertyTrack.frameNumbers[i] = propertyKeyFrame.frameNumber;
+                propertyTrack.visibles[i] = propertyKeyFrame.visible ? 1 : 0;
+
+                const propertyTrackIkStates = propertyTrack.ikStates;
+                const propertyKeyFrameIkStates = propertyKeyFrame.ikStates;
+
+                keyExistsCheckArray.fill(0);
+                for (let j = 0; j < propertyKeyFrameIkStates.length; ++j) {
+                    const ikState = propertyKeyFrameIkStates[j];
+                    const boneIndex = boneIndexMap.get(ikState[0])!;
+                    propertyTrackIkStates[boneIndex][i] = ikState[1] ? 1 : 0;
+
+                    keyExistsCheckArray[boneIndex] = 1;
+                }
+
+                for (let j = 0; j < keyExistsCheckArray.length; ++j) {
+                    if (keyExistsCheckArray[j] === 0) {
+                        const previousValue = propertyTrackIkStates[j][i - 1];
+                        propertyTrackIkStates[j][i] = previousValue === undefined ? 0 : previousValue;
+                    }
+                }
+            }
+        }
+
+        progressEvent.loaded = lastStageLoaded + propertyLoadCost;
+        onProgress?.({ ...progressEvent });
+        lastStageLoaded += propertyLoadCost;
 
         const margedCameraKeyFrames: VmdObject.CameraKeyFrame[] = [];
         for (let i = 0; i < vmdObject.length; ++i) {
@@ -185,9 +336,81 @@ export class VmdLoader {
             }
         }
         margedCameraKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
-        const cameraTrack = new MmdCameraAnimationTrack("cameraTrack", margedCameraKeyFrames.length);
+        const cameraTrack = new MmdCameraAnimationTrack(name, margedCameraKeyFrames.length);
+        for (let i = 0; i < margedCameraKeyFrames.length; ++i) {
+            const cameraKeyFrame = margedCameraKeyFrames[i];
+            const cameraKeyFrameInterpolation = cameraKeyFrame.interpolation;
 
-        onProgress;
+
+            cameraTrack.frameNumbers[i] = cameraKeyFrame.frameNumber;
+
+
+            const cameraTrackPositions = cameraTrack.positions;
+            const cameraKeyFramePosition = cameraKeyFrame.position;
+            cameraTrackPositions[i * 3 + 0] = cameraKeyFramePosition[0];
+            cameraTrackPositions[i * 3 + 1] = cameraKeyFramePosition[1];
+            cameraTrackPositions[i * 3 + 2] = cameraKeyFramePosition[2];
+
+            const cameraTrackPositionInterpolations = cameraTrack.positionInterpolations;
+            cameraTrackPositionInterpolations[i * 12 + 0] = cameraKeyFrameInterpolation[0];// x_x1
+            cameraTrackPositionInterpolations[i * 12 + 1] = cameraKeyFrameInterpolation[1];// x_x2
+            cameraTrackPositionInterpolations[i * 12 + 2] = cameraKeyFrameInterpolation[2];// x_y1
+            cameraTrackPositionInterpolations[i * 12 + 3] = cameraKeyFrameInterpolation[3];// x_y2
+
+            cameraTrackPositionInterpolations[i * 12 + 4] = cameraKeyFrameInterpolation[4];// y_x1
+            cameraTrackPositionInterpolations[i * 12 + 5] = cameraKeyFrameInterpolation[5];// y_x2
+            cameraTrackPositionInterpolations[i * 12 + 6] = cameraKeyFrameInterpolation[6];// y_y1
+            cameraTrackPositionInterpolations[i * 12 + 7] = cameraKeyFrameInterpolation[7];// y_y2
+
+            cameraTrackPositionInterpolations[i * 12 + 8] = cameraKeyFrameInterpolation[8];// z_x1
+            cameraTrackPositionInterpolations[i * 12 + 9] = cameraKeyFrameInterpolation[9];// z_x2
+            cameraTrackPositionInterpolations[i * 12 + 10] = cameraKeyFrameInterpolation[10];// z_y1
+            cameraTrackPositionInterpolations[i * 12 + 11] = cameraKeyFrameInterpolation[11];// z_y2
+
+
+            const cameraTrackRotations = cameraTrack.rotations;
+            const cameraKeyFrameRotation = cameraKeyFrame.rotation;
+            cameraTrackRotations[i * 3 + 0] = cameraKeyFrameRotation[0];
+            cameraTrackRotations[i * 3 + 1] = cameraKeyFrameRotation[1];
+            cameraTrackRotations[i * 3 + 2] = cameraKeyFrameRotation[2];
+
+            const cameraTrackRotationInterpolations = cameraTrack.rotationInterpolations;
+            cameraTrackRotationInterpolations[i * 4 + 0] = cameraKeyFrameInterpolation[12];// x1
+            cameraTrackRotationInterpolations[i * 4 + 1] = cameraKeyFrameInterpolation[13];// x2
+            cameraTrackRotationInterpolations[i * 4 + 2] = cameraKeyFrameInterpolation[14];// y1
+            cameraTrackRotationInterpolations[i * 4 + 3] = cameraKeyFrameInterpolation[15];// y2
+
+
+            cameraTrack.distances[i] = cameraKeyFrame.distance;
+
+            const cameraTrackDistancesInterpolations = cameraTrack.distancesInterpolations;
+            cameraTrackDistancesInterpolations[i * 4 + 0] = cameraKeyFrameInterpolation[16];// x1
+            cameraTrackDistancesInterpolations[i * 4 + 1] = cameraKeyFrameInterpolation[17];// x2
+            cameraTrackDistancesInterpolations[i * 4 + 2] = cameraKeyFrameInterpolation[18];// y1
+            cameraTrackDistancesInterpolations[i * 4 + 3] = cameraKeyFrameInterpolation[19];// y2
+
+
+            cameraTrack.fovs[i] = cameraKeyFrame.fov;
+
+            const cameraTrackFovInterpolations = cameraTrack.fovInterpolations;
+            cameraTrackFovInterpolations[i * 4 + 0] = cameraKeyFrameInterpolation[20];// x1
+            cameraTrackFovInterpolations[i * 4 + 1] = cameraKeyFrameInterpolation[21];// x2
+            cameraTrackFovInterpolations[i * 4 + 2] = cameraKeyFrameInterpolation[22];// y1
+            cameraTrackFovInterpolations[i * 4 + 3] = cameraKeyFrameInterpolation[23];// y2
+
+
+            if (i % 1000 < performance.now() - time) {
+                progressEvent.loaded = lastStageLoaded + i;
+                onProgress?.({ ...progressEvent });
+
+                await Tools.DelayAsync(0);
+                time = performance.now();
+            }
+        }
+
+        progressEvent.loaded = lastStageLoaded + cameraLoadCost;
+        onProgress?.({ ...progressEvent });
+        lastStageLoaded += cameraLoadCost;
 
         if (0 < cameraTrack.frameNumbers.length) {
             if (boneTracks.length !== 0 || morphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
@@ -203,7 +426,7 @@ export class VmdLoader {
         name: string,
         vmdData: VmdData | VmdData[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): void {
         if (!Array.isArray(vmdData)) {
             vmdData = [vmdData];
@@ -219,7 +442,7 @@ export class VmdLoader {
     public loadFromVmdDataAsync(
         name: string,
         vmdData: VmdData | VmdData[],
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve) => {
             this.loadFromVmdData(name, vmdData, resolve, onProgress);
@@ -230,7 +453,7 @@ export class VmdLoader {
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
-        onProgress?: (event: ProgressEvent) => void,
+        onProgress?: (event: ISceneLoaderProgressEvent) => void,
         onError?: (event: Error) => void
     ): void {
         if (!Array.isArray(buffer)) {
@@ -252,7 +475,7 @@ export class VmdLoader {
     public loadFromBufferAsync(
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
             this.loadFromBuffer(name, buffer, resolve, onProgress, reject);
@@ -263,7 +486,7 @@ export class VmdLoader {
         name: string,
         fileOrUrl: File | string | File[] | string[],
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
-        onProgress?: (event: ProgressEvent) => void,
+        onProgress?: (event: ISceneLoaderProgressEvent) => void,
         onError?: ((request?: WebRequest | undefined, exception?: Error | undefined) => void) | undefined
     ): typeof fileOrUrl extends any[] ? IFileRequest[] : IFileRequest {
         if (!Array.isArray(fileOrUrl)) {
@@ -302,7 +525,7 @@ export class VmdLoader {
     public loadAsync(
         name: string,
         fileOrUrl: File | string | File[] | string[],
-        onProgress?: (event: ProgressEvent) => void
+        onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
             this.load(name, fileOrUrl, resolve, onProgress, reject);
