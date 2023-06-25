@@ -1,5 +1,5 @@
 import type { IFileRequest, Scene, WebRequest } from "@babylonjs/core";
-import { LoadFileError, Logger } from "@babylonjs/core";
+import { LoadFileError, Logger, Tools } from "@babylonjs/core";
 
 import { MmdModelAnimation } from "./animation/MmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
@@ -32,9 +32,19 @@ export class VmdLoader {
         onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
         onProgress?: (event: ProgressEvent) => void
     ): void {
+        this.loadFromVmdObjectAsync(name, vmdObject, onProgress).then(onLoad);
+    }
+
+    public async loadFromVmdObjectAsync(
+        name: string,
+        vmdObject: VmdObject | VmdObject[],
+        onProgress?: (event: ProgressEvent) => void
+    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
         if (!Array.isArray(vmdObject)) {
             vmdObject = [vmdObject];
         }
+        
+        let time = performance.now();
 
         const boneTracks: MmdBoneAnimationTrack[] = [];
         {
@@ -43,14 +53,20 @@ export class VmdLoader {
             const boneNames: string[] = [];
 
             const margedBoneKeyFrames: VmdObject.BoneKeyFrame[] = [];
+
             for (let i = 0; i < vmdObject.length; ++i) {
                 const vmdObjectItem = vmdObject[i];
                 const boneKeyFrames = vmdObjectItem.boneKeyFrames;
 
                 const boneKeyFrameCount = boneKeyFrames.length;
                 for (let i = 0; i < boneKeyFrameCount; ++i) {
-                    margedBoneKeyFrames.push(boneKeyFrames.get(i));
+                    margedBoneKeyFrames.push(boneKeyFrames.get(i));)
                 }
+            }
+
+            if (100 < performance.now() - time) {
+                await Tools.DelayAsync(0);
+                time = performance.now();
             }
 
             const margedBoneKeyFrameCount = margedBoneKeyFrames.length;
@@ -75,6 +91,11 @@ export class VmdLoader {
             for (let i = 0; i < boneTrackIndexMap.size; ++i) {
                 boneTracks.push(new MmdBoneAnimationTrack(boneNames[i], boneTrackFrameCounts[i]));
             }
+
+            if (100 < performance.now() - time) {
+                await Tools.DelayAsync(0);
+                time = performance.now();
+            }
         }
 
         const morphTracks: MmdMorphAnimationTrack[] = [];
@@ -92,6 +113,11 @@ export class VmdLoader {
                 for (let i = 0; i < morphKeyFrameCount; ++i) {
                     margedMorphKeyFrames.push(morphKeyFrames.get(i));
                 }
+            }
+
+            if (100 < performance.now() - time) {
+                await Tools.DelayAsync(0);
+                time = performance.now();
             }
 
             const margedMorphKeyFrameCount = margedMorphKeyFrames.length;
@@ -115,6 +141,11 @@ export class VmdLoader {
 
             for (let i = 0; i < morphTrackIndexMap.size; ++i) {
                 morphTracks.push(new MmdMorphAnimationTrack(morphNames[i], morphTrackFrameCounts[i]));
+            }
+            
+            if (100 < performance.now() - time) {
+                await Tools.DelayAsync(0);
+                time = performance.now();
             }
         }
 
@@ -162,20 +193,10 @@ export class VmdLoader {
             if (boneTracks.length !== 0 || morphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
                 this.warn("animation contains both camera and model animation. model animation will be ignored.");
             }
-            onLoad(cameraTrack);
+            return cameraTrack;
         } else {
-            onLoad(new MmdModelAnimation(name, boneTracks, morphTracks, propertyTrack));
+            return new MmdModelAnimation(name, boneTracks, morphTracks, propertyTrack);
         }
-    }
-
-    public loadFromVmdObjectAsync(
-        name: string,
-        vmdObject: VmdObject | VmdObject[],
-        onProgress?: (event: ProgressEvent) => void
-    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
-        return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve) => {
-            this.loadFromVmdObject(name, vmdObject, resolve, onProgress);
-        });
     }
 
     public loadFromVmdData(
