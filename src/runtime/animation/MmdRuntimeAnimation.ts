@@ -38,7 +38,6 @@ export class MmdRuntimeModelAnimation {
         this._morphBindIndexMap = morphBindIndexMap;
         this._mesh = mesh;
         this._ikSolverBindIndexMap = ikSolverBindIndexMap;
-        console.log(this);
     }
 
     private static readonly _BonePositionA = new Vector3();
