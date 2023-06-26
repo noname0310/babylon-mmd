@@ -577,10 +577,11 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
                 positionInterpolations[lowerBoundIndex * 12 + 11] / 127 // z_y2
             );
 
-            positionA.x += (positionB.x - positionA.x) * xWeight;
-            positionA.y += (positionB.y - positionA.y) * yWeight;
-            positionA.z += (positionB.z - positionA.z) * zWeight;
-            camera.position.copyFrom(positionA);
+            camera.position.set(
+                positionA.x + (positionB.x - positionA.x) * xWeight,
+                positionA.y + (positionB.y - positionA.y) * yWeight,
+                positionA.z + (positionB.z - positionA.z) * zWeight
+            );
 
             const rotations = cameraTrack.rotations;
             const rotationInterpolations = cameraTrack.rotationInterpolations;
@@ -603,9 +604,13 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
                 rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
                 rotationInterpolations[lowerBoundIndex * 4 + 3] / 127 // y2
             );
+            const oneMinusRotationWeight = 1 - rotationWeight;
 
-            Vector3.LerpToRef(rotationA, rotationB, rotationWeight, rotationA);
-            camera.rotation.copyFrom(rotationA);
+            camera.rotation.set(
+                rotationA.x * oneMinusRotationWeight + rotationB.x * rotationWeight,
+                rotationA.y * oneMinusRotationWeight + rotationB.y * rotationWeight,
+                rotationA.z * oneMinusRotationWeight + rotationB.z * rotationWeight
+            );
 
             const distanceA = cameraTrack.distances[lowerBoundIndex - 1];
             const distanceB = cameraTrack.distances[lowerBoundIndex];
