@@ -30,4 +30,5 @@ export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } fr
 export { MmdModel } from "@/runtime/MmdModel";
 export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/runtime/MmdMorphController";
 export { MmdRuntime } from "@/runtime/MmdRuntime";
+export { IMmdRuntimeBone } from "@/runtime/MmdRuntimeBone";
 export { MmdStandardMaterialProxy } from "@/runtime/MmdStandardMaterialProxy";
