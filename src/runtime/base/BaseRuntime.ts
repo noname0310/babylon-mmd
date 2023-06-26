@@ -1,16 +1,13 @@
 import type { Engine, Scene } from "@babylonjs/core";
 
-import type { ISceneBuilder } from "./ISceneBuilder";
+export interface ISceneBuilder {
+    build(canvas: HTMLCanvasElement, engine: Engine): Scene | Promise<Scene>;
+}
 
 export interface BaseRuntimeInitParams {
     canvas: HTMLCanvasElement;
     engine: Engine;
     sceneBuilder: ISceneBuilder;
-}
-
-export interface IRuntimeContext {
-    readonly engine: Engine;
-    readonly scene: Scene;
 }
 
 export class BaseRuntime {

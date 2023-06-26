@@ -32,9 +32,9 @@ import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
 
-import type { ISceneBuilder } from "../base/ISceneBuilder";
 import { MmdCamera } from "../MmdCamera";
 import { MmdRuntime } from "../MmdRuntime";
+import type { ISceneBuilder } from "./BaseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -210,11 +210,11 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-
         const sound = new Sound("sound", "res/private_test/motion/flos/flos_YuNi.mp3", scene, () => {
             sound.setPlaybackRate(1.0);
-            sound.play();
+            sound.play(undefined, 417 / 30);
             mmdRuntime.playAnimation();
+            mmdRuntime.seekAnimation(417);
         }, {
             loop: false,
             autoplay: false
