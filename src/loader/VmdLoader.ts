@@ -171,7 +171,7 @@ export class VmdLoader {
                 trackLengths[trackIndex] += 1;
 
 
-                if (i % 1000 < performance.now() - time) {
+                if (i % 1000 === 0 && 100 < performance.now() - time) {
                     progressEvent.loaded = lastStageLoaded + i;
                     onProgress?.({ ...progressEvent });
 
@@ -281,7 +281,7 @@ export class VmdLoader {
 
                 trackLengths[trackIndex] += 1;
 
-                if (i % 1000 < performance.now() - time) {
+                if (i % 1000 === 0 && 100 < performance.now() - time) {
                     progressEvent.loaded = lastStageLoaded + i;
                     onProgress?.({ ...progressEvent });
 
@@ -447,7 +447,7 @@ export class VmdLoader {
             cameraTrackFovInterpolations[i * 4 + 3] = cameraKeyFrameInterpolation[23];// y2
 
 
-            if (i % 1000 < performance.now() - time) {
+            if (i % 1000 === 0 && 100 < performance.now() - time) {
                 progressEvent.loaded = lastStageLoaded + i;
                 onProgress?.({ ...progressEvent });
 
