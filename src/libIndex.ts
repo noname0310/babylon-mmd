@@ -28,6 +28,6 @@ export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdM
 export { MmdCamera } from "@/runtime/MmdCamera";
 export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/runtime/MmdMesh";
 export { MmdModel } from "@/runtime/MmdModel";
-export { MmdMorphController } from "@/runtime/MmdMorphController";
+export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/runtime/MmdMorphController";
 export { MmdRuntime } from "@/runtime/MmdRuntime";
 export { MmdStandardMaterialProxy } from "@/runtime/MmdStandardMaterialProxy";

@@ -10,7 +10,7 @@ import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMate
 import type { MmdMultiMaterial } from "./MmdMesh";
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
-interface RuntimeMaterialMorphElement {
+export interface RuntimeMaterialMorphElement {
     index: number; // material index
     type: PmxObject.Morph.MaterialMorph.Type;
     diffuse: Vec4 | null;
