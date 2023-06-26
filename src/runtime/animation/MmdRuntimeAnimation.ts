@@ -72,6 +72,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     public animate(frameTime: number): void {
         const animation = this.animation;
 
+        const lowerBoundFrameIndex = this._lowerBoundFrameIndex;
+
         const boneTracks = animation.boneTracks;
         if (0 < boneTracks.length) {
             const boneBindIndexMap = this._boneBindIndexMap;
@@ -81,7 +83,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
                 const boneTrack = boneTracks[i];
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
-                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, boneTrack);
+                const lowerBoundIndex = lowerBoundFrameIndex(clampedFrameTime, boneTrack);
 
                 const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
                 if (frameNumberB === clampedFrameTime) {
@@ -145,7 +147,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
                 const boneTrack = moveableBoneTracks[i];
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
-                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, boneTrack);
+                const lowerBoundIndex = lowerBoundFrameIndex(clampedFrameTime, boneTrack);
 
                 const frameNumberB = boneTrack.frameNumbers[lowerBoundIndex];
                 if (frameNumberB === frameTime) {
@@ -266,7 +268,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                 const morphTrack = morphTracks[i];
 
                 const clampedFrameTime = Math.max(morphTrack.startFrame, Math.min(morphTrack.endFrame, frameTime));
-                const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, morphTrack);
+                const lowerBoundIndex = lowerBoundFrameIndex(clampedFrameTime, morphTrack);
 
                 const frameNumberB = morphTrack.frameNumbers[lowerBoundIndex];
                 if (frameNumberB === clampedFrameTime) {
@@ -293,7 +295,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
             const propertyTrack = animation.propertyTrack;
 
             const clampedFrameTime = Math.max(propertyTrack.startFrame, Math.min(propertyTrack.endFrame, frameTime));
-            const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, propertyTrack);
+            const lowerBoundIndex = lowerBoundFrameIndex(clampedFrameTime, propertyTrack);
             let stepIndex = lowerBoundIndex;
             if (propertyTrack.frameNumbers[lowerBoundIndex] !== clampedFrameTime) {
                 stepIndex = lowerBoundIndex - 1;
