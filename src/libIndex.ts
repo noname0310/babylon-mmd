@@ -21,7 +21,7 @@ export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChec
 export { VmdLoader } from "@/loader/VmdLoader";
 
 // runtime/animation
-export { MmdRuntimeAnimation, MmdRuntimeModelAnimation, MmdRuntimeCameraAnimationTrack } from "@/runtime/animation/MmdRuntimeAnimation";
+export { MmdRuntimeAnimation, MmdRuntimeCameraAnimationTrack, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
 
 // runtime
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
