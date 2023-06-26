@@ -54,7 +54,7 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
 
-        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 15, -40), scene);
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 1000;
 
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
