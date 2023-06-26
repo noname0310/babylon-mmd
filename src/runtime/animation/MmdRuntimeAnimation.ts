@@ -102,7 +102,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     );
                 } else {
                     const frameNumberA = boneTrack.frameNumbers[lowerBoundIndex - 1];
-                    const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
+                    const gradient = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
                     const rotations = boneTrack.rotations;
                     const rotationInterpolations = boneTrack.rotationInterpolations;
@@ -121,7 +121,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     );
 
                     const weight = BezierCurve.Interpolate(
-                        interpolateTime,
+                        gradient,
                         rotationInterpolations[lowerBoundIndex * 4] / 127, // x1
                         rotationInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
                         rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
@@ -179,7 +179,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     );
                 } else {
                     const frameNumberA = boneTrack.frameNumbers[lowerBoundIndex - 1];
-                    const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
+                    const gradient = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
                     const positions = boneTrack.positions;
                     const positionInterpolations = boneTrack.positionInterpolations;
@@ -196,21 +196,21 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     );
 
                     const xWeight = BezierCurve.Interpolate(
-                        interpolateTime,
+                        gradient,
                         positionInterpolations[lowerBoundIndex * 12] / 127, // x_x1
                         positionInterpolations[lowerBoundIndex * 12 + 2] / 127, // x_y1
                         positionInterpolations[lowerBoundIndex * 12 + 1] / 127, // x_x2
                         positionInterpolations[lowerBoundIndex * 12 + 3] / 127 // x_y2
                     );
                     const yWeight = BezierCurve.Interpolate(
-                        interpolateTime,
+                        gradient,
                         positionInterpolations[lowerBoundIndex * 12 + 4] / 127, // y_x1
                         positionInterpolations[lowerBoundIndex * 12 + 6] / 127, // y_y1
                         positionInterpolations[lowerBoundIndex * 12 + 5] / 127, // y_x2
                         positionInterpolations[lowerBoundIndex * 12 + 7] / 127 // y_y2
                     );
                     const zWeight = BezierCurve.Interpolate(
-                        interpolateTime,
+                        gradient,
                         positionInterpolations[lowerBoundIndex * 12 + 8] / 127, // z_x1
                         positionInterpolations[lowerBoundIndex * 12 + 10] / 127, // z_y1
                         positionInterpolations[lowerBoundIndex * 12 + 9] / 127, // z_x2
@@ -240,7 +240,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     );
 
                     const weight = BezierCurve.Interpolate(
-                        interpolateTime,
+                        gradient,
                         rotationInterpolations[lowerBoundIndex * 4] / 127, // x1
                         rotationInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
                         rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
@@ -539,7 +539,7 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             camera.distance = cameraTrack.distances[lowerBoundIndex - 1];
             camera.fov = cameraTrack.fovs[lowerBoundIndex - 1] * MmdRuntimeCameraAnimationTrack._DegToRad;
         } else {
-            const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
+            const gradient = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
             const positions = cameraTrack.positions;
             const positionInterpolations = cameraTrack.positionInterpolations;
@@ -556,21 +556,21 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             );
 
             const xWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 positionInterpolations[lowerBoundIndex * 12] / 127, // x_x1
                 positionInterpolations[lowerBoundIndex * 12 + 2] / 127, // x_y1
                 positionInterpolations[lowerBoundIndex * 12 + 1] / 127, // x_x2
                 positionInterpolations[lowerBoundIndex * 12 + 3] / 127 // x_y2
             );
             const yWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 positionInterpolations[lowerBoundIndex * 12 + 4] / 127, // y_x1
                 positionInterpolations[lowerBoundIndex * 12 + 6] / 127, // y_y1
                 positionInterpolations[lowerBoundIndex * 12 + 5] / 127, // y_x2
                 positionInterpolations[lowerBoundIndex * 12 + 7] / 127 // y_y2
             );
             const zWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 positionInterpolations[lowerBoundIndex * 12 + 8] / 127, // z_x1
                 positionInterpolations[lowerBoundIndex * 12 + 10] / 127, // z_y1
                 positionInterpolations[lowerBoundIndex * 12 + 9] / 127, // z_x2
@@ -598,7 +598,7 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             );
 
             const rotationWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 rotationInterpolations[lowerBoundIndex * 4] / 127, // x1
                 rotationInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
                 rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
@@ -616,7 +616,7 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             const distanceB = cameraTrack.distances[lowerBoundIndex];
 
             const distanceWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 cameraTrack.distanceInterpolations[lowerBoundIndex * 4] / 127, // x1
                 cameraTrack.distanceInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
                 cameraTrack.distanceInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
@@ -629,7 +629,7 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             const fovB = cameraTrack.fovs[lowerBoundIndex];
 
             const fovWeight = BezierCurve.Interpolate(
-                interpolateTime,
+                gradient,
                 cameraTrack.fovInterpolations[lowerBoundIndex * 4] / 127, // x1
                 cameraTrack.fovInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
                 cameraTrack.fovInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
