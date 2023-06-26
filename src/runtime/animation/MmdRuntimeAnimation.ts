@@ -486,11 +486,153 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
         this._camera = camera;
     }
 
-    public animate(frameTime: number): void {
-        frameTime;
-        this._camera;
+    private static readonly _CameraPositionA = new Vector3();
+    private static readonly _CameraPositionB = new Vector3();
+    private static readonly _CameraRotationA = new Vector3();
+    private static readonly _CameraRotationB = new Vector3();
 
-        console.log("MmdRuntimeCameraAnimationTrack.animate is not implemented");
+    private static readonly _DegToRad = Math.PI / 180;
+
+    public animate(frameTime: number): void {
+        const camera = this._camera;
+
+        const cameraTrack = this.animation;
+
+        const clampedFrameTime = Math.max(cameraTrack.startFrame, Math.min(cameraTrack.endFrame, frameTime));
+        const lowerBoundIndex = this._lowerBoundFrameIndex(clampedFrameTime, cameraTrack);
+
+        const frameNumberA = cameraTrack.frameNumbers[lowerBoundIndex - 1];
+        const frameNumberB = cameraTrack.frameNumbers[lowerBoundIndex];
+
+        if (frameNumberB === clampedFrameTime) {
+            const positions = cameraTrack.positions;
+            camera.position.set(
+                positions[lowerBoundIndex * 3],
+                positions[lowerBoundIndex * 3 + 1],
+                positions[lowerBoundIndex * 3 + 2]
+            );
+
+            const rotations = cameraTrack.rotations;
+            camera.rotation.set(
+                rotations[lowerBoundIndex * 3],
+                rotations[lowerBoundIndex * 3 + 1],
+                rotations[lowerBoundIndex * 3 + 2]
+            );
+
+            camera.distance = cameraTrack.distances[lowerBoundIndex];
+            camera.fov = cameraTrack.fovs[lowerBoundIndex] * MmdRuntimeCameraAnimationTrack._DegToRad;
+        } else if (frameNumberA + 1 === frameNumberB) {
+            const positions = cameraTrack.positions;
+            camera.position.set(
+                positions[(lowerBoundIndex - 1) * 3],
+                positions[(lowerBoundIndex - 1) * 3 + 1],
+                positions[(lowerBoundIndex - 1) * 3 + 2]
+            );
+
+            const rotations = cameraTrack.rotations;
+            camera.rotation.set(
+                rotations[(lowerBoundIndex - 1) * 3],
+                rotations[(lowerBoundIndex - 1) * 3 + 1],
+                rotations[(lowerBoundIndex - 1) * 3 + 2]
+            );
+
+            camera.distance = cameraTrack.distances[lowerBoundIndex - 1];
+            camera.fov = cameraTrack.fovs[lowerBoundIndex - 1] * MmdRuntimeCameraAnimationTrack._DegToRad;
+        } else {
+            const interpolateTime = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
+
+            const positions = cameraTrack.positions;
+            const positionInterpolations = cameraTrack.positionInterpolations;
+
+            const positionA = MmdRuntimeCameraAnimationTrack._CameraPositionA.set(
+                positions[(lowerBoundIndex - 1) * 3],
+                positions[(lowerBoundIndex - 1) * 3 + 1],
+                positions[(lowerBoundIndex - 1) * 3 + 2]
+            );
+            const positionB = MmdRuntimeCameraAnimationTrack._CameraPositionB.set(
+                positions[lowerBoundIndex * 3],
+                positions[lowerBoundIndex * 3 + 1],
+                positions[lowerBoundIndex * 3 + 2]
+            );
+
+            const xWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                positionInterpolations[lowerBoundIndex * 12] / 127, // x_x1
+                positionInterpolations[lowerBoundIndex * 12 + 2] / 127, // x_y1
+                positionInterpolations[lowerBoundIndex * 12 + 1] / 127, // x_x2
+                positionInterpolations[lowerBoundIndex * 12 + 3] / 127 // x_y2
+            );
+            const yWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                positionInterpolations[lowerBoundIndex * 12 + 4] / 127, // y_x1
+                positionInterpolations[lowerBoundIndex * 12 + 6] / 127, // y_y1
+                positionInterpolations[lowerBoundIndex * 12 + 5] / 127, // y_x2
+                positionInterpolations[lowerBoundIndex * 12 + 7] / 127 // y_y2
+            );
+            const zWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                positionInterpolations[lowerBoundIndex * 12 + 8] / 127, // z_x1
+                positionInterpolations[lowerBoundIndex * 12 + 10] / 127, // z_y1
+                positionInterpolations[lowerBoundIndex * 12 + 9] / 127, // z_x2
+                positionInterpolations[lowerBoundIndex * 12 + 11] / 127 // z_y2
+            );
+
+            positionA.x += (positionB.x - positionA.x) * xWeight;
+            positionA.y += (positionB.y - positionA.y) * yWeight;
+            positionA.z += (positionB.z - positionA.z) * zWeight;
+            camera.position.copyFrom(positionA);
+
+            const rotations = cameraTrack.rotations;
+            const rotationInterpolations = cameraTrack.rotationInterpolations;
+
+            const rotationA = MmdRuntimeCameraAnimationTrack._CameraRotationA.set(
+                rotations[(lowerBoundIndex - 1) * 3],
+                rotations[(lowerBoundIndex - 1) * 3 + 1],
+                rotations[(lowerBoundIndex - 1) * 3 + 2]
+            );
+            const rotationB = MmdRuntimeCameraAnimationTrack._CameraRotationB.set(
+                rotations[lowerBoundIndex * 3],
+                rotations[lowerBoundIndex * 3 + 1],
+                rotations[lowerBoundIndex * 3 + 2]
+            );
+
+            const rotationWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                rotationInterpolations[lowerBoundIndex * 4] / 127, // x1
+                rotationInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
+                rotationInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
+                rotationInterpolations[lowerBoundIndex * 4 + 3] / 127 // y2
+            );
+
+            Vector3.LerpToRef(rotationA, rotationB, rotationWeight, rotationA);
+            camera.rotation.copyFrom(rotationA);
+
+            const distanceA = cameraTrack.distances[lowerBoundIndex - 1];
+            const distanceB = cameraTrack.distances[lowerBoundIndex];
+
+            const distanceWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                cameraTrack.distanceInterpolations[lowerBoundIndex * 4] / 127, // x1
+                cameraTrack.distanceInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
+                cameraTrack.distanceInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
+                cameraTrack.distanceInterpolations[lowerBoundIndex * 4 + 3] / 127 // y2
+            );
+
+            camera.distance = distanceA + (distanceB - distanceA) * distanceWeight;
+
+            const fovA = cameraTrack.fovs[lowerBoundIndex - 1];
+            const fovB = cameraTrack.fovs[lowerBoundIndex];
+
+            const fovWeight = BezierCurve.Interpolate(
+                interpolateTime,
+                cameraTrack.fovInterpolations[lowerBoundIndex * 4] / 127, // x1
+                cameraTrack.fovInterpolations[lowerBoundIndex * 4 + 2] / 127, // y1
+                cameraTrack.fovInterpolations[lowerBoundIndex * 4 + 1] / 127, // x2
+                cameraTrack.fovInterpolations[lowerBoundIndex * 4 + 3] / 127 // y2
+            );
+
+            camera.fov = (fovA + (fovB - fovA) * fovWeight) * MmdRuntimeCameraAnimationTrack._DegToRad;
+        }
     }
 
     public static Create(animation: MmdCameraAnimationTrack, camera: MmdCamera): MmdRuntimeCameraAnimationTrack {
