@@ -3,12 +3,14 @@ import { Logger } from "@babylonjs/core";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
+import type { MmdCamera } from "./MmdCamera";
 import { MmdMesh } from "./MmdMesh";
 import { MmdModel } from "./MmdModel";
 import { MmdStandardMaterialProxy } from "./MmdStandardMaterialProxy";
 
 export class MmdRuntime implements ILogger {
     private readonly _models: MmdModel[];
+    private _camera: MmdCamera | null;
 
     private _loggingEnabled: boolean;
 
@@ -29,6 +31,7 @@ export class MmdRuntime implements ILogger {
 
     public constructor() {
         this._models = [];
+        this._camera = null;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -63,6 +66,10 @@ export class MmdRuntime implements ILogger {
         models.splice(index, 1);
     }
 
+    public setCamera(camera: MmdCamera): void {
+        this._camera = camera;
+    }
+
     public register(scene: Scene): void {
         if (this._isRegistered) return;
         this._isRegistered = true;
@@ -86,6 +93,10 @@ export class MmdRuntime implements ILogger {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) {
                 models[i].beforePhysics(elapsedFrameTime);
+            }
+
+            if (this._camera !== null) {
+                this._camera.animate(elapsedFrameTime);
             }
         } else {
             const models = this._models;

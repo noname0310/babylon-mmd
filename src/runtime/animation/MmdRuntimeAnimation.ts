@@ -1,19 +1,37 @@
 import type { Material } from "@babylonjs/core";
 import { BezierCurve, type Bone, Quaternion, Space, Vector3 } from "@babylonjs/core";
 
-import type { MmdStandardMaterial } from "@/libIndex";
-import { type MmdAnimationTrack, PmxObject } from "@/libIndex";
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
+import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
+import { PmxObject } from "@/loader/parser/PmxObject";
 
 import type { IIkSolver } from "../IkSolver";
 import type { ILogger } from "../ILogger";
+import type { MmdCamera } from "../MmdCamera";
 import type { RuntimeMmdMesh } from "../MmdMesh";
 import type { MmdModel } from "../MmdModel";
 import type { MmdMorphController } from "../MmdMorphController";
 
 type MorphIndices = readonly number[];
 
-export class MmdRuntimeModelAnimation {
+export abstract class MmdRuntimeAnimation {
+    protected _lowerBoundFrameIndex(frameTime: number, track: MmdAnimationTrack): number {
+        const frameNumbers = track.frameNumbers;
+        let low = 0;
+        let high = frameNumbers.length;
+
+        while (low < high) {
+            const mid = low + ((high - low) >> 1);
+            if (frameTime <= frameNumbers[mid]) high = mid;
+            else low = mid + 1;
+        }
+
+        return low;
+    }
+}
+
+export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     public readonly animation: MmdModelAnimation;
 
     private readonly _boneBindIndexMap: (Bone | null)[];
@@ -32,6 +50,8 @@ export class MmdRuntimeModelAnimation {
         mesh: RuntimeMmdMesh,
         ikSolverBindIndexMap: (IIkSolver | null)[]
     ) {
+        super();
+
         this.animation = animation;
 
         this._boneBindIndexMap = boneBindIndexMap;
@@ -293,20 +313,6 @@ export class MmdRuntimeModelAnimation {
         }
     }
 
-    private _lowerBoundFrameIndex(frameTime: number, track: MmdAnimationTrack): number {
-        const frameNumbers = track.frameNumbers;
-        let low = 0;
-        let high = frameNumbers.length;
-
-        while (low < high) {
-            const mid = low + ((high - low) >> 1);
-            if (frameTime <= frameNumbers[mid]) high = mid;
-            else low = mid + 1;
-        }
-
-        return low;
-    }
-
     public static Create(animation: MmdModelAnimation, model: MmdModel, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.mesh.skeleton;
         const bones = skeleton.bones;
@@ -461,4 +467,31 @@ export class MmdRuntimeModelAnimation {
             }
         }
     };
+}
+
+export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
+    public readonly animation: MmdCameraAnimationTrack;
+
+    private readonly _camera: MmdCamera;
+
+    private constructor(
+        animation: MmdCameraAnimationTrack,
+        camera: MmdCamera
+    ) {
+        super();
+
+        this.animation = animation;
+        this._camera = camera;
+    }
+
+    public animate(frameTime: number): void {
+        frameTime;
+        this._camera;
+
+        console.log("MmdRuntimeCameraAnimationTrack.animate is not implemented");
+    }
+
+    public static Create(animation: MmdCameraAnimationTrack, camera: MmdCamera): MmdRuntimeCameraAnimationTrack {
+        return new MmdRuntimeCameraAnimationTrack(animation, camera);
+    }
 }

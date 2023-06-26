@@ -21,10 +21,11 @@ export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChec
 export { VmdLoader } from "@/loader/VmdLoader";
 
 // runtime/animation
-export { MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
+export { MmdRuntimeAnimation, MmdRuntimeModelAnimation, MmdRuntimeCameraAnimationTrack } from "@/runtime/animation/MmdRuntimeAnimation";
 
 // runtime
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
+export { MmdCamera } from "@/runtime/MmdCamera";
 export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/runtime/MmdMesh";
 export { MmdModel } from "@/runtime/MmdModel";
 export { MmdMorphController } from "@/runtime/MmdMorphController";

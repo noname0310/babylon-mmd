@@ -89,11 +89,14 @@ export class MmdModel {
     }
 
     public removeAnimation(index: number): void {
-        this._animationIndexMap.delete(this._animations[index].animation.name);
+        const animation = this._animations[index];
+        if (this._currentAnimation === animation) this._currentAnimation = null;
+
+        this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
     }
 
-    public setAnimation(name: string|null): void {
+    public setAnimation(name: string | null): void {
         if (name === null) {
             this._currentAnimation = null;
             return;
@@ -108,7 +111,7 @@ export class MmdModel {
         this._currentAnimation = this._animations[index];
     }
 
-    public get animations(): readonly MmdRuntimeModelAnimation[] {
+    public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {
         return this._animations;
     }
 

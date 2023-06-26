@@ -28,12 +28,13 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
-// import { MmdCamera } from "../MmdCamera";
+import { MmdCamera } from "../MmdCamera";
 import { MmdRuntime } from "../MmdRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -53,8 +54,8 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
 
-        // const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 15, -40), scene);
-        // mmdCamera.maxZ = 1000;
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 15, -40), scene);
+        mmdCamera.maxZ = 1000;
 
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
         camera.maxZ = 1000;
@@ -112,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         engine.displayLoadingUI();
 
-        const loadingTexts: string[] = new Array(3).fill("");
+        const loadingTexts: string[] = new Array(4).fill("");
         const updateLoadingText = (updateIndex: number, text: string): void => {
             loadingTexts[updateIndex] = text;
             engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
@@ -151,12 +152,20 @@ export class SceneBuilder implements ISceneBuilder {
             })
         );
 
+        let cameraAnimation2: MmdCameraAnimationTrack;
+        promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
+            (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                cameraAnimation2 = animation as MmdCameraAnimationTrack;
+            })
+        );
+
         promises.push((async(): Promise<void> => {
-            updateLoadingText(2, "Loading physics engine...");
+            updateLoadingText(3, "Loading physics engine...");
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(2, "Loading physics engine... Done");
+            updateLoadingText(3, "Loading physics engine... Done");
         })());
 
         await Promise.all(promises);
@@ -170,11 +179,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdRuntime = new MmdRuntime();
         mmdRuntime.loggingEnabled = true;
-        Object.defineProperty(globalThis, "mmdModels", {
-            configurable: true,
-            enumerable: true,
-            get: () => mmdRuntime.models
-        });
+
+        mmdRuntime.setCamera(mmdCamera);
+        mmdCamera.addAnimation(cameraAnimation2!);
+        mmdCamera.setAnimation("flos_camera");
 
         const meshes = scene.meshes;
         for (let i = 0; i < meshes.length; ++i) {
