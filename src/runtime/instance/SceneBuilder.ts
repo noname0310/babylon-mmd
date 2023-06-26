@@ -217,7 +217,7 @@ export class SceneBuilder implements ISceneBuilder {
             mmdRuntime.playAnimation();
         }, {
             loop: false,
-            autoplay: true
+            autoplay: false
         });
 
         Inspector.Show(scene, { });
