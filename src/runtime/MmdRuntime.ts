@@ -126,6 +126,12 @@ export class MmdRuntime implements ILogger {
         this._isAnimationPlaying = false;
     }
 
+    public seekAnimation(frameTime: number): void {
+        if (!this._isAnimationPlaying) return;
+
+        this._animationStartTime = performance.now() - frameTime * 1000 / 30;
+    }
+
     public get isAnimationPlaying(): boolean {
         return this._isAnimationPlaying;
     }
