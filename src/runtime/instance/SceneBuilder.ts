@@ -20,7 +20,6 @@ import {
     SSAORenderingPipeline,
     SSRRenderingPipeline,
     StandardMaterial,
-    UniversalCamera,
     Vector3,
     VertexData
 } from "@babylonjs/core";
@@ -38,7 +37,7 @@ import { MmdCamera } from "../MmdCamera";
 import { MmdRuntime } from "../MmdRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         await AudioPermissionSolver.Invoke();
 
         SdefInjector.OverrideEngineCreateEffect(engine);
@@ -57,17 +56,17 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 1000;
 
-        const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
-        camera.maxZ = 1000;
-        camera.setTarget(new Vector3(0, 10, 0));
-        camera.attachControl(canvas, false);
-        camera.keysUp.push("W".charCodeAt(0));
-        camera.keysDown.push("S".charCodeAt(0));
-        camera.keysLeft.push("A".charCodeAt(0));
-        camera.keysRight.push("D".charCodeAt(0));
-        camera.inertia = 0;
-        camera.angularSensibility = 500;
-        camera.speed = 10;
+        // const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
+        // camera.maxZ = 1000;
+        // camera.setTarget(new Vector3(0, 10, 0));
+        // camera.attachControl(canvas, false);
+        // camera.keysUp.push("W".charCodeAt(0));
+        // camera.keysDown.push("S".charCodeAt(0));
+        // camera.keysLeft.push("A".charCodeAt(0));
+        // camera.keysRight.push("D".charCodeAt(0));
+        // camera.inertia = 0;
+        // camera.angularSensibility = 500;
+        // camera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
@@ -87,13 +86,13 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.shadowOrthoScale = 0;
 
         DirectionalLightHelper;
-        // const directionalLightHelper = new DirectionalLightHelper(directionalLight, camera);
+        // const directionalLightHelper = new DirectionalLightHelper(directionalLight, mmdCamera);
 
         // window.setTimeout(() => {
         //     scene.onAfterRenderObservable.add(() => directionalLightHelper.buildLightHelper());
         // }, 500);
 
-        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
+        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, mmdCamera);
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
@@ -227,7 +226,7 @@ export class SceneBuilder implements ISceneBuilder {
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
-            const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
+            const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, mmdCamera);
             motionBlur.motionStrength = 1;
 
             const ssaoRatio = {
@@ -240,12 +239,12 @@ export class SceneBuilder implements ISceneBuilder {
             ssao.radius = 0.0001;
             ssao.totalStrength = 0.5;
             ssao.base = 0.5;
-            scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera);
+            scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", mmdCamera);
 
             const ssr = new SSRRenderingPipeline(
                 "ssr",
                 scene,
-                [camera],
+                [mmdCamera],
                 false,
                 Constants.TEXTURETYPE_UNSIGNED_BYTE
             );
@@ -258,7 +257,7 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         if (useBasicPostProcess) {
-            const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+            const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
             defaultPipeline.samples = 4;
             defaultPipeline.bloomEnabled = false;
             defaultPipeline.chromaticAberrationEnabled = false;
