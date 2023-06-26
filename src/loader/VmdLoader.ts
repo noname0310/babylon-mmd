@@ -431,7 +431,7 @@ export class VmdLoader {
 
             cameraTrack.distances[i] = cameraKeyFrame.distance;
 
-            const cameraTrackDistancesInterpolations = cameraTrack.distancesInterpolations;
+            const cameraTrackDistancesInterpolations = cameraTrack.distanceInterpolations;
             cameraTrackDistancesInterpolations[i * 4 + 0] = cameraKeyFrameInterpolation[16];// x1
             cameraTrackDistancesInterpolations[i * 4 + 1] = cameraKeyFrameInterpolation[17];// x2
             cameraTrackDistancesInterpolations[i * 4 + 2] = cameraKeyFrameInterpolation[18];// y1

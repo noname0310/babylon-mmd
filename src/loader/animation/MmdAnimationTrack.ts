@@ -91,7 +91,7 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
     public readonly rotationInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
 
     public readonly distances: Float32Array; // [..., distance, ...]
-    public readonly distancesInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
+    public readonly distanceInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
 
     public readonly fovs: Float32Array; // [..., fov, ...]
     public readonly fovInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
@@ -109,7 +109,7 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
         this.rotationInterpolations = new Uint8Array(frameCount * 4);
 
         this.distances = new Float32Array(frameCount);
-        this.distancesInterpolations = new Uint8Array(frameCount * 4);
+        this.distanceInterpolations = new Uint8Array(frameCount * 4);
 
         this.fovs = new Float32Array(frameCount);
         this.fovInterpolations = new Uint8Array(frameCount * 4);
