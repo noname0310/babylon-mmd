@@ -33,6 +33,7 @@ import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
 
 import type { ISceneBuilder } from "../base/ISceneBuilder";
+// import { MmdCamera } from "../MmdCamera";
 import { MmdRuntime } from "../MmdRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -51,6 +52,9 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
+
+        // const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 15, -40), scene);
+        // mmdCamera.maxZ = 1000;
 
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
         camera.maxZ = 1000;
@@ -201,6 +205,7 @@ export class SceneBuilder implements ISceneBuilder {
 
 
         const sound = new Sound("sound", "res/private_test/motion/flos/flos_YuNi.mp3", scene, () => {
+            sound.setPlaybackRate(1.0);
             sound.play();
             mmdRuntime.playAnimation();
         }, {
