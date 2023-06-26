@@ -330,7 +330,7 @@ export namespace VmdObject {
         public readonly frameNumber: number;
         public readonly position: Vec3;
         public readonly rotation: Vec4;
-        public readonly interpolation: Int8Array;
+        public readonly interpolation: Uint8Array;
 
         public constructor(dataDeserializer: MmdDataDeserializer, offset: number) {
             dataDeserializer.offset = offset;
@@ -340,9 +340,9 @@ export namespace VmdObject {
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(4);
 
-            this.interpolation = new Int8Array(64);
+            this.interpolation = new Uint8Array(64);
             for (let i = 0; i < 64; ++i) {
-                this.interpolation[i] = dataDeserializer.getInt8();
+                this.interpolation[i] = dataDeserializer.getUint8();
             }
         }
     }
@@ -396,7 +396,7 @@ export namespace VmdObject {
         public readonly distance: number;
         public readonly position: Vec3;
         public readonly rotation: Vec3;
-        public readonly interpolation: Int8Array;
+        public readonly interpolation: Uint8Array;
         public readonly fov: number;
         public readonly perspective: boolean;
 
@@ -408,9 +408,9 @@ export namespace VmdObject {
             this.position = dataDeserializer.getFloat32Array(3);
             this.rotation = dataDeserializer.getFloat32Array(3);
 
-            this.interpolation = new Int8Array(24);
+            this.interpolation = new Uint8Array(24);
             for (let i = 0; i < 24; ++i) {
-                this.interpolation[i] = dataDeserializer.getInt8();
+                this.interpolation[i] = dataDeserializer.getUint8();
             }
 
             this.fov = dataDeserializer.getUint32();
