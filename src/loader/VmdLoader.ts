@@ -219,6 +219,148 @@ export class VmdLoader {
             }
         }
         boneTracks.length = 0;
+        if (1 < vmdObject.length) {
+            const boneTrackDuplicateResolvedLengths = new Int32Array(filteredBoneTracks.length).fill(-1);
+            for (let i = 0; i < filteredBoneTracks.length; ++i) {
+                const frameNumbers = filteredBoneTracks[i].frameNumbers;
+
+                let duplicateResolvedLength = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        duplicateResolvedLength += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                if (frameNumbers.length !== duplicateResolvedLength) {
+                    boneTrackDuplicateResolvedLengths[i] = duplicateResolvedLength;
+                }
+            }
+
+            for (let i = 0; i < filteredBoneTracks.length; ++i) {
+                const duplicateResolvedLength = boneTrackDuplicateResolvedLengths[i];
+                if (duplicateResolvedLength === -1) continue;
+
+                const boneTrack = filteredBoneTracks[i];
+                const frameNumbers = boneTrack.frameNumbers;
+                const rotations = boneTrack.rotations;
+                const rotationInterpolations = boneTrack.rotationInterpolations;
+
+                const newTrack = new MmdBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
+
+                let insertIndex = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        const currentIndex = j - 1;
+
+                        newTrack.frameNumbers[insertIndex] = currentFrameNumber;
+
+                        const newRotations = newTrack.rotations;
+                        newRotations[insertIndex * 4 + 0] = rotations[currentIndex * 4 + 0];
+                        newRotations[insertIndex * 4 + 1] = rotations[currentIndex * 4 + 1];
+                        newRotations[insertIndex * 4 + 2] = rotations[currentIndex * 4 + 2];
+                        newRotations[insertIndex * 4 + 3] = rotations[currentIndex * 4 + 3];
+
+                        const newRotationInterpolations = newTrack.rotationInterpolations;
+                        newRotationInterpolations[insertIndex * 4 + 0] = rotationInterpolations[currentIndex * 4 + 0];
+                        newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
+                        newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
+                        newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        insertIndex += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                filteredBoneTracks[i] = newTrack;
+            }
+
+            const moveableBoneTrackDuplicateResolvedLengths = new Int32Array(filteredMoveableBoneTracks.length).fill(-1);
+            for (let i = 0; i < filteredMoveableBoneTracks.length; ++i) {
+                const frameNumbers = filteredMoveableBoneTracks[i].frameNumbers;
+
+                let duplicateResolvedLength = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        duplicateResolvedLength += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                if (frameNumbers.length !== duplicateResolvedLength) {
+                    moveableBoneTrackDuplicateResolvedLengths[i] = duplicateResolvedLength;
+                }
+            }
+
+            for (let i = 0; i < filteredMoveableBoneTracks.length; ++i) {
+                const duplicateResolvedLength = moveableBoneTrackDuplicateResolvedLengths[i];
+                if (duplicateResolvedLength === -1) continue;
+
+                const boneTrack = filteredMoveableBoneTracks[i];
+                const frameNumbers = boneTrack.frameNumbers;
+                const positions = boneTrack.positions;
+                const positionInterpolations = boneTrack.positionInterpolations;
+                const rotations = boneTrack.rotations;
+                const rotationInterpolations = boneTrack.rotationInterpolations;
+
+                const newTrack = new MmdMovableBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
+
+                let insertIndex = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        const currentIndex = j - 1;
+
+                        newTrack.frameNumbers[insertIndex] = currentFrameNumber;
+
+                        const newPositions = newTrack.positions;
+                        newPositions[insertIndex * 3 + 0] = positions[currentIndex * 3 + 0];
+                        newPositions[insertIndex * 3 + 1] = positions[currentIndex * 3 + 1];
+                        newPositions[insertIndex * 3 + 2] = positions[currentIndex * 3 + 2];
+
+                        const newPositionInterpolations = newTrack.positionInterpolations;
+                        newPositionInterpolations[insertIndex * 12 + 0] = positionInterpolations[currentIndex * 12 + 0];
+                        newPositionInterpolations[insertIndex * 12 + 1] = positionInterpolations[currentIndex * 12 + 1];
+                        newPositionInterpolations[insertIndex * 12 + 2] = positionInterpolations[currentIndex * 12 + 2];
+                        newPositionInterpolations[insertIndex * 12 + 3] = positionInterpolations[currentIndex * 12 + 3];
+
+                        newPositionInterpolations[insertIndex * 12 + 4] = positionInterpolations[currentIndex * 12 + 4];
+                        newPositionInterpolations[insertIndex * 12 + 5] = positionInterpolations[currentIndex * 12 + 5];
+                        newPositionInterpolations[insertIndex * 12 + 6] = positionInterpolations[currentIndex * 12 + 6];
+                        newPositionInterpolations[insertIndex * 12 + 7] = positionInterpolations[currentIndex * 12 + 7];
+
+                        newPositionInterpolations[insertIndex * 12 + 8] = positionInterpolations[currentIndex * 12 + 8];
+                        newPositionInterpolations[insertIndex * 12 + 9] = positionInterpolations[currentIndex * 12 + 9];
+                        newPositionInterpolations[insertIndex * 12 + 10] = positionInterpolations[currentIndex * 12 + 10];
+                        newPositionInterpolations[insertIndex * 12 + 11] = positionInterpolations[currentIndex * 12 + 11];
+
+                        const newRotations = newTrack.rotations;
+                        newRotations[insertIndex * 4 + 0] = rotations[currentIndex * 4 + 0];
+                        newRotations[insertIndex * 4 + 1] = rotations[currentIndex * 4 + 1];
+                        newRotations[insertIndex * 4 + 2] = rotations[currentIndex * 4 + 2];
+                        newRotations[insertIndex * 4 + 3] = rotations[currentIndex * 4 + 3];
+
+                        const newRotationInterpolations = newTrack.rotationInterpolations;
+                        newRotationInterpolations[insertIndex * 4 + 0] = rotationInterpolations[currentIndex * 4 + 0];
+                        newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
+                        newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
+                        newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        insertIndex += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                filteredMoveableBoneTracks[i] = newTrack;
+            }
+        }
 
         progressEvent.loaded = lastStageLoaded + boneLoadCost;
         onProgress?.({ ...progressEvent });
@@ -309,6 +451,52 @@ export class VmdLoader {
             filteredMorphTracks.push(morphTrack);
         }
         morphTracks.length = 0;
+        if (1 < vmdObject.length) {
+            const morphTrackDuplicateResolvedLengths = new Int32Array(filteredMorphTracks.length).fill(-1);
+            for (let i = 0; i < filteredMorphTracks.length; ++i) {
+                const frameNumbers = filteredMorphTracks[i].frameNumbers;
+
+                let duplicateResolvedLength = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        duplicateResolvedLength += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                if (frameNumbers.length !== duplicateResolvedLength) {
+                    morphTrackDuplicateResolvedLengths[i] = duplicateResolvedLength;
+                }
+            }
+
+            for (let i = 0; i < filteredMorphTracks.length; ++i) {
+                const duplicateResolvedLength = morphTrackDuplicateResolvedLengths[i];
+                if (duplicateResolvedLength === -1) continue;
+
+                const morphTrack = filteredMorphTracks[i];
+                const frameNumbers = morphTrack.frameNumbers;
+                const weights = morphTrack.weights;
+
+                const newTrack = new MmdMorphAnimationTrack(morphTrack.name, duplicateResolvedLength);
+
+                let insertIndex = 0;
+                let currentFrameNumber = frameNumbers[0];
+                for (let j = 1; j <= frameNumbers.length; ++j) {
+                    const nextFrameNumber = frameNumbers[j];
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        newTrack.frameNumbers[insertIndex] = currentFrameNumber;
+                        newTrack.weights[insertIndex] = weights[j - 1];
+
+                        insertIndex += 1;
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+
+                filteredMorphTracks[i] = newTrack;
+            }
+        }
 
         progressEvent.loaded = lastStageLoaded + morphLoadCost;
         onProgress?.({ ...progressEvent });
@@ -323,6 +511,24 @@ export class VmdLoader {
             }
         }
         margedPropertyKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
+
+        let duplicateResolvedPropertyKeyFrames: VmdObject.PropertyKeyFrame[];
+        {
+            if (1 < vmdObject.length) duplicateResolvedPropertyKeyFrames = margedPropertyKeyFrames;
+            else {
+                duplicateResolvedPropertyKeyFrames = [];
+
+                let currentFrameNumber = margedPropertyKeyFrames[0]?.frameNumber;
+                for (let i = 1; i <= margedPropertyKeyFrames.length; ++i) {
+                    const nextFrameNumber = margedPropertyKeyFrames[i]?.frameNumber;
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        duplicateResolvedPropertyKeyFrames.push(margedPropertyKeyFrames[i - 1]);
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+            }
+        }
+
         const ikStates = new Set<string>();
         for (let i = 0; i < vmdObject.length; ++i) {
             const vmdObjectItem = vmdObject[i];
@@ -334,7 +540,7 @@ export class VmdLoader {
                 }
             }
         }
-        const propertyTrack = new MmdPropertyAnimationTrack(margedPropertyKeyFrames.length, ikStates.size);
+        const propertyTrack = new MmdPropertyAnimationTrack(duplicateResolvedPropertyKeyFrames.length, ikStates.size);
         {
             const boneNameMap: string[] = new Array(ikStates.size);
             const boneIndexMap: Map<string, number> = new Map();
@@ -349,8 +555,8 @@ export class VmdLoader {
 
             const keyExistsCheckArray = new Uint8Array(ikStates.size);
 
-            for (let i = 0; i < margedPropertyKeyFrames.length; ++i) {
-                const propertyKeyFrame = margedPropertyKeyFrames[i];
+            for (let i = 0; i < duplicateResolvedPropertyKeyFrames.length; ++i) {
+                const propertyKeyFrame = duplicateResolvedPropertyKeyFrames[i];
 
                 propertyTrack.frameNumbers[i] = propertyKeyFrame.frameNumber;
                 propertyTrack.visibles[i] = propertyKeyFrame.visible ? 1 : 0;
@@ -389,9 +595,27 @@ export class VmdLoader {
             }
         }
         margedCameraKeyFrames.sort((a, b) => a.frameNumber - b.frameNumber);
-        const cameraTrack = new MmdCameraAnimationTrack(name, margedCameraKeyFrames.length);
-        for (let i = 0; i < margedCameraKeyFrames.length; ++i) {
-            const cameraKeyFrame = margedCameraKeyFrames[i];
+
+        let duplicateResolvedCameraKeyFrames: VmdObject.CameraKeyFrame[];
+        {
+            if (1 < vmdObject.length) duplicateResolvedCameraKeyFrames = margedCameraKeyFrames;
+            else {
+                duplicateResolvedCameraKeyFrames = [];
+
+                let currentFrameNumber = margedCameraKeyFrames[0]?.frameNumber;
+                for (let i = 1; i <= margedCameraKeyFrames.length; ++i) {
+                    const nextFrameNumber = margedCameraKeyFrames[i]?.frameNumber;
+                    if (currentFrameNumber !== nextFrameNumber) {
+                        duplicateResolvedCameraKeyFrames.push(margedCameraKeyFrames[i - 1]);
+                        currentFrameNumber = nextFrameNumber;
+                    }
+                }
+            }
+        }
+
+        const cameraTrack = new MmdCameraAnimationTrack(name, duplicateResolvedCameraKeyFrames.length);
+        for (let i = 0; i < duplicateResolvedCameraKeyFrames.length; ++i) {
+            const cameraKeyFrame = duplicateResolvedCameraKeyFrames[i];
             const cameraKeyFrameInterpolation = cameraKeyFrame.interpolation;
 
 
