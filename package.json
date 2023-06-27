@@ -47,6 +47,7 @@
         "@babylonjs/core": "^6.8.0",
         "@babylonjs/havok": "^1.0.1",
         "@babylonjs/inspector": "^6.8.0",
+        "@babylonjs/materials": "^6.9.0",
         "copy-webpack-plugin": "^11.0.0"
     }
 }

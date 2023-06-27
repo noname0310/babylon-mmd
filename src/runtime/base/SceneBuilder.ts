@@ -26,8 +26,9 @@ import {
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
+import { SkyMaterial } from "@babylonjs/materials";
 
-import type { MmdCameraAnimationTrack } from "@/libIndex";
+import type { MmdCameraAnimationTrack, MmdStandardMaterialBuilder } from "@/libIndex";
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -44,21 +45,21 @@ export class SceneBuilder implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
-        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 1000;
+        mmdCamera.maxZ = 5000;
 
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
-        camera.maxZ = 1000;
+        camera.maxZ = 5000;
         camera.setTarget(new Vector3(0, 10, 0));
         camera.attachControl(canvas, false);
         camera.keysUp.push("W".charCodeAt(0));
@@ -99,7 +100,13 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
-        MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+        // MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+        const skyMaterial = new SkyMaterial("skyMaterial", scene);
+        skyMaterial.backFaceCulling = false;
+        skyMaterial.inclination = 0;
+
+        const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+        skybox.material = skyMaterial;
 
         // SceneLoader.LoadAssetContainer(
         //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
@@ -121,52 +128,78 @@ export class SceneBuilder implements ISceneBuilder {
 
         const promises: Promise<any>[] = [];
 
+        const vmdLoader = new VmdLoader(scene);
+        vmdLoader.loggingEnabled = true;
+
+        promises.push(vmdLoader.loadAsync("camera_motion", "res/private_test/motion/flos/camera.vmd",
+            (event) => updateLoadingText(0, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        );
+
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             //"res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
             undefined,
             scene,
-            (event) => updateLoadingText(0, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(1, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        const vmdLoader = new VmdLoader(scene);
-        vmdLoader.loggingEnabled = true;
-
-        // let modelAnimation: MmdModelAnimation;
-        // promises.push(vmdLoader.loadAsync("melancholy_night_model", [
-        //     "res/private_test/motion/melancholy_night/motion.vmd",
-        //     "res/private_test/motion/melancholy_night/facial.vmd",
-        //     "res/private_test/motion/melancholy_night/lip.vmd"
-        // ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        //     .then((animation) => {
-        //         modelAnimation = animation as MmdModelAnimation;
-        //     })
-        // );
-
-        // let cameraAnimation: MmdCameraAnimationTrack;
-        // promises.push(vmdLoader.loadAsync("melancholy_night_camera", "res/private_test/motion/melancholy_night/camera.vmd",
-        //     (event) => updateLoadingText(2, `Loading camera(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        //     .then((animation) => {
-        //         cameraAnimation = animation as MmdCameraAnimationTrack;
-        //     })
-        // );
-
-        let modelAnimation2: MmdModelAnimation;
-        promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
-            (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                modelAnimation2 = animation as MmdModelAnimation;
-            })
+        promises.push(vmdLoader.loadAsync("model_motion", "res/private_test/motion/flos/combined.vmd",
+            (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
-        let cameraAnimation2: MmdCameraAnimationTrack;
-        promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
-            (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                cameraAnimation2 = animation as MmdCameraAnimationTrack;
-            })
-        );
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
+            "res/private_test/stage/water_house/water house.pmx",
+            undefined,
+            scene,
+            (event) => updateLoadingText(4, `Loading model(water house)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+        ));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/1 - Daphne/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/1.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/2 - Ficus/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/2.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/3 - Iris/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/3.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/4 - Maackia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/4.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/5 - Lythrum/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/5.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/6 - Myrica/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/6.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/7 - Sabia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/7.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/8 - Flos/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/8.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/9 - Thymus/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/9.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/10 - Ribes/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/10.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/11 - Abelia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/11.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/12 - Sedum/TextModel.pmx", undefined,  scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/12.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/13 - Felicia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/13.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/14 - Ochna/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/14.vmd"));
+
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/15 - Lychnis/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/15.vmd"));
 
         promises.push((async(): Promise<void> => {
             updateLoadingText(3, "Loading physics engine...");
@@ -176,11 +209,12 @@ export class SceneBuilder implements ISceneBuilder {
             updateLoadingText(3, "Loading physics engine... Done");
         })());
 
-        await Promise.all(promises);
+        const loadResults = await Promise.all(promises);
 
         setTimeout(() => engine.hideLoadingUI(), 0);
 
         scene.meshes.forEach((mesh) => {
+            if (mesh.name === "skyBox") return;
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
         });
@@ -189,33 +223,36 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setCamera(mmdCamera);
-        // mmdCamera.addAnimation(cameraAnimation!);
-        // mmdCamera.setAnimation("melancholy_night_camera");
-        mmdCamera.addAnimation(cameraAnimation2!);
-        mmdCamera.setAnimation("flos_camera");
+        mmdCamera.addAnimation(loadResults[0] as MmdCameraAnimationTrack);
+        mmdCamera.setAnimation("camera_motion");
 
-        const meshes = scene.meshes;
-        for (let i = 0; i < meshes.length; ++i) {
-            const mesh = meshes[i];
-            if (!(mesh instanceof Mesh)) continue;
-            if (!mesh.metadata || !mesh.metadata.isMmdModel) continue;
+        {
+            const modelMesh = loadResults[1].meshes[0] as Mesh;
 
-            const mmdModel = mmdRuntime.createMmdModel(mesh);
+            const mmdModel = mmdRuntime.createMmdModel(modelMesh);
             // mmdModel.addAnimation(modelAnimation!);
             // mmdModel.setAnimation("melancholy_night_model");
-            mmdModel.addAnimation(modelAnimation2!);
-            mmdModel.setAnimation("flos_model");
+            mmdModel.addAnimation(loadResults[2] as MmdModelAnimation);
+            mmdModel.setAnimation("model_motion");
 
-            const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === "センター");
+            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+
             scene.onBeforeRenderObservable.add(() => {
                 bodyBone!.getWorldMatrix()!.getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
             });
 
-            const viewer = new SkeletonViewer(mesh.skeleton!, mesh, scene, false, 3, {
+            const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;
+        }
+
+        for (let i = 0; i < 15; ++i) {
+            const textModelMesh = loadResults[4 + i * 2].meshes[0] as Mesh;
+            const textModel = mmdRuntime.createMmdModel(textModelMesh);
+            textModel.addAnimation(loadResults[5 + i * 2] as MmdModelAnimation);
+            textModel.setAnimation("text_model_motion");
         }
 
         mmdRuntime.register(scene);
@@ -273,12 +310,12 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = false;
-            defaultPipeline.chromaticAberrationEnabled = false;
+            defaultPipeline.bloomEnabled = true;
+            defaultPipeline.chromaticAberrationEnabled = true;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = false;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = false;
+            defaultPipeline.imageProcessingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
