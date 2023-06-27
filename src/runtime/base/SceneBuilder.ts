@@ -221,15 +221,19 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-        const sound = new Sound("sound", "res/private_test/motion/flos/flos_YuNi.mp3", scene, () => {
-            sound.setPlaybackRate(1.0);
-            sound.play(undefined, 417 / 30);
-            mmdRuntime.playAnimation();
-            mmdRuntime.seekAnimation(417);
-        }, {
-            loop: false,
-            autoplay: false
-        });
+        const sound = new Sound("sound",
+            // "res/private_test/motion/flos/flos_YuNi.mp3",
+            "res/private_test/motion/melancholy_night/melancholy_night.mp3",
+            scene, () => {
+                sound.setPlaybackRate(1.0);
+                sound.play(undefined, 417 / 30);
+                mmdRuntime.playAnimation();
+                mmdRuntime.seekAnimation(417);
+            }, {
+                loop: false,
+                autoplay: false
+            }
+        );
 
         Inspector.Show(scene, { });
 
