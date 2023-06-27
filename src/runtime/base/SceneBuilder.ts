@@ -133,40 +133,40 @@ export class SceneBuilder implements ISceneBuilder {
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
 
-        let modelAnimation: MmdModelAnimation;
-        promises.push(vmdLoader.loadAsync("melancholy_night_model", [
-            "res/private_test/motion/melancholy_night/motion.vmd",
-            "res/private_test/motion/melancholy_night/facial.vmd",
-            "res/private_test/motion/melancholy_night/lip.vmd"
-        ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                modelAnimation = animation as MmdModelAnimation;
-            })
-        );
-
-        let cameraAnimation: MmdCameraAnimationTrack;
-        promises.push(vmdLoader.loadAsync("melancholy_night_camera", "res/private_test/motion/melancholy_night/camera.vmd",
-            (event) => updateLoadingText(2, `Loading camera(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                cameraAnimation = animation as MmdCameraAnimationTrack;
-            })
-        );
-
-        // let modelAnimation2: MmdModelAnimation;
-        // promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
-        //     (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        // let modelAnimation: MmdModelAnimation;
+        // promises.push(vmdLoader.loadAsync("melancholy_night_model", [
+        //     "res/private_test/motion/melancholy_night/motion.vmd",
+        //     "res/private_test/motion/melancholy_night/facial.vmd",
+        //     "res/private_test/motion/melancholy_night/lip.vmd"
+        // ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         //     .then((animation) => {
-        //         modelAnimation2 = animation as MmdModelAnimation;
+        //         modelAnimation = animation as MmdModelAnimation;
         //     })
         // );
 
-        // let cameraAnimation2: MmdCameraAnimationTrack;
-        // promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
-        //     (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        // let cameraAnimation: MmdCameraAnimationTrack;
+        // promises.push(vmdLoader.loadAsync("melancholy_night_camera", "res/private_test/motion/melancholy_night/camera.vmd",
+        //     (event) => updateLoadingText(2, `Loading camera(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         //     .then((animation) => {
-        //         cameraAnimation2 = animation as MmdCameraAnimationTrack;
+        //         cameraAnimation = animation as MmdCameraAnimationTrack;
         //     })
         // );
+
+        let modelAnimation2: MmdModelAnimation;
+        promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
+            (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                modelAnimation2 = animation as MmdModelAnimation;
+            })
+        );
+
+        let cameraAnimation2: MmdCameraAnimationTrack;
+        promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
+            (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                cameraAnimation2 = animation as MmdCameraAnimationTrack;
+            })
+        );
 
         promises.push((async(): Promise<void> => {
             updateLoadingText(3, "Loading physics engine...");
@@ -189,10 +189,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(cameraAnimation!);
-        mmdCamera.setAnimation("melancholy_night_camera");
-        // mmdCamera.addAnimation(cameraAnimation2!);
-        // mmdCamera.setAnimation("flos_camera");
+        // mmdCamera.addAnimation(cameraAnimation!);
+        // mmdCamera.setAnimation("melancholy_night_camera");
+        mmdCamera.addAnimation(cameraAnimation2!);
+        mmdCamera.setAnimation("flos_camera");
 
         const meshes = scene.meshes;
         for (let i = 0; i < meshes.length; ++i) {
@@ -200,12 +200,11 @@ export class SceneBuilder implements ISceneBuilder {
             if (!(mesh instanceof Mesh)) continue;
             if (!mesh.metadata || !mesh.metadata.isMmdModel) continue;
 
-            mesh.alwaysSelectAsActiveMesh = true;
             const mmdModel = mmdRuntime.createMmdModel(mesh);
-            mmdModel.addAnimation(modelAnimation!);
-            mmdModel.setAnimation("melancholy_night_model");
-            // mmdModel.addAnimation(modelAnimation2!);
-            // mmdModel.setAnimation("flos_model");
+            // mmdModel.addAnimation(modelAnimation!);
+            // mmdModel.setAnimation("melancholy_night_model");
+            mmdModel.addAnimation(modelAnimation2!);
+            mmdModel.setAnimation("flos_model");
 
             const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === "センター");
             scene.onBeforeRenderObservable.add(() => {
@@ -222,13 +221,16 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.register(scene);
 
         const sound = new Sound("sound",
-            // "res/private_test/motion/flos/flos_YuNi.mp3",
-            "res/private_test/motion/melancholy_night/melancholy_night.mp3",
+            "res/private_test/motion/flos/flos_YuNi.mp3",
+            // "res/private_test/motion/melancholy_night/melancholy_night.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
-                sound.play(undefined, 417 / 30);
+                // sound.play(undefined, 417 / 30);
                 mmdRuntime.playAnimation();
                 mmdRuntime.seekAnimation(417);
+                setTimeout(() => {
+                    mmdRuntime.pauseAnimation();
+                }, 2000);
             }, {
                 loop: false,
                 autoplay: false

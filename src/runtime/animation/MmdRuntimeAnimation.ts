@@ -1,5 +1,5 @@
-import type { Material } from "@babylonjs/core";
-import { BezierCurve, type Bone, Quaternion, Space, Vector3 } from "@babylonjs/core";
+import type { Bone, Material } from "@babylonjs/core";
+import { Quaternion, Space, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
@@ -121,12 +121,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = BezierCurve.Interpolate(
-                        gradient,
+                    const weight = MmdInterpolator.Interpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
-                        rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
-                        rotationInterpolations[upperBoundIndex * 4 + 3] / 127 // y2
+                        rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
+                        rotationInterpolations[upperBoundIndex * 4 + 3] / 127, // y2
+                        gradient
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
@@ -197,26 +197,26 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                         positions[upperBoundIndex * 3 + 2]
                     );
 
-                    const xWeight = BezierCurve.Interpolate(
-                        gradient,
+                    const xWeight = MmdInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
-                        positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                         positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
-                        positionInterpolations[upperBoundIndex * 12 + 3] / 127 // x_y2
+                        positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
+                        positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
+                        gradient
                     );
-                    const yWeight = BezierCurve.Interpolate(
-                        gradient,
+                    const yWeight = MmdInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
-                        positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                         positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
-                        positionInterpolations[upperBoundIndex * 12 + 7] / 127 // y_y2
+                        positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
+                        positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
+                        gradient
                     );
-                    const zWeight = BezierCurve.Interpolate(
-                        gradient,
+                    const zWeight = MmdInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
-                        positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
                         positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
-                        positionInterpolations[upperBoundIndex * 12 + 11] / 127 // z_y2
+                        positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
+                        positionInterpolations[upperBoundIndex * 12 + 11] / 127, // z_y2
+                        gradient
                     );
 
                     positionA.x += (positionB.x - positionA.x) * xWeight;
@@ -241,12 +241,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = BezierCurve.Interpolate(
-                        gradient,
+                    const weight = MmdInterpolator.Interpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
-                        rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
-                        rotationInterpolations[upperBoundIndex * 4 + 3] / 127 // y2
+                        rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
+                        rotationInterpolations[upperBoundIndex * 4 + 3] / 127, // y2
+                        gradient
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
@@ -538,26 +538,26 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
                 positions[upperBoundIndex * 3 + 2]
             );
 
-            const xWeight = BezierCurve.Interpolate(
-                gradient,
+            const xWeight = MmdInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
-                positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                 positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
-                positionInterpolations[upperBoundIndex * 12 + 3] / 127 // x_y2
+                positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
+                positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
+                gradient
             );
-            const yWeight = BezierCurve.Interpolate(
-                gradient,
+            const yWeight = MmdInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
-                positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                 positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
-                positionInterpolations[upperBoundIndex * 12 + 7] / 127 // y_y2
+                positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
+                positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
+                gradient
             );
-            const zWeight = BezierCurve.Interpolate(
-                gradient,
+            const zWeight = MmdInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
-                positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
                 positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
-                positionInterpolations[upperBoundIndex * 12 + 11] / 127 // z_y2
+                positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
+                positionInterpolations[upperBoundIndex * 12 + 11] / 127, // z_y2
+                gradient
             );
 
             camera.position.set(
@@ -580,12 +580,12 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
                 rotations[upperBoundIndex * 3 + 2]
             );
 
-            const rotationWeight = BezierCurve.Interpolate(
-                gradient,
+            const rotationWeight = MmdInterpolator.Interpolate(
                 rotationInterpolations[upperBoundIndex * 4] / 127, // x1
-                rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
                 rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
-                rotationInterpolations[upperBoundIndex * 4 + 3] / 127 // y2
+                rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
+                rotationInterpolations[upperBoundIndex * 4 + 3] / 127, // y2
+                gradient
             );
             const oneMinusRotationWeight = 1 - rotationWeight;
 
@@ -598,12 +598,12 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             const distanceA = cameraTrack.distances[upperBoundIndexMinusOne];
             const distanceB = cameraTrack.distances[upperBoundIndex];
 
-            const distanceWeight = BezierCurve.Interpolate(
-                gradient,
+            const distanceWeight = MmdInterpolator.Interpolate(
                 cameraTrack.distanceInterpolations[upperBoundIndex * 4] / 127, // x1
-                cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
                 cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
-                cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 3] / 127 // y2
+                cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
+                cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 3] / 127, // y2
+                gradient
             );
 
             camera.distance = distanceA + (distanceB - distanceA) * distanceWeight;
@@ -611,12 +611,12 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             const fovA = cameraTrack.fovs[upperBoundIndexMinusOne];
             const fovB = cameraTrack.fovs[upperBoundIndex];
 
-            const fovWeight = BezierCurve.Interpolate(
-                gradient,
+            const fovWeight = MmdInterpolator.Interpolate(
                 cameraTrack.fovInterpolations[upperBoundIndex * 4] / 127, // x1
-                cameraTrack.fovInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
                 cameraTrack.fovInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
-                cameraTrack.fovInterpolations[upperBoundIndex * 4 + 3] / 127 // y2
+                cameraTrack.fovInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
+                cameraTrack.fovInterpolations[upperBoundIndex * 4 + 3] / 127, // y2
+                gradient
             );
 
             camera.fov = (fovA + (fovB - fovA) * fovWeight) * MmdRuntimeCameraAnimationTrack._DegToRad;
@@ -625,5 +625,34 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
 
     public static Create(animation: MmdCameraAnimationTrack, camera: MmdCamera): MmdRuntimeCameraAnimationTrack {
         return new MmdRuntimeCameraAnimationTrack(animation, camera);
+    }
+}
+
+export class MmdInterpolator {
+    public static Interpolate(x1: number, x2: number, y1: number, y2: number, x: number): number {
+        let c = 0.5;
+        let t = c;
+        let s = 1.0 - t;
+        const loop = 15;
+        const eps = 1e-5;
+        const math = Math;
+
+        let sst3: number, stt3: number, ttt: number;
+
+        for (let i = 0; i < loop; ++i) {
+            sst3 = 3.0 * s * s * t;
+            stt3 = 3.0 * s * t * t;
+            ttt = t * t * t;
+
+            const ft = (sst3 * x1) + (stt3 * x2) + (ttt) - x;
+
+            if (math.abs(ft) < eps) break;
+
+            c /= 2.0;
+
+            t += (ft < 0) ? c : -c;
+            s = 1.0 - t;
+        }
+        return (sst3! * y1) + (stt3! * y2) + ttt!;
     }
 }
