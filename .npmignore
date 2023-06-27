@@ -1,0 +1,12 @@
+docs
+res
+src
+test_dist
+.eslintcache
+.eslintrc.json
+.gitattributes
+.gitignore
+tsconfig.json
+tsconfig.lib.json
+webpack.config.ts
+webpack.lib.config.ts
