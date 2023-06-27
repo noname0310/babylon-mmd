@@ -11,6 +11,7 @@ import type {
 import {
     AssetContainer,
     Bone,
+    BoundingInfo,
     Geometry,
     Logger,
     Matrix,
@@ -43,6 +44,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
     public materialBuilder: IMmdMaterialBuilder;
     public useSdef: boolean;
+    public boundingBoxMargin: number;
 
     private _loggingEnabled: boolean;
 
@@ -62,6 +64,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         this.materialBuilder = new MmdStandardMaterialBuilder();
         this.useSdef = true;
+        this.boundingBoxMargin = 10;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -667,6 +670,30 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             morphTargetManager.areUpdatesFrozen = false;
         }
         mesh.morphTargetManager = morphTargetManager;
+
+        if (this.boundingBoxMargin !== 0) {
+            const subMeshes = mesh.subMeshes;
+            for (let i = 0; i < subMeshes.length; ++i) {
+                const subMesh = subMeshes[i];
+                const subMeshBoundingInfo = subMesh.getBoundingInfo();
+                subMesh.setBoundingInfo(
+                    new BoundingInfo(
+                        new Vector3().setAll(-this.boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
+                        new Vector3().setAll(this.boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                    )
+                );
+            }
+
+            const boundingInfo = mesh.getBoundingInfo();
+            mesh.setBoundingInfo(
+                new BoundingInfo(
+                    new Vector3().setAll(-this.boundingBoxMargin).addInPlace(boundingInfo.minimum),
+                    new Vector3().setAll(this.boundingBoxMargin).addInPlace(boundingInfo.maximum)
+                )
+            );
+
+            mesh._updateBoundingInfo();
+        }
 
         mesh.metadata = <MmdModelMetadata>{
             isMmdModel: true,
