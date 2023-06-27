@@ -225,13 +225,9 @@ export class SceneBuilder implements ISceneBuilder {
             // "res/private_test/motion/melancholy_night/melancholy_night.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
-                // sound.play(undefined, 417 / 30);
+                sound.play();//undefined, 417 / 30);
                 mmdRuntime.playAnimation();
-                mmdRuntime.seekAnimation(417);
-                setTimeout(() => {
-                    mmdRuntime.pauseAnimation();
-                    mmdCamera.setAnimation(null);
-                }, 2000);
+                // mmdRuntime.seekAnimation(417);
             }, {
                 loop: false,
                 autoplay: false
