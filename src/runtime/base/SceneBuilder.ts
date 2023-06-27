@@ -230,6 +230,7 @@ export class SceneBuilder implements ISceneBuilder {
                 mmdRuntime.seekAnimation(417);
                 setTimeout(() => {
                     mmdRuntime.pauseAnimation();
+                    mmdCamera.setAnimation(null);
                 }, 2000);
             }, {
                 loop: false,

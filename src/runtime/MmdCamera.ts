@@ -1,6 +1,5 @@
-import type { Scene} from "@babylonjs/core";
-import { Vector3 } from "@babylonjs/core";
-import { Camera, Matrix } from "@babylonjs/core";
+import type { Scene } from "@babylonjs/core";
+import { Camera, Matrix, Vector3 } from "@babylonjs/core";
 
 import type { MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
@@ -69,6 +68,72 @@ export class MmdCamera extends Camera {
         this._currentAnimation.animate(frameTime);
     }
 
+    private _storedPosition: Vector3 = null!;
+    private _storedRotation: Vector3 = null!;
+    private _storedDistance = 0;
+
+    /**
+     * Store current camera state of the camera (fov, position, rotation, etc..)
+     * @returns the camera
+     */
+    public override storeState(): Camera {
+        this._storedPosition = this.position.clone();
+        this._storedRotation = this.rotation.clone();
+        this._storedDistance = this.distance;
+
+        return super.storeState();
+    }
+
+    /**
+     * Restored camera state. You must call storeState() first
+     * @returns whether it was successful or not
+     * @internal
+     */
+    public override _restoreStateValues(): boolean {
+        if (!super._restoreStateValues()) {
+            return false;
+        }
+
+        this.position = this._storedPosition.clone();
+        this.rotation = this._storedRotation.clone();
+
+        this.distance = this._storedDistance;
+
+        return true;
+    }
+
+    /** @internal */
+    public override _initCache(): void {
+        super._initCache();
+        this._cache.rotation = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+        this._cache.distance = Number.MAX_VALUE;
+    }
+
+    /**
+     * @internal
+     */
+    public override _updateCache(ignoreParentClass?: boolean): void {
+        if (!ignoreParentClass) {
+            super._updateCache();
+        }
+
+        this._cache.rotation.copyFrom(this.rotation);
+        this._cache.distance = this.distance;
+    }
+
+    // Synchronized
+    /** @internal */
+    public override _isSynchronizedViewMatrix(): boolean {
+        if (!super._isSynchronizedViewMatrix()) {
+            return false;
+        }
+
+        return (
+            this._cache.rotation.equals(this.rotation) &&
+            this._cache.distance === this.distance
+        );
+    }
+
     private static readonly _RotationMatrix = new Matrix();
     private static readonly _CameraEyePosition = new Vector3();
     private static readonly _UpVector = new Vector3();
@@ -125,5 +190,13 @@ export class MmdCamera extends Camera {
         }
 
         return this._viewMatrix;
+    }
+
+    /**
+     * Gets the current object class name.
+     * @returns the class name
+     */
+    public override getClassName(): string {
+        return "MmdCamera";
     }
 }
