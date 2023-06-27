@@ -137,6 +137,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<ISceneLoaderAsyncResult> {
         const useSdef = this.useSdef;
+        const boundingBoxMargin = this.boundingBoxMargin;
 
         // data must be ArrayBuffer
         const pmxObject = await PmxReader.ParseAsync(data, this)
@@ -671,15 +672,15 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
         mesh.morphTargetManager = morphTargetManager;
 
-        if (this.boundingBoxMargin !== 0) {
+        if (boundingBoxMargin !== 0) {
             const subMeshes = mesh.subMeshes;
             for (let i = 0; i < subMeshes.length; ++i) {
                 const subMesh = subMeshes[i];
                 const subMeshBoundingInfo = subMesh.getBoundingInfo();
                 subMesh.setBoundingInfo(
                     new BoundingInfo(
-                        new Vector3().setAll(-this.boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                        new Vector3().setAll(this.boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                        new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
+                        new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
                     )
                 );
             }
@@ -687,8 +688,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             const boundingInfo = mesh.getBoundingInfo();
             mesh.setBoundingInfo(
                 new BoundingInfo(
-                    new Vector3().setAll(-this.boundingBoxMargin).addInPlace(boundingInfo.minimum),
-                    new Vector3().setAll(this.boundingBoxMargin).addInPlace(boundingInfo.maximum)
+                    new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
+                    new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
                 )
             );
 
