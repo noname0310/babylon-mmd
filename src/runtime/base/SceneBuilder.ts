@@ -20,14 +20,15 @@ import {
     SSAORenderingPipeline,
     SSRRenderingPipeline,
     StandardMaterial,
+    UniversalCamera,
     Vector3,
     VertexData
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
+import type { MmdCameraAnimationTrack } from "@/libIndex";
 import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
@@ -37,7 +38,7 @@ import { MmdRuntime } from "../MmdRuntime";
 import type { ISceneBuilder } from "./BaseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         await AudioPermissionSolver.Invoke();
 
         SdefInjector.OverrideEngineCreateEffect(engine);
@@ -56,17 +57,17 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 1000;
 
-        // const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
-        // camera.maxZ = 1000;
-        // camera.setTarget(new Vector3(0, 10, 0));
-        // camera.attachControl(canvas, false);
-        // camera.keysUp.push("W".charCodeAt(0));
-        // camera.keysDown.push("S".charCodeAt(0));
-        // camera.keysLeft.push("A".charCodeAt(0));
-        // camera.keysRight.push("D".charCodeAt(0));
-        // camera.inertia = 0;
-        // camera.angularSensibility = 500;
-        // camera.speed = 10;
+        const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
+        camera.maxZ = 1000;
+        camera.setTarget(new Vector3(0, 10, 0));
+        camera.attachControl(canvas, false);
+        camera.keysUp.push("W".charCodeAt(0));
+        camera.keysDown.push("S".charCodeAt(0));
+        camera.keysLeft.push("A".charCodeAt(0));
+        camera.keysRight.push("D".charCodeAt(0));
+        camera.inertia = 0;
+        camera.angularSensibility = 500;
+        camera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
@@ -132,32 +133,40 @@ export class SceneBuilder implements ISceneBuilder {
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
 
-        // let modelAnimation: MmdModelAnimation;
-        // promises.push(vmdLoader.loadAsync("melancholy_night_model", [
-        //     "res/private_test/motion/melancholy_night/motion.vmd",
-        //     "res/private_test/motion/melancholy_night/facial.vmd",
-        //     "res/private_test/motion/melancholy_night/lip.vmd"
-        // ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        let modelAnimation: MmdModelAnimation;
+        promises.push(vmdLoader.loadAsync("melancholy_night_model", [
+            "res/private_test/motion/melancholy_night/motion.vmd",
+            "res/private_test/motion/melancholy_night/facial.vmd",
+            "res/private_test/motion/melancholy_night/lip.vmd"
+        ], (event) => updateLoadingText(1, `Loading motion(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                modelAnimation = animation as MmdModelAnimation;
+            })
+        );
+
+        let cameraAnimation: MmdCameraAnimationTrack;
+        promises.push(vmdLoader.loadAsync("melancholy_night_camera", "res/private_test/motion/melancholy_night/camera.vmd",
+            (event) => updateLoadingText(2, `Loading camera(melancholy_night)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            .then((animation) => {
+                cameraAnimation = animation as MmdCameraAnimationTrack;
+            })
+        );
+
+        // let modelAnimation2: MmdModelAnimation;
+        // promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
+        //     (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         //     .then((animation) => {
-        //         modelAnimation = animation as MmdModelAnimation;
+        //         modelAnimation2 = animation as MmdModelAnimation;
         //     })
         // );
 
-        let modelAnimation2: MmdModelAnimation;
-        promises.push(vmdLoader.loadAsync("flos_model", "res/private_test/motion/flos/combined.vmd",
-            (event) => updateLoadingText(1, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                modelAnimation2 = animation as MmdModelAnimation;
-            })
-        );
-
-        let cameraAnimation2: MmdCameraAnimationTrack;
-        promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
-            (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-            .then((animation) => {
-                cameraAnimation2 = animation as MmdCameraAnimationTrack;
-            })
-        );
+        // let cameraAnimation2: MmdCameraAnimationTrack;
+        // promises.push(vmdLoader.loadAsync("flos_camera", "res/private_test/motion/flos/camera.vmd",
+        //     (event) => updateLoadingText(2, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        //     .then((animation) => {
+        //         cameraAnimation2 = animation as MmdCameraAnimationTrack;
+        //     })
+        // );
 
         promises.push((async(): Promise<void> => {
             updateLoadingText(3, "Loading physics engine...");
@@ -180,8 +189,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(cameraAnimation2!);
-        mmdCamera.setAnimation("flos_camera");
+        mmdCamera.addAnimation(cameraAnimation!);
+        mmdCamera.setAnimation("melancholy_night_camera");
+        // mmdCamera.addAnimation(cameraAnimation2!);
+        // mmdCamera.setAnimation("flos_camera");
 
         const meshes = scene.meshes;
         for (let i = 0; i < meshes.length; ++i) {
@@ -191,10 +202,10 @@ export class SceneBuilder implements ISceneBuilder {
 
             mesh.alwaysSelectAsActiveMesh = true;
             const mmdModel = mmdRuntime.createMmdModel(mesh);
-            // mmdModel.addAnimation(modelAnimation!);
-            mmdModel.addAnimation(modelAnimation2!);
-            // mmdModel.setAnimation("melancholy_night_model");
-            mmdModel.setAnimation("flos_model");
+            mmdModel.addAnimation(modelAnimation!);
+            mmdModel.setAnimation("melancholy_night_model");
+            // mmdModel.addAnimation(modelAnimation2!);
+            // mmdModel.setAnimation("flos_model");
 
             const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === "センター");
             scene.onBeforeRenderObservable.add(() => {
