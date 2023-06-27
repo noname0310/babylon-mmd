@@ -24,6 +24,8 @@ export class MmdRuntime implements ILogger {
     private _isRegistered: boolean;
 
     private _animationStartTime: number;
+    private _animationStopTime: number;
+
     private _isAnimationPlaying: boolean;
 
     private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
@@ -41,6 +43,7 @@ export class MmdRuntime implements ILogger {
         this._isRegistered = false;
 
         this._animationStartTime = 0;
+        this._animationStopTime = -1;
         this._isAnimationPlaying = false;
     }
 
@@ -124,6 +127,20 @@ export class MmdRuntime implements ILogger {
         if (!this._isAnimationPlaying) return;
 
         this._isAnimationPlaying = false;
+    }
+
+    public pauseAnimation(): void {
+        if (!this._isAnimationPlaying) return;
+
+        this._animationStopTime = performance.now();
+        this._isAnimationPlaying = false;
+    }
+
+    public resumeAnimation(): void {
+        if (this._isAnimationPlaying) return;
+
+        this._animationStartTime += performance.now() - this._animationStopTime;
+        this._isAnimationPlaying = true;
     }
 
     public seekAnimation(frameTime: number): void {
