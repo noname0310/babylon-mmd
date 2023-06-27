@@ -1,28 +1,34 @@
-import { Engine } from "@babylonjs/core";
+// loader/animation
+export { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
-import css from "./index.css";
-css;
+// loader/parser
+export { ConsoleLogger, ILogger } from "@/loader/parser/ILogger";
+export { PmxObject } from "@/loader/parser/PmxObject";
+export { PmxReader } from "@/loader/parser/PmxReader";
+export { VmdData, VmdObject } from "@/loader/parser/VmdObject";
 
-import { BaseRuntime } from "./runtime/base/BaseRuntime";
-import { SceneBuilder } from "./runtime/base/SceneBuilder";
+// loader
+export { IMmdMaterialBuilder } from "@/loader/IMmdMaterialBuilder";
+export { MmdAsyncTextureLoader } from "@/loader/MmdAsyncTextureLoader";
+export { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+export { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
+export { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
+export { PmxLoader } from "@/loader/PmxLoader";
+export { SdefInjector } from "@/loader/SdefInjector";
+export { SharedToonTextures } from "@/loader/SharedToonTextures";
+export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChecker";
+export { VmdLoader } from "@/loader/VmdLoader";
 
-const canvas = document.getElementById("render-canvas");
-if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Invalid canvas element");
+// runtime/animation
+export { MmdRuntimeAnimation, MmdRuntimeCameraAnimationTrack, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
 
-const engine = new Engine(canvas, true, {
-    preserveDrawingBuffer: true,
-    stencil: true,
-    antialias: true
-}, true);
-
-// const webGPUEngine = new WebGPUEngine(canvas, {
-//     stencil: true,
-//     antialias: true
-// });
-// await webGPUEngine.initAsync();
-
-BaseRuntime.Create({
-    canvas,
-    engine,
-    sceneBuilder: new SceneBuilder()
-}).then(runtime => runtime.run());
+// runtime
+export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
+export { MmdCamera } from "@/runtime/MmdCamera";
+export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/runtime/MmdMesh";
+export { MmdModel } from "@/runtime/MmdModel";
+export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/runtime/MmdMorphController";
+export { MmdRuntime } from "@/runtime/MmdRuntime";
+export { IMmdRuntimeBone } from "@/runtime/MmdRuntimeBone";
+export { MmdStandardMaterialProxy } from "@/runtime/MmdStandardMaterialProxy";

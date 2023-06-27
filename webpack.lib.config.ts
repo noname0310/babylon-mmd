@@ -2,7 +2,7 @@ import path from "path";
 import type webpack from "webpack";
 
 export default (env: any): webpack.Configuration => ({
-    entry: "./src/libIndex.ts",
+    entry: "./src/index.ts",
     devtool: "source-map",
     output: {
         path: path.resolve(__dirname, "dist/umd"),

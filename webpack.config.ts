@@ -8,7 +8,7 @@ import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
 
 export default (env: any): webpack.Configuration & { devServer?: WebpackDevServerConfiguration } => ({
-    entry: "./src/index.ts",
+    entry: "./src/test/index.ts",
     output: {
         path: path.join(__dirname, "/test_dist"),
         filename: "[name].bundle.js",
@@ -87,7 +87,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./src/index.html"
+            template: "./src/test/index.html"
         }),
         new ExtractCssChunks({
             filename: "[name].css",
