@@ -184,17 +184,22 @@ export class VmdLoader {
         const filteredMoveableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
-            if (boneTrack.frameNumbers.length === 1 &&
-                boneTrack.positions[0] === 0 &&
-                boneTrack.positions[1] === 0 &&
-                boneTrack.positions[2] === 0 &&
-                boneTrack.rotations[0] === 0 &&
-                boneTrack.rotations[1] === 0 &&
-                boneTrack.rotations[2] === 0 &&
-                boneTrack.rotations[3] === 1
-            ) {
-                continue;
+
+            let isEmptyTrack = true;
+            for (let j = 0; j < boneTrack.frameNumbers.length; ++j) {
+                const positions = boneTrack.positions;
+                if (!(positions[j * 3 + 0] === 0 && positions[j * 3 + 1] === 0 && positions[j * 3 + 2] === 0)) {
+                    isEmptyTrack = false;
+                    break;
+                }
+
+                const rotations = boneTrack.rotations;
+                if (!(rotations[j * 4 + 0] === 0 && rotations[j * 4 + 1] === 0 && rotations[j * 4 + 2] === 0 && rotations[j * 4 + 3] === 1)) {
+                    isEmptyTrack = false;
+                    break;
+                }
             }
+            if (isEmptyTrack) continue;
 
             let isMoveableBone = false;
             for (let j = 0; j < boneTrack.positions.length; ++j) {
