@@ -2,64 +2,6 @@
 
 mmd loader and runtime for Babylon.js
 
-## Implementation status
-
-**Parser**
-
-- [x] PMX Parser
-- [x] VMD Parser
-- [ ] Optimized Custom PMX like format
-- [ ] Optimized Custom VMD like format
-
-**PMX Loader**
-
-> Mesh
-- [x] Vertex, Normal, UV, Face load
-- [x] Bone weight load / Bone Structure build
-- [x] Morph target load
-
-> Material / Shading
-- [x] Basic material parameters load
-- [x] Toon texture support
-- [x] Sphere texture support
-- [x] Edge(outline) rendering support
-- [x] Spherical Deformation support
-- [x] WebGL 1.0 support
-- [x] WebGL 2.0 support
-- [x] WebGPU support
-
-> MMD runtime parameters
-- [x] Transform order
-- [x] Additional transform parameters load
-- [x] IK parameters load
-- [x] Rigid body / Joint parameters load
-
-**VMD Loader**
-
-- [x] Basic animation load
-- [ ] Support custom retargeting
-
-**Animation Runtime**
-
-- [x] Basic animation load
-- [x] MMD morph system support
-- [x] Solve Append transform
-- [x] Solve IK
-- [ ] Play audio / sync with animation
-- [ ] Basic animation player UI
-
-**Physics Runtime**
-
-- [ ] Solve Rigid body / Joint
-- [ ] Support custom physics engine for parallel computing
-
-## Not planned features
-
-- PMX 2.1 support (because 2.1 spec not implemented in MMD)
-- PMD format support
-- Self shadow, Ground shadow spec support
-- Additional UV support
-
 ## Screenshots
 
 ![screenshot](./docs/fig1.png)
@@ -68,7 +10,10 @@ Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsu
 
 ## How to use
 
-Since there is no npm build uploaded yet, in order to use the loader, you will need to copy the source code directly from the src folder of this repository.
+First, install the package.
+```bash
+npm add @babylonjs/core @babylonjs/havok babylon-mmd
+```
 
 Here is the code to build a scene with a simple MMD model and play a VMD animation.
 ```typescript
@@ -175,6 +120,64 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     return scene;
 }
 ```
+
+## Implementation status
+
+**Parser**
+
+- [x] PMX Parser
+- [x] VMD Parser
+- [ ] Optimized Custom PMX like format
+- [ ] Optimized Custom VMD like format
+
+**PMX Loader**
+
+> Mesh
+- [x] Vertex, Normal, UV, Face load
+- [x] Bone weight load / Bone Structure build
+- [x] Morph target load
+
+> Material / Shading
+- [x] Basic material parameters load
+- [x] Toon texture support
+- [x] Sphere texture support
+- [x] Edge(outline) rendering support
+- [x] Spherical Deformation support
+- [x] WebGL 1.0 support
+- [x] WebGL 2.0 support
+- [x] WebGPU support
+
+> MMD runtime parameters
+- [x] Transform order
+- [x] Additional transform parameters load
+- [x] IK parameters load
+- [x] Rigid body / Joint parameters load
+
+**VMD Loader**
+
+- [x] Basic animation load
+- [ ] Support custom retargeting
+
+**Animation Runtime**
+
+- [x] Basic animation load
+- [x] MMD morph system support
+- [x] Solve Append transform
+- [x] Solve IK
+- [ ] Play audio / sync with animation
+- [ ] Basic animation player UI
+
+**Physics Runtime**
+
+- [ ] Solve Rigid body / Joint
+- [ ] Support custom physics engine for parallel computing
+
+## Not planned features
+
+- PMX 2.1 support (because 2.1 spec not implemented in MMD)
+- PMD format support
+- Self shadow, Ground shadow spec support
+- Additional UV support
 
 ## References
 
