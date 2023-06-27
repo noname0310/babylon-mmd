@@ -2,8 +2,6 @@
 
 mmd loader and runtime for Babylon.js
 
-**this project is still in very early stage.**
-
 ## Implementation status
 
 **Parser**
@@ -70,11 +68,9 @@ Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsu
 
 ## How to use
 
-Currently, what is possible is to load the model and see it, and try out simple poses.
-
 Since there is no npm build uploaded yet, in order to use the loader, you will need to copy the source code directly from the src folder of this repository.
 
-Here is the code to build a scene with a simple MMD model:
+Here is the code to build a scene with a simple MMD model and play a VMD animation.
 ```typescript
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.
@@ -102,13 +98,8 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const scene = new Scene(engine);
     scene.clearColor = new Color4(1, 1, 1, 1.0);
 
-    const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
-    camera.maxZ = 1000;
-    camera.setTarget(new Vector3(0, 10, 0));
-    camera.attachControl(canvas, false);
-    camera.inertia = 0;
-    camera.angularSensibility = 500;
-    camera.speed = 10;
+    const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
+    camera.maxZ = 5000;
 
     const hemisphericLight = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
     hemisphericLight.intensity = 0.4;
@@ -132,24 +123,30 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     shadowGenerator.forceBackFacesOnly = true;
     shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
     shadowGenerator.frustumEdgeFalloff = 0.1;
+    
+    const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+    ground.receiveShadows = true;
+    shadowGenerator.addShadowCaster(ground);
 
     const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene)
         .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
     model.receiveShadows = true;
     shadowGenerator.addShadowCaster(model);
+    
+    const vmdLoader = new VmdLoader(scene);
 
-    const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
-    ground.receiveShadows = true;
-    shadowGenerator.addShadowCaster(ground);
+    const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
+    const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
 
-    // for anti-aliasing
-    const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
-    defaultPipeline.samples = 4;
-    defaultPipeline.fxaaEnabled = true;
-
-    // register the model to the MMD runtime for solving morph, append transform, IK.
+    // register the model to the MMD runtime for solving morph, append transform, IK, animation.
     const mmdRuntime = new MmdRuntime();
-    mmdRuntime.createMmdModel(model);
+    mmdRuntime.setCamera(camera);
+    camera.addAnimation(cameraMotion);
+    camera.setAnimation("camera_motion_1");
+
+    const mmdModel = mmdRuntime.createMmdModel(model);
+    mmdModel.addAnimation(modelMotion);
+    mmdModel.setAnimation("model_motion_1");
 
     // register update function to the scene
     mmdRuntime.register(scene);
@@ -157,6 +154,23 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // or you can update manually
     // scene.onBeforeAnimationsObservable.add(() => mmdRuntime.beforePhysics());
     // scene.onBeforeRenderObservable.add(() => mmdRuntime.afterPhysics());
+
+    // currently theres no audio sync support
+    const sound = new Sound("sound",
+        "your_audio_path.mp3",
+        scene, () => {
+            sound.play();
+            mmdRuntime.playAnimation();
+        }, {
+            loop: false,
+            autoplay: false
+        }
+    );
+
+    // for anti-aliasing
+    const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+    defaultPipeline.samples = 4;
+    defaultPipeline.fxaaEnabled = true;
 
     return scene;
 }
