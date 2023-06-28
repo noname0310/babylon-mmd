@@ -314,13 +314,27 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         }
     }
 
-    public static Create(animation: MmdModelAnimation, model: MmdModel, logger?: ILogger): MmdRuntimeModelAnimation {
+    /**
+     * bind animation to model and prepare material for morph animation
+     * @param animation animation to bind
+     * @param model bind target
+     * @param retargetingMap model bone name to animation bone name map
+     * @param logger logger
+     * @returns
+     */
+    public static Create(animation: MmdModelAnimation, model: MmdModel, retargetingMap?: Map<string, string>, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.mesh.skeleton;
         const bones = skeleton.bones;
 
         const boneIndexMap = new Map<string, Bone>();
-        for (let i = 0; i < bones.length; ++i) {
-            boneIndexMap.set(bones[i].name, bones[i]);
+        if (retargetingMap === undefined) {
+            for (let i = 0; i < bones.length; ++i) {
+                boneIndexMap.set(bones[i].name, bones[i]);
+            }
+        } else {
+            for (let i = 0; i < bones.length; ++i) {
+                boneIndexMap.set(retargetingMap?.get(bones[i].name) ?? bones[i].name, bones[i]);
+            }
         }
 
         const boneBindIndexMap: (Bone | null)[] = [];
@@ -354,9 +368,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         const morphTracks = animation.morphTracks;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
-            const morphIndices = morphController.getMorphIndices(morphTrack.name);
+            const mappedName = retargetingMap?.get(morphTrack.name) ?? morphTrack.name;
+            const morphIndices = morphController.getMorphIndices(mappedName);
             if (morphIndices === undefined) {
-                logger?.warn(`Binding failed: morph ${morphTrack.name} not found`);
+                logger?.warn(`Binding failed: morph ${mappedName} not found`);
                 morphBindIndexMap.push(null);
             } else {
                 morphBindIndexMap.push(morphIndices);
@@ -366,8 +381,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
         const runtimeBones = model.sortedRuntimeBones;
         const runtimeBoneIndexMap = new Map<string, number>();
-        for (let i = 0; i < bones.length; ++i) {
-            runtimeBoneIndexMap.set(runtimeBones[i].name, i);
+        if (retargetingMap === undefined) {
+            for (let i = 0; i < bones.length; ++i) {
+                runtimeBoneIndexMap.set(bones[i].name, i);
+            }
+        } else {
+            for (let i = 0; i < bones.length; ++i) {
+                runtimeBoneIndexMap.set(retargetingMap?.get(bones[i].name) ?? bones[i].name, i);
+            }
         }
 
         const ikSolverBindIndexMap: (IIkSolver | null)[] = [];
