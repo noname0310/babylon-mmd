@@ -156,7 +156,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 **VMD Loader**
 
 - [x] Basic animation load
-- [ ] Support custom retargeting
+- [x] Support custom retargeting
 
 **Animation Runtime**
 
