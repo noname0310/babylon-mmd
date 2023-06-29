@@ -65,7 +65,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.ikRotation = null;
 
         this.localMatrix = Matrix.Identity();
-        this.worldMatrix = babylonBone.getWorldMatrix();
+        this.worldMatrix = babylonBone.getFinalMatrix();
 
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;

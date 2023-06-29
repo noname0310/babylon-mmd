@@ -33,10 +33,10 @@ import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBui
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
-import { VmdLoader } from "@/loader/VmdLoader";
 import { MmdCamera } from "@/runtime/MmdCamera";
 import { MmdRuntime } from "@/runtime/MmdRuntime";
 
+import { VmdLoader } from "..";
 import type { ISceneBuilder } from "./BaseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -139,10 +139,6 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(0, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
-        // promises.push(vmdLoader.loadAsync("camera_motion", "res/private_test/motion/flos/camera.vmd",
-        //     (event) => updateLoadingText(0, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        // );
-
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             //"res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
@@ -152,10 +148,6 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        // promises.push(vmdLoader.loadAsync("model_motion", "res/private_test/motion/flos/combined.vmd",
-        //     (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        // );
-
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/stage/water_house/water house.pmx",
@@ -164,50 +156,50 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(2, `Loading model(water house)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/1 - Daphne/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/1.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/1 - Daphne/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/1.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/2 - Ficus/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/2.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/2 - Ficus/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/2.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/3 - Iris/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/3.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/3 - Iris/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/3.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/4 - Maackia/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/4.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/4 - Maackia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/4.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/5 - Lythrum/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/5.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/5 - Lythrum/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/5.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/6 - Myrica/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/6.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/6 - Myrica/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/6.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/7 - Sabia/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/7.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/7 - Sabia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/7.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/8 - Flos/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/8.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/8 - Flos/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/8.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/9 - Thymus/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/9.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/9 - Thymus/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/9.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/10 - Ribes/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/10.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/10 - Ribes/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/10.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/11 - Abelia/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/11.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/11 - Abelia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/11.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/12 - Sedum/TextModel.pmx", undefined,  scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/12.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/12 - Sedum/TextModel.pmx", undefined,  scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/12.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/13 - Felicia/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/13.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/13 - Felicia/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/13.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/14 - Ochna/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/14.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/14 - Ochna/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/14.vmd"));
 
-        // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/15 - Lychnis/TextModel.pmx", undefined, scene));
-        // promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/15.vmd"));
+        promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/15 - Lychnis/TextModel.pmx", undefined, scene));
+        promises.push(vmdLoader.loadAsync("text_model_motion", "res/private_test/motion/flos/text models/15.vmd"));
 
         promises.push((async(): Promise<void> => {
             updateLoadingText(3, "Loading physics engine...");
@@ -238,15 +230,13 @@ export class SceneBuilder implements ISceneBuilder {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh);
-            // mmdModel.addAnimation(modelAnimation!);
-            // mmdModel.setAnimation("melancholy_night_model");
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
 
             scene.onBeforeRenderObservable.add(() => {
-                bodyBone!.getWorldMatrix()!.getTranslationToRef(directionalLight.position);
+                bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
             });
 
@@ -256,12 +246,13 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        // for (let i = 0; i < 8; ++i) {
-        //     const textModelMesh = loadResults[4 + i * 2].meshes[0] as Mesh;
-        //     const textModel = mmdRuntime.createMmdModel(textModelMesh);
-        //     textModel.addAnimation(loadResults[5 + i * 2] as MmdModelAnimation);
-        //     textModel.setAnimation("text_model_motion");
-        // }
+        for (let i = 0; i < 15; ++i) {
+            const textModelMesh = loadResults[3 + i * 2].meshes[0] as Mesh;
+            textModelMesh.skeleton!.useTextureToStoreBoneMatrices = false;
+            const textModel = mmdRuntime.createMmdModel(textModelMesh);
+            textModel.addAnimation(loadResults[4 + i * 2]);
+            textModel.setAnimation("text_model_motion");
+        }
 
         mmdRuntime.register(scene);
 

@@ -255,7 +255,7 @@ export class MmdModel {
 
                 if (bone._index !== -1) {
                     const mappedIndex = bone._index === null ? index : bone._index;
-                    bone.getInvertedAbsoluteTransform().multiplyToArray(bone.getWorldMatrix(), targetMatrix, mappedIndex * 16);
+                    bone.getAbsoluteInverseBindMatrix().multiplyToArray(bone.getFinalMatrix(), targetMatrix, mappedIndex * 16);
                 }
             }
 
