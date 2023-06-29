@@ -2,6 +2,10 @@
 export { MmdAnimation } from "@/loader/animation/MmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
+// loader/optimized
+export { BvmdConverter } from "@/loader/optimized/BvmdConverter";
+export { BvmdLoader } from "@/loader/optimized/BvmdLoader";
+
 // loader/parser
 export { ConsoleLogger, ILogger } from "@/loader/parser/ILogger";
 export { PmxObject } from "@/loader/parser/PmxObject";
