@@ -1,5 +1,5 @@
 // loader/animation
-export { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+export { MmdAnimation } from "@/loader/animation/MmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
 // loader/parser
@@ -21,7 +21,7 @@ export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChec
 export { VmdLoader } from "@/loader/VmdLoader";
 
 // runtime/animation
-export { MmdRuntimeAnimation, MmdRuntimeCameraAnimationTrack, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
+export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
 
 // runtime
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";

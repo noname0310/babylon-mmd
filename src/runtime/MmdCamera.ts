@@ -1,9 +1,8 @@
 import type { Scene } from "@babylonjs/core";
 import { Camera, Matrix, Vector3 } from "@babylonjs/core";
 
-import type { MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
-
-import { MmdRuntimeCameraAnimationTrack } from "./animation/MmdRuntimeAnimation";
+import { MmdRuntimeCameraAnimation } from "./animation/MmdRuntimeAnimation";
+import { MmdAnimation } from "@/loader/animation/MmdAnimation";
 
 export class MmdCamera extends Camera {
     public ignoreParentScaling = false;
@@ -16,10 +15,10 @@ export class MmdCamera extends Camera {
     private readonly _tmpUpVector = Vector3.Zero();
     private readonly _tmpTargetVector = Vector3.Zero();
 
-    private readonly _animations: MmdRuntimeCameraAnimationTrack[];
+    private readonly _animations: MmdRuntimeCameraAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
-    private _currentAnimation: MmdRuntimeCameraAnimationTrack | null;
+    private _currentAnimation: MmdRuntimeCameraAnimation | null;
 
     public constructor(name: string, position: Vector3 = new Vector3(0, 10, 0), scene?: Scene, setActiveOnSceneIfNoneActive = true) {
         super(name, position, scene, setActiveOnSceneIfNoneActive);
@@ -33,8 +32,8 @@ export class MmdCamera extends Camera {
         this._currentAnimation = null;
     }
 
-    public addAnimation(animation: MmdCameraAnimationTrack): void {
-        const runtimeAnimation = MmdRuntimeCameraAnimationTrack.Create(animation, this);
+    public addAnimation(animation: MmdAnimation): void {
+        const runtimeAnimation = MmdRuntimeCameraAnimation.Create(animation, this);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }
@@ -58,7 +57,7 @@ export class MmdCamera extends Camera {
         else this._currentAnimation = this._animations[index];
     }
 
-    public get runtimeAnimations(): readonly MmdRuntimeCameraAnimationTrack[] {
+    public get runtimeAnimations(): readonly MmdRuntimeCameraAnimation[] {
         return this._animations;
     }
 

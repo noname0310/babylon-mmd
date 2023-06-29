@@ -1,6 +1,6 @@
 import { type Bone, type Material, type Matrix, type Nullable, type Skeleton, Vector3 } from "@babylonjs/core";
 
-import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 
 import { MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
@@ -82,7 +82,7 @@ export class MmdModel {
         return this._sortedRuntimeBones;
     }
 
-    public addAnimation(animation: MmdModelAnimation, retargetingMap?: Map<string, string>): void {
+    public addAnimation(animation: MmdAnimation, retargetingMap?: Map<string, string>): void {
         const runtimeAnimation = MmdRuntimeModelAnimation.Create(animation, this, retargetingMap, this._logger);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
@@ -247,6 +247,8 @@ export class MmdModel {
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
+            this.onBeforeComputeObservable.notifyObservers(this);
+
             for (let index = 0; index < this.bones.length; index++) {
                 const bone = this.bones[index] as Bone;
                 bone._childUpdateId += 1;

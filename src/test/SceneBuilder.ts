@@ -28,8 +28,7 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 import { SkyMaterial } from "@babylonjs/materials";
 
-import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
+import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -224,7 +223,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdCameraAnimationTrack);
+        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
         mmdCamera.setAnimation("camera_motion");
 
         {
@@ -233,7 +232,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel = mmdRuntime.createMmdModel(modelMesh);
             // mmdModel.addAnimation(modelAnimation!);
             // mmdModel.setAnimation("melancholy_night_model");
-            mmdModel.addAnimation(loadResults[2] as MmdModelAnimation);
+            mmdModel.addAnimation(loadResults[2] as MmdAnimation);
             mmdModel.setAnimation("model_motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");

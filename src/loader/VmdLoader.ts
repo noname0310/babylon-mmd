@@ -1,7 +1,7 @@
 import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from "@babylonjs/core";
 import { LoadFileError, Logger, Tools } from "@babylonjs/core";
 
-import { MmdModelAnimation } from "./animation/MmdAnimation";
+import { MmdAnimation } from "./animation/MmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";
 import { VmdData, VmdObject } from "./parser/VmdObject";
 
@@ -29,7 +29,7 @@ export class VmdLoader {
     public loadFromVmdObject(
         name: string,
         vmdObject: VmdObject | VmdObject[],
-        onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
+        onLoad: (animation: MmdAnimation) => void,
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): void {
         this.loadFromVmdObjectAsync(name, vmdObject, onProgress).then(onLoad);
@@ -39,7 +39,7 @@ export class VmdLoader {
         name: string,
         vmdObject: VmdObject | VmdObject[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
-    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
+    ): Promise<MmdAnimation> {
         if (!Array.isArray(vmdObject)) {
             vmdObject = [vmdObject];
         }
@@ -689,20 +689,13 @@ export class VmdLoader {
         onProgress?.({ ...progressEvent });
         lastStageLoaded += cameraLoadCost;
 
-        if (0 < cameraTrack.frameNumbers.length) {
-            if (boneTracks.length !== 0 || filteredMorphTracks.length !== 0 || propertyTrack.frameNumbers.length !== 0) {
-                this.warn("animation contains both camera and model animation. model animation will be ignored.");
-            }
-            return cameraTrack;
-        } else {
-            return new MmdModelAnimation(name, filteredBoneTracks, filteredMoveableBoneTracks, filteredMorphTracks, propertyTrack);
-        }
+        return new MmdAnimation(name, filteredBoneTracks, filteredMoveableBoneTracks, filteredMorphTracks, propertyTrack, cameraTrack);
     }
 
     public loadFromVmdData(
         name: string,
         vmdData: VmdData | VmdData[],
-        onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
+        onLoad: (animation: MmdAnimation) => void,
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): void {
         if (!Array.isArray(vmdData)) {
@@ -720,8 +713,8 @@ export class VmdLoader {
         name: string,
         vmdData: VmdData | VmdData[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
-    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
-        return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve) => {
+    ): Promise<MmdAnimation> {
+        return new Promise<MmdAnimation>((resolve) => {
             this.loadFromVmdData(name, vmdData, resolve, onProgress);
         });
     }
@@ -729,7 +722,7 @@ export class VmdLoader {
     public loadFromBuffer(
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
-        onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
+        onLoad: (animation: MmdAnimation) => void,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         onError?: (event: Error) => void
     ): void {
@@ -753,8 +746,8 @@ export class VmdLoader {
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
-    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
-        return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
+    ): Promise<MmdAnimation> {
+        return new Promise<MmdAnimation>((resolve, reject) => {
             this.loadFromBuffer(name, buffer, resolve, onProgress, reject);
         });
     }
@@ -762,7 +755,7 @@ export class VmdLoader {
     public load(
         name: string,
         fileOrUrl: File | string | File[] | string[],
-        onLoad: (animation: MmdModelAnimation | MmdCameraAnimationTrack) => void,
+        onLoad: (animation: MmdAnimation) => void,
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         onError?: ((request?: WebRequest | undefined, exception?: Error | undefined) => void) | undefined
     ): typeof fileOrUrl extends any[] ? IFileRequest[] : IFileRequest {
@@ -803,8 +796,8 @@ export class VmdLoader {
         name: string,
         fileOrUrl: File | string | File[] | string[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
-    ): Promise<MmdModelAnimation | MmdCameraAnimationTrack> {
-        return new Promise<MmdModelAnimation | MmdCameraAnimationTrack>((resolve, reject) => {
+    ): Promise<MmdAnimation> {
+        return new Promise<MmdAnimation>((resolve, reject) => {
             this.load(name, fileOrUrl, resolve, onProgress, reject);
         });
     }
