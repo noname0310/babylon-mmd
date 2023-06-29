@@ -1,10 +1,10 @@
 /**
  * BabylonVMD(BVMD) representation
  * prerequisite: frames are sorted by frameNumber
- * 
+ *
  * signature: uint8[4] "BVMD"
  * version: int8[3] - major, minor, patch
- * 
+ *
  * boneTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
@@ -13,7 +13,7 @@
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  * }[boneTrackCount]
- * 
+ *
  * moveableBoneTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
@@ -24,7 +24,7 @@
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  * }[moveableBoneTrackCount]
- * 
+ *
  * morphTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
@@ -32,7 +32,7 @@
  *  frameNumbers: uint32[frameCount]
  *  weights: float32[frameCount] - [..., weight, ...]
  * }[morphTrackCount]
- * 
+ *
  * propertyFrameCount: uint32
  * ikBoneNameCount: uint32
  * frameNumbers: uint32[frameCount]
@@ -41,7 +41,7 @@
  *  ikBoneName: uint32 - uint8[] - length, string
  *  ikState: uint8[frameCount] - [..., ikState, ...]
  * }[ikBoneNameCount]
- * 
+ *
  * cameraFrameCount: uint32
  * frameNumbers: uint32[frameCount]
  * positions: float32[frameCount * 3] - [..., x, y, z, ...]
@@ -54,13 +54,13 @@
  * fovInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  */
 
-import { MmdAnimation } from "../animation/MmdAnimation";
+import type { MmdAnimation } from "../animation/MmdAnimation";
 import { MmdDataSerializer } from "./MmdDataSerializer";
 
 export class BvmdConverter {
     private constructor() { /* block constructor */ }
 
-    public static Convert(animation: MmdAnimation): ArrayBuffer { 
+    public static Convert(animation: MmdAnimation): ArrayBuffer {
         const encoder = new TextEncoder();
 
         let dataLength =
@@ -100,7 +100,7 @@ export class BvmdConverter {
             const morphTrackCount = animation.morphTracks.length;
             for (let i = 0; i < morphTrackCount; i++) {
                 const morphTrack = animation.morphTracks[i];
-                
+
                 const trackNameBytes = encoder.encode(morphTrack.name);
                 dataLength += 4 + trackNameBytes.length; // trackName
                 dataLength += 4; // frameCount

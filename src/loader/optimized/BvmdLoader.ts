@@ -1,8 +1,9 @@
 import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from "@babylonjs/core";
 import { LoadFileError, Logger, Tools } from "@babylonjs/core";
+
 import { MmdAnimation } from "../animation/MmdAnimation";
-import { MmdDataDeserializer } from "../parser/MmdDataDeserializer";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../animation/MmdAnimationTrack";
+import { MmdDataDeserializer } from "../parser/MmdDataDeserializer";
 
 export class BvmdLoader {
     private readonly _scene: Scene;
@@ -42,7 +43,7 @@ export class BvmdLoader {
     ): Promise<MmdAnimation> {
         const deserializer = new MmdDataDeserializer(buffer);
         deserializer.initializeTextDecoder("utf-8");
-        
+
         const progressEvent = {
             lengthComputable: true,
             loaded: 0,
@@ -90,7 +91,7 @@ export class BvmdLoader {
             deserializer.getUint8Array(track.positionInterpolations, track.positionInterpolations.length);
             deserializer.getFloat32Array(track.rotations, track.rotations.length);
             deserializer.getUint8Array(track.rotationInterpolations, track.rotationInterpolations.length);
-            
+
             if (100 < performance.now() - time) {
                 progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
                 onProgress?.(progressEvent);
@@ -108,7 +109,7 @@ export class BvmdLoader {
             const track = morphTracks[i] = new MmdMorphAnimationTrack(trackName, frameCount);
             deserializer.getUint32Array(track.frameNumbers, track.frameNumbers.length);
             deserializer.getFloat32Array(track.weights, track.weights.length);
-            
+
             if (100 < performance.now() - time) {
                 progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
                 onProgress?.(progressEvent);
@@ -127,7 +128,7 @@ export class BvmdLoader {
             propertyTrack.ikBoneNames[i] = deserializer.getDecoderString(deserializer.getUint32(), true);
             deserializer.getUint8Array(propertyTrack.ikStates[i], propertyTrack.ikStates[i].length);
         }
-        
+
         if (100 < performance.now() - time) {
             progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
             onProgress?.(progressEvent);
@@ -147,7 +148,7 @@ export class BvmdLoader {
         deserializer.getUint8Array(cameraTrack.distanceInterpolations, cameraTrack.distanceInterpolations.length);
         deserializer.getFloat32Array(cameraTrack.fovs, cameraTrack.fovs.length);
         deserializer.getUint8Array(cameraTrack.fovInterpolations, cameraTrack.fovInterpolations.length);
-        
+
         if (100 < performance.now() - time) {
             progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
             onProgress?.(progressEvent);

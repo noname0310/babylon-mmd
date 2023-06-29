@@ -2,7 +2,7 @@ export class MmdDataSerializer {
     private static readonly _LittleEndian = true;
 
     private readonly _dataView: DataView;
-    private _encoder: TextEncoder;
+    private readonly _encoder: TextEncoder;
     private _offset: number;
 
     public constructor(arrayBuffer: ArrayBufferLike) {

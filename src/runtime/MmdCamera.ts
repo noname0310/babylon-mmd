@@ -1,8 +1,9 @@
 import type { Scene } from "@babylonjs/core";
 import { Camera, Matrix, Vector3 } from "@babylonjs/core";
 
+import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
+
 import { MmdRuntimeCameraAnimation } from "./animation/MmdRuntimeAnimation";
-import { MmdAnimation } from "@/loader/animation/MmdAnimation";
 
 export class MmdCamera extends Camera {
     public ignoreParentScaling = false;
