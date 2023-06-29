@@ -19,7 +19,7 @@ Here is the code to build a scene with a simple MMD model and play a VMD animati
 ```typescript
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.
-    SdefInjector.overrideEngineCreateEffect(engine);
+    SdefInjector.OverrideEngineCreateEffect(engine);
 
     const pmxLoader = new PmxLoader();
 
@@ -139,7 +139,7 @@ then you can load the converted files like below.
 // bpmx not implemented yet...
 
 const bvmdLoader = new BvmdLoader(scene);
-const motion = bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
+const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 ```
 
 ## Implementation status
