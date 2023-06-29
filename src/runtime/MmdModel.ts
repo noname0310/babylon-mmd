@@ -82,7 +82,7 @@ export class MmdModel {
         return this._sortedRuntimeBones;
     }
 
-    public addAnimation(animation: MmdAnimation, retargetingMap?: Map<string, string>): void {
+    public addAnimation(animation: MmdAnimation, retargetingMap?: { [key: string]: string }): void {
         const runtimeAnimation = MmdRuntimeModelAnimation.Create(animation, this, retargetingMap, this._logger);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
