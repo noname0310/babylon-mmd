@@ -30,6 +30,7 @@ import { SkyMaterial } from "@babylonjs/materials";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
+import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { VmdLoader } from "@/loader/VmdLoader";
@@ -131,9 +132,16 @@ export class SceneBuilder implements ISceneBuilder {
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
 
-        promises.push(vmdLoader.loadAsync("camera_motion", "res/private_test/motion/flos/camera.vmd",
-            (event) => updateLoadingText(0, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        const bvmdLoader = new BvmdLoader(scene);
+        bvmdLoader.loggingEnabled = true;
+
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/combined_with_camera.bvmd",
+            (event) => updateLoadingText(0, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
+
+        // promises.push(vmdLoader.loadAsync("camera_motion", "res/private_test/motion/flos/camera.vmd",
+        //     (event) => updateLoadingText(0, `Loading camera(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        // );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
@@ -144,16 +152,16 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push(vmdLoader.loadAsync("model_motion", "res/private_test/motion/flos/combined.vmd",
-            (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
+        // promises.push(vmdLoader.loadAsync("model_motion", "res/private_test/motion/flos/combined.vmd",
+        //     (event) => updateLoadingText(2, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        // );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/stage/water_house/water house.pmx",
             undefined,
             scene,
-            (event) => updateLoadingText(4, `Loading model(water house)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(2, `Loading model(water house)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         // promises.push(SceneLoader.ImportMeshAsync(undefined, "res/private_test/motion/flos/text models/1 - Daphne/TextModel.pmx", undefined, scene));
@@ -224,7 +232,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
-        mmdCamera.setAnimation("camera_motion");
+        mmdCamera.setAnimation("motion");
 
         {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
@@ -232,8 +240,8 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel = mmdRuntime.createMmdModel(modelMesh);
             // mmdModel.addAnimation(modelAnimation!);
             // mmdModel.setAnimation("melancholy_night_model");
-            mmdModel.addAnimation(loadResults[2] as MmdAnimation);
-            mmdModel.setAnimation("model_motion");
+            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+            mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
 
