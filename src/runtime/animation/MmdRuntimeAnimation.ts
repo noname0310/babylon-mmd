@@ -1,7 +1,7 @@
 import type { Bone, Material } from "@babylonjs/core";
 import { Quaternion, Space, Vector3 } from "@babylonjs/core";
 
-import type { MmdModelAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
 import { PmxObject } from "@/loader/parser/PmxObject";
@@ -32,7 +32,7 @@ export abstract class MmdRuntimeAnimation {
 }
 
 export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
-    public readonly animation: MmdModelAnimation;
+    public readonly animation: MmdAnimation;
 
     private readonly _boneBindIndexMap: (Bone | null)[];
     private readonly _moveableBoneBindIndexMap: (Bone | null)[];
@@ -42,7 +42,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     private readonly _ikSolverBindIndexMap: (IIkSolver | null)[];
 
     private constructor(
-        animation: MmdModelAnimation,
+        animation: MmdAnimation,
         boneBindIndexMap: (Bone | null)[],
         moveableBoneBindIndexMap: (Bone | null)[],
         morphController: MmdMorphController,
@@ -322,7 +322,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
      * @param logger logger
      * @returns
      */
-    public static Create(animation: MmdModelAnimation, model: MmdModel, retargetingMap?: Map<string, string>, logger?: ILogger): MmdRuntimeModelAnimation {
+    public static Create(animation: MmdAnimation, model: MmdModel, retargetingMap?: Map<string, string>, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.mesh.skeleton;
         const bones = skeleton.bones;
 
@@ -491,18 +491,18 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     };
 }
 
-export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
+export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
     public readonly animation: MmdCameraAnimationTrack;
 
     private readonly _camera: MmdCamera;
 
     private constructor(
-        animation: MmdCameraAnimationTrack,
+        animation: MmdAnimation,
         camera: MmdCamera
     ) {
         super();
 
-        this.animation = animation;
+        this.animation = animation.cameraTrack;
         this._camera = camera;
     }
 
@@ -541,19 +541,19 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             );
 
             camera.distance = cameraTrack.distances[upperBoundIndexMinusOne];
-            camera.fov = cameraTrack.fovs[upperBoundIndexMinusOne] * MmdRuntimeCameraAnimationTrack._DegToRad;
+            camera.fov = cameraTrack.fovs[upperBoundIndexMinusOne] * MmdRuntimeCameraAnimation._DegToRad;
         } else {
             const gradient = (clampedFrameTime - frameNumberA) / (frameNumberB - frameNumberA);
 
             const positions = cameraTrack.positions;
             const positionInterpolations = cameraTrack.positionInterpolations;
 
-            const positionA = MmdRuntimeCameraAnimationTrack._CameraPositionA.set(
+            const positionA = MmdRuntimeCameraAnimation._CameraPositionA.set(
                 positions[upperBoundIndexMinusOne * 3],
                 positions[upperBoundIndexMinusOne * 3 + 1],
                 positions[upperBoundIndexMinusOne * 3 + 2]
             );
-            const positionB = MmdRuntimeCameraAnimationTrack._CameraPositionB.set(
+            const positionB = MmdRuntimeCameraAnimation._CameraPositionB.set(
                 positions[upperBoundIndex * 3],
                 positions[upperBoundIndex * 3 + 1],
                 positions[upperBoundIndex * 3 + 2]
@@ -590,12 +590,12 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
             const rotations = cameraTrack.rotations;
             const rotationInterpolations = cameraTrack.rotationInterpolations;
 
-            const rotationA = MmdRuntimeCameraAnimationTrack._CameraRotationA.set(
+            const rotationA = MmdRuntimeCameraAnimation._CameraRotationA.set(
                 rotations[upperBoundIndexMinusOne * 3],
                 rotations[upperBoundIndexMinusOne * 3 + 1],
                 rotations[upperBoundIndexMinusOne * 3 + 2]
             );
-            const rotationB = MmdRuntimeCameraAnimationTrack._CameraRotationB.set(
+            const rotationB = MmdRuntimeCameraAnimation._CameraRotationB.set(
                 rotations[upperBoundIndex * 3],
                 rotations[upperBoundIndex * 3 + 1],
                 rotations[upperBoundIndex * 3 + 2]
@@ -640,12 +640,12 @@ export class MmdRuntimeCameraAnimationTrack extends MmdRuntimeAnimation {
                 gradient
             );
 
-            camera.fov = (fovA + (fovB - fovA) * fovWeight) * MmdRuntimeCameraAnimationTrack._DegToRad;
+            camera.fov = (fovA + (fovB - fovA) * fovWeight) * MmdRuntimeCameraAnimation._DegToRad;
         }
     }
 
-    public static Create(animation: MmdCameraAnimationTrack, camera: MmdCamera): MmdRuntimeCameraAnimationTrack {
-        return new MmdRuntimeCameraAnimationTrack(animation, camera);
+    public static Create(animation: MmdAnimation, camera: MmdCamera): MmdRuntimeCameraAnimation {
+        return new MmdRuntimeCameraAnimation(animation, camera);
     }
 }
 
