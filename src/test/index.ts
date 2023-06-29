@@ -1,8 +1,8 @@
 import { Engine } from "@babylonjs/core";
 
 import { BaseRuntime } from "./BaseRuntime";
-import { ConverterScene } from "./ConverterScene";
 import css from "./index.css";
+import { SceneBuilder } from "./SceneBuilder";
 css;
 
 const canvas = document.getElementById("render-canvas");
@@ -23,5 +23,5 @@ const engine = new Engine(canvas, true, {
 BaseRuntime.Create({
     canvas,
     engine,
-    sceneBuilder: new ConverterScene()
+    sceneBuilder: new SceneBuilder()
 }).then(runtime => runtime.run());

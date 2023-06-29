@@ -539,7 +539,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             for (let i = 0; i < bones.length; ++i) {
                 const bone = bones[i];
                 if (bone.getParent() === null) {
-                    bone._updateDifferenceMatrix();
+                    bone._updateAbsoluteBindMatrices();
                 }
             }
         }
