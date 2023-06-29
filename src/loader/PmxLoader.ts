@@ -560,6 +560,21 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
             const morphTargets: MorphTarget[] = [];
 
+            let hasUvMorph = false;
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphType = morphsInfo[i].type;
+                if (
+                    morphType === PmxObject.Morph.Type.UvMorph ||
+                    morphType === PmxObject.Morph.Type.AdditionalUvMorph1 ||
+                    morphType === PmxObject.Morph.Type.AdditionalUvMorph2 ||
+                    morphType === PmxObject.Morph.Type.AdditionalUvMorph3 ||
+                    morphType === PmxObject.Morph.Type.AdditionalUvMorph4
+                ) {
+                    hasUvMorph = true;
+                    break;
+                }
+            }
+
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
 
@@ -596,7 +611,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
                 if (
                     morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.UvMorph
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
                 ) {
                     // group morph, bone morph, material morph will be handled by cpu bound custom runtime
                     continue;
@@ -606,11 +625,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 morphTargets.push(morphTarget);
 
                 if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
-                    let positions = morphTarget.getPositions();
-                    if (positions === null) {
-                        positions = new Float32Array(pmxObject.vertices.length * 3);
-                        positions.set(vertexData.positions);
-                    }
+                    const positions = new Float32Array(pmxObject.vertices.length * 3);
+                    positions.set(vertexData.positions);
 
                     const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
                     let time = performance.now();
@@ -633,12 +649,10 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     lastStageLoaded += elements.length;
 
                     morphTarget.setPositions(positions);
+                    if (hasUvMorph) morphTarget.setUVs(vertexData.uvs);
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
-                    let uvs = morphTarget.getUVs();
-                    if (uvs === null) {
-                        uvs = new Float32Array(pmxObject.vertices.length * 2);
-                        uvs.set(vertexData.uvs);
-                    }
+                    const uvs = new Float32Array(pmxObject.vertices.length * 2);
+                    uvs.set(vertexData.uvs);
 
                     const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
                     let time = performance.now();
@@ -660,6 +674,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     }
                     lastStageLoaded += elements.length;
 
+                    morphTarget.setPositions(vertexData.positions);
                     morphTarget.setUVs(uvs);
                 }
             }
