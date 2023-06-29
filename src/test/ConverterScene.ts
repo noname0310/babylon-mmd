@@ -96,7 +96,7 @@ export class ConverterScene implements ISceneBuilder {
 
             convertButton.textContent = "Converting...";
             const animation = await vmdLoader.loadAsync(files[0].name, files);
-            const arraybuffer = await BvmdConverter.Convert(animation);
+            const arraybuffer = BvmdConverter.Convert(animation);
             const blob = new Blob([arraybuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
