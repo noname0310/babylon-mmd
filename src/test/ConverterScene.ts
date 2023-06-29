@@ -11,6 +11,7 @@ export class ConverterScene implements ISceneBuilder {
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
 
         const vmdLoader = new VmdLoader(scene);
+        vmdLoader.loggingEnabled = true;
 
         const files: File[] = [];
 
