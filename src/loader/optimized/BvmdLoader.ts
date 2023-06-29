@@ -4,7 +4,7 @@ import { MmdAnimation } from "../animation/MmdAnimation";
 import { MmdDataDeserializer } from "../parser/MmdDataDeserializer";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../animation/MmdAnimationTrack";
 
-export class VmdLoader {
+export class BvmdLoader {
     private readonly _scene: Scene;
 
     private _loggingEnabled: boolean;
