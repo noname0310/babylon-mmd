@@ -123,11 +123,11 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
 ## Use optimized custom format
 
-The optimized custom formats, BPMX (BabylonPMX) and BVMD (BabylonVMD), handle most of the validation and conversion tasks required for loading at the conversion stage.
+The optimized custom formats, BPMX (BabylonPMX) and BVMD (BabylonVMD), handle most of the validation and parsing process required for loading at the conversion stage.
 
-As a result, using the BPMX/BVMD formats to load a scene can provide users with an **incredibly fast loading experience**.
+As a result, you can provide users with an **incredibly fast loading experience**.
 
-Furthermore, it is also useful to use BPMX/BVMD formats when you want to protect the original motion files since they cannot be loaded in MMD.
+Furthermore, it is also useful when you want to protect the original motion files since they cannot be loaded in MMD.
 
 To perform file conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
 
