@@ -58,6 +58,8 @@ import { MmdAnimation } from "../animation/MmdAnimation";
 import { MmdDataSerializer } from "./MmdDataSerializer";
 
 export class BvmdConverter {
+    private constructor() { /* block constructor */ }
+
     public static Convert(animation: MmdAnimation): ArrayBuffer { 
         const encoder = new TextEncoder();
 
