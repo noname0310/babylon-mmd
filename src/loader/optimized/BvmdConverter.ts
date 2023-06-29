@@ -34,9 +34,9 @@
  * }[morphTrackCount]
  * 
  * propertyFrameCount: uint32
+ * ikBoneNameCount: uint32
  * frameNumbers: uint32[frameCount]
  * visibles: uint8[frameCount] - [..., visible, ...]
- * ikBoneNameCount: uint32
  * {
  *  ikBoneName: uint32 - uint8[] - length, string
  *  ikState: uint8[frameCount] - [..., ikState, ...]
@@ -175,9 +175,9 @@ export class BvmdConverter {
         }
 
         serializer.setUint32(animation.propertyTrack.frameNumbers.length); // propertyFrameCount
+        serializer.setUint32(animation.propertyTrack.ikBoneNames.length); // ikBoneNameCount
         serializer.setUint32Array(animation.propertyTrack.frameNumbers); // frameNumbers
         serializer.setUint8Array(animation.propertyTrack.visibles); // visibles
-        serializer.setUint32(animation.propertyTrack.ikBoneNames.length); // ikBoneNameCount
         const ikBoneNames = animation.propertyTrack.ikBoneNames;
         for (let i = 0; i < ikBoneNames.length; i++) {
             const ikBoneName = ikBoneNames[i];

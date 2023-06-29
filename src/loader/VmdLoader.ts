@@ -613,7 +613,7 @@ export class VmdLoader {
             }
         }
 
-        const cameraTrack = new MmdCameraAnimationTrack(name, duplicateResolvedCameraKeyFrames.length);
+        const cameraTrack = new MmdCameraAnimationTrack(duplicateResolvedCameraKeyFrames.length);
         for (let i = 0; i < duplicateResolvedCameraKeyFrames.length; ++i) {
             const cameraKeyFrame = duplicateResolvedCameraKeyFrames[i];
             const cameraKeyFrameInterpolation = cameraKeyFrame.interpolation;

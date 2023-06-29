@@ -97,10 +97,9 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
     public readonly fovInterpolations: Uint8Array; // [..., x1, x2, y1, y2, ...]
 
     public constructor(
-        trackName: string,
         frameCount: number
     ) {
-        super("camera", trackName, frameCount);
+        super("camera", "cameraTrack", frameCount);
 
         this.positions = new Float32Array(frameCount * 3);
         this.positionInterpolations = new Uint8Array(frameCount * 12);

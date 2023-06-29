@@ -38,13 +38,11 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getUint8Array(length: number): Uint8Array {
-        const result = new Uint8Array(length);
+    public getUint8Array(dest: Uint8Array, length: number): void {
         for (let i = 0; i < length; ++i) {
-            result[i] = this._dataView.getUint8(this._offset);
+            dest[i] = this._dataView.getUint8(this._offset);
             this._offset += 1;
         }
-        return result;
     }
 
     public getUint16(): number {
@@ -65,13 +63,11 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getUint32Array(length: number): Uint32Array {
-        const result = new Uint32Array(length);
+    public getUint32Array(dest: Uint32Array, length: number): void {
         for (let i = 0; i < length; ++i) {
-            result[i] = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
+            dest[i] = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 4;
         }
-        return result;
     }
 
     public getInt32(): number {
@@ -86,13 +82,11 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getFloat32Array(length: number): Float32Array {
-        const result = new Float32Array(length);
+    public getFloat32Array(dest: Float32Array, length: number): void {
         for (let i = 0; i < length; ++i) {
-            result[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
+            dest[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 4;
         }
-        return result;
     }
 
     public getFloat32Tuple<N extends number>(length: N): Tuple<number, N> {
