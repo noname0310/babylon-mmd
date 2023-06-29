@@ -207,12 +207,12 @@ export class PmxReader {
 
         let time = performance.now();
         for (let i = 0; i < verticesCount; ++i) {
-            const position = dataDeserializer.getFloat32Array(3);
-            const normal = dataDeserializer.getFloat32Array(3);
-            const uv = dataDeserializer.getFloat32Array(2);
+            const position = dataDeserializer.getFloat32Tuple(3);
+            const normal = dataDeserializer.getFloat32Tuple(3);
+            const uv = dataDeserializer.getFloat32Tuple(2);
             const additionalVec4: Vec4[] = [];
             for (let j = 0; j < header.additionalVec4Count; j++) {
-                additionalVec4.push(dataDeserializer.getFloat32Array(4));
+                additionalVec4.push(dataDeserializer.getFloat32Tuple(4));
             }
             const weightType: PmxObject.Vertex.BoneWeightType = dataDeserializer.getUint8();
 
@@ -258,9 +258,9 @@ export class PmxReader {
                     boneIndices: [indexReader.getBoneIndex(dataDeserializer), indexReader.getBoneIndex(dataDeserializer)],
                     boneWeights: {
                         boneWeight0: dataDeserializer.getFloat32(),
-                        c: dataDeserializer.getFloat32Array(3),
-                        r0: dataDeserializer.getFloat32Array(3),
-                        r1: dataDeserializer.getFloat32Array(3)
+                        c: dataDeserializer.getFloat32Tuple(3),
+                        r0: dataDeserializer.getFloat32Tuple(3),
+                        r1: dataDeserializer.getFloat32Tuple(3)
                     }
                 };
                 boneWeight = sdefweight;
@@ -367,14 +367,14 @@ export class PmxReader {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
             const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
-            const diffuse = dataDeserializer.getFloat32Array(4);
-            const specular = dataDeserializer.getFloat32Array(3);
+            const diffuse = dataDeserializer.getFloat32Tuple(4);
+            const specular = dataDeserializer.getFloat32Tuple(3);
             const shininess = dataDeserializer.getFloat32();
-            const ambient = dataDeserializer.getFloat32Array(3);
+            const ambient = dataDeserializer.getFloat32Tuple(3);
 
             const flag = dataDeserializer.getUint8();
 
-            const edgeColor = dataDeserializer.getFloat32Array(4);
+            const edgeColor = dataDeserializer.getFloat32Tuple(4);
             const edgeSize = dataDeserializer.getFloat32();
 
             const textureIndex = indexReader.getTextureIndex(dataDeserializer);
@@ -428,7 +428,7 @@ export class PmxReader {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
             const englishName = dataDeserializer.getDecoderString(dataDeserializer.getInt32(), false);
 
-            const position = dataDeserializer.getFloat32Array(3);
+            const position = dataDeserializer.getFloat32Tuple(3);
             const parentBoneIndex = indexReader.getBoneIndex(dataDeserializer);
             const transformOrder = dataDeserializer.getInt32();
 
@@ -439,7 +439,7 @@ export class PmxReader {
             if (flag & PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) {
                 tailPosition = indexReader.getBoneIndex(dataDeserializer);
             } else {
-                tailPosition = dataDeserializer.getFloat32Array(3);
+                tailPosition = dataDeserializer.getFloat32Tuple(3);
             }
 
             let appendTransform;
@@ -457,15 +457,15 @@ export class PmxReader {
             let axisLimit: Vec3 | undefined;
 
             if (flag & PmxObject.Bone.Flag.HasAxisLimit) {
-                axisLimit = dataDeserializer.getFloat32Array(3);
+                axisLimit = dataDeserializer.getFloat32Tuple(3);
             }
 
             let localVector;
 
             if (flag & PmxObject.Bone.Flag.HasLocalVector) {
                 localVector = {
-                    x: dataDeserializer.getFloat32Array(3),
-                    z: dataDeserializer.getFloat32Array(3)
+                    x: dataDeserializer.getFloat32Tuple(3),
+                    z: dataDeserializer.getFloat32Tuple(3)
                 };
             }
 
@@ -494,8 +494,8 @@ export class PmxReader {
                     const link: PmxObject.Bone.IKLink = {
                         target: ikLinkTarget,
                         limitation: hasLimit ? {
-                            minimumAngle: dataDeserializer.getFloat32Array(3),
-                            maximumAngle: dataDeserializer.getFloat32Array(3)
+                            minimumAngle: dataDeserializer.getFloat32Tuple(3),
+                            maximumAngle: dataDeserializer.getFloat32Tuple(3)
                         } : undefined
                     };
                     links.push(link);
@@ -569,7 +569,7 @@ export class PmxReader {
             case PmxObject.Morph.Type.VertexMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
-                    const positionOffset = dataDeserializer.getFloat32Array(3);
+                    const positionOffset = dataDeserializer.getFloat32Tuple(3);
 
                     const element: PmxObject.Morph.VertexMorph = {
                         index: vertexIndex,
@@ -581,8 +581,8 @@ export class PmxReader {
             case PmxObject.Morph.Type.BoneMorph:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const boneIndex = indexReader.getBoneIndex(dataDeserializer);
-                    const position = dataDeserializer.getFloat32Array(3);
-                    const rotation = dataDeserializer.getFloat32Array(4);
+                    const position = dataDeserializer.getFloat32Tuple(3);
+                    const rotation = dataDeserializer.getFloat32Tuple(4);
 
                     const element: PmxObject.Morph.BoneMorph = {
                         index: boneIndex,
@@ -599,7 +599,7 @@ export class PmxReader {
             case PmxObject.Morph.Type.AdditionalUvMorph4:
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
-                    const uvOffset = dataDeserializer.getFloat32Array(4);
+                    const uvOffset = dataDeserializer.getFloat32Tuple(4);
 
                     const element: PmxObject.Morph.UvMorph = {
                         index: vertexIndex,
@@ -612,15 +612,15 @@ export class PmxReader {
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const materialIndex = indexReader.getMaterialIndex(dataDeserializer);
                     const type = dataDeserializer.getUint8();
-                    const diffuse = dataDeserializer.getFloat32Array(4);
-                    const specular = dataDeserializer.getFloat32Array(3);
+                    const diffuse = dataDeserializer.getFloat32Tuple(4);
+                    const specular = dataDeserializer.getFloat32Tuple(3);
                     const shininess = dataDeserializer.getFloat32();
-                    const ambient = dataDeserializer.getFloat32Array(3);
-                    const edgeColor = dataDeserializer.getFloat32Array(4);
+                    const ambient = dataDeserializer.getFloat32Tuple(3);
+                    const edgeColor = dataDeserializer.getFloat32Tuple(4);
                     const edgeSize = dataDeserializer.getFloat32();
-                    const textureColor = dataDeserializer.getFloat32Array(4);
-                    const sphereTextureColor = dataDeserializer.getFloat32Array(4);
-                    const toonTextureColor = dataDeserializer.getFloat32Array(4);
+                    const textureColor = dataDeserializer.getFloat32Tuple(4);
+                    const sphereTextureColor = dataDeserializer.getFloat32Tuple(4);
+                    const toonTextureColor = dataDeserializer.getFloat32Tuple(4);
 
                     const element: PmxObject.Morph.MaterialMorph = {
                         index: materialIndex,
@@ -654,8 +654,8 @@ export class PmxReader {
                 for (let i = 0; i < morphOffsetCount; ++i) {
                     const rigidBodyIndex = indexReader.getRigidBodyIndex(dataDeserializer);
                     const isLocal = dataDeserializer.getUint8() === 1;
-                    const velocity = dataDeserializer.getFloat32Array(3);
-                    const torque = dataDeserializer.getFloat32Array(3);
+                    const velocity = dataDeserializer.getFloat32Tuple(3);
+                    const torque = dataDeserializer.getFloat32Tuple(3);
 
                     const element: PmxObject.Morph.ImpulseMorph = {
                         index: rigidBodyIndex,
@@ -740,9 +740,9 @@ export class PmxReader {
             const collisionMask = dataDeserializer.getUint16();
 
             const shapeType: PmxObject.RigidBody.ShapeType = dataDeserializer.getUint8();
-            const shapeSize = dataDeserializer.getFloat32Array(3);
-            const shapePosition = dataDeserializer.getFloat32Array(3);
-            const shapeRotation = dataDeserializer.getFloat32Array(3);
+            const shapeSize = dataDeserializer.getFloat32Tuple(3);
+            const shapePosition = dataDeserializer.getFloat32Tuple(3);
+            const shapeRotation = dataDeserializer.getFloat32Tuple(3);
 
             const mass = dataDeserializer.getFloat32();
             const linearDamping = dataDeserializer.getFloat32();
@@ -789,14 +789,14 @@ export class PmxReader {
             const type: PmxObject.Joint.Type = dataDeserializer.getUint8();
             const rigidbodyIndexA = indexReader.getRigidBodyIndex(dataDeserializer);
             const rigidbodyIndexB = indexReader.getRigidBodyIndex(dataDeserializer);
-            const position = dataDeserializer.getFloat32Array(3);
-            const rotation = dataDeserializer.getFloat32Array(3);
-            const positionMin = dataDeserializer.getFloat32Array(3);
-            const positionMax = dataDeserializer.getFloat32Array(3);
-            const rotationMin = dataDeserializer.getFloat32Array(3);
-            const rotationMax = dataDeserializer.getFloat32Array(3);
-            const springPosition = dataDeserializer.getFloat32Array(3);
-            const springRotation = dataDeserializer.getFloat32Array(3);
+            const position = dataDeserializer.getFloat32Tuple(3);
+            const rotation = dataDeserializer.getFloat32Tuple(3);
+            const positionMin = dataDeserializer.getFloat32Tuple(3);
+            const positionMax = dataDeserializer.getFloat32Tuple(3);
+            const rotationMin = dataDeserializer.getFloat32Tuple(3);
+            const rotationMax = dataDeserializer.getFloat32Tuple(3);
+            const springPosition = dataDeserializer.getFloat32Tuple(3);
+            const springRotation = dataDeserializer.getFloat32Tuple(3);
 
             const joint: PmxObject.Joint = {
                 name,

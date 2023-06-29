@@ -337,8 +337,8 @@ export namespace VmdObject {
 
             this.boneName = dataDeserializer.getDecoderString(15, true);
             this.frameNumber = dataDeserializer.getUint32();
-            this.position = dataDeserializer.getFloat32Array(3);
-            this.rotation = dataDeserializer.getFloat32Array(4);
+            this.position = dataDeserializer.getFloat32Tuple(3);
+            this.rotation = dataDeserializer.getFloat32Tuple(4);
 
             this.interpolation = new Uint8Array(64);
             for (let i = 0; i < 64; ++i) {
@@ -405,8 +405,8 @@ export namespace VmdObject {
 
             this.frameNumber = dataDeserializer.getUint32();
             this.distance = dataDeserializer.getFloat32();
-            this.position = dataDeserializer.getFloat32Array(3);
-            this.rotation = dataDeserializer.getFloat32Array(3);
+            this.position = dataDeserializer.getFloat32Tuple(3);
+            this.rotation = dataDeserializer.getFloat32Tuple(3);
 
             this.interpolation = new Uint8Array(24);
             for (let i = 0; i < 24; ++i) {
@@ -442,8 +442,8 @@ export namespace VmdObject {
             dataDeserializer.offset = offset;
 
             this.frameNumber = dataDeserializer.getUint32();
-            this.color = dataDeserializer.getFloat32Array(3);
-            this.direction = dataDeserializer.getFloat32Array(3);
+            this.color = dataDeserializer.getFloat32Tuple(3);
+            this.direction = dataDeserializer.getFloat32Tuple(3);
         }
     }
 

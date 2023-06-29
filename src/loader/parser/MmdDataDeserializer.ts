@@ -38,6 +38,15 @@ export class MmdDataDeserializer {
         return value;
     }
 
+    public getUint8Array(length: number): Uint8Array {
+        const result = new Uint8Array(length);
+        for (let i = 0; i < length; ++i) {
+            result[i] = this._dataView.getUint8(this._offset);
+            this._offset += 1;
+        }
+        return result;
+    }
+
     public getUint16(): number {
         const value = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 2;
@@ -56,6 +65,15 @@ export class MmdDataDeserializer {
         return value;
     }
 
+    public getUint32Array(length: number): Uint32Array {
+        const result = new Uint32Array(length);
+        for (let i = 0; i < length; ++i) {
+            result[i] = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
+            this._offset += 4;
+        }
+        return result;
+    }
+
     public getInt32(): number {
         const value = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 4;
@@ -68,10 +86,20 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getFloat32Array<N extends number>(length: N): Tuple<number, N> {
-        const result = [];
+    public getFloat32Array(length: number): Float32Array {
+        const result = new Float32Array(length);
         for (let i = 0; i < length; ++i) {
-            result.push(this.getFloat32());
+            result[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
+            this._offset += 4;
+        }
+        return result;
+    }
+
+    public getFloat32Tuple<N extends number>(length: N): Tuple<number, N> {
+        const result = new Array<number>(length);
+        for (let i = 0; i < length; ++i) {
+            result[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
+            this._offset += 4;
         }
         return result as Tuple<number, N>;
     }
