@@ -153,6 +153,7 @@ export class MmdRuntime implements ILogger {
         if (this._isAnimationPlaying) return;
 
         this._animationStartTime = performance.now();
+        this._animationStopTime = -1;
         this._isAnimationPlaying = true;
 
         const models = this._models;
@@ -176,8 +177,10 @@ export class MmdRuntime implements ILogger {
 
     public resumeAnimation(): void {
         if (this._isAnimationPlaying) return;
+        if (this._animationStopTime === -1) return;
 
         this._animationStartTime += performance.now() - this._animationStopTime;
+        this._animationStopTime = -1;
         this._isAnimationPlaying = true;
     }
 
