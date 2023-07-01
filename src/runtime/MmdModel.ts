@@ -174,15 +174,15 @@ export class MmdModel {
     }
 
     public afterPhysics(): void {
-        // const physicsModel = this._physicsModel;
-        // if (physicsModel !== null) {
-        //     physicsModel.syncBones();
-        //     physicsModel.updateLocalMatrixFromWorldMatrix();
-        //     for (let i = 0; i < this._sortedRuntimeRootBones.length; ++i) {
-        //         const bone = this._sortedRuntimeRootBones[i];
-        //         bone.updateWorldMatrix();
-        //     }
-        // }
+        const physicsModel = this._physicsModel;
+        if (physicsModel !== null) {
+            physicsModel.syncBones();
+            // physicsModel.updateLocalMatrixFromWorldMatrix();
+            // for (let i = 0; i < this._sortedRuntimeRootBones.length; ++i) {
+            //     const bone = this._sortedRuntimeRootBones[i];
+            //     bone.updateWorldMatrix();
+            // }
+        }
         this._update(true);
         this.mesh.skeleton._markAsDirty();
     }

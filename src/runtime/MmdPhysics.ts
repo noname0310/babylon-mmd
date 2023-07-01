@@ -94,8 +94,8 @@ export class MmdPhysicsModel {
             const node = nodes[i];
             if (node === null) continue;
 
-            const nodeWorldMatrix = node.linkedBone.worldMatrix.multiplyToRef(
-                node.bodyOffsetMatrix,
+            const nodeWorldMatrix = node.bodyOffsetMatrix.multiplyToRef(
+                node.linkedBone.worldMatrix,
                 MmdPhysicsModel._NodeWorldMatrix
             );
             nodeWorldMatrix.decompose(
@@ -117,8 +117,8 @@ export class MmdPhysicsModel {
             switch (node.physicsMode) {
             case PmxObject.RigidBody.PhysicsMode.FollowBone:
                 {
-                    const nodeWorldMatrix = node.linkedBone.worldMatrix.multiplyToRef(
-                        node.bodyOffsetMatrix,
+                    const nodeWorldMatrix = node.bodyOffsetMatrix.multiplyToRef(
+                        node.linkedBone.worldMatrix,
                         MmdPhysicsModel._NodeWorldMatrix
                     );
                     nodeWorldMatrix.decompose(
