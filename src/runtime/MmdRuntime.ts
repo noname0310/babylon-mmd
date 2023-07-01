@@ -36,6 +36,8 @@ export class MmdRuntime implements ILogger {
 
     private _isAnimationPlaying: boolean;
 
+    private readonly _needToInitializePhysicsModels: MmdModel[] = [];
+
     private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
     private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
 
@@ -55,6 +57,8 @@ export class MmdRuntime implements ILogger {
         this._animationStartTime = 0;
         this._animationStopTime = -1;
         this._isAnimationPlaying = false;
+
+        this._needToInitializePhysicsModels = [];
     }
 
     public createMmdModel(
@@ -77,6 +81,7 @@ export class MmdRuntime implements ILogger {
             this
         );
         this._models.push(model);
+        this._needToInitializePhysicsModels.push(model);
 
         return model;
     }
@@ -129,6 +134,12 @@ export class MmdRuntime implements ILogger {
                 models[i].beforePhysics(null);
             }
         }
+
+        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+        for (let i = 0; i < needToInitializePhysicsModels.length; ++i) {
+            needToInitializePhysicsModels[i].initializePhysics();
+        }
+        needToInitializePhysicsModels.length = 0;
     }
 
     public afterPhysics(): void {
@@ -172,6 +183,19 @@ export class MmdRuntime implements ILogger {
 
     public seekAnimation(frameTime: number): void {
         if (!this._isAnimationPlaying) return;
+
+        const elapsed = performance.now() - this._animationStartTime;
+        const elapsedFrameTime = elapsed * 0.001 * 30;
+
+        if (2 * 30 < Math.abs(frameTime - elapsedFrameTime)) {
+            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+            for (let i = 0; i < this._models.length; ++i) {
+                const model = this._models[i];
+                if (model.currentAnimation !== null) {
+                    needToInitializePhysicsModels.push(model);
+                }
+            }
+        }
 
         this._animationStartTime = performance.now() - frameTime * 1000 / 30;
     }

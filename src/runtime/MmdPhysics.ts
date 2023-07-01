@@ -1,22 +1,41 @@
-import type { Bone, PhysicsBody, PhysicsConstraint, Scene } from "@babylonjs/core";
-import { TransformNode } from "@babylonjs/core";
+import type { PhysicsConstraint, Scene } from "@babylonjs/core";
+import { Matrix, PhysicsBody, PhysicsMotionType, TransformNode } from "@babylonjs/core";
 
-import type { PmxObject } from "@/loader/parser/PmxObject";
+import { PmxObject } from "@/loader/parser/PmxObject";
 
 import type { ILogger } from "./ILogger";
+import type { MmdRuntimeBone } from "./MmdRuntimeBone";
+
+class MmdPhysicsTransformNode extends TransformNode {
+    public boneLocalMatrix: Matrix;
+
+    public constructor(name: string, scene: Scene, isPure?: boolean) {
+        super(name, scene, isPure);
+
+        this.boneLocalMatrix = Matrix.Identity();
+    }
+
+    public computeBoneLocalMatrix(bone: MmdRuntimeBone): void {
+        const worldMatrix = this.getWorldMatrix();
+        const parentWorldMatrix = bone.worldMatrix;
+
+        parentWorldMatrix.invertToRef(this.boneLocalMatrix);
+        this.boneLocalMatrix.multiplyToRef(worldMatrix, this.boneLocalMatrix);
+    }
+}
 
 export class MmdPhysicsModel {
-    private readonly _bones: Bone[];
-    private readonly _nodes: TransformNode[];
-    private readonly _bodies: PhysicsBody[];
+    private readonly _bones: readonly MmdRuntimeBone[];
+    private readonly _nodes: readonly MmdPhysicsTransformNode[];
+    private readonly _bodies: readonly (PhysicsBody | null)[];
 
-    private readonly _constraints: PhysicsConstraint[];
+    private readonly _constraints: readonly PhysicsConstraint[];
 
     public constructor(
-        bones: Bone[],
-        nodes: TransformNode[],
-        bodies: PhysicsBody[],
-        constraints: PhysicsConstraint[]
+        bones: readonly MmdRuntimeBone[],
+        nodes: readonly MmdPhysicsTransformNode[],
+        bodies: readonly (PhysicsBody | null)[],
+        constraints: readonly PhysicsConstraint[]
     ) {
         this._bones = bones;
         this._nodes = nodes;
@@ -32,7 +51,7 @@ export class MmdPhysicsModel {
 
         const bodies = this._bodies;
         for (let i = 0; i < bodies.length; ++i) {
-            bodies[i].dispose();
+            bodies[i]?.dispose();
         }
 
         const nodes = this._nodes;
@@ -41,6 +60,10 @@ export class MmdPhysicsModel {
         }
 
         this._bones;
+    }
+
+    public initialize(): void {
+        //
     }
 }
 
@@ -52,23 +75,85 @@ export class MmdPhysics {
     }
 
     public buildPhysics(
-        bones: Bone[],
+        bones: readonly MmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger
     ): MmdPhysicsModel {
-        const nodes: TransformNode[] = [];
-        const bodies: PhysicsBody[] = [];
+        const nodes: MmdPhysicsTransformNode[] = [];
+        const bodies: (PhysicsBody | null)[] = [];
         const constraints: PhysicsConstraint[] = [];
 
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];
 
-            const node = new TransformNode(rigidBody.name, this._scene);
-            node;
-            joints;
-            logger;
+            if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
+                logger.warn(`Bone index out of range failed to create rigid body: ${rigidBody.name}`);
+                continue;
+            }
+            const bone = bones[rigidBody.boneIndex];
+
+            const node = new MmdPhysicsTransformNode(rigidBody.name, this._scene);
+
+            const shapePosition = rigidBody.shapePosition;
+            node.position.copyFromFloats(
+                shapePosition[0],
+                shapePosition[1],
+                shapePosition[2]
+            );
+
+            node.rotation.copyFromFloats(
+                rigidBody.shapeRotation[0],
+                rigidBody.shapeRotation[1],
+                rigidBody.shapeRotation[2]
+            );
+
+            node.computeBoneLocalMatrix(bone);
+
+            nodes.push(node);
+
+            const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
+                ? PhysicsMotionType.ANIMATED
+                : PhysicsMotionType.DYNAMIC;
+
+            const body = new PhysicsBody(
+                node,
+                motionType,
+                false,
+                this._scene
+            );
+
+            body.setMassProperties({
+                mass: rigidBody.mass
+                /**
+                 * The principal moments of inertia of this object
+                 * for a unit mass. This determines how easy it is
+                 * for the body to rotate. A value of zero on any
+                 * axis will be used as infinite interia about that
+                 * axis.
+                 *
+                 * If not provided, the physics engine will compute
+                 * an appropriate value.
+                 */
+                // inertia?: Vector3;
+                /**
+                 * The rotation rotating from inertia major axis space
+                 * to parent space (i.e., the rotation which, when
+                 * applied to the 3x3 inertia tensor causes the inertia
+                 * tensor to become a diagonal matrix). This determines
+                 * how the values of inertia are aligned with the parent
+                 * object.
+                 *
+                 * If not provided, the physics engine will compute
+                 * an appropriate value.
+                 */
+                // inertiaOrientation?: Quaternion;
+            });
+
+
         }
+
+        joints;
 
         return new MmdPhysicsModel(bones, nodes, bodies, constraints);
     }

@@ -78,7 +78,7 @@ export class MmdModel {
         );
 
         this._physicsModel = mmdPhysics?.buildPhysics(
-            mmdMesh.skeleton.bones,
+            runtimeBones,
             mmdMetadata.rigidBodies,
             mmdMetadata.joints,
             logger
@@ -132,6 +132,10 @@ export class MmdModel {
         return this._animations;
     }
 
+    public get currentAnimation(): MmdRuntimeModelAnimation | null {
+        return this._currentAnimation;
+    }
+
     public resetState(): void {
         this.morph.resetMorphWeights();
 
@@ -143,6 +147,10 @@ export class MmdModel {
                 bone.ikSolver.enabled = true;
             }
         }
+    }
+
+    public initializePhysics(): void {
+        this._physicsModel?.initialize();
     }
 
     public beforePhysics(frameTime: number | null): void {
