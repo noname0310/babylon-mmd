@@ -169,7 +169,6 @@ export class SceneBuilder implements ISceneBuilder {
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            console.log("HavokPlugin", havokPlugin);
             updateLoadingText(3, "Loading physics engine... Done");
         })());
 
