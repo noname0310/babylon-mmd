@@ -303,7 +303,8 @@ export class MmdPhysics {
             const body = new PhysicsBody(node, motionType, false, scene);
             body.shape = shape;
             body.setMassProperties({ mass: rigidBody.mass });
-            body.setLinearDamping(rigidBody.linearDamping);
+            // TODO: fix damping value
+            body.setLinearDamping(Math.ceil(rigidBody.linearDamping));
             body.setAngularDamping(rigidBody.angularDamping);
             if (motionType === PhysicsMotionType.ANIMATED) {
                 body.disablePreStep = false;
@@ -421,6 +422,8 @@ export class MmdPhysics {
                 {
                     pivotA: jointFinalTransformA.getTranslation(),
                     pivotB: jointFinalTransformB.getTranslation(),
+
+                    // TODO: check axis, perpAxis calculation
                     axisA: new Vector3(
                         jointFinalTransformA.m[8],
                         jointFinalTransformA.m[9],
