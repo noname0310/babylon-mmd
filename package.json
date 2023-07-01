@@ -2,7 +2,7 @@
     "name": "babylon-mmd",
     "version": "0.3.0",
     "description": "babylon mmd runtime",
-    "main": "dist/esm/libIndex.js",
+    "main": "dist/esm/index.js",
     "scripts": {
         "start": "webpack serve --mode development",
         "watch": "webpack --watch",
