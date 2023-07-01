@@ -58,6 +58,9 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
 
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
+        mmdCamera.maxZ = 5000;
+
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
         camera.maxZ = 5000;
         camera.setTarget(new Vector3(0, 10, 0));
@@ -69,9 +72,6 @@ export class SceneBuilder implements ISceneBuilder {
         camera.inertia = 0;
         camera.angularSensibility = 500;
         camera.speed = 10;
-
-        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 5000;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
@@ -169,6 +169,7 @@ export class SceneBuilder implements ISceneBuilder {
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            console.log("HavokPlugin", havokPlugin);
             updateLoadingText(3, "Loading physics engine... Done");
         })());
 
