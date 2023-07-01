@@ -560,21 +560,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
             const morphTargets: MorphTarget[] = [];
 
-            let hasUvMorph = false;
-            for (let i = 0; i < morphsInfo.length; ++i) {
-                const morphType = morphsInfo[i].type;
-                if (
-                    morphType === PmxObject.Morph.Type.UvMorph ||
-                    morphType === PmxObject.Morph.Type.AdditionalUvMorph1 ||
-                    morphType === PmxObject.Morph.Type.AdditionalUvMorph2 ||
-                    morphType === PmxObject.Morph.Type.AdditionalUvMorph3 ||
-                    morphType === PmxObject.Morph.Type.AdditionalUvMorph4
-                ) {
-                    hasUvMorph = true;
-                    break;
-                }
-            }
-
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
 
@@ -649,7 +634,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     lastStageLoaded += elements.length;
 
                     morphTarget.setPositions(positions);
-                    if (hasUvMorph) morphTarget.setUVs(vertexData.uvs);
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
                     const uvs = new Float32Array(pmxObject.vertices.length * 2);
                     uvs.set(vertexData.uvs);
