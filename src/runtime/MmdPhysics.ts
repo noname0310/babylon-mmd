@@ -274,6 +274,8 @@ export class MmdPhysics {
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion
             };
+            shape.filterCollideMask = rigidBody.collisionMask;
+            shape.filterMembershipMask = 1 << rigidBody.collisionGroup;
 
             const node = new MmdPhysicsTransformNode(rigidBody.name, scene, bone, rigidBody.physicsMode);
 
@@ -431,8 +433,7 @@ export class MmdPhysics {
                         jointFinalTransformB.m[4],
                         jointFinalTransformB.m[5],
                         jointFinalTransformB.m[6]
-                    ),
-                    collision: bodyInfoA.collisionGroup !== bodyInfoB.collisionGroup
+                    )
                 },
                 [
                     {
