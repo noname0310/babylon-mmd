@@ -75,7 +75,11 @@ export class MmdPhysicsModel {
 
         const bodies = this._bodies;
         for (let i = 0; i < bodies.length; ++i) {
-            bodies[i]?.dispose();
+            const body = bodies[i];
+            if (body === null) continue;
+
+            body.shape!.dispose();
+            body.dispose();
         }
 
         const nodes = this._nodes;
