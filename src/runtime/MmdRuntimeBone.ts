@@ -11,7 +11,7 @@ export interface IMmdRuntimeBone {
 
     readonly name: string;
     readonly parentBone: IMmdRuntimeBone | null;
-    readonly childrenBones: readonly IMmdRuntimeBone[];
+    readonly childBones: readonly IMmdRuntimeBone[];
 
     readonly transformOrder: number;
     readonly flag: number;
@@ -25,7 +25,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
     public readonly name: string;
     public parentBone: MmdRuntimeBone | null;
-    public readonly childrenBones: MmdRuntimeBone[];
+    public readonly childBones: MmdRuntimeBone[];
 
     public readonly transformOrder: number;
     public readonly flag: number;
@@ -50,7 +50,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
         this.name = boneMetadata.name;
         this.parentBone = null;
-        this.childrenBones = [];
+        this.childBones = [];
 
         this.transformOrder = boneMetadata.transformOrder;
         this.flag = boneMetadata.flag;
@@ -149,7 +149,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
                 bone.worldMatrix.copyFrom(bone.localMatrix);
             }
 
-            const childrenBones = bone.childrenBones;
+            const childrenBones = bone.childBones;
             for (let i = 0, l = childrenBones.length; i < l; ++i) {
                 stack.push(childrenBones[i]);
             }
