@@ -113,16 +113,6 @@ export class SceneBuilder implements ISceneBuilder {
         const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
         skybox.material = skyMaterial;
 
-        // SceneLoader.LoadAssetContainer(
-        //     "res/private_test/model/YYB Hatsune Miku_10th_v1.02.glb",
-        //     undefined,
-        //     scene,
-        //     (container) => {
-        //         container;
-        //         //container.addAllToScene();
-        //     }
-        // );
-
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
