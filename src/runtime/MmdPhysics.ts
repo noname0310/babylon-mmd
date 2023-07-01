@@ -170,6 +170,7 @@ export class MmdPhysicsModel {
                         ),
                         node.linkedBone.worldMatrix
                     );
+
                     const childBones = node.linkedBone.childBones;
                     for (let j = 0; j < childBones.length; ++j) {
                         childBones[j].updateWorldMatrix();
@@ -188,6 +189,7 @@ export class MmdPhysicsModel {
                         ),
                         node.linkedBone.worldMatrix
                     );
+
                     const childBones = node.linkedBone.childBones;
                     for (let j = 0; j < childBones.length; ++j) {
                         childBones[j].updateWorldMatrix();
@@ -197,25 +199,6 @@ export class MmdPhysicsModel {
 
             default:
                 throw new Error(`Unknown physics mode: ${node.physicsMode}`);
-            }
-        }
-    }
-
-    private static readonly _ParentWorldMatrixInverse = new Matrix();
-
-    public updateLocalMatrixFromWorldMatrix(): void {
-        const nodes = this._nodes;
-        for (let i = 0; i < nodes.length; ++i) {
-            const node = nodes[i];
-            if (node === null) continue;
-
-            const bone = node.linkedBone;
-            const parentBone = bone.parentBone;
-            if (parentBone !== null) {
-                const parentWorldMatrixInverse = parentBone.worldMatrix.invertToRef(MmdPhysicsModel._ParentWorldMatrixInverse);
-                parentWorldMatrixInverse.multiplyToRef(bone.worldMatrix, bone.localMatrix);
-            } else {
-                bone.localMatrix.copyFrom(bone.worldMatrix);
             }
         }
     }
