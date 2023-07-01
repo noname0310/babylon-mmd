@@ -30,7 +30,6 @@ import {
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
-import { SkyMaterial } from "@babylonjs/materials";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
@@ -74,7 +73,7 @@ export class SceneBuilder implements ISceneBuilder {
         camera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
+        hemisphericLight.intensity = 0.5;
         hemisphericLight.specular = new Color3(0, 0, 0);
         hemisphericLight.groundColor = new Color3(1, 1, 1);
 
@@ -104,21 +103,14 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
-        ground.setEnabled(false);
-
-        const skyMaterial = new SkyMaterial("skyMaterial", scene);
-        skyMaterial.backFaceCulling = false;
-        skyMaterial.inclination = 0;
-
-        const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
-        skybox.material = skyMaterial;
+        ground.setEnabled(true);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
         const sound = new Sound("sound",
-            "res/private_test/motion/flos/flos_YuNi.mp3",
-            // "res/private_test/motion/melancholy_night/melancholy_night.mp3",
+            // "res/private_test/motion/flos/flos_YuNi.mp3",
+            "res/private_test/motion/melancholy_night/melancholy_night.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
                 sound.play();//undefined, 417 / 30);
@@ -143,33 +135,25 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd",
-            (event) => updateLoadingText(0, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/melancholy_night/motion.bvmd",
+            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            //"res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-            "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            // "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
             undefined,
             scene,
-            (event) => updateLoadingText(1, `Loading model(yyb_deep_canyons_miku)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/stage/water_house/water house.pmx",
-            undefined,
-            scene,
-            (event) => updateLoadingText(2, `Loading model(water house)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
+            updateLoadingText(2, "Loading physics engine...");
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
+            updateLoadingText(2, "Loading physics engine... Done");
         })());
 
         const loadResults = await Promise.all(promises);
