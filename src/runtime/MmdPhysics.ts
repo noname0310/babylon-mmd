@@ -247,9 +247,9 @@ export class MmdPhysics {
             case PmxObject.RigidBody.ShapeType.Box:
                 shape = new PhysicsShapeBox(new Vector3(), new Quaternion(),
                     new Vector3(
-                        rigidBody.shapeSize[0],
-                        rigidBody.shapeSize[1],
-                        rigidBody.shapeSize[2]
+                        rigidBody.shapeSize[0] * 2,
+                        rigidBody.shapeSize[1] * 2,
+                        rigidBody.shapeSize[2] * 2
                     ), scene
                 );
                 break;
