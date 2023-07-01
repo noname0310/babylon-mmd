@@ -33,6 +33,7 @@ import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { MmdCamera } from "@/runtime/MmdCamera";
+import { MmdPhysics } from "@/runtime/MmdPhysics";
 import { MmdRuntime } from "@/runtime/MmdRuntime";
 
 import type { ISceneBuilder } from "./BaseRuntime";
@@ -168,7 +169,7 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh);
         });
 
-        const mmdRuntime = new MmdRuntime();
+        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setCamera(mmdCamera);

@@ -6,9 +6,17 @@ import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdCamera } from "./MmdCamera";
 import { MmdMesh } from "./MmdMesh";
 import { MmdModel } from "./MmdModel";
+import type { MmdPhysics } from "./MmdPhysics";
 import { MmdStandardMaterialProxy } from "./MmdStandardMaterialProxy";
 
+export interface CreateMmdModelOptions {
+    materialProxyConstructor?: IMmdMaterialProxyConstructor<Material>;
+    buildPhysics?: boolean;
+}
+
 export class MmdRuntime implements ILogger {
+    private readonly _physics: MmdPhysics | null;
+
     private readonly _models: MmdModel[];
     private _camera: MmdCamera | null;
 
@@ -31,7 +39,9 @@ export class MmdRuntime implements ILogger {
     private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
     private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
 
-    public constructor() {
+    public constructor(physics?: MmdPhysics) {
+        this._physics = physics ?? null;
+
         this._models = [];
         this._camera = null;
 
@@ -49,18 +59,30 @@ export class MmdRuntime implements ILogger {
 
     public createMmdModel(
         mmdMesh: Mesh,
-        materialProxyConstructor: IMmdMaterialProxyConstructor<Material> = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>
+        options: CreateMmdModelOptions = {}
     ): MmdModel {
         if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
 
-        const model = new MmdModel(mmdMesh, materialProxyConstructor, this);
+        if (options.materialProxyConstructor === undefined) {
+            options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
+        }
+        if (options.buildPhysics === undefined) {
+            options.buildPhysics = true;
+        }
+
+        const model = new MmdModel(
+            mmdMesh,
+            options.materialProxyConstructor,
+            options.buildPhysics ? this._physics : null,
+            this
+        );
         this._models.push(model);
 
         return model;
     }
 
     public destroyMmdModel(mmdModel: MmdModel): void {
-        mmdModel.enableSkeletonWorldMatrixUpdate();
+        mmdModel.dispose();
 
         const models = this._models;
         const index = models.indexOf(mmdModel);
@@ -121,6 +143,11 @@ export class MmdRuntime implements ILogger {
 
         this._animationStartTime = performance.now();
         this._isAnimationPlaying = true;
+
+        const models = this._models;
+        for (let i = 0; i < this._models.length; ++i) {
+            models[i].resetState();
+        }
     }
 
     public stopAnimation(): void {

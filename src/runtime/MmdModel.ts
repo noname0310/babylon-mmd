@@ -1,4 +1,5 @@
-import { type Bone, type Material, type Matrix, type Nullable, type Skeleton, Vector3 } from "@babylonjs/core";
+import type { Bone, Material, Matrix, Nullable, Skeleton } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
@@ -10,12 +11,15 @@ import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdMesh, RuntimeMmdMesh } from "./MmdMesh";
 import { MmdMorphController } from "./MmdMorphController";
-import type { IMmdRuntimeBone} from "./MmdRuntimeBone";
+import type { MmdPhysics, MmdPhysicsModel } from "./MmdPhysics";
+import type { IMmdRuntimeBone } from "./MmdRuntimeBone";
 import { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 export class MmdModel {
     public readonly mesh: RuntimeMmdMesh;
     public readonly morph: MmdMorphController;
+
+    private readonly _physicsModel: MmdPhysicsModel | null;
 
     private readonly _logger: ILogger;
 
@@ -30,6 +34,7 @@ export class MmdModel {
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
+        mmdPhysics: MmdPhysics | null,
         logger: ILogger
     ) {
         this._logger = logger;
@@ -72,10 +77,22 @@ export class MmdModel {
             logger
         );
 
+        this._physicsModel = mmdPhysics?.buildPhysics(
+            mmdMesh.skeleton.bones,
+            mmdMetadata.rigidBodies,
+            mmdMetadata.joints,
+            logger
+        ) ?? null;
+
         this._animations = [];
         this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
+    }
+
+    public dispose(): void {
+        this._enableSkeletonWorldMatrixUpdate();
+        this._physicsModel?.dispose();
     }
 
     public get sortedRuntimeBones(): readonly IMmdRuntimeBone[] {
@@ -113,6 +130,19 @@ export class MmdModel {
 
     public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {
         return this._animations;
+    }
+
+    public resetState(): void {
+        this.morph.resetMorphWeights();
+
+        const sortedBones = this._sortedRuntimeBones;
+        for (let i = 0; i < sortedBones.length; ++i) {
+            const bone = sortedBones[i];
+
+            if (bone.ikSolver !== null) {
+                bone.ikSolver.enabled = true;
+            }
+        }
     }
 
     public beforePhysics(frameTime: number | null): void {
@@ -263,7 +293,7 @@ export class MmdModel {
         };
     }
 
-    public enableSkeletonWorldMatrixUpdate(): void {
+    private _enableSkeletonWorldMatrixUpdate(): void {
         if (this._originalComputeTransformMatrices === null) return;
         (this.mesh.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
     }

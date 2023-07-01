@@ -33,6 +33,7 @@ export { MmdCamera } from "@/runtime/MmdCamera";
 export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/runtime/MmdMesh";
 export { MmdModel } from "@/runtime/MmdModel";
 export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/runtime/MmdMorphController";
-export { MmdRuntime } from "@/runtime/MmdRuntime";
+export { MmdPhysics, MmdPhysicsModel } from "@/runtime/MmdPhysics";
+export { MmdRuntime, CreateMmdModelOptions } from "@/runtime/MmdRuntime";
 export { IMmdRuntimeBone } from "@/runtime/MmdRuntimeBone";
 export { MmdStandardMaterialProxy } from "@/runtime/MmdStandardMaterialProxy";
