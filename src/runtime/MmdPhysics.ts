@@ -313,10 +313,13 @@ export class MmdPhysics {
             bodies.push(body);
         }
 
-        const jointRotation = new Matrix();
+        const one: DeepImmutable<Vector3> = Vector3.One();
+        const jointRotation = new Quaternion();
+        const jointPosition = new Vector3();
         const jointTransform = new Matrix();
 
-        const rigidBodyRotation = new Matrix();
+        const rigidBodyRotation = new Quaternion();
+        const rigidBodyPosition = new Vector3();
         const rigidBodyAInverse = new Matrix();
         const rigidBodyBInverse = new Matrix();
 
@@ -350,19 +353,21 @@ export class MmdPhysics {
                 continue;
             }
 
-            Matrix.IdentityToRef(jointTransform);
-            jointTransform.setTranslationFromFloats(
-                joint.position[0],
-                joint.position[1],
-                joint.position[2]
+            Matrix.ComposeToRef(
+                one,
+                Quaternion.FromEulerAnglesToRef(
+                    joint.rotation[0],
+                    joint.rotation[1],
+                    joint.rotation[2],
+                    jointRotation
+                ),
+                jointPosition.copyFromFloats(
+                    joint.position[0],
+                    joint.position[1],
+                    joint.position[2]
+                ),
+                jointTransform
             );
-            Matrix.RotationYawPitchRollToRef(
-                joint.rotation[1],
-                joint.rotation[0],
-                joint.rotation[2],
-                jointRotation
-            );
-            jointTransform.multiplyToRef(jointRotation, jointTransform);
 
             const bodyInfoA = rigidBodies[joint.rigidbodyIndexA];
             const bodyInfoB = rigidBodies[joint.rigidbodyIndexB];
@@ -371,44 +376,46 @@ export class MmdPhysics {
                 const shapeRotation = bodyInfoA.shapeRotation;
                 const shapePosition = bodyInfoA.shapePosition;
 
-                Matrix.IdentityToRef(rigidBodyAInverse);
-                rigidBodyAInverse.setTranslationFromFloats(
-                    shapePosition[0],
-                    shapePosition[1],
-                    shapePosition[2]
-                );
-                Matrix.RotationYawPitchRollToRef(
-                    shapeRotation[1],
-                    shapeRotation[0],
-                    shapeRotation[2],
-                    rigidBodyRotation
-                );
-                rigidBodyAInverse.multiplyToRef(rigidBodyRotation, rigidBodyAInverse);
-                rigidBodyAInverse.invert();
+                Matrix.ComposeToRef(
+                    one,
+                    Quaternion.FromEulerAnglesToRef(
+                        shapeRotation[0],
+                        shapeRotation[1],
+                        shapeRotation[2],
+                        rigidBodyRotation
+                    ),
+                    rigidBodyPosition.copyFromFloats(
+                        shapePosition[0],
+                        shapePosition[1],
+                        shapePosition[2]
+                    ),
+                    rigidBodyAInverse
+                ).invert();
             }
 
             {
                 const shapeRotation = bodyInfoB.shapeRotation;
                 const shapePosition = bodyInfoB.shapePosition;
 
-                Matrix.IdentityToRef(rigidBodyBInverse);
-                rigidBodyBInverse.setTranslationFromFloats(
-                    shapePosition[0],
-                    shapePosition[1],
-                    shapePosition[2]
-                );
-                Matrix.RotationYawPitchRollToRef(
-                    shapeRotation[1],
-                    shapeRotation[0],
-                    shapeRotation[2],
-                    rigidBodyRotation
-                );
-                rigidBodyBInverse.multiplyToRef(rigidBodyRotation, rigidBodyBInverse);
-                rigidBodyBInverse.invert();
+                Matrix.ComposeToRef(
+                    one,
+                    Quaternion.FromEulerAnglesToRef(
+                        shapeRotation[0],
+                        shapeRotation[1],
+                        shapeRotation[2],
+                        rigidBodyRotation
+                    ),
+                    rigidBodyPosition.copyFromFloats(
+                        shapePosition[0],
+                        shapePosition[1],
+                        shapePosition[2]
+                    ),
+                    rigidBodyBInverse
+                ).invert();
             }
 
-            rigidBodyAInverse.multiplyToRef(jointTransform, jointFinalTransformA);
-            rigidBodyBInverse.multiplyToRef(jointTransform, jointFinalTransformB);
+            jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
+            jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
             const constraint = new Physics6DoFConstraint(
                 {
