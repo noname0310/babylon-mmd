@@ -73,6 +73,11 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     ground.receiveShadows = true;
     shadowGenerator.addShadowCaster(ground);
 
+    // use havok physics engine for rigid body/joint simulation
+    const havokInstance = await HavokPhysics();
+    const havokPlugin = new HavokPlugin(true, havokInstance);
+    scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+
     const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene)
         .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
     model.receiveShadows = true;
@@ -83,8 +88,8 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
     const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
 
-    // register the model to the MMD runtime for solving morph, append transform, IK, animation.
-    const mmdRuntime = new MmdRuntime();
+    // register the model to the MMD runtime for solving morph, append transform, IK, animation, physics
+    const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
     mmdRuntime.setCamera(camera);
     camera.addAnimation(cameraMotion);
     camera.setAnimation("camera_motion_1");
@@ -190,7 +195,7 @@ const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 
 **Physics Runtime**
 
-- [ ] Solve Rigid body / Joint
+- [ ] Solve Rigid body / Joint - It's not perfect yet
 - [ ] Support custom physics engine for parallel computing
 
 ## Not planned features
