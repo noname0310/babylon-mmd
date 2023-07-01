@@ -77,13 +77,19 @@ export class MmdModel {
             logger
         );
 
-        this._physicsModel = mmdPhysics?.buildPhysics(
-            mmdMesh,
-            runtimeBones,
-            mmdMetadata.rigidBodies,
-            mmdMetadata.joints,
-            logger
-        ) ?? null;
+        if (mmdPhysics !== null) {
+            for (let i = 0; i < sortedBones.length; ++i) sortedBones[i].updateLocalMatrix();
+            for (let i = 0; i < sortedRootBones.length; ++i) sortedRootBones[i].updateWorldMatrix();
+            this._physicsModel = mmdPhysics.buildPhysics(
+                mmdMesh,
+                runtimeBones,
+                mmdMetadata.rigidBodies,
+                mmdMetadata.joints,
+                logger
+            );
+        } else {
+            this._physicsModel = null;
+        }
 
         this._animations = [];
         this._animationIndexMap = new Map();
@@ -163,11 +169,20 @@ export class MmdModel {
         }
 
         this.morph.update();
-
         this._update(false);
+        this._physicsModel?.syncBodies();
     }
 
     public afterPhysics(): void {
+        // const physicsModel = this._physicsModel;
+        // if (physicsModel !== null) {
+        //     physicsModel.syncBones();
+        //     physicsModel.updateLocalMatrixFromWorldMatrix();
+        //     for (let i = 0; i < this._sortedRuntimeRootBones.length; ++i) {
+        //         const bone = this._sortedRuntimeRootBones[i];
+        //         bone.updateWorldMatrix();
+        //     }
+        // }
         this._update(true);
         this.mesh.skeleton._markAsDirty();
     }
@@ -231,7 +246,7 @@ export class MmdModel {
             if (0 <= parentBoneIndex && parentBoneIndex < runtimeBones.length) {
                 const parentBone = runtimeBones[parentBoneIndex];
                 bone.parentBone = parentBone;
-                parentBone.childrenBones.push(bone);
+                parentBone.childBones.push(bone);
             }
 
             if (boneMetadata.appendTransform !== undefined) {

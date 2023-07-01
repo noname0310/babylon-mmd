@@ -8,48 +8,60 @@ import type { ILogger } from "./ILogger";
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 class MmdPhysicsTransformNode extends TransformNode {
-    public boneLocalMatrix: Matrix;
+    public readonly linkedBone: MmdRuntimeBone;
+    public readonly physicsMode: PmxObject.RigidBody.PhysicsMode;
+    public readonly bodyOffsetMatrix: Matrix;
+    public readonly bodyOffsetInverseMatrix: Matrix;
 
-    public constructor(name: string, scene: Scene, isPure?: boolean) {
+    public constructor(
+        name: string,
+        scene: Scene,
+        linkedBone: MmdRuntimeBone,
+        physicsMode: PmxObject.RigidBody.PhysicsMode,
+        isPure?: boolean) {
         super(name, scene, isPure);
 
-        this.boneLocalMatrix = Matrix.Identity();
+        this.linkedBone = linkedBone;
+        this.physicsMode = physicsMode;
+        this.bodyOffsetMatrix = Matrix.Identity();
+        this.bodyOffsetInverseMatrix = Matrix.Identity();
     }
 
-    private static readonly _WorldMatrix = Matrix.Identity();
+    private static readonly _ParentWorldMatrixInverse = new Matrix();
+    private static readonly _WorldMatrix = new Matrix();
 
-    public computeBoneLocalMatrix(bone: MmdRuntimeBone): void {
+    public computeBodyOffsetMatrix(): void {
+        const parentWorldMatrixInverse = this.linkedBone.worldMatrix.invertToRef(
+            MmdPhysicsTransformNode._ParentWorldMatrixInverse
+        );
+
         const worldMatrix = Matrix.ComposeToRef(
             this.scaling,
-            Quaternion.RotationYawPitchRoll(
-                this.rotation.y,
-                this.rotation.x,
-                this.rotation.z
-            ),
+            this.rotationQuaternion!,
             this.position,
             MmdPhysicsTransformNode._WorldMatrix
         );
-        const parentWorldMatrix = bone.worldMatrix;
 
-        parentWorldMatrix.invertToRef(this.boneLocalMatrix);
-        this.boneLocalMatrix.multiplyToRef(worldMatrix, this.boneLocalMatrix);
+        worldMatrix.multiplyToRef(parentWorldMatrixInverse, this.bodyOffsetMatrix);
+        this.bodyOffsetMatrix.invertToRef(this.bodyOffsetInverseMatrix);
     }
 }
 
 export class MmdPhysicsModel {
-    private readonly _bones: readonly MmdRuntimeBone[];
+    private readonly _mmdPhysics: MmdPhysics;
+
     private readonly _nodes: readonly (MmdPhysicsTransformNode | null)[];
     private readonly _bodies: readonly (PhysicsBody | null)[];
-
     private readonly _constraints: readonly (PhysicsConstraint | null)[];
 
     public constructor(
-        bones: readonly MmdRuntimeBone[],
+        mmdPhysics: MmdPhysics,
         nodes: readonly (MmdPhysicsTransformNode | null)[],
         bodies: readonly (PhysicsBody | null)[],
         constraints: readonly (PhysicsConstraint | null)[]
     ) {
-        this._bones = bones;
+        this._mmdPhysics = mmdPhysics;
+
         this._nodes = nodes;
         this._bodies = bodies;
         this._constraints = constraints;
@@ -70,17 +82,140 @@ export class MmdPhysicsModel {
         for (let i = 0; i < nodes.length; ++i) {
             nodes[i]?.dispose();
         }
-
-        this._bones;
     }
 
+    private static readonly _NodeWorldMatrix = new Matrix();
+
     public initialize(): void {
-        //
+        const mmdPhysics = this._mmdPhysics;
+        const nodes = this._nodes;
+
+        for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i];
+            if (node === null) continue;
+
+            const nodeWorldMatrix = node.linkedBone.worldMatrix.multiplyToRef(
+                node.bodyOffsetMatrix,
+                MmdPhysicsModel._NodeWorldMatrix
+            );
+            nodeWorldMatrix.decompose(
+                node.scaling,
+                node.rotationQuaternion!,
+                node.position
+            );
+
+            mmdPhysics.enablePreStepOnce(node.physicsBody!);
+        }
+    }
+
+    public syncBodies(): void {
+        const nodes = this._nodes;
+        for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i];
+            if (node === null) continue;
+
+            switch (node.physicsMode) {
+            case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                {
+                    const nodeWorldMatrix = node.linkedBone.worldMatrix.multiplyToRef(
+                        node.bodyOffsetMatrix,
+                        MmdPhysicsModel._NodeWorldMatrix
+                    );
+                    nodeWorldMatrix.decompose(
+                        node.scaling,
+                        node.rotationQuaternion!,
+                        node.position
+                    );
+                }
+                break;
+
+            case PmxObject.RigidBody.PhysicsMode.Physics:
+            case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                break;
+
+            default:
+                throw new Error(`Unknown physics mode: ${node.physicsMode}`);
+            }
+        }
+    }
+
+    private static readonly _BoneWorldPosition = new Vector3();
+
+    public syncBones(): void {
+        const nodes = this._nodes;
+        for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i];
+            if (node === null) continue;
+
+            switch (node.physicsMode) {
+            case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                break;
+            case PmxObject.RigidBody.PhysicsMode.Physics:
+                {
+                    node.bodyOffsetInverseMatrix.multiplyToRef(
+                        Matrix.ComposeToRef(
+                            node.scaling,
+                            node.rotationQuaternion!,
+                            node.position,
+                            MmdPhysicsModel._NodeWorldMatrix
+                        ),
+                        node.linkedBone.worldMatrix
+                    );
+                    const childBones = node.linkedBone.childBones;
+                    for (let j = 0; j < childBones.length; ++j) {
+                        childBones[j].updateWorldMatrix();
+                    }
+                }
+                break;
+
+            case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                {
+                    node.bodyOffsetInverseMatrix.multiplyToRef(
+                        Matrix.ComposeToRef(
+                            node.scaling,
+                            node.rotationQuaternion!,
+                            node.linkedBone.worldMatrix.getTranslationToRef(MmdPhysicsModel._BoneWorldPosition),
+                            MmdPhysicsModel._NodeWorldMatrix
+                        ),
+                        node.linkedBone.worldMatrix
+                    );
+                    const childBones = node.linkedBone.childBones;
+                    for (let j = 0; j < childBones.length; ++j) {
+                        childBones[j].updateWorldMatrix();
+                    }
+                }
+                break;
+
+            default:
+                throw new Error(`Unknown physics mode: ${node.physicsMode}`);
+            }
+        }
+    }
+
+    private static readonly _ParentWorldMatrixInverse = new Matrix();
+
+    public updateLocalMatrixFromWorldMatrix(): void {
+        const nodes = this._nodes;
+        for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i];
+            if (node === null) continue;
+
+            const bone = node.linkedBone;
+            const parentBone = bone.parentBone;
+            if (parentBone !== null) {
+                const parentWorldMatrixInverse = parentBone.worldMatrix.invertToRef(MmdPhysicsModel._ParentWorldMatrixInverse);
+                parentWorldMatrixInverse.multiplyToRef(bone.worldMatrix, bone.localMatrix);
+            } else {
+                bone.localMatrix.copyFrom(bone.worldMatrix);
+            }
+        }
     }
 }
 
 export class MmdPhysics {
     private readonly _scene: Scene;
+
+    private readonly _enablePreStepOnces: PhysicsBody[] = [];
 
     public constructor(scene: Scene) {
         this._scene = scene;
@@ -148,7 +283,7 @@ export class MmdPhysics {
                 restitution: rigidBody.repulsion
             };
 
-            const node = new MmdPhysicsTransformNode(rigidBody.name, scene);
+            const node = new MmdPhysicsTransformNode(rigidBody.name, scene, bone, rigidBody.physicsMode);
 
             const shapePosition = rigidBody.shapePosition;
             node.position.copyFromFloats(
@@ -158,13 +293,13 @@ export class MmdPhysics {
             );
 
             const shapeRotation = rigidBody.shapeRotation;
-            node.rotation.copyFromFloats(
+            node.rotationQuaternion = Quaternion.FromEulerAngles(
                 shapeRotation[0],
                 shapeRotation[1],
                 shapeRotation[2]
             );
 
-            node.computeBoneLocalMatrix(bone);
+            node.computeBodyOffsetMatrix();
             node.setParent(mesh);
 
             const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
@@ -176,6 +311,9 @@ export class MmdPhysics {
             body.setMassProperties({ mass: rigidBody.mass });
             body.setLinearDamping(rigidBody.linearDamping);
             body.setAngularDamping(rigidBody.angularDamping);
+            if (motionType === PhysicsMotionType.ANIMATED) {
+                body.disablePreStep = false;
+            }
 
             nodes.push(node);
             bodies.push(body);
@@ -344,6 +482,25 @@ export class MmdPhysics {
             constraints.push(constraint);
         }
 
-        return new MmdPhysicsModel(bones, nodes, bodies, constraints);
+        return new MmdPhysicsModel(this, nodes, bodies, constraints);
+    }
+
+    private readonly _onAfterPhysics = (): void => {
+        const enablePreStepOnces = this._enablePreStepOnces;
+        for (let i = 0; i < enablePreStepOnces.length; ++i) {
+            enablePreStepOnces[i].disablePreStep = true;
+        }
+        enablePreStepOnces.length = 0;
+    };
+
+    public enablePreStepOnce(body: PhysicsBody): void {
+        if (!body.disablePreStep) return;
+
+        if (this._enablePreStepOnces.length === 0) {
+            this._scene.onAfterPhysicsObservable.addOnce(this._onAfterPhysics);
+        }
+
+        this._enablePreStepOnces.push(body);
+        body.disablePreStep = false;
     }
 }
