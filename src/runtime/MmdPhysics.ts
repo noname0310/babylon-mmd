@@ -1,4 +1,4 @@
-import type { Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
+import type { DeepImmutable, Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
 import { Physics6DoFConstraint, PhysicsConstraintAxis } from "@babylonjs/core";
 import { Matrix, PhysicsBody, PhysicsMotionType, PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere, Quaternion, TransformNode, Vector3 } from "@babylonjs/core";
 
@@ -89,6 +89,7 @@ export class MmdPhysicsModel {
     }
 
     private static readonly _NodeWorldMatrix = new Matrix();
+    private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
 
     public initialize(): void {
         const mmdPhysics = this._mmdPhysics;
@@ -107,6 +108,10 @@ export class MmdPhysicsModel {
                 node.rotationQuaternion!,
                 node.position
             );
+
+            const body = node.physicsBody!;
+            body.setAngularVelocity(MmdPhysicsModel._ZeroVector);
+            body.setLinearVelocity(MmdPhysicsModel._ZeroVector);
 
             mmdPhysics.enablePreStepOnce(node.physicsBody!);
         }
