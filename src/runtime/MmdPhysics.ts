@@ -1,4 +1,4 @@
-import type { DeepImmutable, Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
+import type { Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
 import { Physics6DoFConstraint, PhysicsConstraintAxis } from "@babylonjs/core";
 import { Matrix, PhysicsBody, PhysicsMotionType, PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere, Quaternion, TransformNode, Vector3 } from "@babylonjs/core";
 
@@ -38,14 +38,14 @@ class MmdPhysicsTransformNode extends TransformNode {
 
 export class MmdPhysicsModel {
     private readonly _bones: readonly MmdRuntimeBone[];
-    private readonly _nodes: readonly MmdPhysicsTransformNode[];
+    private readonly _nodes: readonly (MmdPhysicsTransformNode | null)[];
     private readonly _bodies: readonly (PhysicsBody | null)[];
 
     private readonly _constraints: readonly (PhysicsConstraint | null)[];
 
     public constructor(
         bones: readonly MmdRuntimeBone[],
-        nodes: readonly MmdPhysicsTransformNode[],
+        nodes: readonly (MmdPhysicsTransformNode | null)[],
         bodies: readonly (PhysicsBody | null)[],
         constraints: readonly (PhysicsConstraint | null)[]
     ) {
@@ -68,7 +68,7 @@ export class MmdPhysicsModel {
 
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
-            nodes[i].dispose();
+            nodes[i]?.dispose();
         }
 
         this._bones;
@@ -95,7 +95,7 @@ export class MmdPhysics {
     ): MmdPhysicsModel {
         const scene = this._scene;
 
-        const nodes: MmdPhysicsTransformNode[] = [];
+        const nodes: (MmdPhysicsTransformNode | null)[] = [];
         const bodies: (PhysicsBody | null)[] = [];
         const constraints: (PhysicsConstraint | null)[] = [];
 
@@ -104,6 +104,9 @@ export class MmdPhysics {
 
             if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
                 logger.warn(`Bone index out of range failed to create rigid body: ${rigidBody.name}`);
+
+                nodes.push(null);
+                bodies.push(null);
                 continue;
             }
             const bone = bones[rigidBody.boneIndex];
@@ -135,6 +138,9 @@ export class MmdPhysics {
 
             default:
                 logger.warn(`Unknown rigid body shape type: ${rigidBody.shapeType}`);
+
+                nodes.push(null);
+                bodies.push(null);
                 continue;
             }
             shape.material = {
@@ -161,8 +167,6 @@ export class MmdPhysics {
             node.computeBoneLocalMatrix(bone);
             node.setParent(mesh);
 
-            nodes.push(node);
-
             const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
                 ? PhysicsMotionType.ANIMATED
                 : PhysicsMotionType.DYNAMIC;
@@ -173,16 +177,14 @@ export class MmdPhysics {
             body.setLinearDamping(rigidBody.linearDamping);
             body.setAngularDamping(rigidBody.angularDamping);
 
+            nodes.push(node);
             bodies.push(body);
         }
 
-        const jointPosition = new Vector3();
-        const jointRotation = new Quaternion();
-        const oneScale: DeepImmutable<Vector3> = new Vector3(1, 1, 1);
+        const jointRotation = new Matrix();
         const jointTransform = new Matrix();
 
-        const rigidBodyPosition = new Vector3();
-        const rigidBodyRotation = new Quaternion();
+        const rigidBodyRotation = new Matrix();
         const rigidBodyAInverse = new Matrix();
         const rigidBodyBInverse = new Matrix();
 
@@ -194,11 +196,15 @@ export class MmdPhysics {
 
             if (joint.rigidbodyIndexA < 0 || rigidBodies.length <= joint.rigidbodyIndexA) {
                 logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
+
+                constraints.push(null);
                 continue;
             }
 
             if (joint.rigidbodyIndexB < 0 || rigidBodies.length <= joint.rigidbodyIndexB) {
                 logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
+
+                constraints.push(null);
                 continue;
             }
 
@@ -207,67 +213,65 @@ export class MmdPhysics {
 
             if (bodyA === null || bodyB === null) {
                 logger.warn(`Rigid body not found failed to create joint: ${joint.name}`);
+
+                constraints.push(null);
                 continue;
             }
 
-            Matrix.ComposeToRef(
-                oneScale,
-                Quaternion.RotationYawPitchRollToRef(
-                    joint.rotation[1],
-                    joint.rotation[0],
-                    joint.rotation[2],
-                    jointRotation
-                ),
-                jointPosition.copyFromFloats(
-                    joint.position[0],
-                    joint.position[1],
-                    joint.position[2]
-                ),
-                jointTransform
+            Matrix.IdentityToRef(jointTransform);
+            jointTransform.setTranslationFromFloats(
+                joint.position[0],
+                joint.position[1],
+                joint.position[2]
             );
+            Matrix.RotationYawPitchRollToRef(
+                joint.rotation[1],
+                joint.rotation[0],
+                joint.rotation[2],
+                jointRotation
+            );
+            jointTransform.multiplyToRef(jointRotation, jointTransform);
 
             const bodyInfoA = rigidBodies[joint.rigidbodyIndexA];
             const bodyInfoB = rigidBodies[joint.rigidbodyIndexB];
 
             {
-                const shapePosition = bodyInfoA.shapePosition;
                 const shapeRotation = bodyInfoA.shapeRotation;
-                Matrix.ComposeToRef(
-                    oneScale,
-                    Quaternion.RotationYawPitchRollToRef(
-                        shapeRotation[1],
-                        shapeRotation[0],
-                        shapeRotation[2],
-                        rigidBodyRotation
-                    ),
-                    rigidBodyPosition.copyFromFloats(
-                        shapePosition[0],
-                        shapePosition[1],
-                        shapePosition[2]
-                    ),
-                    rigidBodyAInverse
+                const shapePosition = bodyInfoA.shapePosition;
+
+                Matrix.IdentityToRef(rigidBodyAInverse);
+                rigidBodyAInverse.setTranslationFromFloats(
+                    shapePosition[0],
+                    shapePosition[1],
+                    shapePosition[2]
                 );
+                Matrix.RotationYawPitchRollToRef(
+                    shapeRotation[1],
+                    shapeRotation[0],
+                    shapeRotation[2],
+                    rigidBodyRotation
+                );
+                rigidBodyAInverse.multiplyToRef(rigidBodyRotation, rigidBodyAInverse);
                 rigidBodyAInverse.invert();
             }
 
             {
-                const shapePosition = bodyInfoB.shapePosition;
                 const shapeRotation = bodyInfoB.shapeRotation;
-                Matrix.ComposeToRef(
-                    oneScale,
-                    Quaternion.RotationYawPitchRollToRef(
-                        shapeRotation[1],
-                        shapeRotation[0],
-                        shapeRotation[2],
-                        rigidBodyRotation
-                    ),
-                    rigidBodyPosition.copyFromFloats(
-                        shapePosition[0],
-                        shapePosition[1],
-                        shapePosition[2]
-                    ),
-                    rigidBodyBInverse
+                const shapePosition = bodyInfoB.shapePosition;
+
+                Matrix.IdentityToRef(rigidBodyBInverse);
+                rigidBodyBInverse.setTranslationFromFloats(
+                    shapePosition[0],
+                    shapePosition[1],
+                    shapePosition[2]
                 );
+                Matrix.RotationYawPitchRollToRef(
+                    shapeRotation[1],
+                    shapeRotation[0],
+                    shapeRotation[2],
+                    rigidBodyRotation
+                );
+                rigidBodyBInverse.multiplyToRef(rigidBodyRotation, rigidBodyBInverse);
                 rigidBodyBInverse.invert();
             }
 
