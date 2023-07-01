@@ -15,7 +15,6 @@ import {
     PhysicsBody,
     PhysicsMotionType,
     PhysicsShapeBox,
-    PhysicsViewer,
     Quaternion,
     Scene,
     SceneLoader,
@@ -225,16 +224,16 @@ export class SceneBuilder implements ISceneBuilder {
             new Quaternion(),
             new Vector3(100, 2, 100), scene);
 
-        {
-            const physicsViewer = new PhysicsViewer(scene);
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            for (const node of modelMesh.getChildren()) {
-                if ((node as any).physicsBody) {
-                    physicsViewer.showBody((node as any).physicsBody);
-                }
-            }
-            physicsViewer.showBody(groundRigidBody);
-        }
+        // {
+        //     const physicsViewer = new PhysicsViewer(scene);
+        //     const modelMesh = loadResults[1].meshes[0] as Mesh;
+        //     for (const node of modelMesh.getChildren()) {
+        //         if ((node as any).physicsBody) {
+        //             physicsViewer.showBody((node as any).physicsBody);
+        //         }
+        //     }
+        //     physicsViewer.showBody(groundRigidBody);
+        // }
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;
