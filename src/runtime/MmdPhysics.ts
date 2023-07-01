@@ -1,5 +1,5 @@
-import type { PhysicsConstraint, Scene } from "@babylonjs/core";
-import { Matrix, PhysicsBody, PhysicsMotionType, TransformNode } from "@babylonjs/core";
+import type { Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
+import { Matrix, PhysicsBody, PhysicsMotionType, PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere, Quaternion, TransformNode, Vector3 } from "@babylonjs/core";
 
 import { PmxObject } from "@/loader/parser/PmxObject";
 
@@ -15,8 +15,19 @@ class MmdPhysicsTransformNode extends TransformNode {
         this.boneLocalMatrix = Matrix.Identity();
     }
 
+    private static readonly _WorldMatrix = Matrix.Identity();
+
     public computeBoneLocalMatrix(bone: MmdRuntimeBone): void {
-        const worldMatrix = this.getWorldMatrix();
+        const worldMatrix = Matrix.ComposeToRef(
+            this.scaling,
+            Quaternion.RotationYawPitchRoll(
+                this.rotation.y,
+                this.rotation.x,
+                this.rotation.z
+            ),
+            this.position,
+            MmdPhysicsTransformNode._WorldMatrix
+        );
         const parentWorldMatrix = bone.worldMatrix;
 
         parentWorldMatrix.invertToRef(this.boneLocalMatrix);
@@ -75,11 +86,14 @@ export class MmdPhysics {
     }
 
     public buildPhysics(
+        mesh: Mesh,
         bones: readonly MmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger
     ): MmdPhysicsModel {
+        const scene = this._scene;
+
         const nodes: MmdPhysicsTransformNode[] = [];
         const bodies: (PhysicsBody | null)[] = [];
         const constraints: PhysicsConstraint[] = [];
@@ -93,7 +107,37 @@ export class MmdPhysics {
             }
             const bone = bones[rigidBody.boneIndex];
 
-            const node = new MmdPhysicsTransformNode(rigidBody.name, this._scene);
+            let shape: PhysicsShape;
+            switch (rigidBody.shapeType) {
+            case PmxObject.RigidBody.ShapeType.Sphere:
+                shape = new PhysicsShapeSphere(new Vector3(), rigidBody.shapeSize[0], scene);
+                break;
+
+            case PmxObject.RigidBody.ShapeType.Box:
+                shape = new PhysicsShapeBox(new Vector3(), new Quaternion(),
+                    new Vector3(
+                        rigidBody.shapeSize[0],
+                        rigidBody.shapeSize[1],
+                        rigidBody.shapeSize[2]
+                    ), scene
+                );
+                break;
+
+            case PmxObject.RigidBody.ShapeType.Capsule:
+                shape = new PhysicsShapeCapsule(
+                    new Vector3(0, rigidBody.shapeSize[1] / 2, 0),
+                    new Vector3(0, -rigidBody.shapeSize[1] / 2, 0),
+                    rigidBody.shapeSize[0],
+                    scene
+                );
+                break;
+
+            default:
+                logger.warn(`Unknown rigid body shape type: ${rigidBody.shapeType}`);
+                continue;
+            }
+
+            const node = new MmdPhysicsTransformNode(rigidBody.name, scene);
 
             const shapePosition = rigidBody.shapePosition;
             node.position.copyFromFloats(
@@ -109,6 +153,7 @@ export class MmdPhysics {
             );
 
             node.computeBoneLocalMatrix(bone);
+            node.setParent(mesh);
 
             nodes.push(node);
 
@@ -116,41 +161,10 @@ export class MmdPhysics {
                 ? PhysicsMotionType.ANIMATED
                 : PhysicsMotionType.DYNAMIC;
 
-            const body = new PhysicsBody(
-                node,
-                motionType,
-                false,
-                this._scene
-            );
+            const body = new PhysicsBody(node, motionType, false, scene);
 
-            body.setMassProperties({
-                mass: rigidBody.mass
-                /**
-                 * The principal moments of inertia of this object
-                 * for a unit mass. This determines how easy it is
-                 * for the body to rotate. A value of zero on any
-                 * axis will be used as infinite interia about that
-                 * axis.
-                 *
-                 * If not provided, the physics engine will compute
-                 * an appropriate value.
-                 */
-                // inertia?: Vector3;
-                /**
-                 * The rotation rotating from inertia major axis space
-                 * to parent space (i.e., the rotation which, when
-                 * applied to the 3x3 inertia tensor causes the inertia
-                 * tensor to become a diagonal matrix). This determines
-                 * how the values of inertia are aligned with the parent
-                 * object.
-                 *
-                 * If not provided, the physics engine will compute
-                 * an appropriate value.
-                 */
-                // inertiaOrientation?: Quaternion;
-            });
-
-
+            body.setMassProperties({ mass: rigidBody.mass });
+            body.shape = shape;
         }
 
         joints;

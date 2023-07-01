@@ -78,6 +78,7 @@ export class MmdModel {
         );
 
         this._physicsModel = mmdPhysics?.buildPhysics(
+            mmdMesh,
             runtimeBones,
             mmdMetadata.rigidBodies,
             mmdMetadata.joints,

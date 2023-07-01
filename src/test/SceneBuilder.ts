@@ -12,6 +12,11 @@ import {
     Mesh,
     MeshBuilder,
     MotionBlurPostProcess,
+    PhysicsBody,
+    PhysicsMotionType,
+    PhysicsShapeBox,
+    PhysicsViewer,
+    Quaternion,
     Scene,
     SceneLoader,
     ShadowGenerator,
@@ -54,9 +59,6 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(1, 1, 1, 1.0);
 
-        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 5000;
-
         const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
         camera.maxZ = 5000;
         camera.setTarget(new Vector3(0, 10, 0));
@@ -68,6 +70,9 @@ export class SceneBuilder implements ISceneBuilder {
         camera.inertia = 0;
         camera.angularSensibility = 500;
         camera.speed = 10;
+
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
+        mmdCamera.maxZ = 5000;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
@@ -99,7 +104,9 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
-        // MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+        const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
+        ground.setEnabled(false);
+
         const skyMaterial = new SkyMaterial("skyMaterial", scene);
         skyMaterial.backFaceCulling = false;
         skyMaterial.inclination = 0;
@@ -147,7 +154,7 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/combined_with_camera.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion(flos)... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -212,7 +219,22 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-        Inspector.Show(scene, { });
+        const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
+        groundRigidBody.shape = new PhysicsShapeBox(
+            new Vector3(0, -1, 0),
+            new Quaternion(),
+            new Vector3(100, 2, 100), scene);
+
+        {
+            const physicsViewer = new PhysicsViewer(scene);
+            const modelMesh = loadResults[1].meshes[0] as Mesh;
+            for (const node of modelMesh.getChildren()) {
+                if ((node as any).physicsBody) {
+                    physicsViewer.showBody((node as any).physicsBody);
+                }
+            }
+            physicsViewer.showBody(groundRigidBody);
+        }
 
         const useHavyPostProcess = false;
         const useBasicPostProcess = true;
@@ -251,12 +273,12 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = true;
-            defaultPipeline.chromaticAberrationEnabled = true;
+            defaultPipeline.bloomEnabled = false;
+            defaultPipeline.chromaticAberrationEnabled = false;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = false;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = true;
+            defaultPipeline.imageProcessingEnabled = false;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
@@ -264,6 +286,8 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
             defaultPipeline.imageProcessing.vignetteEnabled = true;
         }
+
+        Inspector.Show(scene, { });
 
         return scene;
     }
