@@ -3,6 +3,7 @@
     "version": "0.5.0",
     "description": "babylon mmd runtime",
     "main": "dist/esm/index.js",
+    "types": "dist/esm/index.d.ts",
     "scripts": {
         "start": "webpack serve --mode development",
         "watch": "webpack --watch",

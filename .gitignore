@@ -129,3 +129,5 @@ dist
 
 res/private_test
 test_dist
+
+.idea
