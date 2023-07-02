@@ -173,15 +173,16 @@
  */
 
 import { Logger } from "@babylonjs/core";
-import { PmxObject } from "../parser/PmxObject";
+
+import type { ILogger } from "../parser/ILogger";
+import type { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
-import { ILogger } from "../parser/ILogger";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;
     public alphaBlendThreshold: number;
     public useAlphaEvaluation: boolean;
-    
+
     private _loggingEnabled: boolean;
 
     /** @internal */
@@ -206,7 +207,7 @@ export class BpmxConverter implements ILogger {
         scene: Screen,
         urlOrFileName: string,
         files?: File[]
-    ) {
+    ): Promise<void> {
         const alphaThreshold = this.alphaThreshold;
         const alphaBlendThreshold = this.alphaBlendThreshold;
         const useAlphaEvaluation = this.useAlphaEvaluation;
