@@ -8,6 +8,16 @@ mmd loader and runtime for Babylon.js
 
 Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716)
 
+![screenshot2](./docs/fig2.png)
+
+### https://playground.babylonjs.com/#ZF86YL
+
+Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716)
+
+Motion / Camera: https://www.nicovideo.jp/watch/sm41164308
+
+Music: https://youtu.be/y__uZETTuL8
+
 ## How to use
 
 First, install the package.
