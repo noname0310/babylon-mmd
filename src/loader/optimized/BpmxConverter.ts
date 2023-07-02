@@ -34,7 +34,7 @@
  *  specular: float32[3]
  *  shininess: float32
  *  ambient: float32[3]
- *  evauatedTransparency: float32 - -1: not evaluated, 0: opaque, 1: alphatest, 2: alphablend
+ *  evauatedTransparency: int8 - -1: not evaluated, 0: opaque, 1: alphatest, 2: alphablend
  *  flag: uint8
  *  edgeColor: float32[4]
  *  edgeSize: float32
@@ -76,7 +76,7 @@
  *    maximumAngle: float32[3]
  *   }[linkCount]
  *  }
- * }
+ * }[boneCount]
  *
  * morphCount: uint32
  * {
@@ -121,7 +121,7 @@
  *   indices: int32[elementCount]
  *   positions: float32[elementCount * 3]
  *  }
- * }
+ * }[morphCount]
  *
  * displayFrameCount: uint32
  * {
@@ -133,7 +133,7 @@
  *   frameType: uint8
  *   frameIndex: int32
  *  }[elementCount]
- * }
+ * }[displayFrameCount]
  *
  * rigidBodyCount: uint32
  * {
@@ -152,7 +152,7 @@
  *  repulsion: float32
  *  friction: float32
  *  physicsMode: uint8
- * }
+ * }[rigidBodyCount]
  *
  * jointCount: uint32
  * {
@@ -169,5 +169,110 @@
  *  rotationMax: float32[3]
  *  springPosition: float32[3]
  *  springRotation: float32[3]
- * }
+ * }[jointCount]
  */
+
+import { Logger } from "@babylonjs/core";
+import { PmxObject } from "../parser/PmxObject";
+import { PmxReader } from "../parser/PmxReader";
+import { ILogger } from "../parser/ILogger";
+
+export class BpmxConverter implements ILogger {
+    public alphaThreshold: number;
+    public alphaBlendThreshold: number;
+    public useAlphaEvaluation: boolean;
+    
+    private _loggingEnabled: boolean;
+
+    /** @internal */
+    public log: (message: string) => void;
+    /** @internal */
+    public warn: (message: string) => void;
+    /** @internal */
+    public error: (message: string) => void;
+
+    public constructor() {
+        this.alphaThreshold = 195;
+        this.alphaBlendThreshold = 100;
+        this.useAlphaEvaluation = true;
+
+        this._loggingEnabled = true;
+        this.log = this._logDisabled;
+        this.warn = this._warnDisabled;
+        this.error = this._errorDisabled;
+    }
+
+    public async convert(
+        scene: Screen,
+        urlOrFileName: string,
+        files?: File[]
+    ) {
+        const alphaThreshold = this.alphaThreshold;
+        const alphaBlendThreshold = this.alphaBlendThreshold;
+        const useAlphaEvaluation = this.useAlphaEvaluation;
+
+        let pmxObject: PmxObject;
+        if (files === undefined) {
+            const arrayBuffer = await fetch(urlOrFileName)
+                .then((response) => response.arrayBuffer());
+
+            pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
+        } else {
+            const pmxFile = files.find((file) => file.name === urlOrFileName);
+            if (pmxFile === undefined) {
+                throw new Error(`File ${urlOrFileName} not found`);
+            }
+
+            const arrayBuffer = await pmxFile.arrayBuffer();
+
+            pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
+        }
+
+        scene;
+        alphaThreshold;
+        alphaBlendThreshold;
+        useAlphaEvaluation;
+    }
+
+    public get loggingEnabled(): boolean {
+        return this._loggingEnabled;
+    }
+
+    public set loggingEnabled(value: boolean) {
+        this._loggingEnabled = value;
+
+        if (value) {
+            this.log = this._logEnabled;
+            this.warn = this._warnEnabled;
+            this.error = this._errorEnabled;
+        } else {
+            this.log = this._logDisabled;
+            this.warn = this._warnDisabled;
+            this.error = this._errorDisabled;
+        }
+    }
+
+    private _logEnabled(message: string): void {
+        Logger.Log(message);
+    }
+
+    private _logDisabled(): void {
+        // do nothing
+    }
+
+    private _warnEnabled(message: string): void {
+        Logger.Warn(message);
+    }
+
+    private _warnDisabled(): void {
+        // do nothing
+    }
+
+    private _errorEnabled(message: string): void {
+        Logger.Error(message);
+    }
+
+    private _errorDisabled(): void {
+        // do nothing
+    }
+}
