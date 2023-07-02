@@ -228,6 +228,7 @@ export class BpmxConverter implements ILogger {
             pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
         }
 
+        pmxObject;
         scene;
         alphaThreshold;
         alphaBlendThreshold;
