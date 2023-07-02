@@ -128,8 +128,7 @@ export class MmdModel {
 
         const index = this._animationIndexMap.get(name);
         if (index === undefined) {
-            this._logger.error(`Animation not found: ${name}`);
-            return;
+            throw new Error(`Animation '${name}' is not found.`);
         }
 
         this._currentAnimation = this._animations[index];

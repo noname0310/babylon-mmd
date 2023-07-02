@@ -54,7 +54,10 @@ export class MmdCamera extends Camera {
         }
 
         const index = this._animationIndexMap.get(name);
-        if (index === undefined) this._currentAnimation = null;
+        if (index === undefined) {
+            throw new Error(`Animation ${name} is not found`);
+        }
+        
         else this._currentAnimation = this._animations[index];
     }
 
