@@ -224,8 +224,12 @@ export class MmdPhysics {
 
         let scalingFactor: number;
         if (Math.abs(mesh.scaling.x - mesh.scaling.y) < 0.0001 && Math.abs(mesh.scaling.y - mesh.scaling.z) < 0.0001) {
-            scalingFactor = mesh.scaling.x;
-            logger.warn("Mesh scaling is not 1, simulation may differ from the original");
+            if (Math.abs(mesh.scaling.x - 1) < 0.0001 && Math.abs(mesh.scaling.y - 1) < 0.0001 && Math.abs(mesh.scaling.z - 1) < 0.0001) {
+                scalingFactor = 1;
+            } else {
+                scalingFactor = mesh.scaling.x;
+                logger.warn("Mesh scaling is not 1, simulation may differ from the original");
+            }
         } else {
             scalingFactor = Math.max(mesh.scaling.x, mesh.scaling.y, mesh.scaling.z);
             logger.warn("Mesh scaling is not uniform, physics may not work correctly");
