@@ -57,8 +57,8 @@ export class MmdCamera extends Camera {
         if (index === undefined) {
             throw new Error(`Animation ${name} is not found`);
         }
-        
-        else this._currentAnimation = this._animations[index];
+
+        this._currentAnimation = this._animations[index];
     }
 
     public get runtimeAnimations(): readonly MmdRuntimeCameraAnimation[] {
