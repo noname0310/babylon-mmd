@@ -191,7 +191,7 @@ export class BvmdLoader {
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdAnimation> {
         return new Promise<MmdAnimation>((resolve, reject) => {
-            this.load(name, fileOrUrl, resolve, onProgress, reject);
+            this.load(name, fileOrUrl, resolve, onProgress, (request, exception) => reject({ request, exception }));
         });
     }
 
