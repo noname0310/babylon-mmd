@@ -222,6 +222,15 @@ export class MmdPhysics {
     ): MmdPhysicsModel {
         const scene = this._scene;
 
+        let scalingFactor: number;
+        if (Math.abs(mesh.scaling.x - mesh.scaling.y) < 0.0001 && Math.abs(mesh.scaling.y - mesh.scaling.z) < 0.0001) {
+            scalingFactor = mesh.scaling.x;
+            logger.warn("Mesh scaling is not 1, simulation may differ from the original");
+        } else {
+            scalingFactor = Math.max(mesh.scaling.x, mesh.scaling.y, mesh.scaling.z);
+            logger.warn("Mesh scaling is not uniform, physics may not work correctly");
+        }
+
         const nodes: (MmdPhysicsTransformNode | null)[] = [];
         const bodies: (PhysicsBody | null)[] = [];
         const constraints: (PhysicsConstraint | null)[] = [];
@@ -241,24 +250,24 @@ export class MmdPhysics {
             let shape: PhysicsShape;
             switch (rigidBody.shapeType) {
             case PmxObject.RigidBody.ShapeType.Sphere:
-                shape = new PhysicsShapeSphere(new Vector3(), rigidBody.shapeSize[0], scene);
+                shape = new PhysicsShapeSphere(new Vector3(), rigidBody.shapeSize[0] * scalingFactor, scene);
                 break;
 
             case PmxObject.RigidBody.ShapeType.Box:
                 shape = new PhysicsShapeBox(new Vector3(), new Quaternion(),
                     new Vector3(
-                        rigidBody.shapeSize[0] * 2,
-                        rigidBody.shapeSize[1] * 2,
-                        rigidBody.shapeSize[2] * 2
+                        rigidBody.shapeSize[0] * 2 * scalingFactor,
+                        rigidBody.shapeSize[1] * 2 * scalingFactor,
+                        rigidBody.shapeSize[2] * 2 * scalingFactor
                     ), scene
                 );
                 break;
 
             case PmxObject.RigidBody.ShapeType.Capsule:
                 shape = new PhysicsShapeCapsule(
-                    new Vector3(0, rigidBody.shapeSize[1] / 2, 0),
-                    new Vector3(0, -rigidBody.shapeSize[1] / 2, 0),
-                    rigidBody.shapeSize[0],
+                    new Vector3(0, rigidBody.shapeSize[1] / 2 * scalingFactor, 0),
+                    new Vector3(0, -rigidBody.shapeSize[1] / 2 * scalingFactor, 0),
+                    rigidBody.shapeSize[0] * scalingFactor,
                     scene
                 );
                 break;
@@ -364,9 +373,9 @@ export class MmdPhysics {
                     jointRotation
                 ),
                 jointPosition.copyFromFloats(
-                    joint.position[0],
-                    joint.position[1],
-                    joint.position[2]
+                    joint.position[0] * scalingFactor,
+                    joint.position[1] * scalingFactor,
+                    joint.position[2] * scalingFactor
                 ),
                 jointTransform
             );
@@ -387,9 +396,9 @@ export class MmdPhysics {
                         rigidBodyRotation
                     ),
                     rigidBodyPosition.copyFromFloats(
-                        shapePosition[0],
-                        shapePosition[1],
-                        shapePosition[2]
+                        shapePosition[0] * scalingFactor,
+                        shapePosition[1] * scalingFactor,
+                        shapePosition[2] * scalingFactor
                     ),
                     rigidBodyAInverse
                 ).invert();
@@ -408,9 +417,9 @@ export class MmdPhysics {
                         rigidBodyRotation
                     ),
                     rigidBodyPosition.copyFromFloats(
-                        shapePosition[0],
-                        shapePosition[1],
-                        shapePosition[2]
+                        shapePosition[0] * scalingFactor,
+                        shapePosition[1] * scalingFactor,
+                        shapePosition[2] * scalingFactor
                     ),
                     rigidBodyBInverse
                 ).invert();
