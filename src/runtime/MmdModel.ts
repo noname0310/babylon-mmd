@@ -131,7 +131,8 @@ export class MmdModel {
             throw new Error(`Animation '${name}' is not found.`);
         }
 
-        this._currentAnimation = this._animations[index];
+        const animation = this._currentAnimation = this._animations[index];
+        animation.induceMaterialRecompile(this._logger);
     }
 
     public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {

@@ -314,6 +314,20 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         }
     }
 
+    private _materialRecompileInduced = false;
+
+    public induceMaterialRecompile(logger?: ILogger): void {
+        if (this._materialRecompileInduced) return;
+        this._materialRecompileInduced = true;
+
+        MmdRuntimeModelAnimation.InduceMaterialRecompile(
+            this._mesh.material.subMaterials,
+            this._morphController,
+            this._morphBindIndexMap,
+            logger
+        );
+    }
+
     /**
      * bind animation to model and prepare material for morph animation
      * @param animation animation to bind
@@ -377,7 +391,6 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                 morphBindIndexMap.push(morphIndices);
             }
         }
-        MmdRuntimeModelAnimation.InduceMaterialRecompile(model.mesh.material.subMaterials, morphController, morphBindIndexMap);
 
         const runtimeBones = model.sortedRuntimeBones;
         const runtimeBoneIndexMap = new Map<string, number>();
@@ -484,7 +497,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
             if (allMaterialWillBeRecompiled) {
                 logger?.log("All materials could be recompiled for morph animation");
-            } else {
+            } else if (0 < recompiledMaterials.size) {
                 logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
             }
         }
