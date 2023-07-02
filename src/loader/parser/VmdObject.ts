@@ -112,6 +112,19 @@ export class VmdData {
         if (dataDeserializer.bytesAvailable < selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes) return null;
         dataDeserializer.offset += selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes;
 
+        if (dataDeserializer.bytesAvailable === 0) {
+            // some old VMD files don't have property key frames
+            return new VmdData(
+                dataDeserializer,
+                boneKeyFrameCount,
+                morphKeyFrameCount,
+                cameraKeyFrameCount,
+                lightKeyFrameCount,
+                selfShadowKeyFrameCount,
+                0
+            );
+        }
+
         if (dataDeserializer.bytesAvailable < 4) return null;
         const propertyKeyFrameCount = dataDeserializer.getUint32();
         for (let i = 0; i < propertyKeyFrameCount; ++i) {
