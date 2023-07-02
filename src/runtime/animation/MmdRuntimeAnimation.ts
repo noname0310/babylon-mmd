@@ -440,12 +440,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         morphIndices: (MorphIndices | null)[],
         logger?: ILogger
     ): void => {
+        let allTextureColorPropertiesAreRecompiled = false;
+        let allSphereTextureColorPropertiesAreRecompiled = false;
+        let allToonTextureColorPropertiesAreRecompiled = false;
+        const recompiledMaterials = new Set<string>();
+
         for (let i = 0; i < morphIndices.length; ++i) {
             const morphIndex = morphIndices[i];
             if (morphIndex === null) continue;
-
-            let allMaterialWillBeRecompiled = false;
-            const recompiledMaterials = new Set<string>();
 
             for (let j = 0; j < morphIndex.length; ++j) {
                 const morph = morphController.morphs[morphIndex[j]];
@@ -453,39 +455,39 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     const elements = morph.materialElements!;
                     for (let k = 0; k < elements.length; ++k) {
                         const element = elements[k];
-                        if (element.textureColor !== null) {
+                        if (element.textureColor !== null && !allTextureColorPropertiesAreRecompiled) {
                             const materialIndex = element.index;
                             if (element.index === -1) {
                                 for (let l = 0; l < materials.length; ++l) {
                                     (materials[l] as MmdStandardMaterial).textureColor;
                                 }
-                                allMaterialWillBeRecompiled = true;
+                                allTextureColorPropertiesAreRecompiled = true;
                             } else {
                                 (materials[materialIndex] as MmdStandardMaterial).textureColor;
                                 recompiledMaterials.add(materialIndex.toString());
                             }
                         }
 
-                        if (element.sphereTextureColor !== null) {
+                        if (element.sphereTextureColor !== null && !allSphereTextureColorPropertiesAreRecompiled) {
                             const materialIndex = element.index;
                             if (element.index === -1) {
                                 for (let l = 0; l < materials.length; ++l) {
                                     (materials[l] as MmdStandardMaterial).sphereTextureColor;
                                 }
-                                allMaterialWillBeRecompiled = true;
+                                allSphereTextureColorPropertiesAreRecompiled = true;
                             } else {
                                 (materials[materialIndex] as MmdStandardMaterial).sphereTextureColor;
                                 recompiledMaterials.add(materialIndex.toString());
                             }
                         }
 
-                        if (element.toonTextureColor !== null) {
+                        if (element.toonTextureColor !== null && !allToonTextureColorPropertiesAreRecompiled) {
                             const materialIndex = element.index;
                             if (element.index === -1) {
                                 for (let l = 0; l < materials.length; ++l) {
                                     (materials[l] as MmdStandardMaterial).toonTextureColor;
                                 }
-                                allMaterialWillBeRecompiled = true;
+                                allToonTextureColorPropertiesAreRecompiled = true;
                             } else {
                                 (materials[materialIndex] as MmdStandardMaterial).toonTextureColor;
                                 recompiledMaterials.add(materialIndex.toString());
@@ -495,11 +497,19 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                 }
             }
 
-            if (allMaterialWillBeRecompiled) {
-                logger?.log("All materials could be recompiled for morph animation");
-            } else if (0 < recompiledMaterials.size) {
-                logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
+            if (allTextureColorPropertiesAreRecompiled
+                && allSphereTextureColorPropertiesAreRecompiled
+                && allToonTextureColorPropertiesAreRecompiled) {
+                break;
             }
+        }
+
+        if (allTextureColorPropertiesAreRecompiled
+            || allSphereTextureColorPropertiesAreRecompiled
+            || allToonTextureColorPropertiesAreRecompiled) {
+            logger?.log("All materials could be recompiled for morph animation");
+        } else if (0 < recompiledMaterials.size) {
+            logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
         }
     };
 }
