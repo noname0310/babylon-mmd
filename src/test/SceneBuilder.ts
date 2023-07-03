@@ -48,6 +48,7 @@ export class SceneBuilder implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
+        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
@@ -110,7 +111,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const sound = new Sound("sound",
             // "res/private_test/motion/flos/flos_YuNi.mp3",
-            "res/private_test/motion/melancholy_night/melancholy_night.mp3",
+            "res/private_test/motion/cinderella/cinderella.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
                 sound.play();//undefined, 417 / 30);
@@ -135,7 +136,7 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/melancholy_night/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -158,7 +159,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const loadResults = await Promise.all(promises);
 
-        setTimeout(() => engine.hideLoadingUI(), 0);
+        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
         scene.meshes.forEach((mesh) => {
             if (mesh.name === "skyBox") return;

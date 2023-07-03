@@ -36,7 +36,7 @@ export class MmdRuntime implements ILogger {
 
     private _isAnimationPlaying: boolean;
 
-    private readonly _needToInitializePhysicsModels: MmdModel[] = [];
+    private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
     private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
     private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
@@ -58,7 +58,7 @@ export class MmdRuntime implements ILogger {
         this._animationStopTime = -1;
         this._isAnimationPlaying = false;
 
-        this._needToInitializePhysicsModels = [];
+        this._needToInitializePhysicsModels = new Set<MmdModel>();
     }
 
     public createMmdModel(
@@ -81,7 +81,7 @@ export class MmdRuntime implements ILogger {
             this
         );
         this._models.push(model);
-        this._needToInitializePhysicsModels.push(model);
+        this._needToInitializePhysicsModels.add(model);
 
         return model;
     }
@@ -136,10 +136,10 @@ export class MmdRuntime implements ILogger {
         }
 
         const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-        for (let i = 0; i < needToInitializePhysicsModels.length; ++i) {
-            needToInitializePhysicsModels[i].initializePhysics();
+        for (const model of needToInitializePhysicsModels) {
+            model.initializePhysics();
         }
-        needToInitializePhysicsModels.length = 0;
+        needToInitializePhysicsModels.clear();
     }
 
     public afterPhysics(): void {
@@ -158,7 +158,9 @@ export class MmdRuntime implements ILogger {
 
         const models = this._models;
         for (let i = 0; i < this._models.length; ++i) {
-            models[i].resetState();
+            const model = models[i];
+            model.resetState();
+            this._needToInitializePhysicsModels.add(model);
         }
     }
 
@@ -195,7 +197,7 @@ export class MmdRuntime implements ILogger {
             for (let i = 0; i < this._models.length; ++i) {
                 const model = this._models[i];
                 if (model.currentAnimation !== null) {
-                    needToInitializePhysicsModels.push(model);
+                    needToInitializePhysicsModels.add(model);
                 }
             }
         }
