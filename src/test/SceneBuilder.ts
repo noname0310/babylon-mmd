@@ -32,6 +32,7 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -48,11 +49,11 @@ export class SceneBuilder implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
-        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
@@ -74,7 +75,7 @@ export class SceneBuilder implements ISceneBuilder {
         camera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.5;
+        hemisphericLight.intensity = 0.48;
         hemisphericLight.specular = new Color3(0, 0, 0);
         hemisphericLight.groundColor = new Color3(1, 1, 1);
 
