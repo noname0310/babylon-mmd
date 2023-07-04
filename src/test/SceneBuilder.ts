@@ -32,7 +32,6 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -49,11 +48,11 @@ export class SceneBuilder implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
@@ -62,7 +61,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
 
-        const camera = new UniversalCamera("camera1", new Vector3(0, 15, -40), scene);
+        const camera = new UniversalCamera("universalCamera", new Vector3(0, 15, -40), scene);
         camera.maxZ = 5000;
         camera.setTarget(new Vector3(0, 10, 0));
         camera.attachControl(canvas, false);
@@ -74,12 +73,12 @@ export class SceneBuilder implements ISceneBuilder {
         camera.angularSensibility = 500;
         camera.speed = 10;
 
-        const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.48;
+        const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
+        hemisphericLight.intensity = 0.4;
         hemisphericLight.specular = new Color3(0, 0, 0);
         hemisphericLight.groundColor = new Color3(1, 1, 1);
 
-        const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
+        const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
         directionalLight.intensity = 0.8;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
@@ -105,6 +104,8 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
+        const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
+        groundMaterial.diffuseColor = new Color3(1.1, 1.1, 1.1);
         ground.setEnabled(true);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
@@ -112,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const sound = new Sound("sound",
             // "res/private_test/motion/flos/flos_YuNi.mp3",
-            "res/private_test/motion/cinderella/cinderella.mp3",
+            "res/private_test/motion/ruse/ruse.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
                 sound.play();//undefined, 417 / 30);
@@ -137,14 +138,15 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/ruse/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            // "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
             // "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
+            "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
