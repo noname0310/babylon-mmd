@@ -10,6 +10,8 @@ import { PmxObject } from "./parser/PmxObject";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
+    public static EdgeSizeScaleFactor = 0.01;
+
     /**
      * The threshold of material alpha to use transparency mode.
      *
@@ -24,9 +26,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      */
     public alphaBlendThreshold = 100;
 
-    public static EdgeSizeScaleFactor = 0.01;
-
     public useAlphaEvaluation = true;
+
+    public alphaEvaluationResolution = 512;
 
     private readonly _textureLoader = new MmdAsyncTextureLoader();
 
@@ -48,7 +50,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
         const materials = pmxObject.materials;
         const textureAlphaChecker = this.useAlphaEvaluation
-            ? new TextureAlphaChecker(uvs, indices)
+            ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
             : null;
 
         const promises: Promise<void>[] = [];
