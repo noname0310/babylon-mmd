@@ -539,9 +539,10 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
     private static readonly _DegToRad = Math.PI / 180;
 
     public animate(frameTime: number): void {
-        const camera = this._camera;
-
         const cameraTrack = this.animation;
+        if (cameraTrack.frameNumbers.length === 0) return;
+
+        const camera = this._camera;
 
         const clampedFrameTime = Math.max(cameraTrack.startFrame, Math.min(cameraTrack.endFrame, frameTime));
         const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, cameraTrack);
