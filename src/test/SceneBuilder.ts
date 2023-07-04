@@ -32,6 +32,7 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
@@ -48,11 +49,12 @@ export class SceneBuilder implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
-        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.alphaEvaluationResolution = 1024;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
@@ -113,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const sound = new Sound("sound",
             // "res/private_test/motion/flos/flos_YuNi.mp3",
-            "res/private_test/motion/ruse/ruse.mp3",
+            "res/private_test/motion/kimini_totte/kimini totte.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
                 sound.play();//undefined, 417 / 30);
@@ -127,7 +129,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         engine.displayLoadingUI();
 
-        const loadingTexts: string[] = new Array(4).fill("");
+        let loadingTexts: string[] = [];
         const updateLoadingText = (updateIndex: number, text: string): void => {
             loadingTexts[updateIndex] = text;
             engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
@@ -138,27 +140,45 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/ruse/motion.bvmd",
-            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        promises.push((async(): Promise<void> => {
+            updateLoadingText(0, "Loading physics engine...");
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            updateLoadingText(0, "Loading physics engine... Done");
+        })());
+
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/camera.bvmd",
+            (event) => updateLoadingText(1, `Loading camera motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        );
+
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/motion_a.bvmd",
+            (event) => updateLoadingText(2, `Loading modelA motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            // "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-            // "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
-            "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
+            "res/private_test/model/YYB Hatsune Miku Default fanmade by HB-Squiddy - phys edit/Miku phys edit for skirt - faceforward.pmx",
             undefined,
             scene,
-            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(3, `Loading modelA... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(2, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(2, "Loading physics engine... Done");
-        })());
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/motion_b.bvmd",
+            (event) => updateLoadingText(4, `Loading modelB motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        );
+
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
+            // "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
+            // "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
+            undefined,
+            scene,
+            (event) => updateLoadingText(5, `Loading modelB... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+        ));
+
+        loadingTexts = new Array(promises.length).fill("");
 
         const loadResults = await Promise.all(promises);
 
@@ -171,14 +191,14 @@ export class SceneBuilder implements ISceneBuilder {
         });
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(loadResults[1] as MmdAnimation);
         mmdCamera.setAnimation("motion");
 
         {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
+            const modelMesh = loadResults[3].meshes[0] as Mesh;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh);
-            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+            mmdModel.addAnimation(loadResults[2] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
@@ -192,6 +212,13 @@ export class SceneBuilder implements ISceneBuilder {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;
+        }
+        {
+            const modelMesh = loadResults[5].meshes[0] as Mesh;
+
+            const mmdModel = mmdRuntime.createMmdModel(modelMesh);
+            mmdModel.addAnimation(loadResults[4] as MmdAnimation);
+            mmdModel.setAnimation("motion");
         }
 
         mmdRuntime.register(scene);
@@ -213,7 +240,7 @@ export class SceneBuilder implements ISceneBuilder {
         //     physicsViewer.showBody(groundRigidBody);
         // }
 
-        const useHavyPostProcess = false;
+        const useHavyPostProcess = true;
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
@@ -250,12 +277,12 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = false;
-            defaultPipeline.chromaticAberrationEnabled = false;
+            defaultPipeline.bloomEnabled = true;
+            defaultPipeline.chromaticAberrationEnabled = true;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = false;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = false;
+            defaultPipeline.imageProcessingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
