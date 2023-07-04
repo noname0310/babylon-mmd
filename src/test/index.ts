@@ -11,7 +11,8 @@ if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Invalid canvas elem
 const engine = new Engine(canvas, true, {
     preserveDrawingBuffer: true,
     stencil: true,
-    antialias: true
+    antialias: true,
+    powerPreference: "high-performance"
 }, true);
 
 // const webGPUEngine = new WebGPUEngine(canvas, {
