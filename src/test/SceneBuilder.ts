@@ -50,7 +50,7 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.alphaEvaluationResolution = 1024;
+        materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
@@ -84,12 +84,12 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.intensity = 0.8;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
-        directionalLight.shadowMaxZ = 20;
+        directionalLight.shadowMaxZ = 20 * 3;
         directionalLight.shadowMinZ = -15;
-        directionalLight.orthoTop = 18;
-        directionalLight.orthoBottom = -1;
-        directionalLight.orthoLeft = -10;
-        directionalLight.orthoRight = 10;
+        directionalLight.orthoTop = 18 * 3;
+        directionalLight.orthoBottom = -1 * 3;
+        directionalLight.orthoLeft = -10 * 3;
+        directionalLight.orthoRight = 10 * 3;
         directionalLight.shadowOrthoScale = 0;
 
         DirectionalLightHelper;
@@ -201,12 +201,12 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel.addAnimation(loadResults[2] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+            // const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
 
-            scene.onBeforeRenderObservable.add(() => {
-                bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10;
-            });
+            // scene.onBeforeRenderObservable.add(() => {
+            //     bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
+            //     directionalLight.position.y -= 10;
+            // });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
@@ -240,7 +240,7 @@ export class SceneBuilder implements ISceneBuilder {
         //     physicsViewer.showBody(groundRigidBody);
         // }
 
-        const useHavyPostProcess = true;
+        const useHavyPostProcess = false;
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
@@ -277,12 +277,12 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = true;
-            defaultPipeline.chromaticAberrationEnabled = true;
+            defaultPipeline.bloomEnabled = false;
+            defaultPipeline.chromaticAberrationEnabled = false;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = false;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = true;
+            defaultPipeline.imageProcessingEnabled = false;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
