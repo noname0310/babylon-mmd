@@ -12,7 +12,8 @@ const engine = new Engine(canvas, true, {
     preserveDrawingBuffer: true,
     stencil: true,
     antialias: true,
-    powerPreference: "high-performance"
+    powerPreference: "high-performance",
+    doNotHandleContextLost: true
 }, true);
 
 // const webGPUEngine = new WebGPUEngine(canvas, {
