@@ -75,40 +75,30 @@ export class MmdAsyncTextureLoader {
         }
     }
 
-    public async loadTextureAsync(
+    private async _loadTextureAsyncInternal(
         uniqueId: number,
-        rootUrl: string,
-        relativeTexturePathOrIndex: string | number,
+        urlOrTextureName: string,
+        arrayBuffer: ArrayBuffer | null,
+        sharedTextureIndex: number | null,
         scene: Scene,
         assetContainer: AssetContainer | null
     ): Promise<Texture | null> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
-        const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
-
-        const finalRelativeTexturePath = isSharedToonTexture
-            ? "shared_toon_texture_" + relativeTexturePathOrIndex
-            : relativeTexturePathOrIndex;
-
-        const requestString = isSharedToonTexture
-            ? finalRelativeTexturePath
-            : this.pathNormalize(rootUrl + relativeTexturePathOrIndex as string);
-
-        let textureLoadInfo = this._textureLoadInfoMap.get(requestString);
+        let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
         if (textureLoadInfo === undefined) {
             textureLoadInfo = new TextureLoadInfo();
-            this._textureLoadInfoMap.set(requestString, textureLoadInfo);
+            this._textureLoadInfoMap.set(urlOrTextureName, textureLoadInfo);
         }
 
-        let texture = this.textureCache.get(requestString)?.deref();
+        let texture = this.textureCache.get(urlOrTextureName)?.deref();
         if (texture === undefined && !textureLoadInfo.hasLoadError) {
-            const blobOrUrl = isSharedToonTexture
-                ? SharedToonTextures.Data[relativeTexturePathOrIndex as number]
-                : requestString;
+            const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
+                : urlOrTextureName;
 
             scene._blockEntityCollection = !!assetContainer;
             texture = new Texture(
-                blobOrUrl,
+                arrayBuffer === null ? blobOrUrl : null,
                 scene,
                 undefined,
                 undefined,
@@ -120,20 +110,21 @@ export class MmdAsyncTextureLoader {
                 },
                 (_message, _exception) => {
                     texture!.dispose();
-                    this.textureCache.delete(requestString);
+                    this.textureCache.delete(urlOrTextureName);
 
                     textureLoadInfo!.hasLoadError = true;
                     textureLoadInfo!.observable.notifyObservers(true);
                     textureLoadInfo!.observable.clear();
-                }
+                },
+                arrayBuffer
             );
             texture._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
             assetContainer?.textures.push(texture);
 
-            if (isSharedToonTexture) texture.name = finalRelativeTexturePath;
+            if (sharedTextureIndex !== null || arrayBuffer !== null) texture.name = urlOrTextureName;
 
-            this.textureCache.set(requestString, new WeakRef(texture));
+            this.textureCache.set(urlOrTextureName, new WeakRef(texture));
         }
 
         if (texture === undefined || texture.isReady()) {
@@ -142,12 +133,56 @@ export class MmdAsyncTextureLoader {
             return texture!;
         }
 
-        return new Promise((resolve) => {
+        return new Promise<Texture | null>((resolve) => {
             textureLoadInfo!.observable.addOnce((hasLoadError) => {
                 this._decrementLeftLoadCount(model!);
                 resolve(hasLoadError ? null : texture!);
             });
         });
+    }
+
+    public async loadTextureAsync(
+        uniqueId: number,
+        rootUrl: string,
+        relativeTexturePathOrIndex: string | number,
+        scene: Scene,
+        assetContainer: AssetContainer | null
+    ): Promise<Texture | null> {
+        const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
+
+        const finalRelativeTexturePath = isSharedToonTexture
+            ? "shared_toon_texture_" + relativeTexturePathOrIndex
+            : relativeTexturePathOrIndex;
+
+        const requestString = isSharedToonTexture
+            ? finalRelativeTexturePath
+            : this.pathNormalize(rootUrl + relativeTexturePathOrIndex as string);
+
+        return await this._loadTextureAsyncInternal(
+            uniqueId,
+            requestString,
+            null,
+            isSharedToonTexture ? relativeTexturePathOrIndex : null,
+            scene,
+            assetContainer
+        );
+    }
+
+    public async loadTextureFromArrayBufferAsync(
+        uniqueId: number,
+        textureName: string,
+        arrayBuffer: ArrayBuffer,
+        scene: Scene,
+        assetContainer: AssetContainer | null
+    ): Promise<Texture | null> {
+        return await this._loadTextureAsyncInternal(
+            uniqueId,
+            textureName,
+            arrayBuffer,
+            null,
+            scene,
+            assetContainer
+        );
     }
 
     public pathNormalize(path: string): string {
