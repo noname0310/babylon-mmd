@@ -156,7 +156,7 @@ export class MmdAsyncTextureLoader {
 
         const requestString = isSharedToonTexture
             ? finalRelativeTexturePath
-            : this.pathNormalize(rootUrl + relativeTexturePathOrIndex as string);
+            : this.pathNormalize(rootUrl + relativeTexturePathOrIndex);
 
         return await this._loadTextureAsyncInternal(
             uniqueId,
