@@ -116,7 +116,8 @@ export class MmdAsyncTextureLoader {
                     textureLoadInfo!.observable.notifyObservers(true);
                     textureLoadInfo!.observable.clear();
                 },
-                arrayBuffer
+                arrayBuffer,
+                true
             );
             texture._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
