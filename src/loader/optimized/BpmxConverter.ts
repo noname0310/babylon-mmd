@@ -24,7 +24,10 @@
  *
  * textureCount: uint32
  * textureLookupTable: uint32[textureCount] - data offset in the file
- * textures: uint8[texturesCount][] - arraybuffers
+ * textures: {
+ *  uint32, uint8[] - length, string
+ *  uint8[texturesCount] - arraybuffer
+ * }[textureCount]
  *
  * materialCount: uint32
  * {
@@ -172,11 +175,12 @@
  * }[jointCount]
  */
 
-import { Logger } from "@babylonjs/core";
+import { Logger, Scene } from "@babylonjs/core";
 
 import type { ILogger } from "../parser/ILogger";
-import type { PmxObject } from "../parser/PmxObject";
+import { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
+import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;
@@ -204,7 +208,7 @@ export class BpmxConverter implements ILogger {
     }
 
     public async convert(
-        scene: Screen,
+        scene: Scene,
         urlOrFileName: string,
         files?: File[]
     ): Promise<void> {
@@ -229,7 +233,190 @@ export class BpmxConverter implements ILogger {
             pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
         }
 
-        pmxObject;
+        const vertices = pmxObject.vertices;
+
+        const positions = new Float32Array(vertices.length * 3);
+        const normals = new Float32Array(vertices.length * 3);
+        const uvs = new Float32Array(vertices.length * 2);
+
+        let indices;
+        if (pmxObject.faces instanceof Uint8Array || pmxObject.faces instanceof Uint16Array) {
+            indices = new Uint16Array(pmxObject.faces.length);
+        } else {
+            indices = new Uint32Array(pmxObject.faces.length);
+        }
+        
+        const boneIndices = new Float32Array(vertices.length * 4);
+        const boneWeights = new Float32Array(vertices.length * 4);
+        let hasSdef = false;
+        const boneSdefC = new Float32Array(pmxObject.vertices.length * 3);
+        const boneSdefR0 = new Float32Array(pmxObject.vertices.length * 3);
+        const boneSdefR1 = new Float32Array(pmxObject.vertices.length * 3);
+
+        // prepare geometry buffers
+        {
+            const vertices = pmxObject.vertices;
+            {
+                const faces = pmxObject.faces;
+                for (let i = 0; i < indices.length; i += 3) { // reverse winding order
+                    indices[i + 0] = faces[i + 0];
+                    indices[i + 1] = faces[i + 2];
+                    indices[i + 2] = faces[i + 1];
+                }
+            }
+
+            for (let i = 0; i < vertices.length; ++i) {
+                const vertex = vertices[i];
+                positions[i * 3 + 0] = vertex.position[0];
+                positions[i * 3 + 1] = vertex.position[1];
+                positions[i * 3 + 2] = vertex.position[2];
+
+                normals[i * 3 + 0] = vertex.normal[0];
+                normals[i * 3 + 1] = vertex.normal[1];
+                normals[i * 3 + 2] = vertex.normal[2];
+
+                uvs[i * 2 + 0] = vertex.uv[0];
+                uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
+
+                switch (vertex.weightType) {
+                case PmxObject.Vertex.BoneWeightType.Bdef1:
+                    {
+                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
+
+                        boneIndices[i * 4 + 0] = boneWeight.boneIndices;
+                        boneIndices[i * 4 + 1] = 0;
+                        boneIndices[i * 4 + 2] = 0;
+                        boneIndices[i * 4 + 3] = 0;
+
+                        boneWeights[i * 4 + 0] = 1;
+                        boneWeights[i * 4 + 1] = 0;
+                        boneWeights[i * 4 + 2] = 0;
+                        boneWeights[i * 4 + 3] = 0;
+                    }
+                    break;
+
+                case PmxObject.Vertex.BoneWeightType.Bdef2:
+                    {
+                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
+
+                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                        boneIndices[i * 4 + 2] = 0;
+                        boneIndices[i * 4 + 3] = 0;
+
+                        boneWeights[i * 4 + 0] = boneWeight.boneWeights;
+                        boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights;
+                        boneWeights[i * 4 + 2] = 0;
+                        boneWeights[i * 4 + 3] = 0;
+                    }
+                    break;
+
+                case PmxObject.Vertex.BoneWeightType.Bdef4:
+                case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
+                    {
+                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
+
+                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                        boneIndices[i * 4 + 2] = boneWeight.boneIndices[2];
+                        boneIndices[i * 4 + 3] = boneWeight.boneIndices[3];
+
+                        boneWeights[i * 4 + 0] = boneWeight.boneWeights[0];
+                        boneWeights[i * 4 + 1] = boneWeight.boneWeights[1];
+                        boneWeights[i * 4 + 2] = boneWeight.boneWeights[2];
+                        boneWeights[i * 4 + 3] = boneWeight.boneWeights[3];
+                    }
+                    break;
+
+                case PmxObject.Vertex.BoneWeightType.Sdef:
+                    {
+                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
+
+                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
+                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
+                        boneIndices[i * 4 + 2] = 0;
+                        boneIndices[i * 4 + 3] = 0;
+
+                        const sdefWeights = boneWeight.boneWeights;
+                        const boneWeight0 = sdefWeights.boneWeight0;
+                        const boneWeight1 = 1 - boneWeight0;
+
+                        boneWeights[i * 4 + 0] = boneWeight0;
+                        boneWeights[i * 4 + 1] = boneWeight1;
+                        boneWeights[i * 4 + 2] = 0;
+                        boneWeights[i * 4 + 3] = 0;
+
+                        const centerX = sdefWeights.c[0];
+                        const centerY = sdefWeights.c[1];
+                        const centerZ = sdefWeights.c[2];
+
+                        // calculate rw0 and rw1
+                        let r0X = sdefWeights.r0[0];
+                        let r0Y = sdefWeights.r0[1];
+                        let r0Z = sdefWeights.r0[2];
+
+                        let r1X = sdefWeights.r1[0];
+                        let r1Y = sdefWeights.r1[1];
+                        let r1Z = sdefWeights.r1[2];
+
+                        const rwX = r0X * boneWeight0 + r1X * boneWeight1;
+                        const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
+                        const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
+
+                        r0X = centerX + r0X - rwX;
+                        r0Y = centerY + r0Y - rwY;
+                        r0Z = centerZ + r0Z - rwZ;
+
+                        r1X = centerX + r1X - rwX;
+                        r1Y = centerY + r1Y - rwY;
+                        r1Z = centerZ + r1Z - rwZ;
+
+                        const cr0X = (centerX + r0X) * 0.5;
+                        const cr0Y = (centerY + r0Y) * 0.5;
+                        const cr0Z = (centerZ + r0Z) * 0.5;
+
+                        const cr1X = (centerX + r1X) * 0.5;
+                        const cr1Y = (centerY + r1Y) * 0.5;
+                        const cr1Z = (centerZ + r1Z) * 0.5;
+
+                        boneSdefC![i * 3 + 0] = centerX;
+                        boneSdefC![i * 3 + 1] = centerY;
+                        boneSdefC![i * 3 + 2] = centerZ;
+
+                        boneSdefR0![i * 3 + 0] = cr0X;
+                        boneSdefR0![i * 3 + 1] = cr0Y;
+                        boneSdefR0![i * 3 + 2] = cr0Z;
+
+                        boneSdefR1![i * 3 + 0] = cr1X;
+                        boneSdefR1![i * 3 + 1] = cr1Y;
+                        boneSdefR1![i * 3 + 2] = cr1Z;
+
+                        hasSdef = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        const textures: ArrayBuffer[] = [];
+
+        // create texture table
+        {
+            const textureLoader = new MmdAsyncTextureLoader();
+
+            const materials = pmxObject.materials;
+            for (let i = 0; i < materials.length; ++i) {
+                const materialInfo = materials[i];
+
+                const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
+                if (diffuseTexturePath !== undefined) {
+                    hasSdef;
+                    textures;
+                    textureLoader;
+                }
+            }
+        }
+
         scene;
         alphaThreshold;
         alphaBlendThreshold;
