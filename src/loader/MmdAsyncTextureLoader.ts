@@ -1,4 +1,4 @@
-import type { AssetContainer, Scene } from "@babylonjs/core";
+import type { AssetContainer, Nullable, Scene } from "@babylonjs/core";
 import { Observable, Texture } from "@babylonjs/core";
 
 import { SharedToonTextures } from "./SharedToonTextures";
@@ -25,13 +25,109 @@ class TextureLoadInfo {
     }
 }
 
+
+class MmdTextureData {
+    private _arrayBuffer: ArrayBuffer | null;
+    private _texture: Texture | null;
+
+    public constructor(
+        scene: Scene,
+        assetContainer: AssetContainer | null,
+        urlOrTextureName: string,
+        arrayBuffer: ArrayBuffer | null,
+        onLoad?: Nullable<() => void>,
+        onError?: Nullable<(message?: string, exception?: any) => void>
+    ) {
+        this._arrayBuffer = null;
+        this._texture = null;
+
+        if (arrayBuffer === null) {
+            scene._loadFile(
+                urlOrTextureName,
+                (data) => {
+                    const arrayBuffer = this._arrayBuffer = data as ArrayBuffer;
+                    this._createTexture(
+                        scene,
+                        assetContainer,
+                        urlOrTextureName,
+                        arrayBuffer,
+                        onLoad,
+                        onError
+                    );
+                },
+                undefined,
+                true,
+                true,
+                (request, exception) => {
+                    onError?.(request ? request.status + " " + request.statusText : "", exception);
+                }
+            );
+        } else {
+            this._arrayBuffer = arrayBuffer;
+            this._createTexture(
+                scene,
+                assetContainer,
+                urlOrTextureName,
+                arrayBuffer,
+                onLoad,
+                onError
+            );
+        }
+    }
+
+    private _createTexture(
+        scene: Scene,
+        assetContainer: AssetContainer | null,
+        textureName: string,
+        arrayBuffer: ArrayBuffer,
+        onLoad?: Nullable<() => void>,
+        onError?: Nullable<(message?: string, exception?: any) => void>
+    ): void {
+        scene._blockEntityCollection = !!assetContainer;
+        const texture = this._texture = new Texture(
+            "data:" + textureName,
+            scene,
+            undefined,
+            undefined,
+            undefined,
+            onLoad,
+            onError,
+            arrayBuffer,
+            true
+        );
+        texture._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+        assetContainer?.textures.push(texture);
+
+        texture.name = textureName;
+    }
+
+    public get arrayBuffer(): ArrayBuffer | null {
+        return this._arrayBuffer;
+    }
+
+    public get texture(): Texture | null {
+        return this._texture;
+    }
+}
+
+export interface MmdTextureLoadResult {
+    readonly texture: Texture | null;
+    readonly arrayBuffer: ArrayBuffer | null;
+}
+
 export class MmdAsyncTextureLoader {
     public readonly onModelTextureLoadedObservable = new Map<number, Observable<void>>(); // key: uniqueId, value: Observable<void>
 
-    public readonly textureCache = new Map<string, WeakRef<Texture>>(); // key: requestString, value: texture
+    public readonly textureCache = new Map<string, WeakRef<MmdTextureData>>(); // key: requestString, value: texture
 
     private readonly _textureLoadInfoMap = new Map<string, TextureLoadInfo>(); // key: requestString
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
+
+    private static readonly _EmptyResult: MmdTextureLoadResult = {
+        texture: null,
+        arrayBuffer: null
+    };
 
     private _incrementLeftLoadCount(uniqueId: number): TextureLoadingModel {
         let model = this._loadingModels.get(uniqueId);
@@ -82,7 +178,7 @@ export class MmdAsyncTextureLoader {
         sharedTextureIndex: number | null,
         scene: Scene,
         assetContainer: AssetContainer | null
-    ): Promise<Texture | null> {
+    ): Promise<MmdTextureLoadResult> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
         let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
@@ -91,53 +187,44 @@ export class MmdAsyncTextureLoader {
             this._textureLoadInfoMap.set(urlOrTextureName, textureLoadInfo);
         }
 
-        let texture = this.textureCache.get(urlOrTextureName)?.deref();
-        if (texture === undefined && !textureLoadInfo.hasLoadError) {
+        let textureData = this.textureCache.get(urlOrTextureName)?.deref();
+        if (textureData === undefined && !textureLoadInfo.hasLoadError) {
             const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
                 : urlOrTextureName;
 
-            scene._blockEntityCollection = !!assetContainer;
-            texture = new Texture(
-                arrayBuffer === null ? blobOrUrl : null,
+            textureData = new MmdTextureData(
                 scene,
-                undefined,
-                undefined,
-                undefined,
+                assetContainer,
+                blobOrUrl,
+                arrayBuffer,
                 () => {
                     textureLoadInfo!.hasLoadError = false;
                     textureLoadInfo!.observable.notifyObservers(false);
                     textureLoadInfo!.observable.clear();
                 },
                 (_message, _exception) => {
-                    texture!.dispose();
+                    textureData!.texture!.dispose();
                     this.textureCache.delete(urlOrTextureName);
 
                     textureLoadInfo!.hasLoadError = true;
                     textureLoadInfo!.observable.notifyObservers(true);
                     textureLoadInfo!.observable.clear();
-                },
-                arrayBuffer,
-                true
+                }
             );
-            texture._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
-            assetContainer?.textures.push(texture);
 
-            if (sharedTextureIndex !== null || arrayBuffer !== null) texture.name = urlOrTextureName;
-
-            this.textureCache.set(urlOrTextureName, new WeakRef(texture));
+            this.textureCache.set(urlOrTextureName, new WeakRef(textureData));
         }
 
-        if (texture === undefined || texture.isReady()) {
+        if (textureData!.texture !== null && textureData!.texture.isReady()) {
             this._decrementLeftLoadCount(model!);
-            if (textureLoadInfo.hasLoadError) return null;
-            return texture!;
+            if (textureLoadInfo.hasLoadError) return MmdAsyncTextureLoader._EmptyResult;
+            return (textureData as MmdTextureLoadResult);
         }
 
-        return new Promise<Texture | null>((resolve) => {
+        return new Promise<MmdTextureLoadResult>((resolve) => {
             textureLoadInfo!.observable.addOnce((hasLoadError) => {
-                this._decrementLeftLoadCount(model!);
-                resolve(hasLoadError ? null : texture!);
+                this._decrementLeftLoadCount(model);
+                resolve(hasLoadError ? MmdAsyncTextureLoader._EmptyResult : textureData!);
             });
         });
     }
@@ -148,7 +235,7 @@ export class MmdAsyncTextureLoader {
         relativeTexturePathOrIndex: string | number,
         scene: Scene,
         assetContainer: AssetContainer | null
-    ): Promise<Texture | null> {
+    ): Promise<MmdTextureLoadResult> {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
         const finalRelativeTexturePath = isSharedToonTexture
@@ -175,7 +262,7 @@ export class MmdAsyncTextureLoader {
         arrayBuffer: ArrayBuffer,
         scene: Scene,
         assetContainer: AssetContainer | null
-    ): Promise<Texture | null> {
+    ): Promise<MmdTextureLoadResult> {
         return await this._loadTextureAsyncInternal(
             uniqueId,
             textureName,

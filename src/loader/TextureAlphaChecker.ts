@@ -1,4 +1,4 @@
-import { Material, type Texture } from "@babylonjs/core";
+import { Material } from "@babylonjs/core";
 
 export enum TransparencyMode {
     Opaque = Material.MATERIAL_OPAQUE,
@@ -8,7 +8,7 @@ export enum TransparencyMode {
 
 export class TextureAlphaChecker {
     private readonly _resolution: number;
-    private readonly _textureCache: Map<Texture, WebGLTexture>;
+    private readonly _textureCache: Map<ArrayBuffer, WebGLTexture>;
 
     private _context: WebGL2RenderingContext | null;
 
@@ -131,34 +131,19 @@ export class TextureAlphaChecker {
         return true;
     }
 
-    private async _getWebGlTexture(texture: Texture): Promise<WebGLTexture | null> {
+    private async _getWebGlTexture(textureBuffer: ArrayBuffer): Promise<WebGLTexture | null> {
         const context = this._context;
         if (context === null) return null;
 
-        const cachedWebGlTexture = this._textureCache.get(texture);
+        const cachedWebGlTexture = this._textureCache.get(textureBuffer);
         if (cachedWebGlTexture !== undefined) return cachedWebGlTexture;
 
-        if (!texture.isReady()) {
-            await new Promise<void>((resolve) => {
-                texture.onLoadObservable.addOnce(() => {
-                    resolve();
-                });
-            });
-        }
-
-        const textureSize = texture.getSize();
-        const pixelsBufferView = await texture.readPixels(
-            0, // faceIndex
-            0, // level
-            undefined, // buffer
-            false, // flushRenderer
-            false, // noDataConversion
-            0, // x
-            0, // y
-            textureSize.width, // width
-            textureSize.height // height
-        );
-        if (pixelsBufferView === null) return null;
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const image = new Image();
+            image.onload = (): void => resolve(image);
+            image.onerror = (): void => reject();
+            image.src = URL.createObjectURL(new Blob([textureBuffer]));
+        });
 
         const webGlTexture = context.createTexture();
         if (webGlTexture === null) return null;
@@ -172,15 +157,18 @@ export class TextureAlphaChecker {
             context.TEXTURE_2D,
             0, // level
             context.RGBA, // internalFormat
-            textureSize.width, // width
-            textureSize.height, // height
+            image.width, // width
+            image.height, // height
             0, // border
             context.RGBA, // format
             context.UNSIGNED_BYTE, // type
-            pixelsBufferView // pixels
+            image // pixels
         );
+        context.pixelStorei(context.UNPACK_FLIP_Y_WEBGL, 1);
 
-        this._textureCache.set(texture, webGlTexture);
+        URL.revokeObjectURL(image.src);
+
+        this._textureCache.set(textureBuffer, webGlTexture);
 
         return webGlTexture;
     }
@@ -214,7 +202,7 @@ export class TextureAlphaChecker {
     }
 
     public async textureHasAlphaOnGeometry(
-        texture: Texture,
+        textureBuffer: ArrayBuffer,
         startOffset: number,
         length: number,
         alphaThreshold: number,
@@ -225,7 +213,7 @@ export class TextureAlphaChecker {
         const program = this._program;
         if (program === null) return TransparencyMode.Opaque;
 
-        const webGlTexture = await this._getWebGlTexture(texture);
+        const webGlTexture = await this._getWebGlTexture(textureBuffer);
         if (webGlTexture === null) return TransparencyMode.Opaque;
 
         context.clear(context.COLOR_BUFFER_BIT);

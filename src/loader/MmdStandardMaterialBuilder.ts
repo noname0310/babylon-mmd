@@ -239,7 +239,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
             const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
-                const diffuseTexture = await this._textureLoader.loadTextureAsync(
+                const textureLoadResult = await this._textureLoader.loadTextureAsync(
                     uniqueId,
                     rootUrl,
                     diffuseTexturePath,
@@ -247,12 +247,14 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     assetContainer
                 );
 
+                const diffuseTexture = textureLoadResult.texture;
+
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
                     if (textureAlphaChecker !== null) {
                         const transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                            diffuseTexture,
+                            textureLoadResult.arrayBuffer!,
                             offset,
                             materialInfo.surfaceCount,
                             this.alphaThreshold,
@@ -297,13 +299,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
-                    const sphereTexture = await this._textureLoader.loadTextureAsync(
+                    const sphereTexture = (await this._textureLoader.loadTextureAsync(
                         uniqueId,
                         rootUrl,
                         sphereTexturePath,
                         scene,
                         assetContainer
-                    );
+                    )).texture;
 
                     if (sphereTexture !== null) {
                         material.sphereTexture = sphereTexture;
@@ -349,13 +351,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
             }
             if (toonTexturePath !== undefined) {
-                const toonTexture = await this._textureLoader.loadTextureAsync(
+                const toonTexture = (await this._textureLoader.loadTextureAsync(
                     uniqueId,
                     rootUrl,
                     toonTexturePath,
                     scene,
                     assetContainer
-                );
+                )).texture;
 
                 if (toonTexture !== null) {
                     material.toonTexture = toonTexture;
