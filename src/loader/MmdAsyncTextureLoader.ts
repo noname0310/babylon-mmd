@@ -25,7 +25,6 @@ class TextureLoadInfo {
     }
 }
 
-
 class MmdTextureData {
     private _arrayBuffer: ArrayBuffer | null;
     private _texture: Texture | null;

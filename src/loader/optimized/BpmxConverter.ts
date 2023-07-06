@@ -175,12 +175,13 @@
  * }[jointCount]
  */
 
-import { Logger, Scene } from "@babylonjs/core";
+import type { Scene } from "@babylonjs/core";
+import { Logger } from "@babylonjs/core";
 
+import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 import type { ILogger } from "../parser/ILogger";
 import { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
-import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;
@@ -245,7 +246,7 @@ export class BpmxConverter implements ILogger {
         } else {
             indices = new Uint32Array(pmxObject.faces.length);
         }
-        
+
         const boneIndices = new Float32Array(vertices.length * 4);
         const boneWeights = new Float32Array(vertices.length * 4);
         let hasSdef = false;
