@@ -182,11 +182,13 @@ import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 import type { ILogger } from "../parser/ILogger";
 import { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
+import { TextureAlphaChecker } from "../TextureAlphaChecker";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;
     public alphaBlendThreshold: number;
     public useAlphaEvaluation: boolean;
+    public alphaEvaluationResolution: number;
 
     private _loggingEnabled: boolean;
 
@@ -201,6 +203,7 @@ export class BpmxConverter implements ILogger {
         this.alphaThreshold = 195;
         this.alphaBlendThreshold = 100;
         this.useAlphaEvaluation = true;
+        this.alphaEvaluationResolution = 512;
 
         this._loggingEnabled = true;
         this.log = this._logDisabled;
@@ -216,6 +219,7 @@ export class BpmxConverter implements ILogger {
         const alphaThreshold = this.alphaThreshold;
         const alphaBlendThreshold = this.alphaBlendThreshold;
         const useAlphaEvaluation = this.useAlphaEvaluation;
+        const alphaEvaluationResolution = this.alphaEvaluationResolution;
 
         let pmxObject: PmxObject;
         if (files === undefined) {
@@ -399,11 +403,14 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textures: ArrayBuffer[] = [];
+        const textures: (ArrayBuffer | null)[] = new Array(pmxObject.textures.length).fill(null);
 
         // create texture table
         {
+            const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
+
             const textureLoader = new MmdAsyncTextureLoader();
+            const promises: Promise<void>[] = [];
 
             const materials = pmxObject.materials;
             for (let i = 0; i < materials.length; ++i) {
@@ -411,17 +418,94 @@ export class BpmxConverter implements ILogger {
 
                 const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                 if (diffuseTexturePath !== undefined) {
-                    hasSdef;
-                    textures;
-                    textureLoader;
+                    promises.push(textureLoader.loadTextureAsync(
+                        0,
+                        rootUrl,
+                        diffuseTexturePath,
+                        scene,
+                        null
+                    ).then((result) => {
+                        textures[materialInfo.textureIndex] = result.arrayBuffer;
+                    }));
                 }
+
+                const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
+                if (sphereTexturePath !== undefined) {
+                    promises.push(textureLoader.loadTextureAsync(
+                        0,
+                        rootUrl,
+                        sphereTexturePath,
+                        scene,
+                        null
+                    ).then((result) => {
+                        textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
+                    }));
+                }
+
+                const toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
+                if (toonTexturePath !== undefined && !materialInfo.isSharedToonTexture) {
+                    promises.push(textureLoader.loadTextureAsync(
+                        0,
+                        rootUrl,
+                        toonTexturePath,
+                        scene,
+                        null
+                    ).then((result) => {
+                        textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
+                    }));
+                }
+            }
+
+            textureLoader.loadModelTexturesEnd(0);
+
+            await Promise.all(promises);
+
+            const onModelTextureLoadedObservable = textureLoader.onModelTextureLoadedObservable.get(0);
+            if (onModelTextureLoadedObservable !== undefined) {
+                await new Promise<void>((resolve) => {
+                    onModelTextureLoadedObservable.addOnce(() => {
+                        resolve();
+                    });
+                });
             }
         }
 
-        scene;
-        alphaThreshold;
-        alphaBlendThreshold;
-        useAlphaEvaluation;
+        const textureAlphaEvaluateResults: number[] = new Array(pmxObject.textures.length).fill(-1);
+
+        // evaluate texture alpha
+        if (useAlphaEvaluation) {
+            const textureAlphaChecker = new TextureAlphaChecker(uvs, indices, alphaEvaluationResolution);
+
+            const materials = pmxObject.materials;
+            let offset = 0;
+            for (let i = 0; i < materials.length; ++i) {
+                const materialInfo = materials[i];
+
+                const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
+                if (diffuseTexturePath !== undefined) {
+                    const textureIndex = materialInfo.textureIndex;
+                    const texture = textures[textureIndex];
+                    if (texture !== null) {
+                        const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                            texture,
+                            offset,
+                            materialInfo.surfaceCount,
+                            alphaThreshold,
+                            alphaBlendThreshold
+                        );
+                        textureAlphaEvaluateResults[textureIndex] = textureAlphaEvaluateResult;
+                    }
+                }
+
+                offset += materialInfo.surfaceCount;
+            }
+
+            textureAlphaChecker.dispose();
+        }
+
+
+
+        hasSdef;
     }
 
     public get loggingEnabled(): boolean {
