@@ -4,16 +4,11 @@ import { FreeCamera, Scene, Vector3 } from "@babylonjs/core";
 import { BvmdConverter, VmdLoader } from "..";
 import type { ISceneBuilder } from "./BaseRuntime";
 
-export class ConverterScene implements ISceneBuilder {
+export class VmdConverterScene implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
-
-        const vmdLoader = new VmdLoader(scene);
-        vmdLoader.loggingEnabled = true;
-
-        const files: File[] = [];
 
         const formDiv = document.createElement("div");
         formDiv.style.position = "absolute";
@@ -37,6 +32,11 @@ export class ConverterScene implements ISceneBuilder {
         innerFormDiv.style.justifyContent = "center";
         innerFormDiv.style.alignItems = "start";
         formDiv.appendChild(innerFormDiv);
+
+        const vmdLoader = new VmdLoader(scene);
+        vmdLoader.loggingEnabled = true;
+
+        const files: File[] = [];
 
         const title = document.createElement("h1");
         title.textContent = "VMD to BVMD Converter";
