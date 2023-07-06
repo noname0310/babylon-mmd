@@ -218,7 +218,7 @@ export class MmdAsyncTextureLoader {
         if (textureData!.texture !== null && textureData!.texture.isReady()) {
             this._decrementLeftLoadCount(model!);
             if (textureLoadInfo.hasLoadError) return MmdAsyncTextureLoader._EmptyResult;
-            return (textureData as MmdTextureLoadResult);
+            return (textureData!);
         }
 
         return new Promise<MmdTextureLoadResult>((resolve) => {

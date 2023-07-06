@@ -1,4 +1,4 @@
-import { Material } from "@babylonjs/core";
+import { Material, Observable } from "@babylonjs/core";
 
 export enum TransparencyMode {
     Opaque = Material.MATERIAL_OPAQUE,
@@ -6,9 +6,30 @@ export enum TransparencyMode {
     AlphaBlend = Material.MATERIAL_ALPHABLEND
 }
 
+class TextureContainer {
+    public texture: WebGLTexture | null;
+    public readonly onLoadObservable: Observable<void>;
+
+    public constructor() {
+        this.texture = null;
+
+        this.onLoadObservable = new Observable();
+    }
+
+    public awaitLoad(): Promise<TextureContainer> {
+        return new Promise(resolve => {
+            if (this.texture !== null) {
+                resolve(this);
+            } else {
+                this.onLoadObservable.addOnce(() => resolve(this));
+            }
+        });
+    }
+}
+
 export class TextureAlphaChecker {
     private readonly _resolution: number;
-    private readonly _textureCache: Map<ArrayBuffer, WebGLTexture>;
+    private readonly _textureCache: Map<ArrayBuffer, TextureContainer>;
 
     private _context: WebGL2RenderingContext | null;
 
@@ -136,7 +157,13 @@ export class TextureAlphaChecker {
         if (context === null) return null;
 
         const cachedWebGlTexture = this._textureCache.get(textureBuffer);
-        if (cachedWebGlTexture !== undefined) return cachedWebGlTexture;
+        if (cachedWebGlTexture !== undefined) {
+            await cachedWebGlTexture.awaitLoad();
+            return cachedWebGlTexture.texture;
+        }
+
+        const textureContainer = new TextureContainer();
+        this._textureCache.set(textureBuffer, textureContainer);
 
         const image = await new Promise<HTMLImageElement>((resolve, reject) => {
             const image = new Image();
@@ -168,7 +195,8 @@ export class TextureAlphaChecker {
 
         URL.revokeObjectURL(image.src);
 
-        this._textureCache.set(textureBuffer, webGlTexture);
+        textureContainer.texture = webGlTexture;
+        textureContainer.onLoadObservable.notifyObservers();
 
         return webGlTexture;
     }
@@ -299,8 +327,8 @@ export class TextureAlphaChecker {
 
         context.deleteBuffer(this._uvBuffer);
         context.deleteBuffer(this._indexBuffer);
-        for (const webGlTexture of this._textureCache.values()) {
-            context.deleteTexture(webGlTexture);
+        for (const textureContainer of this._textureCache.values()) {
+            context.deleteTexture(textureContainer.texture);
         }
         context.deleteProgram(this._program);
         context.deleteShader(this._vertexShader);
