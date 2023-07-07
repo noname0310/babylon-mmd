@@ -321,8 +321,13 @@ export class MmdAsyncTextureLoader {
         textureName: string,
         arrayBufferOrBlob: ArrayBuffer | Blob,
         scene: Scene,
-        assetContainer: AssetContainer | null
+        assetContainer: AssetContainer | null,
+        applyPathNormalization = true
     ): Promise<MmdTextureLoadResult> {
+        if (applyPathNormalization) {
+            textureName = this.pathNormalize(textureName);
+        }
+
         return await this._loadTextureAsyncInternal(
             uniqueId,
             textureName,
