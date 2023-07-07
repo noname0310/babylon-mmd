@@ -425,9 +425,19 @@ export class PmxConverterScene implements ISceneBuilder {
 
             isLoading = true;
             engine.displayLoadingUI();
+
             const fileRelativePath = (selectedFile as any).webkitRelativePath as string;
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            await bpmxConverter.convert(scene, fileRelativePath, files);
+            const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files);
+            const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}.bpmx`;
+            a.click();
+            URL.revokeObjectURL(url);
+            a.remove();
+
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
         };
