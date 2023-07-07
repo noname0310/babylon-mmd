@@ -181,7 +181,7 @@ export class PmxConverterScene implements ISceneBuilder {
         innerFormDiv.appendChild(selectedPmxFile);
 
         const listContainer = document.createElement("div");
-        listContainer.style.width = "100%";
+        listContainer.style.width = "500px";
         listContainer.style.flexGrow = "1";
         listContainer.style.overflow = "auto";
         listContainer.style.marginBottom = "10px";
@@ -197,6 +197,7 @@ export class PmxConverterScene implements ISceneBuilder {
             pmxFileList.innerHTML = "";
             for (const file of files) {
                 const item = document.createElement("li");
+                item.style.whiteSpace = "nowrap";
                 const fileRelativePath = (file as any).webkitRelativePath as string;
                 item.textContent = fileRelativePath;
                 if (file.name.endsWith(".pmx")) {
