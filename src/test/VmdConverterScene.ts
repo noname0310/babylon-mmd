@@ -97,12 +97,12 @@ export class VmdConverterScene implements ISceneBuilder {
 
             convertButton.textContent = "Converting...";
             const animation = await vmdLoader.loadAsync(files[0].name, files);
-            const arraybuffer = BvmdConverter.Convert(animation);
-            const blob = new Blob([arraybuffer], { type: "application/octet-stream" });
+            const arrayBuffer = BvmdConverter.Convert(animation);
+            const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${files[0].name}.bvmd`;
+            a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}.bvmd`;
             a.click();
             URL.revokeObjectURL(url);
             a.remove();
