@@ -164,7 +164,7 @@ export class PmxConverterScene implements ISceneBuilder {
                     item.style.cursor = "pointer";
                     item.style.textDecoration = "underline";
                     item.onclick = (): void => {
-                        selectedPmxFile.textContent = file.name;
+                        selectedPmxFile.textContent = (file as any).webkitRelativePath as string;
 
                     };
                 }
@@ -248,6 +248,9 @@ export class PmxConverterScene implements ISceneBuilder {
         useAlphaEvaluationInput.type = "checkbox";
         useAlphaEvaluationInput.checked = bpmxConverter.useAlphaEvaluation;
         useAlphaEvaluationDiv.appendChild(useAlphaEvaluationInput);
+        useAlphaEvaluationInput.onchange = (): void => {
+            bpmxConverter.useAlphaEvaluation = useAlphaEvaluationInput.checked;
+        };
 
         const alphaEvaluationResolutionDiv = document.createElement("div");
         alphaEvaluationResolutionDiv.style.width = "100%";
@@ -277,6 +280,9 @@ export class PmxConverterScene implements ISceneBuilder {
         alphaEvaluationResolutionInput.max = "4096";
         alphaEvaluationResolutionInput.value = bpmxConverter.alphaEvaluationResolution.toString();
         alphaEvaluationResolutionDiv.appendChild(alphaEvaluationResolutionInput);
+        alphaEvaluationResolutionInput.onchange = (): void => {
+            bpmxConverter.alphaEvaluationResolution = Number(alphaEvaluationResolutionInput.value);
+        };
 
         const alphaThresholdDiv = document.createElement("div");
         alphaThresholdDiv.style.width = "100%";
@@ -306,6 +312,9 @@ export class PmxConverterScene implements ISceneBuilder {
         alphaThresholdInput.max = "255";
         alphaThresholdInput.value = bpmxConverter.alphaThreshold.toString();
         alphaThresholdDiv.appendChild(alphaThresholdInput);
+        alphaThresholdInput.onchange = (): void => {
+            bpmxConverter.alphaThreshold = Number(alphaThresholdInput.value);
+        };
 
         const alphaBlendThresholdDiv = document.createElement("div");
         alphaBlendThresholdDiv.style.width = "100%";
@@ -334,6 +343,9 @@ export class PmxConverterScene implements ISceneBuilder {
         alphaBlendThresholdInput.max = "500";
         alphaBlendThresholdInput.value = bpmxConverter.alphaBlendThreshold.toString();
         alphaBlendThresholdDiv.appendChild(alphaBlendThresholdInput);
+        alphaBlendThresholdInput.onchange = (): void => {
+            bpmxConverter.alphaBlendThreshold = Number(alphaBlendThresholdInput.value);
+        };
 
         const buttonContainer = document.createElement("div");
         buttonContainer.style.width = "100%";
