@@ -111,7 +111,7 @@ export class PmxConverterScene implements ISceneBuilder {
                 fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
                 file,
                 scene,
-                (event) => engine.loadingUIText = `Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+                (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
             )).meshes[0] as MmdMesh;
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
@@ -426,7 +426,7 @@ export class PmxConverterScene implements ISceneBuilder {
             isLoading = true;
             engine.displayLoadingUI();
             const fileRelativePath = (selectedFile as any).webkitRelativePath as string;
-            engine.loadingUIText = `Converting (${selectedFile.name})...`;
+            engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
             await bpmxConverter.convert(scene, fileRelativePath, files);
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
