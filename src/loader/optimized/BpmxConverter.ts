@@ -15,7 +15,7 @@
  * uvs: float32[vertexCount * 2]
  * indicesBytePerElement: uint8
  * indices: uint16[vertexCount] or uint32[vertexCount]
- * matricesIndices: uint32[vertexCount * 4]
+ * matricesIndices: float32[vertexCount * 4]
  * matricesWeights: float32[vertexCount * 4]
  * hasSdef: uint8 - 0 or 1
  * { // if hasSdef
@@ -25,9 +25,9 @@
  * }
  *
  * textureCount: uint32
- * textureLookupTable: uint32[textureCount] - data offset in the file
  * textures: {
  *  uint32, uint8[] - length, string
+ *  uint32 - byteLength
  *  uint8[texturesCount] - arrayBuffer
  * }[textureCount]
  *
@@ -43,11 +43,11 @@
  *  flag: uint8
  *  edgeColor: float32[4]
  *  edgeSize: float32
- *  textureIndex: uint32
- *  sphereTextureIndex: uint32
+ *  textureIndex: int32
+ *  sphereTextureIndex: int32
  *  sphereTextureMode: uint8
  *  isSharedToontexture: uint8
- *  toonTextureIndex: uint8
+ *  toonTextureIndex: int32
  *  comment: uint32, uint8[] - length, string
  *  surfaceCount: uint32
  * }[materialCount]
@@ -60,7 +60,7 @@
  *  parentBoneIndex: int32
  *  transformOrder: int32
  *  flag: uint16
- *  tailPosition: float32[3]
+ *  tailPosition: float32[3] | float32
  *  appendTransform: { // if has appendTransform
  *    parentIndex: int32
  *    ratio: float32
@@ -77,8 +77,8 @@
  *   links: {
  *    target: int32
  *    hasLimit: uint8
- *    minimumAngle: float32[3]
- *    maximumAngle: float32[3]
+ *    minimumAngle: float32[3] // if hasLimit
+ *    maximumAngle: float32[3] // if hasLimit
  *   }[linkCount]
  *  }
  * }[boneCount]
@@ -592,12 +592,15 @@ export class BpmxConverter implements ILogger {
 
             dataLength += 4; // textureCount
             const pmxObjectTextures = pmxObject.textures;
-            dataLength += pmxObjectTextures.length * 4; // textureLookupTable
             for (let i = 0; i < pmxObjectTextures.length; ++i) {
                 const texture = textures[i];
                 if (texture !== null) {
                     dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
-                    dataLength += 1 + texture.byteLength; // textureData
+                    dataLength += 4; // textureByteLength
+                    dataLength += texture.byteLength; // textureData
+                } else {
+                    dataLength += 4; // textureName
+                    dataLength += 4; // textureByteLength
                 }
             }
 
@@ -620,7 +623,7 @@ export class BpmxConverter implements ILogger {
                 dataLength += 4; // sphereTextureIndex
                 dataLength += 1; // sphereTextureMode
                 dataLength += 1; // isSharedToontexture
-                dataLength += 1; // toonTextureIndex
+                dataLength += 4; // toonTextureIndex
                 dataLength += 4 + encoder.encode(materialInfo.comment).length; // comment
                 dataLength += 4; // surfaceCount
             }
@@ -636,7 +639,11 @@ export class BpmxConverter implements ILogger {
                 dataLength += 4; // parentBoneIndex
                 dataLength += 4; // transformOrder
                 dataLength += 2; // flag
-                dataLength += 3 * 4; // tailPosition
+                if (typeof boneInfo.tailPosition === "number") {
+                    dataLength += 4; // tailPosition
+                } else {
+                    dataLength += 3 * 4; // tailPosition
+                }
                 if (boneInfo.appendTransform !== undefined) {
                     dataLength += 4; // appendTransform.parentIndex
                     dataLength += 4; // appendTransform.ratio
@@ -656,12 +663,18 @@ export class BpmxConverter implements ILogger {
                     dataLength += 4; // ik.iteration
                     dataLength += 4; // ik.rotationConstraint
                     dataLength += 4; // ik.linkCount
-                    dataLength += (
-                        4 + // ik.links.target
-                        1 + // ik.links.hasLimit
-                        3 * 4 + // ik.links.minimumAngle
-                        3 * 4 // ik.links.maximumAngle
-                    ) * boneInfo.ik.links.length;
+
+                    const ikLinks = boneInfo.ik.links;
+                    for (let j = 0; j < ikLinks.length; ++j) {
+                        const ikLink = ikLinks[j];
+
+                        dataLength += 4; // ik.link.target
+                        dataLength += 1; // ik.link.hasLimit
+                        if (ikLink.limitation !== undefined) {
+                            dataLength += 3 * 4; // ik.link.minimumAngle
+                            dataLength += 3 * 4; // ik.link.maximumAngle
+                        }
+                    }
                 }
             }
 
@@ -699,6 +712,10 @@ export class BpmxConverter implements ILogger {
                     break;
 
                 case PmxObject.Morph.Type.UvMorph:
+                case PmxObject.Morph.Type.AdditionalUvMorph1:
+                case PmxObject.Morph.Type.AdditionalUvMorph2:
+                case PmxObject.Morph.Type.AdditionalUvMorph3:
+                case PmxObject.Morph.Type.AdditionalUvMorph4:
                     dataLength += (
                         4 + // uv.indices
                         4 * 4 // uv.uvs
@@ -786,6 +803,296 @@ export class BpmxConverter implements ILogger {
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
         serializer.setUint8Array([1, 0, 0]); // version
+
+        serializer.setString(pmxObject.header.modelName); // modelName
+        serializer.setString(pmxObject.header.englishModelName); // englishModelName
+        serializer.setString(pmxObject.header.comment); // comment
+        serializer.setString(pmxObject.header.englishComment); // englishComment
+
+        serializer.setUint32(vertices.length); // vertexCount
+        serializer.setFloat32Array(positions); // positions
+        serializer.setFloat32Array(normals); // normals
+        serializer.setFloat32Array(uvs); // uvs
+        if (indices instanceof Uint16Array) {
+            serializer.setUint8(2); // indicesBytePerElement
+            serializer.setUint16Array(indices); // indices
+        } else {
+            serializer.setUint8(4); // indicesBytePerElement
+            serializer.setUint32Array(indices); // indices
+        }
+        serializer.setFloat32Array(boneIndices); // boneIndices
+        serializer.setFloat32Array(boneWeights); // boneWeights
+        serializer.setUint8(hasSdef ? 1 : 0); // hasSdef
+        if (hasSdef) {
+            serializer.setFloat32Array(boneSdefC); // sdefC
+            serializer.setFloat32Array(boneSdefR0); // sdefR0
+            serializer.setFloat32Array(boneSdefR1); // sdefR1
+        }
+
+        serializer.setUint32(pmxObject.textures.length); // textureCount
+        const pmxObjectTextures = pmxObject.textures;
+        for (let i = 0; i < textures.length; ++i) {
+            const texture = textures[i];
+            if (texture !== null) {
+                serializer.setString(pmxObjectTextures[i]); // textureName
+                serializer.setUint32(texture.byteLength); // textureDataLength
+                serializer.setUint8Array(new Uint8Array(texture)); // textureData
+            } else {
+                serializer.setUint32(0); // textureName
+                serializer.setUint32(0); // textureDataLength
+            }
+        }
+
+        serializer.setUint32(pmxObject.materials.length); // materialCount
+        const pmxObjectMaterials = pmxObject.materials;
+        for (let i = 0; i < pmxObjectMaterials.length; ++i) {
+            const materialInfo = pmxObjectMaterials[i];
+
+            serializer.setString(materialInfo.name); // materialName
+            serializer.setString(materialInfo.englishName); // englishMaterialName
+            serializer.setFloat32Array(materialInfo.diffuse); // diffuse
+            serializer.setFloat32Array(materialInfo.specular); // specular
+            serializer.setFloat32(materialInfo.shininess); // shininess
+            serializer.setFloat32Array(materialInfo.ambient); // ambient
+            serializer.setInt8(textureAlphaEvaluateResults[materialInfo.textureIndex]); // evauatedTransparency
+            serializer.setUint8(materialInfo.flag); // flag
+            serializer.setFloat32Array(materialInfo.edgeColor); // edgeColor
+            serializer.setFloat32(materialInfo.edgeSize); // edgeSize
+            serializer.setInt32(materialInfo.textureIndex); // textureIndex
+            serializer.setInt32(materialInfo.sphereTextureIndex); // sphereTextureIndex
+            serializer.setUint8(materialInfo.sphereTextureMode); // sphereTextureMode
+            serializer.setUint8(materialInfo.isSharedToonTexture ? 1 : 0); // isSharedToontexture
+            serializer.setInt32(materialInfo.toonTextureIndex); // toonTextureIndex
+            serializer.setString(materialInfo.comment); // comment
+            serializer.setUint32(materialInfo.surfaceCount); // surfaceCount
+        }
+
+        serializer.setUint32(pmxObject.bones.length); // boneCount
+        const pmxObjectBones = pmxObject.bones;
+        for (let i = 0; i < pmxObjectBones.length; ++i) {
+            const boneInfo = pmxObjectBones[i];
+
+            serializer.setString(boneInfo.name); // boneName
+            serializer.setString(boneInfo.englishName); // englishBoneName
+            serializer.setFloat32Array(boneInfo.position); // position
+            serializer.setInt32(boneInfo.parentBoneIndex); // parentBoneIndex
+            serializer.setInt32(boneInfo.transformOrder); // transformOrder
+            serializer.setUint16(boneInfo.flag); // flag
+            if (typeof boneInfo.tailPosition === "number") {
+                serializer.setFloat32(boneInfo.tailPosition); // tailPosition
+            } else {
+                serializer.setFloat32Array(boneInfo.tailPosition); // tailPosition
+            }
+            if (boneInfo.appendTransform !== undefined) {
+                serializer.setInt32(boneInfo.appendTransform.parentIndex); // appendTransform.parentIndex
+                serializer.setFloat32(boneInfo.appendTransform.ratio); // appendTransform.ratio
+            }
+            if (boneInfo.axisLimit !== undefined) {
+                serializer.setFloat32Array(boneInfo.axisLimit); // axisLimit
+            }
+            if (boneInfo.localVector !== undefined) {
+                serializer.setFloat32Array(boneInfo.localVector.x); // localVectorX
+                serializer.setFloat32Array(boneInfo.localVector.z); // localVectorZ
+            }
+            if (boneInfo.externalParentTransform !== undefined) {
+                serializer.setInt32(boneInfo.externalParentTransform); // externalParentTransform
+            }
+            if (boneInfo.ik !== undefined) {
+                const ik = boneInfo.ik;
+                serializer.setInt32(ik.target); // ik.target
+                serializer.setInt32(ik.iteration); // ik.iteration
+                serializer.setFloat32(ik.rotationConstraint); // ik.rotationConstraint
+                const links = ik.links;
+                serializer.setInt32(links.length); // ik.linkCount
+                for (let j = 0; j < links.length; ++j) {
+                    const link = links[j];
+                    serializer.setInt32(link.target); // ik.links.target
+                    serializer.setUint8(link.limitation !== undefined ? 1 : 0); // ik.links.hasLimit
+                    if (link.limitation !== undefined) {
+                        serializer.setFloat32Array(link.limitation.minimumAngle); // ik.links.minimumAngle
+                        serializer.setFloat32Array(link.limitation.maximumAngle); // ik.links.maximumAngle
+                    }
+                }
+            }
+        }
+
+        serializer.setUint32(pmxObject.morphs.length); // morphCount
+        const pmxObjectMorphs = pmxObject.morphs;
+        for (let i = 0; i < pmxObjectMorphs.length; ++i) {
+            const morphInfo = pmxObjectMorphs[i];
+
+            serializer.setString(morphInfo.name); // morphName
+            serializer.setString(morphInfo.englishName); // englishMorphName
+            serializer.setUint8(morphInfo.category); // category
+            serializer.setUint8(morphInfo.type); // type
+            switch (morphInfo.type) {
+            case PmxObject.Morph.Type.GroupMorph:
+                {
+                    serializer.setUint32(morphInfo.elements.length); // elementCount
+                    const elements = morphInfo.elements as PmxObject.Morph.GroupMorph[];
+                    const indices = new Int32Array(elements.length);
+                    const ratios = new Float32Array(elements.length);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+                        indices[j] = element.index;
+                        ratios[j] = element.ratio;
+                    }
+                    serializer.setInt32Array(indices); // group.indices
+                    serializer.setFloat32Array(ratios); // group.ratios
+                }
+                break;
+
+            case PmxObject.Morph.Type.VertexMorph:
+                {
+                    serializer.setUint32(morphInfo.elements.length); // elementCount
+                    const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
+                    const indices = new Int32Array(elements.length);
+                    const positions = new Float32Array(elements.length * 3);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+                        indices[j] = element.index;
+                        positions[j * 3 + 0] = element.position[0];
+                        positions[j * 3 + 1] = element.position[1];
+                        positions[j * 3 + 2] = element.position[2];
+                    }
+                    serializer.setInt32Array(indices); // vertex.indices
+                    serializer.setFloat32Array(positions); // vertex.positions
+                }
+                break;
+
+            case PmxObject.Morph.Type.BoneMorph:
+                {
+                    serializer.setUint32(morphInfo.elements.length); // elementCount
+                    const elements = morphInfo.elements as PmxObject.Morph.BoneMorph[];
+                    const indices = new Int32Array(elements.length);
+                    const positions = new Float32Array(elements.length * 3);
+                    const rotations = new Float32Array(elements.length * 4);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+                        indices[j] = element.index;
+                        positions[j * 3 + 0] = element.position[0];
+                        positions[j * 3 + 1] = element.position[1];
+                        positions[j * 3 + 2] = element.position[2];
+                        rotations[j * 4 + 0] = element.rotation[0];
+                        rotations[j * 4 + 1] = element.rotation[1];
+                        rotations[j * 4 + 2] = element.rotation[2];
+                        rotations[j * 4 + 3] = element.rotation[3];
+                    }
+                    serializer.setInt32Array(indices); // bone.indices
+                    serializer.setFloat32Array(positions); // bone.positions
+                    serializer.setFloat32Array(rotations); // bone.rotations
+                }
+                break;
+
+            case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.AdditionalUvMorph1:
+            case PmxObject.Morph.Type.AdditionalUvMorph2:
+            case PmxObject.Morph.Type.AdditionalUvMorph3:
+            case PmxObject.Morph.Type.AdditionalUvMorph4:
+                {
+                    serializer.setUint32(morphInfo.elements.length); // elementCount
+                    const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
+                    const indices = new Int32Array(elements.length);
+                    const uvs = new Float32Array(elements.length * 4);
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+                        indices[j] = element.index;
+                        uvs[j * 4 + 0] = element.offset[0];
+                        uvs[j * 4 + 1] = element.offset[1];
+                        uvs[j * 4 + 2] = element.offset[2];
+                        uvs[j * 4 + 3] = element.offset[3];
+                    }
+                    serializer.setInt32Array(indices); // uv.indices
+                    serializer.setFloat32Array(uvs); // uv.uvs
+                }
+                break;
+
+            case PmxObject.Morph.Type.MaterialMorph:
+                {
+                    serializer.setUint32(morphInfo.elements.length); // elementCount
+                    const elements = morphInfo.elements as PmxObject.Morph.MaterialMorph[];
+                    for (let j = 0; j < elements.length; ++j) {
+                        const element = elements[j];
+                        serializer.setInt32(element.index); // material.index
+                        serializer.setUint8(element.type); // material.type
+                        serializer.setFloat32Array(element.diffuse); // material.diffuse
+                        serializer.setFloat32Array(element.specular); // material.specular
+                        serializer.setFloat32(element.shininess); // material.shininess
+                        serializer.setFloat32Array(element.ambient); // material.ambient
+                        serializer.setFloat32Array(element.edgeColor); // material.edgeColor
+                        serializer.setFloat32(element.edgeSize); // material.edgeSize
+                        serializer.setFloat32Array(element.textureColor); // material.textureColor
+                        serializer.setFloat32Array(element.sphereTextureColor); // material.sphereTextureColor
+                        serializer.setFloat32Array(element.toonTextureColor); // material.toonTextureColor
+                    }
+                }
+                break;
+
+            default:
+                serializer.setUint32(0); // elementCount
+                // ignore unsupported morph type
+                break;
+            }
+        }
+
+        serializer.setUint32(pmxObject.displayFrames.length); // displayFrameCount
+        const pmxObjectDisplayFrames = pmxObject.displayFrames;
+        for (let i = 0; i < pmxObjectDisplayFrames.length; ++i) {
+            const displayFrameInfo = pmxObjectDisplayFrames[i];
+
+            serializer.setString(displayFrameInfo.name); // name
+            serializer.setString(displayFrameInfo.englishName); // englishName
+            serializer.setUint8(displayFrameInfo.isSpecialFrame ? 1 : 0); // isSpecialFrame
+            serializer.setUint32(displayFrameInfo.frames.length); // elementCount
+            const frames = displayFrameInfo.frames;
+            for (let j = 0; j < frames.length; ++j) {
+                const frame = frames[j];
+                serializer.setUint8(frame.type); // element.frameType
+                serializer.setInt32(frame.index); // element.frameIndex
+            }
+        }
+
+        serializer.setUint32(pmxObject.rigidBodies.length); // rigidBodyCount
+        const pmxObjectRigidBodies = pmxObject.rigidBodies;
+        for (let i = 0; i < pmxObjectRigidBodies.length; ++i) {
+            const rigidBodyInfo = pmxObjectRigidBodies[i];
+
+            serializer.setString(rigidBodyInfo.name); // name
+            serializer.setString(rigidBodyInfo.englishName); // englishName
+            serializer.setInt32(rigidBodyInfo.boneIndex); // boneIndex
+            serializer.setUint16(rigidBodyInfo.collisionGroup); // collisionGroup
+            serializer.setUint16(rigidBodyInfo.collisionMask); // collisionMask
+            serializer.setUint8(rigidBodyInfo.shapeType); // shapeType
+            serializer.setFloat32Array(rigidBodyInfo.shapeSize); // shapeSize
+            serializer.setFloat32Array(rigidBodyInfo.shapePosition); // shapePosition
+            serializer.setFloat32Array(rigidBodyInfo.shapeRotation); // shapeRotation
+            serializer.setFloat32(rigidBodyInfo.mass); // mass
+            serializer.setFloat32(rigidBodyInfo.linearDamping); // linearDamping
+            serializer.setFloat32(rigidBodyInfo.angularDamping); // angularDamping
+            serializer.setFloat32(rigidBodyInfo.repulsion); // repulsion
+            serializer.setFloat32(rigidBodyInfo.friction); // friction
+            serializer.setUint8(rigidBodyInfo.physicsMode); // physicsMode
+        }
+
+        serializer.setUint32(pmxObject.joints.length); // jointCount
+        const pmxObjectJoints = pmxObject.joints;
+        for (let i = 0; i < pmxObjectJoints.length; ++i) {
+            const jointInfo = pmxObjectJoints[i];
+
+            serializer.setString(jointInfo.name); // name
+            serializer.setString(jointInfo.englishName); // englishName
+            serializer.setUint8(jointInfo.type); // type
+            serializer.setInt32(jointInfo.rigidbodyIndexA); // rigidBodyIndexA
+            serializer.setInt32(jointInfo.rigidbodyIndexB); // rigidBodyIndexB
+            serializer.setFloat32Array(jointInfo.position); // position
+            serializer.setFloat32Array(jointInfo.rotation); // rotation
+            serializer.setFloat32Array(jointInfo.positionMin); // positionMin
+            serializer.setFloat32Array(jointInfo.positionMax); // positionMax
+            serializer.setFloat32Array(jointInfo.rotationMin); // rotationMin
+            serializer.setFloat32Array(jointInfo.rotationMax); // rotationMax
+            serializer.setFloat32Array(jointInfo.springPosition); // springPosition
+            serializer.setFloat32Array(jointInfo.springRotation); // springRotation
+        }
 
         return data;
     }
