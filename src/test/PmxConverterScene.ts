@@ -190,7 +190,7 @@ export class PmxConverterScene implements ISceneBuilder {
                         materialBuilder.alphaBlendThreshold = bpmxConverter.alphaBlendThreshold;
                         mesh = (await SceneLoader.ImportMeshAsync(
                             undefined,
-                            fileRelativePath.substring(0, fileRelativePath.length - file.name.length),
+                            fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
                             file,
                             scene,
                             (event) => engine.loadingUIText = `Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
@@ -409,6 +409,7 @@ export class PmxConverterScene implements ISceneBuilder {
         convertButton.style.fontSize = "20px";
         buttonContainer.appendChild(convertButton);
 
+        engine.resize(true);
         return scene;
     }
 }
