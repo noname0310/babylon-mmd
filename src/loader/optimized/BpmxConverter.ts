@@ -182,6 +182,7 @@ import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 import type { ILogger } from "../parser/ILogger";
 import { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
+import { ReferenceFileResolver } from "../ReferenceFileResolver";
 import { TextureAlphaChecker } from "../TextureAlphaChecker";
 
 export class BpmxConverter implements ILogger {
@@ -228,7 +229,7 @@ export class BpmxConverter implements ILogger {
 
             pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
         } else {
-            const pmxFile = files.find((file) => file.name === urlOrFileName);
+            const pmxFile = files.find((file) => (file as any).webkitRelativePath === urlOrFileName);
             if (pmxFile === undefined) {
                 throw new Error(`File ${urlOrFileName} not found`);
             }
@@ -410,6 +411,7 @@ export class BpmxConverter implements ILogger {
             const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
 
             const textureLoader = new MmdAsyncTextureLoader();
+            const referenceFileResolver = new ReferenceFileResolver(files ?? []);
             const promises: Promise<void>[] = [];
 
             const materials = pmxObject.materials;
@@ -418,41 +420,92 @@ export class BpmxConverter implements ILogger {
 
                 const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                 if (diffuseTexturePath !== undefined) {
-                    promises.push(textureLoader.loadTextureAsync(
-                        0,
-                        rootUrl,
-                        diffuseTexturePath,
-                        scene,
-                        null
-                    ).then((result) => {
-                        textures[materialInfo.textureIndex] = result.arrayBuffer;
-                    }));
+                    const diffuseTextureFullPath = rootUrl + diffuseTexturePath;
+
+                    const file = referenceFileResolver.resolve(diffuseTextureFullPath);
+                    if (file !== undefined) {
+                        promises.push(textureLoader.loadTextureFromBufferAsync(
+                            0,
+                            diffuseTextureFullPath,
+                            file,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.textureIndex] = result.arrayBuffer;
+                        }));
+                    } else {
+                        promises.push(textureLoader.loadTextureAsync(
+                            0,
+                            rootUrl,
+                            diffuseTexturePath,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.textureIndex] = result.arrayBuffer;
+                        }));
+                    }
                 }
 
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
-                    promises.push(textureLoader.loadTextureAsync(
-                        0,
-                        rootUrl,
-                        sphereTexturePath,
-                        scene,
-                        null
-                    ).then((result) => {
-                        textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
-                    }));
+                    const sphereTextureFullPath = rootUrl + sphereTexturePath;
+
+                    const file = referenceFileResolver.resolve(sphereTextureFullPath);
+                    if (file !== undefined) {
+                        promises.push(textureLoader.loadTextureFromBufferAsync(
+                            0,
+                            sphereTextureFullPath,
+                            file,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
+                        }));
+                    } else {
+                        promises.push(textureLoader.loadTextureAsync(
+                            0,
+                            rootUrl,
+                            sphereTexturePath,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
+                        }));
+                    }
                 }
 
                 const toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
                 if (toonTexturePath !== undefined && !materialInfo.isSharedToonTexture) {
-                    promises.push(textureLoader.loadTextureAsync(
-                        0,
-                        rootUrl,
-                        toonTexturePath,
-                        scene,
-                        null
-                    ).then((result) => {
-                        textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
-                    }));
+                    const toonTextureFullPath = rootUrl + toonTexturePath;
+
+                    const file = referenceFileResolver.resolve(toonTextureFullPath);
+                    if (file !== undefined) {
+                        promises.push(textureLoader.loadTextureFromBufferAsync(
+                            0,
+                            toonTextureFullPath,
+                            file,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
+                        }));
+                    } else {
+                        promises.push(textureLoader.loadTextureAsync(
+                            0,
+                            rootUrl,
+                            toonTexturePath,
+                            scene,
+                            null
+                        ).then((result) => {
+                            result.texture?.dispose();
+                            textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
+                        }));
+                    }
                 }
             }
 
@@ -503,9 +556,20 @@ export class BpmxConverter implements ILogger {
             textureAlphaChecker.dispose();
         }
 
-
-
-        hasSdef;
+        console.log(
+            positions,
+            normals,
+            uvs,
+            indices,
+            boneIndices,
+            boneWeights,
+            hasSdef,
+            boneSdefC,
+            boneSdefR0,
+            boneSdefR1,
+            "textures", textures,
+            "textureAlphaEvaluateResults", textureAlphaEvaluateResults
+        );
     }
 
     public get loggingEnabled(): boolean {

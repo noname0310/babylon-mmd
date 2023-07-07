@@ -426,6 +426,7 @@ export class PmxConverterScene implements ISceneBuilder {
             isLoading = true;
             engine.displayLoadingUI();
             const fileRelativePath = (selectedFile as any).webkitRelativePath as string;
+            engine.loadingUIText = `Converting (${selectedFile.name})...`;
             await bpmxConverter.convert(scene, fileRelativePath, files);
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
