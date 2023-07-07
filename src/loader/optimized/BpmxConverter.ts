@@ -178,6 +178,7 @@
 import type { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core";
 
+import type { MmdTextureLoadResult } from "../MmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
 import type { ILogger } from "../parser/ILogger";
 import { PmxObject } from "../parser/PmxObject";
@@ -404,10 +405,12 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textures: (ArrayBuffer | null)[] = new Array(pmxObject.textures.length).fill(null);
+        const textures: (ArrayBuffer | null)[] = [];
 
         // create texture table
         {
+            const textureDatas: MmdTextureLoadResult[] = new Array(pmxObject.textures.length);
+
             const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
 
             const textureLoader = new MmdAsyncTextureLoader();
@@ -431,8 +434,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.textureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.textureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -442,8 +444,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.textureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.textureIndex] = result;
                         }));
                     }
                 }
@@ -461,8 +462,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.sphereTextureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -472,8 +472,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.sphereTextureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.sphereTextureIndex] = result;
                         }));
                     }
                 }
@@ -491,8 +490,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.toonTextureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -502,8 +500,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            result.texture?.dispose();
-                            textures[materialInfo.toonTextureIndex] = result.arrayBuffer;
+                            textureDatas[materialInfo.toonTextureIndex] = result;
                         }));
                     }
                 }
@@ -520,6 +517,12 @@ export class BpmxConverter implements ILogger {
                         resolve();
                     });
                 });
+            }
+
+            for (let i = 0; i < textureDatas.length; ++i) {
+                const textureData = textureDatas[i];
+                textures[i] = textureData.arrayBuffer;
+                textureData.texture?.dispose();
             }
         }
 
