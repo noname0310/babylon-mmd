@@ -151,15 +151,23 @@ export class PmxConverterScene implements ISceneBuilder {
         innerFormDiv.appendChild(listContainer);
 
         const pmxFileList = document.createElement("ul");
-        pmxFileList.style.width = "100%";
         pmxFileList.style.height = "auto";
-        pmxFileList.style.fontSize = "20px";
+        pmxFileList.style.fontSize = "16px";
         listContainer.appendChild(pmxFileList);
         const renderLoadedFiles = (): void => {
             pmxFileList.innerHTML = "";
             for (const file of files) {
                 const item = document.createElement("li");
                 item.textContent = file.name;
+                if (file.name.endsWith(".pmx")) {
+                    item.style.color = "blue";
+                    item.style.cursor = "pointer";
+                    item.style.textDecoration = "underline";
+                    item.onclick = (): void => {
+                        selectedPmxFile.textContent = file.name;
+
+                    };
+                }
                 pmxFileList.appendChild(item);
             }
         };
