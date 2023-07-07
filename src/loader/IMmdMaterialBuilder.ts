@@ -7,6 +7,7 @@ export interface IMmdMaterialBuilder {
         uniqueId: number,
         pmxObject: PmxObject,
         rootUrl: string,
+        referenceFiles: readonly File[],
         scene: Scene,
         assetContainer: AssetContainer | null,
         indices: Uint16Array | Uint32Array,

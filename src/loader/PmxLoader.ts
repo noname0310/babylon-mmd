@@ -45,6 +45,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
     public materialBuilder: IMmdMaterialBuilder;
     public useSdef: boolean;
     public boundingBoxMargin: number;
+    public referenceFiles: readonly File[];
 
     private _loggingEnabled: boolean;
 
@@ -65,6 +66,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         this.materialBuilder = new MmdStandardMaterialBuilder();
         this.useSdef = true;
         this.boundingBoxMargin = 10;
+        this.referenceFiles = [];
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -138,6 +140,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
     ): Promise<ISceneLoaderAsyncResult> {
         const useSdef = this.useSdef;
         const boundingBoxMargin = this.boundingBoxMargin;
+        const referenceFiles = this.referenceFiles;
 
         // data must be ArrayBuffer
         const pmxObject = await PmxReader.ParseAsync(data, this)
@@ -410,6 +413,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 mesh.uniqueId,
                 pmxObject,
                 rootUrl,
+                referenceFiles,
                 scene,
                 assetContainer,
                 vertexData.indices as Uint16Array | Uint32Array,

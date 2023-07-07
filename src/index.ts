@@ -19,6 +19,7 @@ export { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 export { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 export { PmxLoader } from "@/loader/PmxLoader";
+export { ReferenceFileResolver } from "@/loader/ReferenceFileResolver";
 export { SdefInjector } from "@/loader/SdefInjector";
 export { SharedToonTextures } from "@/loader/SharedToonTextures";
 export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChecker";
