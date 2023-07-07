@@ -433,7 +433,7 @@ export class PmxConverterScene implements ISceneBuilder {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}.bpmx`;
+            a.download = `${selectedFile.name.substring(0, selectedFile.name.lastIndexOf("."))}.bpmx`;
             a.click();
             URL.revokeObjectURL(url);
             a.remove();
