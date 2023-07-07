@@ -396,19 +396,19 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 let toonTexture: Texture | null;
                 const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTextureFullPath) : undefined;
-                if (file === undefined) {
-                    toonTexture = (await this._textureLoader.loadTextureAsync(
+                if (file !== undefined) {
+                    toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
-                        rootUrl,
                         toonTextureFullPath,
+                        file,
                         scene,
                         assetContainer
                     )).texture;
                 } else {
-                    toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(
+                    toonTexture = (await this._textureLoader.loadTextureAsync(
                         uniqueId,
                         rootUrl,
-                        file,
+                        toonTexturePath,
                         scene,
                         assetContainer
                     )).texture;
