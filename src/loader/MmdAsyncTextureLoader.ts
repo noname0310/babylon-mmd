@@ -202,7 +202,7 @@ export class MmdAsyncTextureLoader {
                     textureLoadInfo!.observable.clear();
                 },
                 (_message, _exception) => {
-                    textureData!.texture!.dispose();
+                    textureData!.texture?.dispose();
                     this.textureCache.delete(urlOrTextureName);
 
                     textureLoadInfo!.hasLoadError = true;

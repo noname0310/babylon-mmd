@@ -55,7 +55,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const textureAlphaChecker = this.useAlphaEvaluation
             ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
             : null;
-        const referenceFileResolver = new ReferenceFileResolver(referenceFiles);
+        const referenceFileResolver = new ReferenceFileResolver(rootUrl, referenceFiles);
 
         const promises: Promise<void>[] = [];
 
