@@ -5,7 +5,9 @@ import { BpmxConverter } from "@/loader/optimized/BpmxConverter";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { MmdCamera } from "@/runtime/MmdCamera";
+import type { MmdMesh } from "@/runtime/MmdMesh";
 
+import type { MmdStandardMaterialBuilder } from "..";
 import type { ISceneBuilder } from "./BaseRuntime";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
@@ -82,7 +84,11 @@ export class PmxConverterScene implements ISceneBuilder {
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
+        ground.receiveShadows = true;
         shadowGenerator.addShadowCaster(ground);
+
+        let mesh: MmdMesh | null = null;
+        let isLoading = false;
 
         const parentDiv = canvas.parentElement!;
         parentDiv.style.display = "flex";
@@ -158,14 +164,40 @@ export class PmxConverterScene implements ISceneBuilder {
             pmxFileList.innerHTML = "";
             for (const file of files) {
                 const item = document.createElement("li");
-                item.textContent = file.name;
+                const fileRelativePath = (file as any).webkitRelativePath as string;
+                item.textContent = fileRelativePath;
                 if (file.name.endsWith(".pmx")) {
                     item.style.color = "blue";
                     item.style.cursor = "pointer";
                     item.style.textDecoration = "underline";
-                    item.onclick = (): void => {
-                        selectedPmxFile.textContent = (file as any).webkitRelativePath as string;
+                    item.onclick = async(): Promise<void> => {
+                        if (isLoading) return;
 
+                        if (mesh !== null) {
+                            shadowGenerator.removeShadowCaster(mesh);
+                            mesh.dispose(false, true);
+                            mesh = null;
+                        }
+
+                        isLoading = true;
+                        engine.displayLoadingUI();
+                        selectedPmxFile.textContent = file.name;
+                        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+                        materialBuilder.useAlphaEvaluation = bpmxConverter.useAlphaEvaluation;
+                        materialBuilder.alphaEvaluationResolution = bpmxConverter.alphaEvaluationResolution;
+                        materialBuilder.alphaThreshold = bpmxConverter.alphaThreshold;
+                        materialBuilder.alphaBlendThreshold = bpmxConverter.alphaBlendThreshold;
+                        mesh = (await SceneLoader.ImportMeshAsync(
+                            undefined,
+                            fileRelativePath.substring(0, fileRelativePath.length - file.name.length),
+                            file,
+                            scene,
+                            (event) => engine.loadingUIText = `Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+                        )).meshes[0] as MmdMesh;
+                        mesh.receiveShadows = true;
+                        shadowGenerator.addShadowCaster(mesh);
+                        engine.hideLoadingUI();
+                        isLoading = false;
                     };
                 }
                 pmxFileList.appendChild(item);
@@ -201,11 +233,13 @@ export class PmxConverterScene implements ISceneBuilder {
             const fileSystemEntries = await readDirectories(entries);
             files = await entriesToFiles(fileSystemEntries);
             renderLoadedFiles();
+            pmxLoader.referenceFiles = files;
         };
         fileInput.onchange = (): void => {
             if (fileInput.files === null) return;
             files = Array.from(fileInput.files);
             renderLoadedFiles();
+            pmxLoader.referenceFiles = files;
         };
         innerFormDiv.appendChild(fileInput);
 
