@@ -1,14 +1,8 @@
 export class ReferenceFileResolver {
-    public readonly rootUrl: string;
     public readonly files: readonly File[];
     private readonly _fileMap: Map<string, File> = new Map<string, File>();
 
-    public constructor(rootUrl: string, files: readonly File[]) {
-        if (rootUrl.endsWith("/")) {
-            this.rootUrl = rootUrl;
-        } else {
-            this.rootUrl = rootUrl + "/";
-        }
+    public constructor(files: readonly File[]) {
         this.files = files;
 
         for (const file of files) {
@@ -18,7 +12,7 @@ export class ReferenceFileResolver {
     }
 
     public resolve(path: string): File | undefined {
-        const finalPath = this._normalizePath(this.rootUrl + path);
+        const finalPath = this._normalizePath(path);
         return this._fileMap.get(finalPath);
     }
 

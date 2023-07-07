@@ -8,10 +8,14 @@ class TextureLoadingModel {
     public leftLoadCount: number;
     public isRequesting: boolean;
 
+    public readonly errorTextureDatas: MmdTextureData[];
+
     public constructor(uniqueId: number) {
         this.uniqueId = uniqueId;
         this.leftLoadCount = 0;
         this.isRequesting = true;
+
+        this.errorTextureDatas = [];
     }
 }
 
@@ -26,10 +30,13 @@ class TextureLoadInfo {
 }
 
 class MmdTextureData {
+    public readonly cacheKey: string;
+
     private _arrayBuffer: ArrayBuffer | null;
     private _texture: Texture | null;
 
     public constructor(
+        cacheKey: string,
         scene: Scene,
         assetContainer: AssetContainer | null,
         urlOrTextureName: string,
@@ -37,6 +44,8 @@ class MmdTextureData {
         onLoad?: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ) {
+        this.cacheKey = cacheKey;
+
         this._arrayBuffer = null;
         this._texture = null;
 
@@ -51,7 +60,10 @@ class MmdTextureData {
                         urlOrTextureName,
                         arrayBuffer,
                         onLoad,
-                        onError
+                        (message, exception) => {
+                            this._arrayBuffer = null;
+                            onError?.(message, exception);
+                        }
                     );
                 },
                 undefined,
@@ -69,7 +81,10 @@ class MmdTextureData {
                 urlOrTextureName,
                 arrayBuffer,
                 onLoad,
-                onError
+                (message, exception) => {
+                    this._arrayBuffer = null;
+                    onError?.(message, exception);
+                }
             );
         }
     }
@@ -123,6 +138,8 @@ export class MmdAsyncTextureLoader {
     private readonly _textureLoadInfoMap = new Map<string, TextureLoadInfo>(); // key: requestString
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
 
+    private readonly _errorTexturesReferenceCount = new Map<MmdTextureData, number>(); // key: textureName, value: referenceModelCount
+
     private static readonly _EmptyResult: MmdTextureLoadResult = {
         texture: null,
         arrayBuffer: null
@@ -148,6 +165,8 @@ export class MmdAsyncTextureLoader {
     private _decrementLeftLoadCount(model: TextureLoadingModel): void {
         model.leftLoadCount -= 1;
         if (!model.isRequesting && model.leftLoadCount === 0) {
+            this._removeErrorTexturesReferenceCount(model.uniqueId);
+
             this._loadingModels.delete(model.uniqueId);
             const observable = this.onModelTextureLoadedObservable.get(model.uniqueId);
             observable?.notifyObservers();
@@ -162,6 +181,8 @@ export class MmdAsyncTextureLoader {
 
         model.isRequesting = false;
         if (model.leftLoadCount === 0) {
+            this._removeErrorTexturesReferenceCount(uniqueId);
+
             this._loadingModels.delete(uniqueId);
             const observable = this.onModelTextureLoadedObservable.get(uniqueId);
             observable?.notifyObservers();
@@ -170,15 +191,52 @@ export class MmdAsyncTextureLoader {
         }
     }
 
+    private _addErrorTextureReferenceCount(uniqueId: number, textureData: MmdTextureData): void {
+        const model = this._loadingModels.get(uniqueId)!;
+        model.errorTextureDatas.push(textureData);
+        this._errorTexturesReferenceCount.set(textureData, (this._errorTexturesReferenceCount.get(textureData) ?? 0) + 1);
+    }
+
+    private _removeErrorTexturesReferenceCount(uniqueId: number): void {
+        const model = this._loadingModels.get(uniqueId)!;
+        for (let i = 0; i < model.errorTextureDatas.length; ++i) {
+            const textureData = model.errorTextureDatas[i];
+            const referenceCount = this._errorTexturesReferenceCount.get(textureData)! - 1;
+            if (referenceCount === 0) {
+                if (textureData.texture !== null) {
+                    textureData.texture.dispose();
+                } else {
+                    this._textureLoadInfoMap.delete(textureData.cacheKey);
+                    this.textureCache.delete(textureData.cacheKey);
+                    this._errorTexturesReferenceCount.delete(textureData);
+                }
+            } else {
+                this._errorTexturesReferenceCount.set(textureData, referenceCount);
+            }
+        }
+    }
+
+    private _handleTextureOnDispose(textureData: MmdTextureData): void {
+        textureData.texture!.onDisposeObservable.addOnce(() => {
+            this._textureLoadInfoMap.delete(textureData.cacheKey);
+            this.textureCache.delete(textureData.cacheKey);
+            this._errorTexturesReferenceCount.delete(textureData);
+        });
+    }
+
     private async _loadTextureAsyncInternal(
         uniqueId: number,
         urlOrTextureName: string,
-        arrayBuffer: ArrayBuffer | null,
+        arrayBufferOrBlob: ArrayBuffer | Blob | null,
         sharedTextureIndex: number | null,
         scene: Scene,
         assetContainer: AssetContainer | null
     ): Promise<MmdTextureLoadResult> {
         const model = this._incrementLeftLoadCount(uniqueId);
+
+        const arrayBuffer = arrayBufferOrBlob instanceof Blob
+            ? await arrayBufferOrBlob.arrayBuffer()
+            : arrayBufferOrBlob;
 
         let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
         if (textureLoadInfo === undefined) {
@@ -192,18 +250,21 @@ export class MmdAsyncTextureLoader {
                 : urlOrTextureName;
 
             textureData = new MmdTextureData(
+                urlOrTextureName,
                 scene,
                 assetContainer,
                 blobOrUrl,
                 arrayBuffer,
                 () => {
+                    this._handleTextureOnDispose(textureData!);
+
                     textureLoadInfo!.hasLoadError = false;
                     textureLoadInfo!.observable.notifyObservers(false);
                     textureLoadInfo!.observable.clear();
                 },
                 (_message, _exception) => {
-                    textureData!.texture?.dispose();
-                    this.textureCache.delete(urlOrTextureName);
+                    if (textureData!.texture !== null) this._handleTextureOnDispose(textureData!);
+                    this._addErrorTextureReferenceCount(uniqueId, textureData!);
 
                     textureLoadInfo!.hasLoadError = true;
                     textureLoadInfo!.observable.notifyObservers(true);
@@ -255,17 +316,17 @@ export class MmdAsyncTextureLoader {
         );
     }
 
-    public async loadTextureFromArrayBufferAsync(
+    public async loadTextureFromBufferAsync(
         uniqueId: number,
         textureName: string,
-        arrayBuffer: ArrayBuffer,
+        arrayBufferOrBlob: ArrayBuffer | Blob,
         scene: Scene,
         assetContainer: AssetContainer | null
     ): Promise<MmdTextureLoadResult> {
         return await this._loadTextureAsyncInternal(
             uniqueId,
             textureName,
-            arrayBuffer,
+            arrayBufferOrBlob,
             null,
             scene,
             assetContainer

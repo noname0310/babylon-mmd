@@ -55,7 +55,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const textureAlphaChecker = this.useAlphaEvaluation
             ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
             : null;
-        const referenceFileResolver = new ReferenceFileResolver(rootUrl, referenceFiles);
+        const referenceFileResolver = new ReferenceFileResolver(referenceFiles);
 
         const promises: Promise<void>[] = [];
 
@@ -248,13 +248,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
             const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
+                const diffuseTextureFullPath = rootUrl + diffuseTexturePath;
+
                 let textureLoadResult: MmdTextureLoadResult;
-                const file = referenceFileResolver.resolve(diffuseTexturePath);
+                const file = referenceFileResolver.resolve(diffuseTextureFullPath);
                 if (file !== undefined) {
-                    textureLoadResult = await this._textureLoader.loadTextureFromArrayBufferAsync(
+                    textureLoadResult = await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
-                        rootUrl,
-                        await file.arrayBuffer(),
+                        diffuseTextureFullPath,
+                        file,
                         scene,
                         assetContainer
                     );
@@ -322,13 +324,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
+                    const sphereTextureFullPath = rootUrl + sphereTexturePath;
+
                     let sphereTexture: Texture | null;
-                    const file = referenceFileResolver.resolve(sphereTexturePath);
+                    const file = referenceFileResolver.resolve(sphereTextureFullPath);
                     if (file !== undefined) {
-                        sphereTexture = (await this._textureLoader.loadTextureFromArrayBufferAsync(
+                        sphereTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                             uniqueId,
-                            rootUrl,
-                            await file.arrayBuffer(),
+                            sphereTextureFullPath,
+                            file,
                             scene,
                             assetContainer
                         )).texture;
@@ -388,21 +392,23 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
             }
             if (toonTexturePath !== undefined) {
+                const toonTextureFullPath = rootUrl + toonTexturePath;
+
                 let toonTexture: Texture | null;
-                const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTexturePath) : undefined;
+                const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTextureFullPath) : undefined;
                 if (file === undefined) {
                     toonTexture = (await this._textureLoader.loadTextureAsync(
                         uniqueId,
                         rootUrl,
-                        toonTexturePath,
+                        toonTextureFullPath,
                         scene,
                         assetContainer
                     )).texture;
                 } else {
-                    toonTexture = (await this._textureLoader.loadTextureFromArrayBufferAsync(
+                    toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
                         rootUrl,
-                        await file.arrayBuffer(),
+                        file,
                         scene,
                         assetContainer
                     )).texture;
