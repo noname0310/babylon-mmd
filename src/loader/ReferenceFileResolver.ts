@@ -7,16 +7,16 @@ export class ReferenceFileResolver {
 
         for (const file of files) {
             const fileFullPath = (file as any).webkitRelativePath as string;
-            this._fileMap.set(this._normalizePath(fileFullPath), file);
+            this._fileMap.set(this._pathNormalize(fileFullPath), file);
         }
     }
 
     public resolve(path: string): File | undefined {
-        const finalPath = this._normalizePath(path);
+        const finalPath = this._pathNormalize(path);
         return this._fileMap.get(finalPath);
     }
 
-    private _normalizePath(path: string): string {
+    private _pathNormalize(path: string): string {
         return path.replace(/\\/g, "/").toUpperCase();
     }
 }
