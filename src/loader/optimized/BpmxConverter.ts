@@ -18,15 +18,17 @@
  * matricesIndices: uint32[vertexCount * 4]
  * matricesWeights: float32[vertexCount * 4]
  * hasSdef: uint8 - 0 or 1
- * sdefC: float32[vertexCount * 3]
- * sdefR0: float32[vertexCount * 3]
- * sdefR1: float32[vertexCount * 3]
+ * { // if hasSdef
+ *  sdefC: float32[vertexCount * 3]
+ *  sdefR0: float32[vertexCount * 3]
+ *  sdefR1: float32[vertexCount * 3]
+ * }
  *
  * textureCount: uint32
  * textureLookupTable: uint32[textureCount] - data offset in the file
  * textures: {
  *  uint32, uint8[] - length, string
- *  uint8[texturesCount] - arraybuffer
+ *  uint8[texturesCount] - arrayBuffer
  * }[textureCount]
  *
  * materialCount: uint32
@@ -185,6 +187,7 @@ import { PmxObject } from "../parser/PmxObject";
 import { PmxReader } from "../parser/PmxReader";
 import { ReferenceFileResolver } from "../ReferenceFileResolver";
 import { TextureAlphaChecker } from "../TextureAlphaChecker";
+import { MmdDataSerializer } from "./MmdDataSerializer";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;
@@ -217,7 +220,7 @@ export class BpmxConverter implements ILogger {
         scene: Scene,
         urlOrFileName: string,
         files?: File[]
-    ): Promise<void> {
+    ): Promise<ArrayBuffer> {
         const alphaThreshold = this.alphaThreshold;
         const alphaBlendThreshold = this.alphaBlendThreshold;
         const useAlphaEvaluation = this.useAlphaEvaluation;
@@ -559,20 +562,232 @@ export class BpmxConverter implements ILogger {
             textureAlphaChecker.dispose();
         }
 
-        console.log(
-            positions,
-            normals,
-            uvs,
-            indices,
-            boneIndices,
-            boneWeights,
-            hasSdef,
-            boneSdefC,
-            boneSdefR0,
-            boneSdefR1,
-            "textures", textures,
-            "textureAlphaEvaluateResults", textureAlphaEvaluateResults
-        );
+        const encoder = new TextEncoder();
+
+        let dataLength =
+            4 + // signature
+            3; // version
+
+        { // compute dataLength
+            const pmxObjectHeader = pmxObject.header;
+            dataLength += 4 + encoder.encode(pmxObjectHeader.modelName).length; // modelName
+            dataLength += 4 + encoder.encode(pmxObjectHeader.englishModelName).length; // englishModelName
+            dataLength += 4 + encoder.encode(pmxObjectHeader.comment).length; // comment
+            dataLength += 4 + encoder.encode(pmxObjectHeader.englishComment).length; // englishComment
+
+            dataLength += 4; // vertexCount
+            dataLength += vertices.length * 3 * 4; // positions
+            dataLength += vertices.length * 3 * 4; // normals
+            dataLength += vertices.length * 2 * 4; // uvs
+            dataLength += 1; // indicesBytePerElement
+            dataLength += indices.byteLength; // indices
+            dataLength += vertices.length * 4 * 4; // boneIndices
+            dataLength += vertices.length * 4 * 4; // boneWeights
+            dataLength += 1; // hasSdef
+            if (hasSdef) {
+                dataLength += vertices.length * 3 * 4; // sdefC
+                dataLength += vertices.length * 3 * 4; // sdefR0
+                dataLength += vertices.length * 3 * 4; // sdefR1
+            }
+
+            dataLength += 4; // textureCount
+            const pmxObjectTextures = pmxObject.textures;
+            dataLength += pmxObjectTextures.length * 4; // textureLookupTable
+            for (let i = 0; i < pmxObjectTextures.length; ++i) {
+                const texture = textures[i];
+                if (texture !== null) {
+                    dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
+                    dataLength += 1 + texture.byteLength; // textureData
+                }
+            }
+
+            dataLength += 4; // materialCount
+            const pmxObjectMaterials = pmxObject.materials;
+            for (let i = 0; i < pmxObjectMaterials.length; ++i) {
+                const materialInfo = pmxObjectMaterials[i];
+
+                dataLength += 4 + encoder.encode(materialInfo.name).length; // materialName
+                dataLength += 4 + encoder.encode(materialInfo.englishName).length; // englishMaterialName
+                dataLength += 4 * 4; // diffuse
+                dataLength += 3 * 4; // specular
+                dataLength += 4; // shininess
+                dataLength += 3 * 4; // ambient
+                dataLength += 1; // evauatedTransparency
+                dataLength += 1; // flag
+                dataLength += 4 * 4; // edgeColor
+                dataLength += 4; // edgeSize
+                dataLength += 4; // textureIndex
+                dataLength += 4; // sphereTextureIndex
+                dataLength += 1; // sphereTextureMode
+                dataLength += 1; // isSharedToontexture
+                dataLength += 1; // toonTextureIndex
+                dataLength += 4 + encoder.encode(materialInfo.comment).length; // comment
+                dataLength += 4; // surfaceCount
+            }
+
+            dataLength += 4; // boneCount
+            const pmxObjectBones = pmxObject.bones;
+            for (let i = 0; i < pmxObjectBones.length; ++i) {
+                const boneInfo = pmxObjectBones[i];
+
+                dataLength += 4 + encoder.encode(boneInfo.name).length; // boneName
+                dataLength += 4 + encoder.encode(boneInfo.englishName).length; // englishBoneName
+                dataLength += 3 * 4; // position
+                dataLength += 4; // parentBoneIndex
+                dataLength += 4; // transformOrder
+                dataLength += 2; // flag
+                dataLength += 3 * 4; // tailPosition
+                if (boneInfo.appendTransform !== undefined) {
+                    dataLength += 4; // appendTransform.parentIndex
+                    dataLength += 4; // appendTransform.ratio
+                }
+                if (boneInfo.axisLimit !== undefined) {
+                    dataLength += 3 * 4; // axisLimit
+                }
+                if (boneInfo.localVector !== undefined) {
+                    dataLength += 3 * 4; // localVectorX
+                    dataLength += 3 * 4; // localVectorZ
+                }
+                if (boneInfo.externalParentTransform !== undefined) {
+                    dataLength += 4; // externalParentTransform
+                }
+                if (boneInfo.ik !== undefined) {
+                    dataLength += 4; // ik.target
+                    dataLength += 4; // ik.iteration
+                    dataLength += 4; // ik.rotationConstraint
+                    dataLength += 4; // ik.linkCount
+                    dataLength += (
+                        4 + // ik.links.target
+                        1 + // ik.links.hasLimit
+                        3 * 4 + // ik.links.minimumAngle
+                        3 * 4 // ik.links.maximumAngle
+                    ) * boneInfo.ik.links.length;
+                }
+            }
+
+            dataLength += 4; // morphCount
+            const pmxObjectMorphs = pmxObject.morphs;
+            for (let i = 0; i < pmxObjectMorphs.length; ++i) {
+                const morphInfo = pmxObjectMorphs[i];
+
+                dataLength += 4 + encoder.encode(morphInfo.name).length; // morphName
+                dataLength += 4 + encoder.encode(morphInfo.englishName).length; // englishMorphName
+                dataLength += 1; // category
+                dataLength += 1; // type
+                dataLength += 4; // elementCount
+                switch (morphInfo.type) {
+                case PmxObject.Morph.Type.GroupMorph:
+                    dataLength += (
+                        4 + // group.indices
+                        4 // group.ratios
+                    ) * morphInfo.elements.length;
+                    break;
+
+                case PmxObject.Morph.Type.VertexMorph:
+                    dataLength += (
+                        4 + // vertex.indices
+                        3 * 4 // vertex.positions
+                    ) * morphInfo.elements.length;
+                    break;
+
+                case PmxObject.Morph.Type.BoneMorph:
+                    dataLength += (
+                        4 + // bone.indices
+                        3 * 4 + // bone.positions
+                        4 * 4 // bone.rotations
+                    ) * morphInfo.elements.length;
+                    break;
+
+                case PmxObject.Morph.Type.UvMorph:
+                    dataLength += (
+                        4 + // uv.indices
+                        4 * 4 // uv.uvs
+                    ) * morphInfo.elements.length;
+                    break;
+
+                case PmxObject.Morph.Type.MaterialMorph:
+                    dataLength += (
+                        4 + // material.index
+                        1 + // material.type
+                        4 * 4 + // material.diffuse
+                        3 * 4 + // material.specular
+                        4 + // material.shininess
+                        3 * 4 + // material.ambient
+                        4 * 4 + // material.edgeColor
+                        4 + // material.edgeSize
+                        4 * 4 + // material.textureColor
+                        4 * 4 + // material.sphereTextureColor
+                        4 * 4 // material.toonTextureColor
+                    ) * morphInfo.elements.length;
+                    break;
+                }
+            }
+
+            dataLength += 4; // displayFrameCount
+            const pmxObjectDisplayFrames = pmxObject.displayFrames;
+            for (let i = 0; i < pmxObjectDisplayFrames.length; ++i) {
+                const displayFrameInfo = pmxObjectDisplayFrames[i];
+
+                dataLength += 4 + encoder.encode(displayFrameInfo.name).length; // name
+                dataLength += 4 + encoder.encode(displayFrameInfo.englishName).length; // englishName
+                dataLength += 1; // isSpecialFrame
+                dataLength += 4; // elementCount
+                dataLength += (
+                    1 + // element.frameType
+                    4 // element.frameIndex
+                ) * displayFrameInfo.frames.length;
+            }
+
+            dataLength += 4; // rigidBodyCount
+            const pmxObjectRigidBodies = pmxObject.rigidBodies;
+            for (let i = 0; i < pmxObjectRigidBodies.length; ++i) {
+                const rigidBodyInfo = pmxObjectRigidBodies[i];
+
+                dataLength += 4 + encoder.encode(rigidBodyInfo.name).length; // name
+                dataLength += 4 + encoder.encode(rigidBodyInfo.englishName).length; // englishName
+                dataLength += 4; // boneIndex
+                dataLength += 2; // collisionGroup
+                dataLength += 2; // collisionMask
+                dataLength += 1; // shapeType
+                dataLength += 3 * 4; // shapeSize
+                dataLength += 3 * 4; // shapePosition
+                dataLength += 3 * 4; // shapeRotation
+                dataLength += 4; // mass
+                dataLength += 4; // linearDamping
+                dataLength += 4; // angularDamping
+                dataLength += 4; // repulsion
+                dataLength += 4; // friction
+                dataLength += 1; // physicsMode
+            }
+
+            dataLength += 4; // jointCount
+            const pmxObjectJoints = pmxObject.joints;
+            for (let i = 0; i < pmxObjectJoints.length; ++i) {
+                const jointInfo = pmxObjectJoints[i];
+
+                dataLength += 4 + encoder.encode(jointInfo.name).length; // name
+                dataLength += 4 + encoder.encode(jointInfo.englishName).length; // englishName
+                dataLength += 1; // type
+                dataLength += 4; // rigidBodyIndexA
+                dataLength += 4; // rigidBodyIndexB
+                dataLength += 3 * 4; // position
+                dataLength += 3 * 4; // rotation
+                dataLength += 3 * 4; // positionMin
+                dataLength += 3 * 4; // positionMax
+                dataLength += 3 * 4; // rotationMin
+                dataLength += 3 * 4; // rotationMax
+                dataLength += 3 * 4; // springPosition
+                dataLength += 3 * 4; // springRotation
+            }
+        }
+
+        const data = new ArrayBuffer(dataLength);
+        const serializer = new MmdDataSerializer(data);
+
+        serializer.setUint8Array(encoder.encode("BPMX")); // signature
+        serializer.setUint8Array([1, 0, 0]); // version
+
+        return data;
     }
 
     public get loggingEnabled(): boolean {
