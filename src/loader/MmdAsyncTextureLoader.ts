@@ -31,25 +31,36 @@ class TextureLoadInfo {
 
 class MmdTextureData {
     public readonly cacheKey: string;
+    private readonly _scene: Scene;
+    private readonly _assetContainer: AssetContainer | null;
+    private readonly _urlOrTextureName: string;
+    private readonly _onLoad?: Nullable<() => void>;
+    private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
     private _arrayBuffer: ArrayBuffer | null;
     private _texture: Texture | null;
+
 
     public constructor(
         cacheKey: string,
         scene: Scene,
         assetContainer: AssetContainer | null,
         urlOrTextureName: string,
-        arrayBuffer: ArrayBuffer | null,
+        useLazyLoadWithBuffer: boolean,
         onLoad?: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ) {
         this.cacheKey = cacheKey;
+        this._scene = scene;
+        this._assetContainer = assetContainer;
+        this._urlOrTextureName = urlOrTextureName;
+        this._onLoad = onLoad;
+        this._onError = onError;
 
         this._arrayBuffer = null;
         this._texture = null;
 
-        if (arrayBuffer === null) {
+        if (!useLazyLoadWithBuffer) {
             scene._loadFile(
                 urlOrTextureName,
                 (data) => {
@@ -73,20 +84,22 @@ class MmdTextureData {
                     onError?.(request ? request.status + " " + request.statusText : "", exception);
                 }
             );
-        } else {
-            this._arrayBuffer = arrayBuffer;
-            this._createTexture(
-                scene,
-                assetContainer,
-                urlOrTextureName,
-                arrayBuffer,
-                onLoad,
-                (message, exception) => {
-                    this._arrayBuffer = null;
-                    onError?.(message, exception);
-                }
-            );
         }
+    }
+
+    public loadFromArrayBuffer(arrayBuffer: ArrayBuffer): void {
+        this._arrayBuffer = arrayBuffer;
+        this._createTexture(
+            this._scene,
+            this._assetContainer,
+            this._urlOrTextureName,
+            this._arrayBuffer,
+            this._onLoad,
+            (message, exception) => {
+                this._arrayBuffer = null;
+                this._onError?.(message, exception);
+            }
+        );
     }
 
     private _createTexture(
@@ -234,10 +247,6 @@ export class MmdAsyncTextureLoader {
     ): Promise<MmdTextureLoadResult> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
-        const arrayBuffer = arrayBufferOrBlob instanceof Blob
-            ? await arrayBufferOrBlob.arrayBuffer()
-            : arrayBufferOrBlob;
-
         let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
         if (textureLoadInfo === undefined) {
             textureLoadInfo = new TextureLoadInfo();
@@ -254,7 +263,7 @@ export class MmdAsyncTextureLoader {
                 scene,
                 assetContainer,
                 blobOrUrl,
-                arrayBuffer,
+                arrayBufferOrBlob !== null,
                 () => {
                     this._handleTextureOnDispose(textureData!);
 
@@ -273,6 +282,14 @@ export class MmdAsyncTextureLoader {
             );
 
             this.textureCache.set(urlOrTextureName, new WeakRef(textureData));
+
+            const arrayBuffer = arrayBufferOrBlob instanceof Blob
+                ? await arrayBufferOrBlob.arrayBuffer()
+                : arrayBufferOrBlob;
+
+            if (arrayBuffer !== null) {
+                textureData.loadFromArrayBuffer(arrayBuffer);
+            }
         }
 
         if (textureData!.texture !== null && textureData!.texture.isReady()) {
