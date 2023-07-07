@@ -87,6 +87,39 @@ export class PmxConverterScene implements ISceneBuilder {
         ground.receiveShadows = true;
         shadowGenerator.addShadowCaster(ground);
 
+        const loadModelAsync = async(file: File): Promise<void> => {
+            if (isLoading) return;
+
+            if (mesh !== null) {
+                shadowGenerator.removeShadowCaster(mesh);
+                mesh.skeleton.dispose();
+                mesh.dispose(false, true);
+                mesh = null;
+            }
+
+            isLoading = true;
+            engine.displayLoadingUI();
+            const fileRelativePath = (file as any).webkitRelativePath as string;
+            selectedPmxFile.textContent = file.name;
+            const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+            materialBuilder.useAlphaEvaluation = bpmxConverter.useAlphaEvaluation;
+            materialBuilder.alphaEvaluationResolution = bpmxConverter.alphaEvaluationResolution;
+            materialBuilder.alphaThreshold = bpmxConverter.alphaThreshold;
+            materialBuilder.alphaBlendThreshold = bpmxConverter.alphaBlendThreshold;
+            mesh = (await SceneLoader.ImportMeshAsync(
+                undefined,
+                fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
+                file,
+                scene,
+                (event) => engine.loadingUIText = `Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+            )).meshes[0] as MmdMesh;
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh);
+            engine.hideLoadingUI();
+            setTimeout(() => isLoading = false, 1500);
+        };
+
+        let selectedFile: File | null = null;
         let mesh: MmdMesh | null = null;
         let isLoading = false;
 
@@ -170,35 +203,9 @@ export class PmxConverterScene implements ISceneBuilder {
                     item.style.color = "blue";
                     item.style.cursor = "pointer";
                     item.style.textDecoration = "underline";
-                    item.onclick = async(): Promise<void> => {
-                        if (isLoading) return;
-
-                        if (mesh !== null) {
-                            shadowGenerator.removeShadowCaster(mesh);
-                            mesh.skeleton.dispose();
-                            mesh.dispose(false, true);
-                            mesh = null;
-                        }
-
-                        isLoading = true;
-                        engine.displayLoadingUI();
-                        selectedPmxFile.textContent = file.name;
-                        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-                        materialBuilder.useAlphaEvaluation = bpmxConverter.useAlphaEvaluation;
-                        materialBuilder.alphaEvaluationResolution = bpmxConverter.alphaEvaluationResolution;
-                        materialBuilder.alphaThreshold = bpmxConverter.alphaThreshold;
-                        materialBuilder.alphaBlendThreshold = bpmxConverter.alphaBlendThreshold;
-                        mesh = (await SceneLoader.ImportMeshAsync(
-                            undefined,
-                            fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
-                            file,
-                            scene,
-                            (event) => engine.loadingUIText = `Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-                        )).meshes[0] as MmdMesh;
-                        mesh.receiveShadows = true;
-                        shadowGenerator.addShadowCaster(mesh);
-                        engine.hideLoadingUI();
-                        setTimeout(() => isLoading = false, 1500);
+                    item.onclick = (): void => {
+                        selectedFile = file;
+                        loadModelAsync(file);
                     };
                 }
                 pmxFileList.appendChild(item);
@@ -391,15 +398,19 @@ export class PmxConverterScene implements ISceneBuilder {
         buttonContainer.style.alignItems = "center";
         innerFormDiv.appendChild(buttonContainer);
 
-        const previewButton = document.createElement("button");
-        previewButton.textContent = "Preview";
-        previewButton.style.width = "100%";
-        previewButton.style.height = "60px";
-        previewButton.style.border = "none";
-        previewButton.style.fontSize = "20px";
-        previewButton.style.color = "gray";
-        previewButton.style.marginRight = "10px";
-        buttonContainer.appendChild(previewButton);
+        const reloadButton = document.createElement("button");
+        reloadButton.textContent = "Reload";
+        reloadButton.style.width = "100%";
+        reloadButton.style.height = "60px";
+        reloadButton.style.border = "none";
+        reloadButton.style.fontSize = "20px";
+        reloadButton.style.color = "gray";
+        reloadButton.style.marginRight = "10px";
+        buttonContainer.appendChild(reloadButton);
+        reloadButton.onclick = (): void => {
+            if (selectedFile === null) return;
+            loadModelAsync(selectedFile);
+        };
 
         const convertButton = document.createElement("button");
         convertButton.textContent = "Convert";
@@ -408,6 +419,18 @@ export class PmxConverterScene implements ISceneBuilder {
         convertButton.style.border = "none";
         convertButton.style.fontSize = "20px";
         buttonContainer.appendChild(convertButton);
+        convertButton.onclick = async(): Promise<void> => {
+            if (selectedFile === null) return;
+            if (mesh === null) return;
+
+            isLoading = true;
+            engine.displayLoadingUI();
+            const fileRelativePath = (selectedFile as any).webkitRelativePath as string;
+            await bpmxConverter.convert(scene, fileRelativePath, files);
+            engine.hideLoadingUI();
+            setTimeout(() => isLoading = false, 1500);
+        };
+
 
         engine.resize(true);
         return scene;
