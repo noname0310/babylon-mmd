@@ -70,7 +70,7 @@ export class PmxConverterScene implements ISceneBuilder {
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20 * 3;
-        directionalLight.shadowMinZ = -15;
+        directionalLight.shadowMinZ = -30;
         directionalLight.orthoTop = 18 * 3;
         directionalLight.orthoBottom = -1 * 3;
         directionalLight.orthoLeft = -10 * 3;
@@ -175,6 +175,7 @@ export class PmxConverterScene implements ISceneBuilder {
 
                         if (mesh !== null) {
                             shadowGenerator.removeShadowCaster(mesh);
+                            mesh.skeleton.dispose();
                             mesh.dispose(false, true);
                             mesh = null;
                         }
@@ -197,7 +198,7 @@ export class PmxConverterScene implements ISceneBuilder {
                         mesh.receiveShadows = true;
                         shadowGenerator.addShadowCaster(mesh);
                         engine.hideLoadingUI();
-                        isLoading = false;
+                        setTimeout(() => isLoading = false, 1500);
                     };
                 }
                 pmxFileList.appendChild(item);
