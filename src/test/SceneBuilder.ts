@@ -59,6 +59,7 @@ export class SceneBuilder implements ISceneBuilder {
             if (material.name !== "body01") return;
             material.transparencyMode = Material.MATERIAL_OPAQUE;
         };
+        pmxLoader.boundingBoxMargin = 40;
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
