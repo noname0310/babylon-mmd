@@ -8,6 +8,7 @@ import {
     HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
+    Material,
     Matrix,
     Mesh,
     MeshBuilder,
@@ -54,6 +55,10 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            if (material.name !== "body01") return;
+            material.transparencyMode = Material.MATERIAL_OPAQUE;
+        };
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
@@ -83,12 +88,12 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.intensity = 0.8;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
-        directionalLight.shadowMaxZ = 20 * 3;
-        directionalLight.shadowMinZ = -15;
-        directionalLight.orthoTop = 18 * 3;
-        directionalLight.orthoBottom = -1 * 3;
-        directionalLight.orthoLeft = -10 * 3;
-        directionalLight.orthoRight = 10 * 3;
+        directionalLight.shadowMaxZ = 20;
+        directionalLight.shadowMinZ = -20;
+        directionalLight.orthoTop = 18;
+        directionalLight.orthoBottom = -3;
+        directionalLight.orthoLeft = -10;
+        directionalLight.orthoRight = 10;
         directionalLight.shadowOrthoScale = 0;
 
         DirectionalLightHelper;
@@ -113,13 +118,11 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         const sound = new Sound("sound",
-            // "res/private_test/motion/flos/flos_YuNi.mp3",
-            "res/private_test/motion/kimini_totte/kimini totte.mp3",
+            "res/private_test/motion/patchwork_staccato/pv_912.mp3",
             scene, () => {
                 sound.setPlaybackRate(1.0);
-                sound.play();//undefined, 417 / 30);
+                sound.play();
                 mmdRuntime.playAnimation();
-                // mmdRuntime.seekAnimation(417);
             }, {
                 loop: false,
                 autoplay: false
@@ -147,32 +150,16 @@ export class SceneBuilder implements ISceneBuilder {
             updateLoadingText(0, "Loading physics engine... Done");
         })());
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/camera.bvmd",
-            (event) => updateLoadingText(1, `Loading camera motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/motion_a.bvmd",
-            (event) => updateLoadingText(2, `Loading modelA motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd",
+            (event) => updateLoadingText(1, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB 元气少女.bpmx",
+            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
             undefined,
             scene,
-            (event) => updateLoadingText(3, `Loading modelA... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/kimini_totte/motion_b.bvmd",
-            (event) => updateLoadingText(4, `Loading modelB motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/yyb_deep_canyons_miku.bpmx",
-            undefined,
-            scene,
-            (event) => updateLoadingText(5, `Loading modelB... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(2, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         loadingTexts = new Array(promises.length).fill("");
@@ -192,30 +179,25 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.setAnimation("motion");
 
         {
-            const modelMesh = loadResults[3].meshes[0] as Mesh;
+            const modelMesh = loadResults[2].meshes[0] as Mesh;
 
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh);
-            mmdModel.addAnimation(loadResults[2] as MmdAnimation);
+            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+                buildPhysics: false
+            });
+            mmdModel.addAnimation(loadResults[1] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
-            // const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
 
-            // scene.onBeforeRenderObservable.add(() => {
-            //     bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
-            //     directionalLight.position.y -= 10;
-            // });
+            scene.onBeforeRenderObservable.add(() => {
+                bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
+                directionalLight.position.y -= 10;
+            });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;
-        }
-        {
-            const modelMesh = loadResults[5].meshes[0] as Mesh;
-
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh);
-            mmdModel.addAnimation(loadResults[4] as MmdAnimation);
-            mmdModel.setAnimation("motion");
         }
 
         mmdRuntime.register(scene);
