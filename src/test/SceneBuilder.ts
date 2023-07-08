@@ -57,7 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
-        scene.clearColor = new Color4(1, 1, 1, 1.0);
+        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
@@ -106,7 +106,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
-        groundMaterial.diffuseColor = new Color3(1.1, 1.1, 1.1);
+        groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
         ground.setEnabled(true);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
