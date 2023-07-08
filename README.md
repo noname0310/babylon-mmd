@@ -142,16 +142,25 @@ The optimized custom formats, BPMX (BabylonPMX) and BVMD (BabylonVMD), handle mo
 
 As a result, you can provide users with an **incredibly fast loading experience**.
 
-Furthermore, it is also useful when you want to protect the original motion files since they cannot be loaded in MMD.
+Furthermore, it is also useful when you want to protect the original model/motion files since they cannot be loaded in MMD.
 
-To perform file conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
+To perform pmx conversion, please visit below link and load the desired models directory. Then select the model you want to convert and click on "convert".
 
-### [converter](https://noname0310.github.io/babylon-mmd/converter)
+### [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter)
+
+To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
+
+### [vmd converter](https://noname0310.github.io/babylon-mmd/vmd_converter)
 
 then you can load the converted files like below.
 
 ```typescript
-// bpmx not implemented yet...
+const bpmxLoader = new BpmxLoader();
+SceneLoader.RegisterPlugin(bpmxLoader);
+
+const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.bpmx", undefined, scene)
+    .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
+
 
 const bvmdLoader = new BvmdLoader(scene);
 const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
@@ -163,7 +172,7 @@ const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 
 - [x] PMX Parser
 - [x] VMD Parser
-- [ ] Optimized Custom PMX like format
+- [x] Optimized Custom PMX like format
 - [x] Optimized Custom VMD like format
 
 **PMX Loader**

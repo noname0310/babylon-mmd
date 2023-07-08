@@ -2,7 +2,6 @@ import { Engine } from "@babylonjs/core";
 
 import { BaseRuntime } from "./BaseRuntime";
 import css from "./index.css";
-// import { PmxConverterScene } from "./PmxConverterScene";
 import { SceneBuilder } from "./SceneBuilder";
 css;
 
