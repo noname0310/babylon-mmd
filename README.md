@@ -144,9 +144,13 @@ As a result, you can provide users with an **incredibly fast loading experience*
 
 Furthermore, it is also useful when you want to protect the original model/motion files since they cannot be loaded in MMD.
 
+### PMX to BPMX
+
 To perform pmx conversion, please visit below link and load the desired models directory. Then select the model you want to convert and click on "convert".
 
 ### [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter)
+
+### VMD to BVMD
 
 To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
 
