@@ -215,7 +215,7 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const fileInput = document.createElement("input");
         fileInput.style.width = "100%";
-        fileInput.style.height = "80px";
+        fileInput.style.minHeight = "80px";
         fileInput.style.display = "block";
         fileInput.style.backgroundColor = "black";
         fileInput.style.color = "white";

@@ -164,7 +164,6 @@ export class BpmxReader {
 
     private static async _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Texture[]> {
         const textureCount = dataDeserializer.getUint32();
-        console.log("textureCount", textureCount);
 
         let time = performance.now();
 

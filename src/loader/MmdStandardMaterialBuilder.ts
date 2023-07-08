@@ -57,7 +57,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const textureAlphaChecker = this.useAlphaEvaluation
             ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
             : null;
-        const referenceFileResolver = new ReferenceFileResolver<File | IArrayBufferFile>(referenceFiles);
+        const referenceFileResolver = referenceFiles.length === 0 || referenceFiles[0] instanceof File
+            ? new ReferenceFileResolver(referenceFiles as readonly File[])
+            : new ReferenceFileResolver(referenceFiles as readonly IArrayBufferFile[], rootUrl);
 
         const promises: Promise<void>[] = [];
 
@@ -278,8 +280,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     material.diffuseTexture = diffuseTexture;
 
                     let transparencyMode = Number.MAX_SAFE_INTEGER;
-                    if ((materialInfo as BpmxObject.Material).evauatedTransparency !== undefined) {
-                        transparencyMode = (materialInfo as BpmxObject.Material).evauatedTransparency;
+
+                    const evauatedTransparency = (materialInfo as BpmxObject.Material).evauatedTransparency;
+                    if (evauatedTransparency !== undefined && evauatedTransparency !== -1) {
+                        transparencyMode = evauatedTransparency;
                     } else if (textureAlphaChecker !== null) {
                         transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
                             textureLoadResult.arrayBuffer!,

@@ -418,7 +418,7 @@ export class BpmxConverter implements ILogger {
             const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
 
             const textureLoader = new MmdAsyncTextureLoader();
-            const referenceFileResolver = new ReferenceFileResolver(files ?? []);
+            const referenceFileResolver = new ReferenceFileResolver<File>(files ?? []);
             const promises: Promise<void>[] = [];
 
             const materials = pmxObject.materials;
@@ -530,7 +530,7 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textureAlphaEvaluateResults: number[] = new Array(pmxObject.textures.length).fill(-1);
+        const textureAlphaEvaluateResults: number[] = new Array(pmxObject.materials.length).fill(-1);
 
         // evaluate texture alpha
         if (useAlphaEvaluation) {
@@ -553,7 +553,7 @@ export class BpmxConverter implements ILogger {
                             alphaThreshold,
                             alphaBlendThreshold
                         );
-                        textureAlphaEvaluateResults[textureIndex] = textureAlphaEvaluateResult;
+                        textureAlphaEvaluateResults[i] = textureAlphaEvaluateResult;
                     }
                 }
 
@@ -858,7 +858,7 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32Array(materialInfo.specular); // specular
             serializer.setFloat32(materialInfo.shininess); // shininess
             serializer.setFloat32Array(materialInfo.ambient); // ambient
-            serializer.setInt8(textureAlphaEvaluateResults[materialInfo.textureIndex]); // evauatedTransparency
+            serializer.setInt8(textureAlphaEvaluateResults[i]); // evauatedTransparency
             serializer.setUint8(materialInfo.flag); // flag
             serializer.setFloat32Array(materialInfo.edgeColor); // edgeColor
             serializer.setFloat32(materialInfo.edgeSize); // edgeSize

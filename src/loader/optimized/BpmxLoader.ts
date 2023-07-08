@@ -226,11 +226,16 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         let buildMaterialsPromise: void | Promise<void> = undefined;
 
+        const texturePathTable: string[] = new Array(bpmxObject.textures.length);
+        for (let i = 0; i < bpmxObject.textures.length; ++i) {
+            texturePathTable[i] = bpmxObject.textures[i].relativePath;
+        }
+
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = this.materialBuilder.buildMaterials(
                 mesh.uniqueId,
                 bpmxObject.materials,
-                bpmxObject.textures.map((texture) => texture.relativePath),
+                texturePathTable,
                 rootUrl,
                 bpmxObject.textures,
                 scene,
