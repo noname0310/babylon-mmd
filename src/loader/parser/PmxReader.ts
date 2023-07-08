@@ -549,47 +549,78 @@ export class PmxReader {
             const category: PmxObject.Morph.Category = dataDeserializer.getInt8();
             const type: PmxObject.Morph.Type = dataDeserializer.getInt8();
 
-            const morphOffsetCount = dataDeserializer.getInt32();
+            let morph: Partial<PmxObject.Morph> = {
+                name,
+                englishName,
+                category,
+                type
+            };
 
-            const elements = [];
+            const morphOffsetCount = dataDeserializer.getInt32();
 
             switch (type) {
             case PmxObject.Morph.Type.GroupMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const morphIndex = indexReader.getMorphIndex(dataDeserializer);
-                    const morphRatio = dataDeserializer.getFloat32();
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const ratios = new Float32Array(morphOffsetCount);
 
-                    const element: PmxObject.Morph.GroupMorph = {
-                        index: morphIndex,
-                        ratio: morphRatio
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getMorphIndex(dataDeserializer);
+                        ratios[i] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.GroupMorph>{
+                        ...morph,
+                        indices,
+                        ratios
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.VertexMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
-                    const positionOffset = dataDeserializer.getFloat32Tuple(3);
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const positions = new Float32Array(morphOffsetCount * 3);
 
-                    const element: PmxObject.Morph.VertexMorph = {
-                        index: vertexIndex,
-                        position: positionOffset
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getVertexIndex(dataDeserializer);
+
+                        positions[i * 3 + 0] = dataDeserializer.getFloat32();
+                        positions[i * 3 + 1] = dataDeserializer.getFloat32();
+                        positions[i * 3 + 2] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.VertexMorph>{
+                        ...morph,
+                        indices,
+                        positions
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.BoneMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const boneIndex = indexReader.getBoneIndex(dataDeserializer);
-                    const position = dataDeserializer.getFloat32Tuple(3);
-                    const rotation = dataDeserializer.getFloat32Tuple(4);
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const positions = new Float32Array(morphOffsetCount * 3);
+                    const rotations = new Float32Array(morphOffsetCount * 4);
 
-                    const element: PmxObject.Morph.BoneMorph = {
-                        index: boneIndex,
-                        position,
-                        rotation
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getBoneIndex(dataDeserializer);
+
+                        positions[i * 3 + 0] = dataDeserializer.getFloat32();
+                        positions[i * 3 + 1] = dataDeserializer.getFloat32();
+                        positions[i * 3 + 2] = dataDeserializer.getFloat32();
+
+                        rotations[i * 4 + 0] = dataDeserializer.getFloat32();
+                        rotations[i * 4 + 1] = dataDeserializer.getFloat32();
+                        rotations[i * 4 + 2] = dataDeserializer.getFloat32();
+                        rotations[i * 4 + 3] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.BoneMorph>{
+                        ...morph,
+                        indices,
+                        positions,
+                        rotations
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.UvMorph:
@@ -597,87 +628,116 @@ export class PmxReader {
             case PmxObject.Morph.Type.AdditionalUvMorph2:
             case PmxObject.Morph.Type.AdditionalUvMorph3:
             case PmxObject.Morph.Type.AdditionalUvMorph4:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const vertexIndex = indexReader.getVertexIndex(dataDeserializer);
-                    const uvOffset = dataDeserializer.getFloat32Tuple(4);
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const offsets = new Float32Array(morphOffsetCount * 4);
 
-                    const element: PmxObject.Morph.UvMorph = {
-                        index: vertexIndex,
-                        offset: uvOffset
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getVertexIndex(dataDeserializer);
+
+                        offsets[i * 4 + 0] = dataDeserializer.getFloat32();
+                        offsets[i * 4 + 1] = dataDeserializer.getFloat32();
+                        offsets[i * 4 + 2] = dataDeserializer.getFloat32();
+                        offsets[i * 4 + 3] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.UvMorph>{
+                        ...morph,
+                        indices,
+                        offsets
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.MaterialMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const materialIndex = indexReader.getMaterialIndex(dataDeserializer);
-                    const type = dataDeserializer.getUint8();
-                    const diffuse = dataDeserializer.getFloat32Tuple(4);
-                    const specular = dataDeserializer.getFloat32Tuple(3);
-                    const shininess = dataDeserializer.getFloat32();
-                    const ambient = dataDeserializer.getFloat32Tuple(3);
-                    const edgeColor = dataDeserializer.getFloat32Tuple(4);
-                    const edgeSize = dataDeserializer.getFloat32();
-                    const textureColor = dataDeserializer.getFloat32Tuple(4);
-                    const sphereTextureColor = dataDeserializer.getFloat32Tuple(4);
-                    const toonTextureColor = dataDeserializer.getFloat32Tuple(4);
+                {
+                    const elements: PmxObject.Morph.MaterialMorph["elements"] = [];
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        const materialIndex = indexReader.getMaterialIndex(dataDeserializer);
+                        const type = dataDeserializer.getUint8();
+                        const diffuse = dataDeserializer.getFloat32Tuple(4);
+                        const specular = dataDeserializer.getFloat32Tuple(3);
+                        const shininess = dataDeserializer.getFloat32();
+                        const ambient = dataDeserializer.getFloat32Tuple(3);
+                        const edgeColor = dataDeserializer.getFloat32Tuple(4);
+                        const edgeSize = dataDeserializer.getFloat32();
+                        const textureColor = dataDeserializer.getFloat32Tuple(4);
+                        const sphereTextureColor = dataDeserializer.getFloat32Tuple(4);
+                        const toonTextureColor = dataDeserializer.getFloat32Tuple(4);
 
-                    const element: PmxObject.Morph.MaterialMorph = {
-                        index: materialIndex,
-                        type,
-                        diffuse,
-                        specular,
-                        shininess,
-                        ambient,
-                        edgeColor,
-                        edgeSize,
-                        textureColor,
-                        sphereTextureColor,
-                        toonTextureColor
+                        const element: PmxObject.Morph.MaterialMorph["elements"][number] = {
+                            index: materialIndex,
+                            type,
+                            diffuse,
+                            specular,
+                            shininess,
+                            ambient,
+                            edgeColor,
+                            edgeSize,
+                            textureColor,
+                            sphereTextureColor,
+                            toonTextureColor
+                        };
+                        elements.push(element);
+                    }
+
+                    morph = <PmxObject.Morph.MaterialMorph>{
+                        ...morph,
+                        elements
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.FlipMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const morphIndex = indexReader.getMorphIndex(dataDeserializer);
-                    const morphRatio = dataDeserializer.getFloat32();
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const ratios = new Float32Array(morphOffsetCount);
 
-                    const element: PmxObject.Morph.FlipMorph = {
-                        index: morphIndex,
-                        ratio: morphRatio
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getMorphIndex(dataDeserializer);
+                        ratios[i] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.FlipMorph>{
+                        ...morph,
+                        indices,
+                        ratios
                     };
-                    elements.push(element);
                 }
                 break;
             case PmxObject.Morph.Type.ImpulseMorph:
-                for (let i = 0; i < morphOffsetCount; ++i) {
-                    const rigidBodyIndex = indexReader.getRigidBodyIndex(dataDeserializer);
-                    const isLocal = dataDeserializer.getUint8() === 1;
-                    const velocity = dataDeserializer.getFloat32Tuple(3);
-                    const torque = dataDeserializer.getFloat32Tuple(3);
+                {
+                    const indices = new Int32Array(morphOffsetCount);
+                    const isLocals = new Array<boolean>(morphOffsetCount);
+                    const velocities = new Float32Array(morphOffsetCount * 3);
+                    const torques = new Float32Array(morphOffsetCount * 3);
 
-                    const element: PmxObject.Morph.ImpulseMorph = {
-                        index: rigidBodyIndex,
-                        isLocal,
-                        velocity,
-                        torque
+                    for (let i = 0; i < morphOffsetCount; ++i) {
+                        indices[i] = indexReader.getRigidBodyIndex(dataDeserializer);
+
+                        isLocals[i] = dataDeserializer.getUint8() === 1;
+
+                        velocities[i * 3 + 0] = dataDeserializer.getFloat32();
+                        velocities[i * 3 + 1] = dataDeserializer.getFloat32();
+                        velocities[i * 3 + 2] = dataDeserializer.getFloat32();
+
+                        torques[i * 3 + 0] = dataDeserializer.getFloat32();
+                        torques[i * 3 + 1] = dataDeserializer.getFloat32();
+                        torques[i * 3 + 2] = dataDeserializer.getFloat32();
+                    }
+
+                    morph = <PmxObject.Morph.ImpulseMorph>{
+                        ...morph,
+                        indices,
+                        isLocals,
+                        velocities,
+                        torques
                     };
-                    elements.push(element);
                 }
                 break;
             default:
                 throw new Error(`Unknown morph type: ${type}`);
             }
 
-            const morph: PmxObject.Morph = {
-                name,
-                englishName,
-                category,
-                type,
-                elements: elements as PmxObject.Morph["elements"]
-            };
-            morphs.push(morph);
+            morphs.push(morph as PmxObject.Morph);
         }
 
         return morphs;

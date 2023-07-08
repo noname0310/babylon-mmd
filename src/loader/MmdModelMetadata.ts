@@ -17,17 +17,47 @@ export namespace MmdModelMetadata {
         englishComment: PmxObject.Header["englishComment"];
     }
 
-    export interface Morph {
+    export type Morph = GroupMorph | BoneMorph | MaterialMorph | VertexMorph | UvMorph;
+
+    export interface BaseMorph {
         name: PmxObject.Morph["name"];
         englishName: PmxObject.Morph["englishName"];
 
         category: PmxObject.Morph["category"];
         type: PmxObject.Morph["type"];
+    }
 
-        elements: readonly PmxObject.Morph.GroupMorph[]
-            | readonly PmxObject.Morph.BoneMorph[]
-            | readonly PmxObject.Morph.MaterialMorph[]
-            | number; // MorphTargetManager morph target index
+    export interface GroupMorph extends BaseMorph {
+        type: PmxObject.Morph.GroupMorph["type"];
+
+        indices: PmxObject.Morph.GroupMorph["indices"];
+        ratios: PmxObject.Morph.GroupMorph["ratios"];
+    }
+
+    export interface BoneMorph extends BaseMorph {
+        type: PmxObject.Morph.BoneMorph["type"];
+
+        indices: PmxObject.Morph.BoneMorph["indices"];
+        positions: PmxObject.Morph.BoneMorph["positions"];
+        rotations: PmxObject.Morph.BoneMorph["rotations"];
+    }
+
+    export interface MaterialMorph extends BaseMorph {
+        type: PmxObject.Morph.MaterialMorph["type"];
+
+        elements: PmxObject.Morph.MaterialMorph["elements"];
+    }
+
+    export interface VertexMorph extends BaseMorph {
+        type: PmxObject.Morph.VertexMorph["type"];
+
+        index: number; // MorphTargetManager morph target index
+    }
+
+    export interface UvMorph extends BaseMorph {
+        type: PmxObject.Morph.UvMorph["type"];
+
+        index: number; // MorphTargetManager morph target index
     }
 
     export interface Bone {

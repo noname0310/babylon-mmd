@@ -7,10 +7,11 @@ import { MmdAsyncTextureLoader } from "./MmdAsyncTextureLoader";
 import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
+import type { BpmxObject } from "./optimized/parser/BpmxObject";
 import { PmxObject } from "./parser/PmxObject";
-import { IArrayBufferFile, ReferenceFileResolver } from "./ReferenceFileResolver";
+import type { IArrayBufferFile} from "./ReferenceFileResolver";
+import { ReferenceFileResolver } from "./ReferenceFileResolver";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
-import { BpmxObject } from "./optimized/parser/BpmxObject";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public static EdgeSizeScaleFactor = 0.01;

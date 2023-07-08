@@ -167,7 +167,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     continue;
                 }
 
-                buildMorphCost += morphInfo.elements.length;
+                buildMorphCost += morphInfo.indices.length;
             }
         }
         const textureLoadCost = 30000 * pmxObject.textures.length;
@@ -567,34 +567,32 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 const morphInfo = morphsInfo[i];
 
                 // create morph metadata
-                if (
-                    morphInfo.type !== PmxObject.Morph.Type.FlipMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.ImpulseMorph
-                ) {
-                    let elements: readonly PmxObject.Morph.GroupMorph[]
-                        | readonly PmxObject.Morph.BoneMorph[]
-                        | readonly PmxObject.Morph.MaterialMorph[]
-                        | number = morphTargets.length;
-                    if (
-                        morphInfo.type === PmxObject.Morph.Type.GroupMorph ||
-                        morphInfo.type === PmxObject.Morph.Type.BoneMorph ||
-                        morphInfo.type === PmxObject.Morph.Type.MaterialMorph
-                    ) {
-                        elements = morphInfo.elements as (
-                            readonly PmxObject.Morph.GroupMorph[]
-                            | readonly PmxObject.Morph.BoneMorph[]
-                            | readonly PmxObject.Morph.MaterialMorph[]);
-                    }
+                switch (morphInfo.type) {
+                case PmxObject.Morph.Type.GroupMorph:
+                case PmxObject.Morph.Type.BoneMorph:
+                case PmxObject.Morph.Type.MaterialMorph:
+                    morphsMetadata.push(morphInfo);
+                    break;
 
-                    morphsMetadata.push({
+                case PmxObject.Morph.Type.VertexMorph:
+                case PmxObject.Morph.Type.UvMorph:
+                case PmxObject.Morph.Type.AdditionalUvMorph1:
+                case PmxObject.Morph.Type.AdditionalUvMorph2:
+                case PmxObject.Morph.Type.AdditionalUvMorph3:
+                case PmxObject.Morph.Type.AdditionalUvMorph4:
+                    morphsMetadata.push(<MmdModelMetadata.VertexMorph | MmdModelMetadata.UvMorph> {
                         name: morphInfo.name,
                         englishName: morphInfo.englishName,
 
                         category: morphInfo.category,
                         type: morphInfo.type,
 
-                        elements: elements
+                        index: morphTargets.length
                     });
+                    break;
+
+                default:
+                    this.warn(`Unsupported morph type: ${morphInfo.type}`);
                 }
 
                 if (
@@ -616,15 +614,15 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     const positions = new Float32Array(pmxObject.vertices.length * 3);
                     positions.set(vertexData.positions);
 
-                    const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
+                    const morphIndices = morphInfo.indices;
+                    const positionOffsets = morphInfo.positions;
+
                     let time = performance.now();
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        const elementIndex = element.index;
-                        const elementPosition = element.position;
-                        positions[elementIndex * 3 + 0] += elementPosition[0];
-                        positions[elementIndex * 3 + 1] += elementPosition[1];
-                        positions[elementIndex * 3 + 2] += elementPosition[2];
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const elementIndex = morphIndices[j];
+                        positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
+                        positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
+                        positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
 
                         if (j % 10000 === 0 && 100 < performance.now() - time) {
                             progressEvent.loaded = lastStageLoaded + j;
@@ -634,22 +632,21 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                             time = performance.now();
                         }
                     }
-                    lastStageLoaded += elements.length;
+                    lastStageLoaded += morphIndices.length;
 
                     morphTarget.setPositions(positions);
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
                     const uvs = new Float32Array(pmxObject.vertices.length * 2);
                     uvs.set(vertexData.uvs);
 
-                    const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
-                    let time = performance.now();
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        const elementIndex = element.index;
-                        const elementUvOffset = element.offset;
+                    const morphIndices = morphInfo.indices;
+                    const uvOffsets = morphInfo.offsets;
 
-                        uvs[elementIndex * 2 + 0] += elementUvOffset[0];
-                        uvs[elementIndex * 2 + 1] += elementUvOffset[1];
+                    let time = performance.now();
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const elementIndex = morphIndices[j];
+                        uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
+                        uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
 
                         if (j % 10000 === 0 && 100 < performance.now() - time) {
                             progressEvent.loaded = lastStageLoaded + j;
@@ -659,7 +656,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                             time = performance.now();
                         }
                     }
-                    lastStageLoaded += elements.length;
+                    lastStageLoaded += morphIndices.length;
 
                     morphTarget.setPositions(vertexData.positions);
                     morphTarget.setUVs(uvs);

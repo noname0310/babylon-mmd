@@ -693,14 +693,14 @@ export class BpmxConverter implements ILogger {
                     dataLength += (
                         4 + // group.indices
                         4 // group.ratios
-                    ) * morphInfo.elements.length;
+                    ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.VertexMorph:
                     dataLength += (
                         4 + // vertex.indices
                         3 * 4 // vertex.positions
-                    ) * morphInfo.elements.length;
+                    ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.BoneMorph:
@@ -708,7 +708,7 @@ export class BpmxConverter implements ILogger {
                         4 + // bone.indices
                         3 * 4 + // bone.positions
                         4 * 4 // bone.rotations
-                    ) * morphInfo.elements.length;
+                    ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.UvMorph:
@@ -719,7 +719,7 @@ export class BpmxConverter implements ILogger {
                     dataLength += (
                         4 + // uv.indices
                         4 * 4 // uv.uvs
-                    ) * morphInfo.elements.length;
+                    ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.MaterialMorph:
@@ -928,59 +928,26 @@ export class BpmxConverter implements ILogger {
             switch (morphInfo.type) {
             case PmxObject.Morph.Type.GroupMorph:
                 {
-                    serializer.setUint32(morphInfo.elements.length); // elementCount
-                    const elements = morphInfo.elements as PmxObject.Morph.GroupMorph[];
-                    const indices = new Int32Array(elements.length);
-                    const ratios = new Float32Array(elements.length);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        indices[j] = element.index;
-                        ratios[j] = element.ratio;
-                    }
-                    serializer.setInt32Array(indices); // group.indices
-                    serializer.setFloat32Array(ratios); // group.ratios
+                    serializer.setUint32(morphInfo.indices.length); // elementCount
+                    serializer.setInt32Array(morphInfo.indices); // group.indices
+                    serializer.setFloat32Array(morphInfo.ratios); // group.ratios
                 }
                 break;
 
             case PmxObject.Morph.Type.VertexMorph:
                 {
-                    serializer.setUint32(morphInfo.elements.length); // elementCount
-                    const elements = morphInfo.elements as PmxObject.Morph.VertexMorph[];
-                    const indices = new Int32Array(elements.length);
-                    const positions = new Float32Array(elements.length * 3);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        indices[j] = element.index;
-                        positions[j * 3 + 0] = element.position[0];
-                        positions[j * 3 + 1] = element.position[1];
-                        positions[j * 3 + 2] = element.position[2];
-                    }
-                    serializer.setInt32Array(indices); // vertex.indices
-                    serializer.setFloat32Array(positions); // vertex.positions
+                    serializer.setUint32(morphInfo.indices.length); // elementCount
+                    serializer.setInt32Array(morphInfo.indices); // vertex.indices
+                    serializer.setFloat32Array(morphInfo.positions); // vertex.positions
                 }
                 break;
 
             case PmxObject.Morph.Type.BoneMorph:
                 {
-                    serializer.setUint32(morphInfo.elements.length); // elementCount
-                    const elements = morphInfo.elements as PmxObject.Morph.BoneMorph[];
-                    const indices = new Int32Array(elements.length);
-                    const positions = new Float32Array(elements.length * 3);
-                    const rotations = new Float32Array(elements.length * 4);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        indices[j] = element.index;
-                        positions[j * 3 + 0] = element.position[0];
-                        positions[j * 3 + 1] = element.position[1];
-                        positions[j * 3 + 2] = element.position[2];
-                        rotations[j * 4 + 0] = element.rotation[0];
-                        rotations[j * 4 + 1] = element.rotation[1];
-                        rotations[j * 4 + 2] = element.rotation[2];
-                        rotations[j * 4 + 3] = element.rotation[3];
-                    }
-                    serializer.setInt32Array(indices); // bone.indices
-                    serializer.setFloat32Array(positions); // bone.positions
-                    serializer.setFloat32Array(rotations); // bone.rotations
+                    serializer.setUint32(morphInfo.indices.length); // elementCount
+                    serializer.setInt32Array(morphInfo.indices); // bone.indices
+                    serializer.setFloat32Array(morphInfo.positions); // bone.positions
+                    serializer.setFloat32Array(morphInfo.rotations); // bone.rotations
                 }
                 break;
 
@@ -990,27 +957,16 @@ export class BpmxConverter implements ILogger {
             case PmxObject.Morph.Type.AdditionalUvMorph3:
             case PmxObject.Morph.Type.AdditionalUvMorph4:
                 {
-                    serializer.setUint32(morphInfo.elements.length); // elementCount
-                    const elements = morphInfo.elements as PmxObject.Morph.UvMorph[];
-                    const indices = new Int32Array(elements.length);
-                    const uvs = new Float32Array(elements.length * 4);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-                        indices[j] = element.index;
-                        uvs[j * 4 + 0] = element.offset[0];
-                        uvs[j * 4 + 1] = element.offset[1];
-                        uvs[j * 4 + 2] = element.offset[2];
-                        uvs[j * 4 + 3] = element.offset[3];
-                    }
-                    serializer.setInt32Array(indices); // uv.indices
-                    serializer.setFloat32Array(uvs); // uv.uvs
+                    serializer.setUint32(morphInfo.indices.length); // elementCount
+                    serializer.setInt32Array(morphInfo.indices); // uv.indices
+                    serializer.setFloat32Array(morphInfo.offsets); // uv.uvs
                 }
                 break;
 
             case PmxObject.Morph.Type.MaterialMorph:
                 {
                     serializer.setUint32(morphInfo.elements.length); // elementCount
-                    const elements = morphInfo.elements as PmxObject.Morph.MaterialMorph[];
+                    const elements = morphInfo.elements;
                     for (let j = 0; j < elements.length; ++j) {
                         const element = elements[j];
                         serializer.setInt32(element.index); // material.index

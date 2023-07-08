@@ -8,5 +8,8 @@ export class BpmxReader {
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<BpmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
         
+        dataDeserializer;
+        logger;
+        throw new Error("Not implemented");
     }
 }

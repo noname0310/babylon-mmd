@@ -195,21 +195,13 @@ export namespace PmxObject {
         }>;
     }
 
-    export type Morph = Readonly<{
-        name: string;
-        englishName: string;
-
-        category: Morph.Category;
-        type: Morph.Type;
-
-        elements: readonly Morph.GroupMorph[]
-            | readonly Morph.VertexMorph[]
-            | readonly Morph.BoneMorph[]
-            | readonly Morph.UvMorph[]
-            | readonly Morph.MaterialMorph[]
-            | readonly Morph.FlipMorph[]
-            | readonly Morph.ImpulseMorph[];
-    }>;
+    export type Morph = Morph.GroupMorph
+        | Morph.VertexMorph
+        | Morph.BoneMorph
+        | Morph.UvMorph
+        | Morph.MaterialMorph
+        | Morph.FlipMorph
+        | Morph.ImpulseMorph;
 
     export namespace Morph {
         export enum Category {
@@ -234,39 +226,63 @@ export namespace PmxObject {
             ImpulseMorph = 10 // pmx 2.1 spec (which is not supported by mmd)
         }
 
-        export type GroupMorph = Readonly<{
-            index: number; // morph index (cannot be group morph)
-            ratio: number;
+        export type BaseMorph = Readonly<{
+            name: string;
+            englishName: string;
+
+            category: Morph.Category;
+            type: Morph.Type;
         }>;
 
-        export type VertexMorph = Readonly<{
-            index: number; // vertex index
-            position: Vec3;
+        export type GroupMorph = BaseMorph & Readonly<{
+            type: Morph.Type.GroupMorph;
+
+            indices: Int32Array; // morph index (cannot be group morph)
+            ratios: Float32Array;
         }>;
 
-        export type BoneMorph = Readonly<{
-            index: number; // bone index
-            position: Vec3;
-            rotation: Vec4;
+        export type VertexMorph = BaseMorph & Readonly<{
+            type: Morph.Type.VertexMorph;
+
+            indices: Int32Array; // vertex index
+            positions: Float32Array; // [..., x, y, z, ...]
         }>;
 
-        export type UvMorph = Readonly<{
-            index: number; // vertex index
-            offset: Vec4;
+        export type BoneMorph = BaseMorph & Readonly<{
+            type: Morph.Type.BoneMorph;
+
+            indices: Int32Array; // bone index
+            positions: Float32Array; // [..., x, y, z, ...]
+            rotations: Float32Array; // [..., x, y, z, w, ...]
         }>;
 
-        export type MaterialMorph = Readonly<{
-            index: number; // material index
-            type: MaterialMorph.Type;
-            diffuse: Vec4;
-            specular: Vec3;
-            shininess: number;
-            ambient: Vec3;
-            edgeColor: Vec4;
-            edgeSize: number;
-            textureColor: Vec4;
-            sphereTextureColor: Vec4;
-            toonTextureColor: Vec4;
+        export type UvMorph = BaseMorph & Readonly<{
+            type: Morph.Type.UvMorph
+                | Morph.Type.AdditionalUvMorph1
+                | Morph.Type.AdditionalUvMorph2
+                | Morph.Type.AdditionalUvMorph3
+                | Morph.Type.AdditionalUvMorph4;
+
+            indices: Int32Array; // vertex index
+            offsets: Float32Array; // [..., x, y, z, w, ...]
+        }>;
+
+        export type MaterialMorph = BaseMorph & Readonly<{
+            type: Morph.Type.MaterialMorph;
+
+            elements: Readonly<{
+                index: number; // material index
+                type: MaterialMorph.Type;
+                diffuse: Vec4;
+                specular: Vec3;
+                shininess: number;
+                ambient: Vec3;
+                edgeColor: Vec4;
+                edgeSize: number;
+                textureColor: Vec4;
+                sphereTextureColor: Vec4;
+                toonTextureColor: Vec4;
+            }>[];
         }>;
 
         export namespace MaterialMorph {
@@ -276,16 +292,20 @@ export namespace PmxObject {
             }
         }
 
-        export type FlipMorph = Readonly<{
-            index: number; // morph index
-            ratio: number;
+        export type FlipMorph = BaseMorph & Readonly<{
+            type: Morph.Type.FlipMorph;
+
+            indices: Int32Array; // morph index
+            ratios: Float32Array;
         }>;
 
-        export type ImpulseMorph = Readonly<{
-            index: number; // rigidbody index
-            isLocal: boolean;
-            velocity: Vec3;
-            torque: Vec3;
+        export type ImpulseMorph = BaseMorph & Readonly<{
+            type: Morph.Type.ImpulseMorph;
+
+            indices: Int32Array; // rigidbody index
+            isLocals: boolean[];
+            velocities: Float32Array; // [..., x, y, z, ...]
+            torques: Float32Array; // [..., x, y, z, ...]
         }>;
     }
 

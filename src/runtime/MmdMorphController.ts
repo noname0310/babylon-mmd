@@ -192,44 +192,22 @@ export class MmdMorphController {
             switch (morphMetadata.type) {
             case PmxObject.Morph.Type.GroupMorph:
                 {
-                    const elements = morphMetadata.elements as readonly PmxObject.Morph.GroupMorph[];
-                    runtimeMorphElements = new Int32Array(elements.length);
-                    runtimeMorphElements2 = new Float32Array(elements.length);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-
-                        runtimeMorphElements[j] = element.index;
-                        runtimeMorphElements2[j] = element.ratio;
-                    }
+                    runtimeMorphElements = morphMetadata.indices;
+                    runtimeMorphElements2 = morphMetadata.ratios;
                 }
                 break;
 
             case PmxObject.Morph.Type.BoneMorph:
                 {
-                    const elements = morphMetadata.elements as readonly PmxObject.Morph.BoneMorph[];
-                    runtimeMorphElements = new Int32Array(elements.length);
-                    runtimeMorphElements2 = new Float32Array(elements.length * 3);
-                    runtimeMorphElements3 = new Float32Array(elements.length * 4);
-                    for (let j = 0; j < elements.length; ++j) {
-                        const element = elements[j];
-
-                        runtimeMorphElements[j] = element.index;
-
-                        runtimeMorphElements2[j * 3 + 0] = element.position[0];
-                        runtimeMorphElements2[j * 3 + 1] = element.position[1];
-                        runtimeMorphElements2[j * 3 + 2] = element.position[2];
-
-                        runtimeMorphElements3[j * 4 + 0] = element.rotation[0];
-                        runtimeMorphElements3[j * 4 + 1] = element.rotation[1];
-                        runtimeMorphElements3[j * 4 + 2] = element.rotation[2];
-                        runtimeMorphElements3[j * 4 + 3] = element.rotation[3];
-                    }
+                    runtimeMorphElements = morphMetadata.indices;
+                    runtimeMorphElements2 = morphMetadata.positions;
+                    runtimeMorphElements3 = morphMetadata.rotations;
                 }
                 break;
 
             case PmxObject.Morph.Type.MaterialMorph:
                 {
-                    const elements = morphMetadata.elements as readonly PmxObject.Morph.MaterialMorph[];
+                    const elements = morphMetadata.elements;
                     const morphElements = new Array<RuntimeMaterialMorphElement>(elements.length);
 
                     for (let j = 0; j < elements.length; ++j) {
@@ -272,7 +250,7 @@ export class MmdMorphController {
 
             case PmxObject.Morph.Type.UvMorph:
             case PmxObject.Morph.Type.VertexMorph:
-                runtimeMorphElements = morphMetadata.elements as number;
+                runtimeMorphElements = morphMetadata.index;
                 break;
 
             default:
