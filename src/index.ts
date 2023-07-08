@@ -2,7 +2,13 @@
 export { MmdAnimation } from "@/loader/animation/MmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
 
+// loader/optimized/parser
+export { BpmxObject } from "@/loader/optimized/parser/BpmxObject";
+export { BpmxReader } from "@/loader/optimized/parser/BpmxReader";
+
 // loader/optimized
+export { BpmxConverter } from "@/loader/optimized/BpmxConverter";
+export { BpmxLoader } from "@/loader/optimized/BpmxLoader";
 export { BvmdConverter } from "@/loader/optimized/BvmdConverter";
 export { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 
@@ -13,13 +19,13 @@ export { PmxReader } from "@/loader/parser/PmxReader";
 export { VmdData, VmdObject } from "@/loader/parser/VmdObject";
 
 // loader
-export { IMmdMaterialBuilder } from "@/loader/IMmdMaterialBuilder";
-export { MmdAsyncTextureLoader } from "@/loader/MmdAsyncTextureLoader";
+export { IMmdMaterialBuilder, MaterialInfo } from "@/loader/IMmdMaterialBuilder";
+export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/loader/MmdAsyncTextureLoader";
 export { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 export { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 export { PmxLoader } from "@/loader/PmxLoader";
-export { ReferenceFileResolver } from "@/loader/ReferenceFileResolver";
+export { IArrayBufferFile, ReferenceFileResolver } from "@/loader/ReferenceFileResolver";
 export { SdefInjector } from "@/loader/SdefInjector";
 export { SharedToonTextures } from "@/loader/SharedToonTextures";
 export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChecker";
