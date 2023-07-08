@@ -18,6 +18,15 @@ type MorphIndices = readonly number[];
 export abstract class MmdRuntimeAnimation {
     private readonly _lastResults = new Map<MmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
 
+    /**
+     * find frame index B to interpolate between frame A and frame B
+     *
+     * frame time must be clamped to [startFrame, endFrame]
+     *
+     * @param frameTime frame time in 30fps
+     * @param track animation track
+     * @returns
+     */
     protected _upperBoundFrameIndex(frameTime: number, track: MmdAnimationTrack): number {
         const frameNumbers = track.frameNumbers;
 
