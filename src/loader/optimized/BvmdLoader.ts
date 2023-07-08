@@ -73,7 +73,7 @@ export class BvmdLoader {
 
             if (100 < performance.now() - time) {
                 progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
-                onProgress?.(progressEvent);
+                onProgress?.({ ...progressEvent });
 
                 await Tools.DelayAsync(0);
                 time = performance.now();
@@ -94,7 +94,7 @@ export class BvmdLoader {
 
             if (100 < performance.now() - time) {
                 progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
-                onProgress?.(progressEvent);
+                onProgress?.({ ...progressEvent });
 
                 await Tools.DelayAsync(0);
                 time = performance.now();
@@ -112,7 +112,7 @@ export class BvmdLoader {
 
             if (100 < performance.now() - time) {
                 progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
-                onProgress?.(progressEvent);
+                onProgress?.({ ...progressEvent });
 
                 await Tools.DelayAsync(0);
                 time = performance.now();
@@ -131,7 +131,7 @@ export class BvmdLoader {
 
         if (100 < performance.now() - time) {
             progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
-            onProgress?.(progressEvent);
+            onProgress?.({ ...progressEvent });
 
             await Tools.DelayAsync(0);
             time = performance.now();
@@ -149,13 +149,8 @@ export class BvmdLoader {
         deserializer.getFloat32Array(cameraTrack.fovs, cameraTrack.fovs.length);
         deserializer.getUint8Array(cameraTrack.fovInterpolations, cameraTrack.fovInterpolations.length);
 
-        if (100 < performance.now() - time) {
-            progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
-            onProgress?.(progressEvent);
-
-            await Tools.DelayAsync(0);
-            time = performance.now();
-        }
+        progressEvent.loaded = progressEvent.total - deserializer.bytesAvailable;
+        onProgress?.({ ...progressEvent });
 
         return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, propertyTrack, cameraTrack);
     }
