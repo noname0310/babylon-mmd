@@ -5,7 +5,6 @@ import {
     Constants,
     DefaultRenderingPipeline,
     DirectionalLight,
-    HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
     Material,
@@ -13,10 +12,6 @@ import {
     Mesh,
     MeshBuilder,
     MotionBlurPostProcess,
-    PhysicsBody,
-    PhysicsMotionType,
-    PhysicsShapeBox,
-    Quaternion,
     Scene,
     SceneLoader,
     ShadowGenerator,
@@ -29,7 +24,6 @@ import {
     Vector3,
     VertexData
 } from "@babylonjs/core";
-import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -143,16 +137,16 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(0, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(0, "Loading physics engine... Done");
-        })());
+        // promises.push((async(): Promise<void> => {
+        //     updateLoadingText(0, "Loading physics engine...");
+        //     const havokInstance = await HavokPhysics();
+        //     const havokPlugin = new HavokPlugin(true, havokInstance);
+        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+        //     updateLoadingText(0, "Loading physics engine... Done");
+        // })());
 
         promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd",
-            (event) => updateLoadingText(1, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
@@ -160,7 +154,7 @@ export class SceneBuilder implements ISceneBuilder {
             "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
             undefined,
             scene,
-            (event) => updateLoadingText(2, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
         loadingTexts = new Array(promises.length).fill("");
@@ -176,16 +170,16 @@ export class SceneBuilder implements ISceneBuilder {
         });
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[1] as MmdAnimation);
+        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
         mmdCamera.setAnimation("motion");
 
         {
-            const modelMesh = loadResults[2].meshes[0] as Mesh;
+            const modelMesh = loadResults[1].meshes[0] as Mesh;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: false
             });
-            mmdModel.addAnimation(loadResults[1] as MmdAnimation);
+            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
@@ -203,11 +197,11 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-        const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
-        groundRigidBody.shape = new PhysicsShapeBox(
-            new Vector3(0, -1, 0),
-            new Quaternion(),
-            new Vector3(100, 2, 100), scene);
+        // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
+        // groundRigidBody.shape = new PhysicsShapeBox(
+        //     new Vector3(0, -1, 0),
+        //     new Quaternion(),
+        //     new Vector3(100, 2, 100), scene);
 
         // {
         //     const physicsViewer = new PhysicsViewer(scene);
