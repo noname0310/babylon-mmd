@@ -404,13 +404,13 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         multiMaterial._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
 
-
         let buildMaterialsPromise: void | Promise<void> = undefined;
 
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = this.materialBuilder.buildMaterials(
                 mesh.uniqueId,
-                pmxObject,
+                pmxObject.materials,
+                pmxObject.textures,
                 rootUrl,
                 referenceFiles,
                 scene,

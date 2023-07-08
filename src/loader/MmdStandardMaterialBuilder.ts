@@ -1,15 +1,16 @@
 import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene, Texture } from "@babylonjs/core";
 import { Color3, Material } from "@babylonjs/core";
 
-import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
+import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
 import type { MmdTextureLoadResult } from "./MmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "./MmdAsyncTextureLoader";
 import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { PmxObject } from "./parser/PmxObject";
-import { ReferenceFileResolver } from "./ReferenceFileResolver";
+import { IArrayBufferFile, ReferenceFileResolver } from "./ReferenceFileResolver";
 import { TextureAlphaChecker } from "./TextureAlphaChecker";
+import { BpmxObject } from "./optimized/parser/BpmxObject";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public static EdgeSizeScaleFactor = 0.01;
@@ -36,9 +37,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public buildMaterials(
         uniqueId: number,
-        pmxObject: PmxObject,
+        materialsInfo: readonly MaterialInfo[],
+        texturePathTable: readonly string[],
         rootUrl: string,
-        referenceFiles: readonly File[],
+        referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
         assetContainer: AssetContainer | null,
         indices: Uint16Array | Uint32Array,
@@ -51,18 +53,17 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
         scene.blockMaterialDirtyMechanism = true;
 
-        const materials = pmxObject.materials;
         const textureAlphaChecker = this.useAlphaEvaluation
             ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
             : null;
-        const referenceFileResolver = new ReferenceFileResolver(referenceFiles);
+        const referenceFileResolver = new ReferenceFileResolver<File | IArrayBufferFile>(referenceFiles);
 
         const promises: Promise<void>[] = [];
 
         const progressEvent = {
             lengthComputable: true,
             loaded: 0,
-            total: materials.length * 3
+            total: materialsInfo.length * 3
         };
         const incrementProgress = (): void => {
             progressEvent.loaded += 1;
@@ -70,8 +71,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         };
 
         let offset = 0;
-        for (let i = 0; i < materials.length; ++i) {
-            const materialInfo = materials[i];
+        for (let i = 0; i < materialsInfo.length; ++i) {
+            const materialInfo = materialsInfo[i];
 
             scene._blockEntityCollection = !!assetContainer;
             const material = new MmdStandardMaterial(materialInfo.name, scene);
@@ -93,7 +94,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    pmxObject,
+                    texturePathTable,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -110,7 +111,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    pmxObject,
+                    texturePathTable,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -125,7 +126,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    pmxObject,
+                    texturePathTable,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -152,7 +153,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         i, // materialIndex
                         materialInfo,
                         multiMaterial,
-                        pmxObject,
+                        texturePathTable,
                         scene,
                         rootUrl
                     );
@@ -187,7 +188,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public loadGeneralScalarProperties: (
         material: MmdStandardMaterial,
-        materialInfo: PmxObject.Material
+        materialInfo: MaterialInfo
     ) => Promise<void> | void = (
             material,
             materialInfo
@@ -222,8 +223,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public loadDiffuseTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
-        materialInfo: PmxObject.Material,
-        pmxObject: PmxObject,
+        materialInfo: MaterialInfo,
+        texturePathTable: readonly string[],
         scene: Scene,
         assetContainer: AssetContainer | null,
         rootUrl: string,
@@ -235,7 +236,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            pmxObject,
+            texturePathTable,
             scene,
             assetContainer,
             rootUrl,
@@ -246,7 +247,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         ): Promise<void> => {
             material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
 
-            const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
+            const diffuseTexturePath = texturePathTable[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
                 const diffuseTextureFullPath = rootUrl + diffuseTexturePath;
 
@@ -256,7 +257,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     textureLoadResult = await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
                         diffuseTextureFullPath,
-                        file,
+                        file instanceof File ? file : file.data,
                         scene,
                         assetContainer
                     );
@@ -275,14 +276,20 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
-                    if (textureAlphaChecker !== null) {
-                        const transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                    let transparencyMode = Number.MAX_SAFE_INTEGER;
+                    if ((materialInfo as BpmxObject.Material).evauatedTransparency !== undefined) {
+                        transparencyMode = (materialInfo as BpmxObject.Material).evauatedTransparency;
+                    } else if (textureAlphaChecker !== null) {
+                        transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
                             textureLoadResult.arrayBuffer!,
                             offset,
                             materialInfo.surfaceCount,
                             this.alphaThreshold,
                             this.alphaBlendThreshold
                         );
+                    }
+
+                    if (transparencyMode !== Number.MAX_SAFE_INTEGER) {
                         const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
 
                         if (hasAlpha) diffuseTexture.hasAlpha = true;
@@ -303,8 +310,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public loadSphereTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
-        materialInfo: PmxObject.Material,
-        pmxObject: PmxObject,
+        materialInfo: MaterialInfo,
+        texturePathTable: readonly string[],
         scene: Scene,
         assetContainer: AssetContainer | null,
         rootUrl: string,
@@ -314,7 +321,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            pmxObject,
+            texturePathTable,
             scene,
             assetContainer,
             rootUrl,
@@ -322,7 +329,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             onTextureLoadComplete
         ): Promise<void> => {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
-                const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
+                const sphereTexturePath = texturePathTable[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
                     const sphereTextureFullPath = rootUrl + sphereTexturePath;
 
@@ -332,7 +339,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         sphereTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                             uniqueId,
                             sphereTextureFullPath,
-                            file,
+                            file instanceof File ? file : file.data,
                             scene,
                             assetContainer
                         )).texture;
@@ -365,8 +372,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public loadToonTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
-        materialInfo: PmxObject.Material,
-        pmxObject: PmxObject,
+        materialInfo: MaterialInfo,
+        texturePathTable: readonly string[],
         scene: Scene,
         assetContainer: AssetContainer | null,
         rootUrl: string,
@@ -376,7 +383,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            pmxObject,
+            texturePathTable,
             scene,
             assetContainer,
             rootUrl,
@@ -389,7 +396,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     ? undefined
                     : materialInfo.toonTextureIndex;
             } else {
-                toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
+                toonTexturePath = texturePathTable[materialInfo.toonTextureIndex];
             }
             if (toonTexturePath !== undefined) {
                 const toonTextureFullPath = rootUrl + toonTexturePath;
@@ -400,7 +407,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
                         toonTextureFullPath,
-                        file,
+                        file instanceof File ? file : file.data,
                         scene,
                         assetContainer
                     )).texture;
@@ -426,7 +433,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public loadOutlineRenderingProperties: (
         material: MmdStandardMaterial,
-        materialInfo: PmxObject.Material
+        materialInfo: MaterialInfo
     ) => Promise<void> | void = (
             material,
             materialInfo
@@ -447,9 +454,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public afterBuildSingleMaterial: (
         material: MmdStandardMaterial,
         materialIndex: number,
-        materialInfo: PmxObject.Material,
+        materialInfo: MaterialInfo,
         multiMaterial: MultiMaterial,
-        pmxObject: PmxObject,
+        texturePathTable: readonly string[],
         scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };

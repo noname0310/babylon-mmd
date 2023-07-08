@@ -38,7 +38,7 @@ export namespace BpmxObject {
     }>;
 
     export type Texture = Readonly<{
-        name: string;
+        relativePath: string;
         data: ArrayBuffer;
     }>;
 

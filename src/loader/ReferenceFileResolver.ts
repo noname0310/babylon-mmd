@@ -1,17 +1,32 @@
-export class ReferenceFileResolver {
-    public readonly files: readonly File[];
-    private readonly _fileMap: Map<string, File> = new Map<string, File>();
+export interface IArrayBufferFile {
+    readonly relativePath: string;
+    readonly data: ArrayBuffer;
+}
 
-    public constructor(files: readonly File[]) {
+export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IArrayBufferFile> {
+    public readonly files: readonly T[];
+    private readonly _fileMap: Map<string, T> = new Map<string, T>();
+
+    public constructor(files: readonly T[]) {
         this.files = files;
 
-        for (const file of files) {
-            const fileFullPath = (file as any).webkitRelativePath as string;
-            this._fileMap.set(this._pathNormalize(fileFullPath), file);
+        if (files.length === 0) return;
+
+
+        if (files[0] instanceof File) {
+            for (const file of files) {
+                const relativePath = (file as any).webkitRelativePath as string;
+                this._fileMap.set(this._pathNormalize(relativePath), file);
+            }
+        } else {
+            for (const file of files) {
+                const relativePath = (file as IArrayBufferFile).relativePath;
+                this._fileMap.set(this._pathNormalize(relativePath), file);
+            }
         }
     }
 
-    public resolve(path: string): File | undefined {
+    public resolve(path: string): T | undefined {
         const finalPath = this._pathNormalize(path);
         return this._fileMap.get(finalPath);
     }
