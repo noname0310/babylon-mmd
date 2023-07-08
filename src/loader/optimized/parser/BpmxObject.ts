@@ -48,7 +48,7 @@ export namespace BpmxObject {
 
     export type Bone = PmxObject.Bone;
 
-    export type Morph = Morph.GroupMorph | Morph.VertexMorph | Morph.BoneMorph | Morph.UvMorph;
+    export type Morph = Morph.GroupMorph | Morph.VertexMorph | Morph.BoneMorph | Morph.UvMorph | Morph.MaterialMorph | Morph.UnsupportedMorph;
 
     export namespace Morph {
         export type BaseMorph = Readonly<{
@@ -80,6 +80,18 @@ export namespace BpmxObject {
         export type UvMorph = BaseMorph & Readonly<{
             elements: Int32Array; // vertex index
             elements2: Float32Array; // uv offset
+            elements3: null;
+        }>;
+
+        export type MaterialMorph = BaseMorph & Readonly<{
+            elements: readonly PmxObject.Morph.MaterialMorph[];
+            elements2: null;
+            elements3: null;
+        }>;
+
+        export type UnsupportedMorph = BaseMorph & Readonly<{
+            elements: null;
+            elements2: null;
             elements3: null;
         }>;
     }
