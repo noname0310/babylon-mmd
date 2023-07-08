@@ -802,7 +802,7 @@ export class BpmxConverter implements ILogger {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setUint8Array([1, 0, 0]); // version
+        serializer.setInt8Array([1, 0, 0]); // version
 
         serializer.setString(pmxObject.header.modelName); // modelName
         serializer.setString(pmxObject.header.englishModelName); // englishModelName
