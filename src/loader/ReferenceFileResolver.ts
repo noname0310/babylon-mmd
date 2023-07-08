@@ -6,7 +6,7 @@ export interface IArrayBufferFile {
 export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IArrayBufferFile> {
     public readonly files: readonly T[];
     private readonly _fileMap: Map<string, T> = new Map<string, T>();
-    
+
     public constructor(files: readonly File[]);
 
     public constructor(files: readonly IArrayBufferFile[], rootUrl: string);
