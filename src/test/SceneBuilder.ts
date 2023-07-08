@@ -33,8 +33,8 @@ import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
+import { BpmxLoader } from "@/loader/optimized/BpmxLoader";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
-import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { MmdCamera } from "@/runtime/MmdCamera";
 import { MmdPhysics } from "@/runtime/MmdPhysics";
@@ -47,7 +47,7 @@ export class SceneBuilder implements ISceneBuilder {
         await AudioPermissionSolver.Invoke();
 
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = new PmxLoader();
+        const pmxLoader = new BpmxLoader();
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
@@ -158,7 +158,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku Default fanmade by HB-Squiddy - phys edit/Miku phys edit for skirt - faceforward.pmx",
+            "res/private_test/model/YYB Hatsune Miku Default.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(3, `Loading modelA... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -170,9 +170,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
-            // "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
-            // "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
+            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(5, `Loading modelB... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
