@@ -51,6 +51,13 @@ export class MmdDataDeserializer {
         return value;
     }
 
+    public getUint16Array(dest: Uint16Array, length: number): void {
+        for (let i = 0; i < length; ++i) {
+            dest[i] = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
+            this._offset += 2;
+        }
+    }
+
     public getInt16(): number {
         const value = this._dataView.getInt16(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 2;

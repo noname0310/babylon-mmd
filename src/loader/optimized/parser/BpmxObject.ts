@@ -15,7 +15,7 @@ export type BpmxObject = Readonly<{
 export namespace BpmxObject {
     export type Header = Readonly<{
         signature: string;
-        version: [number, number, number];
+        version: readonly [number, number, number];
 
         modelName: string;
         englishModelName: string;
