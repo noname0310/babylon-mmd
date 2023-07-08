@@ -78,7 +78,7 @@ export class BvmdConverter {
                 dataLength += 4; // frameCount
                 dataLength += 4 * boneTrack.frameNumbers.length; // frameNumbers
                 dataLength += 4 * 4 * boneTrack.frameNumbers.length; // rotations
-                dataLength += 4 * 4 * boneTrack.frameNumbers.length; // rotationInterpolations
+                dataLength += 1 * 4 * boneTrack.frameNumbers.length; // rotationInterpolations
             }
 
             dataLength += 4; // moveableBoneTrackCount
@@ -91,9 +91,9 @@ export class BvmdConverter {
                 dataLength += 4; // frameCount
                 dataLength += 4 * moveableBoneTrack.frameNumbers.length; // frameNumbers
                 dataLength += 4 * 3 * moveableBoneTrack.frameNumbers.length; // positions
-                dataLength += 4 * 12 * moveableBoneTrack.frameNumbers.length; // positionInterpolations
+                dataLength += 1 * 12 * moveableBoneTrack.frameNumbers.length; // positionInterpolations
                 dataLength += 4 * 4 * moveableBoneTrack.frameNumbers.length; // rotations
-                dataLength += 4 * 4 * moveableBoneTrack.frameNumbers.length; // rotationInterpolations
+                dataLength += 1 * 4 * moveableBoneTrack.frameNumbers.length; // rotationInterpolations
             }
 
             dataLength += 4; // morphTrackCount
@@ -124,13 +124,13 @@ export class BvmdConverter {
             dataLength += 4; // camera frameCount
             dataLength += 4 * animation.cameraTrack.frameNumbers.length; // frameNumbers
             dataLength += 4 * 3 * animation.cameraTrack.frameNumbers.length; // positions
-            dataLength += 4 * 12 * animation.cameraTrack.frameNumbers.length; // positionInterpolations
+            dataLength += 1 * 12 * animation.cameraTrack.frameNumbers.length; // positionInterpolations
             dataLength += 4 * 3 * animation.cameraTrack.frameNumbers.length; // rotations
-            dataLength += 4 * 4 * animation.cameraTrack.frameNumbers.length; // rotationInterpolations
+            dataLength += 1 * 4 * animation.cameraTrack.frameNumbers.length; // rotationInterpolations
             dataLength += 4 * animation.cameraTrack.frameNumbers.length; // distances
-            dataLength += 4 * 4 * animation.cameraTrack.frameNumbers.length; // distanceInterpolations
+            dataLength += 1 * 4 * animation.cameraTrack.frameNumbers.length; // distanceInterpolations
             dataLength += 4 * animation.cameraTrack.frameNumbers.length; // fovs
-            dataLength += 4 * 4 * animation.cameraTrack.frameNumbers.length; // fovInterpolations
+            dataLength += 1 * 4 * animation.cameraTrack.frameNumbers.length; // fovInterpolations
         }
 
         const data = new ArrayBuffer(dataLength);
