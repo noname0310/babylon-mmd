@@ -16,18 +16,43 @@ import type { MmdMorphController } from "../MmdMorphController";
 type MorphIndices = readonly number[];
 
 export abstract class MmdRuntimeAnimation {
+    private readonly _lastResults = new Map<MmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
+
     protected _upperBoundFrameIndex(frameTime: number, track: MmdAnimationTrack): number {
         const frameNumbers = track.frameNumbers;
-        let low = 0;
-        let high = frameNumbers.length;
 
-        while (low < high) {
-            const mid = low + ((high - low) >> 1);
-            if (frameTime < frameNumbers[mid]) high = mid;
-            else low = mid + 1;
+        let lastResult = this._lastResults.get(track);
+        if (lastResult === undefined) {
+            lastResult = [Number.NEGATIVE_INFINITY, 0];
+            this._lastResults.set(track, lastResult);
         }
 
-        return low;
+        const diff = frameTime - lastResult[0];
+
+        if (Math.abs(diff) < 6) { // if frame time is close to last frame time, use iterative search
+            let frameIndex = lastResult[1];
+            while (0 < frameIndex && frameTime < frameNumbers[frameIndex - 1]) frameIndex -= 1;
+            while (frameIndex < frameNumbers.length && frameNumbers[frameIndex] <= frameTime) frameIndex += 1;
+
+            lastResult[0] = frameTime;
+            lastResult[1] = frameIndex;
+
+            return frameIndex;
+        } else { // if frame time is far from last frame time, use binary search
+            let low = 0;
+            let high = frameNumbers.length;
+
+            while (low < high) {
+                const mid = low + ((high - low) >> 1);
+                if (frameTime < frameNumbers[mid]) high = mid;
+                else low = mid + 1;
+            }
+
+            lastResult[0] = frameTime;
+            lastResult[1] = low;
+
+            return low;
+        }
     }
 }
 
@@ -72,8 +97,6 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     public animate(frameTime: number): void {
         const animation = this.animation;
 
-        const upperBoundFrameIndex = this._upperBoundFrameIndex;
-
         const boneTracks = animation.boneTracks;
         if (0 < boneTracks.length) {
             const boneBindIndexMap = this._boneBindIndexMap;
@@ -83,7 +106,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
                 const boneTrack = boneTracks[i];
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
-                const upperBoundIndex = upperBoundFrameIndex(clampedFrameTime, boneTrack);
+                const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, boneTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
@@ -148,7 +171,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
                 const boneTrack = moveableBoneTracks[i];
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
-                const upperBoundIndex = upperBoundFrameIndex(clampedFrameTime, boneTrack);
+                const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, boneTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
@@ -270,7 +293,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                 const morphTrack = morphTracks[i];
 
                 const clampedFrameTime = Math.max(morphTrack.startFrame, Math.min(morphTrack.endFrame, frameTime));
-                const upperBoundIndex = upperBoundFrameIndex(clampedFrameTime, morphTrack);
+                const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, morphTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
 
                 const frameNumberB = morphTrack.frameNumbers[upperBoundIndex];
@@ -300,7 +323,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
             const propertyTrack = animation.propertyTrack;
 
             const clampedFrameTime = Math.max(propertyTrack.startFrame, Math.min(propertyTrack.endFrame, frameTime));
-            const stepIndex = upperBoundFrameIndex(clampedFrameTime, propertyTrack) - 1;
+            const stepIndex = this._upperBoundFrameIndex(clampedFrameTime, propertyTrack) - 1;
 
             this._mesh.visibility = propertyTrack.visibles[stepIndex];
 
