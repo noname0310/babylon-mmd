@@ -50,8 +50,12 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         materialBuilder.afterBuildSingleMaterial = (material): void => {
-            if (material.name !== "body01") return;
-            material.transparencyMode = Material.MATERIAL_OPAQUE;
+            if (material.name === "body01") material.transparencyMode = Material.MATERIAL_OPAQUE;
+            if (material.name === "face02") {
+                material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+                material.useAlphaFromDiffuseTexture = true;
+                material.diffuseTexture!.hasAlpha = true;
+            }
         };
         pmxLoader.boundingBoxMargin = 40;
         SceneLoader.RegisterPlugin(pmxLoader);
