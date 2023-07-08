@@ -135,7 +135,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         scene: Scene,
         assetContainer: AssetContainer | null,
         data: ArrayBuffer,
-        rootUrl: string,
+        _rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<ISceneLoaderAsyncResult> {
         // duplicate with pmx loader is intentional
@@ -236,7 +236,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 mesh.uniqueId,
                 bpmxObject.materials,
                 texturePathTable,
-                rootUrl,
+                mesh.uniqueId + "_",
                 bpmxObject.textures,
                 scene,
                 assetContainer,

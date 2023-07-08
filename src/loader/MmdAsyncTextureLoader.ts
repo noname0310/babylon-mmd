@@ -33,7 +33,6 @@ class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: AssetContainer | null;
-    private readonly _urlOrTextureName: string;
     private readonly _onLoad?: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
@@ -53,7 +52,6 @@ class MmdTextureData {
         this.cacheKey = cacheKey;
         this._scene = scene;
         this._assetContainer = assetContainer;
-        this._urlOrTextureName = urlOrTextureName;
         this._onLoad = onLoad;
         this._onError = onError;
 
@@ -68,7 +66,7 @@ class MmdTextureData {
                     this._createTexture(
                         scene,
                         assetContainer,
-                        urlOrTextureName,
+                        cacheKey,
                         arrayBuffer,
                         onLoad,
                         (message, exception) => {
@@ -92,7 +90,7 @@ class MmdTextureData {
         this._createTexture(
             this._scene,
             this._assetContainer,
-            this._urlOrTextureName,
+            this.cacheKey,
             this._arrayBuffer,
             this._onLoad,
             (message, exception) => {

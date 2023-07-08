@@ -29,7 +29,6 @@ import {
     VertexData
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
-import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -158,7 +157,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku Default.bpmx",
+            "res/private_test/model/YYB 元气少女.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(3, `Loading modelA... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -170,7 +169,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+            "res/private_test/model/yyb_deep_canyons_miku.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(5, `Loading modelB... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -289,7 +288,7 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.imageProcessing.vignetteEnabled = true;
         }
 
-        Inspector.Show(scene, { });
+        // Inspector.Show(scene, { });
 
         return scene;
     }
