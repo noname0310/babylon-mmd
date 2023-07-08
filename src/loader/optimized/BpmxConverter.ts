@@ -145,7 +145,7 @@
  *  name: uint32, uint8[] - length, string
  *  englishName: uint32, uint8[] - length, string
  *  boneIndex: int32
- *  collisionGroup: uint16
+ *  collisionGroup: uint8
  *  collisionMask: uint16
  *  shapeType: uint8
  *  shapeSize: float32[3]
@@ -763,7 +763,7 @@ export class BpmxConverter implements ILogger {
                 dataLength += 4 + encoder.encode(rigidBodyInfo.name).length; // name
                 dataLength += 4 + encoder.encode(rigidBodyInfo.englishName).length; // englishName
                 dataLength += 4; // boneIndex
-                dataLength += 2; // collisionGroup
+                dataLength += 1; // collisionGroup
                 dataLength += 2; // collisionMask
                 dataLength += 1; // shapeType
                 dataLength += 3 * 4; // shapeSize
@@ -1016,7 +1016,7 @@ export class BpmxConverter implements ILogger {
             serializer.setString(rigidBodyInfo.name); // name
             serializer.setString(rigidBodyInfo.englishName); // englishName
             serializer.setInt32(rigidBodyInfo.boneIndex); // boneIndex
-            serializer.setUint16(rigidBodyInfo.collisionGroup); // collisionGroup
+            serializer.setUint8(rigidBodyInfo.collisionGroup); // collisionGroup
             serializer.setUint16(rigidBodyInfo.collisionMask); // collisionMask
             serializer.setUint8(rigidBodyInfo.shapeType); // shapeType
             serializer.setFloat32Array(rigidBodyInfo.shapeSize); // shapeSize
