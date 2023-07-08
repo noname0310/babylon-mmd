@@ -74,6 +74,10 @@ export class SceneBuilder implements ISceneBuilder {
         camera.angularSensibility = 500;
         camera.speed = 10;
 
+        canvas.onclick = (): void => {
+            canvas.requestFullscreen();
+        };
+
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
         hemisphericLight.specular = new Color3(0, 0, 0);
