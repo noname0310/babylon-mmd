@@ -83,6 +83,13 @@ export class MmdDataDeserializer {
         return value;
     }
 
+    public getInt32Array(dest: Int32Array, length: number): void {
+        for (let i = 0; i < length; ++i) {
+            dest[i] = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
+            this._offset += 4;
+        }
+    }
+
     public getFloat32(): number {
         const value = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
         this._offset += 4;

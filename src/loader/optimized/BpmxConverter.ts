@@ -14,6 +14,7 @@
  * normals: float32[vertexCount * 3]
  * uvs: float32[vertexCount * 2]
  * indicesBytePerElement: uint8
+ * indicesCount: uint32
  * indices: uint16[vertexCount] or uint32[vertexCount]
  * matricesIndices: float32[vertexCount * 4]
  * matricesWeights: float32[vertexCount * 4]
@@ -580,6 +581,7 @@ export class BpmxConverter implements ILogger {
             dataLength += vertices.length * 3 * 4; // normals
             dataLength += vertices.length * 2 * 4; // uvs
             dataLength += 1; // indicesBytePerElement
+            dataLength += 4; // indicesCount
             dataLength += indices.byteLength; // indices
             dataLength += vertices.length * 4 * 4; // boneIndices
             dataLength += vertices.length * 4 * 4; // boneWeights
@@ -815,9 +817,11 @@ export class BpmxConverter implements ILogger {
         serializer.setFloat32Array(uvs); // uvs
         if (indices instanceof Uint16Array) {
             serializer.setUint8(2); // indicesBytePerElement
+            serializer.setUint32(indices.length); // indicesCount
             serializer.setUint16Array(indices); // indices
         } else {
             serializer.setUint8(4); // indicesBytePerElement
+            serializer.setUint32(indices.length); // indicesCount
             serializer.setUint32Array(indices); // indices
         }
         serializer.setFloat32Array(boneIndices); // boneIndices

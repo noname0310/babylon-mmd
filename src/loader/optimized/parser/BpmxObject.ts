@@ -54,6 +54,18 @@ export namespace BpmxObject {
         | PmxObject.Morph.UvMorph
         | PmxObject.Morph.MaterialMorph;
 
+    export namespace Morph {
+        export type Type = PmxObject.Morph.Type.GroupMorph
+            | PmxObject.Morph.Type.VertexMorph
+            | PmxObject.Morph.Type.BoneMorph
+            | PmxObject.Morph.Type.UvMorph
+            | PmxObject.Morph.Type.AdditionalUvMorph1
+            | PmxObject.Morph.Type.AdditionalUvMorph2
+            | PmxObject.Morph.Type.AdditionalUvMorph3
+            | PmxObject.Morph.Type.AdditionalUvMorph4
+            | PmxObject.Morph.Type.MaterialMorph;
+    }
+
     export type DisplayFrame = PmxObject.DisplayFrame;
 
     export type RigidBody = PmxObject.RigidBody;

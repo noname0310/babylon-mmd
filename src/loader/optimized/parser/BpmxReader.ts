@@ -1,9 +1,10 @@
+import type { Vec3 } from "@/loader/parser/MmdTypes";
 import { PmxObject } from "@/loader/parser/PmxObject";
+
 import type { ILogger } from "../../parser/ILogger";
 import { ConsoleLogger } from "../../parser/ILogger";
 import { MmdDataDeserializer } from "../../parser/MmdDataDeserializer";
 import type { BpmxObject } from "./BpmxObject";
-import { Vec3 } from "@/loader/parser/MmdTypes";
 
 export class BpmxReader {
     private constructor() { /* block constructor */ }
@@ -21,7 +22,7 @@ export class BpmxReader {
         const displayFrames = this._ParseDisplayFrames(dataDeserializer);
         const rigidBodies = this._ParseRigidBodies(dataDeserializer);
         const joints = this._ParseJoints(dataDeserializer);
-        
+
         if (dataDeserializer.bytesAvailable > 0) {
             logger.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
         }
@@ -40,11 +41,11 @@ export class BpmxReader {
 
         return bpmxObject;
     }
-    
+
     private static _ParseHeader(dataDeserializer: MmdDataDeserializer): BpmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
             4 + // signature
-            3 + // version
+            3 // version
         )) {
             throw new RangeError("is not bpmx file");
         }
@@ -70,7 +71,7 @@ export class BpmxReader {
             modelName,
             englishModelName,
             comment,
-            englishComment,
+            englishComment
         };
         return header;
     }
@@ -105,15 +106,16 @@ export class BpmxReader {
         }
 
         const indicesBytePerElement = dataDeserializer.getUint8();
+        const indicesCount = dataDeserializer.getUint32();
         const indices = indicesBytePerElement === 2
-            ? new Uint16Array(vertexCount)
-            : new Uint32Array(vertexCount);
+            ? new Uint16Array(indicesCount)
+            : new Uint32Array(indicesCount);
         if (indicesBytePerElement === 2) {
             dataDeserializer.getUint16Array(indices as Uint16Array, indices.length);
         } else {
             dataDeserializer.getUint32Array(indices as Uint32Array, indices.length);
         }
-        
+
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
             time = performance.now();
@@ -124,7 +126,7 @@ export class BpmxReader {
 
         const matricesWeights = new Float32Array(vertexCount * 4);
         dataDeserializer.getFloat32Array(matricesWeights, matricesWeights.length);
-        
+
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
             time = performance.now();
@@ -162,6 +164,7 @@ export class BpmxReader {
 
     private static async _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Texture[]> {
         const textureCount = dataDeserializer.getUint32();
+        console.log("textureCount", textureCount);
 
         let time = performance.now();
 
@@ -213,7 +216,7 @@ export class BpmxReader {
 
             const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
             const surfaceCount = dataDeserializer.getInt32();
-            
+
             const material: BpmxObject.Material = {
                 name,
                 englishName,
@@ -361,18 +364,229 @@ export class BpmxReader {
     }
 
     private static _ParseMorphs(dataDeserializer: MmdDataDeserializer): BpmxObject.Morph[] {
-        dataDeserializer;
-        throw new Error("Not implemented");
+        const morphsCount = dataDeserializer.getUint32();
+
+        const morphs: BpmxObject.Morph[] = [];
+        for (let i = 0; i < morphsCount; ++i) {
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+
+            const category: PmxObject.Morph.Category = dataDeserializer.getUint8();
+            const type: BpmxObject.Morph.Type = dataDeserializer.getUint8();
+
+            let morph: Partial<BpmxObject.Morph> = {
+                name,
+                englishName,
+                category,
+                type
+            };
+
+            const elementCount = dataDeserializer.getUint32();
+
+            switch (type) {
+            case PmxObject.Morph.Type.GroupMorph:
+                {
+                    const indices = new Int32Array(elementCount);
+                    dataDeserializer.getInt32Array(indices, indices.length);
+
+                    const ratios = new Float32Array(elementCount);
+                    dataDeserializer.getFloat32Array(ratios, ratios.length);
+
+                    morph = <PmxObject.Morph.GroupMorph>{
+                        ...morph,
+                        indices,
+                        ratios
+                    };
+                }
+                break;
+
+            case PmxObject.Morph.Type.VertexMorph:
+                {
+                    const indices = new Int32Array(elementCount);
+                    dataDeserializer.getInt32Array(indices, indices.length);
+
+                    const positions = new Float32Array(elementCount * 3);
+                    dataDeserializer.getFloat32Array(positions, positions.length);
+
+                    morph = <PmxObject.Morph.VertexMorph>{
+                        ...morph,
+                        indices,
+                        positions
+                    };
+                }
+                break;
+
+            case PmxObject.Morph.Type.BoneMorph:
+                {
+                    const indices = new Int32Array(elementCount);
+                    dataDeserializer.getInt32Array(indices, indices.length);
+
+                    const positions = new Float32Array(elementCount * 3);
+                    dataDeserializer.getFloat32Array(positions, positions.length);
+
+                    const rotations = new Float32Array(elementCount * 4);
+                    dataDeserializer.getFloat32Array(rotations, rotations.length);
+
+                    morph = <PmxObject.Morph.BoneMorph>{
+                        ...morph,
+                        indices,
+                        positions,
+                        rotations
+                    };
+                }
+                break;
+
+            case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.AdditionalUvMorph1:
+            case PmxObject.Morph.Type.AdditionalUvMorph2:
+            case PmxObject.Morph.Type.AdditionalUvMorph3:
+            case PmxObject.Morph.Type.AdditionalUvMorph4:
+                {
+                    const indices = new Int32Array(elementCount);
+                    dataDeserializer.getInt32Array(indices, indices.length);
+
+                    const offsets = new Float32Array(elementCount * 4);
+                    dataDeserializer.getFloat32Array(offsets, offsets.length);
+
+                    morph = <PmxObject.Morph.UvMorph>{
+                        ...morph,
+                        indices,
+                        offsets
+                    };
+                }
+                break;
+
+            case PmxObject.Morph.Type.MaterialMorph:
+                {
+                    const elements: PmxObject.Morph.MaterialMorph["elements"] = [];
+                    for (let i = 0; i < elementCount; ++i) {
+                        const materialIndex = dataDeserializer.getInt32();
+                        const type = dataDeserializer.getUint8();
+                        const diffuse = dataDeserializer.getFloat32Tuple(4);
+                        const specular = dataDeserializer.getFloat32Tuple(3);
+                        const shininess = dataDeserializer.getFloat32();
+                        const ambient = dataDeserializer.getFloat32Tuple(3);
+                        const edgeColor = dataDeserializer.getFloat32Tuple(4);
+                        const edgeSize = dataDeserializer.getFloat32();
+                        const textureColor = dataDeserializer.getFloat32Tuple(4);
+                        const sphereTextureColor = dataDeserializer.getFloat32Tuple(4);
+                        const toonTextureColor = dataDeserializer.getFloat32Tuple(4);
+
+                        const element: PmxObject.Morph.MaterialMorph["elements"][number] = {
+                            index: materialIndex,
+                            type,
+                            diffuse,
+                            specular,
+                            shininess,
+                            ambient,
+                            edgeColor,
+                            edgeSize,
+                            textureColor,
+                            sphereTextureColor,
+                            toonTextureColor
+                        };
+                        elements.push(element);
+                    }
+
+                    morph = <PmxObject.Morph.MaterialMorph>{
+                        ...morph,
+                        elements
+                    };
+                }
+                break;
+
+            default:
+                throw new Error(`Unknown morph type: ${type}`);
+            }
+
+            morphs.push(morph as BpmxObject.Morph);
+        }
+
+        return morphs;
     }
 
-    private static _ParseDisplayFrames(dataDeserializer: MmdDataDeserializer): BpmxObject.DisplayFrame[] {
-        dataDeserializer;
-        throw new Error("Not implemented");
+    private static _ParseDisplayFrames(dataDeserializer: MmdDataDeserializer): PmxObject.DisplayFrame[] {
+        const displayFramesCount = dataDeserializer.getUint32();
+
+        const displayFrames: PmxObject.DisplayFrame[] = [];
+        for (let i = 0; i < displayFramesCount; ++i) {
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+
+            const isSpecialFrame = dataDeserializer.getUint8() === 1;
+
+            const elementsCount = dataDeserializer.getUint32();
+            const frames: PmxObject.DisplayFrame.FrameData[] = [];
+            for (let i = 0; i < elementsCount; ++i) {
+                const frameType = dataDeserializer.getUint8();
+                const frameIndex = dataDeserializer.getInt32();
+
+                const frame: PmxObject.DisplayFrame.FrameData = {
+                    type: frameType,
+                    index: frameIndex
+                };
+                frames.push(frame);
+            }
+
+            const displayFrame: PmxObject.DisplayFrame = {
+                name,
+                englishName,
+                isSpecialFrame,
+                frames
+            };
+            displayFrames.push(displayFrame);
+        }
+
+        return displayFrames;
     }
 
-    private static _ParseRigidBodies(dataDeserializer: MmdDataDeserializer): BpmxObject.RigidBody[] {
-        dataDeserializer;
-        throw new Error("Not implemented");
+    private static _ParseRigidBodies(dataDeserializer: MmdDataDeserializer): PmxObject.RigidBody[] {
+        const rigidBodiesCount = dataDeserializer.getUint32();
+
+        const rigidBodies: PmxObject.RigidBody[] = [];
+        for (let i = 0; i < rigidBodiesCount; ++i) {
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+
+            const boneIndex = dataDeserializer.getInt32();
+
+            const collisionGroup = dataDeserializer.getUint8();
+            const collisionMask = dataDeserializer.getUint16();
+
+            const shapeType: PmxObject.RigidBody.ShapeType = dataDeserializer.getUint8();
+            const shapeSize = dataDeserializer.getFloat32Tuple(3);
+            const shapePosition = dataDeserializer.getFloat32Tuple(3);
+            const shapeRotation = dataDeserializer.getFloat32Tuple(3);
+
+            const mass = dataDeserializer.getFloat32();
+            const linearDamping = dataDeserializer.getFloat32();
+            const angularDamping = dataDeserializer.getFloat32();
+            const repulsion = dataDeserializer.getFloat32();
+            const friction = dataDeserializer.getFloat32();
+
+            const physicsMode: PmxObject.RigidBody.PhysicsMode = dataDeserializer.getUint8();
+
+            const rigidBody: PmxObject.RigidBody = {
+                name,
+                englishName,
+                boneIndex,
+                collisionGroup,
+                collisionMask,
+                shapeType,
+                shapeSize,
+                shapePosition,
+                shapeRotation,
+                mass,
+                linearDamping,
+                angularDamping,
+                repulsion,
+                friction,
+                physicsMode
+            };
+            rigidBodies.push(rigidBody);
+        }
+
+        return rigidBodies;
     }
 
     private static _ParseJoints(dataDeserializer: MmdDataDeserializer): PmxObject.Joint[] {
