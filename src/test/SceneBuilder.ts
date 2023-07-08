@@ -157,6 +157,14 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
+            "res/private_test/stage/Stage35_02.bpmx",
+            undefined,
+            scene,
+            (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+        ));
+
         loadingTexts = new Array(promises.length).fill("");
 
         const loadResults = await Promise.all(promises);
