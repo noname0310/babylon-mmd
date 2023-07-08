@@ -142,7 +142,6 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const boundingBoxMargin = this.boundingBoxMargin;
         const referenceFiles = this.referenceFiles;
 
-        // data must be ArrayBuffer
         const pmxObject = await PmxReader.ParseAsync(data, this)
             .catch((e: any) => {
                 return Promise.reject(e);
