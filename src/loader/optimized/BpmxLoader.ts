@@ -7,7 +7,7 @@ import type {
     Scene,
     WebRequest
 } from "@babylonjs/core";
-import {
+import type {
     LoadFileError
 } from "@babylonjs/core";
 import {
@@ -29,13 +29,13 @@ import {
 } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder } from "../IMmdMaterialBuilder";
+import type { MmdModelMetadata } from "../MmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "../MmdStandardMaterialBuilder";
 import type { ILogger } from "../parser/ILogger";
-import { BpmxReader } from "./parser/BpmxReader";
 import { PmxObject } from "../parser/PmxObject";
-import { SdefMesh } from "../SdefMesh";
 import { SdefBufferKind } from "../SdefBufferKind";
-import { MmdModelMetadata } from "../MmdModelMetadata";
+import { SdefMesh } from "../SdefMesh";
+import { BpmxReader } from "./parser/BpmxReader";
 
 export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
     /**
@@ -176,7 +176,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
             }
         }
         const textureLoadCost = 30000 * bpmxObject.textures.length;
-        
+
         let applyTextureLoading = false;
 
         const progressEvent = {
@@ -184,7 +184,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
             loaded: parseCost,
             total: parseCost + buildGeometryCost + buildMaterialCost + buildSkeletonCost + buildMorphCost + textureLoadCost
         };
-        
+
         onProgress?.({...progressEvent});
 
         let lastStageLoaded = parseCost;
@@ -201,12 +201,12 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         vertexData.indices = bpmxObject.geometry.indices;
         vertexData.matricesIndices = bpmxObject.geometry.matricesIndices;
         vertexData.matricesWeights = bpmxObject.geometry.matricesWeights;
-        
+
         scene._blockEntityCollection = !!assetContainer;
         const geometry = new Geometry(bpmxObject.header.modelName, scene, vertexData, false);
         geometry._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        
+
         if (useSdef && bpmxObject.geometry.sdef !== undefined) {
             const sdefData = bpmxObject.geometry.sdef;
             geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, sdefData.c, false, 3);
@@ -223,7 +223,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const multiMaterial = new MultiMaterial(bpmxObject.header.modelName + "_multi", scene);
         multiMaterial._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        
+
         let buildMaterialsPromise: void | Promise<void> = undefined;
 
         const textureLoadPromise = new Promise<void>((resolve) => {
@@ -367,7 +367,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
             }
         }
         mesh.skeleton = skeleton;
-        
+
         progressEvent.loaded = lastStageLoaded + buildSkeletonCost;
         onProgress?.({...progressEvent});
         lastStageLoaded += buildSkeletonCost;
@@ -458,7 +458,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
                     const morphIndices = morphInfo.indices;
                     const uvOffsets = morphInfo.offsets;
-                    
+
                     let time = performance.now();
                     for (let j = 0; j < morphIndices.length; ++j) {
                         const elementIndex = morphIndices[j];

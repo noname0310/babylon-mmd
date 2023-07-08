@@ -1,8 +1,8 @@
 import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene } from "@babylonjs/core";
 
+import type { BpmxObject } from "./optimized/parser/BpmxObject";
 import type { PmxObject } from "./parser/PmxObject";
-import { BpmxObject } from "./optimized/parser/BpmxObject";
-import { IArrayBufferFile } from "./ReferenceFileResolver";
+import type { IArrayBufferFile } from "./ReferenceFileResolver";
 
 export type MaterialInfo = PmxObject.Material | BpmxObject.Material;
 
