@@ -1,4 +1,4 @@
-import type { Material } from "@babylonjs/core";
+import type { DeepImmutable, Material } from "@babylonjs/core";
 import { type MorphTargetManager, Quaternion } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
@@ -25,8 +25,8 @@ export interface RuntimeMaterialMorphElement {
 }
 
 interface RuntimeMorph {
-    name: string;
-    type: PmxObject.Morph.Type;
+    readonly name: string;
+    readonly type: PmxObject.Morph.Type;
     readonly materialElements: readonly RuntimeMaterialMorphElement[] | null;
     readonly elements: Int32Array // group morph / bone morph indices
         | number // MorphTargetManager morph target index
@@ -39,7 +39,7 @@ interface RuntimeMorph {
 export interface ReadonlyRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
-    readonly materialElements: readonly Readonly<RuntimeMaterialMorphElement>[] | null;
+    readonly materialElements: readonly DeepImmutable<RuntimeMaterialMorphElement>[] | null;
 }
 
 export class MmdMorphController {
