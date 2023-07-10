@@ -54,9 +54,14 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
         scene.blockMaterialDirtyMechanism = true;
 
-        const textureAlphaChecker = this.useAlphaEvaluation
-            ? new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
-            : null;
+        let textureAlphaChecker: TextureAlphaChecker | null = null;
+        const getTextureAlpphaChecker = (): TextureAlphaChecker | null => {
+            if (textureAlphaChecker !== null) return textureAlphaChecker;
+            return this.useAlphaEvaluation
+                ? textureAlphaChecker = new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
+                : null;
+        };
+
         const referenceFileResolver = referenceFiles.length === 0 || referenceFiles[0] instanceof File
             ? new ReferenceFileResolver(referenceFiles as readonly File[])
             : new ReferenceFileResolver(referenceFiles as readonly IArrayBufferFile[], rootUrl);
@@ -103,7 +108,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl,
                     referenceFileResolver,
                     offset,
-                    textureAlphaChecker,
+                    getTextureAlpphaChecker,
                     incrementProgress
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
@@ -233,7 +238,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         rootUrl: string,
         referenceFileResolver: ReferenceFileResolver,
         materialIndexOffset: number,
-        textureAlphaChecker: TextureAlphaChecker | null,
+        getTextureAlphaChecker: () => TextureAlphaChecker | null,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -245,7 +250,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             rootUrl,
             referenceFileResolver,
             offset,
-            textureAlphaChecker,
+            getTextureAlphaChecker,
             onTextureLoadComplete
         ): Promise<void> => {
             material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
@@ -284,14 +289,17 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     const evauatedTransparency = (materialInfo as BpmxObject.Material).evauatedTransparency;
                     if (evauatedTransparency !== undefined && evauatedTransparency !== -1) {
                         transparencyMode = evauatedTransparency;
-                    } else if (textureAlphaChecker !== null) {
-                        transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                            textureLoadResult.arrayBuffer!,
-                            offset,
-                            materialInfo.surfaceCount,
-                            this.alphaThreshold,
-                            this.alphaBlendThreshold
-                        );
+                    } else {
+                        const textureAlphaChecker = getTextureAlphaChecker();
+                        if (textureAlphaChecker !== null) {
+                            transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                                textureLoadResult.arrayBuffer!,
+                                offset,
+                                materialInfo.surfaceCount,
+                                this.alphaThreshold,
+                                this.alphaBlendThreshold
+                            );
+                        }
                     }
 
                     if (transparencyMode !== Number.MAX_SAFE_INTEGER) {
