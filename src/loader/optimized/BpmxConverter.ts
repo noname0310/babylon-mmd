@@ -220,7 +220,8 @@ export class BpmxConverter implements ILogger {
     public async convert(
         scene: Scene,
         urlOrFileName: string,
-        files?: File[]
+        files?: File[],
+        overrideMaterialTransparency?: (materialsName: readonly string[], textureAlphaEvaluateResults: number[]) => void
     ): Promise<ArrayBuffer> {
         const alphaThreshold = this.alphaThreshold;
         const alphaBlendThreshold = this.alphaBlendThreshold;
@@ -561,6 +562,17 @@ export class BpmxConverter implements ILogger {
             }
 
             textureAlphaChecker.dispose();
+        }
+
+        // override material transparency
+        if (overrideMaterialTransparency !== undefined) {
+            const materials = pmxObject.materials;
+            const materialsName: string[] = new Array(materials.length);
+            for (let i = 0; i < materials.length; ++i) {
+                materialsName[i] = materials[i].name;
+            }
+
+            overrideMaterialTransparency(materialsName, textureAlphaEvaluateResults);
         }
 
         const encoder = new TextEncoder();
