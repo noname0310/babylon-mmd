@@ -144,7 +144,7 @@ export interface MmdTextureLoadResult {
 export class MmdAsyncTextureLoader {
     public readonly onModelTextureLoadedObservable = new Map<number, Observable<void>>(); // key: uniqueId, value: Observable<void>
 
-    public readonly textureCache = new Map<string, WeakRef<MmdTextureData>>(); // key: requestString, value: texture
+    public readonly textureCache = new Map<string, MmdTextureData>(); // key: requestString, value: texture
 
     private readonly _textureLoadInfoMap = new Map<string, TextureLoadInfo>(); // key: requestString
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
@@ -251,7 +251,7 @@ export class MmdAsyncTextureLoader {
             this._textureLoadInfoMap.set(urlOrTextureName, textureLoadInfo);
         }
 
-        let textureData = this.textureCache.get(urlOrTextureName)?.deref();
+        let textureData = this.textureCache.get(urlOrTextureName);
         if (textureData === undefined && !textureLoadInfo.hasLoadError) {
             const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
                 : urlOrTextureName;
@@ -279,7 +279,7 @@ export class MmdAsyncTextureLoader {
                 }
             );
 
-            this.textureCache.set(urlOrTextureName, new WeakRef(textureData));
+            this.textureCache.set(urlOrTextureName, textureData);
 
             const arrayBuffer = arrayBufferOrBlob instanceof Blob
                 ? await arrayBufferOrBlob.arrayBuffer()
