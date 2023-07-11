@@ -1,11 +1,11 @@
 import type { Engine } from "@babylonjs/core";
-import { Color3, DirectionalLight, HemisphericLight, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import { ArcRotateCamera, Color3, DirectionalLight, HemisphericLight, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import { Inspector } from "@babylonjs/inspector";
 
 import { BpmxConverter } from "@/loader/optimized/BpmxConverter";
 import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
-import { MmdCamera } from "@/runtime/MmdCamera";
-import type { MmdMesh } from "@/runtime/MmdMesh";
+import type { MmdStaticMesh } from "@/runtime/MmdMesh";
 
 import type { MmdStandardMaterialBuilder } from "..";
 import type { ISceneBuilder } from "./BaseRuntime";
@@ -53,12 +53,20 @@ export class PmxConverterScene implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
+        pmxLoader.buildSkeleton = false;
+        pmxLoader.buildMorph = false;
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
 
-        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 5000;
+        Inspector.Show(scene, { });
+
+        const camera = new ArcRotateCamera("camera", 0, 0, 45, new Vector3(0, 10, 0), scene);
+        camera.maxZ = 5000;
+        camera.fov = 30 * (Math.PI / 180);
+        camera.speed = 0.5;
+        camera.setPosition(new Vector3(0, 10, -45));
+        camera.attachControl(canvas, true);
 
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
         hemisphericLight.intensity = 0.4;
@@ -77,7 +85,7 @@ export class PmxConverterScene implements ISceneBuilder {
         directionalLight.orthoRight = 10 * 3;
         directionalLight.shadowOrthoScale = 0;
 
-        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, mmdCamera);
+        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
@@ -92,14 +100,13 @@ export class PmxConverterScene implements ISceneBuilder {
 
             if (mesh !== null) {
                 shadowGenerator.removeShadowCaster(mesh);
-                mesh.skeleton.dispose();
                 mesh.dispose(false, true);
                 mesh = null;
             }
 
             isLoading = true;
             engine.displayLoadingUI();
-            const fileRelativePath = (file as any).webkitRelativePath as string;
+            const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
             const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
             materialBuilder.useAlphaEvaluation = bpmxConverter.useAlphaEvaluation;
@@ -112,7 +119,7 @@ export class PmxConverterScene implements ISceneBuilder {
                 file,
                 scene,
                 (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-            )).meshes[0] as MmdMesh;
+            )).meshes[0] as MmdStaticMesh;
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
             engine.hideLoadingUI();
@@ -120,7 +127,7 @@ export class PmxConverterScene implements ISceneBuilder {
         };
 
         let selectedFile: File | null = null;
-        let mesh: MmdMesh | null = null;
+        let mesh: MmdStaticMesh | null = null;
         let isLoading = false;
 
         const parentDiv = canvas.parentElement!;
@@ -198,7 +205,7 @@ export class PmxConverterScene implements ISceneBuilder {
             for (const file of files) {
                 const item = document.createElement("li");
                 item.style.whiteSpace = "nowrap";
-                const fileRelativePath = (file as any).webkitRelativePath as string;
+                const fileRelativePath = file.webkitRelativePath as string;
                 item.textContent = fileRelativePath;
                 if (file.name.endsWith(".pmx")) {
                     item.style.color = "blue";
@@ -427,7 +434,7 @@ export class PmxConverterScene implements ISceneBuilder {
             isLoading = true;
             engine.displayLoadingUI();
 
-            const fileRelativePath = (selectedFile as any).webkitRelativePath as string;
+            const fileRelativePath = selectedFile.webkitRelativePath as string;
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
             const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files);
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
@@ -442,7 +449,6 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
         };
-
 
         engine.resize(true);
         return scene;

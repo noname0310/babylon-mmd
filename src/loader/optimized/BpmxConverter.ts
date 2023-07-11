@@ -235,7 +235,7 @@ export class BpmxConverter implements ILogger {
 
             pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
         } else {
-            const pmxFile = files.find((file) => (file as any).webkitRelativePath === urlOrFileName);
+            const pmxFile = files.find((file) => file.webkitRelativePath === urlOrFileName);
             if (pmxFile === undefined) {
                 throw new Error(`File ${urlOrFileName} not found`);
             }

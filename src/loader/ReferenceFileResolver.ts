@@ -19,7 +19,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
 
         if (files[0] instanceof File) {
             for (const file of files) {
-                const relativePath = (file as any).webkitRelativePath as string;
+                const relativePath = (file as File).webkitRelativePath as string;
                 this._fileMap.set(this._pathNormalize(relativePath), file);
             }
         } else {

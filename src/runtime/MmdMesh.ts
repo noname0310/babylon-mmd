@@ -9,6 +9,11 @@ export interface MmdMesh extends Mesh {
     morphTargetManager: MorphTargetManager;
 }
 
+export interface MmdStaticMesh extends Mesh {
+    metadata: MmdModelMetadata;
+    material: MmdMultiMaterial;
+}
+
 export interface MmdMultiMaterial extends MultiMaterial {
     subMaterials: Material[];
 }
@@ -34,6 +39,16 @@ export namespace MmdMesh {
         }
         if (mesh.skeleton === null) return false;
         if (mesh.morphTargetManager === null) return false;
+
+        return true;
+    }
+
+    export function isMmdStaticMesh(mesh: Mesh): mesh is MmdStaticMesh {
+        if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
+        if (mesh.material === null || !(mesh.material as MultiMaterial).subMaterials) return false;
+        for (const material of (mesh.material as MultiMaterial).subMaterials) {
+            if (material === null) return false;
+        }
 
         return true;
     }
