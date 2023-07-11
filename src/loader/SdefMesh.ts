@@ -200,23 +200,23 @@ export class SdefMesh extends Mesh {
 
                 // https://github.com/benikabocha/saba/blob/master/src/Saba/Model/MMD/PMXModel.cpp#L1032
                 auto& nodes = (*m_nodeMan.GetNodes());
-				const auto i0 = vtxInfo->m_sdef.m_boneIndex[0];
-				const auto i1 = vtxInfo->m_sdef.m_boneIndex[1];
-				const auto w0 = vtxInfo->m_sdef.m_boneWeight;
-				const auto w1 = 1.0f - w0;
-				const auto center = vtxInfo->m_sdef.m_sdefC;
-				const auto cr0 = vtxInfo->m_sdef.m_sdefR0;
-				const auto cr1 = vtxInfo->m_sdef.m_sdefR1;
-				const auto q0 = glm::quat_cast(nodes[i0]->GetGlobalTransform());
-				const auto q1 = glm::quat_cast(nodes[i1]->GetGlobalTransform());
-				const auto m0 = transforms[i0];
-				const auto m1 = transforms[i1];
+                const auto i0 = vtxInfo->m_sdef.m_boneIndex[0];
+                const auto i1 = vtxInfo->m_sdef.m_boneIndex[1];
+                const auto w0 = vtxInfo->m_sdef.m_boneWeight;
+                const auto w1 = 1.0f - w0;
+                const auto center = vtxInfo->m_sdef.m_sdefC;
+                const auto cr0 = vtxInfo->m_sdef.m_sdefR0;
+                const auto cr1 = vtxInfo->m_sdef.m_sdefR1;
+                const auto q0 = glm::quat_cast(nodes[i0]->GetGlobalTransform());
+                const auto q1 = glm::quat_cast(nodes[i1]->GetGlobalTransform());
+                const auto m0 = transforms[i0];
+                const auto m1 = transforms[i1];
 
-				const auto pos = *position + *morphPos;
-				const auto rot_mat = glm::mat3_cast(glm::slerp(q0, q1, w1));
+                const auto pos = *position + *morphPos;
+                const auto rot_mat = glm::mat3_cast(glm::slerp(q0, q1, w1));
 
-				*updatePosition = glm::mat3(rot_mat) * (pos - center) + glm::vec3(m0 * glm::vec4(cr0, 1)) * w0 + glm::vec3(m1 * glm::vec4(cr1, 1)) * w1;
-				*updateNormal = rot_mat * *normal;
+                *updatePosition = glm::mat3(rot_mat) * (pos - center) + glm::vec3(m0 * glm::vec4(cr0, 1)) * w0 + glm::vec3(m1 * glm::vec4(cr1, 1)) * w1;
+                *updateNormal = rot_mat * *normal;
 
                  */
                 const weight0 = matricesWeightsData[matWeightIdx + 0];
