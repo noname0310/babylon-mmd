@@ -1,7 +1,9 @@
 import type { Engine } from "@babylonjs/core";
 import { FreeCamera, Scene, Vector3 } from "@babylonjs/core";
 
-import { BvmdConverter, VmdLoader } from "..";
+import { BvmdConverter } from "@/loader/optimized/BvmdConverter";
+import { VmdLoader } from "@/loader/VmdLoader";
+
 import type { ISceneBuilder } from "./BaseRuntime";
 
 export class VmdConverterScene implements ISceneBuilder {
