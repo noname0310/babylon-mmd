@@ -1,6 +1,5 @@
 import type { Engine } from "@babylonjs/core";
 import { ArcRotateCamera, Color3, DirectionalLight, HemisphericLight, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
-import { Inspector } from "@babylonjs/inspector";
 
 import { BpmxConverter } from "@/loader/optimized/BpmxConverter";
 import { PmxLoader } from "@/loader/PmxLoader";
@@ -58,8 +57,6 @@ export class PmxConverterScene implements ISceneBuilder {
         SceneLoader.RegisterPlugin(pmxLoader);
 
         const scene = new Scene(engine);
-
-        Inspector.Show(scene, { });
 
         const camera = new ArcRotateCamera("camera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;

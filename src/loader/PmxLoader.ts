@@ -29,6 +29,7 @@ import {
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import type { MmdModelMetadata } from "./MmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
+import { ObjectUniqueIdProvider } from "./ObjectUniqueIdProvider";
 import type { ILogger } from "./parser/ILogger";
 import { PmxObject } from "./parser/PmxObject";
 import { PmxReader } from "./parser/PmxReader";
@@ -37,6 +38,7 @@ import { SdefMesh } from "./SdefMesh";
 
 interface LoadState {
     readonly arrayBuffer: ArrayBuffer;
+    readonly pmxFileId: string;
     readonly materialBuilder: IMmdMaterialBuilder;
     readonly useSdef: boolean;
     readonly buildSkeleton: boolean;
@@ -146,6 +148,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             (data, responseURL) => {
                 const loadState: LoadState = {
                     arrayBuffer: data as ArrayBuffer,
+                    pmxFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
                     useSdef,
                     buildSkeleton,
@@ -436,23 +439,24 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                mesh.uniqueId,
-                pmxObject.materials,
-                pmxObject.textures,
-                rootUrl,
-                state.referenceFiles,
-                scene,
-                assetContainer,
-                vertexData.indices as Uint16Array | Uint32Array,
-                vertexData.uvs as Float32Array,
-                multiMaterial,
+                mesh.uniqueId, // uniqueId
+                pmxObject.materials, // materialsInfo
+                pmxObject.textures, // texturePathTable
+                rootUrl, // rootUrl
+                "file:" + state.pmxFileId + "_", // fileRootId
+                state.referenceFiles, // referenceFiles
+                scene, // scene
+                assetContainer, // assetContainer
+                vertexData.indices as Uint16Array | Uint32Array, // indices
+                vertexData.uvs as Float32Array, // uvs
+                multiMaterial, // multiMaterial
                 (event) => {
                     if (!applyTextureLoading) return;
                     const loadedRatio = event.loaded / event.total;
                     progressEvent.loaded = lastStageLoaded + Math.floor(textureLoadCost * loadedRatio);
                     onProgress?.({...progressEvent});
-                },
-                () => resolve()
+                }, // onTextureLoadProgress
+                () => resolve() // onTextureLoadComplete
             );
         });
         if (buildMaterialsPromise !== undefined) {

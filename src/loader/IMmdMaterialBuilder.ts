@@ -12,6 +12,7 @@ export interface IMmdMaterialBuilder {
         materialsInfo: readonly MaterialInfo[],
         texturePathTable: readonly string[],
         rootUrl: string,
+        fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
         assetContainer: AssetContainer | null,

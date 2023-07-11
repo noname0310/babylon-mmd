@@ -165,6 +165,8 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
+        pmxLoader.buildSkeleton = false;
+        pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/stage/Stage35_02.bpmx",

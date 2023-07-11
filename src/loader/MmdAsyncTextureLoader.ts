@@ -314,7 +314,7 @@ export class MmdAsyncTextureLoader {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
         const finalRelativeTexturePath = isSharedToonTexture
-            ? "shared_toon_texture_" + relativeTexturePathOrIndex
+            ? "file:shared_toon_texture_" + relativeTexturePathOrIndex
             : relativeTexturePathOrIndex;
 
         const requestString = isSharedToonTexture

@@ -419,7 +419,7 @@ export class BpmxConverter implements ILogger {
             const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
 
             const textureLoader = new MmdAsyncTextureLoader();
-            const referenceFileResolver = new ReferenceFileResolver<File>(files ?? []);
+            const referenceFileResolver = new ReferenceFileResolver<File>(files ?? [], rootUrl, "");
             const promises: Promise<void>[] = [];
 
             const materials = pmxObject.materials;
@@ -428,13 +428,11 @@ export class BpmxConverter implements ILogger {
 
                 const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                 if (diffuseTexturePath !== undefined) {
-                    const diffuseTextureFullPath = rootUrl + diffuseTexturePath;
-
-                    const file = referenceFileResolver.resolve(diffuseTextureFullPath);
+                    const file = referenceFileResolver.resolve(diffuseTexturePath);
                     if (file !== undefined) {
                         promises.push(textureLoader.loadTextureFromBufferAsync(
                             0,
-                            diffuseTextureFullPath,
+                            diffuseTexturePath,
                             file,
                             scene,
                             null
@@ -456,13 +454,11 @@ export class BpmxConverter implements ILogger {
 
                 const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
-                    const sphereTextureFullPath = rootUrl + sphereTexturePath;
-
-                    const file = referenceFileResolver.resolve(sphereTextureFullPath);
+                    const file = referenceFileResolver.resolve(sphereTexturePath);
                     if (file !== undefined) {
                         promises.push(textureLoader.loadTextureFromBufferAsync(
                             0,
-                            sphereTextureFullPath,
+                            sphereTexturePath,
                             file,
                             scene,
                             null
@@ -484,13 +480,11 @@ export class BpmxConverter implements ILogger {
 
                 const toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
                 if (toonTexturePath !== undefined && !materialInfo.isSharedToonTexture) {
-                    const toonTextureFullPath = rootUrl + toonTexturePath;
-
-                    const file = referenceFileResolver.resolve(toonTextureFullPath);
+                    const file = referenceFileResolver.resolve(toonTexturePath);
                     if (file !== undefined) {
                         promises.push(textureLoader.loadTextureFromBufferAsync(
                             0,
-                            toonTextureFullPath,
+                            toonTexturePath,
                             file,
                             scene,
                             null

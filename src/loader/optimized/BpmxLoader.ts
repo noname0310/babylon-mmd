@@ -31,6 +31,7 @@ import {
 import type { IMmdMaterialBuilder } from "../IMmdMaterialBuilder";
 import type { MmdModelMetadata } from "../MmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "../MmdStandardMaterialBuilder";
+import { ObjectUniqueIdProvider } from "../ObjectUniqueIdProvider";
 import type { ILogger } from "../parser/ILogger";
 import { PmxObject } from "../parser/PmxObject";
 import { SdefBufferKind } from "../SdefBufferKind";
@@ -39,6 +40,7 @@ import { BpmxReader } from "./parser/BpmxReader";
 
 interface LoadState {
     readonly arrayBuffer: ArrayBuffer;
+    readonly pmxFileId: string;
     readonly materialBuilder: IMmdMaterialBuilder;
     readonly useSdef: boolean;
     readonly buildSkeleton: boolean;
@@ -144,6 +146,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
             (data, responseURL) => {
                 const loadState: LoadState = {
                     arrayBuffer: data as ArrayBuffer,
+                    pmxFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
                     useSdef,
                     buildSkeleton,
@@ -164,7 +167,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         scene: Scene,
         assetContainer: AssetContainer | null,
         state: LoadState,
-        _rootUrl: string,
+        rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<ISceneLoaderAsyncResult> {
         // duplicate with pmx loader is intentional
@@ -179,9 +182,9 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const parseCost = Math.floor(state.arrayBuffer.byteLength / 100);
         const buildGeometryCost = bpmxObject.geometry.indices.length;
         const buildMaterialCost = 100 * bpmxObject.materials.length;
-        const buildSkeletonCost = 100 * bpmxObject.bones.length;
+        const buildSkeletonCost = state.buildSkeleton ? 100 * bpmxObject.bones.length : 0;
         let buildMorphCost = 0;
-        {
+        if (state.buildMorph) {
             const morphsInfo = bpmxObject.morphs;
             for (let i = 0; i < morphsInfo.length; ++i) {
                 const morphInfo = morphsInfo[i];
@@ -258,23 +261,24 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                mesh.uniqueId,
-                bpmxObject.materials,
-                texturePathTable,
-                mesh.uniqueId + "_",
-                bpmxObject.textures,
-                scene,
-                assetContainer,
-                vertexData.indices as Uint16Array | Uint32Array,
-                vertexData.uvs as Float32Array,
-                multiMaterial,
+                mesh.uniqueId, // uniqueId
+                bpmxObject.materials, // materialsInfo
+                texturePathTable, // texturePathTable
+                rootUrl, // rootUrl
+                "file:" + state.pmxFileId + "_", // fileRootId
+                bpmxObject.textures, // referenceFiles
+                scene, // scene
+                assetContainer, // assetContainer
+                vertexData.indices as Uint16Array | Uint32Array, // indices
+                vertexData.uvs as Float32Array, // uvs
+                multiMaterial, // multiMaterial
                 (event) => {
                     if (!applyTextureLoading) return;
                     const loadedRatio = event.loaded / event.total;
                     progressEvent.loaded = lastStageLoaded + Math.floor(textureLoadCost * loadedRatio);
                     onProgress?.({...progressEvent});
-                },
-                () => resolve()
+                }, // onTextureLoadProgress
+                () => resolve() // onTextureLoadComplete
             );
         });
         if (buildMaterialsPromise !== undefined) {
