@@ -30,7 +30,7 @@ class IkChain {
     }
 }
 
-enum SolveAxis {
+const enum SolveAxis {
     X,
     Y,
     Z,
