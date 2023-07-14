@@ -1,5 +1,5 @@
 import type { Material, Mesh, Scene } from "@babylonjs/core";
-import { Logger } from "@babylonjs/core";
+import { Logger, Observable } from "@babylonjs/core";
 
 import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
 import type { IAudioPlayer } from "./audio/IAudioPlayer";
@@ -34,6 +34,11 @@ export class MmdRuntime implements ILogger {
 
     private _isRegistered: boolean;
 
+    public readonly onAnimationDurationChangedObservable: Observable<void>;
+    public readonly onPlayAnimationObservable: Observable<void>;
+    public readonly onPauseAnimationObservable: Observable<void>;
+    public readonly onSeekAnimationObservable: Observable<void>;
+
     private _currentFrameTime: number;
     private _animationTimeScale: number;
     private _animationPaused: boolean;
@@ -45,8 +50,8 @@ export class MmdRuntime implements ILogger {
     private _beforePhysicsBinded: (() => void) | null;
     private readonly _afterPhysicsBinded: () => void;
 
-    public constructor(physics?: MmdPhysics) {
-        this._physics = physics ?? null;
+    public constructor(physics: MmdPhysics | null = null) {
+        this._physics = physics;
 
         this._models = [];
         this._camera = null;
@@ -58,6 +63,11 @@ export class MmdRuntime implements ILogger {
         this.error = this._errorDisabled;
 
         this._isRegistered = false;
+
+        this.onAnimationDurationChangedObservable = new Observable<void>();
+        this.onPlayAnimationObservable = new Observable<void>();
+        this.onPauseAnimationObservable = new Observable<void>();
+        this.onSeekAnimationObservable = new Observable<void>();
 
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
@@ -194,6 +204,8 @@ export class MmdRuntime implements ILogger {
             if (this._animationDuration <= elapsedFrameTime) {
                 this._animationPaused = true;
                 this._currentFrameTime = this._animationDuration;
+
+                this.onPauseAnimationObservable.notifyObservers();
             }
 
             const models = this._models;
@@ -235,6 +247,8 @@ export class MmdRuntime implements ILogger {
         } else if (newAnimationDuration < this._animationDuration) {
             this._animationDuration = this._computeAnimationDuration();
         }
+
+        this.onAnimationDurationChangedObservable.notifyObservers();
     };
 
     private _computeAnimationDuration(): number {
@@ -261,6 +275,8 @@ export class MmdRuntime implements ILogger {
     private readonly _onAudioDurationChanged = (): void => {
         if (this._useManualAnimationDuration) return;
         this._animationDuration = this._computeAnimationDuration();
+
+        this.onAnimationDurationChangedObservable.notifyObservers();
     };
 
     private readonly _onAudioPlaybackRateChanged = (): void => {
@@ -274,6 +290,7 @@ export class MmdRuntime implements ILogger {
     private readonly _onAudioPause = (): void => {
         if (this._audioPlayer!.currentTime === this._audioPlayer!.duration) return;
         this._animationPaused = true;
+        this.onPauseAnimationObservable.notifyObservers();
     };
 
     private readonly _onAudioSeek = (): void => {
@@ -293,7 +310,11 @@ export class MmdRuntime implements ILogger {
 
         if (!this._useManualAnimationDuration && this._currentFrameTime === 0) {
             this._animationDuration = this._computeAnimationDuration();
+
+            this.onAnimationDurationChangedObservable.notifyObservers();
         }
+
+        this.onPlayAnimationObservable.notifyObservers();
     }
 
     public async playAnimation(): Promise<void> {
@@ -318,6 +339,7 @@ export class MmdRuntime implements ILogger {
             this._audioPlayer.pause();
         } else {
             this._animationPaused = true;
+            this.onPauseAnimationObservable.notifyObservers();
         }
     }
 
@@ -340,6 +362,8 @@ export class MmdRuntime implements ILogger {
             this.beforePhysics(0);
             this._animationPaused = originalPaused;
         }
+
+        this.onSeekAnimationObservable.notifyObservers();
     }
 
     public seekAnimation(frameTime: number, forceEvaluate: boolean = false): void {
@@ -401,6 +425,8 @@ export class MmdRuntime implements ILogger {
             this._useManualAnimationDuration = true;
             this._animationDuration = duration;
         }
+
+        this.onAnimationDurationChangedObservable.notifyObservers();
     }
 
     public get loggingEnabled(): boolean {
