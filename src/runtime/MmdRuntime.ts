@@ -14,6 +14,12 @@ export interface CreateMmdModelOptions {
     buildPhysics?: boolean;
 }
 
+const enum AnimationState {
+    Playing,
+    Paused,
+    Stopped
+}
+
 export class MmdRuntime implements ILogger {
     private readonly _physics: MmdPhysics | null;
 
@@ -31,15 +37,14 @@ export class MmdRuntime implements ILogger {
 
     private _isRegistered: boolean;
 
-    private _animationStartTime: number;
-    private _animationStopTime: number;
-
-    private _isAnimationPlaying: boolean;
+    private _currentFrameTime: number;
+    private _timeScale: number;
+    private _animationState: AnimationState;
 
     private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
-    private readonly _beforePhysicsBinded = this.beforePhysics.bind(this);
-    private readonly _afterPhysicsBinded = this.afterPhysics.bind(this);
+    private _beforePhysicsBinded: (() => void) | null;
+    private readonly _afterPhysicsBinded: () => void;
 
     public constructor(physics?: MmdPhysics) {
         this._physics = physics ?? null;
@@ -54,11 +59,14 @@ export class MmdRuntime implements ILogger {
 
         this._isRegistered = false;
 
-        this._animationStartTime = 0;
-        this._animationStopTime = -1;
-        this._isAnimationPlaying = false;
+        this._currentFrameTime = 0;
+        this._timeScale = 1;
+        this._animationState = AnimationState.Stopped;
 
         this._needToInitializePhysicsModels = new Set<MmdModel>();
+
+        this._beforePhysicsBinded = null;
+        this._afterPhysicsBinded = this.afterPhysics.bind(this);
     }
 
     public createMmdModel(
@@ -104,6 +112,8 @@ export class MmdRuntime implements ILogger {
         if (this._isRegistered) return;
         this._isRegistered = true;
 
+        this._beforePhysicsBinded = (): void => this.beforePhysics(scene.getEngine().getDeltaTime());
+
         scene.onBeforeAnimationsObservable.add(this._beforePhysicsBinded);
         scene.onBeforeRenderObservable.add(this._afterPhysicsBinded);
     }
@@ -112,14 +122,16 @@ export class MmdRuntime implements ILogger {
         if (!this._isRegistered) return;
         this._isRegistered = false;
 
-        scene.onBeforeAnimationsObservable.removeCallback(this._beforePhysicsBinded);
+        scene.onBeforeAnimationsObservable.removeCallback(this._beforePhysicsBinded!);
         scene.onBeforeRenderObservable.removeCallback(this._afterPhysicsBinded);
+
+        this._beforePhysicsBinded = null;
     }
 
-    public beforePhysics(): void {
-        if (this._isAnimationPlaying) {
-            const elapsed = performance.now() - this._animationStartTime;
-            const elapsedFrameTime = elapsed * 0.001 * 30;
+    public beforePhysics(deltaTime: number): void {
+        if (this._animationState === AnimationState.Playing) {
+            this._currentFrameTime += deltaTime / 1000 * 30 * this._timeScale;
+            const elapsedFrameTime = this._currentFrameTime;
             const models = this._models;
             for (let i = 0; i < models.length; ++i) {
                 models[i].beforePhysics(elapsedFrameTime);
@@ -150,11 +162,10 @@ export class MmdRuntime implements ILogger {
     }
 
     public playAnimation(): void {
-        if (this._isAnimationPlaying) return;
+        if (this._animationState === AnimationState.Playing) return;
 
-        this._animationStartTime = performance.now();
-        this._animationStopTime = -1;
-        this._isAnimationPlaying = true;
+        this._currentFrameTime = 0;
+        this._animationState = AnimationState.Playing;
 
         const models = this._models;
         for (let i = 0; i < this._models.length; ++i) {
@@ -165,34 +176,21 @@ export class MmdRuntime implements ILogger {
     }
 
     public stopAnimation(): void {
-        if (!this._isAnimationPlaying) return;
-
-        this._isAnimationPlaying = false;
+        this._animationState = AnimationState.Stopped;
     }
 
     public pauseAnimation(): void {
-        if (!this._isAnimationPlaying) return;
-
-        this._animationStopTime = performance.now();
-        this._isAnimationPlaying = false;
+        if (this._animationState !== AnimationState.Playing) return;
+        this._animationState = AnimationState.Paused;
     }
 
     public resumeAnimation(): void {
-        if (this._isAnimationPlaying) return;
-        if (this._animationStopTime === -1) return;
-
-        this._animationStartTime += performance.now() - this._animationStopTime;
-        this._animationStopTime = -1;
-        this._isAnimationPlaying = true;
+        if (this._animationState !== AnimationState.Paused) return;
+        this._animationState = AnimationState.Playing;
     }
 
-    public seekAnimation(frameTime: number): void {
-        if (!this._isAnimationPlaying) return;
-
-        const elapsed = performance.now() - this._animationStartTime;
-        const elapsedFrameTime = elapsed * 0.001 * 30;
-
-        if (2 * 30 < Math.abs(frameTime - elapsedFrameTime)) {
+    public seekAnimation(frameTime: number, forceEvaluate: boolean = false): void {
+        if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
             const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
             for (let i = 0; i < this._models.length; ++i) {
                 const model = this._models[i];
@@ -202,15 +200,42 @@ export class MmdRuntime implements ILogger {
             }
         }
 
-        this._animationStartTime = performance.now() - frameTime * 1000 / 30;
+        this._currentFrameTime = frameTime;
+
+        if (forceEvaluate) {
+            const originalAnimationState = this._animationState;
+            this._animationState = AnimationState.Playing;
+            this.beforePhysics(0);
+            this._animationState = originalAnimationState;
+        }
     }
 
     public get isAnimationPlaying(): boolean {
-        return this._isAnimationPlaying;
+        return this._animationState === AnimationState.Playing;
     }
 
     public get models(): readonly MmdModel[] {
         return this._models;
+    }
+
+    public get camera(): MmdCamera | null {
+        return this._camera;
+    }
+
+    public get timeScale(): number {
+        return this._timeScale;
+    }
+
+    public set timeScale(value: number) {
+        this._timeScale = value;
+    }
+
+    public get currentFrameTime(): number {
+        return this._currentFrameTime;
+    }
+
+    public get currentTime(): number {
+        return this._currentFrameTime / 30;
     }
 
     public get loggingEnabled(): boolean {
