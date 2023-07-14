@@ -1,4 +1,4 @@
-import { Observable } from "@babylonjs/core";
+import type { Observable } from "@babylonjs/core";
 
 export interface IAudioPlayer {
     readonly onLoadErrorObservable: Observable<void>;
@@ -10,7 +10,7 @@ export interface IAudioPlayer {
     readonly onSeekObservable: Observable<void>;
 
     get duration(): number;
-    
+
     get currentTime(): number;
     set currentTime(value: number);
     /** @internal */
