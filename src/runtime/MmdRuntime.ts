@@ -130,6 +130,8 @@ export class MmdRuntime implements ILogger {
     }
 
     public async setAudioPlayer(audioPlayer: IAudioPlayer | null): Promise<void> {
+        if (this._audioPlayer === audioPlayer) return;
+
         if (this._audioPlayer !== null) {
             this._audioPlayer.onDurationChangedObservable.removeCallback(this._onAudioDurationChanged);
             this._audioPlayer.onPlaybackRateChangedObservable.removeCallback(this._onAudioPlaybackRateChanged);
