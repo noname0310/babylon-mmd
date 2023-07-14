@@ -78,6 +78,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         canvas.onclick = (): void => {
             canvas.requestFullscreen();
+            audioPlayer.unmute();
         };
 
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
