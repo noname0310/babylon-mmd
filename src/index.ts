@@ -34,6 +34,10 @@ export { VmdLoader } from "@/loader/VmdLoader";
 // runtime/animation
 export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
 
+// runtime/audio
+export { IAudioPlayer } from "@/runtime/audio/IAudioPlayer";
+export { StreamAudioPlayer } from "@/runtime/audio/StreamAudioPlayer";
+
 // runtime
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
 export { MmdCamera } from "@/runtime/MmdCamera";
