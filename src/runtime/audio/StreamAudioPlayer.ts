@@ -43,14 +43,14 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._virtualPauseCurrentTime = 0;
         this._metadataLoaded = false;
 
-        audio.onloadedmetadata = this._onMetadataLoaded;
+        audio.ondurationchange = this._onDurationChanged;
         audio.onerror = this._onLoadError;
         audio.onplaying = this._onPlay;
         audio.onpause = this._onPause;
         audio.onseeked = this._onSeek;
     }
 
-    private readonly _onMetadataLoaded = (): void => {
+    private readonly _onDurationChanged = (): void => {
         this._duration = this._audio.duration;
 
         this._isVirtualPlay = false;
