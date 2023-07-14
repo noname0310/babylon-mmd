@@ -16,7 +16,6 @@ import {
     SceneLoader,
     ShadowGenerator,
     SkeletonViewer,
-    Sound,
     SSAORenderingPipeline,
     SSRRenderingPipeline,
     StandardMaterial,
@@ -30,6 +29,7 @@ import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBui
 import { BpmxLoader } from "@/loader/optimized/BpmxLoader";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
+import { AudioPlayer } from "@/runtime/audio/AudioPlayer";
 import { MmdCamera } from "@/runtime/MmdCamera";
 import { MmdPhysics } from "@/runtime/MmdPhysics";
 import { MmdRuntime } from "@/runtime/MmdRuntime";
@@ -38,8 +38,6 @@ import type { ISceneBuilder } from "./BaseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
-        await AudioPermissionSolver.Invoke();
-
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = new BpmxLoader();
         pmxLoader.loggingEnabled = true;
@@ -119,18 +117,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
-
-        const sound = new Sound("sound",
-            "res/private_test/motion/patchwork_staccato/pv_912.mp3",
-            scene, () => {
-                sound.setPlaybackRate(1.0);
-                sound.play();
-                mmdRuntime.playAnimation();
-            }, {
-                loop: false,
-                autoplay: false
-            }
-        );
 
         engine.displayLoadingUI();
 
@@ -214,6 +200,17 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         mmdRuntime.register(scene);
+
+        const audioPlayer = new AudioPlayer();
+        audioPlayer.preservesPitch = false;
+        audioPlayer.playbackRate = 0.5;
+        mmdRuntime.timeScale = 0.5;
+        audioPlayer.play("res/private_test/motion/patchwork_staccato/pv_912.mp3")
+            .then(() => {
+                mmdRuntime.playAnimation();
+            });
+
+        (globalThis as any).audioPlayer = audioPlayer;
 
         // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
         // groundRigidBody.shape = new PhysicsShapeBox(
@@ -420,39 +417,5 @@ class DirectionalLightHelper {
         makePlane("left",   new Color3(0, 0.3, 0),  [near4.x, near4.y, near4.z, far4.x, far4.y, far4.z, far3.x, far3.y, far3.z, near3.x, near3.y, near3.z ]);
         makePlane("top",    new Color3(0, 0, 1),    [near1.x, near1.y, near1.z, far1.x, far1.y, far1.z, far4.x, far4.y, far4.z, near4.x, near4.y, near4.z ]);
         makePlane("bottom", new Color3(0, 0, 0.3),  [near2.x, near2.y, near2.z, far2.x, far2.y, far2.z, far3.x, far3.y, far3.z, near3.x, near3.y, near3.z ]);
-    }
-}
-
-class AudioPermissionSolver {
-    public static async Invoke(): Promise<void> {
-        let audioTest: HTMLAudioElement|null = new Audio("res/audioTest.mp3");
-
-        try {
-            await audioTest.play();
-        } catch (error: unknown) {
-            if (error instanceof DOMException && error.name === "NotAllowedError") {
-                const button = document.createElement("button");
-                button.style.position = "absolute";
-                button.style.left = "0";
-                button.style.top = "0";
-                button.style.width = "100%";
-                button.style.height = "100%";
-                button.style.border = "none";
-                button.style.fontSize = "32px";
-                button.innerText = "Play";
-                document.body.appendChild(button);
-                await new Promise<void>((resolve): void => {
-                    button.onclick = (): void => {
-                        audioTest!.play();
-                        audioTest!.remove();
-                        audioTest = null;
-                        button.remove();
-                        resolve();
-                    };
-                });
-            } else {
-                throw error;
-            }
-        }
     }
 }
