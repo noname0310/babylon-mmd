@@ -271,6 +271,13 @@ export class MmdRuntime implements ILogger {
     };
 
     private _computeAnimationDuration(): number {
+        if (this._models.length === 0 &&
+            this._camera === null &&
+            (this._audioPlayer === null || !this._audioPlayer.metadataLoaded)
+        ) {
+            return Infinity;
+        }
+
         let duration = 0;
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {

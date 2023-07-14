@@ -36,6 +36,8 @@ export interface IAudioPlayer {
     get source(): string;
     set source(value: string);
 
+    get metadataLoaded(): boolean;
+
     play(): Promise<void>;
 
     pause(): void;

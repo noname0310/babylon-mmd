@@ -245,6 +245,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.load();
     }
 
+    public get metadataLoaded(): boolean {
+        return this._metadataLoaded;
+    }
+
     private async _virtualPlay(): Promise<void> {
         if (this._metadataLoaded) {
             if (this._virtualPaused) {
