@@ -118,6 +118,12 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
+        const audioPlayer = new AudioPlayer();
+        audioPlayer.preservesPitch = false;
+        audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
+        mmdRuntime.setAudioPlayer(audioPlayer);
+        (globalThis as any).audioPlayer = audioPlayer;
+
         engine.displayLoadingUI();
 
         let loadingTexts: string[] = [];
@@ -200,17 +206,8 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         mmdRuntime.register(scene);
-
-        const audioPlayer = new AudioPlayer();
-        audioPlayer.preservesPitch = false;
-        audioPlayer.playbackRate = 0.5;
-        mmdRuntime.timeScale = 0.5;
-        audioPlayer.play("res/private_test/motion/patchwork_staccato/pv_912.mp3")
-            .then(() => {
-                mmdRuntime.playAnimation();
-            });
-
-        (globalThis as any).audioPlayer = audioPlayer;
+        mmdRuntime.timeScale = 0.6;
+        mmdRuntime.playAnimation();
 
         // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
         // groundRigidBody.shape = new PhysicsShapeBox(

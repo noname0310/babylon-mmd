@@ -1,6 +1,7 @@
 import type { Material, Mesh, Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core";
 
+import type { IAudioPlayer } from "./audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdCamera } from "./MmdCamera";
@@ -14,17 +15,12 @@ export interface CreateMmdModelOptions {
     buildPhysics?: boolean;
 }
 
-const enum AnimationState {
-    Playing,
-    Paused,
-    Stopped
-}
-
 export class MmdRuntime implements ILogger {
     private readonly _physics: MmdPhysics | null;
 
     private readonly _models: MmdModel[];
     private _camera: MmdCamera | null;
+    private _audioPlayer: IAudioPlayer | null;
 
     private _loggingEnabled: boolean;
 
@@ -39,7 +35,7 @@ export class MmdRuntime implements ILogger {
 
     private _currentFrameTime: number;
     private _timeScale: number;
-    private _animationState: AnimationState;
+    private _paused: boolean;
 
     private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
@@ -51,6 +47,7 @@ export class MmdRuntime implements ILogger {
 
         this._models = [];
         this._camera = null;
+        this._audioPlayer = null;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -61,7 +58,7 @@ export class MmdRuntime implements ILogger {
 
         this._currentFrameTime = 0;
         this._timeScale = 1;
-        this._animationState = AnimationState.Stopped;
+        this._paused = true;
 
         this._needToInitializePhysicsModels = new Set<MmdModel>();
 
@@ -108,6 +105,21 @@ export class MmdRuntime implements ILogger {
         this._camera = camera;
     }
 
+    public setAudioPlayer(audioPlayer: IAudioPlayer): void {
+        if (this._audioPlayer !== null) {
+            this._audioPlayer.pause();
+            this._audioPlayer.onPlayObservable.removeCallback(this._onAudioPlay);
+            this._audioPlayer.onPauseObservable.removeCallback(this._onAudioPause);
+            this._audioPlayer.onSeekObservable.removeCallback(this._onAudioSeek);
+        }
+
+        this._audioPlayer = audioPlayer;
+        audioPlayer.onPlayObservable.add(this._onAudioPlay);
+        audioPlayer.onPauseObservable.add(this._onAudioPause);
+        audioPlayer.onSeekObservable.add(this._onAudioSeek);
+        audioPlayer._setPlaybackRateWithoutNotify(this._timeScale);
+    }
+
     public register(scene: Scene): void {
         if (this._isRegistered) return;
         this._isRegistered = true;
@@ -129,7 +141,7 @@ export class MmdRuntime implements ILogger {
     }
 
     public beforePhysics(deltaTime: number): void {
-        if (this._animationState === AnimationState.Playing) {
+        if (!this._paused) {
             this._currentFrameTime += deltaTime / 1000 * 30 * this._timeScale;
             const elapsedFrameTime = this._currentFrameTime;
             const models = this._models;
@@ -161,11 +173,23 @@ export class MmdRuntime implements ILogger {
         }
     }
 
-    public playAnimation(): void {
-        if (this._animationState === AnimationState.Playing) return;
+    private readonly _onAudioPlay = (): void => {
+        this._playAnimationInternal();
+    };
+
+    private readonly _onAudioPause = (): void => {
+        this._paused = true;
+    };
+
+    private readonly _onAudioSeek = (): void => {
+        this.seekAnimation(this._audioPlayer!.currentTime * 30);
+    };
+
+    private _playAnimationInternal(): void {
+        if (!this._paused) return;
+        this._paused = false;
 
         this._currentFrameTime = 0;
-        this._animationState = AnimationState.Playing;
 
         const models = this._models;
         for (let i = 0; i < this._models.length; ++i) {
@@ -175,18 +199,20 @@ export class MmdRuntime implements ILogger {
         }
     }
 
-    public stopAnimation(): void {
-        this._animationState = AnimationState.Stopped;
+    public playAnimation(): void {
+        if (this._audioPlayer !== null) {
+            this._audioPlayer.play();
+        } else {
+            this._playAnimationInternal();
+        }
     }
 
     public pauseAnimation(): void {
-        if (this._animationState !== AnimationState.Playing) return;
-        this._animationState = AnimationState.Paused;
-    }
-
-    public resumeAnimation(): void {
-        if (this._animationState !== AnimationState.Paused) return;
-        this._animationState = AnimationState.Playing;
+        if (this._audioPlayer !== null) {
+            this._audioPlayer.pause();
+        } else {
+            this._paused = true;
+        }
     }
 
     public seekAnimation(frameTime: number, forceEvaluate: boolean = false): void {
@@ -203,15 +229,15 @@ export class MmdRuntime implements ILogger {
         this._currentFrameTime = frameTime;
 
         if (forceEvaluate) {
-            const originalAnimationState = this._animationState;
-            this._animationState = AnimationState.Playing;
+            const originalPaused = this._paused;
+            this._paused = false;
             this.beforePhysics(0);
-            this._animationState = originalAnimationState;
+            this._paused = originalPaused;
         }
     }
 
     public get isAnimationPlaying(): boolean {
-        return this._animationState === AnimationState.Playing;
+        return !this._paused;
     }
 
     public get models(): readonly MmdModel[] {
@@ -222,12 +248,20 @@ export class MmdRuntime implements ILogger {
         return this._camera;
     }
 
+    public get audioPlayer(): IAudioPlayer | null {
+        return this._audioPlayer;
+    }
+
     public get timeScale(): number {
         return this._timeScale;
     }
 
     public set timeScale(value: number) {
         this._timeScale = value;
+
+        if (this._audioPlayer !== null) {
+            this._audioPlayer._setPlaybackRateWithoutNotify(value);
+        }
     }
 
     public get currentFrameTime(): number {
