@@ -151,7 +151,6 @@ export class SceneBuilder implements ISceneBuilder {
             playerContainer.onmouseleave = (): void => {
                 mouseLeaveTimeout = window.setTimeout(hidePlayerContainer, 3000);
             };
-            hidePlayerContainer();
 
             const playerInnerContainer = document.createElement("div");
             playerInnerContainer.style.position = "absolute";
@@ -255,7 +254,7 @@ export class SceneBuilder implements ISceneBuilder {
             const speedSlider = document.createElement("input");
             speedSlider.style.width = "80px";
             speedSlider.type = "range";
-            speedSlider.min = "0.01";
+            speedSlider.min = "0.07";
             speedSlider.max = "1";
             speedSlider.step = "0.01";
             speedSlider.value = mmdRuntime.timeScale.toString();
