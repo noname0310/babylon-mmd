@@ -6,6 +6,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
     public readonly onLoadErrorObservable: Observable<void>;
     public readonly onDurationChangedObservable: Observable<void>;
     public readonly onPlaybackRateChangedObservable: Observable<void>;
+    public readonly onMuteStateChangedObservable: Observable<void>;
 
     public readonly onPlayObservable: Observable<void>;
     public readonly onPauseObservable: Observable<void>;
@@ -25,6 +26,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
         this.onPlaybackRateChangedObservable = new Observable<void>();
+        this.onMuteStateChangedObservable = new Observable<void>();
 
         this.onPlayObservable = new Observable<void>();
         this.onPauseObservable = new Observable<void>();
@@ -53,7 +55,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
     private readonly _onDurationChanged = (): void => {
         this._duration = this._audio.duration;
 
-        this._isVirtualPlay = false;
+        if (this._isVirtualPlay) {
+            this._isVirtualPlay = false;
+            this.onMuteStateChangedObservable.notifyObservers();
+        }
         this._virtualPaused = true;
         this._virtualPauseCurrentTime = 0;
         this._metadataLoaded = true;
@@ -64,7 +69,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
     private readonly _onLoadError = (): void => {
         this._duration = 0;
 
-        this._isVirtualPlay = false;
+        if (this._isVirtualPlay) {
+            this._isVirtualPlay = false;
+            this.onMuteStateChangedObservable.notifyObservers();
+        }
         this._virtualPaused = true;
         this._virtualPauseCurrentTime = 0;
         this._metadataLoaded = false;
@@ -163,6 +171,8 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._virtualPaused = this._audio.paused;
         this._virtualPauseCurrentTime = this._audio.currentTime;
         this._audio.pause();
+
+        this.onMuteStateChangedObservable.notifyObservers();
     }
 
     public async unmute(): Promise<boolean> {
@@ -189,6 +199,8 @@ export class StreamAudioPlayer implements IAudioPlayer {
             this._isVirtualPlay = false;
             this._virtualPaused = true;
             this._virtualPauseCurrentTime = 0;
+
+            this.onMuteStateChangedObservable.notifyObservers();
             return true;
         }
 
@@ -236,7 +248,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.src = value;
         this._metadataLoaded = false;
 
-        this._isVirtualPlay = false;
+        if (this._isVirtualPlay) {
+            this._isVirtualPlay = false;
+            this.onMuteStateChangedObservable.notifyObservers();
+        }
         this._virtualPaused = true;
         this._virtualPauseCurrentTime = 0;
 
@@ -253,7 +268,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
                 this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
                 this._virtualPaused = false;
             }
-            this._isVirtualPlay = true;
+            if (!this._isVirtualPlay) {
+                this._isVirtualPlay = true;
+                this.onMuteStateChangedObservable.notifyObservers();
+            }
             this._onPlay();
         } else {
             await new Promise<void>((resolve, reject) => {
@@ -262,7 +280,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
                         this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
                         this._virtualPaused = false;
                     }
-                    this._isVirtualPlay = true;
+                    if (!this._isVirtualPlay) {
+                        this._isVirtualPlay = true;
+                        this.onMuteStateChangedObservable.notifyObservers();
+                    }
                     this._onPlay();
                     this.onLoadErrorObservable.removeCallback(onLoadError);
                     resolve();

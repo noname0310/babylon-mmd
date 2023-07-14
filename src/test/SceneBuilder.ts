@@ -224,15 +224,14 @@ export class SceneBuilder implements ISceneBuilder {
             soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
             soundButton.onclick = (): void => {
                 if (audioPlayer.muted) {
-                    audioPlayer.unmute()
-                        .then(isSuccess => {
-                            if (isSuccess) soundButton.innerText = "Mute";
-                        });
+                    audioPlayer.unmute();
                 } else {
                     audioPlayer.mute();
-                    soundButton.innerText = "Unmute";
                 }
             };
+            audioPlayer.onMuteStateChangedObservable.add(() => {
+                soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
+            });
             playerInnerContainer.appendChild(soundButton);
 
             const volumeSlider = document.createElement("input");
