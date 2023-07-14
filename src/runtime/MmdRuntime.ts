@@ -439,7 +439,7 @@ export class MmdRuntime implements ILogger {
         return this._currentFrameTime / 30;
     }
 
-    public get animationDuration(): number | null {
+    public get animationDuration(): number {
         return this._animationDuration;
     }
 
