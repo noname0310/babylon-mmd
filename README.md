@@ -36,7 +36,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want SDEF support, you can uncomment this line. This can save some performance.
     // pmxLoader.useSdef = false;
     
-    // you can create your own material builder and override the default one for custom shading
+    // You can create your own material builder and override the default one for custom shading
     const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
 
     // If you don't want sphere texture support, you can uncomment this line. This can save some performance.
@@ -82,8 +82,26 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     ground.receiveShadows = true;
     shadowGenerator.addShadowCaster(ground);
+    
+    // MMD runtime for solving morph, append transform, IK, animation, physics
+    const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
 
-    // use havok physics engine for rigid body/joint simulation
+    // Register update function to the scene
+    mmdRuntime.register(scene);
+    
+    // Or you can update manually
+    // scene.onBeforeAnimationsObservable.add(() => mmdRuntime.beforePhysics());
+    // scene.onBeforeRenderObservable.add(() => mmdRuntime.afterPhysics());
+    
+    // For synced audio playback
+    const audioPlayer = new StreamAudioPlayer();
+    audioPlayer.source = "your_audio_path.mp3";
+    mmdRuntime.setAudioPlayer(audioPlayer);
+    
+    // You can also run the animation before it loads. This will allow the audio to run first.
+    mmdRuntime.playAnimation();
+
+    // Use havok physics engine for rigid body/joint simulation
     const havokInstance = await HavokPhysics();
     const havokPlugin = new HavokPlugin(true, havokInstance);
     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
@@ -98,8 +116,6 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
     const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
 
-    // register the model to the MMD runtime for solving morph, append transform, IK, animation, physics
-    const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
     mmdRuntime.setCamera(camera);
     camera.addAnimation(cameraMotion);
     camera.setAnimation("camera_motion_1");
@@ -108,26 +124,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     mmdModel.addAnimation(modelMotion);
     mmdModel.setAnimation("model_motion_1");
 
-    // register update function to the scene
-    mmdRuntime.register(scene);
-    
-    // or you can update manually
-    // scene.onBeforeAnimationsObservable.add(() => mmdRuntime.beforePhysics());
-    // scene.onBeforeRenderObservable.add(() => mmdRuntime.afterPhysics());
-
-    // currently theres no audio sync support
-    const sound = new Sound("sound",
-        "your_audio_path.mp3",
-        scene, () => {
-            sound.play();
-            mmdRuntime.playAnimation();
-        }, {
-            loop: false,
-            autoplay: false
-        }
-    );
-
-    // for anti-aliasing
+    // For anti-aliasing
     const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
     defaultPipeline.samples = 4;
     defaultPipeline.fxaaEnabled = true;
@@ -213,7 +210,7 @@ const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 - [x] MMD morph system support
 - [x] Solve Append transform
 - [x] Solve IK
-- [ ] Play audio / sync with animation
+- [x] Play audio / sync with animation
 - [ ] Basic animation player UI
 
 **Physics Runtime**
