@@ -133,6 +133,7 @@ export class SceneBuilder implements ISceneBuilder {
             playerContainer.style.width = "100%";
             playerContainer.style.height = "60px";
             playerContainer.style.transition = "transform 0.5s";
+            playerContainer.style.overflow = "hidden";
             outerContainer.appendChild(playerContainer);
             const showPlayerContainer = (): void => {
                 playerContainer.style.transform = "translateY(0)";
