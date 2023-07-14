@@ -140,8 +140,17 @@ export class SceneBuilder implements ISceneBuilder {
             const hidePlayerContainer = (): void => {
                 playerContainer.style.transform = "translateY(50%)";
             };
-            playerContainer.onmouseenter = showPlayerContainer;
-            playerContainer.onmouseleave = hidePlayerContainer;
+            let mouseLeaveTimeout: number | null = null;
+            playerContainer.onmouseenter = (): void => {
+                if (mouseLeaveTimeout !== null) {
+                    window.clearTimeout(mouseLeaveTimeout);
+                    mouseLeaveTimeout = null;
+                }
+                showPlayerContainer();
+            };
+            playerContainer.onmouseleave = (): void => {
+                mouseLeaveTimeout = window.setTimeout(hidePlayerContainer, 3000);
+            };
             hidePlayerContainer();
 
             const playerInnerContainer = document.createElement("div");
