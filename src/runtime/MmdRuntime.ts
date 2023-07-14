@@ -129,8 +129,12 @@ export class MmdRuntime implements ILogger {
         this._camera = camera;
     }
 
+    private _setAudioPlayerLastValue: IAudioPlayer | null = null;
+
     public async setAudioPlayer(audioPlayer: IAudioPlayer | null): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
+
+        this._setAudioPlayerLastValue = audioPlayer;
 
         if (this._audioPlayer !== null) {
             this._audioPlayer.onDurationChangedObservable.removeCallback(this._onAudioDurationChanged);
@@ -141,13 +145,26 @@ export class MmdRuntime implements ILogger {
             this._audioPlayer.pause();
         }
 
+        this._audioPlayer = null;
         if (audioPlayer === null) return;
 
-        this._audioPlayer = null;
         if (!this._animationPaused) {
-            if (this._currentFrameTime < this._animationDuration) {
+            const audioFrameTimeDuration = audioPlayer.duration * 30;
+            if (this._currentFrameTime < audioFrameTimeDuration) {
+                if (this._animationDuration < audioFrameTimeDuration) {
+                    this._animationDuration = audioFrameTimeDuration;
+                } else {
+                    this._animationDuration = this._computeAnimationDuration();
+                }
+
+                this.onAnimationDurationChangedObservable.notifyObservers();
+
                 audioPlayer.currentTime = this._currentFrameTime / 30;
                 await audioPlayer.play();
+                if (this._setAudioPlayerLastValue !== audioPlayer) {
+                    audioPlayer.pause();
+                    return;
+                }
             }
         }
         this._audioPlayer = audioPlayer;
