@@ -206,8 +206,6 @@ export class StreamAudioPlayer implements IAudioPlayer {
 
     /** @internal */
     public _setPlaybackRateWithoutNotify(value: number): void {
-        if (value < 0) throw new RangeError("playbackRate must be greater than or equal to 0");
-
         this._playbackRate = value;
         this._audio.playbackRate = value;
     }
