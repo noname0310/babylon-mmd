@@ -1,5 +1,12 @@
 import { Observable } from "@babylonjs/core";
 
+const enum AudioPlayerState {
+    Playing,
+    Paused,
+    Stopped,
+    Disposed,
+}
+
 export class AudioPlayer {
     public onAudioDataChangedObservable: Observable<void>;
     public onDurationChangedObservable: Observable<void>;
@@ -11,6 +18,9 @@ export class AudioPlayer {
 
     private readonly _audio: HTMLAudioElement;
     private _duration: number;
+    private _playbackRate: number;
+
+    private _state: AudioPlayerState;
 
     public constructor() {
         this.onAudioDataChangedObservable = new Observable<void>();
@@ -26,6 +36,9 @@ export class AudioPlayer {
         audio.autoplay = false;
 
         this._duration = Infinity;
+        this._playbackRate = 1;
+
+        this._state = AudioPlayerState.Stopped;
 
         audio.onloadedmetadata = this._onMetadataLoaded;
     }
@@ -57,11 +70,20 @@ export class AudioPlayer {
     }
 
     public get playbackRate(): number {
-        return this._audio.playbackRate;
+        return this._playbackRate;
     }
 
     public set playbackRate(value: number) {
+        this._playbackRate = value;
         this._audio.playbackRate = value;
+    }
+
+    public get preservesPitch(): boolean {
+        return this._audio.preservesPitch;
+    }
+
+    public set preservesPitch(value: boolean) {
+        this._audio.preservesPitch = value;
     }
 
     public get isPlaying(): boolean {
@@ -69,19 +91,62 @@ export class AudioPlayer {
     }
 
     public async play(source: string): Promise<void> {
+        if (this._state === AudioPlayerState.Playing) {
+            this.stop();
+        }
+
         this._audio.src = source;
 
         try {
             await this._audio.play();
+            this._audio.playbackRate = this._playbackRate;
+            this._state = AudioPlayerState.Playing;
             this.onPlayObservable.notifyObservers();
         } catch (e) {
             if (e instanceof DOMException && e.name === "NotAllowedError") {
                 this._audio.muted = true;
-                this._audio.play();
+                await this._audio.play();
+                this._audio.playbackRate = this._playbackRate;
+                this._state = AudioPlayerState.Playing;
                 this.onPlayObservable.notifyObservers();
             } else {
                 throw e;
             }
         }
+    }
+
+    public pause(): void {
+        if (this._state !== AudioPlayerState.Playing) return;
+
+        this._audio.pause();
+        this._state = AudioPlayerState.Paused;
+        this.onPauseObservable.notifyObservers();
+    }
+
+    public stop(): void {
+        if (this._state === AudioPlayerState.Stopped) return;
+
+        this._audio.pause();
+        this._audio.currentTime = 0;
+        this._state = AudioPlayerState.Stopped;
+        this.onStopObservable.notifyObservers();
+    }
+
+    public dispose(): void {
+        this._audio.pause();
+        this._audio.src = "";
+
+        this.onAudioDataChangedObservable.clear();
+        this.onDurationChangedObservable.clear();
+
+        this.onPlayObservable.clear();
+        this.onPauseObservable.clear();
+        this.onStopObservable.clear();
+        this.onSeekObservable.clear();
+
+        this._audio.onloadedmetadata = null;
+        this._audio.remove();
+
+        this._state = AudioPlayerState.Disposed;
     }
 }
