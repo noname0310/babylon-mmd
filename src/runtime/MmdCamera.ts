@@ -1,5 +1,5 @@
 import type { Scene } from "@babylonjs/core";
-import { Camera, Matrix, Vector3 } from "@babylonjs/core";
+import { Camera, Matrix, Observable, Vector3 } from "@babylonjs/core";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 
@@ -16,6 +16,7 @@ export class MmdCamera extends Camera {
     private readonly _tmpUpVector = Vector3.Zero();
     private readonly _tmpTargetVector = Vector3.Zero();
 
+    public readonly onCurrentAnimationChangedObservable: Observable<MmdRuntimeCameraAnimation | null>;
     private readonly _animations: MmdRuntimeCameraAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
@@ -27,6 +28,7 @@ export class MmdCamera extends Camera {
         // mmd default fov
         this.fov = 30 * (Math.PI / 180);
 
+        this.onCurrentAnimationChangedObservable = new Observable<MmdRuntimeCameraAnimation | null>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -49,7 +51,10 @@ export class MmdCamera extends Camera {
 
     public setAnimation(name: string | null): void {
         if (name === null) {
-            this._currentAnimation = null;
+            if (this._currentAnimation !== null) {
+                this._currentAnimation = null;
+                this.onCurrentAnimationChangedObservable.notifyObservers(null);
+            }
             return;
         }
 
@@ -59,10 +64,15 @@ export class MmdCamera extends Camera {
         }
 
         this._currentAnimation = this._animations[index];
+        this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
     }
 
     public get runtimeAnimations(): readonly MmdRuntimeCameraAnimation[] {
         return this._animations;
+    }
+
+    public get currentAnimation(): MmdRuntimeCameraAnimation | null {
+        return this._currentAnimation;
     }
 
     public animate(frameTime: number): void {

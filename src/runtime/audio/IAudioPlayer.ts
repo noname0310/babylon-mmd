@@ -1,17 +1,20 @@
 import { Observable } from "@babylonjs/core";
 
 export interface IAudioPlayer {
-    onDurationChangedObservable: Observable<void>;
-    onPlaybackRateChangedObservable: Observable<void>;
+    readonly onLoadErrorObservable: Observable<void>;
+    readonly onDurationChangedObservable: Observable<void>;
+    readonly onPlaybackRateChangedObservable: Observable<void>;
 
-    onPlayObservable: Observable<void>;
-    onPauseObservable: Observable<void>;
-    onSeekObservable: Observable<void>;
+    readonly onPlayObservable: Observable<void>;
+    readonly onPauseObservable: Observable<void>;
+    readonly onSeekObservable: Observable<void>;
 
     get duration(): number;
     
     get currentTime(): number;
     set currentTime(value: number);
+    /** @internal */
+    _setCurrentTimeWithoutNotify(value: number): void;
 
     get volume(): number;
     set volume(value: number);
@@ -22,6 +25,7 @@ export interface IAudioPlayer {
 
     get playbackRate(): number;
     set playbackRate(value: number);
+    /** @internal */
     _setPlaybackRateWithoutNotify(value: number): void;
 
     get preservesPitch(): boolean;

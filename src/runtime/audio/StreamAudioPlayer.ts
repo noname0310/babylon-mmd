@@ -2,13 +2,14 @@ import { Observable } from "@babylonjs/core";
 
 import type { IAudioPlayer } from "./IAudioPlayer";
 
-export class AudioPlayer implements IAudioPlayer {
-    public onDurationChangedObservable: Observable<void>;
-    public onPlaybackRateChangedObservable: Observable<void>;
+export class StreamAudioPlayer implements IAudioPlayer {
+    public readonly onLoadErrorObservable: Observable<void>;
+    public readonly onDurationChangedObservable: Observable<void>;
+    public readonly onPlaybackRateChangedObservable: Observable<void>;
 
-    public onPlayObservable: Observable<void>;
-    public onPauseObservable: Observable<void>;
-    public onSeekObservable: Observable<void>;
+    public readonly onPlayObservable: Observable<void>;
+    public readonly onPauseObservable: Observable<void>;
+    public readonly onSeekObservable: Observable<void>;
 
     private readonly _audio: HTMLAudioElement;
     private _duration: number;
@@ -21,6 +22,7 @@ export class AudioPlayer implements IAudioPlayer {
     private _metadataLoaded: boolean;
 
     public constructor() {
+        this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
         this.onPlaybackRateChangedObservable = new Observable<void>();
 
@@ -32,7 +34,7 @@ export class AudioPlayer implements IAudioPlayer {
         audio.loop = false;
         audio.autoplay = false;
 
-        this._duration = Infinity;
+        this._duration = 0;
         this._playbackRate = 1;
 
         this._isVirtualPlay = false;
@@ -42,7 +44,8 @@ export class AudioPlayer implements IAudioPlayer {
         this._metadataLoaded = false;
 
         audio.onloadedmetadata = this._onMetadataLoaded;
-        audio.onplay = this._onPlay;
+        audio.onerror = this._onLoadError;
+        audio.onplaying = this._onPlay;
         audio.onpause = this._onPause;
         audio.onseeked = this._onSeek;
     }
@@ -58,6 +61,18 @@ export class AudioPlayer implements IAudioPlayer {
         this.onDurationChangedObservable.notifyObservers();
     };
 
+    private readonly _onLoadError = (): void => {
+        this._duration = 0;
+
+        this._isVirtualPlay = false;
+        this._virtualPaused = true;
+        this._virtualPauseCurrentTime = 0;
+        this._metadataLoaded = false;
+
+        this.onLoadErrorObservable.notifyObservers();
+        this.onDurationChangedObservable.notifyObservers();
+    };
+
     private readonly _onPlay = (): void => {
         if (!this._isVirtualPlay) {
             this._audio.playbackRate = this._playbackRate;
@@ -66,10 +81,22 @@ export class AudioPlayer implements IAudioPlayer {
     };
 
     private readonly _onPause = (): void => {
-        this.onPauseObservable.notifyObservers();
+        if (!this._isVirtualPlay) {
+            this.onPauseObservable.notifyObservers();
+        } else {
+            if (this._virtualPaused) {
+                this.onPauseObservable.notifyObservers();
+            }
+        }
     };
 
+    private _ignoreSeekedEventOnce = false;
+
     private readonly _onSeek = (): void => {
+        if (this._ignoreSeekedEventOnce) {
+            this._ignoreSeekedEventOnce = false;
+            return;
+        }
         this.onSeekObservable.notifyObservers();
     };
 
@@ -106,6 +133,16 @@ export class AudioPlayer implements IAudioPlayer {
         }
     }
 
+    /** @internal */
+    public _setCurrentTimeWithoutNotify(value: number): void {
+        if (this._isVirtualPlay) {
+            this._virtualStartTime = performance.now() / 1000 - value / this._playbackRate;
+        } else {
+            this._ignoreSeekedEventOnce = true;
+            this._audio.currentTime = value;
+        }
+    }
+
     public get volume(): number {
         return this._audio.volume;
     }
@@ -133,13 +170,11 @@ export class AudioPlayer implements IAudioPlayer {
 
         let notAllowedError = false;
 
-        this._audio.onseeked = null;
+        this._ignoreSeekedEventOnce = true;
         if (this._virtualPaused) {
             this._audio.currentTime = this._virtualPauseCurrentTime;
-            this._audio.onseeked = this._onSeek;
         } else {
             this._audio.currentTime = (performance.now() / 1000 - this._virtualStartTime) * this._playbackRate;
-            this._audio.onseeked = this._onSeek;
 
             try {
                 await this._audio.play();
@@ -202,12 +237,59 @@ export class AudioPlayer implements IAudioPlayer {
 
         this._audio.src = value;
         this._metadataLoaded = false;
+
+        this._isVirtualPlay = false;
+        this._virtualPaused = true;
+        this._virtualPauseCurrentTime = 0;
+
+        this._audio.load();
+    }
+
+    private async _virtualPlay(): Promise<void> {
+        if (this._metadataLoaded) {
+            if (this._virtualPaused) {
+                this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
+                this._virtualPaused = false;
+            }
+            this._isVirtualPlay = true;
+            this._onPlay();
+        } else {
+            await new Promise<void>((resolve, reject) => {
+                const onDurationChanged = (): void => {
+                    if (this._virtualPaused) {
+                        this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
+                        this._virtualPaused = false;
+                    }
+                    this._isVirtualPlay = true;
+                    this._onPlay();
+                    this.onLoadErrorObservable.removeCallback(onLoadError);
+                    resolve();
+                };
+
+                const onLoadError = (): void => {
+                    this.onDurationChangedObservable.removeCallback(onDurationChanged);
+
+                    reject(new DOMException(
+                        "The media resource indicated by the src attribute or assigned media provider object was not suitable.",
+                        "NotSupportedError"
+                    ));
+                };
+
+                this.onDurationChangedObservable.addOnce(onDurationChanged);
+                this.onLoadErrorObservable.addOnce(onLoadError);
+            });
+        }
     }
 
     private _playRequestBlocking = false;
 
     public async play(): Promise<void> {
         if (this._isVirtualPlay && !this._virtualPaused) return;
+
+        if (this._isVirtualPlay) {
+            await this._virtualPlay();
+            return;
+        }
 
         if (this._playRequestBlocking) return;
         this._playRequestBlocking = true;
@@ -216,26 +298,7 @@ export class AudioPlayer implements IAudioPlayer {
             await this._audio.play();
         } catch (e) {
             if (e instanceof DOMException && e.name === "NotAllowedError") {
-                if (this._metadataLoaded) {
-                    if (this._virtualPaused) {
-                        this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
-                        this._virtualPaused = false;
-                    }
-                    this._isVirtualPlay = true;
-                    this._onPlay();
-                } else {
-                    await new Promise<void>((resolve) => {
-                        this.onDurationChangedObservable.addOnce(() => {
-                            if (this._virtualPaused) {
-                                this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
-                                this._virtualPaused = false;
-                            }
-                            this._isVirtualPlay = true;
-                            this._onPlay();
-                            resolve();
-                        });
-                    });
-                }
+                await this._virtualPlay();
             } else {
                 throw e;
             }

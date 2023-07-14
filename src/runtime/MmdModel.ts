@@ -1,5 +1,5 @@
 import type { Bone, Material, Matrix, Nullable, Skeleton } from "@babylonjs/core";
-import { Vector3 } from "@babylonjs/core";
+import { Observable, Vector3 } from "@babylonjs/core";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
@@ -26,6 +26,7 @@ export class MmdModel {
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
+    public readonly onCurrentAnimationChangedObservable: Observable<MmdRuntimeModelAnimation | null>;
     private readonly _animations: MmdRuntimeModelAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
@@ -91,6 +92,7 @@ export class MmdModel {
             this._physicsModel = null;
         }
 
+        this.onCurrentAnimationChangedObservable = new Observable<MmdRuntimeModelAnimation | null>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -100,6 +102,7 @@ export class MmdModel {
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this._physicsModel?.dispose();
+        this.onCurrentAnimationChangedObservable.clear();
     }
 
     public get sortedRuntimeBones(): readonly IMmdRuntimeBone[] {
@@ -122,7 +125,10 @@ export class MmdModel {
 
     public setAnimation(name: string | null): void {
         if (name === null) {
-            this._currentAnimation = null;
+            if (this._currentAnimation !== null) {
+                this._currentAnimation = null;
+                this.onCurrentAnimationChangedObservable.notifyObservers(null);
+            }
             return;
         }
 
@@ -133,6 +139,7 @@ export class MmdModel {
 
         const animation = this._currentAnimation = this._animations[index];
         animation.induceMaterialRecompile(this._logger);
+        this.onCurrentAnimationChangedObservable.notifyObservers(animation);
     }
 
     public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {

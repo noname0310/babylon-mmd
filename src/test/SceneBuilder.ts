@@ -29,7 +29,7 @@ import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBui
 import { BpmxLoader } from "@/loader/optimized/BpmxLoader";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
-import { AudioPlayer } from "@/runtime/audio/AudioPlayer";
+import { StreamAudioPlayer } from "@/runtime/audio/StreamAudioPlayer";
 import { MmdCamera } from "@/runtime/MmdCamera";
 import { MmdPhysics } from "@/runtime/MmdPhysics";
 import { MmdRuntime } from "@/runtime/MmdRuntime";
@@ -118,11 +118,16 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
-        const audioPlayer = new AudioPlayer();
+        const audioPlayer = new StreamAudioPlayer();
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
         (globalThis as any).audioPlayer = audioPlayer;
+        (globalThis as any).mmdRuntime = mmdRuntime;
+
+        mmdRuntime.register(scene);
+        mmdRuntime.timeScale = 0.6;
+        mmdRuntime.playAnimation();
 
         engine.displayLoadingUI();
 
@@ -204,10 +209,6 @@ export class SceneBuilder implements ISceneBuilder {
             });
             viewer.isEnabled = false;
         }
-
-        mmdRuntime.register(scene);
-        mmdRuntime.timeScale = 0.6;
-        mmdRuntime.playAnimation();
 
         // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
         // groundRigidBody.shape = new PhysicsShapeBox(
