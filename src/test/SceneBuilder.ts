@@ -122,12 +122,10 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
-        (globalThis as any).audioPlayer = audioPlayer;
-        (globalThis as any).mmdRuntime = mmdRuntime;
 
         mmdRuntime.register(scene);
-        mmdRuntime.timeScale = 0.6;
         mmdRuntime.playAnimation();
+        mmdRuntime.timeScale = 0.9;
 
         engine.displayLoadingUI();
 
