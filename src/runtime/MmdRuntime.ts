@@ -344,7 +344,7 @@ export class MmdRuntime implements ILogger {
     }
 
     public async playAnimation(): Promise<void> {
-        if (this._audioPlayer !== null) {
+        if (this._audioPlayer !== null && this._currentFrameTime <= this._audioPlayer.duration * 30) {
             try {
                 await this._audioPlayer.play();
             } catch (e) {
@@ -361,7 +361,7 @@ export class MmdRuntime implements ILogger {
     }
 
     public pauseAnimation(): void {
-        if (this._audioPlayer !== null) {
+        if (this._audioPlayer !== null && !this._audioPlayer.paused) {
             this._audioPlayer.pause();
         } else {
             this._animationPaused = true;
@@ -392,14 +392,30 @@ export class MmdRuntime implements ILogger {
         this.onSeekAnimationObservable.notifyObservers();
     }
 
-    public seekAnimation(frameTime: number, forceEvaluate: boolean = false): void {
+    public async seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void> {
         frameTime = Math.max(0, Math.min(frameTime, this._animationDuration));
 
-        if (this._audioPlayer !== null && !this._audioPlayer.paused) {
-            this._audioPlayer.currentTime = frameTime / 30;
+        if (this._audioPlayer !== null) {
+            if (!this._audioPlayer.paused) {
+                this._audioPlayer.currentTime = frameTime / 30;
+            } else if (!this._animationPaused && frameTime < this._audioPlayer.duration * 30) {
+                try {
+                    this._audioPlayer._setCurrentTimeWithoutNotify(frameTime / 30);
+                    await this._audioPlayer.play();
+                } catch (e) {
+                    if (e instanceof DOMException && e.name === "NotSupportedError") {
+                        this.error("Failed to play audio.");
+                        this._seekAnimationInternal(frameTime, forceEvaluate);
+                    } else {
+                        throw e;
+                    }
+                }
+            } else {
+                this._seekAnimationInternal(frameTime, forceEvaluate);
+                this._audioPlayer?._setCurrentTimeWithoutNotify(frameTime / 30);
+            }
         } else {
             this._seekAnimationInternal(frameTime, forceEvaluate);
-            this._audioPlayer?._setCurrentTimeWithoutNotify(frameTime / 30);
         }
     }
 
