@@ -126,7 +126,7 @@ export class SceneBuilder implements ISceneBuilder {
             playerContainer.style.bottom = "0";
             playerContainer.style.left = "0";
             playerContainer.style.width = "100%";
-            playerContainer.style.height = "60px";
+            playerContainer.style.height = "120px";
             playerContainer.style.transition = "transform 0.5s";
             playerContainer.style.overflow = "hidden";
             outerContainer.appendChild(playerContainer);
@@ -154,43 +154,26 @@ export class SceneBuilder implements ISceneBuilder {
             playerInnerContainer.style.left = "0";
             playerInnerContainer.style.width = "100%";
             playerInnerContainer.style.height = "50%";
-            playerInnerContainer.style.padding = "0 5px";
             playerInnerContainer.style.boxSizing = "border-box";
-            playerInnerContainer.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+            playerInnerContainer.style.background = "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3))";
             playerInnerContainer.style.display = "flex";
-            playerInnerContainer.style.flexDirection = "row";
-            playerInnerContainer.style.alignItems = "center";
+            playerInnerContainer.style.flexDirection = "column";
             playerContainer.appendChild(playerInnerContainer);
 
-            const playButton = document.createElement("button");
-            playButton.style.width = "80px";
-            playButton.style.border = "none";
-            playButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
-            playButton.style.color = "white";
-            playButton.innerText = mmdRuntime.isAnimationPlaying ? "Pause" : "Play";
-            playButton.onclick = (): void => {
-                if (mmdRuntime.isAnimationPlaying) mmdRuntime.pauseAnimation();
-                else mmdRuntime.playAnimation();
-            };
-            mmdRuntime.onPlayAnimationObservable.add(() => {
-                playButton.innerText = "Pause";
-            });
-            mmdRuntime.onPauseAnimationObservable.add(() => {
-                playButton.innerText = "Play";
-            });
-            playerInnerContainer.appendChild(playButton);
-
-            const frameNumber = document.createElement("span");
-            frameNumber.style.width = "70px";
-            frameNumber.style.textAlign = "center";
-            frameNumber.style.color = "white";
-            engine.onBeginFrameObservable.add(() => {
-                frameNumber.innerText = Math.floor(mmdRuntime.currentFrameTime).toString();
-            });
-            playerInnerContainer.appendChild(frameNumber);
+            const playerUpperContainer = document.createElement("div");
+            playerUpperContainer.style.width = "100%";
+            playerUpperContainer.style.flex = "1";
+            playerUpperContainer.style.boxSizing = "border-box";
+            playerUpperContainer.style.display = "flex";
+            playerUpperContainer.style.flexDirection = "row";
+            playerUpperContainer.style.alignItems = "center";
+            playerInnerContainer.appendChild(playerUpperContainer);
 
             const timeSlider = document.createElement("input");
-            timeSlider.style.flex = "10";
+            timeSlider.style.width = "100%";
+            timeSlider.style.height = "4px";
+            timeSlider.style.border = "none";
+            timeSlider.style.opacity = "0.5";
             timeSlider.type = "range";
             timeSlider.min = "0";
             timeSlider.max = mmdRuntime.animationDuration.toString();
@@ -217,7 +200,43 @@ export class SceneBuilder implements ISceneBuilder {
                     isPlaySeeking = false;
                 }
             };
-            playerInnerContainer.appendChild(timeSlider);
+            playerUpperContainer.appendChild(timeSlider);
+
+            const playerLowerContainer = document.createElement("div");
+            playerLowerContainer.style.width = "100%";
+            playerLowerContainer.style.flex = "3";
+            playerLowerContainer.style.padding = "0 5px";
+            playerLowerContainer.style.boxSizing = "border-box";
+            playerLowerContainer.style.display = "flex";
+            playerLowerContainer.style.flexDirection = "row";
+            playerLowerContainer.style.alignItems = "space-between";
+            playerInnerContainer.appendChild(playerLowerContainer);
+
+            const playerLowerLeftContainer = document.createElement("div");
+            playerLowerLeftContainer.style.flex = "1";
+            playerLowerLeftContainer.style.display = "flex";
+            playerLowerLeftContainer.style.flexDirection = "row";
+            playerLowerLeftContainer.style.alignItems = "center";
+            playerLowerContainer.appendChild(playerLowerLeftContainer);
+
+            const playButton = document.createElement("button");
+            playButton.style.width = "40px";
+            playButton.style.border = "none";
+            playButton.style.backgroundColor = "rgba(0, 0, 0, 0)";
+            playButton.style.color = "white";
+            playButton.style.fontSize = "18px";
+            playButton.innerText = mmdRuntime.isAnimationPlaying ? "❚❚" : "▶";
+            playButton.onclick = (): void => {
+                if (mmdRuntime.isAnimationPlaying) mmdRuntime.pauseAnimation();
+                else mmdRuntime.playAnimation();
+            };
+            mmdRuntime.onPlayAnimationObservable.add(() => {
+                playButton.innerText = "❚❚";
+            });
+            mmdRuntime.onPauseAnimationObservable.add(() => {
+                playButton.innerText = "▶";
+            });
+            playerLowerLeftContainer.appendChild(playButton);
 
             const soundButton = document.createElement("button");
             soundButton.style.width = "60px";
@@ -235,10 +254,13 @@ export class SceneBuilder implements ISceneBuilder {
             audioPlayer.onMuteStateChangedObservable.add(() => {
                 soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
             });
-            playerInnerContainer.appendChild(soundButton);
+            playerLowerLeftContainer.appendChild(soundButton);
 
             const volumeSlider = document.createElement("input");
             volumeSlider.style.width = "80px";
+            volumeSlider.style.height = "4px";
+            volumeSlider.style.border = "none";
+            volumeSlider.style.opacity = "0.5";
             volumeSlider.type = "range";
             volumeSlider.min = "0";
             volumeSlider.max = "1";
@@ -247,16 +269,36 @@ export class SceneBuilder implements ISceneBuilder {
             volumeSlider.oninput = (): void => {
                 audioPlayer.volume = Number(volumeSlider.value);
             };
-            playerInnerContainer.appendChild(volumeSlider);
+            playerLowerLeftContainer.appendChild(volumeSlider);
+
+            const frameNumber = document.createElement("span");
+            frameNumber.style.width = "60px";
+            frameNumber.style.textAlign = "center";
+            frameNumber.style.color = "white";
+            engine.onBeginFrameObservable.add(() => {
+                frameNumber.innerText = Math.floor(mmdRuntime.currentFrameTime).toString();
+            });
+            playerLowerLeftContainer.appendChild(frameNumber);
+
+            const playerLowerRightContainer = document.createElement("div");
+            playerLowerRightContainer.style.flex = "1";
+            playerLowerRightContainer.style.display = "flex";
+            playerLowerRightContainer.style.flexDirection = "row";
+            playerLowerRightContainer.style.alignItems = "center";
+            playerLowerRightContainer.style.justifyContent = "flex-end";
+            playerLowerContainer.appendChild(playerLowerRightContainer);
 
             const speedLabel = document.createElement("label");
             speedLabel.style.width = "40px";
             speedLabel.style.textAlign = "center";
             speedLabel.style.color = "white";
             speedLabel.innerText = "1.00x";
-            playerInnerContainer.appendChild(speedLabel);
+            playerLowerRightContainer.appendChild(speedLabel);
             const speedSlider = document.createElement("input");
             speedSlider.style.width = "80px";
+            speedSlider.style.height = "4px";
+            speedSlider.style.border = "none";
+            speedSlider.style.opacity = "0.5";
             speedSlider.type = "range";
             speedSlider.min = "0.07";
             speedSlider.max = "1";
@@ -266,7 +308,7 @@ export class SceneBuilder implements ISceneBuilder {
                 mmdRuntime.timeScale = Number(speedSlider.value);
                 speedLabel.innerText = mmdRuntime.timeScale.toFixed(2) + "x";
             };
-            playerInnerContainer.appendChild(speedSlider);
+            playerLowerRightContainer.appendChild(speedSlider);
 
             const fullscreenButton = document.createElement("button");
             fullscreenButton.style.width = "80px";
@@ -281,7 +323,7 @@ export class SceneBuilder implements ISceneBuilder {
                     outerContainer.requestFullscreen();
                 }
             };
-            playerInnerContainer.appendChild(fullscreenButton);
+            playerLowerRightContainer.appendChild(fullscreenButton);
         }
 
         engine.displayLoadingUI();
