@@ -358,50 +358,17 @@ export class BpmxConverter implements ILogger {
                         boneWeights[i * 4 + 2] = 0;
                         boneWeights[i * 4 + 3] = 0;
 
-                        const centerX = sdefWeights.c[0];
-                        const centerY = sdefWeights.c[1];
-                        const centerZ = sdefWeights.c[2];
+                        boneSdefC[i * 3 + 0] = sdefWeights.c[0];
+                        boneSdefC[i * 3 + 1] = sdefWeights.c[1];
+                        boneSdefC[i * 3 + 2] = sdefWeights.c[2];
 
-                        // calculate rw0 and rw1
-                        let r0X = sdefWeights.r0[0];
-                        let r0Y = sdefWeights.r0[1];
-                        let r0Z = sdefWeights.r0[2];
+                        boneSdefR0[i * 3 + 0] = sdefWeights.r0[0];
+                        boneSdefR0[i * 3 + 1] = sdefWeights.r0[1];
+                        boneSdefR0[i * 3 + 2] = sdefWeights.r0[2];
 
-                        let r1X = sdefWeights.r1[0];
-                        let r1Y = sdefWeights.r1[1];
-                        let r1Z = sdefWeights.r1[2];
-
-                        const rwX = r0X * boneWeight0 + r1X * boneWeight1;
-                        const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
-                        const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
-
-                        r0X = centerX + r0X - rwX;
-                        r0Y = centerY + r0Y - rwY;
-                        r0Z = centerZ + r0Z - rwZ;
-
-                        r1X = centerX + r1X - rwX;
-                        r1Y = centerY + r1Y - rwY;
-                        r1Z = centerZ + r1Z - rwZ;
-
-                        const cr0X = (centerX + r0X) * 0.5;
-                        const cr0Y = (centerY + r0Y) * 0.5;
-                        const cr0Z = (centerZ + r0Z) * 0.5;
-
-                        const cr1X = (centerX + r1X) * 0.5;
-                        const cr1Y = (centerY + r1Y) * 0.5;
-                        const cr1Z = (centerZ + r1Z) * 0.5;
-
-                        boneSdefC![i * 3 + 0] = centerX;
-                        boneSdefC![i * 3 + 1] = centerY;
-                        boneSdefC![i * 3 + 2] = centerZ;
-
-                        boneSdefR0![i * 3 + 0] = cr0X;
-                        boneSdefR0![i * 3 + 1] = cr0Y;
-                        boneSdefR0![i * 3 + 2] = cr0Z;
-
-                        boneSdefR1![i * 3 + 0] = cr1X;
-                        boneSdefR1![i * 3 + 1] = cr1Y;
-                        boneSdefR1![i * 3 + 2] = cr1Z;
+                        boneSdefR1[i * 3 + 0] = sdefWeights.r1[0];
+                        boneSdefR1[i * 3 + 1] = sdefWeights.r1[1];
+                        boneSdefR1[i * 3 + 2] = sdefWeights.r1[2];
 
                         hasSdef = true;
                     }

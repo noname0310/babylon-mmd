@@ -237,6 +237,58 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         if (state.useSdef && bpmxObject.geometry.sdef !== undefined) {
             const sdefData = bpmxObject.geometry.sdef;
+
+            const vetexCount = vertexData.positions!.length / 3;
+            for (let i = 0; i < vetexCount; ++i) {
+                const boneWeight0 = vertexData.matricesWeights![i * 4 + 0];
+                const boneWeight1 = vertexData.matricesWeights![i * 4 + 1];
+
+                const sdefC = sdefData.c;
+                const sdefR0 = sdefData.r0;
+                const sdefR1 = sdefData.r1;
+
+                const centerX = sdefC[i * 3 + 0];
+                const centerY = sdefC[i * 3 + 1];
+                const centerZ = sdefC[i * 3 + 2];
+
+                // calculate rw0 and rw1
+                let r0X = sdefR0[i * 3 + 0];
+                let r0Y = sdefR0[i * 3 + 1];
+                let r0Z = sdefR0[i * 3 + 2];
+
+                let r1X = sdefR1[i * 3 + 0];
+                let r1Y = sdefR1[i * 3 + 1];
+                let r1Z = sdefR1[i * 3 + 2];
+
+                const rwX = r0X * boneWeight0 + r1X * boneWeight1;
+                const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
+                const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
+
+                r0X = centerX + r0X - rwX;
+                r0Y = centerY + r0Y - rwY;
+                r0Z = centerZ + r0Z - rwZ;
+
+                r1X = centerX + r1X - rwX;
+                r1Y = centerY + r1Y - rwY;
+                r1Z = centerZ + r1Z - rwZ;
+
+                const cr0X = (centerX + r0X) * 0.5;
+                const cr0Y = (centerY + r0Y) * 0.5;
+                const cr0Z = (centerZ + r0Z) * 0.5;
+
+                const cr1X = (centerX + r1X) * 0.5;
+                const cr1Y = (centerY + r1Y) * 0.5;
+                const cr1Z = (centerZ + r1Z) * 0.5;
+
+                sdefR0[i * 3 + 0] = cr0X;
+                sdefR0[i * 3 + 1] = cr0Y;
+                sdefR0[i * 3 + 2] = cr0Z;
+
+                sdefR1[i * 3 + 0] = cr1X;
+                sdefR1[i * 3 + 1] = cr1Y;
+                sdefR1[i * 3 + 2] = cr1Z;
+            }
+
             geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, sdefData.c, false, 3);
             geometry.setVerticesData(SdefBufferKind.MatricesSdefR0Kind, sdefData.r0, false, 3);
             geometry.setVerticesData(SdefBufferKind.MatricesSdefR1Kind, sdefData.r1, false, 3);
