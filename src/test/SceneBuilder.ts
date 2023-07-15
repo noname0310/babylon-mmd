@@ -161,7 +161,7 @@ export class SceneBuilder implements ISceneBuilder {
             playerInnerContainer.style.height = "50%";
             playerInnerContainer.style.padding = "0 5px";
             playerInnerContainer.style.boxSizing = "border-box";
-            playerInnerContainer.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+            playerInnerContainer.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
             playerInnerContainer.style.display = "flex";
             playerInnerContainer.style.flexDirection = "row";
             playerInnerContainer.style.alignItems = "center";
@@ -169,6 +169,9 @@ export class SceneBuilder implements ISceneBuilder {
 
             const playButton = document.createElement("button");
             playButton.style.width = "80px";
+            playButton.style.border = "none";
+            playButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+            playButton.style.color = "white";
             playButton.innerText = mmdRuntime.isAnimationPlaying ? "Pause" : "Play";
             playButton.onclick = (): void => {
                 if (mmdRuntime.isAnimationPlaying) mmdRuntime.pauseAnimation();
@@ -185,6 +188,7 @@ export class SceneBuilder implements ISceneBuilder {
             const frameNumber = document.createElement("span");
             frameNumber.style.width = "70px";
             frameNumber.style.textAlign = "center";
+            frameNumber.style.color = "white";
             engine.onBeginFrameObservable.add(() => {
                 frameNumber.innerText = Math.floor(mmdRuntime.currentFrameTime).toString();
             });
@@ -222,6 +226,9 @@ export class SceneBuilder implements ISceneBuilder {
 
             const soundButton = document.createElement("button");
             soundButton.style.width = "60px";
+            soundButton.style.border = "none";
+            soundButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+            soundButton.style.color = "white";
             soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
             soundButton.onclick = (): void => {
                 if (audioPlayer.muted) {
@@ -249,6 +256,8 @@ export class SceneBuilder implements ISceneBuilder {
 
             const speedLabel = document.createElement("label");
             speedLabel.style.width = "40px";
+            speedLabel.style.textAlign = "center";
+            speedLabel.style.color = "white";
             speedLabel.innerText = "1.00x";
             playerInnerContainer.appendChild(speedLabel);
             const speedSlider = document.createElement("input");
@@ -266,6 +275,9 @@ export class SceneBuilder implements ISceneBuilder {
 
             const fullscreenButton = document.createElement("button");
             fullscreenButton.style.width = "80px";
+            fullscreenButton.style.border = "none";
+            fullscreenButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+            fullscreenButton.style.color = "white";
             fullscreenButton.innerText = "Fullscreen";
             fullscreenButton.onclick = (): void => {
                 if (document.fullscreenElement) {
