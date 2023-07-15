@@ -239,11 +239,12 @@ export class SceneBuilder implements ISceneBuilder {
             playerLowerLeftContainer.appendChild(playButton);
 
             const soundButton = document.createElement("button");
-            soundButton.style.width = "60px";
+            soundButton.style.width = "35px";
             soundButton.style.border = "none";
-            soundButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+            soundButton.style.backgroundColor = "rgba(0, 0, 0, 0)";
             soundButton.style.color = "white";
-            soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
+            soundButton.style.fontSize = "20px";
+            soundButton.innerText = audioPlayer.muted ? "🔇" : "🔊";
             soundButton.onclick = (): void => {
                 if (audioPlayer.muted) {
                     audioPlayer.unmute();
@@ -252,7 +253,7 @@ export class SceneBuilder implements ISceneBuilder {
                 }
             };
             audioPlayer.onMuteStateChangedObservable.add(() => {
-                soundButton.innerText = audioPlayer.muted ? "Unmute" : "Mute";
+                soundButton.innerText = audioPlayer.muted ? "🔇" : "🔊";
             });
             playerLowerLeftContainer.appendChild(soundButton);
 
@@ -311,11 +312,12 @@ export class SceneBuilder implements ISceneBuilder {
             playerLowerRightContainer.appendChild(speedSlider);
 
             const fullscreenButton = document.createElement("button");
-            fullscreenButton.style.width = "80px";
+            fullscreenButton.style.width = "40px";
             fullscreenButton.style.border = "none";
-            fullscreenButton.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
             fullscreenButton.style.color = "white";
-            fullscreenButton.innerText = "Fullscreen";
+            fullscreenButton.style.backgroundColor = "rgba(0, 0, 0, 0)";
+            fullscreenButton.style.fontSize = "20px";
+            fullscreenButton.innerText = "🗖";
             fullscreenButton.onclick = (): void => {
                 if (document.fullscreenElement) {
                     document.exitFullscreen();
