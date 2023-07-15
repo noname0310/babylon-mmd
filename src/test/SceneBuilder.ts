@@ -4,6 +4,7 @@ import {
     Color4,
     Constants,
     DefaultRenderingPipeline,
+    DepthOfFieldEffectBlurLevel,
     DirectionalLight,
     HemisphericLight,
     ImageProcessingConfiguration,
@@ -359,7 +360,7 @@ export class SceneBuilder implements ISceneBuilder {
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
 
             scene.onBeforeRenderObservable.add(() => {
-                bodyBone!.getFinalMatrix()!.getTranslationToRef(directionalLight.position);
+                bodyBone!.getFinalMatrix().getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
             });
 
@@ -418,18 +419,47 @@ export class SceneBuilder implements ISceneBuilder {
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = false;
-            defaultPipeline.chromaticAberrationEnabled = false;
+            defaultPipeline.bloomEnabled = true;
+            defaultPipeline.chromaticAberrationEnabled = true;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
-            defaultPipeline.depthOfFieldEnabled = false;
+            defaultPipeline.depthOfFieldEnabled = true;
+            defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.Medium;
             defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = false;
+            defaultPipeline.imageProcessingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
             defaultPipeline.imageProcessing.vignetteWeight = 0.5;
             defaultPipeline.imageProcessing.vignetteStretch = 0.5;
             defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
             defaultPipeline.imageProcessing.vignetteEnabled = true;
+
+            defaultPipeline.depthOfField.fStop = 0.05;
+            defaultPipeline.depthOfField.focalLength = 20;
+
+            const modelMesh = loadResults[1].meshes[0] as Mesh;
+            const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
+
+            const rotationMatrix = new Matrix();
+            const cameraNormal = new Vector3();
+            const cameraEyePosition = new Vector3();
+            const headRelativePosition = new Vector3();
+
+            scene.onBeforeRenderObservable.add(() => {
+                const cameraRotation = mmdCamera.rotation;
+                Matrix.RotationYawPitchRollToRef(-cameraRotation.y, -cameraRotation.x, -cameraRotation.z, rotationMatrix);
+
+                Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, cameraNormal);
+
+                mmdCamera.position.addToRef(
+                    Vector3.TransformCoordinatesFromFloatsToRef(0, 0, mmdCamera.distance, rotationMatrix, cameraEyePosition),
+                    cameraEyePosition
+                );
+
+                headBone!.getFinalMatrix().getTranslationToRef(headRelativePosition)
+                    .subtractToRef(cameraEyePosition, headRelativePosition);
+
+                defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;
+            });
         }
 
         // Inspector.Show(scene, { });
