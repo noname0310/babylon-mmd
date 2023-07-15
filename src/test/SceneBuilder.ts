@@ -458,7 +458,16 @@ export class SceneBuilder implements ISceneBuilder {
                 defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;
             });
 
-            canvas.ondblclick = (): void => {
+            let lastClickTime = -Infinity;
+            canvas.onclick = (): void => {
+                const currentTime = performance.now();
+                if (500 < currentTime - lastClickTime) {
+                    lastClickTime = currentTime;
+                    return;
+                }
+
+                lastClickTime = -Infinity;
+
                 if (scene.activeCamera === mmdCamera) {
                     defaultPipeline.depthOfFieldEnabled = false;
                     scene.activeCamera = camera;
