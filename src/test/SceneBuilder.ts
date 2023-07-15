@@ -423,7 +423,7 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.chromaticAberrationEnabled = true;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = true;
-            defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.Medium;
+            defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
             defaultPipeline.fxaaEnabled = true;
             defaultPipeline.imageProcessingEnabled = true;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
@@ -434,7 +434,7 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.imageProcessing.vignetteEnabled = true;
 
             defaultPipeline.depthOfField.fStop = 0.05;
-            defaultPipeline.depthOfField.focalLength = 20;
+            defaultPipeline.depthOfField.focalLength = 30;
 
             const modelMesh = loadResults[1].meshes[0] as Mesh;
             const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
