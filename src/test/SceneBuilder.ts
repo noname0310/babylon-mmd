@@ -16,7 +16,6 @@ import {
     SceneLoader,
     ShadowGenerator,
     SkeletonViewer,
-    SSAORenderingPipeline,
     SSRRenderingPipeline,
     StandardMaterial,
     UniversalCamera,
@@ -100,7 +99,7 @@ export class SceneBuilder implements ISceneBuilder {
         //     scene.onAfterRenderObservable.add(() => directionalLightHelper.buildLightHelper());
         // }, 500);
 
-        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, mmdCamera);
+        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
@@ -387,42 +386,37 @@ export class SceneBuilder implements ISceneBuilder {
         //     physicsViewer.showBody(groundRigidBody);
         // }
 
-        const useHavyPostProcess = false;
+        const useHavyPostProcess = true;
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
-            const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, mmdCamera);
+            const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
             motionBlur.motionStrength = 1;
-
-            const ssaoRatio = {
-                ssaoRatio: 0.5, // Ratio of the SSAO post-process, in a lower resolution
-                combineRatio: 1.0 // Ratio of the combine post-process (combines the SSAO and the scene)
-            };
-            const ssao = new SSAORenderingPipeline("ssao", scene, ssaoRatio);
-            ssao.fallOff = 0.000001;
-            ssao.area = 1;
-            ssao.radius = 0.0001;
-            ssao.totalStrength = 0.5;
-            ssao.base = 0.5;
-            scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", mmdCamera);
 
             const ssr = new SSRRenderingPipeline(
                 "ssr",
                 scene,
-                [mmdCamera],
+                [mmdCamera, camera],
                 false,
                 Constants.TEXTURETYPE_UNSIGNED_BYTE
             );
+            ssr.step = 32;
+            ssr.maxSteps = 128;
+            ssr.maxDistance = 500;
+            ssr.enableSmoothReflections = false;
+            ssr.enableAutomaticThicknessComputation = false;
+            ssr.blurDownsample = 2;
+            ssr.ssrDownsample = 2;
             ssr.thickness = 0.1;
             ssr.selfCollisionNumSkip = 2;
-            ssr.enableAutomaticThicknessComputation = true;
-            ssr.blurDispersionStrength = 0.03;
+            ssr.blurDispersionStrength = 0;
             ssr.roughnessFactor = 0.1;
+            ssr.reflectivityThreshold = 0.9;
             ssr.samples = 4;
         }
 
         if (useBasicPostProcess) {
-            const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera]);
+            const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
             defaultPipeline.samples = 4;
             defaultPipeline.bloomEnabled = false;
             defaultPipeline.chromaticAberrationEnabled = false;
