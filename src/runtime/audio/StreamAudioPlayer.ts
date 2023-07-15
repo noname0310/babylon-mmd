@@ -134,7 +134,11 @@ export class StreamAudioPlayer implements IAudioPlayer {
 
     public set currentTime(value: number) {
         if (this._isVirtualPlay) {
-            this._virtualStartTime = performance.now() / 1000 - value / this._playbackRate;
+            if (this._virtualPaused) {
+                this._virtualPauseCurrentTime = value;
+            } else {
+                this._virtualStartTime = performance.now() / 1000 - value / this._playbackRate;
+            }
             this._onSeek();
         } else {
             this._audio.currentTime = value;
@@ -144,7 +148,11 @@ export class StreamAudioPlayer implements IAudioPlayer {
     /** @internal */
     public _setCurrentTimeWithoutNotify(value: number): void {
         if (this._isVirtualPlay) {
-            this._virtualStartTime = performance.now() / 1000 - value / this._playbackRate;
+            if (this._virtualPaused) {
+                this._virtualPauseCurrentTime = value;
+            } else {
+                this._virtualStartTime = performance.now() / 1000 - value / this._playbackRate;
+            }
         } else {
             this._ignoreSeekedEventOnce = true;
             this._audio.currentTime = value;
