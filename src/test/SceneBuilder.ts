@@ -1,5 +1,6 @@
 import type { Camera, Engine } from "@babylonjs/core";
 import {
+    ArcRotateCamera,
     Color3,
     Color4,
     Constants,
@@ -19,7 +20,6 @@ import {
     SkeletonViewer,
     SSRRenderingPipeline,
     StandardMaterial,
-    UniversalCamera,
     Vector3,
     VertexData
 } from "@babylonjs/core";
@@ -64,16 +64,11 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
 
-        const camera = new UniversalCamera("universalCamera", new Vector3(0, 15, -40), scene);
+        const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;
-        camera.setTarget(new Vector3(0, 10, 0));
+        camera.setPosition(new Vector3(0, 10, -45));
         camera.attachControl(canvas, false);
-        camera.keysUp.push("W".charCodeAt(0));
-        camera.keysDown.push("S".charCodeAt(0));
-        camera.keysLeft.push("A".charCodeAt(0));
-        camera.keysRight.push("D".charCodeAt(0));
-        camera.inertia = 0;
-        camera.angularSensibility = 500;
+        camera.inertia = 0.8;
         camera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
@@ -358,10 +353,12 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-
             scene.onBeforeRenderObservable.add(() => {
                 bodyBone!.getFinalMatrix().getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
+
+                camera.target.copyFrom(directionalLight.position);
+                camera.target.y += 13;
             });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
@@ -460,6 +457,16 @@ export class SceneBuilder implements ISceneBuilder {
 
                 defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;
             });
+
+            canvas.ondblclick = (): void => {
+                if (scene.activeCamera === mmdCamera) {
+                    defaultPipeline.depthOfFieldEnabled = false;
+                    scene.activeCamera = camera;
+                } else {
+                    defaultPipeline.depthOfFieldEnabled = true;
+                    scene.activeCamera = mmdCamera;
+                }
+            };
         }
 
         // Inspector.Show(scene, { });
