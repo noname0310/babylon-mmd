@@ -201,7 +201,9 @@ export class MmdRuntime implements ILogger {
     public beforePhysics(deltaTime: number): void {
         if (!this._animationPaused) {
             if (this._audioPlayer !== null && !this._audioPlayer.paused) { // sync animation time with audio time
-                const timeDiff = this._audioPlayer.currentTime - this._currentFrameTime / 30;
+                const audioPlayerCurrentTime = this._audioPlayer.currentTime;
+
+                const timeDiff = audioPlayerCurrentTime - this._currentFrameTime / 30;
                 const timeDiffAbs = Math.abs(timeDiff);
                 if (timeDiffAbs < 0.05) { // synced
                     this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale;
@@ -212,7 +214,17 @@ export class MmdRuntime implements ILogger {
                         this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale * 1.1;
                     }
                 } else {
-                    this._currentFrameTime = this._audioPlayer.currentTime * 30;
+                    if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
+                        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                        for (let i = 0; i < this._models.length; ++i) {
+                            const model = this._models[i];
+                            if (model.currentAnimation !== null) {
+                                needToInitializePhysicsModels.add(model);
+                            }
+                        }
+                    }
+
+                    this._currentFrameTime = audioPlayerCurrentTime * 30;
                 }
             } else { // only use delta time to calculate animation time
                 this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale;
@@ -224,7 +236,11 @@ export class MmdRuntime implements ILogger {
                 this._animationPaused = true;
                 this._currentFrameTime = this._animationDuration;
 
-                this.onPauseAnimationObservable.notifyObservers();
+                if (this._audioPlayer !== null && !this._audioPlayer.paused) {
+                    this._audioPlayer.pause();
+                } else {
+                    this.onPauseAnimationObservable.notifyObservers();
+                }
             }
 
             const models = this._models;
@@ -327,14 +343,14 @@ export class MmdRuntime implements ILogger {
         if (!this._animationPaused) return;
         this._animationPaused = false;
 
-        const models = this._models;
-        for (let i = 0; i < this._models.length; ++i) {
-            const model = models[i];
-            model.resetState();
-            this._needToInitializePhysicsModels.add(model);
-        }
-
         if (!this._useManualAnimationDuration && this._currentFrameTime === 0) {
+            const models = this._models;
+            for (let i = 0; i < this._models.length; ++i) {
+                const model = models[i];
+                model.resetState();
+                this._needToInitializePhysicsModels.add(model);
+            }
+
             this._animationDuration = this._computeAnimationDuration();
 
             this.onAnimationDurationChangedObservable.notifyObservers();

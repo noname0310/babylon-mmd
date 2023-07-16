@@ -7,6 +7,7 @@ import {
     DefaultRenderingPipeline,
     DepthOfFieldEffectBlurLevel,
     DirectionalLight,
+    HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
     Material,
@@ -23,6 +24,7 @@ import {
     Vector3,
     VertexData
 } from "@babylonjs/core";
+import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -111,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer();
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
+        audioPlayer.source = "res/private_test/motion/totemo_sutekina/totemo_sutekina.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         mmdRuntime.register(scene);
@@ -341,15 +343,7 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        // promises.push((async(): Promise<void> => {
-        //     updateLoadingText(0, "Loading physics engine...");
-        //     const havokInstance = await HavokPhysics();
-        //     const havokPlugin = new HavokPlugin(true, havokInstance);
-        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-        //     updateLoadingText(0, "Loading physics engine... Done");
-        // })());
-
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/totemo_sutekina/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -371,9 +365,19 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
+        promises.push((async(): Promise<void> => {
+            updateLoadingText(3, "Loading physics engine...");
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            updateLoadingText(3, "Loading physics engine... Done");
+        })());
+
         loadingTexts = new Array(promises.length).fill("");
 
         const loadResults = await Promise.all(promises);
+
+        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
 
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
@@ -391,7 +395,7 @@ export class SceneBuilder implements ISceneBuilder {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: false
+                buildPhysics: true
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
