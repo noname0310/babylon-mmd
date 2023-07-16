@@ -1,4 +1,5 @@
-import type { Camera, Engine } from "@babylonjs/core";
+import type { Camera,
+    Engine} from "@babylonjs/core";
 import {
     ArcRotateCamera,
     Color3,
@@ -6,8 +7,7 @@ import {
     Constants,
     DefaultRenderingPipeline,
     DepthOfFieldEffectBlurLevel,
-    DirectionalLight,
-    HavokPlugin,
+    DirectionalLight,    HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
     Material,
@@ -25,6 +25,7 @@ import {
     VertexData
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -50,9 +51,15 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         materialBuilder.afterBuildSingleMaterial = (material): void => {
-            if (material.name === "body01") material.transparencyMode = Material.MATERIAL_OPAQUE;
-            if (material.name === "face02") {
+            if (material.name.toLowerCase() === "body01") material.transparencyMode = Material.MATERIAL_OPAQUE;
+            if (material.name.toLowerCase() === "face02") {
                 material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+                material.useAlphaFromDiffuseTexture = true;
+                material.diffuseTexture!.hasAlpha = true;
+            }
+            if (material.name.toLowerCase() === "hairshadow") {
+                material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+                material.alphaMode = Constants.ALPHA_SUBTRACT;
                 material.useAlphaFromDiffuseTexture = true;
                 material.diffuseTexture!.hasAlpha = true;
             }
@@ -113,7 +120,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer();
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/totemo_sutekina/totemo_sutekina.mp3";
+        audioPlayer.source = "res/private_test/motion/shinshoku/shinshoku.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         mmdRuntime.register(scene);
@@ -343,13 +350,13 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/totemo_sutekina/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku Default.bpmx",
+            "res/private_test/model/YYB miku Crown Knight.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -529,7 +536,7 @@ export class SceneBuilder implements ISceneBuilder {
             };
         }
 
-        // Inspector.Show(scene, { });
+        Inspector.Show(scene, { });
 
         return scene;
     }
