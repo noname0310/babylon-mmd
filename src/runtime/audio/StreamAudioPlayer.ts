@@ -226,6 +226,12 @@ export class StreamAudioPlayer implements IAudioPlayer {
 
     /** @internal */
     public _setPlaybackRateWithoutNotify(value: number): void {
+        if (this._isVirtualPlay && !this._virtualPaused) {
+            const nowInSec = performance.now() / 1000;
+            const currentTime = (nowInSec - this._virtualStartTime) * this._playbackRate;
+            this._virtualStartTime = nowInSec - currentTime / value;
+        }
+
         this._playbackRate = value;
         this._audio.playbackRate = value;
     }
