@@ -1,5 +1,4 @@
-import type { Camera,
-    Engine} from "@babylonjs/core";
+import type { Camera, Engine } from "@babylonjs/core";
 import {
     ArcRotateCamera,
     Color3,
@@ -7,7 +6,7 @@ import {
     Constants,
     DefaultRenderingPipeline,
     DepthOfFieldEffectBlurLevel,
-    DirectionalLight,    HavokPlugin,
+    DirectionalLight,
     HemisphericLight,
     ImageProcessingConfiguration,
     Material,
@@ -24,7 +23,6 @@ import {
     Vector3,
     VertexData
 } from "@babylonjs/core";
-import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
@@ -113,7 +111,7 @@ export class SceneBuilder implements ISceneBuilder {
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
-        ground.setEnabled(false);
+        ground.setEnabled(true);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
@@ -350,7 +348,7 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion_physics.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -366,19 +364,19 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/stage/碇と桜のステージ.bpmx",
+            "res/private_test/stage/ガラス片ドームB.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
-        })());
+        // promises.push((async(): Promise<void> => {
+        //     updateLoadingText(3, "Loading physics engine...");
+        //     const havokInstance = await HavokPhysics();
+        //     const havokPlugin = new HavokPlugin(true, havokInstance);
+        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+        //     updateLoadingText(3, "Loading physics engine... Done");
+        // })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -402,7 +400,7 @@ export class SceneBuilder implements ISceneBuilder {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
+                buildPhysics: false
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
