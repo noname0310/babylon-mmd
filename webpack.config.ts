@@ -3,6 +3,7 @@ import CssMinimizerWebpackPlugin from "css-minimizer-webpack-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
 import ExtractCssChunks from "extract-css-chunks-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import CompressionWebpackPlugin from "compression-webpack-plugin";
 import path from "path";
 import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
@@ -103,7 +104,11 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
                 { from: "res", to: "res" }
             ]
         })
-    ],
+    ].concat(env.production ? [
+        new CompressionWebpackPlugin({
+            test: /\.(js|bvmd|bpmx)$/i,
+        })
+    ] : []),
     devServer: {
         host: "0.0.0.0",
         port: 20310,
