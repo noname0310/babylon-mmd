@@ -13,7 +13,6 @@ import {
     Matrix,
     Mesh,
     MeshBuilder,
-    MotionBlurPostProcess,
     Scene,
     SceneLoader,
     ShadowGenerator,
@@ -23,7 +22,6 @@ import {
     Vector3,
     VertexData
 } from "@babylonjs/core";
-import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -440,13 +438,10 @@ export class SceneBuilder implements ISceneBuilder {
         //     physicsViewer.showBody(groundRigidBody);
         // }
 
-        const useHavyPostProcess = false;
+        const useHavyPostProcess = true;
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
-            const motionBlur = new MotionBlurPostProcess("motionBlur", scene, 1.0, camera);
-            motionBlur.motionStrength = 1;
-
             const ssr = new SSRRenderingPipeline(
                 "ssr",
                 scene,
@@ -534,12 +529,11 @@ export class SceneBuilder implements ISceneBuilder {
             };
         }
 
-        Inspector.Show(scene, { });
+        // Inspector.Show(scene, { });
 
         return scene;
     }
 }
-
 
 class DirectionalLightHelper {
     public readonly scene: Scene;
