@@ -106,7 +106,7 @@ export class SceneBuilder implements ISceneBuilder {
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
-        ground.setEnabled(true);
+        ground.setEnabled(false);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
@@ -349,7 +349,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+            "res/private_test/model/YYB Hatsune Miku Default.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -359,7 +359,7 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/stage/Stage35_02.bpmx",
+            "res/private_test/stage/碇と桜のステージ.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -415,6 +415,9 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
+        const mmdStageMesh = loadResults[2].meshes[0] as Mesh;
+        mmdStageMesh.position.y += 0.01;
+
         // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
         // groundRigidBody.shape = new PhysicsShapeBox(
         //     new Vector3(0, -1, 0),
@@ -432,7 +435,7 @@ export class SceneBuilder implements ISceneBuilder {
         //     physicsViewer.showBody(groundRigidBody);
         // }
 
-        const useHavyPostProcess = true;
+        const useHavyPostProcess = false;
         const useBasicPostProcess = true;
 
         if (useHavyPostProcess) {
