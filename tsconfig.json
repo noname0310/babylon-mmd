@@ -5,7 +5,6 @@
         "esModuleInterop": true,
         "moduleResolution": "node",
         "forceConsistentCasingInFileNames": true,
-        "stripInternal": true,
         "noEmitOnError": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
