@@ -308,6 +308,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                 const frameNumberB = morphTrack.frameNumbers[upperBoundIndex];
                 if (frameNumberB === undefined) {
                     // this clamp will be removed when morph target recompilation problem is solved
+                    // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
                     const weight = Math.max(morphTrack.weights[upperBoundIndexMinusOne], 1e-16);
                     for (let j = 0; j < morphIndices.length; ++j) {
                         morphController.setMorphWeightFromIndex(morphIndices[j], weight);
@@ -320,6 +321,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
                     const weightB = morphTrack.weights[upperBoundIndex];
 
                     // this clamp will be removed when morph target recompilation problem is solved
+                    // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
                     const weight = Math.max(weightA + (weightB - weightA) * relativeTime, 1e-16);
                     for (let j = 0; j < morphIndices.length; ++j) {
                         morphController.setMorphWeightFromIndex(morphIndices[j], weight);
