@@ -45,6 +45,8 @@ export class MmdRuntime implements ILogger {
     private _animationDuration: number;
     private _useManualAnimationDuration: boolean;
 
+    private _audioExhausted: boolean;
+
     private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
     private _beforePhysicsBinded: (() => void) | null;
@@ -74,6 +76,8 @@ export class MmdRuntime implements ILogger {
         this._animationPaused = true;
         this._animationDuration = 0;
         this._useManualAnimationDuration = false;
+
+        this._audioExhausted = false;
 
         this._needToInitializePhysicsModels = new Set<MmdModel>();
 
@@ -146,19 +150,12 @@ export class MmdRuntime implements ILogger {
         }
 
         this._audioPlayer = null;
+        this._audioExhausted = false;
         if (audioPlayer === null) return;
 
         if (!this._animationPaused) {
             const audioFrameTimeDuration = audioPlayer.duration * 30;
             if (this._currentFrameTime < audioFrameTimeDuration) {
-                if (this._animationDuration < audioFrameTimeDuration) {
-                    this._animationDuration = audioFrameTimeDuration;
-                } else {
-                    this._animationDuration = this._computeAnimationDuration();
-                }
-
-                this.onAnimationDurationChangedObservable.notifyObservers();
-
                 audioPlayer.currentTime = this._currentFrameTime / 30;
                 await audioPlayer.play();
                 if (this._setAudioPlayerLastValue !== audioPlayer) {
@@ -168,6 +165,7 @@ export class MmdRuntime implements ILogger {
             }
         }
         this._audioPlayer = audioPlayer;
+        this._onAudioDurationChanged();
 
         audioPlayer.onDurationChangedObservable.add(this._onAudioDurationChanged);
         audioPlayer.onPlaybackRateChangedObservable.add(this._onAudioPlaybackRateChanged);
@@ -175,7 +173,6 @@ export class MmdRuntime implements ILogger {
         audioPlayer.onPauseObservable.add(this._onAudioPause);
         audioPlayer.onSeekObservable.add(this._onAudioSeek);
         audioPlayer._setPlaybackRateWithoutNotify(this._animationTimeScale);
-
     }
 
     public register(scene: Scene): void {
@@ -316,7 +313,14 @@ export class MmdRuntime implements ILogger {
 
     private readonly _onAudioDurationChanged = (): void => {
         if (this._useManualAnimationDuration) return;
-        this._animationDuration = this._computeAnimationDuration();
+
+        const audioFrameTimeDuration = this._audioPlayer!.duration * 30;
+
+        if (this._animationDuration < audioFrameTimeDuration) {
+            this._animationDuration = audioFrameTimeDuration;
+        } else {
+            this._animationDuration = this._computeAnimationDuration();
+        }
 
         this.onAnimationDurationChangedObservable.notifyObservers();
     };
@@ -330,12 +334,16 @@ export class MmdRuntime implements ILogger {
     };
 
     private readonly _onAudioPause = (): void => {
-        if (this._audioPlayer!.currentTime === this._audioPlayer!.duration) return;
+        if (this._audioPlayer!.currentTime === this._audioPlayer!.duration) {
+            this._audioExhausted = true;
+            return;
+        }
         this._animationPaused = true;
         this.onPauseAnimationObservable.notifyObservers();
     };
 
     private readonly _onAudioSeek = (): void => {
+        this._audioExhausted = this._audioPlayer!.currentTime === this._audioPlayer!.duration;
         this._seekAnimationInternal(this._audioPlayer!.currentTime * 30, this._animationPaused);
     };
 
@@ -379,6 +387,7 @@ export class MmdRuntime implements ILogger {
     public pauseAnimation(): void {
         if (this._audioPlayer !== null && !this._audioPlayer.paused) {
             this._audioPlayer.pause();
+            this._animationPaused = true;
         } else {
             this._animationPaused = true;
             this.onPauseAnimationObservable.notifyObservers();
@@ -422,10 +431,7 @@ export class MmdRuntime implements ILogger {
         if (this._audioPlayer !== null) {
             if (!this._audioPlayer.paused) {
                 this._audioPlayer.currentTime = frameTime / 30;
-            } else if (!this._animationPaused &&
-                this._animationDuration <= this._audioPlayer.currentTime &&
-                frameTime < this._audioPlayer.duration * 30
-            ) {
+            } else if (!this._animationPaused && this._audioExhausted && frameTime < this._audioPlayer.duration * 30) {
                 try {
                     this._audioPlayer._setCurrentTimeWithoutNotify(frameTime / 30);
                     await this._audioPlayer.play();
