@@ -7,6 +7,7 @@ import {
     DefaultRenderingPipeline,
     DepthOfFieldEffectBlurLevel,
     DirectionalLight,
+    HavokPlugin,
     HemisphericLight,
     ImageProcessingConfiguration,
     Material,
@@ -19,9 +20,11 @@ import {
     SkeletonViewer,
     SSRRenderingPipeline,
     StandardMaterial,
+    TransformNode,
     Vector3,
     VertexData
 } from "@babylonjs/core";
+import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -69,6 +72,10 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
 
+        const mmdCameraParent = new TransformNode("mmdCameraParent", scene);
+        mmdCamera.parent = mmdCameraParent;
+        mmdCameraParent.position.z -= 50;
+
         const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;
         camera.setPosition(new Vector3(0, 10, -45));
@@ -106,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
-        const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
+        const ground = MeshBuilder.CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
         ground.setEnabled(true);
@@ -116,7 +123,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer();
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/shinshoku/shinshoku.mp3";
+        audioPlayer.source = "res/private_test/motion/pizzicato_drops/pizzicato_drops.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         mmdRuntime.register(scene);
@@ -346,13 +353,13 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion_physics.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB miku Crown Knight.bpmx",
+            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -368,13 +375,13 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        // promises.push((async(): Promise<void> => {
-        //     updateLoadingText(3, "Loading physics engine...");
-        //     const havokInstance = await HavokPhysics();
-        //     const havokPlugin = new HavokPlugin(true, havokInstance);
-        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-        //     updateLoadingText(3, "Loading physics engine... Done");
-        // })());
+        promises.push((async(): Promise<void> => {
+            updateLoadingText(3, "Loading physics engine...");
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            updateLoadingText(3, "Loading physics engine... Done");
+        })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -396,16 +403,20 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
+            modelMesh.position.z -= 50;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: false
+                buildPhysics: true
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+            const meshWorldMatrix = modelMesh.getWorldMatrix();
+            const boneWorldMatrix = new Matrix();
             scene.onBeforeRenderObservable.add(() => {
-                bodyBone!.getFinalMatrix().getTranslationToRef(directionalLight.position);
+                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
+                boneWorldMatrix.getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
 
                 camera.target.copyFrom(directionalLight.position);
@@ -483,6 +494,8 @@ export class SceneBuilder implements ISceneBuilder {
 
             defaultPipeline.depthOfField.fStop = 0.05;
             defaultPipeline.depthOfField.focalLength = 30;
+
+            // note: this dof distance compute will broken when camera and mesh is not in same space
 
             const modelMesh = loadResults[1].meshes[0] as Mesh;
             const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
