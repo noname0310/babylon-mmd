@@ -399,10 +399,18 @@ export class MmdRuntime implements ILogger {
         this._currentFrameTime = frameTime;
 
         if (forceEvaluate) {
-            const originalPaused = this._animationPaused;
-            this._animationPaused = false;
-            this.beforePhysics(0);
-            this._animationPaused = originalPaused;
+            const models = this._models;
+            for (let i = 0; i < models.length; ++i) {
+                const model = models[i];
+                if (model.currentAnimation !== null) {
+                    model.mesh.skeleton.returnToRest();
+                    model.currentAnimation.animate(frameTime);
+                }
+            }
+
+            if (this._camera !== null && this._camera.currentAnimation !== null) {
+                this._camera.animate(frameTime);
+            }
         }
 
         this.onSeekAnimationObservable.notifyObservers();
@@ -414,7 +422,10 @@ export class MmdRuntime implements ILogger {
         if (this._audioPlayer !== null) {
             if (!this._audioPlayer.paused) {
                 this._audioPlayer.currentTime = frameTime / 30;
-            } else if (!this._animationPaused && frameTime < this._audioPlayer.duration * 30) {
+            } else if (!this._animationPaused &&
+                this._animationDuration <= this._audioPlayer.currentTime &&
+                frameTime < this._audioPlayer.duration * 30
+            ) {
                 try {
                     this._audioPlayer._setCurrentTimeWithoutNotify(frameTime / 30);
                     await this._audioPlayer.play();
