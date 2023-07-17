@@ -42,10 +42,8 @@ export class MmdRuntime implements ILogger {
     private _currentFrameTime: number;
     private _animationTimeScale: number;
     private _animationPaused: boolean;
-    private _animationDuration: number;
+    private _animationFrameTimeDuration: number;
     private _useManualAnimationDuration: boolean;
-
-    private _audioExhausted: boolean;
 
     private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
@@ -74,10 +72,8 @@ export class MmdRuntime implements ILogger {
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
         this._animationPaused = true;
-        this._animationDuration = 0;
+        this._animationFrameTimeDuration = 0;
         this._useManualAnimationDuration = false;
-
-        this._audioExhausted = false;
 
         this._needToInitializePhysicsModels = new Set<MmdModel>();
 
@@ -150,7 +146,6 @@ export class MmdRuntime implements ILogger {
         }
 
         this._audioPlayer = null;
-        this._audioExhausted = false;
         if (audioPlayer === null) return;
 
         if (!this._animationPaused) {
@@ -229,9 +224,9 @@ export class MmdRuntime implements ILogger {
 
             const elapsedFrameTime = this._currentFrameTime;
 
-            if (this._animationDuration <= elapsedFrameTime) {
+            if (this._animationFrameTimeDuration <= elapsedFrameTime) {
                 this._animationPaused = true;
-                this._currentFrameTime = this._animationDuration;
+                this._currentFrameTime = this._animationFrameTimeDuration;
 
                 if (this._audioPlayer !== null && !this._audioPlayer.paused) {
                     this._audioPlayer.pause();
@@ -274,10 +269,10 @@ export class MmdRuntime implements ILogger {
 
         const newAnimationDuration = newAnimation?.animation.endFrame ?? 0;
 
-        if (this._animationDuration < newAnimationDuration) {
-            this._animationDuration = newAnimationDuration;
-        } else if (newAnimationDuration < this._animationDuration) {
-            this._animationDuration = this._computeAnimationDuration();
+        if (this._animationFrameTimeDuration < newAnimationDuration) {
+            this._animationFrameTimeDuration = newAnimationDuration;
+        } else if (newAnimationDuration < this._animationFrameTimeDuration) {
+            this._animationFrameTimeDuration = this._computeAnimationDuration();
         }
 
         this.onAnimationDurationChangedObservable.notifyObservers();
@@ -316,10 +311,10 @@ export class MmdRuntime implements ILogger {
 
         const audioFrameTimeDuration = this._audioPlayer!.duration * 30;
 
-        if (this._animationDuration < audioFrameTimeDuration) {
-            this._animationDuration = audioFrameTimeDuration;
+        if (this._animationFrameTimeDuration < audioFrameTimeDuration) {
+            this._animationFrameTimeDuration = audioFrameTimeDuration;
         } else {
-            this._animationDuration = this._computeAnimationDuration();
+            this._animationFrameTimeDuration = this._computeAnimationDuration();
         }
 
         this.onAnimationDurationChangedObservable.notifyObservers();
@@ -334,16 +329,12 @@ export class MmdRuntime implements ILogger {
     };
 
     private readonly _onAudioPause = (): void => {
-        if (this._audioPlayer!.currentTime === this._audioPlayer!.duration) {
-            this._audioExhausted = true;
-            return;
-        }
+        if (this._audioPlayer!.currentTime === this._audioPlayer!.duration) return;
         this._animationPaused = true;
         this.onPauseAnimationObservable.notifyObservers();
     };
 
     private readonly _onAudioSeek = (): void => {
-        this._audioExhausted = this._audioPlayer!.currentTime === this._audioPlayer!.duration;
         this._seekAnimationInternal(this._audioPlayer!.currentTime * 30, this._animationPaused);
     };
 
@@ -359,7 +350,7 @@ export class MmdRuntime implements ILogger {
                 this._needToInitializePhysicsModels.add(model);
             }
 
-            this._animationDuration = this._computeAnimationDuration();
+            this._animationFrameTimeDuration = this._computeAnimationDuration();
 
             this.onAnimationDurationChangedObservable.notifyObservers();
         }
@@ -426,12 +417,16 @@ export class MmdRuntime implements ILogger {
     }
 
     public async seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void> {
-        frameTime = Math.max(0, Math.min(frameTime, this._animationDuration));
+        frameTime = Math.max(0, Math.min(frameTime, this._animationFrameTimeDuration));
 
         if (this._audioPlayer !== null) {
             if (!this._audioPlayer.paused) {
                 this._audioPlayer.currentTime = frameTime / 30;
-            } else if (!this._animationPaused && this._audioExhausted && frameTime < this._audioPlayer.duration * 30) {
+            } else if (
+                !this._animationPaused && // animation playing but audio paused
+                this._audioPlayer.currentTime * 30 < this._animationFrameTimeDuration && // is player exausted
+                frameTime < this._audioPlayer.duration * 30 // is seek time in audio duration
+            ) {
                 try {
                     this._audioPlayer._setCurrentTimeWithoutNotify(frameTime / 30);
                     await this._audioPlayer.play();
@@ -488,17 +483,23 @@ export class MmdRuntime implements ILogger {
         return this._currentFrameTime / 30;
     }
 
-    public get animationDuration(): number {
-        return this._animationDuration;
+    public get animationFrameTimeDuration(): number {
+        return this._animationFrameTimeDuration;
     }
 
-    public setManualAnimationDuration(duration: number | null): void {
-        if (duration === null) {
+    public get animationDuration(): number {
+        return this._animationFrameTimeDuration / 30;
+    }
+
+    public setManualAnimationDuration(frameTimeDuration: number | null): void {
+        if (frameTimeDuration === null && !this._useManualAnimationDuration) return;
+
+        if (frameTimeDuration === null) {
             this._useManualAnimationDuration = false;
-            this._animationDuration = this._computeAnimationDuration();
+            this._animationFrameTimeDuration = this._computeAnimationDuration();
         } else {
             this._useManualAnimationDuration = true;
-            this._animationDuration = duration;
+            this._animationFrameTimeDuration = frameTimeDuration;
         }
 
         this.onAnimationDurationChangedObservable.notifyObservers();

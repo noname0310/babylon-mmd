@@ -181,12 +181,12 @@ export class SceneBuilder implements ISceneBuilder {
             timeSlider.style.opacity = "0.5";
             timeSlider.type = "range";
             timeSlider.min = "0";
-            timeSlider.max = mmdRuntime.animationDuration.toString();
+            timeSlider.max = mmdRuntime.animationFrameTimeDuration.toString();
             engine.onBeginFrameObservable.add(() => {
                 timeSlider.value = mmdRuntime.currentFrameTime.toString();
             });
             mmdRuntime.onAnimationDurationChangedObservable.add(() => {
-                timeSlider.max = mmdRuntime.animationDuration.toString();
+                timeSlider.max = mmdRuntime.animationFrameTimeDuration.toString();
             });
             timeSlider.oninput = (e): void => {
                 e.preventDefault();
