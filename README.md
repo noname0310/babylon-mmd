@@ -18,7 +18,7 @@ Camera: https://www.nicovideo.jp/watch/sm36273873
 
 ![screenshot2](./docs/fig2.png)
 
-### https://playground.babylonjs.com/#ZF86YL
+### https://playground.babylonjs.com/#AZCXLD
 
 Music: [メランコリ・ナイト](https://youtu.be/y__uZETTuL8)
 
