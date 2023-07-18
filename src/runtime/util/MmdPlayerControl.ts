@@ -16,7 +16,7 @@ export class MmdPlayerControl {
     private readonly _mmdRuntime: MmdRuntime;
     private readonly _audioPlayer: Nullable<IAudioPlayer>;
 
-    private readonly _newCanvasContainer: HTMLElement;
+    private _newCanvasContainer: Nullable<HTMLElement>;
     private _playerContainer: HTMLElement;
     private _hidePlayerControlTimeoutId: number | undefined;
     private _playButton: HTMLButtonElement;
@@ -81,7 +81,7 @@ export class MmdPlayerControl {
     }
 
     private _restoreCanvasContainer(parentControl: HTMLElement): void {
-        const newCanvasContainer = this._newCanvasContainer;
+        const newCanvasContainer = this._newCanvasContainer!;
 
         while (newCanvasContainer.childElementCount > 0) {
             const child = newCanvasContainer.childNodes[0];
@@ -359,7 +359,9 @@ export class MmdPlayerControl {
     }
 
     public dispose(): void {
+        if (this._newCanvasContainer === null) return;
         this._restoreCanvasContainer(this._newCanvasContainer.parentElement!);
+        this._newCanvasContainer = null;
 
         this._playButton.onclick = null;
 
