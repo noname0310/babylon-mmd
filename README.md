@@ -109,6 +109,9 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // You can also run the animation before it loads. This will allow the audio to run first.
     mmdRuntime.playAnimation();
 
+    // create a youtube-like player control
+    new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+
     // Use havok physics engine for rigid body/joint simulation
     const havokInstance = await HavokPhysics();
     const havokPlugin = new HavokPlugin(true, havokInstance);
@@ -219,7 +222,7 @@ const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 - [x] Solve Append transform
 - [x] Solve IK
 - [x] Play audio / sync with animation
-- [ ] Basic animation player UI
+- [x] Basic animation player UI
 
 **Physics Runtime**
 
