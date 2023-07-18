@@ -1,4 +1,4 @@
-import type { Engine } from "@babylonjs/core";
+import type { Engine, Nullable } from "@babylonjs/core";
 import { ArcRotateCamera, Color3, DirectionalLight, HemisphericLight, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
 
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
@@ -123,8 +123,8 @@ export class PmxConverterScene implements ISceneBuilder {
             setTimeout(() => isLoading = false, 1500);
         };
 
-        let selectedFile: File | null = null;
-        let mesh: MmdStaticMesh | null = null;
+        let selectedFile: Nullable<File> = null;
+        let mesh: Nullable<MmdStaticMesh> = null;
         let isLoading = false;
 
         const parentDiv = canvas.parentElement!;

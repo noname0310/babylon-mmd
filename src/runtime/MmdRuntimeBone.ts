@@ -1,4 +1,4 @@
-import type { Bone} from "@babylonjs/core";
+import type { Bone, Nullable } from "@babylonjs/core";
 import { Matrix, Quaternion, Space, Vector3 } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
@@ -10,34 +10,34 @@ export interface IMmdRuntimeBone {
     readonly babylonBone: Bone;
 
     readonly name: string;
-    readonly parentBone: IMmdRuntimeBone | null;
+    readonly parentBone: Nullable<IMmdRuntimeBone>;
     readonly childBones: readonly IMmdRuntimeBone[];
 
     readonly transformOrder: number;
     readonly flag: number;
     readonly transformAfterPhysics: boolean;
 
-    readonly ikSolver: IIkSolver | null;
+    readonly ikSolver: Nullable<IIkSolver>;
 }
 
 export class MmdRuntimeBone implements IMmdRuntimeBone {
     public readonly babylonBone: Bone;
 
     public readonly name: string;
-    public parentBone: MmdRuntimeBone | null;
+    public parentBone: Nullable<MmdRuntimeBone>;
     public readonly childBones: MmdRuntimeBone[];
 
     public readonly transformOrder: number;
     public readonly flag: number;
     public readonly transformAfterPhysics: boolean;
 
-    public appendTransformSolver: AppendTransformSolver | null;
-    public ikSolver: IkSolver | null;
+    public appendTransformSolver: Nullable<AppendTransformSolver>;
+    public ikSolver: Nullable<IkSolver>;
 
     public readonly morphPositionOffset: Vector3;
     public readonly morphRotationOffset: Quaternion;
 
-    public ikRotation: Quaternion | null;
+    public ikRotation: Nullable<Quaternion>;
 
     public readonly localMatrix: Matrix;
     public readonly worldMatrix: Matrix;

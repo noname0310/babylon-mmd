@@ -1,3 +1,4 @@
+import type { Nullable } from "@babylonjs/core";
 import { Material } from "@babylonjs/core";
 
 import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
@@ -29,7 +30,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     private readonly _initialSphereTextureColor: Vec4;
     private readonly _initialToonTextureColor: Vec4;
 
-    private readonly _initialTransparencyMode: number | null;
+    private readonly _initialTransparencyMode: Nullable<number>;
     private readonly _initialBackFaceCulling: boolean;
 
     public constructor(material: MmdStandardMaterial) {

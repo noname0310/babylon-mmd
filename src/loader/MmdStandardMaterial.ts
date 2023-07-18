@@ -1,4 +1,4 @@
-import type { Color4, Scene, Texture } from "@babylonjs/core";
+import type { Color4, Nullable, Scene, Texture } from "@babylonjs/core";
 import { Color3, StandardMaterial } from "@babylonjs/core";
 
 import type { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
@@ -21,11 +21,11 @@ export class MmdStandardMaterial extends StandardMaterial {
         pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = true;
     }
 
-    public get sphereTexture(): Texture | null {
+    public get sphereTexture(): Nullable<Texture> {
         return this._pluginMaterial.sphereTexture;
     }
 
-    public set sphereTexture(value: Texture | null) {
+    public set sphereTexture(value: Nullable<Texture>) {
         this._pluginMaterial.sphereTexture = value;
     }
 
@@ -37,11 +37,11 @@ export class MmdStandardMaterial extends StandardMaterial {
         this._pluginMaterial.sphereTextureBlendMode = value;
     }
 
-    public get toonTexture(): Texture | null {
+    public get toonTexture(): Nullable<Texture> {
         return this._pluginMaterial.toonTexture;
     }
 
-    public set toonTexture(value: Texture | null) {
+    public set toonTexture(value: Nullable<Texture>) {
         this._pluginMaterial.toonTexture = value;
     }
 

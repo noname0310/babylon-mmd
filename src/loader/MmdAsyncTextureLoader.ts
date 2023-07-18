@@ -32,18 +32,18 @@ class TextureLoadInfo {
 class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
-    private readonly _assetContainer: AssetContainer | null;
+    private readonly _assetContainer: Nullable<AssetContainer>;
     private readonly _onLoad?: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
-    private _arrayBuffer: ArrayBuffer | null;
-    private _texture: Texture | null;
+    private _arrayBuffer: Nullable<ArrayBuffer>;
+    private _texture: Nullable<Texture>;
 
 
     public constructor(
         cacheKey: string,
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         urlOrTextureName: string,
         useLazyLoadWithBuffer: boolean,
         onLoad?: Nullable<() => void>,
@@ -102,7 +102,7 @@ class MmdTextureData {
 
     private _createTexture(
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         textureName: string,
         arrayBuffer: ArrayBuffer,
         onLoad?: Nullable<() => void>,
@@ -127,18 +127,18 @@ class MmdTextureData {
         texture.name = textureName;
     }
 
-    public get arrayBuffer(): ArrayBuffer | null {
+    public get arrayBuffer(): Nullable<ArrayBuffer> {
         return this._arrayBuffer;
     }
 
-    public get texture(): Texture | null {
+    public get texture(): Nullable<Texture> {
         return this._texture;
     }
 }
 
 export interface MmdTextureLoadResult {
-    readonly texture: Texture | null;
-    readonly arrayBuffer: ArrayBuffer | null;
+    readonly texture: Nullable<Texture>;
+    readonly arrayBuffer: Nullable<ArrayBuffer>;
 }
 
 export class MmdAsyncTextureLoader {
@@ -238,10 +238,10 @@ export class MmdAsyncTextureLoader {
     private async _loadTextureAsyncInternal(
         uniqueId: number,
         urlOrTextureName: string,
-        arrayBufferOrBlob: ArrayBuffer | Blob | null,
-        sharedTextureIndex: number | null,
+        arrayBufferOrBlob: Nullable<ArrayBuffer | Blob>,
+        sharedTextureIndex: Nullable<number>,
         scene: Scene,
-        assetContainer: AssetContainer | null
+        assetContainer: Nullable<AssetContainer>
     ): Promise<MmdTextureLoadResult> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
@@ -309,7 +309,7 @@ export class MmdAsyncTextureLoader {
         rootUrl: string,
         relativeTexturePathOrIndex: string | number,
         scene: Scene,
-        assetContainer: AssetContainer | null
+        assetContainer: Nullable<AssetContainer>
     ): Promise<MmdTextureLoadResult> {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
@@ -336,7 +336,7 @@ export class MmdAsyncTextureLoader {
         textureName: string,
         arrayBufferOrBlob: ArrayBuffer | Blob,
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         applyPathNormalization = true
     ): Promise<MmdTextureLoadResult> {
         if (applyPathNormalization) {

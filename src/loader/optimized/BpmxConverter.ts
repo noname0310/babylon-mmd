@@ -178,7 +178,7 @@
  * }[jointCount]
  */
 
-import type { Scene } from "@babylonjs/core";
+import type { Nullable, Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core";
 
 import type { MmdTextureLoadResult } from "../MmdAsyncTextureLoader";
@@ -377,7 +377,7 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textures: (ArrayBuffer | null)[] = [];
+        const textures: Nullable<ArrayBuffer>[] = [];
 
         // create texture table
         {

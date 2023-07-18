@@ -1,4 +1,4 @@
-import type { Material, Mesh, Scene } from "@babylonjs/core";
+import type { Material, Mesh, Nullable, Scene } from "@babylonjs/core";
 import { Logger, Observable } from "@babylonjs/core";
 
 import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
@@ -17,11 +17,11 @@ export interface CreateMmdModelOptions {
 }
 
 export class MmdRuntime implements ILogger {
-    private readonly _physics: MmdPhysics | null;
+    private readonly _physics: Nullable<MmdPhysics>;
 
     private readonly _models: MmdModel[];
-    private _camera: MmdCamera | null;
-    private _audioPlayer: IAudioPlayer | null;
+    private _camera: Nullable<MmdCamera>;
+    private _audioPlayer: Nullable<IAudioPlayer>;
 
     private _loggingEnabled: boolean;
 
@@ -47,10 +47,10 @@ export class MmdRuntime implements ILogger {
 
     private readonly _needToInitializePhysicsModels: Set<MmdModel>;
 
-    private _beforePhysicsBinded: (() => void) | null;
+    private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
-    public constructor(physics: MmdPhysics | null = null) {
+    public constructor(physics: Nullable<MmdPhysics> = null) {
         this._physics = physics;
 
         this._models = [];
@@ -118,7 +118,7 @@ export class MmdRuntime implements ILogger {
         models.splice(index, 1);
     }
 
-    public setCamera(camera: MmdCamera | null): void {
+    public setCamera(camera: Nullable<MmdCamera>): void {
         if (this._camera !== null) {
             this._camera.onCurrentAnimationChangedObservable.removeCallback(this._onAnimationChanged);
         }
@@ -129,9 +129,9 @@ export class MmdRuntime implements ILogger {
         this._camera = camera;
     }
 
-    private _setAudioPlayerLastValue: IAudioPlayer | null = null;
+    private _setAudioPlayerLastValue: Nullable<IAudioPlayer> = null;
 
-    public async setAudioPlayer(audioPlayer: IAudioPlayer | null): Promise<void> {
+    public async setAudioPlayer(audioPlayer: Nullable<IAudioPlayer>): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
 
         this._setAudioPlayerLastValue = audioPlayer;
@@ -264,7 +264,7 @@ export class MmdRuntime implements ILogger {
         }
     }
 
-    private readonly _onAnimationChanged = (newAnimation: MmdRuntimeCameraAnimation | MmdRuntimeModelAnimation | null): void => {
+    private readonly _onAnimationChanged = (newAnimation: Nullable<MmdRuntimeCameraAnimation | MmdRuntimeModelAnimation>): void => {
         if (this._useManualAnimationDuration) return;
 
         const newAnimationDuration = newAnimation?.animation.endFrame ?? 0;
@@ -455,11 +455,11 @@ export class MmdRuntime implements ILogger {
         return this._models;
     }
 
-    public get camera(): MmdCamera | null {
+    public get camera(): Nullable<MmdCamera> {
         return this._camera;
     }
 
-    public get audioPlayer(): IAudioPlayer | null {
+    public get audioPlayer(): Nullable<IAudioPlayer> {
         return this._audioPlayer;
     }
 
@@ -491,7 +491,7 @@ export class MmdRuntime implements ILogger {
         return this._animationFrameTimeDuration / 30;
     }
 
-    public setManualAnimationDuration(frameTimeDuration: number | null): void {
+    public setManualAnimationDuration(frameTimeDuration: Nullable<number>): void {
         if (frameTimeDuration === null && !this._useManualAnimationDuration) return;
 
         if (frameTimeDuration === null) {

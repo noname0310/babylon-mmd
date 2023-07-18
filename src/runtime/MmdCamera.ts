@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core";
+import type { Nullable, Scene } from "@babylonjs/core";
 import { Camera, Matrix, Observable, Vector3 } from "@babylonjs/core";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
@@ -16,11 +16,11 @@ export class MmdCamera extends Camera {
     private readonly _tmpUpVector = Vector3.Zero();
     private readonly _tmpTargetVector = Vector3.Zero();
 
-    public readonly onCurrentAnimationChangedObservable: Observable<MmdRuntimeCameraAnimation | null>;
+    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<MmdRuntimeCameraAnimation>>;
     private readonly _animations: MmdRuntimeCameraAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
-    private _currentAnimation: MmdRuntimeCameraAnimation | null;
+    private _currentAnimation: Nullable<MmdRuntimeCameraAnimation>;
 
     public constructor(name: string, position: Vector3 = new Vector3(0, 10, 0), scene?: Scene, setActiveOnSceneIfNoneActive = true) {
         super(name, position, scene, setActiveOnSceneIfNoneActive);
@@ -28,7 +28,7 @@ export class MmdCamera extends Camera {
         // mmd default fov
         this.fov = 30 * (Math.PI / 180);
 
-        this.onCurrentAnimationChangedObservable = new Observable<MmdRuntimeCameraAnimation | null>();
+        this.onCurrentAnimationChangedObservable = new Observable<Nullable<MmdRuntimeCameraAnimation>>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -49,7 +49,7 @@ export class MmdCamera extends Camera {
         this._animations.splice(index, 1);
     }
 
-    public setAnimation(name: string | null): void {
+    public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 this._currentAnimation = null;
@@ -71,7 +71,7 @@ export class MmdCamera extends Camera {
         return this._animations;
     }
 
-    public get currentAnimation(): MmdRuntimeCameraAnimation | null {
+    public get currentAnimation(): Nullable<MmdRuntimeCameraAnimation> {
         return this._currentAnimation;
     }
 

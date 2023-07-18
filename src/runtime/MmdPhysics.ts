@@ -1,4 +1,4 @@
-import type { DeepImmutable, Mesh, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
+import type { DeepImmutable, Mesh, Nullable, PhysicsConstraint, PhysicsShape, Scene } from "@babylonjs/core";
 import { Physics6DoFConstraint, PhysicsConstraintAxis } from "@babylonjs/core";
 import { Matrix, PhysicsBody, PhysicsMotionType, PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere, Quaternion, TransformNode, Vector3 } from "@babylonjs/core";
 
@@ -50,15 +50,15 @@ class MmdPhysicsTransformNode extends TransformNode {
 export class MmdPhysicsModel {
     private readonly _mmdPhysics: MmdPhysics;
 
-    private readonly _nodes: readonly (MmdPhysicsTransformNode | null)[];
-    private readonly _bodies: readonly (PhysicsBody | null)[];
-    private readonly _constraints: readonly (PhysicsConstraint | null)[];
+    private readonly _nodes: readonly Nullable<MmdPhysicsTransformNode>[];
+    private readonly _bodies: readonly Nullable<PhysicsBody>[];
+    private readonly _constraints: readonly Nullable<PhysicsConstraint>[];
 
     public constructor(
         mmdPhysics: MmdPhysics,
-        nodes: readonly (MmdPhysicsTransformNode | null)[],
-        bodies: readonly (PhysicsBody | null)[],
-        constraints: readonly (PhysicsConstraint | null)[]
+        nodes: readonly Nullable<MmdPhysicsTransformNode>[],
+        bodies: readonly Nullable<PhysicsBody>[],
+        constraints: readonly Nullable<PhysicsConstraint>[]
     ) {
         this._mmdPhysics = mmdPhysics;
 
@@ -235,9 +235,9 @@ export class MmdPhysics {
             logger.warn("Mesh scaling is not uniform, physics may not work correctly");
         }
 
-        const nodes: (MmdPhysicsTransformNode | null)[] = [];
-        const bodies: (PhysicsBody | null)[] = [];
-        const constraints: (PhysicsConstraint | null)[] = [];
+        const nodes: Nullable<MmdPhysicsTransformNode>[] = [];
+        const bodies: Nullable<PhysicsBody>[] = [];
+        const constraints: Nullable<PhysicsConstraint>[] = [];
 
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];

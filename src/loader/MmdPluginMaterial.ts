@@ -77,10 +77,10 @@ export enum MmdPluginMaterialSphereTextureBlendMode {
 }
 
 export class MmdPluginMaterial extends MaterialPluginBase {
-    private _sphereTexture: Texture | null = null;
+    private _sphereTexture: Nullable<Texture> = null;
     private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
 
-    private _toonTexture: Texture | null = null;
+    private _toonTexture: Nullable<Texture> = null;
     private _ignoreDiffuseWhenToonTextureIsNull = false;
 
     public textureColor = new Color4(1, 1, 1, 1);
@@ -104,11 +104,11 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this._enable(value);
     }
 
-    public get sphereTexture(): Texture | null {
+    public get sphereTexture(): Nullable<Texture> {
         return this._sphereTexture;
     }
 
-    public set sphereTexture(value: Texture | null) {
+    public set sphereTexture(value: Nullable<Texture>) {
         if (this._sphereTexture === value) return;
         this._sphereTexture = value;
         this.markAllSubMeshesAsTexturesDirty();
@@ -124,11 +124,11 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this.markAllDefinesAsDirty();
     }
 
-    public get toonTexture(): Texture | null {
+    public get toonTexture(): Nullable<Texture> {
         return this._toonTexture;
     }
 
-    public set toonTexture(value: Texture | null) {
+    public set toonTexture(value: Nullable<Texture>) {
         if (this._toonTexture === value) return;
         this._toonTexture = value;
         this.markAllSubMeshesAsTexturesDirty();

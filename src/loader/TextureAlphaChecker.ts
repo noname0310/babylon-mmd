@@ -1,3 +1,4 @@
+import type { Nullable } from "@babylonjs/core";
 import { Material, Observable } from "@babylonjs/core";
 
 export enum TransparencyMode {
@@ -7,7 +8,7 @@ export enum TransparencyMode {
 }
 
 class TextureContainer {
-    public texture: WebGLTexture | null;
+    public texture: Nullable<WebGLTexture>;
     public readonly onLoadObservable: Observable<void>;
 
     public constructor() {
@@ -31,13 +32,13 @@ export class TextureAlphaChecker {
     private readonly _resolution: number;
     private readonly _textureCache: Map<ArrayBuffer, TextureContainer>;
 
-    private _context: WebGL2RenderingContext | null;
+    private _context: Nullable<WebGL2RenderingContext>;
 
-    private _vertexShader: WebGLShader | null;
-    private _fragmentShader: WebGLShader | null;
-    private _program: WebGLProgram | null;
-    private _uvBuffer: WebGLBuffer | null;
-    private _indexBuffer: WebGLBuffer | null;
+    private _vertexShader: Nullable<WebGLShader>;
+    private _fragmentShader: Nullable<WebGLShader>;
+    private _program: Nullable<WebGLProgram>;
+    private _uvBuffer: Nullable<WebGLBuffer>;
+    private _indexBuffer: Nullable<WebGLBuffer>;
 
     private readonly _indicesBytePerElement: number;
 
@@ -62,7 +63,7 @@ export class TextureAlphaChecker {
         }
     }
 
-    private _createRenderingContext(): WebGL2RenderingContext | null {
+    private _createRenderingContext(): Nullable<WebGL2RenderingContext> {
         const canvas = document.createElement("canvas");
         canvas.width = this._resolution;
         canvas.height = this._resolution;
@@ -152,7 +153,7 @@ export class TextureAlphaChecker {
         return true;
     }
 
-    private async _getWebGlTexture(textureBuffer: ArrayBuffer): Promise<WebGLTexture | null> {
+    private async _getWebGlTexture(textureBuffer: ArrayBuffer): Promise<Nullable<WebGLTexture>> {
         const context = this._context;
         if (context === null) return null;
 

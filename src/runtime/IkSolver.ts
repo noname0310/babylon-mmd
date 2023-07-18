@@ -3,23 +3,23 @@
  * https://github.com/benikabocha/saba/blob/master/src/Saba/Model/MMD/MMDIkSolver.cpp
  */
 
-import type { DeepImmutable } from "@babylonjs/core";
+import type { DeepImmutable, Nullable } from "@babylonjs/core";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core";
 
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 
 class IkChain {
     public bone: MmdRuntimeBone;
-    public minimumAngle: DeepImmutable<Vector3> | null;
-    public maximumAngle: DeepImmutable<Vector3> | null;
+    public minimumAngle: Nullable<DeepImmutable<Vector3>>;
+    public maximumAngle: Nullable<DeepImmutable<Vector3>>;
     public prevAngle: Vector3;
     public savedIkRotation: Quaternion;
     public planeModeAngle: number;
 
     public constructor(
         bone: MmdRuntimeBone,
-        minimumAngle: DeepImmutable<Vector3> | null,
-        maximumAngle: DeepImmutable<Vector3> | null
+        minimumAngle: Nullable<DeepImmutable<Vector3>>,
+        maximumAngle: Nullable<DeepImmutable<Vector3>>
     ) {
         this.bone = bone;
         this.minimumAngle = minimumAngle;
@@ -63,7 +63,7 @@ export class IkSolver implements IIkSolver {
         this._ikChains = [];
     }
 
-    public addIkChain(bone: MmdRuntimeBone, minimumAngle: Vector3 | null, maximumAngle: Vector3 | null): void {
+    public addIkChain(bone: MmdRuntimeBone, minimumAngle: Nullable<Vector3>, maximumAngle: Nullable<Vector3>): void {
         bone.ikRotation = Quaternion.Identity();
         const ikChain = new IkChain(bone, minimumAngle, maximumAngle);
         this._ikChains.push(ikChain);

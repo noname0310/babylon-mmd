@@ -1,4 +1,4 @@
-import type { _InstancesBatch, Engine, IEffectCreationOptions, ISceneComponent, Mesh, SubMesh } from "@babylonjs/core";
+import type { _InstancesBatch, Engine, IEffectCreationOptions, ISceneComponent, Mesh, Nullable, SubMesh } from "@babylonjs/core";
 import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, EffectFallbacks, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
@@ -119,7 +119,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         const replacementMesh = ownerMesh._internalAbstractMeshDataInfo._actAsRegularMesh ? ownerMesh : null;
         const renderingMesh = subMesh.getRenderingMesh();
         const effectiveMesh = replacementMesh ? replacementMesh : renderingMesh;
-        const material = subMesh.getMaterial() as MmdStandardMaterial | null;
+        const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
 
         if (!material || !scene.activeCamera) {
             return;
@@ -322,7 +322,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     private _beforeRenderingMesh(mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
         // Outline - step 1
         this._savedDepthWrite = this._engine.getDepthWrite();
-        const material = subMesh.getMaterial() as MmdStandardMaterial | null;
+        const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material && material.renderOutline) {
             if (material.needAlphaBlendingForMesh(mesh)) {
                 this._engine.cacheStencilState();
@@ -360,7 +360,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     }
 
     private _afterRenderingMesh(_mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
-        const material = subMesh.getMaterial() as MmdStandardMaterial | null;
+        const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material === null) return;
 
         // // Overlay

@@ -5,6 +5,7 @@ import type {
     ISceneLoaderPluginExtensions,
     ISceneLoaderProgressEvent,
     LoadFileError,
+    Nullable,
     Scene,
     WebRequest
 } from "@babylonjs/core";
@@ -168,7 +169,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
     private async _loadAsyncInternal(
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         state: LoadState,
         rootUrl: string,
         onProgress?: (event: ISceneLoaderProgressEvent) => void
@@ -489,7 +490,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         lastStageLoaded += buildMaterialCost;
 
         const bonesMetadata: MmdModelMetadata.Bone[] = [];
-        let skeleton: Skeleton | null = null;
+        let skeleton: Nullable<Skeleton> = null;
         if (state.buildSkeleton) {
             scene._blockEntityCollection = !!assetContainer;
             skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
@@ -588,7 +589,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
 
         const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManager: MorphTargetManager | null = null;
+        let morphTargetManager: Nullable<MorphTargetManager> = null;
         if (state.buildMorph) {
             scene._blockEntityCollection = !!assetContainer;
             morphTargetManager = new MorphTargetManager(scene);

@@ -1,4 +1,4 @@
-import type { DeepImmutable, Material } from "@babylonjs/core";
+import type { DeepImmutable, Material, Nullable } from "@babylonjs/core";
 import { type MorphTargetManager, Quaternion } from "@babylonjs/core";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
@@ -13,33 +13,34 @@ import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 export interface RuntimeMaterialMorphElement {
     index: number; // material index
     type: PmxObject.Morph.MaterialMorph.Type;
-    diffuse: Vec4 | null;
-    specular: Vec3 | null;
-    shininess: number | null;
-    ambient: Vec3 | null;
-    edgeColor: Vec4 | null;
-    edgeSize: number | null;
-    textureColor: Vec4 | null;
-    sphereTextureColor: Vec4 | null;
-    toonTextureColor: Vec4 | null;
+    diffuse: Nullable<Vec4>;
+    specular: Nullable<Vec3>;
+    shininess: Nullable<number>;
+    ambient: Nullable<Vec3>;
+    edgeColor: Nullable<Vec4>;
+    edgeSize: Nullable<number>;
+    textureColor: Nullable<Vec4>;
+    sphereTextureColor: Nullable<Vec4>;
+    toonTextureColor: Nullable<Vec4>;
 }
 
 interface RuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
-    readonly materialElements: readonly RuntimeMaterialMorphElement[] | null;
-    readonly elements: Int32Array // group morph / bone morph indices
+    readonly materialElements: Nullable<readonly RuntimeMaterialMorphElement[]>;
+    readonly elements: Nullable<
+        Int32Array // group morph / bone morph indices
         | number // MorphTargetManager morph target index
-        | null;
+    >;
 
-    readonly elements2: Float32Array | null; // group morph ratios / bone morph positions [..., x, y, z, ...]
-    readonly elements3: Float32Array | null; // bone morph rotations [..., x, y, z, w, ...]
+    readonly elements2: Nullable<Float32Array>; // group morph ratios / bone morph positions [..., x, y, z, ...]
+    readonly elements3: Nullable<Float32Array>; // bone morph rotations [..., x, y, z, w, ...]
 }
 
 export interface ReadonlyRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
-    readonly materialElements: readonly DeepImmutable<RuntimeMaterialMorphElement>[] | null;
+    readonly materialElements: Nullable<readonly DeepImmutable<RuntimeMaterialMorphElement>[]>;
 }
 
 export class MmdMorphController {
@@ -184,10 +185,10 @@ export class MmdMorphController {
         for (let i = 0; i < morphsMetadata.length; ++i) {
             const morphMetadata = morphsMetadata[i];
 
-            let runtimeMorphMaterialElements: readonly RuntimeMaterialMorphElement[] | null = null;
+            let runtimeMorphMaterialElements: Nullable<readonly RuntimeMaterialMorphElement[]> = null;
             let runtimeMorphElements: RuntimeMorph["elements"] = null;
-            let runtimeMorphElements2: Float32Array | null = null;
-            let runtimeMorphElements3: Float32Array | null = null;
+            let runtimeMorphElements2: Nullable<Float32Array> = null;
+            let runtimeMorphElements3: Nullable<Float32Array> = null;
 
             switch (morphMetadata.type) {
             case PmxObject.Morph.Type.GroupMorph:

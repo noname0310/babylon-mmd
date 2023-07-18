@@ -1,4 +1,4 @@
-import type { Camera, Engine } from "@babylonjs/core";
+import type { Camera, Engine, Nullable } from "@babylonjs/core";
 import {
     ArcRotateCamera,
     Color3,
@@ -147,7 +147,7 @@ export class SceneBuilder implements ISceneBuilder {
             const hidePlayerContainer = (): void => {
                 playerContainer.style.transform = "translateY(50%)";
             };
-            let mouseLeaveTimeout: number | null = null;
+            let mouseLeaveTimeout: Nullable<number> = null;
             playerContainer.onmouseenter = (): void => {
                 if (mouseLeaveTimeout !== null) {
                     window.clearTimeout(mouseLeaveTimeout);

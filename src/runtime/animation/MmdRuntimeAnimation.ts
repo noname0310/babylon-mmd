@@ -1,4 +1,4 @@
-import type { Bone, Material } from "@babylonjs/core";
+import type { Bone, Material, Nullable } from "@babylonjs/core";
 import { Quaternion, Space, Vector3 } from "@babylonjs/core";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
@@ -68,21 +68,21 @@ export abstract class MmdRuntimeAnimation {
 export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     public readonly animation: MmdAnimation;
 
-    private readonly _boneBindIndexMap: (Bone | null)[];
-    private readonly _moveableBoneBindIndexMap: (Bone | null)[];
+    private readonly _boneBindIndexMap: Nullable<Bone>[];
+    private readonly _moveableBoneBindIndexMap: Nullable<Bone>[];
     private readonly _morphController: MmdMorphController;
-    private readonly _morphBindIndexMap: (MorphIndices | null)[];
+    private readonly _morphBindIndexMap: Nullable<MorphIndices>[];
     private readonly _mesh: RuntimeMmdMesh;
-    private readonly _ikSolverBindIndexMap: (IIkSolver | null)[];
+    private readonly _ikSolverBindIndexMap: Nullable<IIkSolver>[];
 
     private constructor(
         animation: MmdAnimation,
-        boneBindIndexMap: (Bone | null)[],
-        moveableBoneBindIndexMap: (Bone | null)[],
+        boneBindIndexMap: Nullable<Bone>[],
+        moveableBoneBindIndexMap: Nullable<Bone>[],
         morphController: MmdMorphController,
-        morphBindIndexMap: (MorphIndices | null)[],
+        morphBindIndexMap: Nullable<MorphIndices>[],
         mesh: RuntimeMmdMesh,
-        ikSolverBindIndexMap: (IIkSolver | null)[]
+        ikSolverBindIndexMap: Nullable<IIkSolver>[]
     ) {
         super();
 
@@ -387,7 +387,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
             }
         }
 
-        const boneBindIndexMap: (Bone | null)[] = [];
+        const boneBindIndexMap: Nullable<Bone>[] = [];
         const boneTracks = animation.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
@@ -400,7 +400,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
             }
         }
 
-        const moveableBoneBindIndexMap: (Bone | null)[] = [];
+        const moveableBoneBindIndexMap: Nullable<Bone>[] = [];
         const moveableBoneTracks = animation.moveableBoneTracks;
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
@@ -414,7 +414,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         }
 
         const morphController = model.morph;
-        const morphBindIndexMap: (MorphIndices | null)[] = [];
+        const morphBindIndexMap: Nullable<MorphIndices>[] = [];
         const morphTracks = animation.morphTracks;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -440,7 +440,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
             }
         }
 
-        const ikSolverBindIndexMap: (IIkSolver | null)[] = [];
+        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = [];
         const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
@@ -473,7 +473,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     public static InduceMaterialRecompile = (
         materials: Material[],
         morphController: MmdMorphController,
-        morphIndices: (MorphIndices | null)[],
+        morphIndices: Nullable<MorphIndices>[],
         logger?: ILogger
     ): void => {
         let allTextureColorPropertiesAreRecompiled = false;

@@ -19,23 +19,23 @@ export class MmdModel {
     public readonly mesh: RuntimeMmdMesh;
     public readonly morph: MmdMorphController;
 
-    private readonly _physicsModel: MmdPhysicsModel | null;
+    private readonly _physicsModel: Nullable<MmdPhysicsModel>;
 
     private readonly _logger: ILogger;
 
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
-    public readonly onCurrentAnimationChangedObservable: Observable<MmdRuntimeModelAnimation | null>;
+    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<MmdRuntimeModelAnimation>>;
     private readonly _animations: MmdRuntimeModelAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
-    private _currentAnimation: MmdRuntimeModelAnimation | null;
+    private _currentAnimation: Nullable<MmdRuntimeModelAnimation>;
 
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
-        mmdPhysics: MmdPhysics | null,
+        mmdPhysics: Nullable<MmdPhysics>,
         logger: ILogger
     ) {
         this._logger = logger;
@@ -92,7 +92,7 @@ export class MmdModel {
             this._physicsModel = null;
         }
 
-        this.onCurrentAnimationChangedObservable = new Observable<MmdRuntimeModelAnimation | null>();
+        this.onCurrentAnimationChangedObservable = new Observable<Nullable<MmdRuntimeModelAnimation>>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -123,7 +123,7 @@ export class MmdModel {
         this._animations.splice(index, 1);
     }
 
-    public setAnimation(name: string | null): void {
+    public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 this._currentAnimation = null;
@@ -146,7 +146,7 @@ export class MmdModel {
         return this._animations;
     }
 
-    public get currentAnimation(): MmdRuntimeModelAnimation | null {
+    public get currentAnimation(): Nullable<MmdRuntimeModelAnimation> {
         return this._currentAnimation;
     }
 
@@ -167,7 +167,7 @@ export class MmdModel {
         this._physicsModel?.initialize();
     }
 
-    public beforePhysics(frameTime: number | null): void {
+    public beforePhysics(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
             if (this._currentAnimation !== null) {
                 this.mesh.skeleton.returnToRest();
@@ -295,7 +295,7 @@ export class MmdModel {
         return runtimeBones;
     }
 
-    private _originalComputeTransformMatrices: ((targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void) | null = null;
+    private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
 
     private _disableSkeletonWorldMatrixUpdate(skeleton: Skeleton): void {
         if (this._originalComputeTransformMatrices !== null) return;

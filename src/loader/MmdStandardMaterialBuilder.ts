@@ -1,4 +1,4 @@
-import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene, Texture } from "@babylonjs/core";
+import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Nullable, Scene, Texture } from "@babylonjs/core";
 import { Color3, Material } from "@babylonjs/core";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
@@ -44,7 +44,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,
@@ -55,8 +55,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
         scene.blockMaterialDirtyMechanism = true;
 
-        let textureAlphaChecker: TextureAlphaChecker | null = null;
-        const getTextureAlpphaChecker = (): TextureAlphaChecker | null => {
+        let textureAlphaChecker: Nullable<TextureAlphaChecker> = null;
+        const getTextureAlpphaChecker = (): Nullable<TextureAlphaChecker> => {
             if (textureAlphaChecker !== null) return textureAlphaChecker;
             return this.useAlphaEvaluation
                 ? textureAlphaChecker = new TextureAlphaChecker(uvs, indices, this.alphaEvaluationResolution)
@@ -236,12 +236,12 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: MaterialInfo,
         texturePathTable: readonly string[],
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         materialIndexOffset: number,
-        getTextureAlphaChecker: () => TextureAlphaChecker | null,
+        getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -330,7 +330,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: MaterialInfo,
         texturePathTable: readonly string[],
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
@@ -352,7 +352,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (sphereTexturePath !== undefined) {
                     const sphereTextureFileFullPath = fileRootId + sphereTexturePath;
 
-                    let sphereTexture: Texture | null;
+                    let sphereTexture: Nullable<Texture>;
                     const file = referenceFileResolver.resolve(sphereTextureFileFullPath);
                     if (file !== undefined) {
                         sphereTexture = (await this._textureLoader.loadTextureFromBufferAsync(
@@ -394,7 +394,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialInfo: MaterialInfo,
         texturePathTable: readonly string[],
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
@@ -422,7 +422,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (toonTexturePath !== undefined) {
                 const toonTextureFileFullPath = fileRootId + toonTexturePath;
 
-                let toonTexture: Texture | null;
+                let toonTexture: Nullable<Texture>;
                 const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTextureFileFullPath) : undefined;
                 if (file !== undefined) {
                     toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(

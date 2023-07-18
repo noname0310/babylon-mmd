@@ -1,4 +1,4 @@
-import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Scene } from "@babylonjs/core";
+import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Nullable, Scene } from "@babylonjs/core";
 
 import type { BpmxObject } from "./optimized/parser/BpmxObject";
 import type { PmxObject } from "./parser/PmxObject";
@@ -15,7 +15,7 @@ export interface IMmdMaterialBuilder {
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
-        assetContainer: AssetContainer | null,
+        assetContainer: Nullable<AssetContainer>,
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,
