@@ -1,6 +1,6 @@
 import type { Observable } from "@babylonjs/core";
 
-export interface IAudioPlayer {
+export interface IPlayer {
     readonly onDurationChangedObservable: Observable<void>;
     readonly onPlaybackRateChangedObservable: Observable<void>;
     readonly onMuteStateChangedObservable: Observable<void>;
@@ -24,4 +24,14 @@ export interface IAudioPlayer {
 
     play(): Promise<void>;
     pause(): void;
+}
+
+export interface IAudioPlayer extends IPlayer {
+    volume: number;
+    readonly muted: boolean;
+    
+    mute(): void;
+    unmute(): Promise<boolean>;
+
+    preservesPitch: boolean;
 }

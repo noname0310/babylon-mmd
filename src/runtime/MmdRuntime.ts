@@ -2,7 +2,7 @@ import type { Material, Mesh, Nullable, Scene } from "@babylonjs/core";
 import { Logger, Observable } from "@babylonjs/core";
 
 import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
-import type { IAudioPlayer } from "./audio/IAudioPlayer";
+import type { IPlayer } from "./audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdCamera } from "./MmdCamera";
@@ -21,7 +21,7 @@ export class MmdRuntime implements ILogger {
 
     private readonly _models: MmdModel[];
     private _camera: Nullable<MmdCamera>;
-    private _audioPlayer: Nullable<IAudioPlayer>;
+    private _audioPlayer: Nullable<IPlayer>;
 
     private _loggingEnabled: boolean;
 
@@ -38,6 +38,7 @@ export class MmdRuntime implements ILogger {
     public readonly onPlayAnimationObservable: Observable<void>;
     public readonly onPauseAnimationObservable: Observable<void>;
     public readonly onSeekAnimationObservable: Observable<void>;
+    public readonly onAnimationTickObservable: Observable<void>;
 
     private _currentFrameTime: number;
     private _animationTimeScale: number;
@@ -68,6 +69,7 @@ export class MmdRuntime implements ILogger {
         this.onPlayAnimationObservable = new Observable<void>();
         this.onPauseAnimationObservable = new Observable<void>();
         this.onSeekAnimationObservable = new Observable<void>();
+        this.onAnimationTickObservable = new Observable<void>();
 
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
@@ -129,9 +131,9 @@ export class MmdRuntime implements ILogger {
         this._camera = camera;
     }
 
-    private _setAudioPlayerLastValue: Nullable<IAudioPlayer> = null;
+    private _setAudioPlayerLastValue: Nullable<IPlayer> = null;
 
-    public async setAudioPlayer(audioPlayer: Nullable<IAudioPlayer>): Promise<void> {
+    public async setAudioPlayer(audioPlayer: Nullable<IPlayer>): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
 
         this._setAudioPlayerLastValue = audioPlayer;
@@ -243,6 +245,8 @@ export class MmdRuntime implements ILogger {
             if (this._camera !== null) {
                 this._camera.animate(elapsedFrameTime);
             }
+
+            this.onAnimationTickObservable.notifyObservers();
         } else {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) {
@@ -411,6 +415,8 @@ export class MmdRuntime implements ILogger {
             if (this._camera !== null && this._camera.currentAnimation !== null) {
                 this._camera.animate(frameTime);
             }
+
+            this.onAnimationTickObservable.notifyObservers();
         }
 
         this.onSeekAnimationObservable.notifyObservers();
@@ -459,7 +465,7 @@ export class MmdRuntime implements ILogger {
         return this._camera;
     }
 
-    public get audioPlayer(): Nullable<IAudioPlayer> {
+    public get audioPlayer(): Nullable<IPlayer> {
         return this._audioPlayer;
     }
 
