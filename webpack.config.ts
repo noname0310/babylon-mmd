@@ -1,8 +1,6 @@
 import CompressionWebpackPlugin from "compression-webpack-plugin";
 import CopyWebpackPlugin from "copy-webpack-plugin";
-import CssMinimizerWebpackPlugin from "css-minimizer-webpack-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
-import ExtractCssChunks from "extract-css-chunks-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import path from "path";
 import type webpack from "webpack";
@@ -16,20 +14,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         clean: true
     },
     optimization: {
-        minimize: env.production,
-        minimizer: [
-            "...",
-            new CssMinimizerWebpackPlugin()
-        ],
-        splitChunks: {
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: "vendors",
-                    chunks: "all"
-                }
-            }
-        }
+        minimize: env.production
     },
     cache: true,
     module: {
@@ -39,39 +24,8 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
                 loader: "ts-loader"
             },
             {
-                test: /\.(png|jpg|gif)$/,
-                loader: "file-loader",
-                options: {
-                    name: "[name].[hash:8].[ext]",
-                    outputPath: "assets"
-                }
-            },
-            {
                 test: /\.html$/,
                 loader: "html-loader"
-            },
-            {
-                test: /\.css$/,
-                exclude: /\.module\.css$/,
-                use: [
-                    ExtractCssChunks.loader,
-                    "css-loader"
-                ]
-            },
-            {
-                test: /\.module\.css$/,
-                use: [
-                    ExtractCssChunks.loader,
-                    {
-                        loader: "css-loader",
-                        options: {
-                            modules: {
-                                localIdentName: "[name]__[local]--[hash:base64:5]",
-                                exportLocalsConvention: "camelCase"
-                            }
-                        }
-                    }
-                ]
             }
         ]
     },
@@ -90,10 +44,6 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         new HtmlWebpackPlugin({
             template: "./src/test/index.html"
         }),
-        new ExtractCssChunks({
-            filename: "[name].css",
-            chunkFilename: "[id].css"
-        }) as any,
         new ESLintPlugin({
             extensions: ["ts", "tsx"],
             fix: true,
@@ -107,7 +57,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
     ].concat(env.production ? [
         new CompressionWebpackPlugin({
             test: /\.(js|bvmd|bpmx)$/i
-        })
+        }) as any
     ] : []),
     devServer: {
         host: "0.0.0.0",
