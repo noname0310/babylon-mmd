@@ -114,7 +114,7 @@ export class MmdPlayerControl {
             playerInnerContainer.style.width = "100%";
             playerInnerContainer.style.height = "50%";
             playerInnerContainer.style.boxSizing = "border-box";
-            playerInnerContainer.style.background = "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3))";
+            playerInnerContainer.style.background = "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6))";
             playerInnerContainer.style.display = "flex";
             playerInnerContainer.style.flexDirection = "column";
             playerContainer.appendChild(playerInnerContainer);
