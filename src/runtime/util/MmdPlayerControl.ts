@@ -331,21 +331,20 @@ export class MmdPlayerControl {
         this._soundButton.innerText = this._audioPlayer!.muted ? "🔇" : "🔊";
     };
 
-    private readonly _formattedTimeCache: Map<number, string> = new Map();
+    private _formattedTimeCacheKey: number = NaN;
+    private _formatterTimeCacheValue: string = "";
 
     private _getFormattedTime(time: number): string { // 00:00 or 0:00
         const floorTime = Math.floor(time);
-
-        const cache = this._formattedTimeCache;
-        const cachedResult = cache.get(floorTime);
-        if (cachedResult !== undefined) return cachedResult;
-
-        if (cache.size > 100) cache.clear();
+        if (floorTime === this._formattedTimeCacheKey) return this._formatterTimeCacheValue;
 
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
         const formattedTime = minutes.toString() + ":" + (seconds < 10 ? "0" : "") + seconds.toString();
-        cache.set(floorTime, formattedTime);
+
+        this._formattedTimeCacheKey = floorTime;
+        this._formatterTimeCacheValue = formattedTime;
+
         return formattedTime;
     }
 
