@@ -144,7 +144,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
-        const audioPlayer = new StreamAudioPlayer();
+        const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/shinshoku/shinshoku.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);

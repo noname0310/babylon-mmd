@@ -29,6 +29,9 @@ export class MmdPlayerControl {
     private _speedSlider: HTMLInputElement;
     private _fullscreenButton: HTMLButtonElement;
 
+    private readonly _bindedDispose: () => void;
+    private readonly _scene: Scene;
+
     public constructor(scene: Scene, mmdRuntime: MmdRuntime, audioPlayer?: IAudioPlayer) {
         const rootElement = scene.getEngine().getInputElement();
         if (rootElement === null) {
@@ -60,6 +63,10 @@ export class MmdPlayerControl {
         mmdRuntime.onAnimationDurationChangedObservable.add(this._onAnimationDurationChanged);
         mmdRuntime.onAnimationTickObservable.add(this._onAnimationTick);
         audioPlayer?.onMuteStateChangedObservable.add(this._onMuteStateChanged);
+
+        this._bindedDispose = this.dispose.bind(this);
+        this._scene = scene;
+        scene.onDisposeObservable.add(this._bindedDispose);
     }
 
     private _createCanvasContainer(parentControl: HTMLElement): HTMLElement {
@@ -386,5 +393,7 @@ export class MmdPlayerControl {
         this._mmdRuntime.onAnimationDurationChangedObservable.removeCallback(this._onAnimationDurationChanged);
         this._mmdRuntime.onAnimationTickObservable.removeCallback(this._onAnimationTick);
         this._audioPlayer?.onMuteStateChangedObservable.removeCallback(this._onMuteStateChanged);
+
+        this._scene.onDisposeObservable.removeCallback(this._bindedDispose);
     }
 }

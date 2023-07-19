@@ -36,7 +36,7 @@ export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimatio
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
-export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
+export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Util
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";

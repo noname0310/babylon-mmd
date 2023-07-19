@@ -1,6 +1,11 @@
 import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { IAudioPlayer } from "./IAudioPlayer";
+
+export interface IDisposeObservable {
+    readonly onDisposeObservable: Observable<any>;
+}
 
 export class StreamAudioPlayer implements IAudioPlayer {
     public readonly onLoadErrorObservable: Observable<void>;
@@ -22,7 +27,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
     private _virtualPauseCurrentTime: number;
     private _metadataLoaded: boolean;
 
-    public constructor() {
+    private readonly _bindedDispose: () => void;
+    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+
+    public constructor(disposeObservable: Nullable<IDisposeObservable>) {
         this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
         this.onPlaybackRateChangedObservable = new Observable<void>();
@@ -50,6 +58,12 @@ export class StreamAudioPlayer implements IAudioPlayer {
         audio.onplaying = this._onPlay;
         audio.onpause = this._onPause;
         audio.onseeked = this._onSeek;
+
+        this._bindedDispose = this.dispose.bind(this);
+        this._disposeObservableObject = disposeObservable;
+        if (this._disposeObservableObject !== null) {
+            this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
+        }
     }
 
     private readonly _onDurationChanged = (): void => {
@@ -353,6 +367,30 @@ export class StreamAudioPlayer implements IAudioPlayer {
             this._onPause();
         } else {
             this._audio.pause();
+        }
+    }
+
+    public dispose(): void {
+        const audio = this._audio;
+        audio.pause();
+        audio.ondurationchange = null;
+        audio.onerror = null;
+        audio.onplaying = null;
+        audio.onpause = null;
+        audio.onseeked = null;
+        this._audio.remove();
+
+        this.onLoadErrorObservable.clear();
+        this.onDurationChangedObservable.clear();
+        this.onPlaybackRateChangedObservable.clear();
+        this.onMuteStateChangedObservable.clear();
+
+        this.onPlayObservable.clear();
+        this.onPauseObservable.clear();
+        this.onSeekObservable.clear();
+
+        if (this._disposeObservableObject !== null) {
+            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
         }
     }
 }
