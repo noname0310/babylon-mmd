@@ -12,10 +12,10 @@ import { PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere } from "@babyl
 import type { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import { PmxObject } from "@/loader/parser/PmxObject";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "./ILogger";
-import type { MmdRuntimeBone } from "./MmdRuntimeBone";
+import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 class MmdPhysicsTransformNode extends TransformNode {
     public readonly linkedBone: MmdRuntimeBone;

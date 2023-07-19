@@ -54,8 +54,8 @@
  * fovInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  */
 
-import type { MmdAnimation } from "../animation/MmdAnimation";
-import { MmdDataSerializer } from "./MmdDataSerializer";
+import type { MmdAnimation } from "../Animation/mmdAnimation";
+import { MmdDataSerializer } from "./mmdDataSerializer";
 
 export class BvmdConverter {
     private constructor() { /* block constructor */ }

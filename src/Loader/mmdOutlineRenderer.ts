@@ -13,9 +13,9 @@ import type { ISceneComponent} from "@babylonjs/core/sceneComponent";
 import { SceneComponentConstants } from "@babylonjs/core/sceneComponent";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdStandardMaterial } from "./MmdStandardMaterial";
-import { SdefBufferKind } from "./SdefBufferKind";
-import { SdefInjector } from "./SdefInjector";
+import type { MmdStandardMaterial } from "./mmdStandardMaterial";
+import { SdefBufferKind } from "./sdefBufferKind";
+import { SdefInjector } from "./sdefInjector";
 
 declare module "@babylonjs/core/scene" {
     export interface Scene {

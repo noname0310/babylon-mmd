@@ -4,17 +4,17 @@ import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
-import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
-import { PmxObject } from "@/loader/parser/PmxObject";
+import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
-import type { IIkSolver } from "../IkSolver";
+import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
-import type { MmdCamera } from "../MmdCamera";
-import type { RuntimeMmdMesh } from "../MmdMesh";
-import type { MmdModel } from "../MmdModel";
-import type { MmdMorphController } from "../MmdMorphController";
+import type { MmdCamera } from "../mmdCamera";
+import type { RuntimeMmdMesh } from "../mmdMesh";
+import type { MmdModel } from "../mmdModel";
+import type { MmdMorphController } from "../mmdMorphController";
 
 type MorphIndices = readonly number[];
 

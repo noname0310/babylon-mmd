@@ -9,7 +9,7 @@ import type { Observable, Observer } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { FloatArray, Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./SdefBufferKind";
+import { SdefBufferKind } from "./sdefBufferKind";
 
 /**
  * IMPORTANT NOTE:

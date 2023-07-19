@@ -181,14 +181,14 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdTextureLoadResult } from "../MmdAsyncTextureLoader";
-import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";
-import type { ILogger } from "../parser/ILogger";
-import { PmxObject } from "../parser/PmxObject";
-import { PmxReader } from "../parser/PmxReader";
-import { ReferenceFileResolver } from "../ReferenceFileResolver";
-import { TextureAlphaChecker } from "../TextureAlphaChecker";
-import { MmdDataSerializer } from "./MmdDataSerializer";
+import type { MmdTextureLoadResult } from "../mmdAsyncTextureLoader";
+import { MmdAsyncTextureLoader } from "../mmdAsyncTextureLoader";
+import type { ILogger } from "../Parser/ILogger";
+import { PmxObject } from "../Parser/pmxObject";
+import { PmxReader } from "../Parser/pmxReader";
+import { ReferenceFileResolver } from "../referenceFileResolver";
+import { TextureAlphaChecker } from "../textureAlphaChecker";
+import { MmdDataSerializer } from "./mmdDataSerializer";
 
 export class BpmxConverter implements ILogger {
     public alphaThreshold: number;

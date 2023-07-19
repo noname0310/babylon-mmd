@@ -3,10 +3,10 @@ import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
-import type { AppendTransformSolver } from "./AppendTransformSolver";
-import type { IIkSolver, IkSolver } from "./IkSolver";
+import type { AppendTransformSolver } from "./appendTransformSolver";
+import type { IIkSolver, IkSolver } from "./ikSolver";
 
 export interface IMmdRuntimeBone {
     readonly babylonBone: Bone;

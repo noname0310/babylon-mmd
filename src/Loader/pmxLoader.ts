@@ -20,14 +20,14 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
-import type { MmdModelMetadata } from "./MmdModelMetadata";
-import { MmdStandardMaterialBuilder } from "./MmdStandardMaterialBuilder";
-import { ObjectUniqueIdProvider } from "./ObjectUniqueIdProvider";
-import type { ILogger } from "./parser/ILogger";
-import { PmxObject } from "./parser/PmxObject";
-import { PmxReader } from "./parser/PmxReader";
-import { SdefBufferKind } from "./SdefBufferKind";
-import { SdefMesh } from "./SdefMesh";
+import type { MmdModelMetadata } from "./mmdModelMetadata";
+import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
+import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
+import type { ILogger } from "./Parser/ILogger";
+import { PmxObject } from "./Parser/pmxObject";
+import { PmxReader } from "./Parser/pmxReader";
+import { SdefBufferKind } from "./sdefBufferKind";
+import { SdefMesh } from "./sdefMesh";
 
 interface LoadState {
     readonly arrayBuffer: ArrayBuffer;

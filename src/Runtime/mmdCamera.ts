@@ -4,9 +4,9 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
+import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 
-import { MmdRuntimeCameraAnimation } from "./animation/MmdRuntimeAnimation";
+import { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeAnimation";
 
 export class MmdCamera extends Camera {
     public ignoreParentScaling = false;

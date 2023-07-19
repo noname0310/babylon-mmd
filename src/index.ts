@@ -1,53 +1,53 @@
-// loader/animation
-export { MmdAnimation } from "@/loader/animation/MmdAnimation";
-export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/loader/animation/MmdAnimationTrack";
+// Loader/animation
+export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 
-// loader/optimized/parser
-export { BpmxObject } from "@/loader/optimized/parser/BpmxObject";
-export { BpmxReader } from "@/loader/optimized/parser/BpmxReader";
+// Loader/Optimized/parser
+export { BpmxObject } from "@/Loader/Optimized/Parser/bpmxObject";
+export { BpmxReader } from "@/Loader/Optimized/Parser/bpmxReader";
 
-// loader/optimized
-export { BpmxConverter } from "@/loader/optimized/BpmxConverter";
-export { BpmxLoader } from "@/loader/optimized/BpmxLoader";
-export { BvmdConverter } from "@/loader/optimized/BvmdConverter";
-export { BvmdLoader } from "@/loader/optimized/BvmdLoader";
+// Loader/optimized
+export { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
+export { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+export { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
+export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
-// loader/parser
-export { ConsoleLogger, ILogger } from "@/loader/parser/ILogger";
-export { PmxObject } from "@/loader/parser/PmxObject";
-export { PmxReader } from "@/loader/parser/PmxReader";
-export { VmdData, VmdObject } from "@/loader/parser/VmdObject";
+// Loader/parser
+export { ConsoleLogger, ILogger } from "@/Loader/Parser/ILogger";
+export { PmxObject } from "@/Loader/Parser/pmxObject";
+export { PmxReader } from "@/Loader/Parser/pmxReader";
+export { VmdData, VmdObject } from "@/Loader/Parser/vmdObject";
 
 // loader
-export { IMmdMaterialBuilder, MaterialInfo } from "@/loader/IMmdMaterialBuilder";
-export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/loader/MmdAsyncTextureLoader";
-export { MmdModelMetadata } from "@/loader/MmdModelMetadata";
-export { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
-export { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
-export { PmxLoader } from "@/loader/PmxLoader";
-export { IArrayBufferFile, ReferenceFileResolver } from "@/loader/ReferenceFileResolver";
-export { SdefInjector } from "@/loader/SdefInjector";
-export { SharedToonTextures } from "@/loader/SharedToonTextures";
-export { TextureAlphaChecker, TransparencyMode } from "@/loader/TextureAlphaChecker";
-export { VmdLoader } from "@/loader/VmdLoader";
+export { IMmdMaterialBuilder, MaterialInfo } from "@/Loader/IMmdMaterialBuilder";
+export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/Loader/mmdAsyncTextureLoader";
+export { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
+export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+export { PmxLoader } from "@/Loader/pmxLoader";
+export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
+export { SdefInjector } from "@/Loader/sdefInjector";
+export { SharedToonTextures } from "@/Loader/sharedToonTextures";
+export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChecker";
+export { VmdLoader } from "@/Loader/vmdLoader";
 
-// runtime/animation
-export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "@/runtime/animation/MmdRuntimeAnimation";
+// Runtime/animation
+export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 
-// runtime/audio
-export { IPlayer } from "@/runtime/audio/IAudioPlayer";
-export { StreamAudioPlayer } from "@/runtime/audio/StreamAudioPlayer";
+// Runtime/audio
+export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
+export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
-// runtime/util
-export { DisplayTimeFormat, MmdPlayerControl } from "@/runtime/util/MmdPlayerControl";
+// Runtime/util
+export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 // runtime
-export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/runtime/IMmdMaterialProxy";
-export { MmdCamera } from "@/runtime/MmdCamera";
-export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/runtime/MmdMesh";
-export { MmdModel } from "@/runtime/MmdModel";
-export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/runtime/MmdMorphController";
-export { MmdPhysics, MmdPhysicsModel } from "@/runtime/MmdPhysics";
-export { CreateMmdModelOptions, MmdRuntime } from "@/runtime/MmdRuntime";
-export { IMmdRuntimeBone } from "@/runtime/MmdRuntimeBone";
-export { MmdStandardMaterialProxy } from "@/runtime/MmdStandardMaterialProxy";
+export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
+export { MmdCamera } from "@/Runtime/mmdCamera";
+export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
+export { MmdModel } from "@/Runtime/mmdModel";
+export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphController";
+export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/mmdPhysics";
+export { CreateMmdModelOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
+export { IMmdRuntimeBone } from "@/Runtime/mmdRuntimeBone";
+export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";

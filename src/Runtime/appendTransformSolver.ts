@@ -1,8 +1,8 @@
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
-import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
-import type { MmdRuntimeBone } from "./MmdRuntimeBone";
+import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 type RemoveUndefined<T> = T extends undefined ? never : T;
 type AppendTransformMetadata = RemoveUndefined<MmdModelMetadata.Bone["appendTransform"]>;

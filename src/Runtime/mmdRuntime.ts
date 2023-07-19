@@ -5,15 +5,15 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
-import type { IPlayer } from "./audio/IAudioPlayer";
+import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeAnimation";
+import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdCamera } from "./MmdCamera";
-import { MmdMesh } from "./MmdMesh";
-import { MmdModel } from "./MmdModel";
-import type { MmdPhysics } from "./MmdPhysics";
-import { MmdStandardMaterialProxy } from "./MmdStandardMaterialProxy";
+import type { MmdCamera } from "./mmdCamera";
+import { MmdMesh } from "./mmdMesh";
+import { MmdModel } from "./mmdModel";
+import type { MmdPhysics } from "./mmdPhysics";
+import { MmdStandardMaterialProxy } from "./mmdStandardMaterialProxy";
 
 export interface CreateMmdModelOptions {
     materialProxyConstructor?: IMmdMaterialProxyConstructor<Material>;

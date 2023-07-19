@@ -22,19 +22,19 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 
-import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
-import { BpmxLoader } from "@/loader/optimized/BpmxLoader";
-import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
-import { PmxLoader } from "@/loader/PmxLoader";
-import { SdefInjector } from "@/loader/SdefInjector";
-import { StreamAudioPlayer } from "@/runtime/audio/StreamAudioPlayer";
-import { MmdCamera } from "@/runtime/MmdCamera";
-import { MmdPhysics } from "@/runtime/MmdPhysics";
-import { MmdRuntime } from "@/runtime/MmdRuntime";
-import { MmdPlayerControl } from "@/runtime/util/MmdPlayerControl";
+import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
+import { PmxLoader } from "@/Loader/pmxLoader";
+import { SdefInjector } from "@/Loader/sdefInjector";
+import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
+import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdPhysics } from "@/Runtime/mmdPhysics";
+import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
-import type { ISceneBuilder } from "./BaseRuntime";
+import type { ISceneBuilder } from "./baseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {

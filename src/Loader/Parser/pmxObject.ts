@@ -1,4 +1,4 @@
-import type { Vec2, Vec3, Vec4 } from "./MmdTypes";
+import type { Vec2, Vec3, Vec4 } from "./mmdTypes";
 
 export type PmxObject = Readonly<{
     header: PmxObject.Header;

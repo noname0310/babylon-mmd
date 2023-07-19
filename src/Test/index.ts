@@ -1,8 +1,8 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 
-import { BaseRuntime } from "./BaseRuntime";
+import { BaseRuntime } from "./baseRuntime";
 import css from "./index.css";
-import { SceneBuilder } from "./SceneBuilder";
+import { SceneBuilder } from "./sceneBuilder";
 css;
 
 const canvas = document.getElementById("render-canvas");

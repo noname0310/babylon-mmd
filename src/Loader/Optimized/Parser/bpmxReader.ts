@@ -1,10 +1,10 @@
-import type { Vec3 } from "@/loader/parser/MmdTypes";
-import { PmxObject } from "@/loader/parser/PmxObject";
+import type { Vec3 } from "@/Loader/Parser/mmdTypes";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
-import type { ILogger } from "../../parser/ILogger";
-import { ConsoleLogger } from "../../parser/ILogger";
-import { MmdDataDeserializer } from "../../parser/MmdDataDeserializer";
-import type { BpmxObject } from "./BpmxObject";
+import type { ILogger } from "../../Parser/ILogger";
+import { ConsoleLogger } from "../../Parser/ILogger";
+import { MmdDataDeserializer } from "../../Parser/mmdDataDeserializer";
+import type { BpmxObject } from "./bpmxObject";
 
 export class BpmxReader {
     private constructor() { /* block constructor */ }

@@ -3,14 +3,14 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
-import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
-import { PmxObject } from "@/loader/parser/PmxObject";
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
+import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMultiMaterial } from "./MmdMesh";
-import type { MmdRuntimeBone } from "./MmdRuntimeBone";
+import type { MmdMultiMaterial } from "./mmdMesh";
+import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 export interface RuntimeMaterialMorphElement {
     index: number; // material index

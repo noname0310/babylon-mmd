@@ -6,9 +6,9 @@ import { Tools } from "@babylonjs/core/Misc/tools";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import type { Scene } from "@babylonjs/core/scene";
 
-import { MmdAnimation } from "../animation/MmdAnimation";
-import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../animation/MmdAnimationTrack";
-import { MmdDataDeserializer } from "../parser/MmdDataDeserializer";
+import { MmdAnimation } from "../Animation/mmdAnimation";
+import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../Animation/mmdAnimationTrack";
+import { MmdDataDeserializer } from "../Parser/mmdDataDeserializer";
 
 export class BvmdLoader {
     private readonly _scene: Scene;

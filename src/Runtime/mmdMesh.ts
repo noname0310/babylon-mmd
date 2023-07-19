@@ -4,7 +4,7 @@ import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 
-import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 export interface MmdMesh extends Mesh {
     metadata: MmdModelMetadata;

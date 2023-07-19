@@ -4,7 +4,7 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SharedToonTextures } from "./SharedToonTextures";
+import { SharedToonTextures } from "./sharedToonTextures";
 
 class TextureLoadingModel {
     public readonly uniqueId: number;

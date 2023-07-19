@@ -1,2 +1,2 @@
-export { ILogger } from "@/loader/parser/ILogger";
-export { ConsoleLogger } from "@/loader/parser/ILogger";
+export { ILogger } from "@/Loader/Parser/ILogger";
+export { ConsoleLogger } from "@/Loader/Parser/ILogger";

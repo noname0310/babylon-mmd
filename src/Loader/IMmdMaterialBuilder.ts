@@ -4,9 +4,9 @@ import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { BpmxObject } from "./optimized/parser/BpmxObject";
-import type { PmxObject } from "./parser/PmxObject";
-import type { IArrayBufferFile } from "./ReferenceFileResolver";
+import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
+import type { PmxObject } from "./Parser/pmxObject";
+import type { IArrayBufferFile } from "./referenceFileResolver";
 
 export type MaterialInfo = PmxObject.Material | BpmxObject.Material;
 

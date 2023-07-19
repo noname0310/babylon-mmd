@@ -10,13 +10,13 @@ import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
-import { BpmxConverter } from "@/loader/optimized/BpmxConverter";
-import { PmxLoader } from "@/loader/PmxLoader";
-import { SdefInjector } from "@/loader/SdefInjector";
-import type { MmdStaticMesh } from "@/runtime/MmdMesh";
+import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
+import { PmxLoader } from "@/Loader/pmxLoader";
+import { SdefInjector } from "@/Loader/sdefInjector";
+import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
 
-import type { ISceneBuilder } from "./BaseRuntime";
+import type { ISceneBuilder } from "./baseRuntime";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
     const result: FileSystemFileEntry[] = [];

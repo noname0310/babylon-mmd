@@ -1,4 +1,4 @@
-import type { PmxObject } from "./parser/PmxObject";
+import type { PmxObject } from "./Parser/pmxObject";
 
 export interface MmdModelMetadata {
     readonly isMmdModel: true;

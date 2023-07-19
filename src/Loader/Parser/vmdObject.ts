@@ -1,7 +1,7 @@
 import type { ILogger } from "./ILogger";
 import { ConsoleLogger } from "./ILogger";
-import { MmdDataDeserializer } from "./MmdDataDeserializer";
-import type { Vec3, Vec4 } from "./MmdTypes";
+import { MmdDataDeserializer } from "./mmdDataDeserializer";
+import type { Vec3, Vec4 } from "./mmdTypes";
 
 export class VmdData {
     private static readonly _Signature = "Vocaloid Motion Data 0002";

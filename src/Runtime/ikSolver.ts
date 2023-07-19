@@ -6,7 +6,7 @@
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { MmdRuntimeBone } from "./MmdRuntimeBone";
+import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 class IkChain {
     public bone: MmdRuntimeBone;

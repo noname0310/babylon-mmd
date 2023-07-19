@@ -5,8 +5,8 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
-import { MmdPluginMaterial } from "./MmdPluginMaterial";
+import type { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
+import { MmdPluginMaterial } from "./mmdPluginMaterial";
 
 export class MmdStandardMaterial extends StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;

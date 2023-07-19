@@ -8,16 +8,16 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
-import type { MmdTextureLoadResult } from "./MmdAsyncTextureLoader";
-import { MmdAsyncTextureLoader } from "./MmdAsyncTextureLoader";
-import { MmdOutlineRenderer } from "./MmdOutlineRenderer";
-import { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
-import { MmdStandardMaterial } from "./MmdStandardMaterial";
-import type { BpmxObject } from "./optimized/parser/BpmxObject";
-import { PmxObject } from "./parser/PmxObject";
-import type { IArrayBufferFile} from "./ReferenceFileResolver";
-import { ReferenceFileResolver } from "./ReferenceFileResolver";
-import { TextureAlphaChecker } from "./TextureAlphaChecker";
+import type { MmdTextureLoadResult } from "./mmdAsyncTextureLoader";
+import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
+import { MmdOutlineRenderer } from "./mmdOutlineRenderer";
+import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
+import { MmdStandardMaterial } from "./mmdStandardMaterial";
+import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
+import { PmxObject } from "./Parser/pmxObject";
+import type { IArrayBufferFile } from "./referenceFileResolver";
+import { ReferenceFileResolver } from "./referenceFileResolver";
+import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public static EdgeSizeScaleFactor = 0.01;

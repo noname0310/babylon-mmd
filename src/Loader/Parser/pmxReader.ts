@@ -1,7 +1,7 @@
 import { ConsoleLogger, type ILogger } from "./ILogger";
-import { MmdDataDeserializer } from "./MmdDataDeserializer";
-import type { Vec3, Vec4 } from "./MmdTypes";
-import { PmxObject } from "./PmxObject";
+import { MmdDataDeserializer } from "./mmdDataDeserializer";
+import type { Vec3, Vec4 } from "./mmdTypes";
+import { PmxObject } from "./pmxObject";
 
 class IndexReader {
     private readonly _vertexIndexSize: number;

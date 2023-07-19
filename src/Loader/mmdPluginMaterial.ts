@@ -14,9 +14,9 @@ import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./SdefBufferKind";
-import { sdefDeclaration } from "./shader/SdefDeclaration";
-import { sdefVertex } from "./shader/SdefVertex";
+import { SdefBufferKind } from "./sdefBufferKind";
+import { sdefDeclaration } from "./Shader/sdefDeclaration";
+import { sdefVertex } from "./Shader/sdefVertex";
 
 /**
  * for convert MMD material to Babylon material

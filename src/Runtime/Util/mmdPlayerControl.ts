@@ -1,8 +1,8 @@
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IAudioPlayer } from "../audio/IAudioPlayer";
-import type { MmdRuntime } from "../MmdRuntime";
+import type { IAudioPlayer } from "../Audio/IAudioPlayer";
+import type { MmdRuntime } from "../mmdRuntime";
 
 export enum DisplayTimeFormat {
     Seconds,

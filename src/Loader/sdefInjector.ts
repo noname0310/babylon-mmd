@@ -4,9 +4,9 @@ import type { IEffectFallbacks } from "@babylonjs/core/Materials/iEffectFallback
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./SdefBufferKind";
-import { sdefDeclaration } from "./shader/SdefDeclaration";
-import { sdefVertex } from "./shader/SdefVertex";
+import { SdefBufferKind } from "./sdefBufferKind";
+import { sdefDeclaration } from "./Shader/sdefDeclaration";
+import { sdefVertex } from "./Shader/sdefVertex";
 
 export class SdefInjector {
     public static OverrideEngineCreateEffect(engine: ThinEngine): void {

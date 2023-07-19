@@ -6,19 +6,19 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
-import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
+import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
-import { MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
-import { AppendTransformSolver } from "./AppendTransformSolver";
-import { IkSolver } from "./IkSolver";
+import { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeAnimation";
+import { AppendTransformSolver } from "./appendTransformSolver";
+import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMesh, RuntimeMmdMesh } from "./MmdMesh";
-import { MmdMorphController } from "./MmdMorphController";
-import type { MmdPhysics, MmdPhysicsModel } from "./MmdPhysics";
-import type { IMmdRuntimeBone } from "./MmdRuntimeBone";
-import { MmdRuntimeBone } from "./MmdRuntimeBone";
+import type { MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
+import { MmdMorphController } from "./mmdMorphController";
+import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
+import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
+import { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 export class MmdModel {
     public readonly mesh: RuntimeMmdMesh;

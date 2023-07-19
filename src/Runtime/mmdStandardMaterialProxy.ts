@@ -1,9 +1,9 @@
 import { Material } from "@babylonjs/core/Materials/material";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
-import { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
-import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 
 import type { IMmdMaterialProxy } from "./IMmdMaterialProxy";
 

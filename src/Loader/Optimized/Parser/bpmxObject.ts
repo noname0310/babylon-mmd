@@ -1,4 +1,4 @@
-import type { PmxObject } from "@/loader/parser/PmxObject";
+import type { PmxObject } from "@/Loader/Parser/pmxObject";
 
 export type BpmxObject = Readonly<{
     header: BpmxObject.Header;
