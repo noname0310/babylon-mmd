@@ -1,3 +1,6 @@
+import "@babylonjs/core/Shaders/outline.fragment";
+import "@babylonjs/core/Shaders/outline.vertex";
+
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";

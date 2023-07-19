@@ -1,3 +1,6 @@
+import "@babylonjs/core/Loading/loadingScreen";
+import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";

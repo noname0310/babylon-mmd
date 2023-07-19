@@ -1,4 +1,10 @@
 // import HavokPhysics from "@babylonjs/havok";
+import "@babylonjs/core/Loading/loadingScreen";
+import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
+import "@babylonjs/core/Rendering/depthRendererSceneComponent";
+import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
+
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { Camera } from "@babylonjs/core/Cameras/camera";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
