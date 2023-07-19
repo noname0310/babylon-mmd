@@ -29,6 +29,7 @@ import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BpmxLoader } from "@/loader/optimized/BpmxLoader";
 import { BvmdLoader } from "@/loader/optimized/BvmdLoader";
+import { PmxLoader } from "@/loader/PmxLoader";
 import { SdefInjector } from "@/loader/SdefInjector";
 import { StreamAudioPlayer } from "@/runtime/audio/StreamAudioPlayer";
 import { MmdCamera } from "@/runtime/MmdCamera";
@@ -41,7 +42,7 @@ import type { ISceneBuilder } from "./BaseRuntime";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = new BpmxLoader();
+        const pmxLoader = new PmxLoader();
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
@@ -62,9 +63,28 @@ export class SceneBuilder implements ISceneBuilder {
                 material.useAlphaFromDiffuseTexture = true;
                 material.diffuseTexture!.hasAlpha = true;
             }
+            if (material.name.toLowerCase() === "t_floor.bmp") {
+                material.specularColor = new Color3(1, 1, 1);
+                material.specularPower = 10;
+            }
+
+            material.useLogarithmicDepth = true;
         };
         pmxLoader.boundingBoxMargin = 60;
         SceneLoader.RegisterPlugin(pmxLoader);
+        {
+            const bpmxLoader = new BpmxLoader();
+            const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+            materialBuilder.afterBuildSingleMaterial = (material): void => {
+                if (material.name.toLowerCase() === "t_floor.bmp") {
+                    material.specularColor = new Color3(1, 1, 1);
+                    material.specularPower = 10;
+                }
+
+                material.useLogarithmicDepth = true;
+            };
+            SceneLoader.RegisterPlugin(bpmxLoader);
+        }
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -123,7 +143,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer();
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/pizzicato_drops/pizzicato_drops.mp3";
+        audioPlayer.source = "res/private_test/motion/shinshoku/shinshoku.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         mmdRuntime.register(scene);
@@ -145,13 +165,13 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion_10th_physics.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion_physics.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+            "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -161,7 +181,7 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/stage/ガラス片ドームB.bpmx",
+            "res/private_test/stage/舞踏会風ステージVer2_forcemerged.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
