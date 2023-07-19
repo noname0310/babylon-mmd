@@ -1,5 +1,14 @@
-import type { Engine, Nullable } from "@babylonjs/core";
-import { ArcRotateCamera, Color3, DirectionalLight, HemisphericLight, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/loader/optimized/BpmxConverter";
