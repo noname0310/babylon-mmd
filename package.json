@@ -8,6 +8,7 @@
         "watch": "webpack --watch",
         "build": "webpack --env production",
         "build:lib": "tspc --project tsconfig.lib.json && webpack --env production --config webpack.lib.config.ts",
+        "publish": "ts-node publishScript.ts && npm publish",
         "lint": "eslint --ext .ts,.tsx . --fix --cache"
     },
     "repository": {
