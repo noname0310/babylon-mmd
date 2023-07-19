@@ -1,4 +1,4 @@
-import { Quaternion, Vector3 } from "@babylonjs/core";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 

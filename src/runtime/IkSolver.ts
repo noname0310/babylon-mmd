@@ -3,8 +3,8 @@
  * https://github.com/benikabocha/saba/blob/master/src/Saba/Model/MMD/MMDIkSolver.cpp
  */
 
-import type { DeepImmutable, Nullable } from "@babylonjs/core";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdRuntimeBone } from "./MmdRuntimeBone";
 

@@ -1,30 +1,27 @@
-import type { Camera, Engine } from "@babylonjs/core";
-import {
-    ArcRotateCamera,
-    Color3,
-    Color4,
-    Constants,
-    DefaultRenderingPipeline,
-    DepthOfFieldEffectBlurLevel,
-    DirectionalLight,
-    HemisphericLight,
-    ImageProcessingConfiguration,
-    Material,
-    Matrix,
-    Mesh,
-    MeshBuilder,
-    Scene,
-    SceneLoader,
-    ShadowGenerator,
-    SkeletonViewer,
-    SSRRenderingPipeline,
-    StandardMaterial,
-    TransformNode,
-    Vector3,
-    VertexData
-} from "@babylonjs/core";
-
 // import HavokPhysics from "@babylonjs/havok";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import type { Camera } from "@babylonjs/core/Cameras/camera";
+import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
+import { Constants } from "@babylonjs/core/Engines/constants";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
+import { Material } from "@babylonjs/core/Materials/material";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
+import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
+import { Scene } from "@babylonjs/core/scene";
+
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";
 import { BpmxLoader } from "@/loader/optimized/BpmxLoader";

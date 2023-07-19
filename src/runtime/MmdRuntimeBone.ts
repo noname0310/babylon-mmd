@@ -1,5 +1,7 @@
-import type { Bone, Nullable } from "@babylonjs/core";
-import { Matrix, Quaternion, Space, Vector3 } from "@babylonjs/core";
+import type { Bone } from "@babylonjs/core/Bones/bone";
+import { Space } from "@babylonjs/core/Maths/math.axis";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 

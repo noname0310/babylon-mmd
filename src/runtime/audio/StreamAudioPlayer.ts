@@ -1,4 +1,4 @@
-import { Observable } from "@babylonjs/core";
+import { Observable } from "@babylonjs/core/Misc/observable";
 
 import type { IAudioPlayer } from "./IAudioPlayer";
 

@@ -1,5 +1,6 @@
-import type { Nullable } from "@babylonjs/core";
-import { Material, Observable } from "@babylonjs/core";
+import { Material } from "@babylonjs/core/Materials/material";
+import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Nullable } from "@babylonjs/core/types";
 
 export enum TransparencyMode {
     Opaque = Material.MATERIAL_OPAQUE,

@@ -1,6 +1,13 @@
-import type { FloatArray, Material, MeshLODLevel, Nullable, Observable, Observer, Scene, Skeleton, SubMesh } from "@babylonjs/core";
-import { Quaternion } from "@babylonjs/core";
-import { Matrix, Mesh, Vector3, VertexBuffer } from "@babylonjs/core";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
+import type { Material } from "@babylonjs/core/Materials/material";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { MeshLODLevel } from "@babylonjs/core/Meshes/meshLODLevel";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import type { Observable, Observer } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
+import type { FloatArray, Nullable } from "@babylonjs/core/types";
 
 import { SdefBufferKind } from "./SdefBufferKind";
 

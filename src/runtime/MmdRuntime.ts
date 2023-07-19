@@ -1,5 +1,9 @@
-import type { Material, Mesh, Nullable, Scene } from "@babylonjs/core";
-import { Logger, Observable } from "@babylonjs/core";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Logger } from "@babylonjs/core/Misc/logger";
+import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "./animation/MmdRuntimeAnimation";
 import type { IPlayer } from "./audio/IAudioPlayer";

@@ -1,5 +1,9 @@
-import type { Color4, Nullable, Scene, Texture } from "@babylonjs/core";
-import { Color3, StandardMaterial } from "@babylonjs/core";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdPluginMaterialSphereTextureBlendMode } from "./MmdPluginMaterial";
 import { MmdPluginMaterial } from "./MmdPluginMaterial";

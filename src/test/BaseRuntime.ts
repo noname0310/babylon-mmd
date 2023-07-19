@@ -1,4 +1,5 @@
-import type { Engine, Scene } from "@babylonjs/core";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { Scene } from "@babylonjs/core/scene";
 
 export interface ISceneBuilder {
     build(canvas: HTMLCanvasElement, engine: Engine): Scene | Promise<Scene>;

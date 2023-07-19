@@ -1,5 +1,11 @@
-import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Nullable, Scene, Texture } from "@babylonjs/core";
-import { Color3, Material } from "@babylonjs/core";
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
 import type { MmdTextureLoadResult } from "./MmdAsyncTextureLoader";

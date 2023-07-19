@@ -1,4 +1,5 @@
-import type { Nullable, Scene } from "@babylonjs/core";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { IAudioPlayer } from "../audio/IAudioPlayer";
 import type { MmdRuntime } from "../MmdRuntime";

@@ -1,5 +1,8 @@
-import type { AssetContainer, Nullable, Scene } from "@babylonjs/core";
-import { Observable, Texture } from "@babylonjs/core";
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import { SharedToonTextures } from "./SharedToonTextures";
 

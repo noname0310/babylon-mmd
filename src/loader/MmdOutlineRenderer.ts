@@ -1,11 +1,23 @@
-import type { _InstancesBatch, Engine, IEffectCreationOptions, ISceneComponent, Mesh, Nullable, SubMesh } from "@babylonjs/core";
-import { addClipPlaneUniforms, bindClipPlane, Constants, DrawWrapper, EffectFallbacks, MaterialHelper, prepareStringDefinesForClipPlanes, Scene, SceneComponentConstants, VertexBuffer } from "@babylonjs/core";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
+import { Constants } from "@babylonjs/core/Engines/constants";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
+import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
+import type { IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
+import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
+import { MaterialHelper } from "@babylonjs/core/Materials/materialHelper";
+import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import { Scene } from "@babylonjs/core/scene";
+import type { ISceneComponent} from "@babylonjs/core/sceneComponent";
+import { SceneComponentConstants } from "@babylonjs/core/sceneComponent";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "./MmdStandardMaterial";
 import { SdefBufferKind } from "./SdefBufferKind";
 import { SdefInjector } from "./SdefInjector";
 
-declare module "@babylonjs/core" {
+declare module "@babylonjs/core/scene" {
     export interface Scene {
         /* eslint-disable @typescript-eslint/naming-convention */
         /** @internal */

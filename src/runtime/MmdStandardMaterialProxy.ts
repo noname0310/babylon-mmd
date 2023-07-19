@@ -1,5 +1,5 @@
-import type { Nullable } from "@babylonjs/core";
-import { Material } from "@babylonjs/core";
+import { Material } from "@babylonjs/core/Materials/material";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/loader/MmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/loader/MmdStandardMaterialBuilder";

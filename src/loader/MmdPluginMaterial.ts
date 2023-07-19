@@ -1,23 +1,18 @@
-import type {
-    AbstractMesh,
-    BaseTexture,
-    Engine,
-    IAnimatable,
-    Mesh,
-    Nullable,
-    Scene,
-    StandardMaterial,
-    StandardMaterialDefines,
-    SubMesh,
-    Texture,
-    UniformBuffer
-} from "@babylonjs/core";
-import {
-    Color4,
-    Constants,
-    MaterialDefines,
-    MaterialPluginBase
-} from "@babylonjs/core";
+import type { IAnimatable } from "@babylonjs/core/Animations/animatable.interface";
+import { Constants } from "@babylonjs/core/Engines/constants";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { MaterialDefines } from "@babylonjs/core/Materials/materialDefines";
+import { MaterialPluginBase } from "@babylonjs/core/Materials/materialPluginBase";
+import type { StandardMaterial, StandardMaterialDefines } from "@babylonjs/core/Materials/standardMaterial";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { UniformBuffer } from "@babylonjs/core/Materials/uniformBuffer";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import { SdefBufferKind } from "./SdefBufferKind";
 import { sdefDeclaration } from "./shader/SdefDeclaration";

@@ -1,5 +1,7 @@
-import type { Engine } from "@babylonjs/core";
-import { FreeCamera, Scene, Vector3 } from "@babylonjs/core";
+import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Scene } from "@babylonjs/core/scene";
 
 import { BvmdConverter } from "@/loader/optimized/BvmdConverter";
 import { VmdLoader } from "@/loader/VmdLoader";

@@ -1,5 +1,8 @@
-import type { Nullable, Scene } from "@babylonjs/core";
-import { Camera, Matrix, Observable, Vector3 } from "@babylonjs/core";
+import { Camera } from "@babylonjs/core/Cameras/camera";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 

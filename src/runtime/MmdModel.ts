@@ -1,5 +1,10 @@
-import type { Bone, Material, Matrix, Nullable, Skeleton } from "@babylonjs/core";
-import { Observable, Vector3 } from "@babylonjs/core";
+import type { Bone } from "@babylonjs/core/Bones/bone";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Matrix} from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";

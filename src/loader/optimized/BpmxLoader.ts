@@ -1,33 +1,23 @@
-import type {
-    IFileRequest,
-    ISceneLoaderAsyncResult,
-    ISceneLoaderPluginAsync,
-    ISceneLoaderPluginExtensions,
-    ISceneLoaderProgressEvent,
-    Nullable,
-    Scene,
-    WebRequest
-} from "@babylonjs/core";
-import type {
-    LoadFileError
-} from "@babylonjs/core";
-import {
-    AssetContainer,
-    Bone,
-    BoundingInfo,
-    Geometry,
-    Logger,
-    Matrix,
-    Mesh,
-    MorphTarget,
-    MorphTargetManager,
-    MultiMaterial,
-    Skeleton,
-    SubMesh,
-    Tools,
-    Vector3,
-    VertexData
-} from "@babylonjs/core";
+import { AssetContainer } from "@babylonjs/core/assetContainer";
+import { Bone } from "@babylonjs/core/Bones/bone";
+import { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
+import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Geometry } from "@babylonjs/core/Meshes/geometry";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
+import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+import { Logger } from "@babylonjs/core/Misc/logger";
+import { Tools } from "@babylonjs/core/Misc/tools";
+import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
+import { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
+import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder } from "../IMmdMaterialBuilder";
 import type { MmdModelMetadata } from "../MmdModelMetadata";

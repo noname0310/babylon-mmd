@@ -1,5 +1,8 @@
-import type { Bone, Material, Nullable } from "@babylonjs/core";
-import { Quaternion, Space, Vector3 } from "@babylonjs/core";
+import type { Bone } from "@babylonjs/core/Bones/bone";
+import type { Material } from "@babylonjs/core/Materials/material";
+import { Space } from "@babylonjs/core/Maths/math.axis";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/loader/animation/MmdAnimation";
 import type { MmdAnimationTrack, MmdCameraAnimationTrack } from "@/loader/animation/MmdAnimationTrack";

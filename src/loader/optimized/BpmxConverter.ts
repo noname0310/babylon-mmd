@@ -177,9 +177,9 @@
  *  springRotation: float32[3]
  * }[jointCount]
  */
-
-import type { Nullable, Scene } from "@babylonjs/core";
-import { Logger } from "@babylonjs/core";
+import { Logger } from "@babylonjs/core/Misc/logger";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdTextureLoadResult } from "../MmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "../MmdAsyncTextureLoader";

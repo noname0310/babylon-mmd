@@ -1,5 +1,7 @@
-import type { DeepImmutable, Material, Nullable } from "@babylonjs/core";
-import { type MorphTargetManager, Quaternion } from "@babylonjs/core";
+import type { Material } from "@babylonjs/core/Materials/material";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector";
+import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";

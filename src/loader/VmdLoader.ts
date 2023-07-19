@@ -1,5 +1,10 @@
-import type { IFileRequest, ISceneLoaderProgressEvent, Scene, WebRequest } from "@babylonjs/core";
-import { LoadFileError, Logger, Tools } from "@babylonjs/core";
+import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
+import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+import { Logger } from "@babylonjs/core/Misc/logger";
+import { Tools } from "@babylonjs/core/Misc/tools";
+import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
+import type { Scene } from "@babylonjs/core/scene";
 
 import { MmdAnimation } from "./animation/MmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./animation/MmdAnimationTrack";

@@ -1,4 +1,8 @@
-import type { AssetContainer, ISceneLoaderProgressEvent, MultiMaterial, Nullable, Scene } from "@babylonjs/core";
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { BpmxObject } from "./optimized/parser/BpmxObject";
 import type { PmxObject } from "./parser/PmxObject";

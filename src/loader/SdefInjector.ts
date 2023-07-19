@@ -1,5 +1,8 @@
-import type { Effect, IEffectCreationOptions, IEffectFallbacks, Nullable, ThinEngine } from "@babylonjs/core";
-import { ShaderLanguage } from "@babylonjs/core";
+import type { ThinEngine } from "@babylonjs/core/Engines/thinEngine";
+import type { Effect, IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
+import type { IEffectFallbacks } from "@babylonjs/core/Materials/iEffectFallbacks";
+import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
+import type { Nullable } from "@babylonjs/core/types";
 
 import { SdefBufferKind } from "./SdefBufferKind";
 import { sdefDeclaration } from "./shader/SdefDeclaration";

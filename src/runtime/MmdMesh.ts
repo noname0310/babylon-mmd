@@ -1,4 +1,8 @@
-import type { Material, Mesh, MorphTargetManager, MultiMaterial, Skeleton } from "@babylonjs/core";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 
 import type { MmdModelMetadata } from "@/loader/MmdModelMetadata";
 

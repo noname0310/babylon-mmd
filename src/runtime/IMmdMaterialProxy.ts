@@ -1,4 +1,4 @@
-import type { Material } from "@babylonjs/core";
+import type { Material } from "@babylonjs/core/Materials/material";
 
 import type { Vec3, Vec4 } from "@/loader/parser/MmdTypes";
 
