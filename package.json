@@ -22,8 +22,8 @@
     "homepage": "https://github.com/noname0310/babylon-mmd#readme",
     "devDependencies": {
         "@babylonjs/havok": "^1.1.0",
-        "@babylonjs/inspector": "^6.12.3",
-        "@babylonjs/materials": "^6.12.3",
+        "@babylonjs/inspector": "^6.12.4",
+        "@babylonjs/materials": "^6.12.4",
         "@typescript-eslint/eslint-plugin": "^6.1.0",
         "@typescript-eslint/parser": "^6.1.0",
         "compression-webpack-plugin": "^10.0.0",
@@ -46,6 +46,6 @@
     },
     "sideEffects": false,
     "peerDependencies": {
-        "@babylonjs/core": "^6.12.3"
+        "@babylonjs/core": "^6.12.4"
     }
 }
