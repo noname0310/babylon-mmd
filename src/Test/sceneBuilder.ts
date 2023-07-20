@@ -1,4 +1,3 @@
-// import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
@@ -23,10 +22,12 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -190,13 +191,13 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        // promises.push((async(): Promise<void> => {
-        //     updateLoadingText(3, "Loading physics engine...");
-        //     const havokInstance = await HavokPhysics();
-        //     const havokPlugin = new HavokPlugin(true, havokInstance);
-        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-        //     updateLoadingText(3, "Loading physics engine... Done");
-        // })());
+        promises.push((async(): Promise<void> => {
+            updateLoadingText(3, "Loading physics engine...");
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+            updateLoadingText(3, "Loading physics engine... Done");
+        })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -221,7 +222,7 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh.position.z -= 50;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: false
+                buildPhysics: true
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
