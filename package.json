@@ -1,6 +1,6 @@
 {
     "name": "babylon-mmd",
-    "version": "0.16.0",
+    "version": "0.18.0",
     "description": "babylon mmd runtime",
     "main": "esm/index.js",
     "scripts": {
@@ -8,7 +8,7 @@
         "watch": "webpack --watch",
         "build": "webpack --env production",
         "build:lib": "tspc --project tsconfig.lib.json && webpack --env production --config webpack.lib.config.ts",
-        "publish": "ts-node publishScript.ts && npm publish ./dist",
+        "publish:lib": "ts-node publishScript.ts && npm publish ./dist",
         "lint": "eslint --ext .ts,.tsx . --fix --cache"
     },
     "repository": {
