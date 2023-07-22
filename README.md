@@ -4,11 +4,11 @@ mmd loader and runtime for Babylon.js
 
 ## Screenshots
 
-![screenshot](./docs/fig3.gif)
+![screenshot](./docs/fig3.mp4)
 
 Music: [ピチカートドロップス](https://youtu.be/eYKAwm-sZ-o)
 
-Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716)
+Model: [YYB Piano dress Miku](https://www.deviantart.com/mamiya-mmd/art/YYB-Piano-dress-Miku-and-Rin-Models-Download-831030256)
 
 Stage: [ガラス片ドーム](http://nebusokummd.blog.shinobi.jp/)
 
