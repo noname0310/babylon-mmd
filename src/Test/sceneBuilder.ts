@@ -22,18 +22,17 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import HavokPhysics from "@babylonjs/havok";
 
+// import HavokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
-import { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
@@ -46,7 +45,7 @@ import type { ISceneBuilder } from "./baseRuntime";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = new PmxLoader();
+        const pmxLoader = new BpmxLoader();
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
@@ -71,24 +70,21 @@ export class SceneBuilder implements ISceneBuilder {
                 material.specularColor = new Color3(1, 1, 1);
                 material.specularPower = 10;
             }
+            if (material.name.toLowerCase() === "lace") {
+                material.transparencyMode = Material.MATERIAL_ALPHATEST;
+            }
+            if (material.name.toLowerCase() === "socks") {
+                material.transparencyMode = Material.MATERIAL_OPAQUE;
+            }
+            if (material.name === "ガラス破片") {
+                material.transparencyMode = Material.MATERIAL_ALPHATESTANDBLEND;
+                material.alphaCutOff = 0;
+            }
 
             material.useLogarithmicDepth = true;
         };
         pmxLoader.boundingBoxMargin = 60;
         SceneLoader.RegisterPlugin(pmxLoader);
-        {
-            const bpmxLoader = new BpmxLoader();
-            const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-            materialBuilder.afterBuildSingleMaterial = (material): void => {
-                if (material.name.toLowerCase() === "t_floor.bmp") {
-                    material.specularColor = new Color3(1, 1, 1);
-                    material.specularPower = 10;
-                }
-
-                material.useLogarithmicDepth = true;
-            };
-            SceneLoader.RegisterPlugin(bpmxLoader);
-        }
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -96,9 +92,9 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
 
-        const mmdCameraParent = new TransformNode("mmdCameraParent", scene);
-        mmdCamera.parent = mmdCameraParent;
-        mmdCameraParent.position.z -= 50;
+        const mmdRoot = new TransformNode("mmdRoot", scene);
+        mmdCamera.parent = mmdRoot;
+        mmdRoot.position.z -= 50;
 
         const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;
@@ -133,7 +129,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
         shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.forceBackFacesOnly = true;
+        shadowGenerator.forceBackFacesOnly = false;
+        shadowGenerator.bias = 0.01;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
@@ -147,7 +144,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/shinshoku/shinshoku.mp3";
+        audioPlayer.source = "res/private_test/motion/pizzicato_drops/pizzicato_drops.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         mmdRuntime.register(scene);
@@ -169,13 +166,13 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/shinshoku/motion_physics.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion_piano_physics.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB miku Crown Knight/YYB miku Crown Knight.pmx",
+            "res/private_test/model/YYB Piano dress Miku Collision fix FF BF.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
@@ -185,19 +182,19 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/stage/舞踏会風ステージVer2_forcemerged.bpmx",
+            "res/private_test/stage/ガラス片ドームB.bpmx",
             undefined,
             scene,
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
-        })());
+        // promises.push((async(): Promise<void> => {
+        //     updateLoadingText(3, "Loading physics engine...");
+        //     const havokInstance = await HavokPhysics();
+        //     const havokPlugin = new HavokPlugin(true, havokInstance);
+        //     scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+        //     updateLoadingText(3, "Loading physics engine... Done");
+        // })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -219,10 +216,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
-            modelMesh.position.z -= 50;
+            modelMesh.parent = mmdRoot;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
+                buildPhysics: false
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
@@ -309,7 +306,7 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.imageProcessing.vignetteEnabled = true;
 
             defaultPipeline.depthOfField.fStop = 0.05;
-            defaultPipeline.depthOfField.focalLength = 30;
+            defaultPipeline.depthOfField.focalLength = 20;
 
             // note: this dof distance compute will broken when camera and mesh is not in same space
 
