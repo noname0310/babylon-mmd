@@ -4,7 +4,7 @@ mmd loader and runtime for Babylon.js
 
 ## Screenshots
 
-<video src='https://noname0310.github.io/babylon-mmd/fig3.mp4' width=1080></video>
+https://github.com/noname0310/babylon-mmd/assets/48761044/288bfeda-c672-4c0b-8eb4-5c96ca580b71
 
 Music: [ピチカートドロップス](https://youtu.be/eYKAwm-sZ-o)
 
