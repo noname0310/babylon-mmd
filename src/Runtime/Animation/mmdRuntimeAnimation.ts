@@ -18,6 +18,9 @@ import type { MmdMorphController } from "../mmdMorphController";
 
 type MorphIndices = readonly number[];
 
+/**
+ * Mmd runtime animation base class
+ */
 export abstract class MmdRuntimeAnimation {
     private readonly _lastResults = new Map<MmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
 
@@ -68,7 +71,15 @@ export abstract class MmdRuntimeAnimation {
     }
 }
 
+/**
+ * Mmd runtime model animation
+ *
+ * An object with mmd animation and model binding information
+ */
 export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
+    /**
+     * Mmd animation
+     */
     public readonly animation: MmdAnimation;
 
     private readonly _boneBindIndexMap: Nullable<Bone>[];
@@ -106,6 +117,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     private static readonly _BoneRotationB = new Quaternion();
     private static readonly _BoneOriginalRotation = new Quaternion();
 
+    /**
+     * Update animation
+     * @param frameTime frame time in 30fps
+     */
     public animate(frameTime: number): void {
         const animation = this.animation;
 
@@ -355,6 +370,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
 
     private _materialRecompileInduced = false;
 
+    /**
+     * Induce material recompile
+     *
+     * This method must run once before the animation runs
+     *
+     * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param logger logger
+     */
     public induceMaterialRecompile(logger?: ILogger): void {
         if (this._materialRecompileInduced) return;
         this._materialRecompileInduced = true;
@@ -373,7 +396,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
      * @param model bind target
      * @param retargetingMap model bone name to animation bone name map
      * @param logger logger
-     * @returns
+     * @return MmdRuntimeModelAnimation instance
      */
     public static Create(animation: MmdAnimation, model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.mesh.skeleton;
@@ -473,6 +496,19 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
         );
     }
 
+    /**
+     * Induce material recompile
+     *
+     * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     *
+     * This method is exposed as public because it must be overrideable
+     *
+     * If you are using a material other than `MmdStandardMaterial`, you must implement this method yourself
+     * @param materials Materials
+     * @param morphController Morph controller
+     * @param morphIndices Morph indices to induce recompile
+     * @param logger logger
+     */
     public static InduceMaterialRecompile = (
         materials: Material[],
         morphController: MmdMorphController,
@@ -553,6 +589,11 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     };
 }
 
+/**
+ * Mmd runtime camera animation
+ *
+ * An object with mmd animation and camera binding information
+ */
 export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
     public readonly animation: MmdCameraAnimationTrack;
 
@@ -575,6 +616,10 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
 
     private static readonly _DegToRad = Math.PI / 180;
 
+    /**
+     * Update animation
+     * @param frameTime frame time in 30fps
+     */
     public animate(frameTime: number): void {
         const cameraTrack = this.animation;
         if (cameraTrack.frameNumbers.length === 0) return;
@@ -707,13 +752,66 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
         }
     }
 
+    /**
+     * bind animation to camera
+     * @param animation animation to bind
+     * @param camera bind target
+     * @returns MmdRuntimeCameraAnimation instance
+     */
     public static Create(animation: MmdAnimation, camera: MmdCamera): MmdRuntimeCameraAnimation {
         return new MmdRuntimeCameraAnimation(animation, camera);
     }
 }
 
+/**
+ * Mmd Interpolator for MMD animation interpolation
+ */
 export class MmdInterpolator {
+    /**
+     * Cubic Bezier interpolation
+     * @param x1 X1
+     * @param x2 X2
+     * @param y1 Y1
+     * @param y2 Y2
+     * @param x Weight
+     * @returns Interpolated value
+     */
     public static Interpolate(x1: number, x2: number, y1: number, y2: number, x: number): number {
+        /*
+        Cubic Bezier curves
+        https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Cubic_B.C3.A9zier_curves
+
+        B(t) = ( 1 - t ) ^ 3 * P0
+            + 3 * ( 1 - t ) ^ 2 * t * P1
+            + 3 * ( 1 - t ) * t^2 * P2
+            + t ^ 3 * P3
+            ( 0 <= t <= 1 )
+
+        MMD uses Cubic Bezier curves for bone and camera animation interpolation.
+        http://d.hatena.ne.jp/edvakf/20111016/1318716097
+
+        x = ( 1 - t ) ^ 3 * x0
+            + 3 * ( 1 - t ) ^ 2 * t * x1
+            + 3 * ( 1 - t ) * t^2 * x2
+            + t ^ 3 * x3
+        y = ( 1 - t ) ^ 3 * y0
+            + 3 * ( 1 - t ) ^ 2 * t * y1
+            + 3 * ( 1 - t ) * t^2 * y2
+            + t ^ 3 * y3
+            ( x0 = 0, y0 = 0 )
+            ( x3 = 1, y3 = 1 )
+            ( 0 <= t, x1, x2, y1, y2 <= 1 )
+
+        Here solves this equation with Bisection method,
+        https://en.wikipedia.org/wiki/Bisection_method
+        gets t, and then calculate y.
+
+        f(t) = 3 * ( 1 - t ) ^ 2 * t * x1
+            + 3 * ( 1 - t ) * t^2 * x2
+            + t ^ 3 - x = 0
+
+        (Another option: Newton's method https://en.wikipedia.org/wiki/Newton%27s_method)
+        */
         let c = 0.5;
         let t = c;
         let s = 1.0 - t;

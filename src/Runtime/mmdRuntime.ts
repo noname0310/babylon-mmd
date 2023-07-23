@@ -515,6 +515,9 @@ export class MmdRuntime implements ILogger {
         this.onAnimationDurationChangedObservable.notifyObservers();
     }
 
+    /**
+     * Enable or disable debug logging (default: false)
+     */
     public get loggingEnabled(): boolean {
         return this._loggingEnabled;
     }

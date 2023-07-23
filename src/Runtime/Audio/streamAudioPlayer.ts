@@ -3,18 +3,75 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IAudioPlayer } from "./IAudioPlayer";
 
+/**
+ * Disposeable object interface
+ */
 export interface IDisposeObservable {
+    /**
+     * On dispose observable
+     *
+     * This observable is notified when the object is disposed
+     */
     readonly onDisposeObservable: Observable<any>;
 }
 
+/**
+ * Stream audio player
+ *
+ * This class is used to play the audio from the stream
+ *
+ * It is suitable for playing long sounds because it plays even if all of the audio is not loaded
+ *
+ * Wrapper of `HTMLAudioElement` which handles audio playback permission issues gracefully
+ */
 export class StreamAudioPlayer implements IAudioPlayer {
+    /**
+     * On load error observable
+     *
+     * This observable is notified when the audio load is failed
+     */
     public readonly onLoadErrorObservable: Observable<void>;
+
+    /**
+     * On duration changed observable
+     *
+     * This observable is notified when the audio duration is changed
+     */
     public readonly onDurationChangedObservable: Observable<void>;
+
+    /**
+     * On mute state changed observable
+     *
+     * This observable is notified when the mute state is changed
+     */
     public readonly onPlaybackRateChangedObservable: Observable<void>;
+
+    /**
+     * On mute state changed observable
+     *
+     * This observable is notified when the mute state is changed
+     */
     public readonly onMuteStateChangedObservable: Observable<void>;
 
+    /**
+     * On play observable
+     *
+     * This observable is notified when the player is played
+     */
     public readonly onPlayObservable: Observable<void>;
+
+    /**
+     * On pause observable
+     *
+     * This observable is notified when the player is paused
+     */
     public readonly onPauseObservable: Observable<void>;
+
+    /**
+     * On seek observable
+     *
+     * This observable is notified when the player is seeked
+     */
     public readonly onSeekObservable: Observable<void>;
 
     private readonly _audio: HTMLAudioElement;
@@ -30,6 +87,13 @@ export class StreamAudioPlayer implements IAudioPlayer {
     private readonly _bindedDispose: () => void;
     private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
 
+    /**
+     * Create a stream audio player
+     *
+     * In general disposeObservable should be `Scene` of Babylon.js
+     *
+     * @param disposeObservable Objects that limit the lifetime of this instance
+     */
     public constructor(disposeObservable: Nullable<IDisposeObservable>) {
         this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
@@ -122,10 +186,18 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onSeekObservable.notifyObservers();
     };
 
+    /**
+     * Audio duration (in seconds)
+     */
     public get duration(): number {
         return this._duration;
     }
 
+    /**
+     * Current time (in seconds)
+     *
+     * This property may be slow to update
+     */
     public get currentTime(): number {
         if (this._isVirtualPlay) {
             if (this._virtualPaused) {
@@ -173,6 +245,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         }
     }
 
+    /**
+     * Volume (0.0 to 1.0)
+     */
     public get volume(): number {
         return this._audio.volume;
     }
@@ -181,10 +256,16 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.volume = value;
     }
 
+    /**
+     * Whether the audio is muted
+     */
     public get muted(): boolean {
         return this._isVirtualPlay;
     }
 
+    /**
+     * Mute the audio
+     */
     public mute(): void {
         if (this._isVirtualPlay) return;
 
@@ -197,6 +278,12 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onMuteStateChangedObservable.notifyObservers();
     }
 
+    /**
+     * Unmute the audio
+     *
+     * Unmute is possible failed if user interaction is not performed
+     * @returns Whether the audio is unmuted
+     */
     public async unmute(): Promise<boolean> {
         if (!this._isVirtualPlay) return false;
 
@@ -229,6 +316,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         return false;
     }
 
+    /**
+     * Playback rate (0.07 to 16.0)
+     */
     public get playbackRate(): number {
         return this._playbackRate;
     }
@@ -250,6 +340,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.playbackRate = value;
     }
 
+    /**
+     * Determines whether or not the browser should adjust the pitch of the audio to compensate for changes to the playback rate made by setting
+     */
     public get preservesPitch(): boolean {
         return this._audio.preservesPitch;
     }
@@ -258,6 +351,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.preservesPitch = value;
     }
 
+    /**
+     * Whether the player is paused
+     */
     public get paused(): boolean {
         if (this._isVirtualPlay) {
             return this._virtualPaused;
@@ -266,6 +362,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         }
     }
 
+    /**
+     * Audio source URL
+     */
     public get source(): string {
         return this._audio.src;
     }
@@ -286,6 +385,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._audio.load();
     }
 
+    /**
+     * Whether the audio metadata(durations) is loaded
+     */
     public get metadataLoaded(): boolean {
         return this._metadataLoaded;
     }
@@ -334,6 +436,11 @@ export class StreamAudioPlayer implements IAudioPlayer {
 
     private _playRequestBlocking = false;
 
+    /**
+     * Play the audio from the current position
+     *
+     * If context don't have permission to play the audio, play audio in a mute state
+     */
     public async play(): Promise<void> {
         if (this._isVirtualPlay && !this._virtualPaused) return;
 
@@ -358,6 +465,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         }
     }
 
+    /**
+     * Pause the audio
+     */
     public pause(): void {
         if (this._isVirtualPlay) {
             if (this._virtualPaused) return;
@@ -370,6 +480,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         }
     }
 
+    /**
+     * Dispose the player
+     */
     public dispose(): void {
         const audio = this._audio;
         audio.pause();

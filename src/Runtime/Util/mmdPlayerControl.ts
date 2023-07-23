@@ -4,11 +4,23 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { IAudioPlayer } from "../Audio/IAudioPlayer";
 import type { MmdRuntime } from "../mmdRuntime";
 
+/**
+ * Display time format
+ *
+ * This enum is used for `MmdPlayerControl.displayTimeFormat`
+ */
 export enum DisplayTimeFormat {
     Seconds,
     Frames
 }
 
+/**
+ * Mmd player control
+ *
+ * Create youtube-like player control for MMD
+ *
+ * It's just a GUI for debugging purposes, so it doesn't offer a lot of customization, and We don't plan to
+ */
 export class MmdPlayerControl {
     public autoHidePlayerControl: boolean;
     public hidePlayerControlTimeout: number;
@@ -32,6 +44,12 @@ export class MmdPlayerControl {
     private readonly _bindedDispose: () => void;
     private readonly _scene: Scene;
 
+    /**
+     * Create a MMD player control
+     * @param scene Scene
+     * @param mmdRuntime MMD runtime
+     * @param audioPlayer Audio player
+     */
     public constructor(scene: Scene, mmdRuntime: MmdRuntime, audioPlayer?: IAudioPlayer) {
         const rootElement = scene.getEngine().getInputElement();
         if (rootElement === null) {
@@ -356,15 +374,24 @@ export class MmdPlayerControl {
         return formattedTime;
     }
 
+    /**
+     * Hide player control
+     */
     public hidePlayerControl(): void {
         this._playerContainer.style.transform = "translateY(50%)";
         this._hidePlayerControlTimeoutId = undefined;
     }
 
+    /**
+     * Show player control
+     */
     public showPlayerControl(): void {
         this._playerContainer.style.transform = "translateY(0)";
     }
 
+    /**
+     * Dispose this object
+     */
     public dispose(): void {
         if (this._newCanvasContainer === null) return;
         this._restoreCanvasContainer(this._newCanvasContainer.parentElement!);
