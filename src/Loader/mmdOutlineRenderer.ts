@@ -36,6 +36,17 @@ declare module "@babylonjs/core/scene" {
 }
 
 /**
+ * Gets the outline renderer associated with the scene
+ * @returns a MmdOutlineRenderer
+ */
+Scene.prototype.getMmdOutlineRenderer = function(): MmdOutlineRenderer {
+    if (!this._mmdOutlineRenderer) {
+        this._mmdOutlineRenderer = new MmdOutlineRenderer(this);
+    }
+    return this._mmdOutlineRenderer;
+};
+
+/**
  * This class is responsible to draw the outline/overlay of meshes.
  * It should not be used directly but through the available method on mesh.
  */
@@ -396,22 +407,5 @@ export class MmdOutlineRenderer implements ISceneComponent {
             this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[2]);
             this._engine.setColorWrite(true);
         }
-    }
-
-    public static RegisterMmdOutlineRendererIfNeeded(): void {
-        if (Scene.prototype.getMmdOutlineRenderer as unknown) {
-            return;
-        }
-
-        /**
-         * Gets the outline renderer associated with the scene
-         * @returns a MmdOutlineRenderer
-         */
-        Scene.prototype.getMmdOutlineRenderer = function(): MmdOutlineRenderer {
-            if (!this._mmdOutlineRenderer) {
-                this._mmdOutlineRenderer = new MmdOutlineRenderer(this);
-            }
-            return this._mmdOutlineRenderer;
-        };
     }
 }

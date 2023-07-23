@@ -1,3 +1,5 @@
+import "@/Loader/mmdOutlineRenderer";
+
 // Loader/Animation
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";

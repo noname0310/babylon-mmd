@@ -4,16 +4,16 @@ import { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import type { Scene } from "@babylonjs/core/scene";
+import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
 import type { MmdTextureLoadResult } from "./mmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
-import { MmdOutlineRenderer } from "./mmdOutlineRenderer";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
+import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
@@ -54,6 +54,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         indices: Uint16Array | Uint32Array,
         uvs: Float32Array,
         multiMaterial: MultiMaterial,
+        logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
     ): void {
@@ -155,7 +156,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 const loadOutlineRenderingPropertiesPromise = this.loadOutlineRenderingProperties(
                     material,
-                    materialInfo
+                    materialInfo,
+                    logger
                 );
                 if (loadOutlineRenderingPropertiesPromise !== undefined) {
                     singleMaterialPromises.push(loadOutlineRenderingPropertiesPromise);
@@ -460,15 +462,20 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     public loadOutlineRenderingProperties: (
         material: MmdStandardMaterial,
-        materialInfo: MaterialInfo
+        materialInfo: MaterialInfo,
+        logger: ILogger
     ) => Promise<void> | void = (
             material,
-            materialInfo
+            materialInfo,
+            logger
         ): void => {
             if (materialInfo.flag & PmxObject.Material.Flag.EnabledToonEdge) {
-                MmdOutlineRenderer.RegisterMmdOutlineRendererIfNeeded();
+                if (Scene.prototype.getMmdOutlineRenderer === undefined) {
+                    logger.warn("MMD Outline Renderer is not available. Please import \"babylon-mmd/Loader/mmdOutlineRenderer\".");
+                } else {
+                    material.renderOutline = true;
+                }
 
-                material.renderOutline = true;
                 material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(

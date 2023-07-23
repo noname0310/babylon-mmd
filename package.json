@@ -45,7 +45,9 @@
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^4.15.1"
     },
-    "sideEffects": false,
+    "sideEffects": [
+        "**/mmdOutlineRenderer.*"
+    ],
     "peerDependencies": {
         "@babylonjs/core": "^6.13.0"
     }
