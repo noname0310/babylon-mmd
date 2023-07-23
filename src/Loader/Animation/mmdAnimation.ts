@@ -1,17 +1,71 @@
 import type { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./mmdAnimationTrack";
 
+/**
+ * Represents mmd animation data
+ *
+ * Internally, it uses typed arrays to store animation data for better performance
+ *
+ * Therefore, it is not compatible with existing Babylon.js animation systems.
+ *
+ * You can save one mesh animation and one camera animation in one `MmdAnimation` instance
+ */
 export class MmdAnimation {
     public readonly name: string;
 
+    /**
+     * Bone animation tracks for one `mesh.skeleton`
+     *
+     * it contains rotation and rotation cubic interpolation data
+     */
     public readonly boneTracks: readonly MmdBoneAnimationTrack[];
+
+    /**
+     * Moveable bone animation tracks for one `mesh.skeleton`
+     *
+     * it contains position, rotation and their cubic interpolation data
+     */
     public readonly moveableBoneTracks: readonly MmdMovableBoneAnimationTrack[];
+
+    /**
+     * Morph animation tracks for one `mesh.morphTargetManager`
+     *
+     * it contains weight and weight linear interpolation data
+     */
     public readonly morphTracks: readonly MmdMorphAnimationTrack[];
+
+    /**
+     * Property animation track for one `mmdModel`
+     *
+     * it contains visibility and ik toggle keyframe data
+     */
     public readonly propertyTrack: MmdPropertyAnimationTrack;
+
+    /**
+     * Camera animation track for one `mmdCamera`
+     *
+     * it contains position, rotation, distance and fov cubic interpolation data
+     */
     public readonly cameraTrack: MmdCameraAnimationTrack;
 
+    /**
+     * The start frame of this animation
+     */
     public readonly startFrame: number;
+
+    /**
+     * The end frame of this animation
+     */
     public readonly endFrame: number;
 
+    /**
+     * Create a new `MmdAnimation` instance
+     * @param name animation name for identification
+     * @param boneTracks bone animation tracks
+     * @param moveableBoneTracks moveable bone animation tracks
+     * @param morphTracks morph animation tracks
+     * @param propertyTrack property animation track
+     * @param cameraTrack camera animation track
+     */
     public constructor(
         name: string,
         boneTracks: readonly MmdBoneAnimationTrack[],
@@ -54,6 +108,10 @@ export class MmdAnimation {
         this.endFrame = maxEndFrame;
     }
 
+    /**
+     * Check if all animation tracks are valid(sorted)
+     * @returns true if all animation tracks are valid
+     */
     public validate(): boolean {
         const boneTracks = this.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {

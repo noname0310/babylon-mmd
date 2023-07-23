@@ -190,10 +190,42 @@ import { ReferenceFileResolver } from "../referenceFileResolver";
 import { TextureAlphaChecker } from "../textureAlphaChecker";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 
+/**
+ * BPMX converter
+ */
 export class BpmxConverter implements ILogger {
+    /**
+     * The threshold of material alpha to use transparency mode. (default: 195)
+     *
+     * lower value is more likely to use transparency mode. (0 - 255)
+     */
     public alphaThreshold: number;
+    
+    /**
+     * The threshold of transparency mode to use alpha blend. (default: 100)
+     *
+     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode
+     */
     public alphaBlendThreshold: number;
+
+    /**
+     * Whether to use alpha evaluation (default: true)
+     * 
+     * If true, evaluate the alpha of the texture to automatically determine the blending method of the material
+     * 
+     * This automatic blend mode decision is not perfect and is quite costly
+     * 
+     * For load time optimization, it is recommended to turn off this feature and set the blending mode for the material manually
+     */
     public useAlphaEvaluation: boolean;
+
+    /**
+     * The canvas resolution to evaluate alpha (default: 512)
+     * 
+     * Resolution of the render canvas used to evaluate alpha internally
+     * 
+     * The higher the resolution, the higher the accuracy and the longer the load time
+     */
     public alphaEvaluationResolution: number;
 
     private _loggingEnabled: boolean;
@@ -205,6 +237,9 @@ export class BpmxConverter implements ILogger {
     /** @internal */
     public error: (message: string) => void;
 
+    /**
+     * Create a BPMX converter
+     */
     public constructor() {
         this.alphaThreshold = 195;
         this.alphaBlendThreshold = 100;
@@ -217,6 +252,14 @@ export class BpmxConverter implements ILogger {
         this.error = this._errorDisabled;
     }
 
+    /**
+     * Convert PMX to BPMX
+     * @param scene Scene
+     * @param urlOrFileName if files is undefined, urlOrFileName is url of PMX file. if files is defined, urlOrFileName is file name of PMX file.
+     * @param files Dependency files of PMX file (textures, sphere textures, toon textures)
+     * @param overrideMaterialTransparency Override alpha evaluation result function
+     * @returns BPMX data as ArrayBuffer
+     */
     public async convert(
         scene: Scene,
         urlOrFileName: string,
@@ -1030,6 +1073,9 @@ export class BpmxConverter implements ILogger {
         return data;
     }
 
+    /**
+     * Enable or disable debug logging (default: false)
+     */
     public get loggingEnabled(): boolean {
         return this._loggingEnabled;
     }

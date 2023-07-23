@@ -74,9 +74,19 @@ class IndexReader {
     }
 }
 
+/**
+ * PmxReader is a static class that parses PMX data
+ */
 export class PmxReader {
     private constructor() { /* block constructor */ }
 
+    /**
+     * Parses PMX data asynchronously
+     * @param data Arraybuffer of PMX data
+     * @param logger Logger
+     * @returns PMX data
+     * @throws {RangeError} If the parse fails
+     */
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<PmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
 
@@ -288,7 +298,7 @@ export class PmxReader {
                 throw new Error(`Invalid weightType: ${weightType}`);
             }
 
-            const edgeRatio = dataDeserializer.getFloat32();
+            const edgeScale = dataDeserializer.getFloat32();
 
             vertices.push({
                 position,
@@ -297,7 +307,7 @@ export class PmxReader {
                 additionalVec4,
                 weightType,
                 boneWeight,
-                edgeRatio
+                edgeScale
             });
 
             if (i % 10000 === 0 && 100 < performance.now() - time) {
@@ -928,7 +938,7 @@ export class PmxReader {
                 ssSpltCl: dataDeserializer.getFloat32()
             };
 
-            const interation: PmxObject.SoftBody.Interation = {
+            const iteration: PmxObject.SoftBody.Iteration = {
                 vIt: dataDeserializer.getInt32(),
                 pIt: dataDeserializer.getInt32(),
                 dIt: dataDeserializer.getInt32(),
@@ -995,7 +1005,7 @@ export class PmxReader {
 
                 config,
                 cluster,
-                interation,
+                iteration,
                 material,
 
                 anchors,

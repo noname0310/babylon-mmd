@@ -139,15 +139,50 @@ class MmdTextureData {
     }
 }
 
+/**
+ * MMD texture load result
+ */
 export interface MmdTextureLoadResult {
+    /**
+     * Loaded texture
+     *
+     * If the texture has load error or decoding error, this value is null
+     */
     readonly texture: Nullable<Texture>;
+
+    /**
+     * Loaded texture data in encoded format(PNG/JPG/BMP)
+     *
+     * If the texture is not loaded, this value is null
+     */
     readonly arrayBuffer: Nullable<ArrayBuffer>;
 }
 
+/**
+ * MMD async texture loader
+ *
+ * The MMD async texture loader caches redundant textures across multiple materials and simplifies asynchronous textural loading
+ *
+ * It also includes handling when multiple models are loaded at the same time
+ */
 export class MmdAsyncTextureLoader {
-    public readonly onModelTextureLoadedObservable = new Map<number, Observable<void>>(); // key: uniqueId, value: Observable<void>
+    /**
+     * Observable which is notified when all textures of the model are loaded
+     *
+     * key: uniqueId, value: Observable<void>
+     */
+    public readonly onModelTextureLoadedObservable = new Map<number, Observable<void>>();
 
-    public readonly textureCache = new Map<string, MmdTextureData>(); // key: requestString, value: texture
+    /**
+     * Texture cache
+     *
+     * This cache is used to avoid loading the same texture multiple times
+     *
+     * Once loaded, all textures are stored in the cache and deleted from the cache on their own when the texture is disposed
+     *
+     * key: requestString, value: texture
+     */
+    public readonly textureCache = new Map<string, MmdTextureData>();
 
     private readonly _textureLoadInfoMap = new Map<string, TextureLoadInfo>(); // key: requestString
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
@@ -189,6 +224,15 @@ export class MmdAsyncTextureLoader {
         }
     }
 
+    /**
+     * Notify that the model texture load request has been ended
+     *
+     * If all the textures are cached, no event callback is called
+     *
+     * so this method must be called and specified at the end of the model's text load request to handle such an edge case
+     *
+     * @param uniqueId Model unique id
+     */
     public loadModelTexturesEnd(uniqueId: number): void {
         const model = this._loadingModels.get(uniqueId);
         if (model === undefined) return;
@@ -307,6 +351,20 @@ export class MmdAsyncTextureLoader {
         });
     }
 
+    /**
+     * Load texture asynchronously
+     *
+     * All texture requests for one model must be executed within one synchronization routine without await
+     *
+     * Because the internally used left texture count mechanism requires knowing the total number of textures required at the time the request is processed
+     *
+     * @param uniqueId Model unique id
+     * @param rootUrl Root url
+     * @param relativeTexturePathOrIndex Relative texture path or shared toon texture index
+     * @param scene Scene
+     * @param assetContainer Asset container
+     * @returns MMD texture load result
+     */
     public async loadTextureAsync(
         uniqueId: number,
         rootUrl: string,
@@ -334,6 +392,21 @@ export class MmdAsyncTextureLoader {
         );
     }
 
+    /**
+     * Load texture from buffer asynchronously
+     *
+     * All texture requests for one model must be executed within one synchronization routine without await
+     *
+     * Because the internally used left texture count mechanism requires knowing the total number of textures required at the time the request is processed
+     *
+     * @param uniqueId Model unique id
+     * @param textureName Texture name
+     * @param arrayBufferOrBlob Texture data encoded in PNG/JPG/BMP
+     * @param scene Scene
+     * @param assetContainer Asset container
+     * @param applyPathNormalization Whether to apply path normalization to the texture name (default: true)
+     * @returns MMD texture load result
+     */
     public async loadTextureFromBufferAsync(
         uniqueId: number,
         textureName: string,
@@ -356,6 +429,11 @@ export class MmdAsyncTextureLoader {
         );
     }
 
+    /**
+     * Normalize path
+     * @param path Path
+     * @returns Normalized path
+     */
     public pathNormalize(path: string): string {
         path = path.replace(/\\/g, "/");
         const pathArray = path.split("/");

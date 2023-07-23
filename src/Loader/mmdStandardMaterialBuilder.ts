@@ -20,24 +20,45 @@ import { ReferenceFileResolver } from "./referenceFileResolver";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
+    /**
+     * The scale factor of the edge size (default: 0.01)
+     *
+     * The mmd outline parameter needs to be scaled to fit the outline shader of the Babylon.js
+     */
     public static EdgeSizeScaleFactor = 0.01;
 
     /**
-     * The threshold of material alpha to use transparency mode.
+     * The threshold of material alpha to use transparency mode. (default: 195)
      *
-     * lower value is more likely to use transparency mode. (0 - 255) default is 195.
+     * lower value is more likely to use transparency mode. (0 - 255)
      */
     public alphaThreshold = 195;
 
     /**
-     * The threshold of transparency mode to use alpha blend.
+     * The threshold of transparency mode to use alpha blend. (default: 100)
      *
-     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode. default is 100.
+     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode
      */
     public alphaBlendThreshold = 100;
 
+    /**
+     * Whether to use alpha evaluation (default: true)
+     *
+     * If true, evaluate the alpha of the texture to automatically determine the blending method of the material
+     *
+     * This automatic blend mode decision is not perfect and is quite costly
+     *
+     * For load time optimization, it is recommended to turn off this feature and set the blending mode for the material manually
+     */
     public useAlphaEvaluation = true;
 
+    /**
+     * The canvas resolution to evaluate alpha (default: 512)
+     *
+     * Resolution of the render canvas used to evaluate alpha internally
+     *
+     * The higher the resolution, the higher the accuracy and the longer the load time
+     */
     public alphaEvaluationResolution = 512;
 
     private readonly _textureLoader = new MmdAsyncTextureLoader();
@@ -207,6 +228,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         }
     }
 
+    /**
+     * Load general scalar properties (diffuse, specular, ambient, alpha, shininess)
+     *
+     * This method can be overridden for customizing the material loading process
+     * @param material Material
+     * @param materialInfo Material information
+     */
     public loadGeneralScalarProperties: (
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo
@@ -241,6 +269,24 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             material.specularPower = materialInfo.shininess;
         };
 
+    /**
+     * Load diffuse texture
+     *
+     * This method can be overridden for customizing the material loading process
+     * @param uniqueId Model unique id
+     * @param material Material
+     * @param materialInfo Material information
+     * @param texturePathTable Texture path table
+     * @param scene Scene
+     * @param assetContainer Asset container
+     * @param rootUrl Root url
+     * @param fileRootId File root id
+     * @param referenceFileResolver Reference file resolver
+     * @param offset Offset of the material index
+     * @param logger Logger
+     * @param getTextureAlphaChecker Get texture alpha checker
+     * @param onTextureLoadComplete Texture load complete callback
+     */
     public loadDiffuseTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
@@ -338,6 +384,22 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
         };
 
+    /**
+     * Load sphere texture
+     *
+     * This method can be overridden for customizing the material loading process
+     * @param uniqueId Model unique id
+     * @param material Material
+     * @param materialInfo Material information
+     * @param texturePathTable Texture path table
+     * @param scene Scene
+     * @param assetContainer Asset container
+     * @param rootUrl Root url
+     * @param fileRootId File root id
+     * @param referenceFileResolver Reference file resolver
+     * @param logger Logger
+     * @param onTextureLoadComplete Texture load complete callback
+     */
     public loadSphereTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
@@ -406,6 +468,22 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
         };
 
+    /**
+     * Load toon texture
+     *
+     * This method can be overridden for customizing the material loading process
+     * @param uniqueId Model unique id
+     * @param material Material
+     * @param materialInfo Material information
+     * @param texturePathTable Texture path table
+     * @param scene Scene
+     * @param assetContainer Asset container
+     * @param rootUrl Root url
+     * @param fileRootId File root id
+     * @param referenceFileResolver Reference file resolver
+     * @param logger Logger
+     * @param onTextureLoadComplete Texture load complete callback
+     */
     public loadToonTexture: (
         uniqueId: number,
         material: MmdStandardMaterial,
@@ -474,6 +552,14 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
         };
 
+    /**
+     * Load outline rendering properties
+     *
+     * This method can be overridden for customizing the material loading process
+     * @param material Material
+     * @param materialInfo Material information
+     * @param logger Logger
+     */
     public loadOutlineRenderingProperties: (
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
@@ -488,6 +574,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     logger.warn("MMD Outline Renderer is not available. Please import \"babylon-mmd/Loader/mmdOutlineRenderer\".");
                 }
 
+                material.renderOutline = true;
                 material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(
@@ -497,6 +584,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
         };
 
+    /**
+     * Called after building a single material
+     *
+     * This method is called after the material and textures have been loaded
+     */
     public afterBuildSingleMaterial: (
         material: MmdStandardMaterial,
         materialIndex: number,

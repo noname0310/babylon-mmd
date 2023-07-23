@@ -1,3 +1,6 @@
+/**
+ * SdefBufferKind Constants
+ */
 export class SdefBufferKind {
     public static readonly MatricesSdefCKind = "matricesSdefC";
     public static readonly MatricesSdefR0Kind = "matricesSdefR0";

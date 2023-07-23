@@ -6,9 +6,19 @@ import { ConsoleLogger } from "../../Parser/ILogger";
 import { MmdDataDeserializer } from "../../Parser/mmdDataDeserializer";
 import type { BpmxObject } from "./bpmxObject";
 
+/**
+ * BpmxReader is a static class that parses BPMX data
+ */
 export class BpmxReader {
     private constructor() { /* block constructor */ }
 
+    /**
+     * Parses BPMX data asynchronously
+     * @param data Arraybuffer of BPMX data
+     * @param logger Logger
+     * @returns BPMX data
+     * @throws {RangeError} If the parse fails
+     */
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<BpmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
         dataDeserializer.initializeTextDecoder("utf-8");

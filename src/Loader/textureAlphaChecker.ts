@@ -2,6 +2,11 @@ import { Material } from "@babylonjs/core/Materials/material";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
+/**
+ * Material transparency mode
+ *
+ * Constants are same as Babylon.js MaterialTransparencyMode
+ */
 export enum TransparencyMode {
     Opaque = Material.MATERIAL_OPAQUE,
     AlphaTest = Material.MATERIAL_ALPHATEST,
@@ -29,6 +34,11 @@ class TextureContainer {
     }
 }
 
+/**
+ * Texture alpha checker
+ *
+ * This class is used to check if the texture has alpha on geometry
+ */
 export class TextureAlphaChecker {
     private readonly _resolution: number;
     private readonly _textureCache: Map<ArrayBuffer, TextureContainer>;
@@ -43,6 +53,12 @@ export class TextureAlphaChecker {
 
     private readonly _indicesBytePerElement: number;
 
+    /**
+     * Create a texture alpha checker
+     * @param uvs Geometry uvs
+     * @param indices Geometry indices
+     * @param resolution Resolution of the canvas used to check the texture
+     */
     public constructor(uvs: Float32Array, indices: Uint16Array | Uint32Array, resolution = 512) {
         this._resolution = resolution;
         this._textureCache = new Map();
@@ -231,6 +247,17 @@ export class TextureAlphaChecker {
         return true;
     }
 
+    /**
+     * Check if the texture has alpha on geometry
+     *
+     * "Does the textures on the geometry have alpha" is simply to make sure that a portion of the textures (the part that is rendered) have alpha
+     * @param textureBuffer Texture array buffer
+     * @param startOffset start offset of the indices
+     * @param length length of the indices
+     * @param alphaThreshold alpha threshold
+     * @param alphaBlendThreshold alpha blend threshold
+     * @returns Transparency mode
+     */
     public async textureHasAlphaOnGeometry(
         textureBuffer: ArrayBuffer,
         startOffset: number,
@@ -318,6 +345,9 @@ export class TextureAlphaChecker {
         }
     }
 
+    /**
+     * Dispose this object
+     */
     public dispose(): void {
         const context = this._context;
         if (context === null) return;

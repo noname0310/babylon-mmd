@@ -10,6 +10,11 @@ import { MmdAnimation } from "./Animation/mmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./Animation/mmdAnimationTrack";
 import { VmdData, VmdObject } from "./Parser/vmdObject";
 
+/**
+ * VmdLoader is a loader that loads MMD animation data in VMD format
+ *
+ * VMD format is a binary format for MMD animation data
+ */
 export class VmdLoader {
     private readonly _scene: Scene;
 
@@ -31,6 +36,17 @@ export class VmdLoader {
         this._scene = scene;
     }
 
+    /**
+     * Load MMD animation from VMD object
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param vmdObject VMD object or VMD object array
+     * @param onLoad Callback function that is called when loading is complete
+     * @param onProgress Callback function that is called while loading
+     */
     public loadFromVmdObject(
         name: string,
         vmdObject: VmdObject | VmdObject[],
@@ -40,6 +56,17 @@ export class VmdLoader {
         this.loadFromVmdObjectAsync(name, vmdObject, onProgress).then(onLoad);
     }
 
+    /**
+     * Load MMD animation from VMD object asynchronously
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param vmdObject VMD object or VMD object array
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public async loadFromVmdObjectAsync(
         name: string,
         vmdObject: VmdObject | VmdObject[],
@@ -697,6 +724,17 @@ export class VmdLoader {
         return new MmdAnimation(name, filteredBoneTracks, filteredMoveableBoneTracks, filteredMorphTracks, propertyTrack, cameraTrack);
     }
 
+    /**
+     * Load MMD animation data from VMD data
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param vmdData VMD data or array of VMD data
+     * @param onLoad Callback function that is called when load is complete
+     * @param onProgress Callback function that is called while loading
+     */
     public loadFromVmdData(
         name: string,
         vmdData: VmdData | VmdData[],
@@ -714,6 +752,17 @@ export class VmdLoader {
         this.loadFromVmdObject(name, vmdObjects, onLoad, onProgress);
     }
 
+    /**
+     * Load MMD animation data from VMD data asynchronously
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param vmdData VMD data or array of VMD data
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public loadFromVmdDataAsync(
         name: string,
         vmdData: VmdData | VmdData[],
@@ -724,6 +773,18 @@ export class VmdLoader {
         });
     }
 
+    /**
+     * Load MMD animation data from VMD array buffer
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param buffer VMD array buffer or array of VMD array buffer
+     * @param onLoad Callback function that is called when load is complete
+     * @param onProgress Callback function that is called while loading
+     * @param onError Callback function that is called when loading is failed
+     */
     public loadFromBuffer(
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
@@ -747,6 +808,17 @@ export class VmdLoader {
         this.loadFromVmdData(name, vmdData, onLoad, onProgress);
     }
 
+    /**
+     * Load MMD animation data from VMD array buffer asynchronously
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param buffer VMD array buffer or array of VMD array buffer
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public loadFromBufferAsync(
         name: string,
         buffer: ArrayBufferLike | ArrayBufferLike[],
@@ -757,6 +829,19 @@ export class VmdLoader {
         });
     }
 
+    /**
+     * Load MMD animation data from VMD file or URL
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param fileOrUrl VMD file or URL or array of VMD file or URL
+     * @param onLoad Callback function that is called when load is complete
+     * @param onProgress Callback function that is called while loading
+     * @param onError Callback function that is called when loading is failed
+     * @returns File request
+     */
     public load(
         name: string,
         fileOrUrl: File | string | File[] | string[],
@@ -797,6 +882,17 @@ export class VmdLoader {
         return fileOrUrl.length === 1 ? requests[0] : requests as any;
     }
 
+    /**
+     * Load MMD animation data from VMD file or URL asynchronously
+     * 
+     * If you put multiple motions, they are merged into one animation
+     * 
+     * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
+     * @param name Animation name
+     * @param fileOrUrl VMD file or URL or array of VMD file or URL
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public loadAsync(
         name: string,
         fileOrUrl: File | string | File[] | string[],
@@ -807,6 +903,9 @@ export class VmdLoader {
         });
     }
 
+    /**
+     * Enable or disable debug logging (default: false)
+     */
     public get loggingEnabled(): boolean {
         return this._loggingEnabled;
     }

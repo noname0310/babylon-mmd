@@ -4,6 +4,11 @@ export interface ILogger {
     error(message: string): void;
 }
 
+/**
+ * A logger that outputs to the console
+ *
+ * generally, you can use this class as default logger
+ */
 export class ConsoleLogger implements ILogger {
     public log(message: string): void {
         console.log(message);

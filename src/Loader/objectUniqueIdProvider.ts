@@ -1,3 +1,6 @@
+/**
+ * Provides unique IDs for objects
+ */
 export class ObjectUniqueIdProvider {
     private static readonly _IdMap: WeakMap<object, number> = new WeakMap<object, number>();
 
@@ -5,6 +8,11 @@ export class ObjectUniqueIdProvider {
 
     private constructor() { /* block constructor */ }
 
+    /**
+     * Get the unique ID of the object
+     * @param obj Object
+     * @returns Unique ID
+     */
     public static GetId(obj: object): number {
         let id = this._IdMap.get(obj);
         if (id === undefined) {

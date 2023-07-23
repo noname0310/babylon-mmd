@@ -57,9 +57,17 @@
 import type { MmdAnimation } from "../Animation/mmdAnimation";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 
+/**
+ * BVMD converter
+ */
 export class BvmdConverter {
     private constructor() { /* block constructor */ }
 
+    /**
+     * Convert mmd animation to BVMD
+     * @param animation mmd animation from VMD/BVMD
+     * @returns converted BVMD
+     */
     public static Convert(animation: MmdAnimation): ArrayBuffer {
         const encoder = new TextEncoder();
 

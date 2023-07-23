@@ -39,17 +39,67 @@ interface LoadState {
     readonly boundingBoxMargin: number;
 }
 
+/**
+ * BpmxLoader is a loader that loads models in BPMX format
+ *
+ * BPMX is a single binary file format that contains all the data of a model
+ */
 export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Name of the loader ("bpmx")
      */
     public name: string;
+
+    /**
+     * Extensions supported by this loader
+     */
     public extensions: ISceneLoaderPluginExtensions;
 
+    /**
+     * Material builder used by this loader
+     *
+     * This property can be overwritten to customize the material of the loaded model
+     */
     public materialBuilder: IMmdMaterialBuilder;
+
+    /**
+     * Whether to use SDEF (default: true)
+     *
+     * Spherical Deformation(SDEF) is a feature that allows you to deform the model more naturally than the traditional skinning method
+     *
+     * But it uses more memory and is slower than the traditional skinning method
+     *
+     * If you are targeting a platform with limited memory or performance, you may want to disable this feature
+     */
     public useSdef: boolean;
+
+    /**
+     * Whether to build skeleton (default: true)
+     *
+     * If you want to load a model without a skeleton, you can disable this feature
+     *
+     * This feature is useful when you want to load a model that is not animated. (e.g. background object)
+     */
     public buildSkeleton: boolean;
+
+    /**
+     * Whether to build morph (default: true)
+     *
+     * If you want to load a model without morph, you can disable this feature
+     *
+     * This feature is useful when you want to load a model that is not animated. (e.g. background object)
+     */
     public buildMorph: boolean;
+
+    /**
+     * Margin of the bounding box of the model (default: 10)
+     *
+     * This property is used to calculate the bounding box of the model
+     *
+     * If the bounding box of the model is too small, the model may not be rendered correctly
+     *
+     * This value may need to be set higher, especially in motion with a large movement range
+     */
     public boundingBoxMargin: number;
 
     private _loggingEnabled: boolean;
@@ -61,6 +111,9 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
     /** @internal */
     public error: (message: string) => void;
 
+    /**
+     * Create a new BpmxLoader
+     */
     public constructor() {
         this.name = "bpmx";
         this.extensions = {
@@ -315,6 +368,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 vertexData.indices as Uint16Array | Uint32Array, // indices
                 vertexData.uvs as Float32Array, // uvs
                 multiMaterial, // multiMaterial
+                this, // logger
                 (event) => {
                     if (!applyTextureLoading) return;
                     const loadedRatio = event.loaded / event.total;
@@ -634,6 +688,9 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         };
     }
 
+    /**
+     * Enable or disable debug logging (default: false)
+     */
     public get loggingEnabled(): boolean {
         return this._loggingEnabled;
     }

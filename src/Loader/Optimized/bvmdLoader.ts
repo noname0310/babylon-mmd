@@ -10,6 +10,11 @@ import { MmdAnimation } from "../Animation/mmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../Animation/mmdAnimationTrack";
 import { MmdDataDeserializer } from "../Parser/mmdDataDeserializer";
 
+/**
+ * BvmdLoader is a loader that loads MMD animation data in BVMD format
+ *
+ * BVMD format is a optimized binary format for MMD animation data
+ */
 export class BvmdLoader {
     private readonly _scene: Scene;
 
@@ -22,6 +27,10 @@ export class BvmdLoader {
     /** @internal */
     public error: (message: string) => void;
 
+    /**
+     * Create a new BvmdLoader
+     * @param scene Scene
+     */
     public constructor(scene: Scene) {
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -31,6 +40,14 @@ export class BvmdLoader {
         this._scene = scene;
     }
 
+    /**
+     * Load MMD animation data from BVMD array buffer
+     * @param name Animation name
+     * @param buffer BVMD array buffer
+     * @param onLoad Callback function that is called when load is complete
+     * @param onProgress Callback function that is called while loading
+     * @param onError Callback function that is called when loading is failed
+     */
     public loadFromBuffer(
         name: string,
         buffer: ArrayBufferLike,
@@ -41,6 +58,13 @@ export class BvmdLoader {
         this.loadFromBufferAsync(name, buffer, onProgress).then(onLoad).catch(onError);
     }
 
+    /**
+     * Load MMD animation data from BVMD array buffer asynchronously
+     * @param name Animation name
+     * @param buffer BVMD array buffer
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public async loadFromBufferAsync(
         name: string,
         buffer: ArrayBufferLike,
@@ -160,6 +184,15 @@ export class BvmdLoader {
         return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, propertyTrack, cameraTrack);
     }
 
+    /**
+     * Load MMD animation data from BVMD file or URL
+     * @param name Animation name
+     * @param fileOrUrl BVMD file or URL
+     * @param onLoad Callback function that is called when load is complete
+     * @param onProgress Callback function that is called while loading
+     * @param onError Callback function that is called when loading is failed
+     * @returns File request
+     */
     public load(
         name: string,
         fileOrUrl: File | string,
@@ -185,6 +218,13 @@ export class BvmdLoader {
         );
     }
 
+    /**
+     * Load MMD animation data from BVMD file or URL asynchronously
+     * @param name Animation name
+     * @param fileOrUrl BVMD file or URL
+     * @param onProgress Callback function that is called while loading
+     * @returns Animation data
+     */
     public loadAsync(
         name: string,
         fileOrUrl: File | string,
@@ -195,6 +235,9 @@ export class BvmdLoader {
         });
     }
 
+    /**
+     * Enable or disable debug logging (default: false)
+     */
     public get loggingEnabled(): boolean {
         return this._loggingEnabled;
     }

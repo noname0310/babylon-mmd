@@ -50,6 +50,11 @@ interface _InternalMeshDataInfo {
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
+/**
+ * Sdef mesh
+ *
+ * This class supports Spherical Defromation(SDEF) on CPU skinning
+ */
 export class SdefMesh extends Mesh {
     /**
      * Updates the vertex buffer by applying transformation from the bones
