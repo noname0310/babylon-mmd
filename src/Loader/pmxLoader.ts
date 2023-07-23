@@ -42,7 +42,7 @@ interface LoadState {
 
 /**
  * PmxLoader is a loader that loads the model in the PMX format
- * 
+ *
  * PMX is a binary file format that contains all the data except the texture of the model
  */
 export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
@@ -105,11 +105,11 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
     /**
      * Reference files for load PMX from files (textures)
-     * 
+     *
      * This property is used to load textures from files
-     * 
+     *
      * pmx files typically store texture files separately in a subdirectory of url root
-     * 
+     *
      * Therefore, in order to load it as a file, you need to put information about these files separately
      */
     public referenceFiles: readonly File[];

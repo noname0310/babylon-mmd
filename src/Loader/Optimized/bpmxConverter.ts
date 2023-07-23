@@ -200,7 +200,7 @@ export class BpmxConverter implements ILogger {
      * lower value is more likely to use transparency mode. (0 - 255)
      */
     public alphaThreshold: number;
-    
+
     /**
      * The threshold of transparency mode to use alpha blend. (default: 100)
      *
@@ -210,20 +210,20 @@ export class BpmxConverter implements ILogger {
 
     /**
      * Whether to use alpha evaluation (default: true)
-     * 
+     *
      * If true, evaluate the alpha of the texture to automatically determine the blending method of the material
-     * 
+     *
      * This automatic blend mode decision is not perfect and is quite costly
-     * 
+     *
      * For load time optimization, it is recommended to turn off this feature and set the blending mode for the material manually
      */
     public useAlphaEvaluation: boolean;
 
     /**
      * The canvas resolution to evaluate alpha (default: 512)
-     * 
+     *
      * Resolution of the render canvas used to evaluate alpha internally
-     * 
+     *
      * The higher the resolution, the higher the accuracy and the longer the load time
      */
     public alphaEvaluationResolution: number;

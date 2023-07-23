@@ -6,35 +6,35 @@ import type { Observable } from "@babylonjs/core/Misc/observable";
 export interface IPlayer {
     /**
      * On duration changed observable
-     * 
+     *
      * This observable is notified when the (audio) duration is changed
      */
     readonly onDurationChangedObservable: Observable<void>;
 
     /**
      * On playback rate changed observable
-     * 
+     *
      * This observable is notified when the playback rate is changed
      */
     readonly onPlaybackRateChangedObservable: Observable<void>;
 
     /**
      * On play observable
-     * 
+     *
      * This observable is notified when the player is played
      */
     readonly onPlayObservable: Observable<void>;
 
     /**
      * On pause observable
-     * 
+     *
      * This observable is notified when the player is paused
      */
     readonly onPauseObservable: Observable<void>;
 
     /**
      * On seek observable
-     * 
+     *
      * This observable is notified when the player is seeked
      */
     readonly onSeekObservable: Observable<void>;
@@ -85,7 +85,7 @@ export interface IPlayer {
 export interface IAudioPlayer extends IPlayer {
     /**
      * On mute state changed observable
-     * 
+     *
      * This observable is notified when the mute state is changed
      */
     readonly onMuteStateChangedObservable: Observable<void>;
@@ -107,7 +107,7 @@ export interface IAudioPlayer extends IPlayer {
 
     /**
      * Unmute the player
-     * 
+     *
      * Unmute is possible failed if user interaction is not performed
      * @returns Whether the player is unmuted
      */

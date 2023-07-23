@@ -38,9 +38,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation from VMD object
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param vmdObject VMD object or VMD object array
@@ -58,9 +58,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation from VMD object asynchronously
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param vmdObject VMD object or VMD object array
@@ -726,9 +726,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD data
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param vmdData VMD data or array of VMD data
@@ -754,9 +754,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD data asynchronously
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param vmdData VMD data or array of VMD data
@@ -775,9 +775,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD array buffer
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param buffer VMD array buffer or array of VMD array buffer
@@ -810,9 +810,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD array buffer asynchronously
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param buffer VMD array buffer or array of VMD array buffer
@@ -831,9 +831,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD file or URL
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param fileOrUrl VMD file or URL or array of VMD file or URL
@@ -884,9 +884,9 @@ export class VmdLoader {
 
     /**
      * Load MMD animation data from VMD file or URL asynchronously
-     * 
+     *
      * If you put multiple motions, they are merged into one animation
-     * 
+     *
      * If two keyframes track and frame numbers are the same, the motion keyframe positioned later in the array is used
      * @param name Animation name
      * @param fileOrUrl VMD file or URL or array of VMD file or URL
