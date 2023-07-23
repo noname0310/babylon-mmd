@@ -115,6 +115,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     fileRootId,
                     referenceFileResolver,
                     offset,
+                    logger,
                     getTextureAlpphaChecker,
                     incrementProgress
                 );
@@ -132,6 +133,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl,
                     fileRootId,
                     referenceFileResolver,
+                    logger,
                     incrementProgress
                 );
                 if (loadSphereTexturePromise !== undefined) {
@@ -148,6 +150,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl,
                     fileRootId,
                     referenceFileResolver,
+                    logger,
                     incrementProgress
                 );
                 if (loadToonTexturePromise !== undefined) {
@@ -249,6 +252,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         materialIndexOffset: number,
+        logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
@@ -262,6 +266,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             fileRootId,
             referenceFileResolver,
             offset,
+            logger,
             getTextureAlphaChecker,
             onTextureLoadComplete
         ): Promise<void> => {
@@ -325,6 +330,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                     onTextureLoadComplete?.();
                 } else {
+                    logger.error(`Failed to load diffuse texture: ${diffuseTextureFileFullPath}`);
                     onTextureLoadComplete?.();
                 }
             } else {
@@ -342,6 +348,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
+        logger: ILogger,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -353,6 +360,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             rootUrl,
             fileRootId,
             referenceFileResolver,
+            logger,
             onTextureLoadComplete
         ): Promise<void> => {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
@@ -385,6 +393,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
                             ? MmdPluginMaterialSphereTextureBlendMode.Multiply
                             : MmdPluginMaterialSphereTextureBlendMode.Add;
+                    } else {
+                        logger.error(`Failed to load sphere texture: ${sphereTextureFileFullPath}`);
                     }
 
                     onTextureLoadComplete?.();
@@ -406,6 +416,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
+        logger: ILogger,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -417,6 +428,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             rootUrl,
             fileRootId,
             referenceFileResolver,
+            logger,
             onTextureLoadComplete
         ): Promise<void> => {
             let toonTexturePath;
@@ -452,6 +464,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 if (toonTexture !== null) {
                     material.toonTexture = toonTexture;
+                } else {
+                    logger.error(`Failed to load toon texture: ${toonTextureFileFullPath}`);
                 }
 
                 onTextureLoadComplete?.();
