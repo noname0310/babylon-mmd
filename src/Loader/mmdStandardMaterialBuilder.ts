@@ -19,6 +19,11 @@ import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
 
+/**
+ * MMD standard material builder
+ *
+ * Use `MmdStandardMaterial` to create a mesh material
+ */
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
      * The scale factor of the edge size (default: 0.01)
