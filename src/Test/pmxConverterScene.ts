@@ -253,13 +253,14 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const selectedPmxFile = document.createElement("div");
         selectedPmxFile.textContent = "No PMX file selected";
-        selectedPmxFile.style.width = "100%";
+        selectedPmxFile.style.width = "350px";
         selectedPmxFile.style.height = "auto";
         selectedPmxFile.style.fontSize = "18px";
         selectedPmxFile.style.marginBottom = "10px";
         selectedPmxFile.style.border = "1px solid black";
         selectedPmxFile.style.boxSizing = "border-box";
         selectedPmxFile.style.padding = "10px";
+        selectedPmxFile.style.overflow = "scroll";
         innerFormDiv.appendChild(selectedPmxFile);
 
         // #region Load Model Tab
