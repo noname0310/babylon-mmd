@@ -44,6 +44,7 @@ export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAud
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 // Runtime
+export { IIkSolver } from "@/Runtime/ikSolver";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { MmdCamera } from "@/Runtime/mmdCamera";
 export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
