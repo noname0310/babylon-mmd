@@ -391,11 +391,11 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
     }
 
     /**
-     * bind animation to model and prepare material for morph animation
-     * @param animation animation to bind
-     * @param model bind target
-     * @param retargetingMap model bone name to animation bone name map
-     * @param logger logger
+     * Bind animation to model and prepare material for morph animation
+     * @param animation Animation to bind
+     * @param model Bind target
+     * @param retargetingMap Model bone name to animation bone name map
+     * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
     public static Create(animation: MmdAnimation, model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
