@@ -182,6 +182,10 @@ export class MmdRuntime implements ILogger {
         models.splice(index, 1);
     }
 
+    /**
+     * Set camera to animate
+     * @param camera MMD camera
+     */
     public setCamera(camera: Nullable<MmdCamera>): void {
         if (this._camera !== null) {
             this._camera.onCurrentAnimationChangedObservable.removeCallback(this._onAnimationChanged);
@@ -195,6 +199,13 @@ export class MmdRuntime implements ILogger {
 
     private _setAudioPlayerLastValue: Nullable<IPlayer> = null;
 
+    /**
+     * Set audio player to sync with animation
+     * 
+     * If you set up audio Player while playing an animation, it try to play the audio from the current animation time
+     * And returns Promise because this operation is asynchronous. In most cases, you don't have to await this Promise
+     * @param audioPlayer Audio player
+     */
     public async setAudioPlayer(audioPlayer: Nullable<IPlayer>): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
 
@@ -234,6 +245,14 @@ export class MmdRuntime implements ILogger {
         audioPlayer._setPlaybackRateWithoutNotify(this._animationTimeScale);
     }
 
+    /**
+     * Register MMD runtime to scene
+     * 
+     * register `beforePhysics` and `afterPhysics` to scene Observables
+     * 
+     * If you need a more complex update method you can call `beforePhysics` and `afterPhysics` manually
+     * @param scene Scene
+     */
     public register(scene: Scene): void {
         if (this._isRegistered) return;
         this._isRegistered = true;
@@ -244,6 +263,10 @@ export class MmdRuntime implements ILogger {
         scene.onBeforeRenderObservable.add(this._afterPhysicsBinded);
     }
 
+    /**
+     * Unregister MMD runtime from scene
+     * @param scene Scene
+     */
     public unregister(scene: Scene): void {
         if (!this._isRegistered) return;
         this._isRegistered = false;
@@ -254,6 +277,11 @@ export class MmdRuntime implements ILogger {
         this._beforePhysicsBinded = null;
     }
 
+    /**
+     * Before the physics stage, update animations and run MMD runtime solvers
+     * 
+     * @param deltaTime Delta time in milliseconds
+     */
     public beforePhysics(deltaTime: number): void {
         if (!this._animationPaused) {
             if (this._audioPlayer !== null && !this._audioPlayer.paused) { // sync animation time with audio time
@@ -323,6 +351,9 @@ export class MmdRuntime implements ILogger {
         needToInitializePhysicsModels.clear();
     }
 
+    /**
+     * After the physics stage, update physics and run MMD runtime solvers
+     */
     public afterPhysics(): void {
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
@@ -424,6 +455,13 @@ export class MmdRuntime implements ILogger {
         this.onPlayAnimationObservable.notifyObservers();
     }
 
+    /**
+     * Play animation from the current animation time
+     * 
+     * If audio player is set, it try to play the audio from the current animation time
+     * 
+     * It returns Promise because playing audio is asynchronous
+     */
     public async playAnimation(): Promise<void> {
         if (this._audioPlayer !== null && this._currentFrameTime <= this._audioPlayer.duration * 30) {
             try {
@@ -441,6 +479,9 @@ export class MmdRuntime implements ILogger {
         }
     }
 
+    /**
+     * Pause animation
+     */
     public pauseAnimation(): void {
         if (this._audioPlayer !== null && !this._audioPlayer.paused) {
             this._audioPlayer.pause();
@@ -484,6 +525,13 @@ export class MmdRuntime implements ILogger {
         this.onSeekAnimationObservable.notifyObservers();
     }
 
+    /**
+     * Seek animation to the specified frame time
+     * 
+     * If you set forceEvaluate true, the animation is evaluated even if the animation is not playing.
+     * @param frameTime Time in 30fps frame
+     * @param forceEvaluate Whether to force evaluate animation
+     */
     public async seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void> {
         frameTime = Math.max(0, Math.min(frameTime, this._animationFrameTimeDuration));
 
@@ -515,22 +563,37 @@ export class MmdRuntime implements ILogger {
         }
     }
 
+    /**
+     * Whether animation is playing
+     */
     public get isAnimationPlaying(): boolean {
         return !this._animationPaused;
     }
 
+    /**
+     * MMD models created by this runtime
+     */
     public get models(): readonly MmdModel[] {
         return this._models;
     }
 
+    /**
+     * MMD camera
+     */
     public get camera(): Nullable<MmdCamera> {
         return this._camera;
     }
 
+    /**
+     * Audio player
+     */
     public get audioPlayer(): Nullable<IPlayer> {
         return this._audioPlayer;
     }
 
+    /**
+     * Current animation time scale (default: 1)
+     */
     public get timeScale(): number {
         return this._animationTimeScale;
     }
@@ -543,22 +606,40 @@ export class MmdRuntime implements ILogger {
         }
     }
 
+    /**
+     * Current animation time in 30fps frame
+     */
     public get currentFrameTime(): number {
         return this._currentFrameTime;
     }
 
+    /**
+     * Current animation time in seconds
+     */
     public get currentTime(): number {
         return this._currentFrameTime / 30;
     }
 
+    /**
+     * Current animation duration in 30fps frame
+     */
     public get animationFrameTimeDuration(): number {
         return this._animationFrameTimeDuration;
     }
 
+    /**
+     * Current animation duration in seconds
+     */
     public get animationDuration(): number {
         return this._animationFrameTimeDuration / 30;
     }
 
+    /**
+     * Set animation duration manually
+     * 
+     * When the difference between the length of the song and the length of the animation is large, it can be helpful to adjust the animation duration manually
+     * @param frameTimeDuration Time in 30fps frame
+     */
     public setManualAnimationDuration(frameTimeDuration: Nullable<number>): void {
         if (frameTimeDuration === null && !this._useManualAnimationDuration) return;
 
