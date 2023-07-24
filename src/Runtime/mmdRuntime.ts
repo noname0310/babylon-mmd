@@ -32,9 +32,9 @@ export interface CreateMmdModelOptions {
 
 /**
  * MMD runtime orchestrates several MMD components (models, camera, audio)
- * 
+ *
  * MMD runtime handles updates and synchronization of MMD components
- * 
+ *
  * It can also create and remove runtime components
  */
 export class MmdRuntime implements ILogger {
@@ -129,7 +129,7 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Create MMD model from mesh that has MMD metadata
-     * 
+     *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
      * @param mmdMesh MMD mesh
      * @param options Creation options
@@ -165,9 +165,9 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Destroy MMD model
-     * 
+     *
      * Dispose all resources used at MMD runtime and restores the skeleton to the usual matrix update policy
-     * 
+     *
      * After calling the `destroyMmdModel` once, the mesh is no longer able to `createMmdModel` because the metadata is lost
      * @param mmdModel MMD model to destroy
      * @throws {Error} if model is not found
@@ -201,7 +201,7 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Set audio player to sync with animation
-     * 
+     *
      * If you set up audio Player while playing an animation, it try to play the audio from the current animation time
      * And returns Promise because this operation is asynchronous. In most cases, you don't have to await this Promise
      * @param audioPlayer Audio player
@@ -247,9 +247,9 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Register MMD runtime to scene
-     * 
+     *
      * register `beforePhysics` and `afterPhysics` to scene Observables
-     * 
+     *
      * If you need a more complex update method you can call `beforePhysics` and `afterPhysics` manually
      * @param scene Scene
      */
@@ -279,7 +279,7 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Before the physics stage, update animations and run MMD runtime solvers
-     * 
+     *
      * @param deltaTime Delta time in milliseconds
      */
     public beforePhysics(deltaTime: number): void {
@@ -457,9 +457,9 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Play animation from the current animation time
-     * 
+     *
      * If audio player is set, it try to play the audio from the current animation time
-     * 
+     *
      * It returns Promise because playing audio is asynchronous
      */
     public async playAnimation(): Promise<void> {
@@ -527,7 +527,7 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Seek animation to the specified frame time
-     * 
+     *
      * If you set forceEvaluate true, the animation is evaluated even if the animation is not playing.
      * @param frameTime Time in 30fps frame
      * @param forceEvaluate Whether to force evaluate animation
@@ -636,7 +636,7 @@ export class MmdRuntime implements ILogger {
 
     /**
      * Set animation duration manually
-     * 
+     *
      * When the difference between the length of the song and the length of the animation is large, it can be helpful to adjust the animation duration manually
      * @param frameTimeDuration Time in 30fps frame
      */

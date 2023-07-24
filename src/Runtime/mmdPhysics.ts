@@ -238,7 +238,7 @@ export class MmdPhysicsModel {
 
 /**
  * Use the v2 physics engine to build the physics model of the MMD model
- * 
+ *
  * If you do not want to use a physics engine, you can reduce the bundling size by not import this class
  */
 export class MmdPhysics {
@@ -248,7 +248,7 @@ export class MmdPhysics {
 
     /**
      * Create a new MMD physics
-     * 
+     *
      * Scene must have a physics engine enabled
      * @param scene The scene to build the physics model
      */
