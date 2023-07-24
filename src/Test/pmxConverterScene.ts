@@ -22,7 +22,7 @@ import { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
 
-import type { MmdStandardMaterial } from "..";
+import { type MmdStandardMaterial, PmxObject } from "..";
 import type { ISceneBuilder } from "./baseRuntime";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
@@ -72,6 +72,15 @@ export class PmxConverterScene implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         SceneLoader.RegisterPlugin(pmxLoader);
         const pmxMaterialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+
+        const initalBackfaceCullingInfo = new Array<boolean>(1000).fill(true);
+        pmxMaterialBuilder.afterBuildSingleMaterial = (
+            _material,
+            materialIndex,
+            materialInfo
+        ): void => {
+            initalBackfaceCullingInfo[materialIndex] = (materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided) === 0;
+        };
 
         const scene = new Scene(engine);
 
@@ -382,7 +391,10 @@ export class PmxConverterScene implements ISceneBuilder {
 
             if (mesh === null) return;
 
-            for (const material of mesh.material.subMaterials as MmdStandardMaterial[]) {
+            const subMaterials = mesh.material.subMaterials;
+            for (let i = 0; i < subMaterials.length; i++) {
+                const material = subMaterials[i] as MmdStandardMaterial;
+
                 const item = document.createElement("li");
                 item.style.padding = "5px 0px";
                 item.style.boxSizing = "border-box";
@@ -405,7 +417,8 @@ export class PmxConverterScene implements ISceneBuilder {
                     const hasAlpha = material.transparencyMode !== Material.MATERIAL_OPAQUE;
                     if (hasAlpha) material.diffuseTexture!.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = hasAlpha;
-                    material.backFaceCulling = !hasAlpha;
+                    material.backFaceCulling = initalBackfaceCullingInfo[i];
+                    if (hasAlpha) material.backFaceCulling = false;
 
                     transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
                 };
