@@ -44,7 +44,8 @@ export class VmdConverterScene implements ISceneBuilder {
 
         const title = document.createElement("h1");
         title.textContent = "VMD to BVMD Converter";
-        title.style.width = "500px";
+        title.style.width = "350px";
+        title.style.fontSize = "24px";
         title.style.textAlign = "center";
         innerFormDiv.appendChild(title);
 
