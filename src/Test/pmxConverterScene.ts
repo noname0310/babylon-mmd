@@ -1,5 +1,6 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@/Loader/mmdOutlineRenderer";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
@@ -7,9 +8,11 @@ import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -19,6 +22,7 @@ import { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
 
+import type { MmdStandardMaterial } from "..";
 import type { ISceneBuilder } from "./baseRuntime";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
@@ -67,6 +71,7 @@ export class PmxConverterScene implements ISceneBuilder {
         pmxLoader.buildSkeleton = false;
         pmxLoader.buildMorph = false;
         SceneLoader.RegisterPlugin(pmxLoader);
+        const pmxMaterialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
 
         const scene = new Scene(engine);
 
@@ -96,13 +101,19 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
         shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.forceBackFacesOnly = true;
+        shadowGenerator.forceBackFacesOnly = false;
+        shadowGenerator.bias = 0.01;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
         shadowGenerator.addShadowCaster(ground);
+
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+        defaultPipeline.samples = 4;
+        defaultPipeline.fxaaEnabled = true;
+        defaultPipeline.imageProcessingEnabled = false;
 
         const loadModelAsync = async(file: File): Promise<void> => {
             if (isLoading) return;
@@ -117,11 +128,6 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.displayLoadingUI();
             const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
-            const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-            materialBuilder.useAlphaEvaluation = bpmxConverter.useAlphaEvaluation;
-            materialBuilder.alphaEvaluationResolution = bpmxConverter.alphaEvaluationResolution;
-            materialBuilder.alphaThreshold = bpmxConverter.alphaThreshold;
-            materialBuilder.alphaBlendThreshold = bpmxConverter.alphaBlendThreshold;
             mesh = (await SceneLoader.ImportMeshAsync(
                 undefined,
                 fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
@@ -131,6 +137,7 @@ export class PmxConverterScene implements ISceneBuilder {
             )).meshes[0] as MmdStaticMesh;
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
+            renderMaterialsList();
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
         };
@@ -174,48 +181,120 @@ export class PmxConverterScene implements ISceneBuilder {
         formDiv.appendChild(innerFormDiv);
 
         const bpmxConverter = new BpmxConverter();
+        bpmxConverter.useAlphaEvaluation = false;
         bpmxConverter.loggingEnabled = true;
 
         let files: File[] = [];
 
         const title = document.createElement("h1");
         title.textContent = "PMX to BPMX Converter";
-        title.style.width = "500px";
+        title.style.width = "350px";
         title.style.textAlign = "center";
+        title.style.fontSize = "24px";
         title.style.marginTop = "0";
         innerFormDiv.appendChild(title);
+
+        // #region Tab
+
+        const tabContainer = document.createElement("div");
+        tabContainer.style.width = "350px";
+        tabContainer.style.height = "auto";
+        tabContainer.style.display = "flex";
+        tabContainer.style.flexDirection = "row";
+        tabContainer.style.justifyContent = "space-between";
+        tabContainer.style.alignItems = "center";
+        innerFormDiv.appendChild(tabContainer);
+
+        const loadModelTab = document.createElement("div");
+        loadModelTab.textContent = "Load Model";
+        loadModelTab.style.width = "100%";
+        loadModelTab.style.height = "auto";
+        loadModelTab.style.border = "none";
+        loadModelTab.style.backgroundColor = "#111111";
+        loadModelTab.style.fontSize = "20px";
+        loadModelTab.style.textAlign = "center";
+        loadModelTab.style.color = "white";
+        loadModelTab.style.cursor = "pointer";
+        loadModelTab.onclick = (): void => {
+            loadModelTab.style.backgroundColor = "#444444";
+            fixMaterialTab.style.backgroundColor = "#111111";
+
+            fileInput.style.display = "block";
+            fileListTitle.style.display = "block";
+            fileListContainer.style.display = "block";
+            materialListTitle.style.display = "none";
+            materialListContainer.style.display = "none";
+        };
+        tabContainer.appendChild(loadModelTab);
+
+        const fixMaterialTab = document.createElement("div");
+        fixMaterialTab.textContent = "Fix Material";
+        fixMaterialTab.style.width = "100%";
+        fixMaterialTab.style.height = "auto";
+        fixMaterialTab.style.border = "none";
+        fixMaterialTab.style.backgroundColor = "#111111";
+        fixMaterialTab.style.fontSize = "20px";
+        fixMaterialTab.style.textAlign = "center";
+        fixMaterialTab.style.color = "white";
+        fixMaterialTab.style.cursor = "pointer";
+        fixMaterialTab.onclick = (): void => {
+            loadModelTab.style.backgroundColor = "#111111";
+            fixMaterialTab.style.backgroundColor = "#444444";
+
+            fileInput.style.display = "none";
+            fileListTitle.style.display = "none";
+            fileListContainer.style.display = "none";
+            materialListTitle.style.display = "block";
+            materialListContainer.style.display = "block";
+        };
+        tabContainer.appendChild(fixMaterialTab);
+
+        // #endregion
 
         const selectedPmxFile = document.createElement("div");
         selectedPmxFile.textContent = "No PMX file selected";
         selectedPmxFile.style.width = "100%";
         selectedPmxFile.style.height = "auto";
-        selectedPmxFile.style.fontSize = "20px";
+        selectedPmxFile.style.fontSize = "18px";
         selectedPmxFile.style.marginBottom = "10px";
         selectedPmxFile.style.border = "1px solid black";
         selectedPmxFile.style.boxSizing = "border-box";
         selectedPmxFile.style.padding = "10px";
         innerFormDiv.appendChild(selectedPmxFile);
 
-        const listContainer = document.createElement("div");
-        listContainer.style.width = "500px";
-        listContainer.style.flexGrow = "1";
-        listContainer.style.overflow = "auto";
-        listContainer.style.marginBottom = "10px";
-        listContainer.style.border = "1px solid black";
-        listContainer.style.boxSizing = "border-box";
-        innerFormDiv.appendChild(listContainer);
+        // #region Load Model Tab
+
+        const fileListTitle = document.createElement("div");
+        fileListTitle.textContent = "Files";
+        fileListTitle.style.width = "100%";
+        fileListTitle.style.height = "auto";
+        fileListTitle.style.fontSize = "18px";
+        fileListTitle.style.backgroundColor = "#444444";
+        fileListTitle.style.color = "white";
+        fileListTitle.style.padding = "2px 5px";
+        fileListTitle.style.boxSizing = "border-box";
+        innerFormDiv.appendChild(fileListTitle);
+
+        const fileListContainer = document.createElement("div");
+        fileListContainer.style.width = "350px";
+        fileListContainer.style.flexGrow = "1";
+        fileListContainer.style.overflow = "auto";
+        fileListContainer.style.marginBottom = "10px";
+        fileListContainer.style.border = "1px solid black";
+        fileListContainer.style.boxSizing = "border-box";
+        innerFormDiv.appendChild(fileListContainer);
 
         const pmxFileList = document.createElement("ul");
         pmxFileList.style.height = "auto";
         pmxFileList.style.fontSize = "16px";
-        listContainer.appendChild(pmxFileList);
+        fileListContainer.appendChild(pmxFileList);
         const renderLoadedFiles = (): void => {
             pmxFileList.innerHTML = "";
             for (const file of files) {
                 const item = document.createElement("li");
                 item.style.whiteSpace = "nowrap";
                 const fileRelativePath = file.webkitRelativePath as string;
-                item.textContent = fileRelativePath;
+                item.textContent = fileRelativePath.substring(fileRelativePath.indexOf("/") + 1);
                 if (file.name.endsWith(".pmx")) {
                     item.style.color = "blue";
                     item.style.cursor = "pointer";
@@ -268,6 +347,88 @@ export class PmxConverterScene implements ISceneBuilder {
         };
         innerFormDiv.appendChild(fileInput);
 
+        // #endregion
+
+        // #region Fix Material Tab
+
+        const materialListTitle = document.createElement("div");
+        materialListTitle.textContent = "Materials";
+        materialListTitle.style.width = "100%";
+        materialListTitle.style.height = "auto";
+        materialListTitle.style.fontSize = "18px";
+        materialListTitle.style.backgroundColor = "#444444";
+        materialListTitle.style.color = "white";
+        materialListTitle.style.padding = "2px 5px";
+        materialListTitle.style.boxSizing = "border-box";
+        innerFormDiv.appendChild(materialListTitle);
+
+        const materialListContainer = document.createElement("div");
+        materialListContainer.style.width = "350px";
+        materialListContainer.style.flexGrow = "1";
+        materialListContainer.style.overflow = "auto";
+        materialListContainer.style.marginBottom = "10px";
+        materialListContainer.style.border = "1px solid black";
+        materialListContainer.style.boxSizing = "border-box";
+        innerFormDiv.appendChild(materialListContainer);
+
+        const materialList = document.createElement("ol");
+        materialList.start = 0;
+        materialList.style.height = "auto";
+        materialList.style.fontSize = "16px";
+        materialListContainer.appendChild(materialList);
+        const renderMaterialsList = (): void => {
+            materialList.innerHTML = "";
+
+            if (mesh === null) return;
+
+            for (const material of mesh.material.subMaterials as MmdStandardMaterial[]) {
+                const item = document.createElement("li");
+                item.style.padding = "5px 0px";
+                item.style.boxSizing = "border-box";
+                item.style.whiteSpace = "nowrap";
+
+                item.textContent = material.name;
+
+                const transparencyModeButton = document.createElement("button");
+                transparencyModeButton.style.float = "right";
+                transparencyModeButton.style.width = "100px";
+                transparencyModeButton.style.height = "auto";
+                transparencyModeButton.style.fontSize = "14px";
+                transparencyModeButton.style.marginRight = "10px";
+                transparencyModeButton.style.border = "none";
+                transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
+                transparencyModeButton.onclick = (): void => {
+                    if (material.transparencyMode === null) material.transparencyMode = 0;
+                    material.transparencyMode = (material.transparencyMode + 1) % 3;
+
+                    const hasAlpha = material.transparencyMode !== Material.MATERIAL_OPAQUE;
+                    if (hasAlpha) material.diffuseTexture!.hasAlpha = true;
+                    material.useAlphaFromDiffuseTexture = hasAlpha;
+                    material.backFaceCulling = !hasAlpha;
+
+                    transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
+                };
+                item.appendChild(transparencyModeButton);
+
+                materialList.appendChild(item);
+            }
+
+            function fromTransparencyModeEnumToString(transparencyMode: number): string {
+                switch (transparencyMode) {
+                case Material.MATERIAL_OPAQUE:
+                    return "Opaque";
+                case Material.MATERIAL_ALPHATEST:
+                    return "Alpha Test";
+                case Material.MATERIAL_ALPHABLEND:
+                    return "Alpha Blend";
+                default:
+                    return "Unknown";
+                }
+            }
+        };
+
+        // #endregion
+
         const convertOptions = document.createElement("div");
         convertOptions.style.width = "100%";
         convertOptions.style.height = "auto";
@@ -283,7 +444,7 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const useAlphaEvaluationDiv = document.createElement("div");
         useAlphaEvaluationDiv.style.width = "100%";
-        useAlphaEvaluationDiv.style.height = "50px";
+        useAlphaEvaluationDiv.style.height = "30px";
         useAlphaEvaluationDiv.style.display = "flex";
         useAlphaEvaluationDiv.style.flexDirection = "row";
         useAlphaEvaluationDiv.style.justifyContent = "space-between";
@@ -293,27 +454,25 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const useAlphaEvaluationLabel = document.createElement("label");
         useAlphaEvaluationLabel.textContent = "Use Alpha Evaluation";
-        useAlphaEvaluationLabel.style.width = "200px";
         useAlphaEvaluationLabel.style.textAlign = "left";
         useAlphaEvaluationLabel.style.marginRight = "10px";
-        useAlphaEvaluationLabel.style.fontSize = "20px";
+        useAlphaEvaluationLabel.style.fontSize = "16px";
         useAlphaEvaluationLabel.style.flexGrow = "1";
         useAlphaEvaluationDiv.appendChild(useAlphaEvaluationLabel);
 
         const useAlphaEvaluationInput = document.createElement("input");
-        useAlphaEvaluationInput.style.width = "20px";
-        useAlphaEvaluationInput.style.height = "20px";
-        useAlphaEvaluationInput.style.fontSize = "20px";
+        useAlphaEvaluationInput.style.width = "16px";
+        useAlphaEvaluationInput.style.height = "16px";
         useAlphaEvaluationInput.type = "checkbox";
-        useAlphaEvaluationInput.checked = bpmxConverter.useAlphaEvaluation;
+        useAlphaEvaluationInput.checked = pmxMaterialBuilder.useAlphaEvaluation;
         useAlphaEvaluationDiv.appendChild(useAlphaEvaluationInput);
         useAlphaEvaluationInput.onchange = (): void => {
-            bpmxConverter.useAlphaEvaluation = useAlphaEvaluationInput.checked;
+            pmxMaterialBuilder.useAlphaEvaluation = useAlphaEvaluationInput.checked;
         };
 
         const alphaEvaluationResolutionDiv = document.createElement("div");
         alphaEvaluationResolutionDiv.style.width = "100%";
-        alphaEvaluationResolutionDiv.style.height = "50px";
+        alphaEvaluationResolutionDiv.style.height = "30px";
         alphaEvaluationResolutionDiv.style.display = "flex";
         alphaEvaluationResolutionDiv.style.flexDirection = "row";
         alphaEvaluationResolutionDiv.style.justifyContent = "space-between";
@@ -323,29 +482,28 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const alphaEvaluationResolutionLabel = document.createElement("label");
         alphaEvaluationResolutionLabel.textContent = "Alpha Evaluation Resolution";
-        alphaEvaluationResolutionLabel.style.width = "200px";
         alphaEvaluationResolutionLabel.style.textAlign = "left";
         alphaEvaluationResolutionLabel.style.marginRight = "10px";
-        alphaEvaluationResolutionLabel.style.fontSize = "20px";
+        alphaEvaluationResolutionLabel.style.fontSize = "16px";
         alphaEvaluationResolutionLabel.style.flexGrow = "1";
         alphaEvaluationResolutionDiv.appendChild(alphaEvaluationResolutionLabel);
 
         const alphaEvaluationResolutionInput = document.createElement("input");
         alphaEvaluationResolutionInput.style.width = "100px";
-        alphaEvaluationResolutionInput.style.height = "40px";
-        alphaEvaluationResolutionInput.style.fontSize = "20px";
+        alphaEvaluationResolutionInput.style.height = "20px";
+        alphaEvaluationResolutionInput.style.fontSize = "16px";
         alphaEvaluationResolutionInput.type = "number";
         alphaEvaluationResolutionInput.min = "64";
         alphaEvaluationResolutionInput.max = "4096";
-        alphaEvaluationResolutionInput.value = bpmxConverter.alphaEvaluationResolution.toString();
+        alphaEvaluationResolutionInput.value = pmxMaterialBuilder.alphaEvaluationResolution.toString();
         alphaEvaluationResolutionDiv.appendChild(alphaEvaluationResolutionInput);
         alphaEvaluationResolutionInput.onchange = (): void => {
-            bpmxConverter.alphaEvaluationResolution = Number(alphaEvaluationResolutionInput.value);
+            pmxMaterialBuilder.alphaEvaluationResolution = Number(alphaEvaluationResolutionInput.value);
         };
 
         const alphaThresholdDiv = document.createElement("div");
         alphaThresholdDiv.style.width = "100%";
-        alphaThresholdDiv.style.height = "50px";
+        alphaThresholdDiv.style.height = "30px";
         alphaThresholdDiv.style.display = "flex";
         alphaThresholdDiv.style.flexDirection = "row";
         alphaThresholdDiv.style.justifyContent = "space-between";
@@ -355,29 +513,28 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const alphaThresholdLabel = document.createElement("label");
         alphaThresholdLabel.textContent = "Alpha Threshold";
-        alphaThresholdLabel.style.width = "200px";
         alphaThresholdLabel.style.textAlign = "left";
         alphaThresholdLabel.style.marginRight = "10px";
-        alphaThresholdLabel.style.fontSize = "20px";
+        alphaThresholdLabel.style.fontSize = "16px";
         alphaThresholdLabel.style.flexGrow = "1";
         alphaThresholdDiv.appendChild(alphaThresholdLabel);
 
         const alphaThresholdInput = document.createElement("input");
         alphaThresholdInput.style.width = "100px";
-        alphaThresholdInput.style.height = "40px";
-        alphaThresholdInput.style.fontSize = "20px";
+        alphaThresholdInput.style.height = "20px";
+        alphaThresholdInput.style.fontSize = "16px";
         alphaThresholdInput.type = "number";
         alphaThresholdInput.min = "0";
         alphaThresholdInput.max = "255";
-        alphaThresholdInput.value = bpmxConverter.alphaThreshold.toString();
+        alphaThresholdInput.value = pmxMaterialBuilder.alphaThreshold.toString();
         alphaThresholdDiv.appendChild(alphaThresholdInput);
         alphaThresholdInput.onchange = (): void => {
-            bpmxConverter.alphaThreshold = Number(alphaThresholdInput.value);
+            pmxMaterialBuilder.alphaThreshold = Number(alphaThresholdInput.value);
         };
 
         const alphaBlendThresholdDiv = document.createElement("div");
         alphaBlendThresholdDiv.style.width = "100%";
-        alphaBlendThresholdDiv.style.height = "50px";
+        alphaBlendThresholdDiv.style.height = "30px";
         alphaBlendThresholdDiv.style.display = "flex";
         alphaBlendThresholdDiv.style.flexDirection = "row";
         alphaBlendThresholdDiv.style.justifyContent = "space-between";
@@ -386,24 +543,23 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const alphaBlendThresholdLabel = document.createElement("label");
         alphaBlendThresholdLabel.textContent = "Alpha Blend Threshold";
-        alphaBlendThresholdLabel.style.width = "200px";
         alphaBlendThresholdLabel.style.textAlign = "left";
         alphaBlendThresholdLabel.style.marginRight = "10px";
-        alphaBlendThresholdLabel.style.fontSize = "20px";
+        alphaBlendThresholdLabel.style.fontSize = "16px";
         alphaBlendThresholdLabel.style.flexGrow = "1";
         alphaBlendThresholdDiv.appendChild(alphaBlendThresholdLabel);
 
         const alphaBlendThresholdInput = document.createElement("input");
         alphaBlendThresholdInput.style.width = "100px";
-        alphaBlendThresholdInput.style.height = "40px";
-        alphaBlendThresholdInput.style.fontSize = "20px";
+        alphaBlendThresholdInput.style.height = "20px";
+        alphaBlendThresholdInput.style.fontSize = "16px";
         alphaBlendThresholdInput.type = "number";
         alphaBlendThresholdInput.min = "-500";
         alphaBlendThresholdInput.max = "500";
-        alphaBlendThresholdInput.value = bpmxConverter.alphaBlendThreshold.toString();
+        alphaBlendThresholdInput.value = pmxMaterialBuilder.alphaBlendThreshold.toString();
         alphaBlendThresholdDiv.appendChild(alphaBlendThresholdInput);
         alphaBlendThresholdInput.onchange = (): void => {
-            bpmxConverter.alphaBlendThreshold = Number(alphaBlendThresholdInput.value);
+            pmxMaterialBuilder.alphaBlendThreshold = Number(alphaBlendThresholdInput.value);
         };
 
         const buttonContainer = document.createElement("div");
@@ -445,7 +601,13 @@ export class PmxConverterScene implements ISceneBuilder {
 
             const fileRelativePath = selectedFile.webkitRelativePath as string;
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files);
+            const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files,
+                (_materialsName, textureAlphaEvaluterResults) => {
+                    for (let i = 0; i < textureAlphaEvaluterResults.length; i++) {
+                        textureAlphaEvaluterResults[i] = mesh!.material.subMaterials[i].transparencyMode ?? 0;
+                    }
+                }
+            );
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -459,6 +621,7 @@ export class PmxConverterScene implements ISceneBuilder {
             setTimeout(() => isLoading = false, 1500);
         };
 
+        loadModelTab.click();
         engine.resize(true);
         return scene;
     }
