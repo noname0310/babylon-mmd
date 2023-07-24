@@ -6,6 +6,9 @@ import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManage
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
+/**
+ * Mesh type that able to create `MmdModel` instance
+ */
 export interface MmdMesh extends Mesh {
     metadata: MmdModelMetadata;
     material: MmdMultiMaterial;
@@ -13,15 +16,24 @@ export interface MmdMesh extends Mesh {
     morphTargetManager: MorphTargetManager;
 }
 
+/**
+ * Static mesh loaded from PMX or BPMX file
+ */
 export interface MmdStaticMesh extends Mesh {
     metadata: MmdModelMetadata;
     material: MmdMultiMaterial;
 }
 
+/**
+ * Multi material for MMD model
+ */
 export interface MmdMultiMaterial extends MultiMaterial {
     subMaterials: Material[];
 }
 
+/**
+ * Mesh type that after create `MmdModel` instance
+ */
 export interface RuntimeMmdMesh extends Mesh {
     metadata: RuntimeMmdModelMetadata;
     material: MmdMultiMaterial;
@@ -29,12 +41,20 @@ export interface RuntimeMmdMesh extends Mesh {
     morphTargetManager: MorphTargetManager;
 }
 
+/**
+ * Metadata for `RuntimeMmdMesh`
+ */
 export interface RuntimeMmdModelMetadata {
     isRuntimeMmdModel: true;
     header: MmdModelMetadata.Header;
 }
 
 export namespace MmdMesh {
+    /**
+     * Check if the mesh is MMD mesh
+     * @param mesh Mesh to check
+     * @returns `true` if the mesh is `MmdMesh`
+     */
     export function isMmdMesh(mesh: Mesh): mesh is MmdMesh {
         if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
         if (mesh.material === null || !(mesh.material as MultiMaterial).subMaterials) return false;
@@ -47,6 +67,11 @@ export namespace MmdMesh {
         return true;
     }
 
+    /**
+     * Check if the mesh is MMD static mesh
+     * @param mesh Mesh to check
+     * @returns `true` if the mesh is `MmdStaticMesh`
+     */
     export function isMmdStaticMesh(mesh: Mesh): mesh is MmdStaticMesh {
         if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
         if (mesh.material === null || !(mesh.material as MultiMaterial).subMaterials) return false;

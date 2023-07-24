@@ -7,15 +7,55 @@ import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 
 import type { IMmdMaterialProxy } from "./IMmdMaterialProxy";
 
+/**
+ * MMD standard material proxy
+ *
+ * Used to apply MMD material morphs to MMD standard materials
+ */
 export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
+    /**
+     * Diffuse color
+     */
     public readonly diffuse: Vec4;
+
+    /**
+     * Specular color
+     */
     public readonly specular: Vec3;
+
+    /**
+     * Shininess
+     */
     public shininess: number;
+
+    /**
+     * Ambient color
+     */
     public readonly ambient: Vec3;
+
+    /**
+     * Edge color
+     */
     public readonly edgeColor: Vec4;
+
+    /**
+     * Edge size
+     */
     public edgeSize: number;
+
+    /**
+     * Texture color
+     */
     public readonly textureColor: Vec4;
+
+    /**
+     * Sphere texture color
+     */
     public readonly sphereTextureColor: Vec4;
+
+    /**
+     * Toon texture color
+     */
     public readonly toonTextureColor: Vec4;
 
     private readonly _material: MmdStandardMaterial;
@@ -33,6 +73,10 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     private readonly _initialTransparencyMode: Nullable<number>;
     private readonly _initialBackFaceCulling: boolean;
 
+    /**
+     * Create MMD standard material proxy
+     * @param material MMD standard material
+     */
     public constructor(material: MmdStandardMaterial) {
         this._material = material;
 
@@ -70,6 +114,9 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         this._initialBackFaceCulling = material.backFaceCulling;
     }
 
+    /**
+     * Reset material properties to initial state
+     */
     public reset(): void {
         for (let i = 0; i < 4; ++i) {
             this.diffuse[i] = this._initialDiffuse[i];
@@ -89,6 +136,9 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         this.edgeSize = this._initialEdgeSize;
     }
 
+    /**
+     * Apply changes to the material
+     */
     public applyChanges(): void {
         const material = this._material;
 

@@ -15,11 +15,28 @@ import { MmdModel } from "./mmdModel";
 import type { MmdPhysics } from "./mmdPhysics";
 import { MmdStandardMaterialProxy } from "./mmdStandardMaterialProxy";
 
+/**
+ * Options for creating MMD model
+ */
 export interface CreateMmdModelOptions {
+    /**
+     * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
+     */
     materialProxyConstructor?: IMmdMaterialProxyConstructor<Material>;
+
+    /**
+     * Whether to build physics (default: true)
+     */
     buildPhysics?: boolean;
 }
 
+/**
+ * MMD runtime orchestrates several MMD components (models, camera, audio)
+ * 
+ * MMD runtime handles updates and synchronization of MMD components
+ * 
+ * It can also create and remove runtime components
+ */
 export class MmdRuntime implements ILogger {
     private readonly _physics: Nullable<MmdPhysics>;
 
@@ -38,10 +55,29 @@ export class MmdRuntime implements ILogger {
 
     private _isRegistered: boolean;
 
+    /**
+     * This observable is notified when animation duration is changed
+     */
     public readonly onAnimationDurationChangedObservable: Observable<void>;
+
+    /**
+     * This observable is notified when animation is played
+     */
     public readonly onPlayAnimationObservable: Observable<void>;
+
+    /**
+     * This observable is notified when animation is paused
+     */
     public readonly onPauseAnimationObservable: Observable<void>;
+
+    /**
+     * This observable is notified when animation is seeked
+     */
     public readonly onSeekAnimationObservable: Observable<void>;
+
+    /**
+     * This observable is notified when animation is evaluated (usually every frame)
+     */
     public readonly onAnimationTickObservable: Observable<void>;
 
     private _currentFrameTime: number;
@@ -55,6 +91,10 @@ export class MmdRuntime implements ILogger {
     private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
+    /**
+     * Creates a new MMD runtime
+     * @param physics Physics builder
+     */
     public constructor(physics: Nullable<MmdPhysics> = null) {
         this._physics = physics;
 
@@ -87,6 +127,15 @@ export class MmdRuntime implements ILogger {
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
     }
 
+    /**
+     * Create MMD model from mesh that has MMD metadata
+     * 
+     * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
+     * @param mmdMesh MMD mesh
+     * @param options Creation options
+     * @returns MMD model
+     * @throws {Error} if mesh is not `MmdMesh`
+     */
     public createMmdModel(
         mmdMesh: Mesh,
         options: CreateMmdModelOptions = {}
@@ -114,6 +163,15 @@ export class MmdRuntime implements ILogger {
         return model;
     }
 
+    /**
+     * Destroy MMD model
+     * 
+     * Dispose all resources used at MMD runtime and restores the skeleton to the usual matrix update policy
+     * 
+     * After calling the `destroyMmdModel` once, the mesh is no longer able to `createMmdModel` because the metadata is lost
+     * @param mmdModel MMD model to destroy
+     * @throws {Error} if model is not found
+     */
     public destroyMmdModel(mmdModel: MmdModel): void {
         mmdModel.dispose();
 

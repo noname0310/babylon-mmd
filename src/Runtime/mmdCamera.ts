@@ -8,23 +8,47 @@ import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 
 import { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeAnimation";
 
+/**
+ * MMD camera
+ *
+ * The MMD camera is a type of Arc Rotate Camera that determines the transform of the camera by the center position, rotation(yaw pitch roll), and distance parameters
+ */
 export class MmdCamera extends Camera {
+    /**
+     * Gets or sets a boolean indicating that the scaling of the parent hierarchy will not be taken in account by the camera
+     */
     public ignoreParentScaling = false;
 
+    /**
+     * Define the current rotation of the camera
+     */
     public rotation = new Vector3();
-    // mmd default distance
+
+    /**
+     * Define the current distance of the camera from its target (default: -45)
+     */
     public distance = -45;
 
     private readonly _viewMatrix = Matrix.Zero();
     private readonly _tmpUpVector = Vector3.Zero();
     private readonly _tmpTargetVector = Vector3.Zero();
 
+    /**
+     * Observable triggered when the current animation is changed
+     */
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<MmdRuntimeCameraAnimation>>;
     private readonly _animations: MmdRuntimeCameraAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<MmdRuntimeCameraAnimation>;
 
+    /**
+     * Creates a new MMD camera
+     * @param name Defines the name of the camera in the scene
+     * @param position Defines the position of the camera
+     * @param scene Defines the scene the camera belongs too
+     * @param setActiveOnSceneIfNoneActive Defines if the camera should be set as active after creation if no other camera have been defined in the scene
+     */
     public constructor(name: string, position: Vector3 = new Vector3(0, 10, 0), scene?: Scene, setActiveOnSceneIfNoneActive = true) {
         super(name, position, scene, setActiveOnSceneIfNoneActive);
 
@@ -38,12 +62,22 @@ export class MmdCamera extends Camera {
         this._currentAnimation = null;
     }
 
+    /**
+     * Add an animation to the camera
+     * @param animation The animation to add
+     */
     public addAnimation(animation: MmdAnimation): void {
         const runtimeAnimation = MmdRuntimeCameraAnimation.Create(animation, this);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }
 
+    /**
+     * Remove an animation from the camera
+     *
+     * If index is out of range, this method does nothing
+     * @param index The index of the animation to remove
+     */
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) this._currentAnimation = null;
@@ -52,6 +86,13 @@ export class MmdCamera extends Camera {
         this._animations.splice(index, 1);
     }
 
+    /**
+     * Set the current animation of the camera
+     *
+     * If name is null, the current animation is set to null
+     * @param name The name of the animation to set
+     * @throws {Error} if the animation is not found
+     */
     public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
@@ -70,14 +111,24 @@ export class MmdCamera extends Camera {
         this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
     }
 
+    /**
+     * Get the animations of the camera
+     */
     public get runtimeAnimations(): readonly MmdRuntimeCameraAnimation[] {
         return this._animations;
     }
 
+    /**
+     * Get the current animation of the camera
+     */
     public get currentAnimation(): Nullable<MmdRuntimeCameraAnimation> {
         return this._currentAnimation;
     }
 
+    /**
+     * Animate the camera
+     * @param frameTime The 30fps frame time
+     */
     public animate(frameTime: number): void {
         if (this._currentAnimation === null) return;
 
@@ -154,6 +205,7 @@ export class MmdCamera extends Camera {
     private static readonly _CameraEyePosition = new Vector3();
     private static readonly _UpVector = new Vector3();
 
+    /** @internal */
     public override _getViewMatrix(): Matrix {
         const target = this.position;
 

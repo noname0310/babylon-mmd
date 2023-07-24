@@ -57,6 +57,9 @@ class MmdPhysicsTransformNode extends TransformNode {
     }
 }
 
+/**
+ * MMD physics model is container of the physics resources of the MMD model
+ */
 export class MmdPhysicsModel {
     private readonly _mmdPhysics: MmdPhysics;
 
@@ -64,6 +67,13 @@ export class MmdPhysicsModel {
     private readonly _bodies: readonly Nullable<PhysicsBody>[];
     private readonly _constraints: readonly Nullable<PhysicsConstraint>[];
 
+    /**
+     * Create a new MMD physics model
+     * @param mmdPhysics MMD physics
+     * @param nodes MMD physics transform nodes
+     * @param bodies Physics bodies
+     * @param constraints Physics constraints
+     */
     public constructor(
         mmdPhysics: MmdPhysics,
         nodes: readonly Nullable<MmdPhysicsTransformNode>[],
@@ -77,6 +87,9 @@ export class MmdPhysicsModel {
         this._constraints = constraints;
     }
 
+    /**
+     * Dispose the physics resources
+     */
     public dispose(): void {
         const constraints = this._constraints;
         for (let i = 0; i < constraints.length; ++i) {
@@ -101,6 +114,9 @@ export class MmdPhysicsModel {
     private static readonly _NodeWorldMatrix = new Matrix();
     private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
 
+    /**
+     * Reset the rigid body positions and velocities
+     */
     public initialize(): void {
         const mmdPhysics = this._mmdPhysics;
         const nodes = this._nodes;
@@ -123,10 +139,13 @@ export class MmdPhysicsModel {
             body.setAngularVelocity(MmdPhysicsModel._ZeroVector);
             body.setLinearVelocity(MmdPhysicsModel._ZeroVector);
 
-            mmdPhysics.enablePreStepOnce(node.physicsBody!);
+            mmdPhysics._enablePreStepOnce(node.physicsBody!);
         }
     }
 
+    /**
+     * Set the rigid bodies transform to the bones transform
+     */
     public syncBodies(): void {
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
@@ -160,6 +179,9 @@ export class MmdPhysicsModel {
 
     private static readonly _BoneWorldPosition = new Vector3();
 
+    /**
+     * Set the bones transform to the rigid bodies transform
+     */
     public syncBones(): void {
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
@@ -214,15 +236,35 @@ export class MmdPhysicsModel {
     }
 }
 
+/**
+ * Use the v2 physics engine to build the physics model of the MMD model
+ * 
+ * If you do not want to use a physics engine, you can reduce the bundling size by not import this class
+ */
 export class MmdPhysics {
     private readonly _scene: Scene;
 
     private readonly _enablePreStepOnces: PhysicsBody[] = [];
 
+    /**
+     * Create a new MMD physics
+     * 
+     * Scene must have a physics engine enabled
+     * @param scene The scene to build the physics model
+     */
     public constructor(scene: Scene) {
         this._scene = scene;
     }
 
+    /**
+     * Build the physics model of the MMD model
+     * @param mesh Mesh
+     * @param bones MMD runtime bones
+     * @param rigidBodies rigid bodies information
+     * @param joints joints information
+     * @param logger Logger
+     * @returns MMD physics model
+     */
     public buildPhysics(
         mesh: Mesh,
         bones: readonly MmdRuntimeBone[],
@@ -530,7 +572,8 @@ export class MmdPhysics {
         enablePreStepOnces.length = 0;
     };
 
-    public enablePreStepOnce(body: PhysicsBody): void {
+    /** @internal */
+    public _enablePreStepOnce(body: PhysicsBody): void {
         if (!body.disablePreStep) return;
 
         if (this._enablePreStepOnces.length === 0) {

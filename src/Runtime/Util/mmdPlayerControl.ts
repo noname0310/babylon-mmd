@@ -49,6 +49,7 @@ export class MmdPlayerControl {
      * @param scene Scene
      * @param mmdRuntime MMD runtime
      * @param audioPlayer Audio player
+     * @throws {Error} if failed to get root element
      */
     public constructor(scene: Scene, mmdRuntime: MmdRuntime, audioPlayer?: IAudioPlayer) {
         const rootElement = scene.getEngine().getInputElement();

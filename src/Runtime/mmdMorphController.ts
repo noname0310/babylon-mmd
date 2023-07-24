@@ -12,6 +12,11 @@ import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMate
 import type { MmdMultiMaterial } from "./mmdMesh";
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
+/**
+ * Represents a material morph element in MMD runtime
+ *
+ * This information is used to induce material recompilation
+ */
 export interface RuntimeMaterialMorphElement {
     index: number; // material index
     type: PmxObject.Morph.MaterialMorph.Type;
@@ -39,12 +44,22 @@ interface RuntimeMorph {
     readonly elements3: Nullable<Float32Array>; // bone morph rotations [..., x, y, z, w, ...]
 }
 
+/**
+ * Morph information exposed to the user
+ *
+ * Only material morphs data are exposed
+ */
 export interface ReadonlyRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
     readonly materialElements: Nullable<readonly DeepImmutable<RuntimeMaterialMorphElement>[]>;
 }
 
+/**
+ * The MmdMorphController uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound
+ *
+ * As a result, it reproduces the behavior of the MMD morph system
+ */
 export class MmdMorphController {
     private readonly _logger: ILogger;
 
@@ -57,6 +72,15 @@ export class MmdMorphController {
     private readonly _morphWeights: Float32Array;
     private readonly _activeMorphs: Set<string>;
 
+    /**
+     * Creates a new MmdMorphController
+     * @param morphTargetManager MorphTargetManager
+     * @param runtimeBones MMD runtime bones which are original order
+     * @param material MMD multi material
+     * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
+     * @param morphsMetadata Morphs metadata
+     * @param logger Logger
+     */
     public constructor(
         morphTargetManager: MorphTargetManager,
         runtimeBones: readonly MmdRuntimeBone[],
@@ -93,6 +117,13 @@ export class MmdMorphController {
         this._activeMorphs = new Set<string>();
     }
 
+    /**
+     * Sets the weight of the morph
+     *
+     * If there are multiple morphs with the same name, all of them will be set to the same weight, this is the behavior of MMD
+     * @param morphName Name of the morph
+     * @param weight Weight of the morph
+     */
     public setMorphWeight(morphName: string, weight: number): void {
         const morphIndexMap = this._morphIndexMap;
         const morphIndices = morphIndexMap.get(morphName);
@@ -109,6 +140,13 @@ export class MmdMorphController {
         }
     }
 
+    /**
+     * Gets the weight of the morph
+     *
+     * If there are multiple morphs with the same name, the weight of the first one will be returned
+     * @param morphName Name of the morph
+     * @returns Weight of the morph
+     */
     public getMorphWeight(morphName: string): number {
         const morphIndexMap = this._morphIndexMap;
         const morphIndices = morphIndexMap.get(morphName);
@@ -117,6 +155,13 @@ export class MmdMorphController {
         return this._morphWeights[morphIndices[0]];
     }
 
+    /**
+     * Gets the indices of the morph with the given name
+     *
+     * The index array is returned because multiple morphs can have the same name
+     * @param morphName Name of the morph
+     * @returns
+     */
     public getMorphIndices(morphName: string): readonly number[] | undefined {
         const morphIndexMap = this._morphIndexMap;
         const morphIndices = morphIndexMap.get(morphName);
@@ -125,6 +170,11 @@ export class MmdMorphController {
         return morphIndices;
     }
 
+    /**
+     * Sets the weight of the morph from the index
+     *
+     * This method is faster than `setMorphWeight` because it does not need to search the morphs with the given name
+     */
     public setMorphWeightFromIndex(morphIndex: number, weight: number): void {
         this._morphWeights[morphIndex] = weight;
 
@@ -133,16 +183,27 @@ export class MmdMorphController {
         }
     }
 
+    /**
+     * Gets the weight of the morph from the index
+     * @param morphIndex Index of the morph
+     * @returns Weight of the morph
+     */
     public getMorphWeightFromIndex(morphIndex: number): number {
         return this._morphWeights[morphIndex];
     }
 
+    /**
+     * Set the weights of all morphs to 0
+     */
     public resetMorphWeights(): void {
         this._morphWeights.fill(0);
     }
 
     private readonly _updatedMaterials = new Set<IMmdMaterialProxy>();
 
+    /**
+     * Apply the morphs to mesh
+     */
     public update(): void {
         const morphs = this._morphs;
         const morphIndexMap = this._morphIndexMap;
@@ -177,6 +238,9 @@ export class MmdMorphController {
         updatedMaterials.clear();
     }
 
+    /**
+     * Gets the morph data
+     */
     public get morphs(): readonly ReadonlyRuntimeMorph[] {
         return this._morphs;
     }

@@ -8,17 +8,54 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import type { AppendTransformSolver } from "./appendTransformSolver";
 import type { IIkSolver, IkSolver } from "./ikSolver";
 
+/**
+ * Bone for MMD runtime
+ *
+ * For mmd runtime, it is necessary to override the bone system because it has a different implementation than the usual matrix update method
+ *
+ * Which requires the mmd runtime bone, which is the wrapper of the babylon.js bone
+ */
 export interface IMmdRuntimeBone {
+    /**
+     * The Babylon.js bone
+     */
     readonly babylonBone: Bone;
 
+    /**
+     * Name of the bone
+     */
     readonly name: string;
+
+    /**
+     * Parent bone
+     */
     readonly parentBone: Nullable<IMmdRuntimeBone>;
+
+    /**
+     * Child bones
+     */
     readonly childBones: readonly IMmdRuntimeBone[];
 
+    /**
+     * Transform order
+     */
     readonly transformOrder: number;
+
+    /**
+     * Bone flag
+     *
+     * @see PmxObject.Bone.Flag
+     */
     readonly flag: number;
+
+    /**
+     * Whether the bone transform is applied after physics
+     */
     readonly transformAfterPhysics: boolean;
 
+    /**
+     * IK solver
+     */
     readonly ikSolver: Nullable<IIkSolver>;
 }
 

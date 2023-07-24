@@ -36,9 +36,20 @@ const enum SolveAxis {
     Z,
 }
 
+/**
+ * IK solver
+ */
 export interface IIkSolver {
+    /**
+     * Whether the IK solver is enabled
+     */
     enabled: boolean;
 
+    /**
+     * Iteration count
+     *
+     * The higher the value, the more accurate the IK solver will be, but the more expensive it will be
+     */
     iteration: number;
 }
 

@@ -1,7 +1,7 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { Matrix} from "@babylonjs/core/Maths/math.vector";
+import type { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
@@ -20,8 +20,26 @@ import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 
+/**
+ * MmdModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Runtime
+ *
+ * The mesh that instantiates `MmdModel` ignores some original implementations of Babylon.js and follows the MMD specifications
+ *
+ * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `bone.getFinalMatrix()`
+ *
+ * Final matrix is guaranteed to be updated after `MmdModel.afterPhysics()` stage
+ */
 export class MmdModel {
+    /**
+     * The mesh of this model
+     */
     public readonly mesh: RuntimeMmdMesh;
+
+    /**
+     * The morph controller of this model
+     *
+     * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
+     */
     public readonly morph: MmdMorphController;
 
     private readonly _physicsModel: Nullable<MmdPhysicsModel>;
@@ -37,6 +55,13 @@ export class MmdModel {
 
     private _currentAnimation: Nullable<MmdRuntimeModelAnimation>;
 
+    /**
+     * Create a MmdModel
+     * @param mmdMesh Mesh that able to instantiate `MmdModel`
+     * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
+     * @param mmdPhysics Physics builder
+     * @param logger Logger
+     */
     public constructor(
         mmdMesh: MmdMesh,
         materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
@@ -104,22 +129,45 @@ export class MmdModel {
         this._currentAnimation = null;
     }
 
+    /**
+     * Dispose this model
+     *
+     * Restore the original bone matrix update behavior
+     *
+     * Dispose the physics resources if the physics is enabled
+     */
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this._physicsModel?.dispose();
         this.onCurrentAnimationChangedObservable.clear();
     }
 
+    /**
+     * Get the sorted bones of this model
+     *
+     * The bones are sorted by `transformOrder`
+     */
     public get sortedRuntimeBones(): readonly IMmdRuntimeBone[] {
         return this._sortedRuntimeBones;
     }
 
+    /**
+     * Add an animation to this model
+     * @param animation MMD animation
+     * @param retargetingMap Model bone name to animation bone name map
+     */
     public addAnimation(animation: MmdAnimation, retargetingMap?: { [key: string]: string }): void {
         const runtimeAnimation = MmdRuntimeModelAnimation.Create(animation, this, retargetingMap, this._logger);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }
 
+    /**
+     * Remove an animation from this model
+     *
+     * if index is out of range, do nothing
+     * @param index The index of the animation to remove
+     */
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) this._currentAnimation = null;
@@ -128,6 +176,11 @@ export class MmdModel {
         this._animations.splice(index, 1);
     }
 
+    /**
+     * Set the current animation of this model
+     * @param name The name of the animation to set
+     * @throws {Error} if the animation is not found
+     */
     public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
@@ -147,14 +200,23 @@ export class MmdModel {
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
     }
 
+    /**
+     * Get the animations of this model
+     */
     public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {
         return this._animations;
     }
 
+    /**
+     * Get the current animation of this model
+     */
     public get currentAnimation(): Nullable<MmdRuntimeModelAnimation> {
         return this._currentAnimation;
     }
 
+    /**
+     * Reset the morph weights and IK enabled state of this model
+     */
     public resetState(): void {
         this.morph.resetMorphWeights();
 
@@ -168,10 +230,21 @@ export class MmdModel {
         }
     }
 
+    /**
+     * Reset the rigid body positions and velocities of this model
+     */
     public initializePhysics(): void {
         this._physicsModel?.initialize();
     }
 
+    /**
+     * Before the physics stage, update animations and run MMD runtime solvers
+     *
+     * This method must be called before the physics stage
+     *
+     * if frameTime is null, animations are not updated
+     * @param frameTime The time elapsed since the last frame in 30fps
+     */
     public beforePhysics(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
             if (this._currentAnimation !== null) {
@@ -185,6 +258,11 @@ export class MmdModel {
         this._physicsModel?.syncBodies();
     }
 
+    /**
+     * After the physics stage, run MMD runtime solvers
+     *
+     * This method must be called after the physics stage
+     */
     public afterPhysics(): void {
         const physicsModel = this._physicsModel;
         if (physicsModel !== null) {
