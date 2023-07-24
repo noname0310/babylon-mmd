@@ -314,6 +314,7 @@ export class VmdObject {
      * Parse VMD data from the given buffer
      * @param buffer ArrayBuffer
      * @returns `VmdObject` instance
+     * @throws {Error} if the given buffer is not a valid VMD data
      */
     public static ParseFromBuffer(buffer: ArrayBufferLike): VmdObject {
         const vmdData = VmdData.CheckedCreate(buffer);

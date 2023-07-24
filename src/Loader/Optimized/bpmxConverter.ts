@@ -259,6 +259,7 @@ export class BpmxConverter implements ILogger {
      * @param files Dependency files of PMX file (textures, sphere textures, toon textures)
      * @param overrideMaterialTransparency Override alpha evaluation result function
      * @returns BPMX data as ArrayBuffer
+     * @throws {Error} if PMX file not found
      */
     public async convert(
         scene: Scene,

@@ -85,7 +85,7 @@ export class PmxReader {
      * @param data Arraybuffer of PMX data
      * @param logger Logger
      * @returns PMX data
-     * @throws {RangeError} If the parse fails
+     * @throws {Error} If the parse fails
      */
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<PmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);

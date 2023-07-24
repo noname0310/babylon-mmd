@@ -64,6 +64,7 @@ export class BvmdLoader {
      * @param buffer BVMD array buffer
      * @param onProgress Callback function that is called while loading
      * @returns Animation data
+     * @throws {LoadFileError} when validation fails
      */
     public async loadFromBufferAsync(
         name: string,
