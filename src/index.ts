@@ -1,4 +1,6 @@
 import "@/Loader/mmdOutlineRenderer";
+import "@/Loader/pmxLoader";
+import "@/Loader/Optimized/bpmxLoader";
 
 // Loader/Animation
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";

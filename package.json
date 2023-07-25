@@ -46,7 +46,9 @@
         "webpack-dev-server": "^4.15.1"
     },
     "sideEffects": [
-        "**/mmdOutlineRenderer.*"
+        "**/mmdOutlineRenderer.*",
+        "**/pmxLoader.*",
+        "**/bpmxLoader.*"
     ],
     "peerDependencies": {
         "@babylonjs/core": "^6.13.0"

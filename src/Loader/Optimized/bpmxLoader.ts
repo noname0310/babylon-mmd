@@ -2,7 +2,7 @@ import { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Bone } from "@babylonjs/core/Bones/bone";
 import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
-import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import { type ISceneLoaderAsyncResult, type ISceneLoaderPluginAsync, type ISceneLoaderPluginExtensions, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
@@ -732,4 +732,8 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
     private _errorDisabled(): void {
         // do nothing
     }
+}
+
+if (SceneLoader) {
+    SceneLoader.RegisterPlugin(new BpmxLoader());
 }
