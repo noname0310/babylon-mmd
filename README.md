@@ -183,7 +183,7 @@ const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 
 Please refer to the documentation for more detailed instructions on how to use it.
 
-- [Documentation](https://noname0310.github.io/babylon-mmd/docs/docs_build) - Work in progress
+- [Documentation](https://noname0310.github.io/babylon-mmd/docs_build) - Work in progress
 
 ## Implementation status
 
