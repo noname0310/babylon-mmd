@@ -1,7 +1,8 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./sceneBuilder";
+// import { SceneBuilder } from "./sceneBuilder";
+import { PmxConverterScene } from "./pmxConverterScene";
 
 window.onload = (): void => {
     const canvas = document.createElement("canvas");
@@ -27,6 +28,6 @@ window.onload = (): void => {
     BaseRuntime.Create({
         canvas,
         engine,
-        sceneBuilder: new SceneBuilder()
+        sceneBuilder: new PmxConverterScene()
     }).then(runtime => runtime.run());
 };

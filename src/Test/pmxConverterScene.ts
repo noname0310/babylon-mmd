@@ -1,6 +1,7 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/mmdOutlineRenderer";
+import "@/Loader/pmxLoader";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
@@ -18,7 +19,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-import { PmxLoader } from "@/Loader/pmxLoader";
+import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
 
@@ -66,7 +67,7 @@ async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
 export class PmxConverterScene implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = new PmxLoader();
+        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
         pmxLoader.buildSkeleton = false;
         pmxLoader.buildMorph = false;
