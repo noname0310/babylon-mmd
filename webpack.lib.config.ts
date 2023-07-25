@@ -34,14 +34,18 @@ export default (env: any): webpack.Configuration => ({
         modules: ["src", "node_modules"],
         extensions: [".js", ".jsx", ".ts", ".tsx"]
     },
-    externals: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        "@babylonjs/core": {
-            amd: "@babylonjs/core",
-            commonjs: "@babylonjs/core",
-            commonjs2: "@babylonjs/core",
-            root: "BABYLON"
+    externals: [
+        ({request}, callback) => {
+            if (/^@babylonjs\/core\//.test(request!)) {
+                return callback(null, {
+                    amd: request,
+                    commonjs: request,
+                    commonjs2: request,
+                    root: "BABYLON"
+                });
+            }
+            callback();
         }
-    },
+    ],
     mode: env.production ? "production" : "development"
 });
