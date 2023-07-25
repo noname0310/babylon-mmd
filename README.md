@@ -42,28 +42,9 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.
     SdefInjector.OverrideEngineCreateEffect(engine);
 
-    const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-
-    // If you don't want SDEF support, you can uncomment this line. This can save some performance.
-    // pmxLoader.useSdef = false;
-    
-    // You can create your own material builder and override the default one for custom shading
-    const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-
-    // If you don't want sphere texture support, you can uncomment this line. This can save some performance.
-    // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-
-    // If you don't want toon texture support, you can uncomment this line. This can save some performance.
-    // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
-
-    // If you don't want outline rendering, you can uncomment this line. This rendering operation can be quite expensive.
-    // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-
     const scene = new Scene(engine);
-    scene.clearColor = new Color4(1, 1, 1, 1.0);
 
     const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-    camera.maxZ = 5000;
 
     const hemisphericLight = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
     hemisphericLight.intensity = 0.4;
@@ -72,35 +53,17 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
     directionalLight.intensity = 0.8;
-    directionalLight.autoCalcShadowZBounds = false;
-    directionalLight.autoUpdateExtends = false;
-    directionalLight.shadowMaxZ = 20;
-    directionalLight.shadowMinZ = -15;
-    directionalLight.orthoTop = 19;
-    directionalLight.orthoBottom = -1;
-    directionalLight.orthoLeft = -9;
-    directionalLight.orthoRight = 9;
-    directionalLight.shadowOrthoScale = 0;
-
-    const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
-    shadowGenerator.usePercentageCloserFiltering = true;
-    shadowGenerator.forceBackFacesOnly = true;
-    shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
-    shadowGenerator.frustumEdgeFalloff = 0.1;
     
-    const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
-    ground.receiveShadows = true;
-    shadowGenerator.addShadowCaster(ground);
+    MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+    
+    // Use havok physics engine for rigid body/joint simulation
+    const havokInstance = await HavokPhysics();
+    const havokPlugin = new HavokPlugin(true, havokInstance);
+    scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
     
     // MMD runtime for solving morph, append transform, IK, animation, physics
     const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
-
-    // Register update function to the scene
     mmdRuntime.register(scene);
-    
-    // Or you can update manually
-    // scene.onBeforeAnimationsObservable.add(() => mmdRuntime.beforePhysics());
-    // scene.onBeforeRenderObservable.add(() => mmdRuntime.afterPhysics());
     
     // For synced audio playback
     const audioPlayer = new StreamAudioPlayer();
@@ -112,34 +75,19 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
     // create a youtube-like player control
     new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
-
-    // Use havok physics engine for rigid body/joint simulation
-    const havokInstance = await HavokPhysics();
-    const havokPlugin = new HavokPlugin(true, havokInstance);
-    scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
-
-    const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene)
-        .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
-    model.receiveShadows = true;
-    shadowGenerator.addShadowCaster(model);
     
     const vmdLoader = new VmdLoader(scene);
 
-    const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
-    const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
-
     mmdRuntime.setCamera(camera);
+    const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
     camera.addAnimation(cameraMotion);
     camera.setAnimation("camera_motion_1");
 
+    const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.pmx", undefined, scene).then((result) => result.meshes[0]);
     const mmdModel = mmdRuntime.createMmdModel(model);
+    const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
     mmdModel.addAnimation(modelMotion);
     mmdModel.setAnimation("model_motion_1");
-
-    // For anti-aliasing
-    const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
-    defaultPipeline.samples = 4;
-    defaultPipeline.fxaaEnabled = true;
 
     return scene;
 }
@@ -159,6 +107,15 @@ To perform pmx conversion, please visit below link and load the desired models d
 
 ### [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter)
 
+then you can load the converted files like below.
+
+```typescript
+const bpmxLoader = new BpmxLoader();
+SceneLoader.RegisterPlugin(bpmxLoader);
+
+const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.bpmx", undefined, scene).then((result) => result.meshes[0]);
+```
+
 ### VMD to BVMD
 
 To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
@@ -168,13 +125,6 @@ To perform vmd conversion, please visit below link and load the desired motions.
 then you can load the converted files like below.
 
 ```typescript
-const bpmxLoader = new BpmxLoader();
-SceneLoader.RegisterPlugin(bpmxLoader);
-
-const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.bpmx", undefined, scene)
-    .then((result) => result.meshes[0]); // importMeshAsync meshes always have length 1
-
-
 const bvmdLoader = new BvmdLoader(scene);
 const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 ```
