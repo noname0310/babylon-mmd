@@ -404,6 +404,20 @@ export class MmdRuntime implements ILogger {
     }
 
     private readonly _onAudioDurationChanged = (): void => {
+        if (!this._animationPaused) {
+            const audioPlayer = this._audioPlayer!;
+            const currentTime = this._currentFrameTime / 30;
+            if (currentTime < audioPlayer.duration) {
+                audioPlayer._setCurrentTimeWithoutNotify(currentTime);
+                audioPlayer.play().then(() => {
+                    if (this._setAudioPlayerLastValue !== audioPlayer) {
+                        audioPlayer.pause();
+                        return;
+                    }
+                });
+            }
+        }
+
         if (this._useManualAnimationDuration) return;
 
         const audioFrameTimeDuration = this._audioPlayer!.duration * 30;
@@ -465,6 +479,10 @@ export class MmdRuntime implements ILogger {
     public async playAnimation(): Promise<void> {
         if (this._audioPlayer !== null && this._currentFrameTime <= this._audioPlayer.duration * 30) {
             try {
+                const currentTime = this._currentFrameTime / 30;
+                if (0.05 < Math.abs(this._audioPlayer.currentTime - currentTime)) {
+                    this._audioPlayer._setCurrentTimeWithoutNotify(currentTime);
+                }
                 await this._audioPlayer.play();
             } catch (e) {
                 if (e instanceof DOMException && e.name === "NotSupportedError") {

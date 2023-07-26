@@ -137,13 +137,13 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
+        mmdRuntime.register(scene);
+        mmdRuntime.playAnimation();
+
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/pizzicato_drops/pizzicato_drops.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
-
-        mmdRuntime.register(scene);
-        mmdRuntime.playAnimation();
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
