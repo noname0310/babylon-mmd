@@ -79,6 +79,9 @@ export class MmdModel {
         };
         this.mesh = runtimeMesh;
 
+        // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
+        mmdMesh.skeleton.prepare();
+
         this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
 
         const runtimeBones = this._buildRuntimeSkeleton(
