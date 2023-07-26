@@ -20,6 +20,6 @@ Therefore, babylon-mmd is designed to be user-friendly and, with a good understa
 
 Introducing simple and optimized usage methods separately You can see what you want.
 
-[Quick Start](./quick-start) - if you want to use it quickly
+**[Quick Start](./docs/category/quick-start)** - if you want to use it quickly
 
-[Optimized Usage](./optimized-usage) - if you want to use it in a more optimized way
+**[Optimized Usage](./docs/category/optimized-usage)** - if you want to use it in a optimized way
