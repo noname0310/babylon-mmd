@@ -12,7 +12,7 @@ You can download it from [here](https://www.deviantart.com/sanmuyyb/art/YYB-Hats
 
 ![Zip preview](image.png)
 
-Unzip the downloaded zip file and copy the "YYB Hatsune Miku_10th.pmx" file to the "res" folder.
+Unzip the downloaded zip file and copy the "YYB Hatsune Miku_10th" folder to the "res" folder.
 
 ![Vscode file structure](image-1.png)
 
@@ -35,8 +35,6 @@ mmdMesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(mmdMesh);
 ```
 
-Explanation of the SceneLoader usage:
-
 - `SceneLoader.ImportMeshAsync` - Load the model using the `SceneLoader` (All other loading methods are supported, but this example uses `ImportMeshAsync`).
     - `""` - this parameter is not used in PMX loading.
     - `"res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"` - the path to the model file.
@@ -47,4 +45,4 @@ Explanation of the SceneLoader usage:
 
 - Below is the shadow setting I won't explain in detail.
 
-![Alt text](image-2.png)
+![Result](image-2.png)
