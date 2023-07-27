@@ -36,7 +36,7 @@ npm add @babylonjs/core @babylonjs/havok babylon-mmd
 Here is the code to build a scene with a simple MMD model and play a VMD animation.
 ```typescript
 // side effects that register the loader
-import "babylon-mmd/Loader/pmxLoader";
+import "babylon-mmd/esm/Loader/pmxLoader";
 
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.

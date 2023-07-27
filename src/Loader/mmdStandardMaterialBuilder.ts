@@ -576,7 +576,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         ): void => {
             if (materialInfo.flag & PmxObject.Material.Flag.EnabledToonEdge) {
                 if (Scene.prototype.getMmdOutlineRenderer === undefined) {
-                    logger.warn("MMD Outline Renderer is not available. Please import \"babylon-mmd/Loader/mmdOutlineRenderer\".");
+                    logger.warn("MMD Outline Renderer is not available. Please import \"babylon-mmd/esm/Loader/mmdOutlineRenderer\".");
                 }
 
                 material.renderOutline = true;

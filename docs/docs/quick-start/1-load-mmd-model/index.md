@@ -23,7 +23,7 @@ Your file structure should look like this.
 For load pmx model, we need to import side effects.
 
 ```typescript title="src/sceneBuilder.ts"
-import "babylon-mmd/Loader/pmxLoader";
+import "babylon-mmd/esm/Loader/pmxLoader";
 ```
 
 Then, load the model using the `SceneLoader`.
