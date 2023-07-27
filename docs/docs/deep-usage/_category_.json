@@ -1,0 +1,8 @@
+{
+    "label": "Deep Usage",
+    "position": 1,
+    "link": {
+        "type": "generated-index",
+        "description": "Deals with how to use babylon-mmd in a performance-friendly and user-experienced way."
+    }
+}

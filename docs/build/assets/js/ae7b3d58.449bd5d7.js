@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbabylon_mmd_docs=self.webpackChunkbabylon_mmd_docs||[]).push([[325],{8510:o=>{o.exports=JSON.parse('{"permalink":"/babylon-mmd/build/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);

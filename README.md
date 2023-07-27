@@ -16,7 +16,7 @@ Motion: https://www.nicovideo.jp/watch/sm31508557
 
 Camera: https://www.nicovideo.jp/watch/sm36273873
 
-![screenshot2](./docs/fig2.png)
+![screenshot2](./docs/build/img/fig2.png)
 
 ### https://playground.babylonjs.com/#AZCXLD
 
@@ -105,7 +105,7 @@ Furthermore, it is also useful when you want to protect the original model/motio
 
 To perform pmx conversion, please visit below link and load the desired models directory. Then select the model you want to convert and click on "convert".
 
-### [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter)
+### [pmx converter](https://noname0310.github.io/babylon-mmd/build/pmx_converter)
 
 then you can load the converted files like below.
 
@@ -120,7 +120,7 @@ const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.bpmx
 
 To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
 
-### [vmd converter](https://noname0310.github.io/babylon-mmd/vmd_converter)
+### [vmd converter](https://noname0310.github.io/babylon-mmd/build/vmd_converter)
 
 then you can load the converted files like below.
 
