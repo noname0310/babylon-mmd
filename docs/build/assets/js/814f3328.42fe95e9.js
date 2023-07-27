@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbabylon_mmd_docs=self.webpackChunkbabylon_mmd_docs||[]).push([[535],{5641:e=>{e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"The reason I made the mmd loader","permalink":"/babylon-mmd/blog/introduction"}]}')}}]);
