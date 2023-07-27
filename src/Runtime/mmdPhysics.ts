@@ -525,32 +525,44 @@ export class MmdPhysics {
                     {
                         axis: PhysicsConstraintAxis.LINEAR_X,
                         minLimit: joint.positionMin[0],
-                        maxLimit: joint.positionMax[0]
+                        maxLimit: joint.positionMax[0],
+                        stiffness: joint.springPosition[0],
+                        damping: 1.0
                     },
                     {
                         axis: PhysicsConstraintAxis.LINEAR_Y,
                         minLimit: joint.positionMin[1],
-                        maxLimit: joint.positionMax[1]
+                        maxLimit: joint.positionMax[1],
+                        stiffness: joint.springPosition[1],
+                        damping: 1.0
                     },
                     {
                         axis: PhysicsConstraintAxis.LINEAR_Z,
                         minLimit: joint.positionMin[2],
-                        maxLimit: joint.positionMax[2]
+                        maxLimit: joint.positionMax[2],
+                        stiffness: joint.springPosition[2],
+                        damping: 1.0
                     },
                     {
                         axis: PhysicsConstraintAxis.ANGULAR_X,
                         minLimit: joint.rotationMin[0],
-                        maxLimit: joint.rotationMax[0]
+                        maxLimit: joint.rotationMax[0],
+                        stiffness: joint.springRotation[0],
+                        damping: 1.0
                     },
                     {
                         axis: PhysicsConstraintAxis.ANGULAR_Y,
                         minLimit: joint.rotationMin[1],
-                        maxLimit: joint.rotationMax[1]
+                        maxLimit: joint.rotationMax[1],
+                        stiffness: joint.springRotation[1],
+                        damping: 1.0
                     },
                     {
                         axis: PhysicsConstraintAxis.ANGULAR_Z,
                         minLimit: joint.rotationMin[2],
-                        maxLimit: joint.rotationMax[2]
+                        maxLimit: joint.rotationMax[2],
+                        stiffness: joint.springRotation[2],
+                        damping: 1.0
                     }
                 ],
                 scene
