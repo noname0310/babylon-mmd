@@ -110,8 +110,8 @@ To perform pmx conversion, please visit below link and load the desired models d
 then you can load the converted files like below.
 
 ```typescript
-const bpmxLoader = new BpmxLoader();
-SceneLoader.RegisterPlugin(bpmxLoader);
+// side effects that register the loader
+import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 
 const model = await SceneLoader.ImportMeshAsync(undefined, "your_model_path.bpmx", undefined, scene).then((result) => result.meshes[0]);
 ```
