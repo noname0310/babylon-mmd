@@ -4,7 +4,7 @@ First, you need a basic scene before you load the MMD.
 
 In this tutorial, we will do basic scene setting using minimal code.
 
-## Clone the `babylon-mmd-viwewer` repository
+## Clone the `babylon-mmd-viewer` repository
 
 Project setups can vary widely depending on personal preferences. However, for starters, I recommend the **[babylon-mmd-viewer](https://github.com/noname0310/babylon-mmd-viewer.git)** repository as a template for using babylon-mmd
 
