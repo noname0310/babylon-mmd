@@ -48,7 +48,8 @@
     "sideEffects": [
         "**/mmdOutlineRenderer.*",
         "**/pmxLoader.*",
-        "**/bpmxLoader.*"
+        "**/bpmxLoader.*",
+        "**/index.*"
     ],
     "peerDependencies": {
         "@babylonjs/core": "^6.14.0"
