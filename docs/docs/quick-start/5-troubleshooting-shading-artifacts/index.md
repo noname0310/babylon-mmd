@@ -97,7 +97,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         // fix material alpha mode
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.useSdef = false;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.useAlphaEvaluation = false;
         const alphaBlendMaterials = ["face02", "Facial02", "HL", "Hairshadow", "q302"];
