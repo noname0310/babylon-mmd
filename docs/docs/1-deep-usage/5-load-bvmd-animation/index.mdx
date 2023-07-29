@@ -1,0 +1,265 @@
+# Load BVMD Animation
+
+Learn how to load and play animations in BVMD format.
+
+## Creae MMD Runtime
+
+MMD has its proprietary animation system, so we provides a runtime to reproduce it. We will create an MMD Runtime and make the camera and mesh controlled by the runtime.
+
+```typescript title="src/sceneBuilder.ts"
+const mmdRuntime = new MmdRuntime();
+mmdRuntime.loggingEnabled = true;
+mmdRuntime.register(scene);
+
+mmdRuntime.playAnimation();
+```
+
+- `mmdRuntime.register(scene)` - Register the runtime to the scene update loop. This is required to runtime to work.
+- `mmdRuntime.loggingEnabled = true` - Enable logging. You can see some useful information (e.g. Animation binding failed bones) in the console.
+- `mmdRuntime.playAnimation()` - Start playing the animation.
+
+:::tip
+It's possible to play animations even if no asset is loaded. In this case, the assets that are loaded later are automatically synchronized.
+:::
+
+Now let's add objects that will be controlled by runtime.
+
+```typescript title="src/sceneBuilder.ts"
+mmdRuntime.setCamera(mmdCamera);
+const mmdModel = mmdRuntime.createMmdModel(modelMesh);
+```
+
+- `mmdRuntime.setCamera(camera)` - Set the camera to be controlled by the runtime.
+- `mmdRuntime.createMmdModel(mmdMesh)` - Create an MMD model from the mesh. `MmdModel` is a kind of controller that abstracts and controls Mesh from the perspective of MMD.
+
+## Load BVMD Animation
+
+For load BVMD animation, we use the `BvmdLoader`.
+
+```typescript title="src/sceneBuilder.ts"
+const bvmdLoader = new BvmdLoader(scene);
+bvmdLoader.loggingEnabled = true;
+
+promises.push(bvmdLoader.loadAsync("motion_1", "res/pizzicato_drops_yyb_piano_miku.bvmd",
+    (event) => updateLoadingText(2, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+);
+```
+
+- `bvmdLoader.loadAsync(name, fileOrUrl, onProgress)` - Load BVMD file. `name` is the name of the animation. `onProgress` is a callback function that is called during loading.
+
+```typescript title="src/sceneBuilder.ts"
+mmdCamera.addAnimation(loadResults[2]);
+mmdCamera.setAnimation("motion_1");
+
+mmdModel.addAnimation(loadResults[2]);
+mmdModel.setAnimation("motion_1");
+```
+
+- Both `MmdCamera` and `MmdModel` are designed to store multiple animations. Therefore, you must set the animation to use after adding it.
+
+## Change Animation Center
+
+The motion that we use tends to move backwards as we go towards the end of the music. So you have to move the model and camera forward to keep them in the plane.
+
+```typescript title="src/sceneBuilder.ts"
+const mmdRoot = new TransformNode("mmdRoot", scene);
+mmdRoot.position.z -= 50;
+
+// ...
+
+mmdCamera.parent = mmdRoot;
+
+// ...
+
+modelMesh.parent = mmdRoot;
+```
+
+## Make Directional Light Follow Model
+
+Our shadow frustum is fitted to the model. So we need to move the directional light to follow the model. to see the shadow properly.
+
+```typescript title="src/sceneBuilder.ts"
+const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+const meshWorldMatrix = modelMesh.getWorldMatrix();
+const boneWorldMatrix = new Matrix();
+scene.onBeforeRenderObservable.add(() => {
+    boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
+    boneWorldMatrix.getTranslationToRef(directionalLight.position);
+    directionalLight.position.y -= 10;
+});
+```
+
+- `modelMesh.skeleton!.bones.find((bone) => bone.name === "センター")` - Get the bone named "センター" from the skeleton of the model. This bone is the center of the model.
+- `modelMesh.getWorldMatrix()` - Get the world matrix of the model. Access after the Physics ensures that the matrix is up to date.
+
+:::danger
+For skeleton, which is being manipulated by `MmdRuntime`, the only way to get the world position value is to use `getWorldMatrix()` because the Matrix update method is overridden by `MmdRuntime`. (e.g. `bone.getAbsolutePosition()` doesn't work properly)
+
+Because MMD uses its own matrix update policy, this flaw is inevitable.
+:::
+
+## Full Code at this Point
+
+Here's the code up to this point:
+
+<details> <summary>src/sceneBuilder.ts</summary>
+
+```typescript
+iimport "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@babylonjs/core/Loading/loadingScreen";
+
+import type { Engine } from "@babylonjs/core/Engines/engine";
+import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Scene } from "@babylonjs/core/scene";
+import type { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
+import type { BpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { BvmdLoader } from "babylon-mmd/esm/Loader/Optimized/bvmdLoader";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdRuntime } from "babylon-mmd/esm/Runtime/mmdRuntime";
+
+import type { ISceneBuilder } from "./baseRuntime";
+
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+        const bpmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
+        bpmxLoader.loggingEnabled = true;
+        const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
+        const scene = new Scene(engine);
+        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
+
+        const mmdRoot = new TransformNode("mmdRoot", scene);
+        mmdRoot.position.z -= 50;
+
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
+        mmdCamera.maxZ = 5000;
+        mmdCamera.parent = mmdRoot;
+
+        const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
+        hemisphericLight.intensity = 0.4;
+        hemisphericLight.specular.set(0, 0, 0);
+        hemisphericLight.groundColor.set(1, 1, 1);
+
+        const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
+        directionalLight.intensity = 0.8;
+        directionalLight.autoCalcShadowZBounds = false;
+        directionalLight.autoUpdateExtends = false;
+        directionalLight.shadowMaxZ = 20;
+        directionalLight.shadowMinZ = -20;
+        directionalLight.orthoTop = 18;
+        directionalLight.orthoBottom = -3;
+        directionalLight.orthoLeft = -10;
+        directionalLight.orthoRight = 10;
+        directionalLight.shadowOrthoScale = 0;
+
+        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
+        shadowGenerator.usePercentageCloserFiltering = true;
+        shadowGenerator.forceBackFacesOnly = false;
+        shadowGenerator.bias = 0.01;
+        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
+        shadowGenerator.frustumEdgeFalloff = 0.1;
+
+        const ground = MeshBuilder.CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
+        const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
+        groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
+        ground.receiveShadows = true;
+
+        // create mmd runtime
+        const mmdRuntime = new MmdRuntime();
+        mmdRuntime.loggingEnabled = true;
+        mmdRuntime.register(scene);
+
+        mmdRuntime.playAnimation();
+
+        engine.displayLoadingUI();
+
+        let loadingTexts: string[] = [];
+        const updateLoadingText = (updateIndex: number, text: string): void => {
+            loadingTexts[updateIndex] = text;
+            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
+        };
+
+        const promises: Promise<any>[] = [];
+
+        bpmxLoader.boundingBoxMargin = 60;
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
+            "res/YYB Piano dress Miku.bpmx",
+            undefined,
+            scene,
+            (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+        ).then((result) => result.meshes[0] as Mesh));
+
+        bpmxLoader.boundingBoxMargin = 0;
+        bpmxLoader.buildSkeleton = false;
+        bpmxLoader.buildMorph = false;
+        promises.push(SceneLoader.ImportMeshAsync(
+            undefined,
+            "res/ガラス片ドームB.bpmx",
+            undefined,
+            scene,
+            (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
+        ));
+
+        const bvmdLoader = new BvmdLoader(scene);
+        bvmdLoader.loggingEnabled = true;
+
+        promises.push(bvmdLoader.loadAsync("motion_1", "res/pizzicato_drops_yyb_piano_miku.bvmd",
+            (event) => updateLoadingText(2, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        );
+
+        loadingTexts = new Array(promises.length).fill("");
+
+        const loadResults = await Promise.all(promises);
+        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
+
+        loadResults;
+
+        mmdRuntime.setCamera(mmdCamera);
+        mmdCamera.addAnimation(loadResults[2]);
+        mmdCamera.setAnimation("motion_1");
+
+        const modelMesh = loadResults[0] as Mesh;
+        modelMesh.parent = mmdRoot;
+        modelMesh.receiveShadows = true;
+        shadowGenerator.addShadowCaster(modelMesh);
+
+        const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
+        const meshWorldMatrix = modelMesh.getWorldMatrix();
+        const boneWorldMatrix = new Matrix();
+        scene.onBeforeRenderObservable.add(() => {
+            boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
+            boneWorldMatrix.getTranslationToRef(directionalLight.position);
+            directionalLight.position.y -= 10;
+        });
+
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh);
+        mmdModel.addAnimation(loadResults[2]);
+        mmdModel.setAnimation("motion_1");
+
+        return scene;
+    }
+}
+
+```
+</details>
+
+import ReactPlayer from "react-player";
+import ResultVideo from "./2023-07-29 18-53-00.mp4";
+
+<ReactPlayer
+    url={ResultVideo}
+    controls={true}
+    width="100%"
+    height="100%"/>
