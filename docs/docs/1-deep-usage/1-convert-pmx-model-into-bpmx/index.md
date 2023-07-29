@@ -10,7 +10,7 @@ If you have a pmx model you want, you can use it.
 
 In this tutorial, we will use the "YYB Piano dress Miku" model.
 
-You can download it from [here](https://www.deviantart.com/mamiya-mmd/art/YYB-Piano-dress-Miku-and-Rin-Models-Download-831030256).
+You can download it from **[here](https://www.deviantart.com/mamiya-mmd/art/YYB-Piano-dress-Miku-and-Rin-Models-Download-831030256)**.
 
 ![zip preview](image.png)
 
@@ -42,7 +42,7 @@ Move the downloaded BPMX file to the "res" folder.
 
 ## Download MMD Stage: "ガラス片ドームB"
 
-We use stage too. You can download it from [here](https://onedrive.live.com/?authkey=%21ACYieu0bTYFjEiE&id=BB455C87024D8563%21946&cid=BB455C87024D8563).
+We use stage too. You can download it from **[here](https://onedrive.live.com/?authkey=%21ACYieu0bTYFjEiE&id=BB455C87024D8563%21946&cid=BB455C87024D8563)**.
 
 Convert the stage in the same way as above.
 

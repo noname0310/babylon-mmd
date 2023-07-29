@@ -8,7 +8,7 @@ If you have a pmx model you want, you can use it.
 
 In this tutorial, we will use the "YYB Hatsune Miku_10th" model.
 
-You can download it from [here](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716).
+You can download it from **[here](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716)**.
 
 ![zip preview](image.png)
 
