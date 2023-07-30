@@ -40,10 +40,10 @@ jobs:
           node-version: 18
         
       - name: Install dependencies
-        run: cd docs && npm install
+        run: cd docs && npm ci
 
       - name: Build
-        run: npm run build
+        run: cd docs && npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
