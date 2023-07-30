@@ -16,7 +16,7 @@ Motion: https://www.nicovideo.jp/watch/sm31508557
 
 Camera: https://www.nicovideo.jp/watch/sm36273873
 
-![screenshot2](./docs/build/img/fig2.png)
+![screenshot2](./docs/static/img/fig2.png)
 
 ### https://playground.babylonjs.com/#G6DC3S
 
