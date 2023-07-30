@@ -22,11 +22,11 @@ find the frame 343 and select all keyframes after it. you can use range select.
 
 ![range select](image-2.png)
 
-then ctrl+c to copy the keyframes. and del to delete the selected keyframes. then ctrl+v to paste the keyframes to the frame 291.
+then *ctrl+c* to copy the keyframes. and *del* to delete the selected keyframes. then *ctrl+v* to paste the keyframes to the frame 291.
 
 ![frames moved](image-3.png)
 
-then save the VMD file by file->save motion data.
+then save the VMD file by *file->save motion data*.
 
 ## Convert VMD animation into BVMD
 

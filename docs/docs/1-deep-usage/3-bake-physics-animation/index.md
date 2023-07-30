@@ -29,7 +29,7 @@ Some models can be baked without modification, but others don't. They need to be
 :::danger
 NexGiMa(which we will use later) has a bug that does not properly convert bone name in certain Chinese characters. Therefore, for some models, the bone name needs to be modified.
 
-The model we use as an example also has this problem, and we will try to use the animation retargeting function to solve it.
+The model we use as an example also has this problem, so we need to modify the bone name.
 :::
 
 We will use PMXEditor to edit the model.
@@ -120,7 +120,7 @@ Click the "モーションを保存する..." button to export the keyframes.
 
 ![export keyframes](image-17.png)
 
-Save is as "pizzicato_drops_yyb_piano_miku_phys".
+Save it as "pizzicato_drops_yyb_piano_miku_phys".
 
 :::tip
 Baked physics animations are only valid for the model you baked. so it is recommended to save the animation with the model name.
