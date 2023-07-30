@@ -7,7 +7,7 @@ import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
 
 export default (env: any): webpack.Configuration & { devServer?: WebpackDevServerConfiguration } => ({
-    entry: "./src/test/index.ts",
+    entry: "./src/Test/index.ts",
     output: {
         path: path.join(__dirname, "/test_dist"),
         filename: "[name].bundle.js",
@@ -42,7 +42,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./src/test/index.html"
+            template: "./src/Test/index.html"
         }),
         new ESLintPlugin({
             extensions: ["ts", "tsx"],
