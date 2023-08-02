@@ -159,6 +159,8 @@ export class MmdPhysicsModel {
                         node.linkedBone.worldMatrix,
                         MmdPhysicsModel._NodeWorldMatrix
                     );
+                    // TODO: apply new method
+                    // https://github.com/BabylonJS/Babylon.js/pull/14110
                     nodeWorldMatrix.decompose(
                         node.scaling,
                         node.rotationQuaternion!,
