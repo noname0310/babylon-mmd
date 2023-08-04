@@ -274,10 +274,9 @@ export class BpmxConverter implements ILogger {
 
         let pmxObject: PmxObject;
         if (files === undefined) {
-            const arrayBuffer = await fetch(urlOrFileName)
-                .then((response) => response.arrayBuffer());
+            const arrayBuffer = await scene._loadFileAsync(urlOrFileName, undefined, true, true);
 
-            pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
+            pmxObject = await PmxReader.ParseAsync(arrayBuffer as ArrayBuffer, this);
         } else {
             const pmxFile = files.find((file) => file.webkitRelativePath === urlOrFileName);
             if (pmxFile === undefined) {
