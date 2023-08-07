@@ -5,7 +5,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
-import type { PhysicsConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
+import type { Physics6DoFLimit, PhysicsConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
 import { Physics6DoFConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
 import type { PhysicsShape} from "@babylonjs/core/Physics/v2/physicsShape";
 import { PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere } from "@babylonjs/core/Physics/v2/physicsShape";
@@ -506,6 +506,58 @@ export class MmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
+            const limits: Physics6DoFLimit[] = [
+                {
+                    axis: PhysicsConstraintAxis.LINEAR_X,
+                    minLimit: joint.positionMin[0],
+                    maxLimit: joint.positionMax[0],
+                    stiffness: joint.springPosition[0],
+                    damping: 1.0
+                },
+                {
+                    axis: PhysicsConstraintAxis.LINEAR_Y,
+                    minLimit: joint.positionMin[1],
+                    maxLimit: joint.positionMax[1],
+                    stiffness: joint.springPosition[1],
+                    damping: 1.0
+                },
+                {
+                    axis: PhysicsConstraintAxis.LINEAR_Z,
+                    minLimit: joint.positionMin[2],
+                    maxLimit: joint.positionMax[2],
+                    stiffness: joint.springPosition[2],
+                    damping: 1.0
+                },
+                {
+                    axis: PhysicsConstraintAxis.ANGULAR_X,
+                    minLimit: joint.rotationMin[0],
+                    maxLimit: joint.rotationMax[0],
+                    stiffness: joint.springRotation[0],
+                    damping: 1.0
+                },
+                {
+                    axis: PhysicsConstraintAxis.ANGULAR_Y,
+                    minLimit: joint.rotationMin[1],
+                    maxLimit: joint.rotationMax[1],
+                    stiffness: joint.springRotation[1],
+                    damping: 1.0
+                },
+                {
+                    axis: PhysicsConstraintAxis.ANGULAR_Z,
+                    minLimit: joint.rotationMin[2],
+                    maxLimit: joint.rotationMax[2],
+                    stiffness: joint.springRotation[2],
+                    damping: 1.0
+                }
+            ];
+            for (let j = 0; j < limits.length; ++j) {
+                const limit = limits[j];
+                if (limit.stiffness === 0) {
+                    limit.stiffness = undefined;
+                    limit.damping = undefined;
+                }
+            }
+
             const constraint = new Physics6DoFConstraint(
                 {
                     pivotA: jointFinalTransformA.getTranslation(),
@@ -533,50 +585,7 @@ export class MmdPhysics {
                         jointFinalTransformB.m[6]
                     )
                 },
-                [
-                    {
-                        axis: PhysicsConstraintAxis.LINEAR_X,
-                        minLimit: joint.positionMin[0],
-                        maxLimit: joint.positionMax[0],
-                        stiffness: joint.springPosition[0],
-                        damping: 1.0
-                    },
-                    {
-                        axis: PhysicsConstraintAxis.LINEAR_Y,
-                        minLimit: joint.positionMin[1],
-                        maxLimit: joint.positionMax[1],
-                        stiffness: joint.springPosition[1],
-                        damping: 1.0
-                    },
-                    {
-                        axis: PhysicsConstraintAxis.LINEAR_Z,
-                        minLimit: joint.positionMin[2],
-                        maxLimit: joint.positionMax[2],
-                        stiffness: joint.springPosition[2],
-                        damping: 1.0
-                    },
-                    {
-                        axis: PhysicsConstraintAxis.ANGULAR_X,
-                        minLimit: joint.rotationMin[0],
-                        maxLimit: joint.rotationMax[0],
-                        stiffness: joint.springRotation[0],
-                        damping: 1.0
-                    },
-                    {
-                        axis: PhysicsConstraintAxis.ANGULAR_Y,
-                        minLimit: joint.rotationMin[1],
-                        maxLimit: joint.rotationMax[1],
-                        stiffness: joint.springRotation[1],
-                        damping: 1.0
-                    },
-                    {
-                        axis: PhysicsConstraintAxis.ANGULAR_Z,
-                        minLimit: joint.rotationMin[2],
-                        maxLimit: joint.rotationMax[2],
-                        stiffness: joint.springRotation[2],
-                        damping: 1.0
-                    }
-                ],
+                limits,
                 scene
             );
 
