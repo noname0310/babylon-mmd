@@ -1,11 +1,13 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@babylonjs/core/Meshes/thinInstanceMesh";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -18,10 +20,13 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
+import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
+import { PhysicsShapeBox } from "@babylonjs/core/Physics/v2/physicsShape";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -240,22 +245,23 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdStageMesh = loadResults[2].meshes[0] as Mesh;
         mmdStageMesh.position.y += 0.01;
 
-        // const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
-        // groundRigidBody.shape = new PhysicsShapeBox(
-        //     new Vector3(0, -1, 0),
-        //     new Quaternion(),
-        //     new Vector3(100, 2, 100), scene);
+        const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
+        groundRigidBody.shape = new PhysicsShapeBox(
+            new Vector3(0, -1, 0),
+            new Quaternion(),
+            new Vector3(100, 2, 100), scene);
 
-        // {
-        //     const physicsViewer = new PhysicsViewer(scene);
-        //     const modelMesh = loadResults[1].meshes[0] as Mesh;
-        //     for (const node of modelMesh.getChildren()) {
-        //         if ((node as any).physicsBody) {
-        //             physicsViewer.showBody((node as any).physicsBody);
-        //         }
-        //     }
-        //     physicsViewer.showBody(groundRigidBody);
-        // }
+        {
+            const physicsViewer = new PhysicsViewer(scene);
+            physicsViewer;
+            // const modelMesh = loadResults[1].meshes[0] as Mesh;
+            // for (const node of modelMesh.getChildren()) {
+            //     if ((node as any).physicsBody) {
+            //         physicsViewer.showBody((node as any).physicsBody);
+            //     }
+            // }
+            // physicsViewer.showBody(groundRigidBody);
+        }
 
         const useHavyPostProcess = true;
         const useBasicPostProcess = true;

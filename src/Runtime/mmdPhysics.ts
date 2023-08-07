@@ -143,6 +143,9 @@ export class MmdPhysicsModel {
         }
     }
 
+    private static readonly _NodeWorldPosition = new Vector3();
+    private static readonly _NodeWorldRotation = new Quaternion();
+
     /**
      * Set the rigid bodies transform to the bones transform
      */
@@ -159,12 +162,22 @@ export class MmdPhysicsModel {
                         node.linkedBone.worldMatrix,
                         MmdPhysicsModel._NodeWorldMatrix
                     );
-                    // TODO: apply new method
-                    // https://github.com/BabylonJS/Babylon.js/pull/14110
                     nodeWorldMatrix.decompose(
                         node.scaling,
                         node.rotationQuaternion!,
                         node.position
+                    );
+
+                    node.computeWorldMatrix(true);
+                    node.getWorldMatrix().decompose(
+                        undefined,
+                        MmdPhysicsModel._NodeWorldRotation,
+                        MmdPhysicsModel._NodeWorldPosition
+                    );
+
+                    node.physicsBody!.setTargetTransform(
+                        MmdPhysicsModel._NodeWorldPosition,
+                        MmdPhysicsModel._NodeWorldRotation
                     );
                 }
                 break;
@@ -384,9 +397,6 @@ export class MmdPhysics {
             body.setLinearDamping(Math.ceil(rigidBody.linearDamping) * 5);
             body.setAngularDamping(rigidBody.angularDamping);
             body.computeMassProperties();
-            if (motionType === PhysicsMotionType.ANIMATED) {
-                body.disablePreStep = false;
-            }
 
             nodes.push(node);
             bodies.push(body);
