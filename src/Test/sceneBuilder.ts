@@ -166,7 +166,7 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion_piano_physics.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
