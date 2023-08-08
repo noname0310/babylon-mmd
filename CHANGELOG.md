@@ -16,3 +16,5 @@
     - fix Image loading failure when using custom texture loader
 
 - support custom texture format on alpha texture evaluation
+
+- umd unoptimized bundle is now available
