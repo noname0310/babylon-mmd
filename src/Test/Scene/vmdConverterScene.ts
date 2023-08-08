@@ -5,8 +5,7 @@ import { Scene } from "@babylonjs/core/scene";
 
 import { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
 import { VmdLoader } from "@/Loader/vmdLoader";
-
-import type { ISceneBuilder } from "./baseRuntime";
+import { ISceneBuilder } from "../baseRuntime";
 
 export class VmdConverterScene implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {

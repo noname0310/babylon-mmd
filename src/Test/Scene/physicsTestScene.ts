@@ -44,8 +44,7 @@ import { MmdCamera } from "@/Runtime/mmdCamera";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
-
-import type { ISceneBuilder } from "./baseRuntime";
+import { ISceneBuilder } from "../baseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {

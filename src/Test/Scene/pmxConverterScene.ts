@@ -22,9 +22,9 @@ import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
-
-import { type MmdStandardMaterial, PmxObject } from "..";
-import type { ISceneBuilder } from "./baseRuntime";
+import { ISceneBuilder } from "../baseRuntime";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
+import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
     const result: FileSystemFileEntry[] = [];
