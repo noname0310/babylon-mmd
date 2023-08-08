@@ -35,7 +35,7 @@ export default (env: any): webpack.Configuration => ({
         extensions: [".js", ".jsx", ".ts", ".tsx"]
     },
     externals: [
-        ({request}, callback) => {
+        ({request}, callback): void => {
             if (/^@babylonjs\/core\//.test(request!)) {
                 return callback(null, {
                     amd: request,
