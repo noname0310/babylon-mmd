@@ -14,7 +14,7 @@ if (!fs.existsSync("./dist")) {
 fs.copyFileSync("./package.json", "./dist/package.json");
 fs.copyFileSync("./README.md", "./dist/README.md");
 fs.copyFileSync("./LICENSE", "./dist/LICENSE");
-// fs.copyFileSync("./CHANGELOG.md", "./dist/CHANGELOG.md");
+fs.copyFileSync("./CHANGELOG.md", "./dist/CHANGELOG.md");
 
 // execSync("npm publish ./dist");
 // fs.rmdirSync("./dist", { recursive: true });
