@@ -10,4 +10,9 @@
 
 - change 6DofSpringConstraint build method more similar to MMD
 
-- now minimum required version of @babylonjs/core is 6.15.0 (was 6.14.0) and @babylonjs/havok is 1.1.2 (was 1.1.1)]
+- now minimum required version of @babylonjs/core is 6.15.0 (was 6.14.0) and @babylonjs/havok is 1.1.2 (was 1.1.1)
+
+- fix TGA texture loading
+    - fix Image loading failure when using custom texture loader
+
+- support custom texture format on alpha texture evaluation
