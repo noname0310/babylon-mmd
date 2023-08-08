@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Observable } from "@babylonjs/core/Misc/observable";
+import { TimingTools } from "@babylonjs/core/Misc/timingTools";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -36,7 +37,7 @@ class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
-    private readonly _onLoad?: Nullable<() => void>;
+    private readonly _onLoad: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
     private _arrayBuffer: Nullable<ArrayBuffer>;
@@ -49,7 +50,7 @@ class MmdTextureData {
         assetContainer: Nullable<AssetContainer>,
         urlOrTextureName: string,
         useLazyLoadWithBuffer: boolean,
-        onLoad?: Nullable<() => void>,
+        onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ) {
         this.cacheKey = cacheKey;
@@ -108,7 +109,7 @@ class MmdTextureData {
         assetContainer: Nullable<AssetContainer>,
         textureName: string,
         arrayBuffer: ArrayBuffer,
-        onLoad?: Nullable<() => void>,
+        onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ): void {
         scene._blockEntityCollection = !!assetContainer;
@@ -118,7 +119,13 @@ class MmdTextureData {
             undefined,
             undefined,
             undefined,
-            onLoad,
+            () => {
+                if (this._texture === null) {
+                    if (onLoad !== null) TimingTools.SetImmediate(onLoad);
+                } else {
+                    onLoad?.();
+                }
+            },
             onError,
             arrayBuffer,
             true
