@@ -17,8 +17,7 @@ export default (env: any): webpack.Configuration => ({
         },
         // libraryExport: "default",
         umdNamedDefine: true,
-        globalObject: "(typeof self !== \"undefined\" ? self : typeof global !== \"undefined\" ? global : this)",
-        clean: true
+        globalObject: "(typeof self !== \"undefined\" ? self : typeof global !== \"undefined\" ? global : this)"
     },
     optimization: {
         minimize: env.production
