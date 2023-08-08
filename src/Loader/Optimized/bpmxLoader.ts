@@ -265,6 +265,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const mesh = new (state.useSdef ? SdefMesh : Mesh)(bpmxObject.header.modelName, scene);
         mesh._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
+        mesh.setEnabled(false);
 
         const vertexData = new VertexData();
         vertexData.positions = bpmxObject.geometry.positions;
@@ -668,6 +669,8 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         applyTextureLoading = true;
         await textureLoadPromise;
+        
+        mesh.setEnabled(true);
 
         if (assetContainer !== null) {
             assetContainer.meshes.push(mesh);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.0
+
+- Shows the mesh when all texture loads and shaders are compiled
+
 ## 0.23.0
 
 - fix object freezing in place to set physics body linear damping to 6.0

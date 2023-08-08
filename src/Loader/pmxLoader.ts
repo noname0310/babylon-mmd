@@ -275,6 +275,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const mesh = new (state.useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
         mesh._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
+        mesh.setEnabled(false);
 
         const vertexData = new VertexData();
         const boneSdefC = state.useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
@@ -809,6 +810,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         applyTextureLoading = true;
         await textureLoadPromise;
+
+        mesh.setEnabled(true);
 
         if (assetContainer !== null) {
             assetContainer.meshes.push(mesh);
