@@ -179,7 +179,6 @@
  */
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Scene } from "@babylonjs/core/scene";
-import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdTextureLoadResult } from "../mmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "../mmdAsyncTextureLoader";
@@ -420,7 +419,7 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textures: Nullable<ArrayBuffer>[] = [];
+        const textureLoadResults: MmdTextureLoadResult[] = [];
 
         // create texture table
         {
@@ -529,9 +528,7 @@ export class BpmxConverter implements ILogger {
             }
 
             for (let i = 0; i < textureDatas.length; ++i) {
-                const textureData = textureDatas[i];
-                textures[i] = textureData.arrayBuffer;
-                textureData.texture?.dispose();
+                textureLoadResults[i] = textureDatas[i];
             }
         }
 
@@ -549,10 +546,11 @@ export class BpmxConverter implements ILogger {
                 const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
                 if (diffuseTexturePath !== undefined) {
                     const textureIndex = materialInfo.textureIndex;
-                    const texture = textures[textureIndex];
-                    if (texture !== null) {
+                    const textureData = textureLoadResults[textureIndex];
+                    if (textureData?.arrayBuffer !== null) {
                         const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                            texture,
+                            textureData.arrayBuffer,
+                            textureData.texture,
                             offset,
                             materialInfo.surfaceCount,
                             alphaThreshold,
@@ -611,11 +609,11 @@ export class BpmxConverter implements ILogger {
             dataLength += 4; // textureCount
             const pmxObjectTextures = pmxObject.textures;
             for (let i = 0; i < pmxObjectTextures.length; ++i) {
-                const texture = textures[i];
-                if (texture !== null) {
+                const textureData = textureLoadResults[i];
+                if (textureData.arrayBuffer !== null) {
                     dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
                     dataLength += 4; // textureByteLength
-                    dataLength += texture.byteLength; // textureData
+                    dataLength += textureData.arrayBuffer.byteLength; // textureData
                 } else {
                     dataLength += 4; // textureName
                     dataLength += 4; // textureByteLength
@@ -851,8 +849,8 @@ export class BpmxConverter implements ILogger {
 
         serializer.setUint32(pmxObject.textures.length); // textureCount
         const pmxObjectTextures = pmxObject.textures;
-        for (let i = 0; i < textures.length; ++i) {
-            const texture = textures[i];
+        for (let i = 0; i < textureLoadResults.length; ++i) {
+            const texture = textureLoadResults[i].arrayBuffer;
             if (texture !== null) {
                 serializer.setString(pmxObjectTextures[i]); // textureName
                 serializer.setUint32(texture.byteLength); // textureDataLength
@@ -1068,6 +1066,11 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32Array(jointInfo.rotationMax); // rotationMax
             serializer.setFloat32Array(jointInfo.springPosition); // springPosition
             serializer.setFloat32Array(jointInfo.springRotation); // springRotation
+        }
+
+        // dispose textures
+        for (let i = 0; i < textureLoadResults.length; ++i) {
+            textureLoadResults[i].texture?.dispose();
         }
 
         return data;

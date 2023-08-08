@@ -1,4 +1,6 @@
 import { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { ISize } from "@babylonjs/core/Maths/math.size";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -170,7 +172,7 @@ export class TextureAlphaChecker {
         return true;
     }
 
-    private async _getWebGlTexture(textureBuffer: ArrayBuffer): Promise<Nullable<WebGLTexture>> {
+    private async _getWebGlTexture(textureBuffer: ArrayBuffer, fallbackTexture: Nullable<Texture>): Promise<Nullable<WebGLTexture>> {
         const context = this._context;
         if (context === null) return null;
 
@@ -183,12 +185,49 @@ export class TextureAlphaChecker {
         const textureContainer = new TextureContainer();
         this._textureCache.set(textureBuffer, textureContainer);
 
-        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        let imageOrPixelsBuffer: Nullable<HTMLImageElement | ArrayBufferView> = null;
+        let textureSize: ISize;
+        let blobCreated = false;
+
+        imageOrPixelsBuffer = await new Promise<Nullable<HTMLImageElement>>((resolve) => {
             const image = new Image();
-            image.onload = (): void => resolve(image);
-            image.onerror = (): void => reject();
+            image.onload = (): void => {
+                blobCreated = true;
+                resolve(image);
+            };
+            image.onerror = (): void => {
+                URL.revokeObjectURL(image.src);
+                resolve(null);
+            };
             image.src = URL.createObjectURL(new Blob([textureBuffer]));
         });
+        if (imageOrPixelsBuffer !== null) {
+            textureSize = {
+                width: imageOrPixelsBuffer.width,
+                height: imageOrPixelsBuffer.height
+            };
+        } else if (fallbackTexture !== null) {
+            if (!fallbackTexture.isReady()) {
+                await new Promise<void>((resolve) => {
+                    fallbackTexture.onLoadObservable.addOnce(() => {
+                        resolve();
+                    });
+                });
+            }
+            textureSize = fallbackTexture.getSize();
+            imageOrPixelsBuffer = await fallbackTexture.readPixels(
+                0, // faceIndex
+                0, // level
+                undefined, // buffer
+                false, // flushRenderer
+                false, // noDataConversion
+                0, // x
+                0, // y
+                textureSize.width, // width
+                textureSize.height // height
+            );
+        }
+        if (imageOrPixelsBuffer === null) return null;
 
         const webGlTexture = context.createTexture();
         if (webGlTexture === null) return null;
@@ -202,16 +241,15 @@ export class TextureAlphaChecker {
             context.TEXTURE_2D,
             0, // level
             context.RGBA, // internalFormat
-            image.width, // width
-            image.height, // height
+            textureSize!.width, // width
+            textureSize!.height, // height
             0, // border
             context.RGBA, // format
             context.UNSIGNED_BYTE, // type
-            image // pixels
+            imageOrPixelsBuffer as any // HTMLImageElement or pixels ArrayBuffer
         );
         context.pixelStorei(context.UNPACK_FLIP_Y_WEBGL, 1);
-
-        URL.revokeObjectURL(image.src);
+        if (blobCreated) URL.revokeObjectURL((imageOrPixelsBuffer as HTMLImageElement).src);
 
         textureContainer.texture = webGlTexture;
         textureContainer.onLoadObservable.notifyObservers();
@@ -252,6 +290,7 @@ export class TextureAlphaChecker {
      *
      * "Does the textures on the geometry have alpha" is simply to make sure that a portion of the textures (the part that is rendered) have alpha
      * @param textureBuffer Texture array buffer
+     * @param fallbackTexture When the texture is unsupported format, dependent on babylon.js Texture Loaders
      * @param startOffset start offset of the indices
      * @param length length of the indices
      * @param alphaThreshold alpha threshold
@@ -260,6 +299,7 @@ export class TextureAlphaChecker {
      */
     public async textureHasAlphaOnGeometry(
         textureBuffer: ArrayBuffer,
+        fallbackTexture: Nullable<Texture>,
         startOffset: number,
         length: number,
         alphaThreshold: number,
@@ -270,7 +310,7 @@ export class TextureAlphaChecker {
         const program = this._program;
         if (program === null) return TransparencyMode.Opaque;
 
-        const webGlTexture = await this._getWebGlTexture(textureBuffer);
+        const webGlTexture = await this._getWebGlTexture(textureBuffer, fallbackTexture);
         if (webGlTexture === null) return TransparencyMode.Opaque;
 
         context.clear(context.COLOR_BUFFER_BIT);

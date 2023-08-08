@@ -362,6 +362,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         if (textureAlphaChecker !== null) {
                             transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
                                 textureLoadResult.arrayBuffer!,
+                                textureLoadResult.texture!,
                                 offset,
                                 materialInfo.surfaceCount,
                                 this.alphaThreshold,
