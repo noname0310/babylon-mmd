@@ -2,7 +2,9 @@
 
 ## 0.24.0
 
-- Shows the mesh when all texture loads and shaders are compiled
+- shows the mesh when all texture loads and shaders are compiled
+
+- fix constraints axis calculation
 
 ## 0.23.0
 
