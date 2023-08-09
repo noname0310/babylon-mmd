@@ -563,17 +563,16 @@ export class MmdPhysics {
                     pivotA: jointFinalTransformA.getTranslation(),
                     pivotB: jointFinalTransformB.getTranslation(),
 
-                    // TODO: check axis, perpAxis calculation
                     axisA: new Vector3(
-                        jointFinalTransformA.m[8],
-                        jointFinalTransformA.m[9],
-                        jointFinalTransformA.m[10]
-                    ),
+                        jointFinalTransformA.m[0],
+                        jointFinalTransformA.m[1],
+                        jointFinalTransformA.m[2]
+                    ).negateInPlace(),
                     axisB: new Vector3(
-                        jointFinalTransformB.m[8],
-                        jointFinalTransformB.m[9],
-                        jointFinalTransformB.m[10]
-                    ),
+                        jointFinalTransformB.m[0],
+                        jointFinalTransformB.m[1],
+                        jointFinalTransformB.m[2]
+                    ).negateInPlace(),
                     perpAxisA: new Vector3(
                         jointFinalTransformA.m[4],
                         jointFinalTransformA.m[5],
