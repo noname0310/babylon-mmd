@@ -171,6 +171,8 @@ Please refer to the documentation for more detailed instructions on how to use i
 
 - [x] Basic animation load
 - [x] Support custom retargeting
+- [ ] Load animation using the Babylon.js `Animation` container
+- [ ] Babylon.js `Animation` container Humanoid to MMD bone mapping
 
 **Animation Runtime**
 
@@ -180,6 +182,8 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] Solve IK
 - [x] Play audio / sync with animation
 - [x] Basic animation player UI
+- [ ] Animation blending
+- [ ] Force Humanoid Model Support
 
 **Physics Runtime**
 
