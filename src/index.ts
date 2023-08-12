@@ -1,6 +1,8 @@
 import "@/Loader/mmdOutlineRenderer";
 import "@/Loader/pmxLoader";
 import "@/Loader/Optimized/bpmxLoader";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 // Loader/Animation
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
@@ -36,7 +38,9 @@ export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChec
 export { VmdLoader } from "@/Loader/vmdLoader";
 
 // Runtime/Animation
-export { MmdRuntimeAnimation, MmdRuntimeCameraAnimation, MmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
+export { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
+export { MmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+export { MmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";

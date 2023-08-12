@@ -9,7 +9,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
-import { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeAnimation";
+import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
 import { AppendTransformSolver } from "./appendTransformSolver";
 import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
@@ -160,7 +160,7 @@ export class MmdModel {
      * @param retargetingMap Model bone name to animation bone name map
      */
     public addAnimation(animation: MmdAnimation, retargetingMap?: { [key: string]: string }): void {
-        const runtimeAnimation = MmdRuntimeModelAnimation.Create(animation, this, retargetingMap, this._logger);
+        const runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }

@@ -5,6 +5,8 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";

@@ -6,7 +6,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 
-import { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeAnimation";
+import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 
 /**
  * MMD camera
@@ -67,7 +67,7 @@ export class MmdCamera extends Camera {
      * @param animation The animation to add
      */
     public addAnimation(animation: MmdAnimation): void {
-        const runtimeAnimation = MmdRuntimeCameraAnimation.Create(animation, this);
+        const runtimeAnimation = animation.createRuntimeCameraAnimation(this);
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }

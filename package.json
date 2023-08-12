@@ -50,6 +50,8 @@
         "**/mmdOutlineRenderer.*",
         "**/pmxLoader.*",
         "**/bpmxLoader.*",
+        "**/mmdRuntimeCameraAnimation.*",
+        "**/mmdRuntimeModelAnimation.*",
         "**/index.*"
     ],
     "peerDependencies": {
