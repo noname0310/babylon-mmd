@@ -393,8 +393,8 @@ export class MmdPhysics {
             const body = new PhysicsBody(node, motionType, false, scene);
             body.shape = shape;
             body.setMassProperties({ mass: rigidBody.mass });
-            // TODO: fix linearDamping calculation
-            body.setLinearDamping(6 /* rigidBody.linearDamping */);
+            // TODO: fix linearDamping calculation (multiply by 10 is nonsense)
+            body.setLinearDamping(rigidBody.linearDamping * 10);
             body.setAngularDamping(rigidBody.angularDamping);
             body.computeMassProperties();
 

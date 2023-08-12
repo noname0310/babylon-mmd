@@ -59,7 +59,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // Use havok physics engine for rigid body/joint simulation
     const havokInstance = await HavokPhysics();
     const havokPlugin = new HavokPlugin(true, havokInstance);
-    scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
+    scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
     
     // MMD runtime for solving morph, append transform, IK, animation, physics
     const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));

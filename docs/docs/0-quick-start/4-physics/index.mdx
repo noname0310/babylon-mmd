@@ -9,7 +9,7 @@ Enable the physics using havok physics engine.
 ```typescript title="src/sceneBuilder.ts"
 import HavokPhysics from "@babylonjs/havok";
 // ...
-scene.enablePhysics(new Vector3(0, -9.8, 0), new HavokPlugin(true, await HavokPhysics()));
+scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), new HavokPlugin(true, await HavokPhysics()));
 ```
 
 ## Use MMD Physics

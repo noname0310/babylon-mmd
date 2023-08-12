@@ -138,7 +138,7 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.addShadowCaster(mmdMesh);
 
         // // enable physics
-        scene.enablePhysics(new Vector3(0, -9.8, 0), new HavokPlugin(true, await HavokPhysics()));
+        scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), new HavokPlugin(true, await HavokPhysics()));
 
         // create mmd runtime
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
