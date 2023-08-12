@@ -132,7 +132,7 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.addShadowCaster(ground);
 
         // load mmd model
-        const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx", undefined, scene)
+        const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
             .then((result) => result.meshes[0] as Mesh);
         mmdMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);

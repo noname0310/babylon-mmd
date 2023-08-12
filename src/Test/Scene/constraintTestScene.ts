@@ -80,8 +80,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "res/constraint_test3.pmx",
-            undefined,
+            "res/",
+            "constraint_test3.pmx",
             scene
         ).then(result => result.meshes[0]);
         mmdMesh.receiveShadows = true;

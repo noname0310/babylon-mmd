@@ -25,8 +25,8 @@ engine.displayLoadingUI();
 bpmxLoader.boundingBoxMargin = 60;
 const modelMesh = await SceneLoader.ImportMeshAsync(
     undefined,
-    "res/YYB Piano dress Miku.bpmx",
-    undefined,
+    "res/",
+    "YYB Piano dress Miku.bpmx",
     scene,
     (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
 ).then((result) => result.meshes[0] as Mesh);
@@ -77,8 +77,8 @@ bpmxLoader.buildMorph = false;
 // promises.push(
 await SceneLoader.ImportMeshAsync(
     undefined,
-    "res/ガラス片ドームB.bpmx",
-    undefined,
+    "res/",
+    "ガラス片ドームB.bpmx",
     scene,
     (event) => engine.loadingUIText = `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
 );
@@ -115,8 +115,8 @@ const promises: Promise<any>[] = [];
 bpmxLoader.boundingBoxMargin = 60;
 promises.push(SceneLoader.ImportMeshAsync(
     undefined,
-    "res/YYB Piano dress Miku.bpmx",
-    undefined,
+    "res/",
+    "YYB Piano dress Miku.bpmx",
     scene,
     (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
 ).then((result) => result.meshes[0] as Mesh));
@@ -126,8 +126,8 @@ bpmxLoader.buildSkeleton = false;
 bpmxLoader.buildMorph = false;
 promises.push(SceneLoader.ImportMeshAsync(
     undefined,
-    "res/ガラス片ドームB.bpmx",
-    undefined,
+    "res/",
+    "ガラス片ドームB.bpmx",
     scene,
     (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
 ));

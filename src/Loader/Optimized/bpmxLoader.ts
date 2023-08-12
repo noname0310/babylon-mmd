@@ -669,7 +669,7 @@ export class BpmxLoader implements ISceneLoaderPluginAsync, ILogger {
 
         applyTextureLoading = true;
         await textureLoadPromise;
-        
+
         mesh.setEnabled(true);
 
         if (assetContainer !== null) {

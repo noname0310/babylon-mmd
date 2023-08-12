@@ -29,7 +29,7 @@ import "babylon-mmd/esm/Loader/pmxLoader";
 Then, load the model using the `SceneLoader`.
 
 ```typescript title="src/sceneBuilder.ts"
-const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx", undefined, scene)
+const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
     .then((result) => result.meshes[0] as Mesh);
 mmdMesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(mmdMesh);
@@ -37,8 +37,8 @@ shadowGenerator.addShadowCaster(mmdMesh);
 
 - `SceneLoader.ImportMeshAsync` - Load the model using the `SceneLoader` (All other loading methods are supported, but this example uses `ImportMeshAsync`).
     - `""` - this parameter is not used in PMX loading.
-    - `"res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"` - the path to the model file.
-    - `undefined` - If you pass a File object, you can load the model from the File object.
+    - `"res/YYB Hatsune Miku_10th/"` - the path to the model file.
+    - `"YYB Hatsune Miku_10th_v1.02.pmx"` - If you pass a File object, you can load the model from the File object.
     - `scene` - the scene to load the model into.
 
 - An importMeshAsync call in pmx file guarantees that result.meshes length is always 1.
