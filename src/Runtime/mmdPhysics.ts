@@ -395,7 +395,7 @@ export class MmdPhysics {
             body.setMassProperties({ mass: rigidBody.mass });
             // TODO: fix linearDamping calculation (multiply by 10 is nonsense)
             body.setLinearDamping(rigidBody.linearDamping * 10);
-            body.setAngularDamping(rigidBody.angularDamping);
+            body.setAngularDamping(rigidBody.angularDamping * 10);
             body.computeMassProperties();
 
             nodes.push(node);
@@ -582,7 +582,8 @@ export class MmdPhysics {
                         jointFinalTransformB.m[4],
                         jointFinalTransformB.m[5],
                         jointFinalTransformB.m[6]
-                    )
+                    ),
+                    collision: true
                 },
                 limits,
                 scene
