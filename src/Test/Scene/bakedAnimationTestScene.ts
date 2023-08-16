@@ -131,8 +131,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
+        groundMaterial.useLogarithmicDepth = true;
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
-        ground.setEnabled(false);
 
         const mmdRuntime = new MmdRuntime();
         mmdRuntime.loggingEnabled = true;
