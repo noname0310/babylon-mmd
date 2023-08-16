@@ -12,7 +12,7 @@
 
 - **breaking change** BVMD format updated to 2.0.0. Files of version 1.0.0 are no longer compatible. Please re-convert VMD files
 
-- `BvmdLoader.loadFromBufferAsync`` is removed because it ended in less than 1 ms
+- `BvmdLoader.loadFromBufferAsync` is removed because it ended in less than 1 ms
 
 ## 0.23.0
 
