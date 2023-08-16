@@ -38,6 +38,10 @@ Here is the code to build a scene with a simple MMD model and play a VMD animati
 // side effects that register the loader
 import "babylon-mmd/esm/Loader/pmxLoader";
 
+// side effects that register the animation runtime
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     // If you don't want full SDEF support on shadow / depth rendering, you can comment out this line as well. While using SDEF can provide similar results to MMD, it comes with a higher cost.
     SdefInjector.OverrideEngineCreateEffect(engine);

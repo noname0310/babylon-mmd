@@ -47,6 +47,15 @@ promises.push(bvmdLoader.loadAsync("motion_1", "res/pizzicato_drops_yyb_piano_mi
 
 - `bvmdLoader.loadAsync(name, fileOrUrl, onProgress)` - Load BVMD file. `name` is the name of the animation. `onProgress` is a callback function that is called during loading.
 
+For handle `MmdAnimation` we need to import animtion runtime side-effect.
+
+```typescript title="src/sceneBuilder.ts"
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+```
+
+Here's how to add and play animations.
+
 ```typescript title="src/sceneBuilder.ts"
 mmdCamera.addAnimation(loadResults[2]);
 mmdCamera.setAnimation("motion_1");
@@ -105,7 +114,9 @@ Here's the code up to this point:
 <details> <summary>src/sceneBuilder.ts</summary>
 
 ```typescript
-iimport "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Loading/loadingScreen";
 

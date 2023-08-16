@@ -2,9 +2,17 @@
 
 ## 0.24.0
 
-- shows the mesh when all texture loads and shaders are compiled
+- #11 shows the mesh when all texture loads and shaders are compiled
 
 - fix constraints axis calculation
+
+- #5 improve physics parameter import
+
+- now you need import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation" and "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" side effect to use MMD animation runtime
+
+- **breaking change** BVMD format updated to 2.0.0. Files of version 1.0.0 are no longer compatible. Please re-convert VMD files
+
+- `BvmdLoader.loadFromBufferAsync`` is removed because it ended in less than 1 ms
 
 ## 0.23.0
 

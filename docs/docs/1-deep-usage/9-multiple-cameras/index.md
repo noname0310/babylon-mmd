@@ -98,6 +98,8 @@ For detailed explanation, please check jsdoc and source code. For questions and 
 
 ```typescript title="src/sceneBuilder.ts"
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";

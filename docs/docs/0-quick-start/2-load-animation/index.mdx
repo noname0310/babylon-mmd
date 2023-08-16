@@ -59,6 +59,15 @@ const cameraMotion = await vmdLoader.loadAsync("camera_motion_1",
 - The motion we are currently using is divided into skeleton, facial, and lip components. While combining them in advance and loading as one would be more performance-efficient, in this tutorial, we will use a feature to merge multiple motions into one.
     - By looking at the code for creating `modelMotion` you can identify the merging method.
 
+For handle `MmdAnimation` we need to import animtion runtime side-effect.
+
+```typescript title="src/sceneBuilder.ts"
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+```
+
+Here's how to add and play animations.
+
 ```typescript title="src/sceneBuilder.ts"
 mmdModel.addAnimation(modelMotion);
 mmdModel.setAnimation("model_motion_1");

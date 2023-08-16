@@ -1,7 +1,7 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
+import { VmdConverterScene } from "./Scene/vmdConverterScene";
 
 window.onload = (): void => {
     const canvas = document.createElement("canvas");
@@ -27,6 +27,6 @@ window.onload = (): void => {
     BaseRuntime.Create({
         canvas,
         engine,
-        sceneBuilder: new SceneBuilder()
+        sceneBuilder: new VmdConverterScene()
     }).then(runtime => runtime.run());
 };
