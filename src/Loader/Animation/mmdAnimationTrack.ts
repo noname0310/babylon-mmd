@@ -26,16 +26,25 @@ export abstract class MmdAnimationTrack {
      * @param trackType Track type
      * @param trackName Track name for bind to model
      * @param frameCount Frame count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param byteOffset Byte offset of frame numbers in arrayBuffer
      */
     public constructor(
         trackType: string,
         trackName: string,
-        frameCount: number
+        frameCount: number,
+        arrayBuffer?: ArrayBufferLike,
+        byteOffset?: number
     ) {
         this.trackType = trackType;
 
         this.name = trackName;
-        this.frameNumbers = new Uint32Array(frameCount);
+
+        if (arrayBuffer === undefined) {
+            this.frameNumbers = new Uint32Array(frameCount);
+        } else {
+            this.frameNumbers = new Uint32Array(arrayBuffer, byteOffset, frameCount);
+        }
     }
 
     /**
@@ -97,15 +106,28 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack {
      * Create a new `MmdBoneAnimationTrack` instance
      * @param trackName track name for bind to model's bone
      * @param frameCount frame count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
+     * @param rotationByteOffset Byte offset of rotations in arrayBuffer
+     * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in arrayBuffer
      */
     public constructor(
         trackName: string,
-        frameCount: number
+        frameCount: number,
+        arrayBuffer?: ArrayBufferLike,
+        frameNumberByteOffset?: number,
+        rotationByteOffset?: number,
+        rotationInterpolationByteOffset?: number
     ) {
-        super("bone", trackName, frameCount);
+        super("bone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
-        this.rotations = new Float32Array(frameCount * 4);
-        this.rotationInterpolations = new Uint8Array(frameCount * 4);
+        if (arrayBuffer === undefined) {
+            this.rotations = new Float32Array(frameCount * 4);
+            this.rotationInterpolations = new Uint8Array(frameCount * 4);
+        } else {
+            this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
+            this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
+        }
     }
 }
 
@@ -154,18 +176,38 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
      * Create a new `MmdMovableBoneAnimationTrack` instance
      * @param trackName Track name for bind to model's bone
      * @param frameCount Frame count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
+     * @param positionByteOffset Byte offset of positions in arrayBuffer
+     * @param positionInterpolationByteOffset Byte offset of position interpolations in arrayBuffer
+     * @param rotationByteOffset Byte offset of rotations in arrayBuffer
+     * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in arrayBuffer
      */
     public constructor(
         trackName: string,
-        frameCount: number
+        frameCount: number,
+        arrayBuffer?: ArrayBufferLike,
+        frameNumberByteOffset?: number,
+        positionByteOffset?: number,
+        positionInterpolationByteOffset?: number,
+        rotationByteOffset?: number,
+        rotationInterpolationByteOffset?: number
     ) {
-        super("moveableBone", trackName, frameCount);
+        super("moveableBone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
-        this.positions = new Float32Array(frameCount * 3);
-        this.positionInterpolations = new Uint8Array(frameCount * 12);
+        if (arrayBuffer === undefined) {
+            this.positions = new Float32Array(frameCount * 3);
+            this.positionInterpolations = new Uint8Array(frameCount * 12);
 
-        this.rotations = new Float32Array(frameCount * 4);
-        this.rotationInterpolations = new Uint8Array(frameCount * 4);
+            this.rotations = new Float32Array(frameCount * 4);
+            this.rotationInterpolations = new Uint8Array(frameCount * 4);
+        } else {
+            this.positions = new Float32Array(arrayBuffer, positionByteOffset, frameCount * 3);
+            this.positionInterpolations = new Uint8Array(arrayBuffer, positionInterpolationByteOffset, frameCount * 12);
+
+            this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
+            this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
+        }
     }
 }
 
@@ -190,14 +232,24 @@ export class MmdMorphAnimationTrack extends MmdAnimationTrack {
      * Create a new `MmdMorphAnimationTrack` instance
      * @param trackName Track name for bind to model's morph
      * @param frameCount Frame count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
+     * @param weightByteOffset Byte offset of weights in arrayBuffer
      */
     public constructor(
         trackName: string,
-        frameCount: number
+        frameCount: number,
+        arrayBuffer?: ArrayBufferLike,
+        frameNumberByteOffset?: number,
+        weightByteOffset?: number
     ) {
-        super("morph", trackName, frameCount);
+        super("morph", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
-        this.weights = new Float32Array(frameCount);
+        if (arrayBuffer === undefined) {
+            this.weights = new Float32Array(frameCount);
+        } else {
+            this.weights = new Float32Array(arrayBuffer, weightByteOffset, frameCount);
+        }
     }
 }
 
@@ -282,23 +334,73 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
     /**
      * Create a new `MmdCameraAnimationTrack` instance
      * @param frameCount Frame count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
+     * @param positionByteOffset Byte offset of positions in arrayBuffer
+     * @param positionInterpolationByteOffset Byte offset of position interpolations in arrayBuffer
+     * @param rotationByteOffset Byte offset of rotations in arrayBuffer
+     * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in arrayBuffer
+     * @param distanceByteOffset Byte offset of distances in arrayBuffer
+     * @param distanceInterpolationByteOffset Byte offset of distance interpolations in arrayBuffer
+     * @param fovByteOffset Byte offset of fovs in arrayBuffer
+     * @param fovInterpolationByteOffset Byte offset of fov interpolations in arrayBuffer
      */
     public constructor(
-        frameCount: number
+        frameCount: number,
+        arrayBuffer?: ArrayBufferLike,
+        frameNumberByteOffset?: number,
+        positionByteOffset?: number,
+        positionInterpolationByteOffset?: number,
+        rotationByteOffset?: number,
+        rotationInterpolationByteOffset?: number,
+        distanceByteOffset?: number,
+        distanceInterpolationByteOffset?: number,
+        fovByteOffset?: number,
+        fovInterpolationByteOffset?: number
     ) {
-        super("camera", "cameraTrack", frameCount);
+        super("camera", "cameraTrack", frameCount, arrayBuffer, frameNumberByteOffset);
 
-        this.positions = new Float32Array(frameCount * 3);
-        this.positionInterpolations = new Uint8Array(frameCount * 12);
+        if (arrayBuffer === undefined) {
+            this.positions = new Float32Array(frameCount * 3);
+            this.positionInterpolations = new Uint8Array(frameCount * 12);
 
-        this.rotations = new Float32Array(frameCount * 3);
-        this.rotationInterpolations = new Uint8Array(frameCount * 4);
+            this.rotations = new Float32Array(frameCount * 3);
+            this.rotationInterpolations = new Uint8Array(frameCount * 4);
 
-        this.distances = new Float32Array(frameCount);
-        this.distanceInterpolations = new Uint8Array(frameCount * 4);
+            this.distances = new Float32Array(frameCount);
+            this.distanceInterpolations = new Uint8Array(frameCount * 4);
 
-        this.fovs = new Float32Array(frameCount);
-        this.fovInterpolations = new Uint8Array(frameCount * 4);
+            this.fovs = new Float32Array(frameCount);
+            this.fovInterpolations = new Uint8Array(frameCount * 4);
+        } else {
+            this.positions = new Float32Array(arrayBuffer, positionByteOffset, frameCount * 3);
+            this.positionInterpolations = new Uint8Array(
+                arrayBuffer,
+                positionInterpolationByteOffset,
+                frameCount * 12
+            );
+
+            this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 3);
+            this.rotationInterpolations = new Uint8Array(
+                arrayBuffer,
+                rotationInterpolationByteOffset,
+                frameCount * 4
+            );
+
+            this.distances = new Float32Array(arrayBuffer, distanceByteOffset, frameCount);
+            this.distanceInterpolations = new Uint8Array(
+                arrayBuffer,
+                distanceInterpolationByteOffset,
+                frameCount * 4
+            );
+
+            this.fovs = new Float32Array(arrayBuffer, fovByteOffset, frameCount);
+            this.fovInterpolations = new Uint8Array(
+                arrayBuffer,
+                fovInterpolationByteOffset,
+                frameCount * 4
+            );
+        }
     }
 }
 
@@ -324,7 +426,7 @@ export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
      *
      * Repr: [..., ikBoneName, ...]
      */
-    public readonly ikBoneNames: string[];
+    public readonly ikBoneNames: readonly string[];
     /**
      * IK state data
      *
@@ -338,19 +440,38 @@ export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
      * Create a new `MmdPropertyAnimationTrack` instance
      * @param frameCount Frame count of this track
      * @param ikBoneCount IK bone count of this track
+     * @param arrayBuffer ArrayBuffer for zero-copy initialization
+     * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
+     * @param visibleByteOffset Byte offset of visibilities in arrayBuffer
+     * @param ikStateByteOffsets Byte offsets of IK states in arrayBuffer
      */
     public constructor(
         frameCount: number,
-        ikBoneCount: number
+        ikBoneNames: readonly string[],
+        arrayBuffer?: ArrayBufferLike,
+        frameNumberByteOffset?: number,
+        visibleByteOffset?: number,
+        ikStateByteOffsets?: number[]
     ) {
-        super("property", "propertyTrack", frameCount);
+        super("property", "propertyTrack", frameCount, arrayBuffer, frameNumberByteOffset);
 
-        this.visibles = new Uint8Array(frameCount);
+        if (arrayBuffer === undefined) {
+            this.visibles = new Uint8Array(frameCount);
 
-        this.ikBoneNames = new Array(ikBoneCount);
-        this.ikStates = new Array(ikBoneCount);
-        for (let i = 0; i < ikBoneCount; ++i) {
-            this.ikStates[i] = new Uint8Array(frameCount);
+            this.ikBoneNames = ikBoneNames;
+            this.ikStates = new Array(ikBoneNames.length);
+            for (let i = 0; i < ikBoneNames.length; ++i) {
+                this.ikStates[i] = new Uint8Array(frameCount);
+            }
+        } else {
+            this.visibles = new Uint8Array(arrayBuffer, visibleByteOffset, frameCount);
+
+            this.ikBoneNames = ikBoneNames;
+            this.ikStates = new Array(ikBoneNames.length);
+            if (ikStateByteOffsets === undefined) ikStateByteOffsets = new Array(ikBoneNames.length);
+            for (let i = 0; i < ikBoneNames.length; ++i) {
+                this.ikStates[i] = new Uint8Array(arrayBuffer, ikStateByteOffsets[i], frameCount);
+            }
         }
     }
 }

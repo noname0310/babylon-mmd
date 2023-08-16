@@ -111,4 +111,8 @@ export class MmdDataSerializer {
     public get bytesAvailable(): number {
         return this._dataView.byteLength - this._offset;
     }
+
+    public static Padding(offset: number, elementSize: number): number {
+        return offset % elementSize === 0 ? 0 : elementSize - offset % elementSize;
+    }
 }

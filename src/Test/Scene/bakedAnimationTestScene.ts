@@ -9,7 +9,6 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -22,19 +21,14 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
-import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
-import { PhysicsShapeBox } from "@babylonjs/core/Physics/v2/physicsShape";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -43,7 +37,6 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
-import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
@@ -141,7 +134,7 @@ export class SceneBuilder implements ISceneBuilder {
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
         ground.setEnabled(false);
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime();
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);
@@ -149,7 +142,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/flos/flos_YuNi.mp3";
+        audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
@@ -168,14 +161,14 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/model/",
-            "yyb_deep_canyons_miku.bpmx",
+            "YYB Hatsune Miku_10th.bpmx",
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
@@ -185,18 +178,10 @@ export class SceneBuilder implements ISceneBuilder {
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/stage/",
-            "water house.bpmx",
+            "Stage35_02.bpmx",
             scene,
             (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
-
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
-        })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -247,24 +232,6 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdStageMesh = loadResults[2].meshes[0] as Mesh;
         mmdStageMesh.receiveShadows = true;
         mmdStageMesh.position.y += 0.01;
-
-        const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
-        groundRigidBody.shape = new PhysicsShapeBox(
-            new Vector3(0, -1, 0),
-            new Quaternion(),
-            new Vector3(100, 2, 100), scene);
-
-        {
-            const physicsViewer = new PhysicsViewer(scene);
-            physicsViewer;
-            // const modelMesh = loadResults[1].meshes[0] as Mesh;
-            // for (const node of modelMesh.getChildren()) {
-            //     if ((node as any).physicsBody) {
-            //         physicsViewer.showBody((node as any).physicsBody);
-            //     }
-            // }
-            // physicsViewer.showBody(groundRigidBody);
-        }
 
         const useHavyPostProcess = true;
         const useBasicPostProcess = true;

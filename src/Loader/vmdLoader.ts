@@ -572,19 +572,21 @@ export class VmdLoader {
                 }
             }
         }
-        const propertyTrack = new MmdPropertyAnimationTrack(duplicateResolvedPropertyKeyFrames.length, ikStates.size);
+
+        const ikBoneNames: string[] = new Array(ikStates.size);
+        const ikboneIndexMap: Map<string, number> = new Map();
         {
-            const boneNameMap: string[] = new Array(ikStates.size);
-            const boneIndexMap: Map<string, number> = new Map();
             let ikStateIndex = 0;
             for (const ikState of ikStates) {
-                boneNameMap[ikStateIndex] = ikState;
-                boneIndexMap.set(ikState, ikStateIndex);
+                ikboneIndexMap.set(ikState, ikStateIndex);
 
-                propertyTrack.ikBoneNames[ikStateIndex] = ikState;
+                ikBoneNames[ikStateIndex] = ikState;
                 ikStateIndex += 1;
             }
+        }
 
+        const propertyTrack = new MmdPropertyAnimationTrack(duplicateResolvedPropertyKeyFrames.length, ikBoneNames);
+        {
             const keyExistsCheckArray = new Uint8Array(ikStates.size);
 
             for (let i = 0; i < duplicateResolvedPropertyKeyFrames.length; ++i) {
@@ -599,7 +601,7 @@ export class VmdLoader {
                 keyExistsCheckArray.fill(0);
                 for (let j = 0; j < propertyKeyFrameIkStates.length; ++j) {
                     const ikState = propertyKeyFrameIkStates[j];
-                    const boneIndex = boneIndexMap.get(ikState[0])!;
+                    const boneIndex = ikboneIndexMap.get(ikState[0])!;
                     propertyTrackIkStates[boneIndex][i] = ikState[1] ? 1 : 0;
 
                     keyExistsCheckArray[boneIndex] = 1;

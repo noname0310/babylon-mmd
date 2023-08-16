@@ -144,6 +144,14 @@ export class MmdDataDeserializer {
         return decoder.decode(bytes);
     }
 
+    public getPaddedArrayOffset(elementSize: number, length: number): number {
+        this._offset += this._offset % elementSize === 0 ? 0 : elementSize - this._offset % elementSize;
+        const offset = this._offset;
+        this._offset += elementSize * length;
+
+        return offset;
+    }
+
     public get bytesAvailable(): number {
         return this._dataView.byteLength - this._offset;
     }
