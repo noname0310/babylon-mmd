@@ -92,7 +92,7 @@ export class BpmxReader {
         let time = performance.now();
 
         const positions = new Float32Array(vertexCount * 3);
-        dataDeserializer.getFloat32Array(positions, positions.length);
+        dataDeserializer.getFloat32Array(positions);
 
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
@@ -100,7 +100,7 @@ export class BpmxReader {
         }
 
         const normals = new Float32Array(vertexCount * 3);
-        dataDeserializer.getFloat32Array(normals, normals.length);
+        dataDeserializer.getFloat32Array(normals);
 
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
@@ -108,7 +108,7 @@ export class BpmxReader {
         }
 
         const uvs = new Float32Array(vertexCount * 2);
-        dataDeserializer.getFloat32Array(uvs, uvs.length);
+        dataDeserializer.getFloat32Array(uvs);
 
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
@@ -121,9 +121,9 @@ export class BpmxReader {
             ? new Uint16Array(indicesCount)
             : new Uint32Array(indicesCount);
         if (indicesBytePerElement === 2) {
-            dataDeserializer.getUint16Array(indices as Uint16Array, indices.length);
+            dataDeserializer.getUint16Array(indices as Uint16Array);
         } else {
-            dataDeserializer.getUint32Array(indices as Uint32Array, indices.length);
+            dataDeserializer.getUint32Array(indices as Uint32Array);
         }
 
         if (100 < performance.now() - time) {
@@ -132,10 +132,10 @@ export class BpmxReader {
         }
 
         const matricesIndices = new Float32Array(vertexCount * 4);
-        dataDeserializer.getFloat32Array(matricesIndices, matricesIndices.length);
+        dataDeserializer.getFloat32Array(matricesIndices);
 
         const matricesWeights = new Float32Array(vertexCount * 4);
-        dataDeserializer.getFloat32Array(matricesWeights, matricesWeights.length);
+        dataDeserializer.getFloat32Array(matricesWeights);
 
         if (100 < performance.now() - time) {
             await new Promise(resolve => setTimeout(resolve, 0));
@@ -150,9 +150,9 @@ export class BpmxReader {
         } : undefined;
 
         if (hasSdef) {
-            dataDeserializer.getFloat32Array(sdef!.c, sdef!.c.length);
-            dataDeserializer.getFloat32Array(sdef!.r0, sdef!.r0.length);
-            dataDeserializer.getFloat32Array(sdef!.r1, sdef!.r1.length);
+            dataDeserializer.getFloat32Array(sdef!.c);
+            dataDeserializer.getFloat32Array(sdef!.r0);
+            dataDeserializer.getFloat32Array(sdef!.r1);
         }
 
         if (100 < performance.now() - time) {
@@ -182,7 +182,7 @@ export class BpmxReader {
             const relativePath = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
             const byteLength = dataDeserializer.getUint32();
             const data = new ArrayBuffer(byteLength);
-            dataDeserializer.getUint8Array(new Uint8Array(data), byteLength);
+            dataDeserializer.getUint8Array(new Uint8Array(data));
 
             textures.push({
                 relativePath,
@@ -396,10 +396,10 @@ export class BpmxReader {
             case PmxObject.Morph.Type.GroupMorph:
                 {
                     const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices, indices.length);
+                    dataDeserializer.getInt32Array(indices);
 
                     const ratios = new Float32Array(elementCount);
-                    dataDeserializer.getFloat32Array(ratios, ratios.length);
+                    dataDeserializer.getFloat32Array(ratios);
 
                     morph = <PmxObject.Morph.GroupMorph>{
                         ...morph,
@@ -412,10 +412,10 @@ export class BpmxReader {
             case PmxObject.Morph.Type.VertexMorph:
                 {
                     const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices, indices.length);
+                    dataDeserializer.getInt32Array(indices);
 
                     const positions = new Float32Array(elementCount * 3);
-                    dataDeserializer.getFloat32Array(positions, positions.length);
+                    dataDeserializer.getFloat32Array(positions);
 
                     morph = <PmxObject.Morph.VertexMorph>{
                         ...morph,
@@ -428,13 +428,13 @@ export class BpmxReader {
             case PmxObject.Morph.Type.BoneMorph:
                 {
                     const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices, indices.length);
+                    dataDeserializer.getInt32Array(indices);
 
                     const positions = new Float32Array(elementCount * 3);
-                    dataDeserializer.getFloat32Array(positions, positions.length);
+                    dataDeserializer.getFloat32Array(positions);
 
                     const rotations = new Float32Array(elementCount * 4);
-                    dataDeserializer.getFloat32Array(rotations, rotations.length);
+                    dataDeserializer.getFloat32Array(rotations);
 
                     morph = <PmxObject.Morph.BoneMorph>{
                         ...morph,
@@ -452,10 +452,10 @@ export class BpmxReader {
             case PmxObject.Morph.Type.AdditionalUvMorph4:
                 {
                     const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices, indices.length);
+                    dataDeserializer.getInt32Array(indices);
 
                     const offsets = new Float32Array(elementCount * 4);
-                    dataDeserializer.getFloat32Array(offsets, offsets.length);
+                    dataDeserializer.getFloat32Array(offsets);
 
                     morph = <PmxObject.Morph.UvMorph>{
                         ...morph,

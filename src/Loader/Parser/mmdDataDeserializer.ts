@@ -38,8 +38,8 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getUint8Array(dest: Uint8Array, length: number): void {
-        for (let i = 0; i < length; ++i) {
+    public getUint8Array(dest: Uint8Array): void {
+        for (let i = 0; i < dest.length; ++i) {
             dest[i] = this._dataView.getUint8(this._offset);
             this._offset += 1;
         }
@@ -51,8 +51,8 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getUint16Array(dest: Uint16Array, length: number): void {
-        for (let i = 0; i < length; ++i) {
+    public getUint16Array(dest: Uint16Array): void {
+        for (let i = 0; i < dest.length; ++i) {
             dest[i] = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 2;
         }
@@ -70,8 +70,8 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getUint32Array(dest: Uint32Array, length: number): void {
-        for (let i = 0; i < length; ++i) {
+    public getUint32Array(dest: Uint32Array): void {
+        for (let i = 0; i < dest.length; ++i) {
             dest[i] = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 4;
         }
@@ -83,8 +83,8 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getInt32Array(dest: Int32Array, length: number): void {
-        for (let i = 0; i < length; ++i) {
+    public getInt32Array(dest: Int32Array): void {
+        for (let i = 0; i < dest.length; ++i) {
             dest[i] = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 4;
         }
@@ -96,8 +96,8 @@ export class MmdDataDeserializer {
         return value;
     }
 
-    public getFloat32Array(dest: Float32Array, length: number): void {
-        for (let i = 0; i < length; ++i) {
+    public getFloat32Array(dest: Float32Array): void {
+        for (let i = 0; i < dest.length; ++i) {
             dest[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
             this._offset += 4;
         }
