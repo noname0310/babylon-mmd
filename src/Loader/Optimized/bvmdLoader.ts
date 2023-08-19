@@ -72,7 +72,7 @@ export class BvmdLoader {
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
 
-            boneTracks[i] = new MmdBoneAnimationTrack(
+            const boneTrack = boneTracks[i] = new MmdBoneAnimationTrack(
                 trackName,
                 frameCount,
                 buffer,
@@ -80,6 +80,10 @@ export class BvmdLoader {
                 rotationByteOffset,
                 rotationInterpolationByteOffset
             );
+            if (!deserializer.isDeviceLittleEndian) {
+                deserializer.swap32Array(boneTrack.frameNumbers);
+                deserializer.swap32Array(boneTrack.rotations);
+            }
         }
 
         const moveableBoneTrackCount = deserializer.getUint32();
@@ -93,7 +97,7 @@ export class BvmdLoader {
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
 
-            moveableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
+            const moveableBoneTrack = moveableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
                 trackName,
                 frameCount,
                 buffer,
@@ -103,6 +107,11 @@ export class BvmdLoader {
                 rotationByteOffset,
                 rotationInterpolationByteOffset
             );
+            if (!deserializer.isDeviceLittleEndian) {
+                deserializer.swap32Array(moveableBoneTrack.frameNumbers);
+                deserializer.swap32Array(moveableBoneTrack.positions);
+                deserializer.swap32Array(moveableBoneTrack.rotations);
+            }
         }
 
         const morphTrackCount = deserializer.getUint32();
@@ -113,13 +122,17 @@ export class BvmdLoader {
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
             const weightByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
 
-            morphTracks[i] = new MmdMorphAnimationTrack(
+            const morphTrack = morphTracks[i] = new MmdMorphAnimationTrack(
                 trackName,
                 frameCount,
                 buffer,
                 frameNumberByteOffset,
                 weightByteOffset
             );
+            if (!deserializer.isDeviceLittleEndian) {
+                deserializer.swap32Array(morphTrack.frameNumbers);
+                deserializer.swap32Array(morphTrack.weights);
+            }
         }
 
         const propertyFrameCount = deserializer.getUint32();
@@ -142,6 +155,9 @@ export class BvmdLoader {
             propertyVisibleByteOffset,
             propertyIkStateByteOffsets
         );
+        if (!deserializer.isDeviceLittleEndian) {
+            deserializer.swap32Array(propertyTrack.frameNumbers);
+        }
 
         const cameraFrameCount = deserializer.getUint32();
         const cameraFrameNumberByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount);
@@ -167,6 +183,13 @@ export class BvmdLoader {
             cameraFovByteOffset,
             cameraFovInterpolationByteOffset
         );
+        if (!deserializer.isDeviceLittleEndian) {
+            deserializer.swap32Array(cameraTrack.frameNumbers);
+            deserializer.swap32Array(cameraTrack.positions);
+            deserializer.swap32Array(cameraTrack.rotations);
+            deserializer.swap32Array(cameraTrack.distances);
+            deserializer.swap32Array(cameraTrack.fovs);
+        }
 
         return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, propertyTrack, cameraTrack);
     }

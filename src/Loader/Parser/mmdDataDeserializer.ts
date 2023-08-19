@@ -6,13 +6,13 @@ type Tuple<T, N extends number> = N extends N
     : never;
 
 export class MmdDataDeserializer {
-    private static readonly _LittleEndian = true;
-
+    public readonly isDeviceLittleEndian: boolean;
     private readonly _dataView: DataView;
     private _decoder: TextDecoder | null;
     private _offset: number;
 
     public constructor(arrayBuffer: ArrayBufferLike) {
+        this.isDeviceLittleEndian = this._getIsDeviceLittleEndian();
         this._dataView = new DataView(arrayBuffer);
         this._decoder = null;
         this._offset = 0;
@@ -24,6 +24,25 @@ export class MmdDataDeserializer {
 
     public set offset(value: number) {
         this._offset = value;
+    }
+
+    private _getIsDeviceLittleEndian(): boolean {
+        const array = new Int16Array([256]);
+        return new Int8Array(array.buffer)[1] === 1;
+    }
+
+    public swap16Array(array: Int16Array | Uint16Array): void {
+        for (let i = 0; i < array.length; ++i) {
+            const value = array[i];
+            array[i] = ((value & 0xFF) << 8) | ((value >> 8) & 0xFF);
+        }
+    }
+
+    public swap32Array(array: Int32Array | Uint32Array | Float32Array): void {
+        for (let i = 0; i < array.length; ++i) {
+            const value = array[i];
+            array[i] = ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+        }
     }
 
     public getUint8(): number {
@@ -39,74 +58,77 @@ export class MmdDataDeserializer {
     }
 
     public getUint8Array(dest: Uint8Array): void {
-        for (let i = 0; i < dest.length; ++i) {
-            dest[i] = this._dataView.getUint8(this._offset);
-            this._offset += 1;
-        }
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        dest.set(source);
+        this._offset += dest.byteLength;
     }
 
     public getUint16(): number {
-        const value = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
+        const value = this._dataView.getUint16(this._offset, true);
         this._offset += 2;
         return value;
     }
 
     public getUint16Array(dest: Uint16Array): void {
-        for (let i = 0; i < dest.length; ++i) {
-            dest[i] = this._dataView.getUint16(this._offset, MmdDataDeserializer._LittleEndian);
-            this._offset += 2;
-        }
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap16Array(dest);
     }
 
     public getInt16(): number {
-        const value = this._dataView.getInt16(this._offset, MmdDataDeserializer._LittleEndian);
+        const value = this._dataView.getInt16(this._offset, true);
         this._offset += 2;
         return value;
     }
 
     public getUint32(): number {
-        const value = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
+        const value = this._dataView.getUint32(this._offset, true);
         this._offset += 4;
         return value;
     }
 
     public getUint32Array(dest: Uint32Array): void {
-        for (let i = 0; i < dest.length; ++i) {
-            dest[i] = this._dataView.getUint32(this._offset, MmdDataDeserializer._LittleEndian);
-            this._offset += 4;
-        }
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     public getInt32(): number {
-        const value = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
+        const value = this._dataView.getInt32(this._offset, true);
         this._offset += 4;
         return value;
     }
 
     public getInt32Array(dest: Int32Array): void {
-        for (let i = 0; i < dest.length; ++i) {
-            dest[i] = this._dataView.getInt32(this._offset, MmdDataDeserializer._LittleEndian);
-            this._offset += 4;
-        }
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     public getFloat32(): number {
-        const value = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
+        const value = this._dataView.getFloat32(this._offset, true);
         this._offset += 4;
         return value;
     }
 
     public getFloat32Array(dest: Float32Array): void {
-        for (let i = 0; i < dest.length; ++i) {
-            dest[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
-            this._offset += 4;
-        }
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     public getFloat32Tuple<N extends number>(length: N): Tuple<number, N> {
         const result = new Array<number>(length);
         for (let i = 0; i < length; ++i) {
-            result[i] = this._dataView.getFloat32(this._offset, MmdDataDeserializer._LittleEndian);
+            result[i] = this._dataView.getFloat32(this._offset, true);
             this._offset += 4;
         }
         return result as Tuple<number, N>;

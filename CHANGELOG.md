@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0
+
+- improve parse speed of PMX, BPMX and VMD
+- big-endian device support
+
 ## 0.24.0
 
 - #11 shows the mesh when all texture loads and shaders are compiled
