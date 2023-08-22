@@ -5,8 +5,14 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
 
+import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";
+import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
+import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
+
+type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | IMmdRuntimeCameraAnimation;
 
 /**
  * MMD camera
@@ -36,11 +42,11 @@ export class MmdCamera extends Camera {
     /**
      * Observable triggered when the current animation is changed
      */
-    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<MmdRuntimeCameraAnimation>>;
-    private readonly _animations: MmdRuntimeCameraAnimation[];
+    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeCameraAnimation>>;
+    private readonly _animations: RuntimeCameraAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
-    private _currentAnimation: Nullable<MmdRuntimeCameraAnimation>;
+    private _currentAnimation: Nullable<RuntimeCameraAnimation>;
 
     /**
      * Creates a new MMD camera
@@ -55,7 +61,7 @@ export class MmdCamera extends Camera {
         // mmd default fov
         this.fov = 30 * (Math.PI / 180);
 
-        this.onCurrentAnimationChangedObservable = new Observable<Nullable<MmdRuntimeCameraAnimation>>();
+        this.onCurrentAnimationChangedObservable = new Observable<Nullable<RuntimeCameraAnimation>>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -64,10 +70,17 @@ export class MmdCamera extends Camera {
 
     /**
      * Add an animation to the camera
-     * @param animation The animation to add
+     * @param animation  MMD animation or MMD camera animation group to add
      */
-    public addAnimation(animation: MmdAnimation): void {
-        const runtimeAnimation = animation.createRuntimeCameraAnimation(this);
+    public addAnimation(animation: MmdAnimation | MmdCameraAnimationGroup | IMmdBindableCameraAnimation): void {
+        let runtimeAnimation: RuntimeCameraAnimation;
+        if ((animation as MmdAnimation).createRuntimeCameraAnimation) {
+            runtimeAnimation = (animation as MmdAnimation).createRuntimeCameraAnimation(this);
+        } else if ((animation as IMmdBindableCameraAnimation).createRuntimeAnimation) {
+            runtimeAnimation = (animation as IMmdBindableCameraAnimation).createRuntimeAnimation(this);
+        } else {
+            throw new Error("animation is not MmdAnimation or IMmdBindableModelAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\"?");
+        }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }
@@ -114,14 +127,14 @@ export class MmdCamera extends Camera {
     /**
      * Get the animations of the camera
      */
-    public get runtimeAnimations(): readonly MmdRuntimeCameraAnimation[] {
+    public get runtimeAnimations(): readonly RuntimeCameraAnimation[] {
         return this._animations;
     }
 
     /**
      * Get the current animation of the camera
      */
-    public get currentAnimation(): Nullable<MmdRuntimeCameraAnimation> {
+    public get currentAnimation(): Nullable<RuntimeCameraAnimation> {
         return this._currentAnimation;
     }
 

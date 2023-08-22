@@ -13,6 +13,7 @@ import type { IIkSolver } from "../ikSolver";
 import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
+import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 import { MmdInterpolator, MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
 type MorphIndices = readonly number[];
@@ -22,9 +23,9 @@ type MorphIndices = readonly number[];
  *
  * An object with mmd animation and model binding information
  */
-export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation {
+export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> implements IMmdRuntimeModelAnimation {
     /**
-     * Mmd animation
+     * The animation data
      */
     public readonly animation: MmdAnimation;
 

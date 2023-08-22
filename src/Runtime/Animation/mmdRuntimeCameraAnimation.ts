@@ -4,6 +4,7 @@ import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 
 import type { MmdCamera } from "../mmdCamera";
+import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
 import { MmdInterpolator, MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
 /**
@@ -11,7 +12,10 @@ import { MmdInterpolator, MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
  *
  * An object with mmd animation and camera binding information
  */
-export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation {
+export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnimationTrack> implements IMmdRuntimeCameraAnimation {
+    /**
+     * The animation data
+     */
     public readonly animation: MmdCameraAnimationTrack;
 
     private readonly _camera: MmdCamera;

@@ -2,11 +2,16 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Loader/pmxLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 
 // Loader/Animation
+export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+export { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
+export { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 
 // Loader/Optimized/Parser
 export { BpmxObject } from "@/Loader/Optimized/Parser/bpmxObject";
@@ -38,9 +43,13 @@ export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChec
 export { VmdLoader } from "@/Loader/vmdLoader";
 
 // Runtime/Animation
+export { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "@/Runtime/Animation/IMmdBindableAnimation";
+export { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 export { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 export { MmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+export { MmdRuntimeCameraAnimationGroup } from "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
 export { MmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation";
+export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";

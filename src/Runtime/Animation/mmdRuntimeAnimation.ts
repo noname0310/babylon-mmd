@@ -3,11 +3,16 @@ import type { MmdAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 /**
  * Mmd runtime animation base class
  */
-export abstract class MmdRuntimeAnimation {
+export abstract class MmdRuntimeAnimation<T> {
+    /**
+     * Animation data
+     */
+    public abstract readonly animation: T;
+
     private readonly _lastResults = new Map<MmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
 
     /**
-     * find frame index B to interpolate between frame A and frame B
+     * Find frame index B to interpolate between frame A and frame B
      *
      * frame time must be clamped to [startFrame, endFrame]
      *

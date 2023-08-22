@@ -7,9 +7,13 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
+import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
+import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
+import type { MmdRuntimeModelAnimationGroup } from "./Animation/mmdRuntimeModelAnimationGroup";
 import { AppendTransformSolver } from "./appendTransformSolver";
 import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
@@ -19,6 +23,8 @@ import { MmdMorphController } from "./mmdMorphController";
 import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
+
+type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | IMmdRuntimeModelAnimation;
 
 /**
  * MmdModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Runtime
@@ -49,11 +55,11 @@ export class MmdModel {
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
     private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
-    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<MmdRuntimeModelAnimation>>;
-    private readonly _animations: MmdRuntimeModelAnimation[];
+    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
+    private readonly _animations: RuntimeModelAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
 
-    private _currentAnimation: Nullable<MmdRuntimeModelAnimation>;
+    private _currentAnimation: Nullable<RuntimeModelAnimation>;
 
     /**
      * Create a MmdModel
@@ -125,7 +131,7 @@ export class MmdModel {
             this._physicsModel = null;
         }
 
-        this.onCurrentAnimationChangedObservable = new Observable<Nullable<MmdRuntimeModelAnimation>>();
+        this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
         this._animations = [];
         this._animationIndexMap = new Map();
 
@@ -156,11 +162,21 @@ export class MmdModel {
 
     /**
      * Add an animation to this model
-     * @param animation MMD animation
+     * @param animation MMD animation or MMD model animation group to add
      * @param retargetingMap Model bone name to animation bone name map
      */
-    public addAnimation(animation: MmdAnimation, retargetingMap?: { [key: string]: string }): void {
-        const runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
+    public addAnimation(
+        animation: MmdAnimation | MmdModelAnimationGroup | IMmdBindableModelAnimation,
+        retargetingMap?: { [key: string]: string }
+    ): void {
+        let runtimeAnimation: RuntimeModelAnimation;
+        if ((animation as MmdAnimation).createRuntimeModelAnimation !== undefined) {
+            runtimeAnimation = (animation as MmdAnimation).createRuntimeModelAnimation(this, retargetingMap, this._logger);
+        } else if ((animation as IMmdBindableModelAnimation).createRuntimeAnimation !== undefined) {
+            runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeAnimation(this, retargetingMap, this._logger);
+        } else {
+            throw new Error("animation is not MmdAnimation or IMmdBindableModelAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\"?");
+        }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
     }
@@ -206,14 +222,14 @@ export class MmdModel {
     /**
      * Get the animations of this model
      */
-    public get runtimeAnimations(): readonly MmdRuntimeModelAnimation[] {
+    public get runtimeAnimations(): readonly RuntimeModelAnimation[] {
         return this._animations;
     }
 
     /**
      * Get the current animation of this model
      */
-    public get currentAnimation(): Nullable<MmdRuntimeModelAnimation> {
+    public get currentAnimation(): Nullable<RuntimeModelAnimation> {
         return this._currentAnimation;
     }
 

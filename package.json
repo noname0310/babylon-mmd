@@ -51,7 +51,9 @@
         "**/pmxLoader.*",
         "**/bpmxLoader.*",
         "**/mmdRuntimeCameraAnimation.*",
+        "**/mmdRuntimeCameraAnimationGroup.*",
         "**/mmdRuntimeModelAnimation.*",
+        "**/mmdRuntimeModelAnimationGroup.*",
         "**/index.*"
     ],
     "peerDependencies": {

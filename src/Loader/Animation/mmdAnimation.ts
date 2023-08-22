@@ -1,3 +1,4 @@
+import type { IMmdAnimation } from "./IMmdAnimation";
 import type { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./mmdAnimationTrack";
 
 /**
@@ -9,7 +10,10 @@ import type { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationT
  *
  * You can save one mesh animation and one camera animation in one `MmdAnimation` instance
  */
-export class MmdAnimation {
+export class MmdAnimation implements IMmdAnimation {
+    /**
+     * Animation name for identification
+     */
     public readonly name: string;
 
     /**

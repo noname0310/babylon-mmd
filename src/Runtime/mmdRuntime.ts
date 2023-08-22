@@ -5,8 +5,7 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
-import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
+import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
@@ -362,7 +361,7 @@ export class MmdRuntime implements ILogger {
         }
     }
 
-    private readonly _onAnimationChanged = (newAnimation: Nullable<MmdRuntimeCameraAnimation | MmdRuntimeModelAnimation>): void => {
+    private readonly _onAnimationChanged = (newAnimation: Nullable<IMmdRuntimeCameraAnimation | IMmdRuntimeModelAnimation>): void => {
         if (this._useManualAnimationDuration) return;
 
         const newAnimationDuration = newAnimation?.animation.endFrame ?? 0;
