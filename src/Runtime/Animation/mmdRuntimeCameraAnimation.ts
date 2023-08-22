@@ -4,8 +4,9 @@ import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 
 import type { MmdCamera } from "../mmdCamera";
+import { CubicBezierInterpolator } from "./cubicBezierInterpolator";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
-import { MmdInterpolator, MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
+import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
 /**
  * Mmd runtime camera animation
@@ -88,21 +89,21 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
                 positions[upperBoundIndex * 3 + 2]
             );
 
-            const xWeight = MmdInterpolator.Interpolate(
+            const xWeight = CubicBezierInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
                 positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
                 positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                 positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
                 gradient
             );
-            const yWeight = MmdInterpolator.Interpolate(
+            const yWeight = CubicBezierInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
                 positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
                 positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                 positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
                 gradient
             );
-            const zWeight = MmdInterpolator.Interpolate(
+            const zWeight = CubicBezierInterpolator.Interpolate(
                 positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
                 positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
                 positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
@@ -130,7 +131,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
                 rotations[upperBoundIndex * 3 + 2]
             );
 
-            const rotationWeight = MmdInterpolator.Interpolate(
+            const rotationWeight = CubicBezierInterpolator.Interpolate(
                 rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                 rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                 rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -148,7 +149,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
             const distanceA = cameraTrack.distances[upperBoundIndexMinusOne];
             const distanceB = cameraTrack.distances[upperBoundIndex];
 
-            const distanceWeight = MmdInterpolator.Interpolate(
+            const distanceWeight = CubicBezierInterpolator.Interpolate(
                 cameraTrack.distanceInterpolations[upperBoundIndex * 4] / 127, // x1
                 cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                 cameraTrack.distanceInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -161,7 +162,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
             const fovA = cameraTrack.fovs[upperBoundIndexMinusOne];
             const fovB = cameraTrack.fovs[upperBoundIndex];
 
-            const fovWeight = MmdInterpolator.Interpolate(
+            const fovWeight = CubicBezierInterpolator.Interpolate(
                 cameraTrack.fovInterpolations[upperBoundIndex * 4] / 127, // x1
                 cameraTrack.fovInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                 cameraTrack.fovInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
