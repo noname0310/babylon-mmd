@@ -1,17 +1,12 @@
-import { AssetContainer } from "@babylonjs/core/assetContainer";
-import { Bone } from "@babylonjs/core/Bones/bone";
-import { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
-import { type ISceneLoaderAsyncResult, type ISceneLoaderPluginAsync, type ISceneLoaderPluginExtensions, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
-import { Logger } from "@babylonjs/core/Misc/logger";
 import { Tools } from "@babylonjs/core/Misc/tools";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
@@ -19,24 +14,17 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
+import type { BuildGeometryResult, BuildMaterialResult, MmdModelLoadState } from "./mmdModelLoader";
+import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
-import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import { PmxReader } from "./Parser/pmxReader";
+import type { Progress, ProgressTask } from "./progress";
 import { SdefBufferKind } from "./sdefBufferKind";
-import { SdefMesh } from "./sdefMesh";
 
-interface LoadState {
-    readonly arrayBuffer: ArrayBuffer;
-    readonly pmxFileId: string;
-    readonly materialBuilder: IMmdMaterialBuilder;
-    readonly useSdef: boolean;
-    readonly buildSkeleton: boolean;
-    readonly buildMorph: boolean;
-    readonly boundingBoxMargin: number;
+interface PmxLoadState extends MmdModelLoadState {
     readonly referenceFiles: readonly File[];
 }
 
@@ -45,64 +33,7 @@ interface LoadState {
  *
  * PMX is a binary file format that contains all the data except the texture of the model
  */
-export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
-    /**
-     * Name of the loader ("pmx")
-     */
-    public name: string;
-
-    /**
-     * Extensions supported by this loader
-     */
-    public extensions: ISceneLoaderPluginExtensions;
-
-    /**
-     * Material builder used by this loader
-     *
-     * This property can be overwritten to customize the material of the loaded model
-     */
-    public materialBuilder: IMmdMaterialBuilder;
-
-    /**
-     * Whether to use SDEF (default: true)
-     *
-     * Spherical Deformation(SDEF) is a feature that allows you to deform the model more naturally than the traditional skinning method
-     *
-     * But it uses more memory and is slower than the traditional skinning method
-     *
-     * If you are targeting a platform with limited memory or performance, you may want to disable this feature
-     */
-    public useSdef: boolean;
-
-    /**
-     * Whether to build skeleton (default: true)
-     *
-     * If you want to load a model without a skeleton, you can disable this feature
-     *
-     * This feature is useful when you want to load a model that is not animated (e.g. background object)
-     */
-    public buildSkeleton: boolean;
-
-    /**
-     * Whether to build morph (default: true)
-     *
-     * If you want to load a model without morph, you can disable this feature
-     *
-     * This feature is useful when you want to load a model that is not animated (e.g. background object)
-     */
-    public buildMorph: boolean;
-
-    /**
-     * Margin of the bounding box of the model (default: 10)
-     *
-     * This property is used to calculate the bounding box of the model
-     *
-     * If the bounding box of the model is too small, the model may not be rendered correctly
-     *
-     * This value may need to be set higher, especially in motion with a large movement range
-     */
-    public boundingBoxMargin: number;
-
+export class PmxLoader extends MmdModelLoader<PmxLoadState, PmxObject> implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Reference files for load PMX from files (textures)
      *
@@ -114,80 +45,26 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
      */
     public referenceFiles: readonly File[];
 
-    private _loggingEnabled: boolean;
-
-    /** @internal */
-    public log: (message: string) => void;
-    /** @internal */
-    public warn: (message: string) => void;
-    /** @internal */
-    public error: (message: string) => void;
-
     /**
      * Create a new PmxLoader
      */
     public constructor() {
-        this.name = "pmx";
-        this.extensions = {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            ".pmx": { isBinary: true }
-        };
+        super(
+            "pmx",
+            {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                ".pmx": { isBinary: true }
+            }
+        );
 
-        this.materialBuilder = new MmdStandardMaterialBuilder();
-        this.useSdef = true;
-        this.buildSkeleton = true;
-        this.buildMorph = true;
-        this.boundingBoxMargin = 10;
         this.referenceFiles = [];
-
-        this._loggingEnabled = false;
-        this.log = this._logDisabled;
-        this.warn = this._warnDisabled;
-        this.error = this._errorDisabled;
-    }
-
-    public importMeshAsync(
-        _meshesNames: any,
-        scene: Scene,
-        data: LoadState,
-        rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        _fileName?: string
-    ): Promise<ISceneLoaderAsyncResult> {
-        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress);
-    }
-
-    public loadAsync(
-        scene: Scene,
-        data: LoadState,
-        rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        _fileName?: string
-    ): Promise<void> {
-        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress).then(() => {
-            return;
-        });
-    }
-
-    public loadAssetContainerAsync(
-        scene: Scene,
-        data: LoadState,
-        rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void,
-        _fileName?: string
-    ): Promise<AssetContainer> {
-        const assetContainer = new AssetContainer(scene);
-
-        return this._loadAsyncInternal(scene, assetContainer, data, rootUrl, onProgress).then(() => {
-            return assetContainer;
-        });
     }
 
     public loadFile(
         scene: Scene,
         fileOrUrl: string | File,
         _rootUrl: string,
-        onSuccess: (data: LoadState, responseURL?: string | undefined) => void,
+        onSuccess: (data: PmxLoadState, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
         onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
@@ -202,7 +79,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const request = scene._loadFile(
             fileOrUrl,
             (data, responseURL) => {
-                const loadState: LoadState = {
+                const loadState: PmxLoadState = {
                     arrayBuffer: data as ArrayBuffer,
                     pmxFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
@@ -222,68 +99,35 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         return request;
     }
 
-    private async _loadAsyncInternal(
-        scene: Scene,
-        assetContainer: Nullable<AssetContainer>,
-        state: LoadState,
-        rootUrl: string,
-        onProgress?: (event: ISceneLoaderProgressEvent) => void
-    ): Promise<ISceneLoaderAsyncResult> {
-        const pmxObject = await PmxReader.ParseAsync(state.arrayBuffer, this)
+    protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<PmxObject> {
+        return await PmxReader.ParseAsync(arrayBuffer, this)
             .catch((e: any) => {
                 return Promise.reject(e);
             });
+    }
 
-        const parseCost = Math.floor(state.arrayBuffer.byteLength / 100);
-        const buildMaterialCost = 100 * pmxObject.materials.length;
-        const buildSkeletonCost = state.buildSkeleton ? 100 * pmxObject.bones.length : 0;
-        let buildMorphCost = 0;
-        if (state.buildMorph) {
-            const morphsInfo = pmxObject.morphs;
-            for (let i = 0; i < morphsInfo.length; ++i) {
-                const morphInfo = morphsInfo[i];
-                if (
-                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
-                ) {
-                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
-                    continue;
-                }
+    protected override _getProgressTaskCosts(state: PmxLoadState, modelObject: PmxObject): ProgressTask[] {
+        const tasks = super._getProgressTaskCosts(state, modelObject);
+        tasks.push({ name: "Build Face", cost: modelObject.faces.length });
+        tasks.push({ name: "Build Vertex", cost: modelObject.vertices.length });
+        return tasks;
+    }
 
-                buildMorphCost += morphInfo.indices.length;
-            }
-        }
-        const textureLoadCost = 30000 * pmxObject.textures.length;
-
-        let applyTextureLoading = false;
-
-        const progressEvent = {
-            lengthComputable: true,
-            loaded: parseCost,
-            total: parseCost + pmxObject.faces.length + pmxObject.vertices.length + buildMaterialCost + buildSkeletonCost + buildMorphCost + textureLoadCost
-        };
-
-        onProgress?.({...progressEvent});
-
-        let lastStageLoaded = parseCost;
-
-        scene._blockEntityCollection = !!assetContainer;
-        const mesh = new (state.useSdef ? SdefMesh : Mesh)(pmxObject.header.modelName, scene);
-        mesh._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
-        mesh.setEnabled(false);
-
+    protected override async _buildGeometryAsync(
+        state: PmxLoadState,
+        modelObject: PmxObject,
+        mesh: Mesh,
+        scene: Scene,
+        assetContainer: Nullable<AssetContainer>,
+        progress: Progress
+    ): Promise<BuildGeometryResult> {
         const vertexData = new VertexData();
-        const boneSdefC = state.useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
-        const boneSdefR0 = state.useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
-        const boneSdefR1 = state.useSdef ? new Float32Array(pmxObject.vertices.length * 3) : undefined;
+        const boneSdefC = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
+        const boneSdefR0 = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
+        const boneSdefR1 = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
         let hasSdef = false;
         {
-            const vertices = pmxObject.vertices;
+            const vertices = modelObject.vertices;
             const positions = new Float32Array(vertices.length * 3);
             const normals = new Float32Array(vertices.length * 3);
             const uvs = new Float32Array(vertices.length * 2);
@@ -291,31 +135,30 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
             const boneWeights = new Float32Array(vertices.length * 4);
 
             let indices;
-            if (pmxObject.faces instanceof Uint8Array || pmxObject.faces instanceof Uint16Array) {
-                indices = new Uint16Array(pmxObject.faces.length);
+            if (modelObject.faces instanceof Uint8Array || modelObject.faces instanceof Uint16Array) {
+                indices = new Uint16Array(modelObject.faces.length);
             } else {
-                indices = new Uint32Array(pmxObject.faces.length);
+                indices = new Uint32Array(modelObject.faces.length);
             }
             {
                 let time = performance.now();
-                const faces = pmxObject.faces;
+                const faces = modelObject.faces;
                 for (let i = 0; i < indices.length; i += 3) { // reverse winding order
                     indices[i + 0] = faces[i + 0];
                     indices[i + 1] = faces[i + 2];
                     indices[i + 2] = faces[i + 1];
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
-                        progressEvent.loaded = lastStageLoaded + i;
-                        onProgress?.({...progressEvent});
+                        progress.setTaskProgress("Build Face", i);
+                        progress.invokeProgressEvent();
 
                         await Tools.DelayAsync(0);
                         time = performance.now();
                     }
                 }
 
-                progressEvent.loaded = lastStageLoaded + indices.length;
-                onProgress?.({...progressEvent});
-                lastStageLoaded += indices.length;
+                progress.endTask("Build Face");
+                progress.invokeProgressEvent();
             }
 
             {
@@ -454,17 +297,16 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                     }
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
-                        progressEvent.loaded = lastStageLoaded + i;
-                        onProgress?.({...progressEvent});
+                        progress.setTaskProgress("Build Vertex", i);
+                        progress.invokeProgressEvent();
 
                         await Tools.DelayAsync(0);
                         time = performance.now();
                     }
                 }
 
-                progressEvent.loaded = lastStageLoaded + vertices.length;
-                onProgress?.({...progressEvent});
-                lastStageLoaded += vertices.length;
+                progress.endTask("Build Vertex");
+                progress.invokeProgressEvent();
             }
 
             vertexData.positions = positions;
@@ -476,7 +318,7 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
 
         scene._blockEntityCollection = !!assetContainer;
-        const geometry = new Geometry(pmxObject.header.modelName, scene, vertexData, false);
+        const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
         geometry._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
 
@@ -487,8 +329,21 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
         geometry.applyToMesh(mesh);
 
+        return { vertexData, geometry };
+    }
+
+    protected override async _buildMaterialAsync(
+        state: PmxLoadState,
+        modelObject: PmxObject,
+        mesh: Mesh,
+        scene: Scene,
+        assetContainer: Nullable<AssetContainer>,
+        vertexData: VertexData,
+        rootUrl: string,
+        progress: Progress
+    ): Promise<BuildMaterialResult> {
         scene._blockEntityCollection = !!assetContainer;
-        const multiMaterial = new MultiMaterial(pmxObject.header.modelName + "_multi", scene);
+        const multiMaterial = new MultiMaterial(modelObject.header.modelName + "_multi", scene);
         multiMaterial._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
 
@@ -497,8 +352,8 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 mesh.uniqueId, // uniqueId
-                pmxObject.materials, // materialsInfo
-                pmxObject.textures, // texturePathTable
+                modelObject.materials, // materialsInfo
+                modelObject.textures, // texturePathTable
                 rootUrl, // rootUrl
                 "file:" + state.pmxFileId + "_", // fileRootId
                 state.referenceFiles, // referenceFiles
@@ -509,10 +364,9 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
                 multiMaterial, // multiMaterial
                 this, // logger
                 (event) => {
-                    if (!applyTextureLoading) return;
-                    const loadedRatio = event.loaded / event.total;
-                    progressEvent.loaded = lastStageLoaded + Math.floor(textureLoadCost * loadedRatio);
-                    onProgress?.({...progressEvent});
+                    if (!event.lengthComputable) return;
+                    progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);
+                    progress.invokeProgressEvent();
                 }, // onTextureLoadProgress
                 () => resolve() // onTextureLoadComplete
             );
@@ -522,359 +376,165 @@ export class PmxLoader implements ISceneLoaderPluginAsync, ILogger {
         }
         mesh.material = multiMaterial;
 
+        progress.endTask("Build Material");
+        progress.invokeProgressEvent();
+
+        return { multiMaterial, textureLoadPromise };
+    }
+
+    protected override _buildSubMeshes(
+        modelObject: PmxObject,
+        mesh: Mesh
+    ): void {
         mesh.subMeshes.length = 0;
-        {
-            const materials = pmxObject.materials;
-            let offset = 0;
-            for (let i = 0; i < materials.length; ++i) {
-                const materialInfo = materials[i];
+        const materials = modelObject.materials;
+        let offset = 0;
+        for (let i = 0; i < materials.length; ++i) {
+            const materialInfo = materials[i];
 
-                new SubMesh(
-                    i, // materialIndex
-                    0, // verticesStart
-                    pmxObject.vertices.length, // verticesCount
-                    offset, // indexStart
-                    materialInfo.surfaceCount, // indexCount
-                    mesh
-                );
-
-                offset += materialInfo.surfaceCount;
-            }
-        }
-
-        progressEvent.loaded = lastStageLoaded + buildMaterialCost;
-        onProgress?.({...progressEvent});
-        lastStageLoaded += buildMaterialCost;
-
-        const bonesMetadata: MmdModelMetadata.Bone[] = [];
-        let skeleton: Nullable<Skeleton> = null;
-        if (state.buildSkeleton) {
-            scene._blockEntityCollection = !!assetContainer;
-            skeleton = new Skeleton(pmxObject.header.modelName, pmxObject.header.modelName + "_skeleton", scene);
-            skeleton._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
-            {
-                const bonesInfo = pmxObject.bones;
-                const bones: Bone[] = [];
-                const looped: boolean[] = [];
-
-                for (let i = 0; i < bonesInfo.length; ++i) {
-                    const boneInfo = bonesInfo[i];
-
-                    let isLooped = false;
-                    if (0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bonesInfo.length) {
-                        let parentBoneIndex = boneInfo.parentBoneIndex;
-                        while (parentBoneIndex !== -1) {
-                            if (parentBoneIndex === i) {
-                                isLooped = true;
-                                this.warn(`Bone loop detected. Ignore Parenting. Bone index: ${i}`);
-                                break;
-                            }
-                            parentBoneIndex = bonesInfo[parentBoneIndex].parentBoneIndex;
-                        }
-
-                        if (i <= boneInfo.parentBoneIndex) {
-                            this.warn(`Parent bone index is greater equal than child bone index. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
-                        }
-                    } else {
-                        if (boneInfo.parentBoneIndex !== -1) {
-                            this.error(`Parent bone index is out of range. Bone index: ${i} Parent bone index: ${boneInfo.parentBoneIndex}`);
-                        }
-                    }
-
-                    const boneWorldPosition = boneInfo.position;
-
-                    const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
-                    if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bones.length) && !isLooped) {
-                        const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
-                        bonePosition.x -= parentBoneInfo.position[0];
-                        bonePosition.y -= parentBoneInfo.position[1];
-                        bonePosition.z -= parentBoneInfo.position[2];
-                    }
-                    const boneMatrix = Matrix.Identity()
-                        .setTranslation(bonePosition);
-
-                    const bone = new Bone(
-                        boneInfo.name,
-                        skeleton,
-                        undefined,
-                        boneMatrix,
-                        undefined,
-                        undefined,
-                        i // bone index
-                    );
-
-                    bones.push(bone);
-                    looped.push(isLooped);
-
-                    const boneMetadata = <MmdModelMetadata.Bone>{
-                        name: boneInfo.name,
-                        parentBoneIndex: boneInfo.parentBoneIndex,
-                        transformOrder: boneInfo.transformOrder,
-                        flag: boneInfo.flag,
-                        appendTransform: boneInfo.appendTransform,
-                        // axisLimit: boneInfo.axisLimit,
-                        // localVector: boneInfo.localVector,
-                        transformAfterPhysics: boneInfo.transformAfterPhysics,
-                        // externalParentTransform: boneInfo.externalParentTransform,
-                        ik: boneInfo.ik
-                    };
-                    bonesMetadata.push(boneMetadata);
-                }
-
-                for (let i = 0; i < bones.length; ++i) {
-                    const boneInfo = bonesInfo[i];
-                    const bone = bones[i];
-
-                    if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bones.length) && !looped[i]) {
-                        bone.setParent(bones[boneInfo.parentBoneIndex], false);
-                    }
-                }
-
-                for (let i = 0; i < bones.length; ++i) {
-                    const bone = bones[i];
-                    if (bone.getParent() === null) {
-                        bone._updateAbsoluteBindMatrices();
-                    }
-                }
-            }
-            mesh.skeleton = skeleton;
-
-            progressEvent.loaded = lastStageLoaded + buildSkeletonCost;
-            onProgress?.({...progressEvent});
-            lastStageLoaded += buildSkeletonCost;
-        }
-
-        const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManager: Nullable<MorphTargetManager> = null;
-        if (state.buildMorph) {
-            scene._blockEntityCollection = !!assetContainer;
-            morphTargetManager = new MorphTargetManager(scene);
-            morphTargetManager._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
-            {
-                const morphsInfo = pmxObject.morphs;
-
-                const morphTargets: MorphTarget[] = [];
-
-                for (let i = 0; i < morphsInfo.length; ++i) {
-                    const morphInfo = morphsInfo[i];
-
-                    // create morph metadata
-                    switch (morphInfo.type) {
-                    case PmxObject.Morph.Type.GroupMorph:
-                    case PmxObject.Morph.Type.BoneMorph:
-                    case PmxObject.Morph.Type.MaterialMorph:
-                        morphsMetadata.push(morphInfo);
-                        break;
-
-                    case PmxObject.Morph.Type.VertexMorph:
-                    case PmxObject.Morph.Type.UvMorph:
-                    case PmxObject.Morph.Type.AdditionalUvMorph1:
-                    case PmxObject.Morph.Type.AdditionalUvMorph2:
-                    case PmxObject.Morph.Type.AdditionalUvMorph3:
-                    case PmxObject.Morph.Type.AdditionalUvMorph4:
-                        morphsMetadata.push(<MmdModelMetadata.VertexMorph | MmdModelMetadata.UvMorph> {
-                            name: morphInfo.name,
-                            englishName: morphInfo.englishName,
-
-                            category: morphInfo.category,
-                            type: morphInfo.type,
-
-                            index: morphTargets.length
-                        });
-                        break;
-
-                    default:
-                        this.warn(`Unsupported morph type: ${morphInfo.type}`);
-                    }
-
-                    if (
-                        morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
-                        morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
-                        morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
-                        morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
-                        morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
-                        morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
-                    ) {
-                        // group morph, bone morph, material morph will be handled by cpu bound custom runtime
-                        continue;
-                    }
-
-                    const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
-                    morphTargets.push(morphTarget);
-
-                    if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
-                        const positions = new Float32Array(pmxObject.vertices.length * 3);
-                        positions.set(vertexData.positions);
-
-                        const morphIndices = morphInfo.indices;
-                        const positionOffsets = morphInfo.positions;
-
-                        let time = performance.now();
-                        for (let j = 0; j < morphIndices.length; ++j) {
-                            const elementIndex = morphIndices[j];
-                            positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
-                            positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
-                            positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
-
-                            if (j % 10000 === 0 && 100 < performance.now() - time) {
-                                progressEvent.loaded = lastStageLoaded + j;
-                                onProgress?.({...progressEvent});
-
-                                await Tools.DelayAsync(0);
-                                time = performance.now();
-                            }
-                        }
-                        lastStageLoaded += morphIndices.length;
-
-                        morphTarget.setPositions(positions);
-                    } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
-                        const uvs = new Float32Array(pmxObject.vertices.length * 2);
-                        uvs.set(vertexData.uvs);
-
-                        const morphIndices = morphInfo.indices;
-                        const uvOffsets = morphInfo.offsets;
-
-                        let time = performance.now();
-                        for (let j = 0; j < morphIndices.length; ++j) {
-                            const elementIndex = morphIndices[j];
-                            uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
-                            uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
-
-                            if (j % 10000 === 0 && 100 < performance.now() - time) {
-                                progressEvent.loaded = lastStageLoaded + j;
-                                onProgress?.({...progressEvent});
-
-                                await Tools.DelayAsync(0);
-                                time = performance.now();
-                            }
-                        }
-                        lastStageLoaded += morphIndices.length;
-
-                        morphTarget.setPositions(vertexData.positions);
-                        morphTarget.setUVs(uvs);
-                    }
-                }
-
-                morphTargetManager.areUpdatesFrozen = true;
-                for (let i = 0; i < morphTargets.length; ++i) {
-                    morphTargetManager.addTarget(morphTargets[i]);
-                }
-                morphTargetManager.areUpdatesFrozen = false;
-            }
-            mesh.morphTargetManager = morphTargetManager;
-        }
-
-        const boundingBoxMargin = state.boundingBoxMargin;
-        if (boundingBoxMargin !== 0) {
-            const subMeshes = mesh.subMeshes;
-            for (let i = 0; i < subMeshes.length; ++i) {
-                const subMesh = subMeshes[i];
-                const subMeshBoundingInfo = subMesh.getBoundingInfo();
-                subMesh.setBoundingInfo(
-                    new BoundingInfo(
-                        new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                        new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
-                    )
-                );
-            }
-
-            const boundingInfo = mesh.getBoundingInfo();
-            mesh.setBoundingInfo(
-                new BoundingInfo(
-                    new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
-                    new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
-                )
+            new SubMesh(
+                i, // materialIndex
+                0, // verticesStart
+                modelObject.vertices.length, // verticesCount
+                offset, // indexStart
+                materialInfo.surfaceCount, // indexCount
+                mesh
             );
 
-            mesh._updateBoundingInfo();
-        }
-
-        mesh.metadata = <MmdModelMetadata>{
-            isMmdModel: true,
-            header: {
-                modelName: pmxObject.header.modelName,
-                englishModelName: pmxObject.header.englishModelName,
-                comment: pmxObject.header.comment,
-                englishComment: pmxObject.header.englishComment
-            },
-            bones: bonesMetadata,
-            morphs: morphsMetadata,
-            rigidBodies: pmxObject.rigidBodies,
-            joints: pmxObject.joints
-        };
-
-        progressEvent.loaded = lastStageLoaded;
-        onProgress?.({...progressEvent});
-
-        applyTextureLoading = true;
-        await textureLoadPromise;
-
-        mesh.setEnabled(true);
-
-        if (assetContainer !== null) {
-            assetContainer.meshes.push(mesh);
-            assetContainer.geometries.push(geometry);
-            assetContainer.multiMaterials.push(multiMaterial);
-            if (skeleton !== null) assetContainer.skeletons.push(skeleton);
-            if (morphTargetManager !== null) assetContainer.morphTargetManagers.push(morphTargetManager);
-        }
-
-        return {
-            meshes: [mesh],
-            particleSystems: [],
-            skeletons: skeleton !== null ? [skeleton] : [],
-            animationGroups: [],
-            transformNodes: [],
-            geometries: [geometry],
-            lights: []
-        };
-    }
-
-    /**
-     * Enable or disable debug logging (default: false)
-     */
-    public get loggingEnabled(): boolean {
-        return this._loggingEnabled;
-    }
-
-    public set loggingEnabled(value: boolean) {
-        this._loggingEnabled = value;
-
-        if (value) {
-            this.log = this._logEnabled;
-            this.warn = this._warnEnabled;
-            this.error = this._errorEnabled;
-        } else {
-            this.log = this._logDisabled;
-            this.warn = this._warnDisabled;
-            this.error = this._errorDisabled;
+            offset += materialInfo.surfaceCount;
         }
     }
 
-    private _logEnabled(message: string): void {
-        Logger.Log(message);
-    }
+    protected override async _buildMorphAsync(
+        modelObject: PmxObject,
+        mesh: Mesh,
+        scene: Scene,
+        assetContainer: Nullable<AssetContainer>,
+        vertexData: VertexData,
+        morphsMetadata: MmdModelMetadata.Morph[],
+        progress: Progress
+    ): Promise<MorphTargetManager> {
+        scene._blockEntityCollection = !!assetContainer;
+        const morphTargetManager = new MorphTargetManager(scene);
+        morphTargetManager._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+        {
+            const morphsInfo = modelObject.morphs;
+            const morphTargets: MorphTarget[] = [];
 
-    private _logDisabled(): void {
-        // do nothing
-    }
+            let buildMorphProgress = 0;
 
-    private _warnEnabled(message: string): void {
-        Logger.Warn(message);
-    }
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphInfo = morphsInfo[i];
 
-    private _warnDisabled(): void {
-        // do nothing
-    }
+                // create morph metadata
+                switch (morphInfo.type) {
+                case PmxObject.Morph.Type.GroupMorph:
+                case PmxObject.Morph.Type.BoneMorph:
+                case PmxObject.Morph.Type.MaterialMorph:
+                    morphsMetadata.push(morphInfo);
+                    break;
 
-    private _errorEnabled(message: string): void {
-        Logger.Error(message);
-    }
+                case PmxObject.Morph.Type.VertexMorph:
+                case PmxObject.Morph.Type.UvMorph:
+                case PmxObject.Morph.Type.AdditionalUvMorph1:
+                case PmxObject.Morph.Type.AdditionalUvMorph2:
+                case PmxObject.Morph.Type.AdditionalUvMorph3:
+                case PmxObject.Morph.Type.AdditionalUvMorph4:
+                    morphsMetadata.push(<MmdModelMetadata.VertexMorph | MmdModelMetadata.UvMorph> {
+                        name: morphInfo.name,
+                        englishName: morphInfo.englishName,
 
-    private _errorDisabled(): void {
-        // do nothing
+                        category: morphInfo.category,
+                        type: morphInfo.type,
+
+                        index: morphTargets.length
+                    });
+                    break;
+
+                default:
+                    this.warn(`Unsupported morph type: ${morphInfo.type}`);
+                }
+
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
+                ) {
+                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                    continue;
+                }
+
+                const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+                morphTargets.push(morphTarget);
+
+                if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
+                    const positions = new Float32Array(modelObject.vertices.length * 3);
+                    positions.set(vertexData.positions!);
+
+                    const morphIndices = morphInfo.indices;
+                    const positionOffsets = morphInfo.positions;
+
+                    let time = performance.now();
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const elementIndex = morphIndices[j];
+                        positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
+                        positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
+                        positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
+
+                        if (j % 10000 === 0 && 100 < performance.now() - time) {
+                            progress.setTaskProgress("Build Morph", buildMorphProgress + j);
+                            progress.invokeProgressEvent();
+
+                            await Tools.DelayAsync(0);
+                            time = performance.now();
+                        }
+                    }
+                    progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
+                    buildMorphProgress += morphIndices.length;
+
+                    morphTarget.setPositions(positions);
+                } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
+                    const uvs = new Float32Array(modelObject.vertices.length * 2);
+                    uvs.set(vertexData.uvs!);
+
+                    const morphIndices = morphInfo.indices;
+                    const uvOffsets = morphInfo.offsets;
+
+                    let time = performance.now();
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const elementIndex = morphIndices[j];
+                        uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
+                        uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
+
+                        if (j % 10000 === 0 && 100 < performance.now() - time) {
+                            progress.setTaskProgress("Build Morph", buildMorphProgress + j);
+                            progress.invokeProgressEvent();
+
+                            await Tools.DelayAsync(0);
+                            time = performance.now();
+                        }
+                    }
+                    progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
+                    buildMorphProgress += morphIndices.length;
+
+                    morphTarget.setPositions(vertexData.positions);
+                    morphTarget.setUVs(uvs);
+                }
+            }
+
+            morphTargetManager.areUpdatesFrozen = true;
+            for (let i = 0; i < morphTargets.length; ++i) {
+                morphTargetManager.addTarget(morphTargets[i]);
+            }
+            morphTargetManager.areUpdatesFrozen = false;
+
+            progress.endTask("Build Morph");
+        }
+        return mesh.morphTargetManager = morphTargetManager;
     }
 }
 
