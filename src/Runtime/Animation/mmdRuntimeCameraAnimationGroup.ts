@@ -25,16 +25,19 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
         this._camera = camera;
     }
 
+    private static readonly _DegToRad = Math.PI / 180;
+
     /**
      * Update animation
      * @param frameTime frame time in 30fps
      */
     public animate(frameTime: number): void {
-        frameTime;
-
-        this._camera;
-
-        throw new Error("Method not implemented.");
+        const animation = this.animation;
+        const camera = this._camera;
+        camera.position.copyFrom(animation.positionAnimation.evaluate(frameTime));
+        camera.rotation.copyFrom(animation.rotationAnimation.evaluate(frameTime));
+        camera.distance = animation.distanceAnimation.evaluate(frameTime);
+        camera.fov = animation.fovAnimation.evaluate(frameTime) * MmdRuntimeCameraAnimationGroup._DegToRad;
     }
 
     /**
