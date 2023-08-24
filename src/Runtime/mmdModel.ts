@@ -6,8 +6,6 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
@@ -166,16 +164,14 @@ export class MmdModel {
      * @param retargetingMap Model bone name to animation bone name map
      */
     public addAnimation(
-        animation: MmdAnimation | MmdModelAnimationGroup | IMmdBindableModelAnimation,
+        animation: IMmdBindableModelAnimation,
         retargetingMap?: { [key: string]: string }
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
-        if ((animation as MmdAnimation).createRuntimeModelAnimation !== undefined) {
-            runtimeAnimation = (animation as MmdAnimation).createRuntimeModelAnimation(this, retargetingMap, this._logger);
-        } else if ((animation as IMmdBindableModelAnimation).createRuntimeAnimation !== undefined) {
-            runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeAnimation(this, retargetingMap, this._logger);
+        if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
+            runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeModelAnimation(this, retargetingMap, this._logger);
         } else {
-            throw new Error("animation is not MmdAnimation or IMmdBindableModelAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\"?");
+            throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\"?");
         }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);

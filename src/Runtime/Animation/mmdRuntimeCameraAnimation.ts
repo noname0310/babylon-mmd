@@ -5,6 +5,7 @@ import type { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTra
 
 import type { MmdCamera } from "../mmdCamera";
 import { BezierInterpolator } from "./bezierInterpolator";
+import type { IMmdBindableCameraAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
@@ -186,16 +187,14 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
 }
 
 declare module "../../Loader/Animation/mmdAnimation" {
-    export interface MmdAnimation {
-        /**
-         * Create runtime camera animation
-         * @param camera bind target
-         * @returns MmdRuntimeCameraAnimation instance
-         */
-        createRuntimeCameraAnimation(camera: MmdCamera): MmdRuntimeCameraAnimation;
-    }
+    export interface MmdAnimation extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimation> { }
 }
 
+/**
+ * Create runtime camera animation
+ * @param camera bind target
+ * @returns MmdRuntimeCameraAnimation instance
+ */
 MmdAnimation.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimation {
     return MmdRuntimeCameraAnimation.Create(this, camera);
 };

@@ -5,7 +5,7 @@ import type { IMmdBindableCameraAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
 
 /**
- * Mmd runtime camera animation that use animation runtime of babylon.js
+ * Mmd runtime camera animation that use animation container of babylon.js
  *
  * An object with mmd animation group and camera binding information
  */
@@ -50,9 +50,14 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
 }
 
 declare module "../../Loader/Animation/mmdCameraAnimationGroup" {
-    interface MmdCameraAnimationGroup extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimationGroup> { }
+    export interface MmdCameraAnimationGroup extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimationGroup> { }
 }
 
-MmdCameraAnimationGroup.prototype.createRuntimeAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimationGroup {
+/**
+ * Create runtime camera animation
+ * @param camera bind target
+ * @returns MmdRuntimeCameraAnimationGroup instance
+ */
+MmdCameraAnimationGroup.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimationGroup {
     return MmdRuntimeCameraAnimationGroup.Create(this, camera);
 };

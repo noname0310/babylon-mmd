@@ -16,7 +16,7 @@ import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 type MorphIndices = readonly number[];
 
 /**
- * Mmd runtime model animation that use animation runtime of babylon.js
+ * Mmd runtime model animation that use animation container of babylon.js
  *
  * An object with mmd animation group and model binding information
  */
@@ -232,7 +232,14 @@ declare module "../../Loader/Animation/mmdModelAnimationGroup" {
     export interface MmdModelAnimationGroup extends IMmdBindableModelAnimation<MmdRuntimeModelAnimationGroup> { }
 }
 
-MmdModelAnimationGroup.prototype.createRuntimeAnimation = function(
+/**
+ * Create runtime model animation
+ * @param model Bind target
+ * @param retargetingMap Model bone name to animation bone name map
+ * @param logger Logger
+ * @returns MmdRuntimeModelAnimationGroup instance
+ */
+MmdModelAnimationGroup.prototype.createRuntimeModelAnimation = function(
     model: MmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger

@@ -13,6 +13,7 @@ import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
 import { BezierInterpolator } from "./bezierInterpolator";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
+import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
@@ -470,18 +471,16 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
 }
 
 declare module "../../Loader/Animation/mmdAnimation" {
-    export interface MmdAnimation {
-        /**
-         * Create runtime model animation
-         * @param model Bind target
-         * @param retargetingMap Model bone name to animation bone name map
-         * @param logger Logger
-         * @returns MmdRuntimeModelAnimation instance
-         */
-        createRuntimeModelAnimation(model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation;
-    }
+    export interface MmdAnimation extends IMmdBindableModelAnimation<MmdRuntimeModelAnimation> { }
 }
 
+/**
+ * Create runtime model animation
+ * @param model Bind target
+ * @param retargetingMap Model bone name to animation bone name map
+ * @param logger Logger
+ * @returns MmdRuntimeModelAnimation instance
+ */
 MmdAnimation.prototype.createRuntimeModelAnimation = function(
     model: MmdModel,
     retargetingMap?: { [key: string]: string },

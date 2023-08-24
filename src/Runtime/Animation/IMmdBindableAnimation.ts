@@ -12,9 +12,9 @@ export interface IMmdBindableCameraAnimation<T extends IMmdRuntimeCameraAnimatio
     /**
      * Create runtime camera animation
      * @param camera bind target
-     * @returns MmdRuntimeCameraAnimation instance
+     * @returns Runtime camera animation instance
      */
-    createRuntimeAnimation(camera: MmdCamera): T;
+    createRuntimeCameraAnimation(camera: MmdCamera): T;
 }
 
 /**
@@ -22,11 +22,11 @@ export interface IMmdBindableCameraAnimation<T extends IMmdRuntimeCameraAnimatio
  */
 export interface IMmdBindableModelAnimation<T extends IMmdRuntimeModelAnimation = IMmdRuntimeModelAnimation> extends IMmdAnimation {
     /**
-     * Create runtime animation
+     * Create runtime model animation
      * @param model Bind target
      * @param retargetingMap Model bone name to animation bone name map
      * @param logger Logger
-     * @returns MmdRuntimeModelAnimation instance
+     * @returns Runtime model animation instance
      */
-    createRuntimeAnimation(model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): T;
+    createRuntimeModelAnimation(model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): T;
 }

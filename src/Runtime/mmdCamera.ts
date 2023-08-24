@@ -4,9 +4,6 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
-
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
@@ -72,14 +69,12 @@ export class MmdCamera extends Camera {
      * Add an animation to the camera
      * @param animation  MMD animation or MMD camera animation group to add
      */
-    public addAnimation(animation: MmdAnimation | MmdCameraAnimationGroup | IMmdBindableCameraAnimation): void {
+    public addAnimation(animation: IMmdBindableCameraAnimation): void {
         let runtimeAnimation: RuntimeCameraAnimation;
-        if ((animation as MmdAnimation).createRuntimeCameraAnimation) {
-            runtimeAnimation = (animation as MmdAnimation).createRuntimeCameraAnimation(this);
-        } else if ((animation as IMmdBindableCameraAnimation).createRuntimeAnimation) {
-            runtimeAnimation = (animation as IMmdBindableCameraAnimation).createRuntimeAnimation(this);
+        if ((animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation) {
+            runtimeAnimation = (animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation(this);
         } else {
-            throw new Error("animation is not MmdAnimation or IMmdBindableModelAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\"?");
+            throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\"?");
         }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
