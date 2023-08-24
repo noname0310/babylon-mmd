@@ -11,10 +11,10 @@ import type { IIkSolver } from "../ikSolver";
 import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
-import { CubicBezierInterpolator } from "./cubicBezierInterpolator";
+import { BezierInterpolator } from "./bezierInterpolator";
+import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
-import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 
 type MorphIndices = readonly number[];
 
@@ -118,7 +118,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = CubicBezierInterpolator.Interpolate(
+                    const weight = BezierInterpolator.Interpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -194,21 +194,21 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                         positions[upperBoundIndex * 3 + 2]
                     );
 
-                    const xWeight = CubicBezierInterpolator.Interpolate(
+                    const xWeight = BezierInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
                         positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
                         positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                         positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
                         gradient
                     );
-                    const yWeight = CubicBezierInterpolator.Interpolate(
+                    const yWeight = BezierInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
                         positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
                         positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                         positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
                         gradient
                     );
-                    const zWeight = CubicBezierInterpolator.Interpolate(
+                    const zWeight = BezierInterpolator.Interpolate(
                         positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
                         positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
                         positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
@@ -238,7 +238,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = CubicBezierInterpolator.Interpolate(
+                    const weight = BezierInterpolator.Interpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1

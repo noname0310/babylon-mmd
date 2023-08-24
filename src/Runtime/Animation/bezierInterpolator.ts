@@ -1,7 +1,7 @@
 /**
  * Cubic Bezier Interpolator for MMD animation interpolation
  */
-export class CubicBezierInterpolator {
+export class BezierInterpolator {
     /**
      * Cubic Bezier interpolation
      * @param x1 X1
