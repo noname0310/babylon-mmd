@@ -52,13 +52,13 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
     /**
      * Create a unbinded mmd camera animation group
      * @param mmdAnimation The mmd animation data
-     * @param coverter The coverter for constructing mmd camera animation group
+     * @param builder The builder for constructing mmd camera animation group
      */
     public constructor(
         mmdAnimation: MmdAnimation,
-        coverter: new () => IMmdCameraAnimationCoverter
+        builder: new () => IMmdCameraAnimationGroupBuilder
     ) {
-        const coverterInstance = new coverter();
+        const coverterInstance = new builder();
 
         this.name = mmdAnimation.name;
 
@@ -73,9 +73,9 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
 }
 
 /**
- * Mmd camera animation coverter for constructing mmd camera animation group
+ * Mmd camera animation builder for constructing mmd camera animation group
  */
-export interface IMmdCameraAnimationCoverter {
+export interface IMmdCameraAnimationGroupBuilder {
     /**
      * create mmd camera position animation
      * @param mmdAnimationTrack mmd camera animation track
@@ -110,7 +110,7 @@ export interface IMmdCameraAnimationCoverter {
  *
  * This has some loss of curve shape, but it converts animations reliably while maintaining a small amount of keyframes
  */
-export class MmdCameraAnimationHermiteCoverter implements IMmdCameraAnimationCoverter {
+export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimationGroupBuilder {
     /**
      * create mmd camera position animation
      * @param mmdAnimationTrack mmd camera animation track
@@ -291,7 +291,7 @@ export class MmdCameraAnimationHermiteCoverter implements IMmdCameraAnimationCov
  *
  * This method samples the bezier curve with 30 frames to preserve the shape of the curve as much as possible. However, it will use a lot of memory
  */
-// export class MmdCameraAnimationSampleCoverter implements IMmdCameraAnimationCoverter {
+// export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimationBuilder {
 
 // }
 
@@ -303,6 +303,6 @@ export class MmdCameraAnimationHermiteCoverter implements IMmdCameraAnimationCov
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-// export class MmdCameraAnimationBezierCoverter implements IMmdCameraAnimationCoverter {
+// export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationBuilder {
 
 // }

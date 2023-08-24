@@ -35,7 +35,7 @@ import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationHermiteCoverter } from "@/Loader/Animation/mmdCameraAnimationGroup";
+import { MmdCameraAnimationGroup, MmdCameraAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
@@ -212,7 +212,7 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh);
         });
 
-        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, MmdCameraAnimationHermiteCoverter);
+        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, MmdCameraAnimationGroupHermiteBuilder);
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(mmdCameraAnimationGroup);
         mmdCamera.setAnimation("motion");

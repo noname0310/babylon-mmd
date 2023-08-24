@@ -95,8 +95,8 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 }
 
 /**
- * Mmd model animation coverter for constructing mmd model animation group
+ * Mmd model animation builder for constructing mmd model animation group
  */
-export interface IMmdModelAnimationCoverter {
+export interface IMmdModelAnimationGroupBuilder {
 
 }
