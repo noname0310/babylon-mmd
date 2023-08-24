@@ -5,8 +5,8 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
@@ -35,7 +35,7 @@ import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
+import { MmdCameraAnimationGroup, MmdCameraAnimationHermiteCoverter } from "@/Loader/Animation/mmdCameraAnimationGroup";
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
@@ -212,7 +212,7 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh);
         });
 
-        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation);
+        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, MmdCameraAnimationHermiteCoverter);
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(mmdCameraAnimationGroup);
         mmdCamera.setAnimation("motion");

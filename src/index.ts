@@ -10,8 +10,8 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
-export { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
-export { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
+export { MmdCameraAnimationGroup, IMmdCameraAnimationCoverter, MmdCameraAnimationHermiteCoverter } from "@/Loader/Animation/mmdCameraAnimationGroup";
+export { MmdModelAnimationGroup, IMmdModelAnimationCoverter } from "@/Loader/Animation/mmdModelAnimationGroup";
 
 // Loader/Optimized/Parser
 export { BpmxObject } from "@/Loader/Optimized/Parser/bpmxObject";

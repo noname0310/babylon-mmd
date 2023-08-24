@@ -93,3 +93,10 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         throw new Error("Not implemented");
     }
 }
+
+/**
+ * Mmd model animation coverter for constructing mmd model animation group
+ */
+export interface IMmdModelAnimationCoverter {
+
+}

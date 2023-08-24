@@ -5,9 +5,7 @@ import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { ILogger } from "@/Loader/Parser/ILogger";
-import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IIkSolver } from "../ikSolver";
 import type { RuntimeMmdMesh } from "../mmdMesh";
@@ -16,6 +14,7 @@ import type { MmdMorphController } from "../mmdMorphController";
 import { CubicBezierInterpolator } from "./cubicBezierInterpolator";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
+import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 
 type MorphIndices = readonly number[];
 
@@ -457,84 +456,17 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
      * @param morphIndices Morph indices to induce recompile
      * @param logger logger
      */
-    public static InduceMaterialRecompile = (
+    public static InduceMaterialRecompile: (
         materials: Material[],
         morphController: MmdMorphController,
         morphIndices: Nullable<MorphIndices>[],
         logger?: ILogger
-    ): void => {
-        let allTextureColorPropertiesAreRecompiled = false;
-        let allSphereTextureColorPropertiesAreRecompiled = false;
-        let allToonTextureColorPropertiesAreRecompiled = false;
-        const recompiledMaterials = new Set<string>();
-
-        for (let i = 0; i < morphIndices.length; ++i) {
-            const morphIndex = morphIndices[i];
-            if (morphIndex === null) continue;
-
-            for (let j = 0; j < morphIndex.length; ++j) {
-                const morph = morphController.morphs[morphIndex[j]];
-                if (morph.type === PmxObject.Morph.Type.MaterialMorph) {
-                    const elements = morph.materialElements!;
-                    for (let k = 0; k < elements.length; ++k) {
-                        const element = elements[k];
-                        if (element.textureColor !== null && !allTextureColorPropertiesAreRecompiled) {
-                            const materialIndex = element.index;
-                            if (element.index === -1) {
-                                for (let l = 0; l < materials.length; ++l) {
-                                    (materials[l] as MmdStandardMaterial).textureColor;
-                                }
-                                allTextureColorPropertiesAreRecompiled = true;
-                            } else {
-                                (materials[materialIndex] as MmdStandardMaterial).textureColor;
-                                recompiledMaterials.add(materialIndex.toString());
-                            }
-                        }
-
-                        if (element.sphereTextureColor !== null && !allSphereTextureColorPropertiesAreRecompiled) {
-                            const materialIndex = element.index;
-                            if (element.index === -1) {
-                                for (let l = 0; l < materials.length; ++l) {
-                                    (materials[l] as MmdStandardMaterial).sphereTextureColor;
-                                }
-                                allSphereTextureColorPropertiesAreRecompiled = true;
-                            } else {
-                                (materials[materialIndex] as MmdStandardMaterial).sphereTextureColor;
-                                recompiledMaterials.add(materialIndex.toString());
-                            }
-                        }
-
-                        if (element.toonTextureColor !== null && !allToonTextureColorPropertiesAreRecompiled) {
-                            const materialIndex = element.index;
-                            if (element.index === -1) {
-                                for (let l = 0; l < materials.length; ++l) {
-                                    (materials[l] as MmdStandardMaterial).toonTextureColor;
-                                }
-                                allToonTextureColorPropertiesAreRecompiled = true;
-                            } else {
-                                (materials[materialIndex] as MmdStandardMaterial).toonTextureColor;
-                                recompiledMaterials.add(materialIndex.toString());
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (allTextureColorPropertiesAreRecompiled
-                && allSphereTextureColorPropertiesAreRecompiled
-                && allToonTextureColorPropertiesAreRecompiled) {
-                break;
-            }
-        }
-
-        if (allTextureColorPropertiesAreRecompiled
-            || allSphereTextureColorPropertiesAreRecompiled
-            || allToonTextureColorPropertiesAreRecompiled) {
-            logger?.log("All materials could be recompiled for morph animation");
-        } else if (0 < recompiledMaterials.size) {
-            logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
-        }
-    };
+    ) => void = induceMmdStandardMaterialRecompile as (
+        materials: Material[],
+        morphController: MmdMorphController,
+        morphIndices: Nullable<MorphIndices>[],
+        logger?: ILogger
+    ) => void;
 }
 
 declare module "../../Loader/Animation/mmdAnimation" {
