@@ -66,8 +66,26 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
         this.endFrame = mmdAnimation.endFrame;
     }
 
-    private _clampTangent(tangent: number): number {
-        return Math.max(-Math.PI, Math.min(Math.PI, tangent));
+    private _computeTangent(x: number, y: number, frameDelta: number, valueDelta: number): number {
+        let tangent;
+
+        if (valueDelta === 0) {
+            tangent = 0;
+        } else if (frameDelta === 0) {
+            tangent = valueDelta < 0 ? -Infinity : Infinity;
+        } else if (x === 0 && y === 0) {
+            tangent = valueDelta / frameDelta;
+        } else if (x === 0) {
+            tangent = valueDelta < 0 ? -Infinity : Infinity;
+        } else if (y === 0) {
+            tangent = 0;
+        } else {
+            tangent = (y * valueDelta) / (x * frameDelta);
+        }
+
+        const tangentLimit = 3 * Math.abs(valueDelta) / frameDelta;
+
+        return Math.max(-tangentLimit, Math.min(tangentLimit, tangent));
     }
 
     private _createPositionAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
@@ -91,16 +109,16 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
                 value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? new Vector3(
-                        this._clampTangent(((1 - positionInterpolations[i * 12 + 3] / 127) * (positions[i * 3] - positions[(i - 1) * 3])) / (1 - positionInterpolations[i * 12 + 1] / 127)) / inFrameDelta,
-                        this._clampTangent(((1 - positionInterpolations[i * 12 + 7] / 127) * (positions[i * 3 + 1] - positions[(i - 1) * 3 + 1])) / (1 - positionInterpolations[i * 12 + 5] / 127)) / inFrameDelta,
-                        this._clampTangent(((1 - positionInterpolations[i * 12 + 11] / 127) * (positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])) / (1 - positionInterpolations[i * 12 + 9] / 127)) / inFrameDelta
+                        this._computeTangent(1 - positionInterpolations[i * 12 + 1] / 127, 1 - positionInterpolations[i * 12 + 3] / 127, inFrameDelta, positions[i * 3] - positions[(i - 1) * 3]),
+                        this._computeTangent(1 - positionInterpolations[i * 12 + 5] / 127, 1 - positionInterpolations[i * 12 + 7] / 127, inFrameDelta, positions[i * 3 + 1] - positions[(i - 1) * 3 + 1]),
+                        this._computeTangent(1 - positionInterpolations[i * 12 + 9] / 127, 1 - positionInterpolations[i * 12 + 11] / 127, inFrameDelta, positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Vector3(
-                        this._clampTangent(((positionInterpolations[(i + 1) * 12 + 2] / 127) * (positions[(i + 1) * 3] - positions[i * 3])) / (positionInterpolations[(i + 1) * 12 + 0] / 127)) / outFrameDelta,
-                        this._clampTangent(((positionInterpolations[(i + 1) * 12 + 6] / 127) * (positions[(i + 1) * 3 + 1] - positions[i * 3 + 1])) / (positionInterpolations[(i + 1) * 12 + 4] / 127)) / outFrameDelta,
-                        this._clampTangent(((positionInterpolations[(i + 1) * 12 + 10] / 127) * (positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])) / (positionInterpolations[(i + 1) * 12 + 8] / 127)) / outFrameDelta
+                        this._computeTangent(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127, outFrameDelta, positions[(i + 1) * 3] - positions[i * 3]),
+                        this._computeTangent(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127, outFrameDelta, positions[(i + 1) * 3 + 1] - positions[i * 3 + 1]),
+                        this._computeTangent(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127, outFrameDelta, positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])
                     )
                     : undefined,
                 interpolation: interpolationKind,
@@ -133,16 +151,16 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
                 value: new Vector3(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? new Vector3(
-                        this._clampTangent(((1 - rotationInterpolations[i * 4 + 3] / 127) * (rotations[i * 3] - rotations[(i - 1) * 3])) / (1 - rotationInterpolations[i * 4 + 1] / 127)) / inFrameDelta,
-                        this._clampTangent(((1 - rotationInterpolations[i * 4 + 3] / 127) * (rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1])) / (1 - rotationInterpolations[i * 4 + 1] / 127)) / inFrameDelta,
-                        this._clampTangent(((1 - rotationInterpolations[i * 4 + 3] / 127) * (rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2])) / (1 - rotationInterpolations[i * 4 + 1] / 127)) / inFrameDelta
+                        this._computeTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3] - rotations[(i - 1) * 3]),
+                        this._computeTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1]),
+                        this._computeTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Vector3(
-                        this._clampTangent((rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3] - rotations[i * 3])) / (rotationInterpolations[(i + 1) * 4 + 0] / 127)) / outFrameDelta,
-                        this._clampTangent((rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1])) / (rotationInterpolations[(i + 1) * 4 + 0] / 127)) / outFrameDelta,
-                        this._clampTangent((rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2])) / (rotationInterpolations[(i + 1) * 4 + 0] / 127)) / outFrameDelta
+                        this._computeTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3] - rotations[i * 3]),
+                        this._computeTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1]),
+                        this._computeTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2])
                     )
                     : undefined,
                 interpolation: interpolationKind,
@@ -174,10 +192,10 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
                 frame: frame,
                 value: distances[i],
                 inTangent: hasPreviousFrame
-                    ? this._clampTangent(((1 - distanceInterpolations[i * 4 + 3] / 127) * (distances[i] - distances[i - 1])) / (1 - distanceInterpolations[i * 4 + 1] / 127)) / inFrameDelta
+                    ? this._computeTangent(1 - distanceInterpolations[i * 4 + 1] / 127, 1 - distanceInterpolations[i * 4 + 3] / 127, inFrameDelta, distances[i] - distances[i - 1])
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? this._clampTangent((distanceInterpolations[(i + 1) * 4 + 2] / 127 * (distances[i + 1] - distances[i])) / (distanceInterpolations[(i + 1) * 4 + 0] / 127)) / outFrameDelta
+                    ? this._computeTangent(distanceInterpolations[(i + 1) * 4 + 0] / 127, distanceInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, distances[i + 1] - distances[i])
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false
@@ -210,10 +228,10 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
                 frame: frame,
                 value: fovs[i] * degToRad,
                 inTangent: hasPreviousFrame
-                    ? this._clampTangent(((1 - fovInterpolations[i * 4 + 3] / 127) * (fovs[i] * degToRad - fovs[i - 1] * degToRad)) / (1 - fovInterpolations[i * 4 + 1] / 127)) / inFrameDelta
+                    ? this._computeTangent(1 - fovInterpolations[i * 4 + 1] / 127, 1 - fovInterpolations[i * 4 + 3] / 127, inFrameDelta, fovs[i] * degToRad - fovs[i - 1] * degToRad)
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? this._clampTangent((fovInterpolations[(i + 1) * 4 + 2] / 127 * (fovs[i + 1] * degToRad - fovs[i] * degToRad)) / (fovInterpolations[(i + 1) * 4 + 0] / 127)) / outFrameDelta
+                    ? this._computeTangent(fovInterpolations[(i + 1) * 4 + 0] / 127, fovInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, fovs[i + 1] * degToRad - fovs[i] * degToRad)
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false
