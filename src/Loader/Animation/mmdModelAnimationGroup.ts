@@ -1,4 +1,7 @@
 import { Animation } from "@babylonjs/core/Animations/animation";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+
+import type { MmdModel } from "@/Runtime/mmdModel";
 
 import type { IMmdAnimation } from "./IMmdAnimation";
 import type { MmdAnimation } from "./mmdAnimation";
@@ -90,6 +93,16 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 
     private _createVisibilityAnimation(mmdAnimationTrack: MmdPropertyAnimationTrack): Animation {
         mmdAnimationTrack;
+        throw new Error("Not implemented");
+    }
+
+    /**
+     * Create a binded mmd model animation group for the given `MmdModel`
+     * @param mmdModel The mmd model to bind
+     * @returns The binded mmd model animation group
+     */
+    public createAnimationGroup(mmdModel: MmdModel): AnimationGroup {
+        mmdModel;
         throw new Error("Not implemented");
     }
 }

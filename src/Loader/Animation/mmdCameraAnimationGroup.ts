@@ -1,7 +1,10 @@
 import { Animation } from "@babylonjs/core/Animations/animation";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+
+import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
@@ -69,6 +72,16 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
+    }
+
+    /**
+     * Create a binded mmd camera animation group for the given mmd camera
+     * @param mmdCamera The mmd camera
+     * @returns The binded mmd camera animation group
+     */
+    public createAnimationGroup(mmdCamera: MmdCamera): AnimationGroup {
+        mmdCamera;
+        throw new Error("Not implemented");
     }
 }
 
