@@ -197,12 +197,24 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         return animation;
     }
 
+    // ref: https://github.com/UuuNyaa/blender_mmd_tools/blob/main/mmd_tools/core/vmd/importer.py#L274-L280
+    private _minimizeRotationDifference(rotation: Quaternion, previousRotation: Quaternion): void {
+        const dot = Quaternion.Dot(rotation, previousRotation);
+        if (dot < 0) {
+            rotation.x = -rotation.x;
+            rotation.y = -rotation.y;
+            rotation.z = -rotation.z;
+            rotation.w = -rotation.w;
+        }
+    }
+
     public createBoneRotationAnimation(mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
         const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const rotations = mmdAnimationTrack.rotations;
         const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
+        let previousRotation = new Quaternion(0, 0, 0, 0);
 
         const keys = new Array<IAnimationKey>(frameNumbers.length);
         for (let i = 0; i < frameNumbers.length; ++i) {
@@ -212,28 +224,38 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
             const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
             const outFrameDelta = nextFrame - frame;
 
+            const rotation = new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]);
+            this._minimizeRotationDifference(rotation, previousRotation);
+
+            const nextRotation = new Quaternion(rotations[(i + 1) * 4], rotations[(i + 1) * 4 + 1], rotations[(i + 1) * 4 + 2], rotations[(i + 1) * 4 + 3]);
+            this._minimizeRotationDifference(nextRotation, rotation);
+
+            // Uses different interpolation methods from mmd
+            // ref: https://github.com/UuuNyaa/blender_mmd_tools/blob/main/mmd_tools/core/vmd/importer.py#L435-L437
             keys[i] = {
                 frame: frame,
-                value: new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]),
+                value: rotation,
                 inTangent: hasPreviousFrame
                     ? new Quaternion(
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4] - rotations[(i - 1) * 4]),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 1] - rotations[(i - 1) * 4 + 1]),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 2] - rotations[(i - 1) * 4 + 2]),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 3] - rotations[(i - 1) * 4 + 3])
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.x - previousRotation.x),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.y - previousRotation.y),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.z - previousRotation.z),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.w - previousRotation.w)
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Quaternion(
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4] - rotations[i * 4]),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 1] - rotations[i * 4 + 1]),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 2] - rotations[i * 4 + 2]),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 3] - rotations[i * 4 + 3])
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.x - rotation.x),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.y - rotation.y),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.z - rotation.z),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.w - rotation.w)
                     )
                     : undefined,
                 interpolation: AnimationKeyInterpolation.NONE,
                 lockedTangent: false
             };
+
+            previousRotation = rotation;
         }
         animation.setKeys(keys);
 
