@@ -1,5 +1,7 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
+import { Space } from "@babylonjs/core/Maths/math.axis";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
@@ -52,21 +54,69 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         this._ikSolverBindIndexMap = ikSolverBindIndexMap;
     }
 
+    private static readonly _BoneOriginalPosition = new Vector3();
+    private static readonly _BoneOriginalRotation = new Quaternion();
+
     /**
      * Update animation
      * @param frameTime frame time in 30fps
      */
     public animate(frameTime: number): void {
-        frameTime;
+        const animation = this.animation;
 
-        this._boneBindIndexMap;
-        this._moveableBoneBindIndexMap;
-        this._morphController;
-        this._morphBindIndexMap;
-        this._mesh;
-        this._ikSolverBindIndexMap;
+        const boneTracks = animation.boneRotationAnimations;
+        const boneBindIndexMap = this._boneBindIndexMap;
+        for (let i = 0; i < boneTracks.length; ++i) {
+            const boneTrack = boneTracks[i];
+            const bone = boneBindIndexMap[i];
+            if (bone === null) continue;
+            bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimationGroup._BoneOriginalRotation);
+            bone.setRotationQuaternion(
+                MmdRuntimeModelAnimationGroup._BoneOriginalRotation.multiply(boneTrack.evaluate(frameTime)),
+                Space.LOCAL
+            );
+        }
 
-        throw new Error("Method not implemented.");
+        const moveableBoneTracks = animation.bonePositionAnimations;
+        const moveableBoneBindIndexMap = this._moveableBoneBindIndexMap;
+        for (let i = 0; i < moveableBoneTracks.length; ++i) {
+            const moveableBoneTrack = moveableBoneTracks[i];
+            const bone = moveableBoneBindIndexMap[i];
+            if (bone === null) continue;
+            bone.getPositionToRef(Space.LOCAL, null, MmdRuntimeModelAnimationGroup._BoneOriginalPosition);
+            bone.setPosition(
+                MmdRuntimeModelAnimationGroup._BoneOriginalPosition.add(moveableBoneTrack.evaluate(frameTime)),
+                Space.LOCAL
+            );
+        }
+
+        const morphTracks = animation.morphAnimations;
+        const morphBindIndexMap = this._morphBindIndexMap;
+        const morphController = this._morphController;
+        for (let i = 0; i < morphTracks.length; ++i) {
+            const morphTrack = morphTracks[i];
+            const morphIndices = morphBindIndexMap[i];
+            if (morphIndices === null) continue;
+            // this clamp will be removed when morph target recompilation problem is solved
+            // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
+            const morphWeight = Math.max(morphTrack.evaluate(frameTime), 1e-16);
+            for (let j = 0; j < morphIndices.length; ++j) {
+                morphController.setMorphWeightFromIndex(morphIndices[j], morphWeight);
+            }
+        }
+
+        const propertyTracks = animation.propertyAnimations;
+        const ikSolverBindIndexMap = this._ikSolverBindIndexMap;
+        for (let i = 0; i < propertyTracks.length; ++i) {
+            const propertyTrack = propertyTracks[i];
+            const ikSolver = ikSolverBindIndexMap[i];
+            if (ikSolver === null) continue;
+            ikSolver.enabled = 0 < propertyTrack.evaluate(frameTime);
+        }
+
+        if (animation.visibilityAnimation !== null) {
+            this._mesh.visibility = animation.visibilityAnimation.evaluate(frameTime) as number;
+        }
     }
 
     private _materialRecompileInduced = false;
@@ -119,34 +169,34 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             }
         }
 
-        const boneBindIndexMap: Nullable<Bone>[] = [];
-        const boneTracks = animationGroup.boneAnimations;
+        const boneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.boneRotationAnimations.length);
+        const boneTracks = animationGroup.boneRotationAnimations;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
-            const bone = boneIndexMap.get(boneTrack.targetProperty);
+            const bone = boneIndexMap.get(boneTrack.targetPropertyPath[0]);
             if (bone === undefined) {
-                logger?.warn(`Binding failed: bone ${boneTrack.targetProperty} not found`);
-                boneBindIndexMap.push(null);
+                logger?.warn(`Binding failed: bone ${boneTrack.targetPropertyPath[0]} not found`);
+                boneBindIndexMap[i] = null;
             } else {
-                boneBindIndexMap.push(bone);
+                boneBindIndexMap[i] = bone;
             }
         }
 
-        const moveableBoneBindIndexMap: Nullable<Bone>[] = [];
-        const moveableBoneTracks = animationGroup.boneAnimations;
+        const moveableBoneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.bonePositionAnimations.length);
+        const moveableBoneTracks = animationGroup.bonePositionAnimations;
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
-            const bone = boneIndexMap.get(moveableBoneTrack.targetProperty);
+            const bone = boneIndexMap.get(moveableBoneTrack.targetPropertyPath[0]);
             if (bone === undefined) {
-                logger?.warn(`Binding failed: bone ${moveableBoneTrack.targetProperty} not found`);
-                moveableBoneBindIndexMap.push(null);
+                logger?.warn(`Binding failed: bone ${moveableBoneTrack.targetPropertyPath[0]} not found`);
+                moveableBoneBindIndexMap[i] = null;
             } else {
-                moveableBoneBindIndexMap.push(bone);
+                moveableBoneBindIndexMap[i] = bone;
             }
         }
 
         const morphController = model.morph;
-        const morphBindIndexMap: Nullable<MorphIndices>[] = [];
+        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animationGroup.morphAnimations.length);
         const morphTracks = animationGroup.morphAnimations;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -154,9 +204,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const morphIndices = morphController.getMorphIndices(mappedName);
             if (morphIndices === undefined) {
                 logger?.warn(`Binding failed: morph ${mappedName} not found`);
-                morphBindIndexMap.push(null);
+                morphBindIndexMap[i] = null;
             } else {
-                morphBindIndexMap.push(morphIndices);
+                morphBindIndexMap[i] = morphIndices;
             }
         }
 
@@ -172,21 +222,21 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             }
         }
 
-        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = [];
+        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = new Array(animationGroup.propertyAnimations.length);
         const propertyTrackIkBoneNames = animationGroup.propertyAnimations;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i].targetProperty;
             const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
             if (ikBoneIndex === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
-                ikSolverBindIndexMap.push(null);
+                ikSolverBindIndexMap[i] = null;
             } else {
                 const ikSolver = runtimeBones[ikBoneIndex].ikSolver;
                 if (ikSolver === null) {
                     logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
-                    ikSolverBindIndexMap.push(null);
+                    ikSolverBindIndexMap[i] = null;
                 } else {
-                    ikSolverBindIndexMap.push(ikSolver);
+                    ikSolverBindIndexMap[i] = ikSolver;
                 }
             }
         }

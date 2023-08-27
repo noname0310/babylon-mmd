@@ -61,14 +61,14 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
         mmdAnimation: MmdAnimation,
         builder: new () => IMmdCameraAnimationGroupBuilder
     ) {
-        const coverterInstance = new builder();
+        const builderInstance = new builder();
 
         this.name = mmdAnimation.name;
 
-        this.positionAnimation = coverterInstance.createPositionAnimation(mmdAnimation.cameraTrack);
-        this.rotationAnimation = coverterInstance.createRotationAnimation(mmdAnimation.cameraTrack);
-        this.distanceAnimation = coverterInstance.createDistanceAnimation(mmdAnimation.cameraTrack);
-        this.fovAnimation = coverterInstance.createFovAnimation(mmdAnimation.cameraTrack);
+        this.positionAnimation = builderInstance.createPositionAnimation(mmdAnimation.cameraTrack);
+        this.rotationAnimation = builderInstance.createRotationAnimation(mmdAnimation.cameraTrack);
+        this.distanceAnimation = builderInstance.createDistanceAnimation(mmdAnimation.cameraTrack);
+        this.fovAnimation = builderInstance.createFovAnimation(mmdAnimation.cameraTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
@@ -90,28 +90,28 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
  */
 export interface IMmdCameraAnimationGroupBuilder {
     /**
-     * create mmd camera position animation
+     * Create mmd camera position animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
     createPositionAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
-     * create mmd camera rotation animation
+     * Create mmd camera rotation animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
     createRotationAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
-     * create mmd camera distance animation
+     * Create mmd camera distance animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
     createDistanceAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
-     * create mmd camera fov animation
+     * Create mmd camera fov animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
@@ -125,7 +125,7 @@ export interface IMmdCameraAnimationGroupBuilder {
  */
 export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimationGroupBuilder {
     /**
-     * create mmd camera position animation
+     * Create mmd camera position animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
@@ -172,7 +172,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
     }
 
     /**
-     * create mmd camera rotation animation
+     * Create mmd camera rotation animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
@@ -219,7 +219,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
     }
 
     /**
-     * create mmd camera distance animation
+     * Create mmd camera distance animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
@@ -258,7 +258,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
     }
 
     /**
-     * create mmd camera fov animation
+     * Create mmd camera fov animation
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */

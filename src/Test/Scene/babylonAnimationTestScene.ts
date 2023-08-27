@@ -36,7 +36,7 @@ import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdCameraAnimationGroup, MmdCameraAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdModelAnimationGroup, MmdModelAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -224,7 +224,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true
             });
-            const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation);
+            const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, MmdModelAnimationGroupHermiteBuilder);
             mmdModel.addAnimation(mmdModelAnimationGroup);
             mmdModel.setAnimation("motion");
 

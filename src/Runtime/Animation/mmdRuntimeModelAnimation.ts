@@ -361,34 +361,34 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             }
         }
 
-        const boneBindIndexMap: Nullable<Bone>[] = [];
+        const boneBindIndexMap: Nullable<Bone>[] = new Array(animation.boneTracks.length);
         const boneTracks = animation.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
             const bone = boneIndexMap.get(boneTrack.name);
             if (bone === undefined) {
                 logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
-                boneBindIndexMap.push(null);
+                boneBindIndexMap[i] = null;
             } else {
-                boneBindIndexMap.push(bone);
+                boneBindIndexMap[i] = bone;
             }
         }
 
-        const moveableBoneBindIndexMap: Nullable<Bone>[] = [];
+        const moveableBoneBindIndexMap: Nullable<Bone>[] = new Array(animation.moveableBoneTracks.length);
         const moveableBoneTracks = animation.moveableBoneTracks;
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
             const bone = boneIndexMap.get(moveableBoneTrack.name);
             if (bone === undefined) {
                 logger?.warn(`Binding failed: bone ${moveableBoneTrack.name} not found`);
-                moveableBoneBindIndexMap.push(null);
+                moveableBoneBindIndexMap[i] = null;
             } else {
-                moveableBoneBindIndexMap.push(bone);
+                moveableBoneBindIndexMap[i] = bone;
             }
         }
 
         const morphController = model.morph;
-        const morphBindIndexMap: Nullable<MorphIndices>[] = [];
+        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animation.morphTracks.length);
         const morphTracks = animation.morphTracks;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -396,9 +396,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             const morphIndices = morphController.getMorphIndices(mappedName);
             if (morphIndices === undefined) {
                 logger?.warn(`Binding failed: morph ${mappedName} not found`);
-                morphBindIndexMap.push(null);
+                morphBindIndexMap[i] = null;
             } else {
-                morphBindIndexMap.push(morphIndices);
+                morphBindIndexMap[i] = morphIndices;
             }
         }
 
@@ -414,21 +414,21 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             }
         }
 
-        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = [];
+        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = new Array(animation.propertyTrack.ikBoneNames.length);
         const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
             const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
             if (ikBoneIndex === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
-                ikSolverBindIndexMap.push(null);
+                ikSolverBindIndexMap[i] = null;
             } else {
                 const ikSolver = runtimeBones[ikBoneIndex].ikSolver;
                 if (ikSolver === null) {
                     logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
-                    ikSolverBindIndexMap.push(null);
+                    ikSolverBindIndexMap[i] = null;
                 } else {
-                    ikSolverBindIndexMap.push(ikSolver);
+                    ikSolverBindIndexMap[i] = ikSolver;
                 }
             }
         }
