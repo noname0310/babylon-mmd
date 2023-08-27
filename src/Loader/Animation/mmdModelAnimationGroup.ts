@@ -5,7 +5,6 @@ import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationK
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SlerpQuaternionAnimation } from "@/Runtime/Animation/slerpQuaternionAnimation";
 import type { MmdModel } from "@/Runtime/mmdModel";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
@@ -199,7 +198,7 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
     }
 
     public createBoneRotationAnimation(mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
-        const animation = new SlerpQuaternionAnimation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
+        const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const rotations = mmdAnimationTrack.rotations;
@@ -218,19 +217,17 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
                 value: new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]),
                 inTangent: hasPreviousFrame
                     ? new Quaternion(
-                        1, 1, 1,
-                        // computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4] - rotations[(i - 1) * 4]),
-                        // computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 1] - rotations[(i - 1) * 4 + 1]),
-                        // computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 2] - rotations[(i - 1) * 4 + 2]),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4] - rotations[(i - 1) * 4]),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 1] - rotations[(i - 1) * 4 + 1]),
+                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 2] - rotations[(i - 1) * 4 + 2]),
                         computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 4 + 3] - rotations[(i - 1) * 4 + 3])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Quaternion(
-                        1, 1, 1,
-                        // computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4] - rotations[i * 4]),
-                        // computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 1] - rotations[i * 4 + 1]),
-                        // computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 2] - rotations[i * 4 + 2]),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4] - rotations[i * 4]),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 1] - rotations[i * 4 + 1]),
+                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 2] - rotations[i * 4 + 2]),
                         computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 4 + 3] - rotations[i * 4 + 3])
                     )
                     : undefined,
