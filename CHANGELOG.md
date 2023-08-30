@@ -6,6 +6,8 @@
 
 - big-endian device support
 
+- introduce `MmdCameraAnimationGroup` and `MmdModelAnimationGroup` to use MMD animation runtime with babylon.js `Animation` container
+
 ## 0.24.0
 
 - #11 shows the mesh when all texture loads and shaders are compiled
