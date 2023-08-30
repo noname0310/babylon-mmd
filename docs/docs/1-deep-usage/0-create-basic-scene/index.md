@@ -85,7 +85,7 @@ shadowGenerator.bias = 0.01;
 shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
 shadowGenerator.frustumEdgeFalloff = 0.1;
 
-const ground = MeshBuilder.CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
+const ground = CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
 const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
 groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
 ground.receiveShadows = true;

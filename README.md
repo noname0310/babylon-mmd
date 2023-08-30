@@ -58,7 +58,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
     directionalLight.intensity = 0.8;
     
-    MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
+    CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     
     // Use havok physics engine for rigid body/joint simulation
     const havokInstance = await HavokPhysics();

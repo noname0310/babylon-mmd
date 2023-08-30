@@ -117,8 +117,8 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -185,7 +185,7 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
         shadowGenerator.frustumEdgeFalloff = 0.1;
 
-        const ground = MeshBuilder.CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
+        const ground = CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
         const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
         ground.receiveShadows = true;
