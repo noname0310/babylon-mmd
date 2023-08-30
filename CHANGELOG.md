@@ -3,7 +3,10 @@
 ## 0.25.0
 
 - improve parse speed of PMX, BPMX and VMD
+
 - big-endian device support
+
+- fix non-texture model loading
 
 ## 0.24.0
 

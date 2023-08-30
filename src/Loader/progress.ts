@@ -85,9 +85,9 @@ export class Progress {
         }
     }
 
-    public setTaskProgress(taskName: string, progress: number): void {
+    public setTaskProgress(taskName: string, progress: number): boolean {
         const taskState = this._getTaskState(taskName);
-        if (taskState === null) throw new Error(`Cannot set progress of ended task: ${taskName}`);
+        if (taskState === null) return false;
 
         taskState.progress = progress;
         if (taskState.progress >= taskState.cost) {
@@ -95,11 +95,13 @@ export class Progress {
             this._endedTaskNames.add(taskName);
             this._endedTasksTotal += taskState.cost;
         }
+
+        return true;
     }
 
-    public setTaskProgressRatio(taskName: string, ratio: number, useFloor: boolean): void {
+    public setTaskProgressRatio(taskName: string, ratio: number, useFloor: boolean): boolean {
         const taskState = this._getTaskState(taskName);
-        if (taskState === null) throw new Error(`Cannot set progress of ended task: ${taskName}`);
+        if (taskState === null) return false;
 
         taskState.progress = useFloor
             ? Math.floor(taskState.cost * ratio)
@@ -109,6 +111,8 @@ export class Progress {
             this._endedTaskNames.add(taskName);
             this._endedTasksTotal += taskState.cost;
         }
+
+        return true;
     }
 
     public endTask(taskName: string): void {
