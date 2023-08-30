@@ -6,8 +6,6 @@
 
 - big-endian device support
 
-- fix non-texture model loading
-
 ## 0.24.0
 
 - #11 shows the mesh when all texture loads and shaders are compiled

@@ -416,11 +416,13 @@ export class PmxConverterScene implements ISceneBuilder {
                     if (material.transparencyMode === null) material.transparencyMode = 0;
                     material.transparencyMode = (material.transparencyMode + 1) % 3;
 
-                    const hasAlpha = material.transparencyMode !== Material.MATERIAL_OPAQUE;
-                    if (hasAlpha) material.diffuseTexture!.hasAlpha = true;
-                    material.useAlphaFromDiffuseTexture = hasAlpha;
-                    material.backFaceCulling = initalBackfaceCullingInfo[i];
-                    if (hasAlpha) material.backFaceCulling = false;
+                    if (material.diffuseTexture !== null) {
+                        const hasAlpha = material.transparencyMode !== Material.MATERIAL_OPAQUE;
+                        if (hasAlpha) material.diffuseTexture.hasAlpha = true;
+                        material.useAlphaFromDiffuseTexture = hasAlpha;
+                        material.backFaceCulling = initalBackfaceCullingInfo[i];
+                        if (hasAlpha) material.backFaceCulling = false;
+                    }
 
                     transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
                 };
