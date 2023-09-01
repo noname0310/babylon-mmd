@@ -70,7 +70,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const boneTrack = boneTracks[i];
             const bone = boneBindIndexMap[i];
             if (bone === null) continue;
-            bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimationGroup._BoneOriginalRotation);
+            Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneOriginalRotation);
             bone.setRotationQuaternion(
                 MmdRuntimeModelAnimationGroup._BoneOriginalRotation.multiply(boneTrack.evaluate(frameTime)),
                 Space.LOCAL
@@ -83,7 +83,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const moveableBoneTrack = moveableBoneTracks[i];
             const bone = moveableBoneBindIndexMap[i];
             if (bone === null) continue;
-            bone.getPositionToRef(Space.LOCAL, null, MmdRuntimeModelAnimationGroup._BoneOriginalPosition);
+            bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BoneOriginalPosition);
             bone.setPosition(
                 MmdRuntimeModelAnimationGroup._BoneOriginalPosition.add(moveableBoneTrack.evaluate(frameTime)),
                 Space.LOCAL
@@ -115,7 +115,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         if (animation.visibilityAnimation !== null) {
-            this._mesh.visibility = animation.visibilityAnimation.evaluate(frameTime) as number;
+            this._mesh.visibility = 1 + animation.visibilityAnimation.evaluate(frameTime) as number;
         }
     }
 

@@ -87,7 +87,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
                 if (frameNumberB === undefined) {
                     const rotations = boneTrack.rotations;
-                    bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
                     bone.setRotationQuaternion(
                         MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(
                             MmdRuntimeModelAnimation._BoneRotationB.set(
@@ -128,7 +128,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
-                    bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
                     bone.setRotationQuaternion(
                         MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(rotationA),
                         Space.LOCAL
@@ -152,7 +152,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
                 if (frameNumberB === undefined) {
                     const positions = boneTrack.positions;
-                    bone.getPositionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalPosition);
+                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BoneOriginalPosition);
                     bone.setPosition(
                         MmdRuntimeModelAnimation._BoneOriginalPosition.add(
                             MmdRuntimeModelAnimation._BonePositionB.set(
@@ -165,7 +165,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     );
 
                     const rotations = boneTrack.rotations;
-                    bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
                     bone.setRotationQuaternion(
                         MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(
                             MmdRuntimeModelAnimation._BoneRotationB.set(
@@ -220,7 +220,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     positionA.x += (positionB.x - positionA.x) * xWeight;
                     positionA.y += (positionB.y - positionA.y) * yWeight;
                     positionA.z += (positionB.z - positionA.z) * zWeight;
-                    bone.getPositionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalPosition);
+                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BoneOriginalPosition);
                     bone.setPosition(MmdRuntimeModelAnimation._BoneOriginalPosition.add(positionA), Space.LOCAL);
 
                     const rotations = boneTrack.rotations;
@@ -248,7 +248,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
-                    bone.getRotationQuaternionToRef(Space.LOCAL, null, MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
                     bone.setRotationQuaternion(
                         MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(rotationA),
                         Space.LOCAL

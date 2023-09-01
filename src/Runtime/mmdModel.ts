@@ -263,7 +263,6 @@ export class MmdModel {
     public beforePhysics(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
             if (this._currentAnimation !== null) {
-                this.mesh.skeleton.returnToRest();
                 this._currentAnimation.animate(frameTime);
             }
         }

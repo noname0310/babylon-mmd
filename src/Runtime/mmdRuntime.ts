@@ -528,7 +528,6 @@ export class MmdRuntime implements ILogger {
             for (let i = 0; i < models.length; ++i) {
                 const model = models[i];
                 if (model.currentAnimation !== null) {
-                    model.mesh.skeleton.returnToRest();
                     model.currentAnimation.animate(frameTime);
                 }
             }
