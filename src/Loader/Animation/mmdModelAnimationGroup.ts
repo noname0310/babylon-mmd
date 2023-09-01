@@ -38,18 +38,23 @@ class MorphProxy {
 }
 
 class IkSolverProxy {
+    private _enabled: number;
+
     private readonly _ikSolver: IIkSolver;
 
     public constructor(ikSolver: IIkSolver) {
+        this._enabled = ikSolver.enabled ? 1 : 0;
+
         this._ikSolver = ikSolver;
     }
 
     public get enabled(): number {
-        return this._ikSolver.enabled ? 1 : 0;
+        return this._enabled;
     }
 
     public set enabled(value: number) {
-        this._ikSolver.enabled = value !== 0;
+        this._enabled = value;
+        this._ikSolver.enabled = 0.5 < value;
     }
 }
 
