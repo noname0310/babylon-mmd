@@ -24,12 +24,15 @@ class MorphProxy {
     }
 
     public get influence(): number {
-        return this._morphController.getMorphWeightFromIndex(this._morphIndices[0]);
+        const weight = this._morphController.getMorphWeightFromIndex(this._morphIndices[0]);
+        return weight === 1e-16 ? 0 : weight;
     }
 
     public set influence(value: number) {
         for (let i = 0; i < this._morphIndices.length; ++i) {
-            this._morphController.setMorphWeightFromIndex(this._morphIndices[i], value);
+            // this clamp will be removed when morph target recompilation problem is solved
+            // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
+            this._morphController.setMorphWeightFromIndex(this._morphIndices[i], Math.max(value, 1e-16));
         }
     }
 }
