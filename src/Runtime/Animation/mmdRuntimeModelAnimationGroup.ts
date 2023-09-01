@@ -111,7 +111,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const propertyTrack = propertyTracks[i];
             const ikSolver = ikSolverBindIndexMap[i];
             if (ikSolver === null) continue;
-            ikSolver.enabled = 0 < propertyTrack.evaluate(frameTime);
+            ikSolver.enabled = 0 < 1 + propertyTrack.evaluate(frameTime);
         }
 
         if (animation.visibilityAnimation !== null) {
@@ -195,10 +195,10 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
 
         const morphController = model.morph;
         const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animationGroup.morphAnimations.length);
-        const morphTracks = animationGroup.morphAnimations;
-        for (let i = 0; i < morphTracks.length; ++i) {
-            const morphTrack = morphTracks[i];
-            const mappedName = retargetingMap?.[morphTrack.targetProperty] ?? morphTrack.targetProperty;
+        const morphNameMap = animationGroup.morphAnimationBindMap;
+        for (let i = 0; i < morphNameMap.length; ++i) {
+            const morphName = morphNameMap[i];
+            const mappedName = retargetingMap?.[morphName] ?? morphName;
             const morphIndices = morphController.getMorphIndices(mappedName);
             if (morphIndices === undefined) {
                 logger?.warn(`Binding failed: morph ${mappedName} not found`);
@@ -221,9 +221,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const ikSolverBindIndexMap: Nullable<IIkSolver>[] = new Array(animationGroup.propertyAnimations.length);
-        const propertyTrackIkBoneNames = animationGroup.propertyAnimations;
+        const propertyTrackIkBoneNames = animationGroup.propertyAnimationBindMap;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
-            const ikBoneName = propertyTrackIkBoneNames[i].targetProperty;
+            const ikBoneName = propertyTrackIkBoneNames[i];
             const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
             if (ikBoneIndex === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);

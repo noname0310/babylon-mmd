@@ -5,12 +5,50 @@ import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationK
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IIkSolver } from "@/Runtime/ikSolver";
 import type { MmdModel } from "@/Runtime/mmdModel";
+import type { MmdMorphController } from "@/Runtime/mmdMorphController";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
 import type { MmdAnimation } from "./mmdAnimation";
 import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./mmdAnimationTrack";
+
+class MorphProxy {
+    private readonly _morphController: MmdMorphController;
+    private readonly _morphIndices: readonly number[];
+
+    public constructor(morphController: MmdMorphController, morphIndices: readonly number[]) {
+        this._morphController = morphController;
+        this._morphIndices = morphIndices;
+    }
+
+    public get influence(): number {
+        return this._morphController.getMorphWeightFromIndex(this._morphIndices[0]);
+    }
+
+    public set influence(value: number) {
+        for (let i = 0; i < this._morphIndices.length; ++i) {
+            this._morphController.setMorphWeightFromIndex(this._morphIndices[i], value);
+        }
+    }
+}
+
+class IkSolverProxy {
+    private readonly _ikSolver: IIkSolver;
+
+    public constructor(ikSolver: IIkSolver) {
+        this._ikSolver = ikSolver;
+    }
+
+    public get enabled(): number {
+        return this._ikSolver.enabled ? 1 : 0;
+    }
+
+    public set enabled(value: number) {
+        this._ikSolver.enabled = value !== 0;
+    }
+}
 
 /**
  * A container type that stores mmd model animations using the `Animation` container in babylon.js
@@ -49,9 +87,19 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
     public readonly morphAnimations: readonly Animation[];
 
     /**
+     * Morph animation track bind map for one `mmdModel.morph`
+     */
+    public readonly morphAnimationBindMap: readonly string[];
+
+    /**
      * Property animation track(a.k.a. IK toggle animation) for one `mmdModel`
      */
     public readonly propertyAnimations: readonly Animation[];
+
+    /**
+     * Property animation track bind map(a.k.a. IK toggle animation) for one `mmdModel`
+     */
+    public readonly propertyAnimationBindMap: readonly string[];
 
     /**
      * Visibility animation track for one `mesh`
@@ -103,11 +151,14 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 
         const morphTracks = mmdAnimation.morphTracks;
         const morphAnimations: Animation[] = this.morphAnimations = new Array(morphTracks.length);
+        const morphAnimationBindMap: string[] = this.morphAnimationBindMap = new Array(morphTracks.length);
         for (let i = 0; i < morphTracks.length; ++i) {
             morphAnimations[i] = builderInstance.createMorphAnimation(name, morphTracks[i]);
+            morphAnimationBindMap[i] = morphTracks[i].name;
         }
 
         this.propertyAnimations = builderInstance.createPropertyAnimation(name, mmdAnimation.propertyTrack);
+        this.propertyAnimationBindMap = mmdAnimation.propertyTrack.ikBoneNames;
         this.visibilityAnimation = builderInstance.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
 
         this.startFrame = mmdAnimation.startFrame;
@@ -147,15 +198,33 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             }
         }
 
-        // const morphAnimations = this.morphAnimations;
-        // for (let i = 0; i < morphAnimations.length; ++i) {
-        //     animationGroup.addTargetedAnimation(morphAnimations[i], mmdModel.morph.getMorph
-        // }
+        const morphAnimations = this.morphAnimations;
+        const morphAnimationBindMap = this.morphAnimationBindMap;
+        const morphController = mmdModel.morph;
+        for (let i = 0; i < morphAnimations.length; ++i) {
+            const morphIndices = morphController.getMorphIndices(morphAnimationBindMap[i]);
+            if (morphIndices !== undefined) {
+                animationGroup.addTargetedAnimation(morphAnimations[i], new MorphProxy(morphController, morphIndices));
+            }
+        }
 
-        // const propertyAnimations = this.propertyAnimations;
-        // for (let i = 0; i < propertyAnimations.length; ++i) {
-        //     animationGroup.addTargetedAnimation(propertyAnimations[i], mmdModel.sortedRuntimeBones[0].ikSolver?.enabled);
-        // }
+        const runtimeBoneMap = new Map<string, number>();
+        const runtimeBones = mmdModel.sortedRuntimeBones;
+        for (let i = 0; i < runtimeBones.length; ++i) {
+            runtimeBoneMap.set(runtimeBones[i].name, i);
+        }
+
+        const propertyAnimations = this.propertyAnimations;
+        const propertyAnimationBindMap = this.propertyAnimationBindMap;
+        for (let i = 0; i < propertyAnimations.length; ++i) {
+            const boneIndex = runtimeBoneMap.get(propertyAnimationBindMap[i]);
+            if (boneIndex !== undefined) {
+                const ikSolver = runtimeBones[boneIndex].ikSolver;
+                if (ikSolver !== null) {
+                    animationGroup.addTargetedAnimation(propertyAnimations[i], new IkSolverProxy(ikSolver));
+                }
+            }
+        }
 
         const visibilityAnimation = this.visibilityAnimation;
         if (visibilityAnimation !== null) {
@@ -342,7 +411,7 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
      * @returns babylon.js animation
      */
     public createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation {
-        const animation = new Animation(rootName + "_morph_" + mmdAnimationTrack.name, mmdAnimationTrack.name, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+        const animation = new Animation(rootName + "_morph_" + mmdAnimationTrack.name, "influence", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const weights = mmdAnimationTrack.weights;
@@ -371,7 +440,7 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
 
         const ikBoneNames = mmdAnimationTrack.ikBoneNames;
         for (let i = 0; i < ikBoneNames.length; ++i) {
-            const animation = animations[i] = new Animation(rootName + "_ik_" + ikBoneNames[i], ikBoneNames[i], 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+            const animation = animations[i] = new Animation(rootName + "_ik_" + ikBoneNames[i], "enabled", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
             const frameNumbers = mmdAnimationTrack.frameNumbers;
             const ikStates = mmdAnimationTrack.ikStates[i];
@@ -380,7 +449,7 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
             for (let j = 0; j < frameNumbers.length; ++j) {
                 keys[j] = {
                     frame: frameNumbers[j],
-                    value: ikStates[j],
+                    value: ikStates[j] - 1,
                     interpolation: AnimationKeyInterpolation.STEP
                 };
             }
