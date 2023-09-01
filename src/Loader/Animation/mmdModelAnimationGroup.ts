@@ -1,5 +1,5 @@
 import { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -26,22 +26,32 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
     /**
      * Bone position animation tracks for one `mesh.skeleton`
      */
-    public readonly bonePositionAnimations: Animation[];
+    public readonly bonePositionAnimations: readonly Animation[];
+
+    /**
+     * Bone position animation track bind map for one `mesh.skeleton`
+     */
+    public readonly bonePositionAnimationBindMap: readonly string[];
 
     /**
      * Bone rotation animation tracks for one `mesh.skeleton`
      */
-    public readonly boneRotationAnimations: Animation[];
+    public readonly boneRotationAnimations: readonly Animation[];
 
     /**
-     * Morph animation tracks for one `mesh.morphTargetManager`
+     * Bone rotation animation track bind map for one `mesh.skeleton`
      */
-    public readonly morphAnimations: Animation[];
+    public readonly boneRotationAnimationBindMap: readonly string[];
+
+    /**
+     * Morph animation tracks for one `mmdModel.morph`
+     */
+    public readonly morphAnimations: readonly Animation[];
 
     /**
      * Property animation track(a.k.a. IK toggle animation) for one `mmdModel`
      */
-    public readonly propertyAnimations: Animation[];
+    public readonly propertyAnimations: readonly Animation[];
 
     /**
      * Visibility animation track for one `mesh`
@@ -69,31 +79,36 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
     ) {
         const builderInstance = new builder();
 
-        this.name = mmdAnimation.name;
+        const name = this.name = mmdAnimation.name;
 
         const moveableBoneTracks = mmdAnimation.moveableBoneTracks;
         const bonePositionAnimations: Animation[] = this.bonePositionAnimations = new Array(moveableBoneTracks.length);
+        const bonePositionAnimationBindMap: string[] = this.bonePositionAnimationBindMap = new Array(moveableBoneTracks.length);
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            bonePositionAnimations[i] = builderInstance.createBonePositionAnimation(moveableBoneTracks[i]);
+            bonePositionAnimations[i] = builderInstance.createBonePositionAnimation(name, moveableBoneTracks[i]);
+            bonePositionAnimationBindMap[i] = moveableBoneTracks[i].name;
         }
 
         const boneTracks = mmdAnimation.boneTracks;
         const boneRotationAnimations: Animation[] = this.boneRotationAnimations = new Array(boneTracks.length + moveableBoneTracks.length);
+        const boneRotationAnimationBindMap: string[] = this.boneRotationAnimationBindMap = new Array(boneTracks.length + moveableBoneTracks.length);
         for (let i = 0; i < boneTracks.length; ++i) {
-            boneRotationAnimations[i] = builderInstance.createBoneRotationAnimation(boneTracks[i]);
+            boneRotationAnimations[i] = builderInstance.createBoneRotationAnimation(name, boneTracks[i]);
+            boneRotationAnimationBindMap[i] = boneTracks[i].name;
         }
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            boneRotationAnimations[boneTracks.length + i] = builderInstance.createBoneRotationAnimation(moveableBoneTracks[i]);
+            boneRotationAnimations[boneTracks.length + i] = builderInstance.createBoneRotationAnimation(name, moveableBoneTracks[i]);
+            boneRotationAnimationBindMap[boneTracks.length + i] = moveableBoneTracks[i].name;
         }
 
         const morphTracks = mmdAnimation.morphTracks;
         const morphAnimations: Animation[] = this.morphAnimations = new Array(morphTracks.length);
         for (let i = 0; i < morphTracks.length; ++i) {
-            morphAnimations[i] = builderInstance.createMorphAnimation(morphTracks[i]);
+            morphAnimations[i] = builderInstance.createMorphAnimation(name, morphTracks[i]);
         }
 
-        this.propertyAnimations = builderInstance.createPropertyAnimation(mmdAnimation.propertyTrack);
-        this.visibilityAnimation = builderInstance.createVisibilityAnimation(mmdAnimation.propertyTrack);
+        this.propertyAnimations = builderInstance.createPropertyAnimation(name, mmdAnimation.propertyTrack);
+        this.visibilityAnimation = builderInstance.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
@@ -105,8 +120,49 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      * @returns The binded mmd model animation group
      */
     public createAnimationGroup(mmdModel: MmdModel): AnimationGroup {
-        mmdModel;
-        throw new Error("Not implemented");
+        const animationGroup = new AnimationGroup(this.name, mmdModel.mesh.getScene(), 1);
+        animationGroup.isAdditive = true;
+
+        const skeletonBoneMap = new Map<string, number>();
+        const skeletonBones = mmdModel.mesh.skeleton.bones;
+        for (let i = 0; i < skeletonBones.length; ++i) {
+            skeletonBoneMap.set(skeletonBones[i].name, i);
+        }
+
+        const bonePositionAnimations = this.bonePositionAnimations;
+        const bonePositionAnimationBindMap = this.bonePositionAnimationBindMap;
+        for (let i = 0; i < bonePositionAnimations.length; ++i) {
+            const boneIndex = skeletonBoneMap.get(bonePositionAnimationBindMap[i]);
+            if (boneIndex !== undefined) {
+                animationGroup.addTargetedAnimation(bonePositionAnimations[i], skeletonBones[boneIndex]);
+            }
+        }
+
+        const boneRotationAnimations = this.boneRotationAnimations;
+        const boneRotationAnimationBindMap = this.boneRotationAnimationBindMap;
+        for (let i = 0; i < boneRotationAnimations.length; ++i) {
+            const boneIndex = skeletonBoneMap.get(boneRotationAnimationBindMap[i]);
+            if (boneIndex !== undefined) {
+                animationGroup.addTargetedAnimation(boneRotationAnimations[i], skeletonBones[boneIndex]);
+            }
+        }
+
+        // const morphAnimations = this.morphAnimations;
+        // for (let i = 0; i < morphAnimations.length; ++i) {
+        //     animationGroup.addTargetedAnimation(morphAnimations[i], mmdModel.morph.getMorph
+        // }
+
+        // const propertyAnimations = this.propertyAnimations;
+        // for (let i = 0; i < propertyAnimations.length; ++i) {
+        //     animationGroup.addTargetedAnimation(propertyAnimations[i], mmdModel.sortedRuntimeBones[0].ikSolver?.enabled);
+        // }
+
+        const visibilityAnimation = this.visibilityAnimation;
+        if (visibilityAnimation !== null) {
+            animationGroup.addTargetedAnimation(visibilityAnimation, mmdModel.mesh);
+        }
+
+        return animationGroup;
     }
 }
 
@@ -116,38 +172,43 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 export interface IMmdModelAnimationGroupBuilder {
     /**
      * Create mmd model bone position animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    createBonePositionAnimation(mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation;
+    createBonePositionAnimation(rootName: string, mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation;
 
     /**
      * Create mmd model bone rotation animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    createBoneRotationAnimation(mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation;
+    createBoneRotationAnimation(rootName: string, mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation;
 
     /**
      * Create mmd model morph animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd morph animation track
      * @returns babylon.js animation
      */
-    createMorphAnimation(mmdAnimationTrack: MmdMorphAnimationTrack): Animation;
+    createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation;
 
     /**
      * Create mmd model property animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd property animation track
      * @returns babylon.js animations
      */
-    createPropertyAnimation(mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[];
+    createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[];
 
     /**
      * Create mmd model visibility animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd property animation track
      * @returns babylon.js animation
      */
-    createVisibilityAnimation(mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation>;
+    createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation>;
 }
 
 /**
@@ -156,8 +217,14 @@ export interface IMmdModelAnimationGroupBuilder {
  * This has some loss of curve shape, but it converts animations reliably while maintaining a small amount of keyframes
  */
 export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationGroupBuilder {
-    public createBonePositionAnimation(mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+    /**
+     * Create mmd model bone position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBonePositionAnimation(rootName: string, mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_bone_position_" + mmdAnimationTrack.name, "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const positions = mmdAnimationTrack.positions;
@@ -208,8 +275,14 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         }
     }
 
-    public createBoneRotationAnimation(mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
+    /**
+     * Create mmd model bone rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const rotations = mmdAnimationTrack.rotations;
@@ -262,8 +335,14 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         return animation;
     }
 
-    public createMorphAnimation(mmdAnimationTrack: MmdMorphAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+    /**
+     * Create mmd model morph animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd morph animation track
+     * @returns babylon.js animation
+     */
+    public createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_morph_" + mmdAnimationTrack.name, mmdAnimationTrack.name, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const weights = mmdAnimationTrack.weights;
@@ -281,12 +360,18 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         return animation;
     }
 
-    public createPropertyAnimation(mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[] {
+    /**
+     * Create mmd model visibility animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animation
+     */
+    public createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[] {
         const animations: Animation[] = new Array(mmdAnimationTrack.ikBoneNames.length);
 
         const ikBoneNames = mmdAnimationTrack.ikBoneNames;
         for (let i = 0; i < ikBoneNames.length; ++i) {
-            const animation = animations[i] = new Animation(mmdAnimationTrack.name, ikBoneNames[i], 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+            const animation = animations[i] = new Animation(rootName + "_ik_" + ikBoneNames[i], ikBoneNames[i], 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
             const frameNumbers = mmdAnimationTrack.frameNumbers;
             const ikStates = mmdAnimationTrack.ikStates[i];
@@ -305,8 +390,14 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         return animations;
     }
 
-    public createVisibilityAnimation(mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
-        const animation = new Animation(mmdAnimationTrack.name, mmdAnimationTrack.name + ".visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+    /**
+     * Create mmd model visibility animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animation
+     */
+    public createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
+        const animation = new Animation(rootName + "_visibility", "visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const visibles = mmdAnimationTrack.visibles;
@@ -315,13 +406,16 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
         for (let i = 0; i < frameNumbers.length; ++i) {
             keys[i] = {
                 frame: frameNumbers[i],
-                value: visibles[i],
+                value: visibles[i] - 1,
                 interpolation: AnimationKeyInterpolation.STEP
             };
         }
         animation.setKeys(keys);
 
-        return 0 < frameNumbers.length ? animation : null;
+        if (frameNumbers.length === 0) return null;
+        else if (frameNumbers.length === 1 && visibles[0] === 1) return null;
+
+        return animation;
     }
 }
 

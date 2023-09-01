@@ -1,5 +1,5 @@
 import { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -63,12 +63,12 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
     ) {
         const builderInstance = new builder();
 
-        this.name = mmdAnimation.name;
+        const name = this.name = mmdAnimation.name;
 
-        this.positionAnimation = builderInstance.createPositionAnimation(mmdAnimation.cameraTrack);
-        this.rotationAnimation = builderInstance.createRotationAnimation(mmdAnimation.cameraTrack);
-        this.distanceAnimation = builderInstance.createDistanceAnimation(mmdAnimation.cameraTrack);
-        this.fovAnimation = builderInstance.createFovAnimation(mmdAnimation.cameraTrack);
+        this.positionAnimation = builderInstance.createPositionAnimation(name, mmdAnimation.cameraTrack);
+        this.rotationAnimation = builderInstance.createRotationAnimation(name, mmdAnimation.cameraTrack);
+        this.distanceAnimation = builderInstance.createDistanceAnimation(name, mmdAnimation.cameraTrack);
+        this.fovAnimation = builderInstance.createFovAnimation(name, mmdAnimation.cameraTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
@@ -80,8 +80,13 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
      * @returns The binded mmd camera animation group
      */
     public createAnimationGroup(mmdCamera: MmdCamera): AnimationGroup {
-        mmdCamera;
-        throw new Error("Not implemented");
+        const animationGroup = new AnimationGroup(this.name, mmdCamera.getScene());
+        animationGroup.addTargetedAnimation(this.positionAnimation, mmdCamera);
+        animationGroup.addTargetedAnimation(this.rotationAnimation, mmdCamera);
+        animationGroup.addTargetedAnimation(this.distanceAnimation, mmdCamera);
+        animationGroup.addTargetedAnimation(this.fovAnimation, mmdCamera);
+
+        return animationGroup;
     }
 }
 
@@ -91,31 +96,35 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
 export interface IMmdCameraAnimationGroupBuilder {
     /**
      * Create mmd camera position animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    createPositionAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
+    createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
      * Create mmd camera rotation animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    createRotationAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
+    createRotationAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
      * Create mmd camera distance animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    createDistanceAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
+    createDistanceAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 
     /**
      * Create mmd camera fov animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    createFovAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
+    createFovAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation;
 }
 
 /**
@@ -126,11 +135,12 @@ export interface IMmdCameraAnimationGroupBuilder {
 export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimationGroupBuilder {
     /**
      * Create mmd camera position animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    public createPositionAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+    public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const positions = mmdAnimationTrack.positions;
@@ -173,11 +183,12 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
 
     /**
      * Create mmd camera rotation animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    public createRotationAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, "rotation", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+    public createRotationAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_rotation", "rotation", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const rotations = mmdAnimationTrack.rotations;
@@ -220,11 +231,12 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
 
     /**
      * Create mmd camera distance animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    public createDistanceAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, "distance", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+    public createDistanceAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_distance", "distance", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const distances = mmdAnimationTrack.distances;
@@ -259,11 +271,12 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
 
     /**
      * Create mmd camera fov animation
+     * @param rootName root animation name
      * @param mmdAnimationTrack mmd camera animation track
      * @returns babylon.js animation
      */
-    public createFovAnimation(mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(mmdAnimationTrack.name, "fov", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+    public createFovAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_fov", "fov", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const fovs = mmdAnimationTrack.fovs;

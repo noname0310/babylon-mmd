@@ -1,3 +1,4 @@
+import "@babylonjs/core/Animations/animatable";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
@@ -33,6 +34,7 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
+import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdCameraAnimationGroup, MmdCameraAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
@@ -145,12 +147,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);
-        mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/flos/flos_YuNi.mp3";
-        mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
@@ -202,8 +202,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const loadResults = await Promise.all(promises);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
-
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
         scene.meshes.forEach((mesh) => {
@@ -212,21 +210,24 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh);
         });
 
+
+        const modelMesh = loadResults[1].meshes[0] as Mesh;
+        modelMesh.parent = mmdRoot;
+
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+            buildPhysics: true
+        });
+
+        const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, MmdModelAnimationGroupHermiteBuilder);
         const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, MmdCameraAnimationGroupHermiteBuilder);
-        mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(mmdCameraAnimationGroup);
-        mmdCamera.setAnimation("motion");
+
+        mmdModelAnimationGroup.createAnimationGroup(mmdModel).play();
+        mmdCameraAnimationGroup.createAnimationGroup(mmdCamera).play();
+        audioPlayer.play();
+
+        Inspector.Show(scene, { });
 
         {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            modelMesh.parent = mmdRoot;
-
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
-            });
-            const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, MmdModelAnimationGroupHermiteBuilder);
-            mmdModel.addAnimation(mmdModelAnimationGroup);
-            mmdModel.setAnimation("motion");
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
             const meshWorldMatrix = modelMesh.getWorldMatrix();

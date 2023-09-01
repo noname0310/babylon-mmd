@@ -170,12 +170,11 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const boneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.boneRotationAnimations.length);
-        const boneTracks = animationGroup.boneRotationAnimations;
-        for (let i = 0; i < boneTracks.length; ++i) {
-            const boneTrack = boneTracks[i];
-            const bone = boneIndexMap.get(boneTrack.targetPropertyPath[0]);
+        const boneNameMap = animationGroup.boneRotationAnimationBindMap;
+        for (let i = 0; i < boneNameMap.length; ++i) {
+            const bone = boneIndexMap.get(boneNameMap[i]);
             if (bone === undefined) {
-                logger?.warn(`Binding failed: bone ${boneTrack.targetPropertyPath[0]} not found`);
+                logger?.warn(`Binding failed: bone ${boneNameMap[i]} not found`);
                 boneBindIndexMap[i] = null;
             } else {
                 boneBindIndexMap[i] = bone;
@@ -183,12 +182,11 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const moveableBoneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.bonePositionAnimations.length);
-        const moveableBoneTracks = animationGroup.bonePositionAnimations;
-        for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            const moveableBoneTrack = moveableBoneTracks[i];
-            const bone = boneIndexMap.get(moveableBoneTrack.targetPropertyPath[0]);
+        const moveableBoneNameMap = animationGroup.bonePositionAnimationBindMap;
+        for (let i = 0; i < moveableBoneNameMap.length; ++i) {
+            const bone = boneIndexMap.get(moveableBoneNameMap[i]);
             if (bone === undefined) {
-                logger?.warn(`Binding failed: bone ${moveableBoneTrack.targetPropertyPath[0]} not found`);
+                logger?.warn(`Binding failed: bone ${moveableBoneNameMap[i]} not found`);
                 moveableBoneBindIndexMap[i] = null;
             } else {
                 moveableBoneBindIndexMap[i] = bone;
