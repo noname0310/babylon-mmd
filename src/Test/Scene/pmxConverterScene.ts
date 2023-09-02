@@ -30,7 +30,7 @@ import type { ISceneBuilder } from "../baseRuntime";
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
     const result: FileSystemFileEntry[] = [];
 
-    for (let i = 0; i < entries.length; i++) {
+    for (let i = 0; i < entries.length; ++i) {
         const entry = entries[i];
         if (entry.isDirectory) {
             const dirReader = (entry as FileSystemDirectoryEntry).createReader();
@@ -49,7 +49,7 @@ async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<F
 async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
     const files: File[] = [];
     const directories = await readDirectories(entries);
-    for (let i = 0; i < directories.length; i++) {
+    for (let i = 0; i < directories.length; ++i) {
         const entry = directories[i];
         const file = await new Promise<File>((resolve, reject) => {
             entry.file(resolve, reject);
@@ -394,7 +394,7 @@ export class PmxConverterScene implements ISceneBuilder {
             if (mesh === null) return;
 
             const subMaterials = mesh.material.subMaterials;
-            for (let i = 0; i < subMaterials.length; i++) {
+            for (let i = 0; i < subMaterials.length; ++i) {
                 const material = subMaterials[i] as MmdStandardMaterial;
 
                 const item = document.createElement("li");
@@ -621,7 +621,7 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
             const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files,
                 (_materialsName, textureAlphaEvaluterResults) => {
-                    for (let i = 0; i < textureAlphaEvaluterResults.length; i++) {
+                    for (let i = 0; i < textureAlphaEvaluterResults.length; ++i) {
                         textureAlphaEvaluterResults[i] = mesh!.material.subMaterials[i].transparencyMode ?? 0;
                     }
                 }

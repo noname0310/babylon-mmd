@@ -79,7 +79,7 @@ export class BvmdConverter {
         { // compute dataLength
             dataLength += 4; // boneTrackCount
             const boneTrackCount = animation.boneTracks.length;
-            for (let i = 0; i < boneTrackCount; i++) {
+            for (let i = 0; i < boneTrackCount; ++i) {
                 const boneTrack = animation.boneTracks[i];
 
                 const trackNameBytes = encoder.encode(boneTrack.name);
@@ -92,7 +92,7 @@ export class BvmdConverter {
 
             dataLength += 4; // moveableBoneTrackCount
             const moveableBoneTrackCount = animation.moveableBoneTracks.length;
-            for (let i = 0; i < moveableBoneTrackCount; i++) {
+            for (let i = 0; i < moveableBoneTrackCount; ++i) {
                 const moveableBoneTrack = animation.moveableBoneTracks[i];
 
                 const trackNameBytes = encoder.encode(moveableBoneTrack.name);
@@ -107,7 +107,7 @@ export class BvmdConverter {
 
             dataLength += 4; // morphTrackCount
             const morphTrackCount = animation.morphTracks.length;
-            for (let i = 0; i < morphTrackCount; i++) {
+            for (let i = 0; i < morphTrackCount; ++i) {
                 const morphTrack = animation.morphTracks[i];
 
                 const trackNameBytes = encoder.encode(morphTrack.name);
@@ -122,7 +122,7 @@ export class BvmdConverter {
             dataLength += 1 * animation.propertyTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // visibles
             dataLength += 4; // ikBoneNameCount
             const ikBoneNameCount = animation.propertyTrack.ikBoneNames.length;
-            for (let i = 0; i < ikBoneNameCount; i++) {
+            for (let i = 0; i < ikBoneNameCount; ++i) {
                 const ikBoneName = animation.propertyTrack.ikBoneNames[i];
 
                 const ikBoneNameBytes = encoder.encode(ikBoneName);
@@ -150,7 +150,7 @@ export class BvmdConverter {
 
         const boneTracks = animation.boneTracks;
         serializer.setUint32(boneTracks.length); // boneTrackCount
-        for (let i = 0; i < boneTracks.length; i++) {
+        for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
 
             serializer.setString(boneTrack.name); // trackName
@@ -167,7 +167,7 @@ export class BvmdConverter {
 
         const moveableBoneTracks = animation.moveableBoneTracks;
         serializer.setUint32(moveableBoneTracks.length); // moveableBoneTrackCount
-        for (let i = 0; i < moveableBoneTracks.length; i++) {
+        for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
 
             serializer.setString(moveableBoneTrack.name); // trackName
@@ -189,7 +189,7 @@ export class BvmdConverter {
 
         const morphTracks = animation.morphTracks;
         serializer.setUint32(morphTracks.length); // morphTrackCount
-        for (let i = 0; i < morphTracks.length; i++) {
+        for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
 
             serializer.setString(morphTrack.name); // trackName
@@ -210,7 +210,7 @@ export class BvmdConverter {
 
         serializer.setUint8Array(animation.propertyTrack.visibles); // visibles
         const ikBoneNames = animation.propertyTrack.ikBoneNames;
-        for (let i = 0; i < ikBoneNames.length; i++) {
+        for (let i = 0; i < ikBoneNames.length; ++i) {
             const ikBoneName = ikBoneNames[i];
 
             serializer.setString(ikBoneName); // ikBoneName

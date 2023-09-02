@@ -306,7 +306,7 @@ export class VmdObject {
 
             const ikStateCount = dataDeserializer.getUint32();
             const ikStates: VmdObject.PropertyKeyFrame.IKState[] = [];
-            for (let j = 0; j < ikStateCount; j++) {
+            for (let j = 0; j < ikStateCount; ++j) {
                 const ikName = dataDeserializer.getDecoderString(20, true);
                 const ikEnabled = dataDeserializer.getUint8() !== 0;
                 ikStates.push([ikName, ikEnabled]);

@@ -221,7 +221,7 @@ export class PmxReader {
             const normal = dataDeserializer.getFloat32Tuple(3);
             const uv = dataDeserializer.getFloat32Tuple(2);
             const additionalVec4: Vec4[] = [];
-            for (let j = 0; j < header.additionalVec4Count; j++) {
+            for (let j = 0; j < header.additionalVec4Count; ++j) {
                 additionalVec4.push(dataDeserializer.getFloat32Tuple(4));
             }
             const weightType: PmxObject.Vertex.BoneWeightType = dataDeserializer.getUint8();

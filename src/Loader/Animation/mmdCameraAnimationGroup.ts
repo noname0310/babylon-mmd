@@ -145,7 +145,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
         const positionInterpolations = mmdAnimationTrack.positionInterpolations;
 
         const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; i++) {
+        for (let i = 0; i < frameNumbers.length; ++i) {
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
@@ -193,7 +193,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
         const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
 
         const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; i++) {
+        for (let i = 0; i < frameNumbers.length; ++i) {
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
@@ -241,7 +241,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
         const distanceInterpolations = mmdAnimationTrack.distanceInterpolations;
 
         const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; i++) {
+        for (let i = 0; i < frameNumbers.length; ++i) {
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
@@ -283,7 +283,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
         const degToRad = Math.PI / 180;
 
         const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; i++) {
+        for (let i = 0; i < frameNumbers.length; ++i) {
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
