@@ -60,10 +60,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
 
     private static readonly _BonePositionA = new Vector3();
     private static readonly _BonePositionB = new Vector3();
-    private static readonly _BoneOriginalPosition = new Vector3();
+    private static readonly _BonePosition = new Vector3();
     private static readonly _BoneRotationA = new Quaternion();
     private static readonly _BoneRotationB = new Quaternion();
-    private static readonly _BoneOriginalRotation = new Quaternion();
+    private static readonly _BoneRotation = new Quaternion();
 
     /**
      * Update animation
@@ -87,9 +87,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
                 if (frameNumberB === undefined) {
                     const rotations = boneTrack.rotations;
-                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneRotation);
                     bone.setRotationQuaternion(
-                        MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(
+                        MmdRuntimeModelAnimation._BoneRotation.multiplyInPlace(
                             MmdRuntimeModelAnimation._BoneRotationB.set(
                                 rotations[upperBoundIndexMinusOne * 4],
                                 rotations[upperBoundIndexMinusOne * 4 + 1],
@@ -128,9 +128,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
-                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneRotation);
                     bone.setRotationQuaternion(
-                        MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(rotationA),
+                        MmdRuntimeModelAnimation._BoneRotation.multiplyInPlace(rotationA),
                         Space.LOCAL
                     );
                 }
@@ -152,22 +152,20 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                 const frameNumberB = boneTrack.frameNumbers[upperBoundIndex];
                 if (frameNumberB === undefined) {
                     const positions = boneTrack.positions;
-                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BoneOriginalPosition);
+                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BonePosition);
                     bone.setPosition(
-                        MmdRuntimeModelAnimation._BoneOriginalPosition.add(
-                            MmdRuntimeModelAnimation._BonePositionB.set(
-                                positions[upperBoundIndexMinusOne * 3],
-                                positions[upperBoundIndexMinusOne * 3 + 1],
-                                positions[upperBoundIndexMinusOne * 3 + 2]
-                            )
+                        MmdRuntimeModelAnimation._BonePosition.addInPlaceFromFloats(
+                            positions[upperBoundIndexMinusOne * 3],
+                            positions[upperBoundIndexMinusOne * 3 + 1],
+                            positions[upperBoundIndexMinusOne * 3 + 2]
                         ),
                         Space.LOCAL
                     );
 
                     const rotations = boneTrack.rotations;
-                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneRotation);
                     bone.setRotationQuaternion(
-                        MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(
+                        MmdRuntimeModelAnimation._BoneRotation.multiplyInPlace(
                             MmdRuntimeModelAnimation._BoneRotationB.set(
                                 rotations[upperBoundIndexMinusOne * 4],
                                 rotations[upperBoundIndexMinusOne * 4 + 1],
@@ -220,8 +218,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     positionA.x += (positionB.x - positionA.x) * xWeight;
                     positionA.y += (positionB.y - positionA.y) * yWeight;
                     positionA.z += (positionB.z - positionA.z) * zWeight;
-                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BoneOriginalPosition);
-                    bone.setPosition(MmdRuntimeModelAnimation._BoneOriginalPosition.add(positionA), Space.LOCAL);
+                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BonePosition);
+                    bone.setPosition(MmdRuntimeModelAnimation._BonePosition.addInPlace(positionA), Space.LOCAL);
 
                     const rotations = boneTrack.rotations;
                     const rotationInterpolations = boneTrack.rotationInterpolations;
@@ -248,9 +246,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     );
 
                     Quaternion.SlerpToRef(rotationA, rotationB, weight, rotationA);
-                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneOriginalRotation);
+                    Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimation._BoneRotation);
                     bone.setRotationQuaternion(
-                        MmdRuntimeModelAnimation._BoneOriginalRotation.multiply(rotationA),
+                        MmdRuntimeModelAnimation._BoneRotation.multiplyInPlace(rotationA),
                         Space.LOCAL
                     );
                 }

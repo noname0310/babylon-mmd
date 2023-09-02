@@ -54,8 +54,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         this._ikSolverBindIndexMap = ikSolverBindIndexMap;
     }
 
-    private static readonly _BoneOriginalPosition = new Vector3();
-    private static readonly _BoneOriginalRotation = new Quaternion();
+    private static readonly _BonePosition = new Vector3();
+    private static readonly _BoneRotation = new Quaternion();
 
     /**
      * Update animation
@@ -70,9 +70,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const boneTrack = boneTracks[i];
             const bone = boneBindIndexMap[i];
             if (bone === null) continue;
-            Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneOriginalRotation);
+            Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneRotation);
             bone.setRotationQuaternion(
-                MmdRuntimeModelAnimationGroup._BoneOriginalRotation.multiply(boneTrack.evaluate(frameTime)),
+                MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack.evaluate(frameTime)),
                 Space.LOCAL
             );
         }
@@ -83,9 +83,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const moveableBoneTrack = moveableBoneTracks[i];
             const bone = moveableBoneBindIndexMap[i];
             if (bone === null) continue;
-            bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BoneOriginalPosition);
+            bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BonePosition);
             bone.setPosition(
-                MmdRuntimeModelAnimationGroup._BoneOriginalPosition.add(moveableBoneTrack.evaluate(frameTime)),
+                MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack.evaluate(frameTime)),
                 Space.LOCAL
             );
         }
