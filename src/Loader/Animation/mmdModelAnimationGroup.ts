@@ -5,6 +5,7 @@ import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationK
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { IIkSolver } from "@/Runtime/ikSolver";
 import type { MmdModel } from "@/Runtime/mmdModel";
 import type { MmdMorphController } from "@/Runtime/mmdMorphController";
@@ -287,11 +288,115 @@ export interface IMmdModelAnimationGroupBuilder {
 }
 
 /**
+ * For reduce duplication of code
+ */
+abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnimationGroupBuilder {
+    /**
+     * Create mmd model bone position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public abstract createBonePositionAnimation(rootName: string, mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation;
+
+    /**
+     * Create mmd model bone rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public abstract createBoneRotationAnimation(rootName: string, mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation;
+
+    /**
+     * Create mmd model morph animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd morph animation track
+     * @returns babylon.js animation
+     */
+    public createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_morph_" + mmdAnimationTrack.name, "influence", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const weights = mmdAnimationTrack.weights;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            keys[i] = {
+                frame: frameNumbers[i],
+                value: weights[i],
+                interpolation: AnimationKeyInterpolation.NONE
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd model property animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animations
+     */
+    public createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[] {
+        const animations: Animation[] = new Array(mmdAnimationTrack.ikBoneNames.length);
+
+        const ikBoneNames = mmdAnimationTrack.ikBoneNames;
+        for (let i = 0; i < ikBoneNames.length; ++i) {
+            const animation = animations[i] = new Animation(rootName + "_ik_" + ikBoneNames[i], "enabled", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+            const frameNumbers = mmdAnimationTrack.frameNumbers;
+            const ikStates = mmdAnimationTrack.ikStates[i];
+
+            const keys = new Array<IAnimationKey>(frameNumbers.length);
+            for (let j = 0; j < frameNumbers.length; ++j) {
+                keys[j] = {
+                    frame: frameNumbers[j],
+                    value: ikStates[j] - 1,
+                    interpolation: AnimationKeyInterpolation.STEP
+                };
+            }
+            animation.setKeys(keys);
+        }
+
+        return animations;
+    }
+
+    /**
+     * Create mmd model visibility animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animation
+     */
+    public createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
+        const animation = new Animation(rootName + "_visibility", "visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const visibles = mmdAnimationTrack.visibles;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            keys[i] = {
+                frame: frameNumbers[i],
+                value: visibles[i] - 1,
+                interpolation: AnimationKeyInterpolation.STEP
+            };
+        }
+        animation.setKeys(keys);
+
+        if (frameNumbers.length === 0) return null;
+        else if (frameNumbers.length === 1 && visibles[0] === 1) return null;
+
+        return animation;
+    }
+}
+
+/**
  * Use hermite interpolation for import animation bezier curve parameter
  *
  * This has some loss of curve shape, but it converts animations reliably while maintaining a small amount of keyframes
  */
-export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationGroupBuilder {
+export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroupBuilderBase {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -409,89 +514,6 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
 
         return animation;
     }
-
-    /**
-     * Create mmd model morph animation
-     * @param rootName root animation name
-     * @param mmdAnimationTrack mmd morph animation track
-     * @returns babylon.js animation
-     */
-    public createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation {
-        const animation = new Animation(rootName + "_morph_" + mmdAnimationTrack.name, "influence", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
-
-        const frameNumbers = mmdAnimationTrack.frameNumbers;
-        const weights = mmdAnimationTrack.weights;
-
-        const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; ++i) {
-            keys[i] = {
-                frame: frameNumbers[i],
-                value: weights[i],
-                interpolation: AnimationKeyInterpolation.NONE
-            };
-        }
-        animation.setKeys(keys);
-
-        return animation;
-    }
-
-    /**
-     * Create mmd model visibility animation
-     * @param rootName root animation name
-     * @param mmdAnimationTrack mmd property animation track
-     * @returns babylon.js animation
-     */
-    public createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[] {
-        const animations: Animation[] = new Array(mmdAnimationTrack.ikBoneNames.length);
-
-        const ikBoneNames = mmdAnimationTrack.ikBoneNames;
-        for (let i = 0; i < ikBoneNames.length; ++i) {
-            const animation = animations[i] = new Animation(rootName + "_ik_" + ikBoneNames[i], "enabled", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
-
-            const frameNumbers = mmdAnimationTrack.frameNumbers;
-            const ikStates = mmdAnimationTrack.ikStates[i];
-
-            const keys = new Array<IAnimationKey>(frameNumbers.length);
-            for (let j = 0; j < frameNumbers.length; ++j) {
-                keys[j] = {
-                    frame: frameNumbers[j],
-                    value: ikStates[j] - 1,
-                    interpolation: AnimationKeyInterpolation.STEP
-                };
-            }
-            animation.setKeys(keys);
-        }
-
-        return animations;
-    }
-
-    /**
-     * Create mmd model visibility animation
-     * @param rootName root animation name
-     * @param mmdAnimationTrack mmd property animation track
-     * @returns babylon.js animation
-     */
-    public createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
-        const animation = new Animation(rootName + "_visibility", "visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
-
-        const frameNumbers = mmdAnimationTrack.frameNumbers;
-        const visibles = mmdAnimationTrack.visibles;
-
-        const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; ++i) {
-            keys[i] = {
-                frame: frameNumbers[i],
-                value: visibles[i] - 1,
-                interpolation: AnimationKeyInterpolation.STEP
-            };
-        }
-        animation.setKeys(keys);
-
-        if (frameNumbers.length === 0) return null;
-        else if (frameNumbers.length === 1 && visibles[0] === 1) return null;
-
-        return animation;
-    }
 }
 
 /**
@@ -499,10 +521,120 @@ export class MmdModelAnimationGroupHermiteBuilder implements IMmdModelAnimationG
  *
  * This method samples the bezier curve with 30 frames to preserve the shape of the curve as much as possible. However, it will use a lot of memory
  */
-// export class MmdModelAnimationGroupSampleBuilder implements IMmdModelAnimationBuilder {
+export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupBuilderBase {
+    /**
+     * Create mmd model bone position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBonePositionAnimation(rootName: string, mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_bone_position_" + mmdAnimationTrack.name, "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
-// }
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const positions = mmdAnimationTrack.positions;
+        const positionInterpolations = mmdAnimationTrack.positionInterpolations;
 
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        const previousPosition = new Vector3(positions[0], positions[1], positions[2]);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
+            };
+
+            const positionInterpolationXx1 = positionInterpolations[i * 12 + 0] / 127;
+            const positionInterpolationXx2 = positionInterpolations[i * 12 + 1] / 127;
+            const positionInterpolationXy1 = positionInterpolations[i * 12 + 2] / 127;
+            const positionInterpolationXy2 = positionInterpolations[i * 12 + 3] / 127;
+
+            const positionInterpolationYx1 = positionInterpolations[i * 12 + 4] / 127;
+            const positionInterpolationYx2 = positionInterpolations[i * 12 + 5] / 127;
+            const positionInterpolationYy1 = positionInterpolations[i * 12 + 6] / 127;
+            const positionInterpolationYy2 = positionInterpolations[i * 12 + 7] / 127;
+
+            const positionInterpolationZx1 = positionInterpolations[i * 12 + 8] / 127;
+            const positionInterpolationZx2 = positionInterpolations[i * 12 + 9] / 127;
+            const positionInterpolationZy1 = positionInterpolations[i * 12 + 10] / 127;
+            const positionInterpolationZy2 = positionInterpolations[i * 12 + 11] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const xWeight = BezierInterpolator.Interpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = BezierInterpolator.Interpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = BezierInterpolator.Interpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+
+                keys[j] = {
+                    frame: j,
+                    value: new Vector3(
+                        previousPosition.x + (positions[i * 3] - previousPosition.x) * xWeight,
+                        previousPosition.y + (positions[i * 3 + 1] - previousPosition.y) * yWeight,
+                        previousPosition.z + (positions[i * 3 + 2] - previousPosition.z) * zWeight
+                    )
+                };
+            }
+
+            previousFrame = frame;
+            previousPosition.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd model bone rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const rotations = mmdAnimationTrack.rotations;
+        const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
+
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        const previousRotation = new Quaternion(rotations[0], rotations[1], rotations[2], rotations[3]);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3])
+            };
+
+            const rotationInterpolationX1 = rotationInterpolations[i * 4 + 0] / 127;
+            const rotationInterpolationX2 = rotationInterpolations[i * 4 + 1] / 127;
+            const rotationInterpolationY1 = rotationInterpolations[i * 4 + 2] / 127;
+            const rotationInterpolationY2 = rotationInterpolations[i * 4 + 3] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const rotationWeight = BezierInterpolator.Interpolate(rotationInterpolationX1, rotationInterpolationX2, rotationInterpolationY1, rotationInterpolationY2, gradient);
+
+                const value = new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]);
+                keys[j] = {
+                    frame: j,
+                    value: Quaternion.SlerpToRef(previousRotation, value, rotationWeight, value)
+                };
+            }
+
+            previousFrame = frame;
+            previousRotation.set(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]);
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+}
 
 /**
  * Use bezier interpolation for import animation bezier curve parameter

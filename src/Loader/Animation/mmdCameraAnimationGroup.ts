@@ -4,6 +4,7 @@ import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
+import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
@@ -315,10 +316,229 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
  *
  * This method samples the bezier curve with 30 frames to preserve the shape of the curve as much as possible. However, it will use a lot of memory
  */
-// export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimationBuilder {
+export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimationGroupBuilder {
+    /**
+     * Create mmd camera position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
-// }
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const positions = mmdAnimationTrack.positions;
+        const positionInterpolations = mmdAnimationTrack.positionInterpolations;
 
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        const previousPosition = new Vector3(positions[0], positions[1], positions[2]);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
+                interpolation: frame + 1 === frameNumbers[i + 1] ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolation.NONE
+            };
+
+            const positionInterpolationXx1 = positionInterpolations[i * 12 + 0] / 127;
+            const positionInterpolationXx2 = positionInterpolations[i * 12 + 1] / 127;
+            const positionInterpolationXy1 = positionInterpolations[i * 12 + 2] / 127;
+            const positionInterpolationXy2 = positionInterpolations[i * 12 + 3] / 127;
+
+            const positionInterpolationYx1 = positionInterpolations[i * 12 + 4] / 127;
+            const positionInterpolationYx2 = positionInterpolations[i * 12 + 5] / 127;
+            const positionInterpolationYy1 = positionInterpolations[i * 12 + 6] / 127;
+            const positionInterpolationYy2 = positionInterpolations[i * 12 + 7] / 127;
+
+            const positionInterpolationZx1 = positionInterpolations[i * 12 + 8] / 127;
+            const positionInterpolationZx2 = positionInterpolations[i * 12 + 9] / 127;
+            const positionInterpolationZy1 = positionInterpolations[i * 12 + 10] / 127;
+            const positionInterpolationZy2 = positionInterpolations[i * 12 + 11] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const xWeight = BezierInterpolator.Interpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = BezierInterpolator.Interpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = BezierInterpolator.Interpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+
+                keys[j] = {
+                    frame: j,
+                    value: new Vector3(
+                        previousPosition.x + (positions[i * 3] - previousPosition.x) * xWeight,
+                        previousPosition.y + (positions[i * 3 + 1] - previousPosition.y) * yWeight,
+                        previousPosition.z + (positions[i * 3 + 2] - previousPosition.z) * zWeight
+                    ),
+                    interpolation: AnimationKeyInterpolation.NONE
+                };
+            }
+
+            previousFrame = frame;
+            previousPosition.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createRotationAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_rotation", "rotation", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const rotations = mmdAnimationTrack.rotations;
+        const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
+
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        const previousRotation = new Vector3(rotations[0], rotations[1], rotations[2]);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: new Vector3(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]),
+                interpolation: frame + 1 === frameNumbers[i + 1] ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolation.NONE
+            };
+
+            const rotationInterpolationXx1 = rotationInterpolations[i * 4 + 0] / 127;
+            const rotationInterpolationXx2 = rotationInterpolations[i * 4 + 1] / 127;
+            const rotationInterpolationXy1 = rotationInterpolations[i * 4 + 2] / 127;
+            const rotationInterpolationXy2 = rotationInterpolations[i * 4 + 3] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const rotationWeight = BezierInterpolator.Interpolate(rotationInterpolationXx1, rotationInterpolationXx2, rotationInterpolationXy1, rotationInterpolationXy2, gradient);
+
+                keys[j] = {
+                    frame: j,
+                    value: new Vector3(
+                        previousRotation.x + (rotations[i * 3] - previousRotation.x) * rotationWeight,
+                        previousRotation.y + (rotations[i * 3 + 1] - previousRotation.y) * rotationWeight,
+                        previousRotation.z + (rotations[i * 3 + 2] - previousRotation.z) * rotationWeight
+                    ),
+                    interpolation: AnimationKeyInterpolation.NONE
+                };
+            }
+
+            previousFrame = frame;
+            previousRotation.set(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]);
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera distance animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createDistanceAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_distance", "distance", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const distances = mmdAnimationTrack.distances;
+        const distanceInterpolations = mmdAnimationTrack.distanceInterpolations;
+
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        let previousDistance = distances[0];
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: distances[i],
+                interpolation: frame + 1 === frameNumbers[i + 1] ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolation.NONE
+            };
+
+            const distanceInterpolationXx1 = distanceInterpolations[i * 4 + 0] / 127;
+            const distanceInterpolationXx2 = distanceInterpolations[i * 4 + 1] / 127;
+            const distanceInterpolationXy1 = distanceInterpolations[i * 4 + 2] / 127;
+            const distanceInterpolationXy2 = distanceInterpolations[i * 4 + 3] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const distanceWeight = BezierInterpolator.Interpolate(distanceInterpolationXx1, distanceInterpolationXx2, distanceInterpolationXy1, distanceInterpolationXy2, gradient);
+
+                keys[j] = {
+                    frame: j,
+                    value: previousDistance + (distances[i] - previousDistance) * distanceWeight,
+                    interpolation: AnimationKeyInterpolation.NONE
+                };
+            }
+
+            previousFrame = frame;
+            previousDistance = distances[i];
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera fov animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createFovAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_camera_fov", "fov", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const fovs = mmdAnimationTrack.fovs;
+        const fovInterpolations = mmdAnimationTrack.fovInterpolations;
+
+        const degToRad = Math.PI / 180;
+
+        const keys = new Array<IAnimationKey>(mmdAnimationTrack.endFrame);
+        let previousFrame = 0;
+        let previousFov = fovs[0] * degToRad;
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+
+            keys[frame] = {
+                frame: frame,
+                value: fovs[i] * degToRad,
+                interpolation: frame + 1 === frameNumbers[i + 1] ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolation.NONE
+            };
+
+            const fovInterpolationXx1 = fovInterpolations[i * 4 + 0] / 127;
+            const fovInterpolationXx2 = fovInterpolations[i * 4 + 1] / 127;
+            const fovInterpolationXy1 = fovInterpolations[i * 4 + 2] / 127;
+            const fovInterpolationXy2 = fovInterpolations[i * 4 + 3] / 127;
+
+            for (let j = previousFrame + 1; j < frame; ++j) {
+                const gradient = (j - previousFrame) / (frame - previousFrame);
+
+                const fovWeight = BezierInterpolator.Interpolate(fovInterpolationXx1, fovInterpolationXx2, fovInterpolationXy1, fovInterpolationXy2, gradient);
+
+                keys[j] = {
+                    frame: j,
+                    value: previousFov + (fovs[i] * degToRad - previousFov) * fovWeight,
+                    interpolation: AnimationKeyInterpolation.NONE
+                };
+            }
+
+            previousFrame = frame;
+            previousFov = fovs[i] * degToRad;
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+}
 
 /**
  * Use bezier interpolation for import animation bezier curve parameter
@@ -327,6 +547,6 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-// export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationBuilder {
+// export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationGroupBuilder {
 
 // }

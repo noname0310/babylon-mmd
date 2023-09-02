@@ -38,7 +38,7 @@ import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdCameraAnimationGroup, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdModelAnimationGroup, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -218,7 +218,7 @@ export class SceneBuilder implements ISceneBuilder {
             buildPhysics: true
         });
 
-        const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, new MmdModelAnimationGroupHermiteBuilder());
+        const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, new MmdModelAnimationGroupSampleBuilder());
         const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, new MmdCameraAnimationGroupSampleBuilder());
 
         mmdModelAnimationGroup.createAnimationGroup(mmdModel).play();
