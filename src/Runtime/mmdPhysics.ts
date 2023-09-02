@@ -7,7 +7,7 @@ import { PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physic
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
 import type { Physics6DoFLimit, PhysicsConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
 import { Physics6DoFConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
-import type { PhysicsShape} from "@babylonjs/core/Physics/v2/physicsShape";
+import type { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
 import { PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere } from "@babylonjs/core/Physics/v2/physicsShape";
 import type { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
@@ -28,7 +28,8 @@ class MmdPhysicsTransformNode extends TransformNode {
         scene: Scene,
         linkedBone: MmdRuntimeBone,
         physicsMode: PmxObject.RigidBody.PhysicsMode,
-        isPure?: boolean) {
+        isPure?: boolean
+    ) {
         super(name, scene, isPure);
 
         this.linkedBone = linkedBone;
@@ -312,9 +313,9 @@ export class MmdPhysics {
             }
         }
 
-        const nodes: Nullable<MmdPhysicsTransformNode>[] = [];
-        const bodies: Nullable<PhysicsBody>[] = [];
-        const constraints: Nullable<PhysicsConstraint>[] = [];
+        const nodes: Nullable<MmdPhysicsTransformNode>[] = new Array(rigidBodies.length);
+        const bodies: Nullable<PhysicsBody>[] = new Array(rigidBodies.length);
+        const constraints: Nullable<PhysicsConstraint>[] = new Array(joints.length);
 
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];
@@ -322,8 +323,8 @@ export class MmdPhysics {
             if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
                 logger.warn(`Bone index out of range failed to create rigid body: ${rigidBody.name}`);
 
-                nodes.push(null);
-                bodies.push(null);
+                nodes[i] = null;
+                bodies[i] = null;
                 continue;
             }
             const bone = bones[rigidBody.boneIndex];
@@ -356,8 +357,8 @@ export class MmdPhysics {
             default:
                 logger.warn(`Unknown rigid body shape type: ${rigidBody.shapeType}`);
 
-                nodes.push(null);
-                bodies.push(null);
+                nodes[i] = null;
+                bodies[i] = null;
                 continue;
             }
             shape.material = {
@@ -398,8 +399,8 @@ export class MmdPhysics {
             body.setAngularDamping(rigidBody.angularDamping * 10);
             body.computeMassProperties();
 
-            nodes.push(node);
-            bodies.push(body);
+            nodes[i] = node;
+            bodies[i] = body;
         }
 
         const one: DeepImmutable<Vector3> = Vector3.One();
@@ -421,14 +422,14 @@ export class MmdPhysics {
             if (joint.rigidbodyIndexA < 0 || rigidBodies.length <= joint.rigidbodyIndexA) {
                 logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
 
-                constraints.push(null);
+                constraints[i] = null;
                 continue;
             }
 
             if (joint.rigidbodyIndexB < 0 || rigidBodies.length <= joint.rigidbodyIndexB) {
                 logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
 
-                constraints.push(null);
+                constraints[i] = null;
                 continue;
             }
 
@@ -438,7 +439,7 @@ export class MmdPhysics {
             if (bodyA === null || bodyB === null) {
                 logger.warn(`Rigid body not found failed to create joint: ${joint.name}`);
 
-                constraints.push(null);
+                constraints[i] = null;
                 continue;
             }
 
@@ -591,7 +592,7 @@ export class MmdPhysics {
 
             bodyA.addConstraint(bodyB, constraint);
 
-            constraints.push(constraint);
+            constraints[i] = constraint;
         }
 
         return new MmdPhysicsModel(this, nodes, bodies, constraints);
