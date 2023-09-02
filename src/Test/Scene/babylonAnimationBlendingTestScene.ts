@@ -202,11 +202,11 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdAnimation1 = loadResults[0] as MmdAnimation;
         const mmdAnimation2 = loadResults[1] as MmdAnimation;
 
-        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, MmdModelAnimationGroupHermiteBuilder);
-        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, MmdCameraAnimationGroupHermiteBuilder);
+        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupHermiteBuilder());
+        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupHermiteBuilder());
 
-        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, MmdModelAnimationGroupHermiteBuilder);
-        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, MmdCameraAnimationGroupHermiteBuilder);
+        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, new MmdModelAnimationGroupHermiteBuilder());
+        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, new MmdCameraAnimationGroupHermiteBuilder());
 
         const bindedModelAnimationGroup1 = mmdModelAnimationGroup1.createAnimationGroup(mmdModel);
         for (const animation of mmdModelAnimationGroup1.propertyAnimations) {

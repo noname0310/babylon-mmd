@@ -131,17 +131,15 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      */
     public constructor(
         mmdAnimation: MmdAnimation,
-        builder: new () => IMmdModelAnimationGroupBuilder
+        builder: IMmdModelAnimationGroupBuilder
     ) {
-        const builderInstance = new builder();
-
         const name = this.name = mmdAnimation.name;
 
         const moveableBoneTracks = mmdAnimation.moveableBoneTracks;
         const bonePositionAnimations: Animation[] = this.bonePositionAnimations = new Array(moveableBoneTracks.length);
         const bonePositionAnimationBindMap: string[] = this.bonePositionAnimationBindMap = new Array(moveableBoneTracks.length);
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            bonePositionAnimations[i] = builderInstance.createBonePositionAnimation(name, moveableBoneTracks[i]);
+            bonePositionAnimations[i] = builder.createBonePositionAnimation(name, moveableBoneTracks[i]);
             bonePositionAnimationBindMap[i] = moveableBoneTracks[i].name;
         }
 
@@ -149,11 +147,11 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         const boneRotationAnimations: Animation[] = this.boneRotationAnimations = new Array(boneTracks.length + moveableBoneTracks.length);
         const boneRotationAnimationBindMap: string[] = this.boneRotationAnimationBindMap = new Array(boneTracks.length + moveableBoneTracks.length);
         for (let i = 0; i < boneTracks.length; ++i) {
-            boneRotationAnimations[i] = builderInstance.createBoneRotationAnimation(name, boneTracks[i]);
+            boneRotationAnimations[i] = builder.createBoneRotationAnimation(name, boneTracks[i]);
             boneRotationAnimationBindMap[i] = boneTracks[i].name;
         }
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            boneRotationAnimations[boneTracks.length + i] = builderInstance.createBoneRotationAnimation(name, moveableBoneTracks[i]);
+            boneRotationAnimations[boneTracks.length + i] = builder.createBoneRotationAnimation(name, moveableBoneTracks[i]);
             boneRotationAnimationBindMap[boneTracks.length + i] = moveableBoneTracks[i].name;
         }
 
@@ -161,13 +159,13 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         const morphAnimations: Animation[] = this.morphAnimations = new Array(morphTracks.length);
         const morphAnimationBindMap: string[] = this.morphAnimationBindMap = new Array(morphTracks.length);
         for (let i = 0; i < morphTracks.length; ++i) {
-            morphAnimations[i] = builderInstance.createMorphAnimation(name, morphTracks[i]);
+            morphAnimations[i] = builder.createMorphAnimation(name, morphTracks[i]);
             morphAnimationBindMap[i] = morphTracks[i].name;
         }
 
-        this.propertyAnimations = builderInstance.createPropertyAnimation(name, mmdAnimation.propertyTrack);
+        this.propertyAnimations = builder.createPropertyAnimation(name, mmdAnimation.propertyTrack);
         this.propertyAnimationBindMap = mmdAnimation.propertyTrack.ikBoneNames;
-        this.visibilityAnimation = builderInstance.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
+        this.visibilityAnimation = builder.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;

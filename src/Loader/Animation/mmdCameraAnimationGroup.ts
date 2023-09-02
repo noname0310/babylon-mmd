@@ -59,16 +59,14 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
      */
     public constructor(
         mmdAnimation: MmdAnimation,
-        builder: new () => IMmdCameraAnimationGroupBuilder
+        builder: IMmdCameraAnimationGroupBuilder
     ) {
-        const builderInstance = new builder();
-
         const name = this.name = mmdAnimation.name;
 
-        this.positionAnimation = builderInstance.createPositionAnimation(name, mmdAnimation.cameraTrack);
-        this.rotationAnimation = builderInstance.createRotationAnimation(name, mmdAnimation.cameraTrack);
-        this.distanceAnimation = builderInstance.createDistanceAnimation(name, mmdAnimation.cameraTrack);
-        this.fovAnimation = builderInstance.createFovAnimation(name, mmdAnimation.cameraTrack);
+        this.positionAnimation = builder.createPositionAnimation(name, mmdAnimation.cameraTrack);
+        this.rotationAnimation = builder.createRotationAnimation(name, mmdAnimation.cameraTrack);
+        this.distanceAnimation = builder.createDistanceAnimation(name, mmdAnimation.cameraTrack);
+        this.fovAnimation = builder.createFovAnimation(name, mmdAnimation.cameraTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
