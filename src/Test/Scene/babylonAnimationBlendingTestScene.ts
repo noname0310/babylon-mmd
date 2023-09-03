@@ -31,8 +31,8 @@ import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
+import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -202,11 +202,11 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdAnimation1 = loadResults[0] as MmdAnimation;
         const mmdAnimation2 = loadResults[1] as MmdAnimation;
 
-        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupSampleBuilder());
-        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupSampleBuilder());
+        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupBezierBuilder());
+        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupBezierBuilder());
 
-        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, new MmdModelAnimationGroupSampleBuilder());
-        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, new MmdCameraAnimationGroupSampleBuilder());
+        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, new MmdModelAnimationGroupBezierBuilder());
+        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, new MmdCameraAnimationGroupBezierBuilder());
 
         const bindedModelAnimationGroup1 = mmdModelAnimationGroup1.createAnimationGroup(mmdModel);
         for (const animation of mmdModelAnimationGroup1.propertyAnimations) {
