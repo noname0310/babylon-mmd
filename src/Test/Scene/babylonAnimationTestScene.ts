@@ -37,8 +37,8 @@ import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
+import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -218,8 +218,8 @@ export class SceneBuilder implements ISceneBuilder {
             buildPhysics: true
         });
 
-        const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, new MmdModelAnimationGroupSampleBuilder());
-        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, new MmdCameraAnimationGroupSampleBuilder());
+        const mmdModelAnimationGroup = new MmdModelAnimationGroup(loadResults[0] as MmdAnimation, new MmdModelAnimationGroupBezierBuilder());
+        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(loadResults[0] as MmdAnimation, new MmdCameraAnimationGroupBezierBuilder());
 
         mmdModelAnimationGroup.createAnimationGroup(mmdModel).play();
         mmdCameraAnimationGroup.createAnimationGroup(mmdCamera).play();

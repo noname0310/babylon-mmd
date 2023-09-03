@@ -667,24 +667,22 @@ export class MmdModelAnimationGroupBezierBuilder extends MmdModelAnimationGroupB
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
-            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
-            const outFrameDelta = nextFrame - frame;
 
             keys[i] = {
                 frame: frame,
                 value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? [
-                        new Vector2(positionInterpolations[i * 12 + 1] / 127 * inFrameDelta, positionInterpolations[i * 12 + 3] / 127 * (positions[i * 3] - positions[(i - 1) * 3])),
-                        new Vector2(positionInterpolations[i * 12 + 5] / 127 * inFrameDelta, positionInterpolations[i * 12 + 7] / 127 * (positions[i * 3 + 1] - positions[(i - 1) * 3 + 1])),
-                        new Vector2(positionInterpolations[i * 12 + 9] / 127 * inFrameDelta, positionInterpolations[i * 12 + 11] / 127 * (positions[i * 3 + 2] - positions[(i - 1) * 3 + 2]))
+                        new Vector2(positionInterpolations[i * 12 + 1] / 127, positionInterpolations[i * 12 + 3] / 127),
+                        new Vector2(positionInterpolations[i * 12 + 5] / 127, positionInterpolations[i * 12 + 7] / 127),
+                        new Vector2(positionInterpolations[i * 12 + 9] / 127, positionInterpolations[i * 12 + 11] / 127)
                     ]
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? [
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 2] / 127 * (positions[(i + 1) * 3] - positions[i * 3])),
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 6] / 127 * (positions[(i + 1) * 3 + 1] - positions[i * 3 + 1])),
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 10] / 127 * (positions[(i + 1) * 3 + 2] - positions[i * 3 + 2]))
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127)
                     ]
                     : undefined,
                 interpolation: AnimationKeyInterpolationBezier,

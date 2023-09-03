@@ -567,7 +567,6 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
-            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
             const outFrameDelta = nextFrame - frame;
             const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
 
@@ -576,16 +575,16 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
                 value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? [
-                        new Vector2(positionInterpolations[i * 12 + 1] / 127 * inFrameDelta, positionInterpolations[i * 12 + 3] / 127 * (positions[i * 3] - positions[(i - 1) * 3])),
-                        new Vector2(positionInterpolations[i * 12 + 5] / 127 * inFrameDelta, positionInterpolations[i * 12 + 7] / 127 * (positions[i * 3 + 1] - positions[(i - 1) * 3 + 1])),
-                        new Vector2(positionInterpolations[i * 12 + 9] / 127 * inFrameDelta, positionInterpolations[i * 12 + 11] / 127 * (positions[i * 3 + 2] - positions[(i - 1) * 3 + 2]))
+                        new Vector2(positionInterpolations[i * 12 + 1] / 127, positionInterpolations[i * 12 + 3] / 127),
+                        new Vector2(positionInterpolations[i * 12 + 5] / 127, positionInterpolations[i * 12 + 7] / 127),
+                        new Vector2(positionInterpolations[i * 12 + 9] / 127, positionInterpolations[i * 12 + 11] / 127)
                     ]
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? [
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 2] / 127 * (positions[(i + 1) * 3] - positions[i * 3])),
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 6] / 127 * (positions[(i + 1) * 3 + 1] - positions[i * 3 + 1])),
-                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 10] / 127 * (positions[(i + 1) * 3 + 2] - positions[i * 3 + 2]))
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127)
                     ]
                     : undefined,
                 interpolation: interpolationKind,
@@ -615,7 +614,6 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
-            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
             const outFrameDelta = nextFrame - frame;
             const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
 
@@ -624,16 +622,16 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
                 value: new Vector3(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? [
-                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3] - rotations[(i - 1) * 3])),
-                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1])),
-                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2]))
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127, rotationInterpolations[i * 4 + 3] / 127),
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127, rotationInterpolations[i * 4 + 3] / 127),
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127, rotationInterpolations[i * 4 + 3] / 127)
                     ]
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? [
-                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3] - rotations[i * 3])),
-                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1])),
-                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2]))
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127),
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127),
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127)
                     ]
                     : undefined,
                 interpolation: interpolationKind,
@@ -663,7 +661,6 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
-            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
             const outFrameDelta = nextFrame - frame;
             const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
 
@@ -671,10 +668,10 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
                 frame: frame,
                 value: distances[i],
                 inTangent: hasPreviousFrame
-                    ? new Vector2(distanceInterpolations[i * 4 + 1] / 127 * inFrameDelta, distanceInterpolations[i * 4 + 3] / 127 * (distances[i] - distances[i - 1]))
+                    ? new Vector2(distanceInterpolations[i * 4 + 1] / 127, distanceInterpolations[i * 4 + 3] / 127)
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? new Vector2(distanceInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, distanceInterpolations[(i + 1) * 4 + 2] / 127 * (distances[i + 1] - distances[i]))
+                    ? new Vector2(distanceInterpolations[(i + 1) * 4 + 0] / 127, distanceInterpolations[(i + 1) * 4 + 2] / 127)
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false
@@ -705,7 +702,6 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
             const frame = frameNumbers[i];
             const hasPreviousFrame = 0 < i;
             const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
-            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
             const outFrameDelta = nextFrame - frame;
             const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
 
@@ -713,10 +709,10 @@ export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimation
                 frame: frame,
                 value: fovs[i] * degToRad,
                 inTangent: hasPreviousFrame
-                    ? new Vector2(fovInterpolations[i * 4 + 1] / 127 * inFrameDelta, fovInterpolations[i * 4 + 3] / 127 * (fovs[i] * degToRad - fovs[i - 1] * degToRad))
+                    ? new Vector2(fovInterpolations[i * 4 + 1] / 127, fovInterpolations[i * 4 + 3] / 127)
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? new Vector2(fovInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, fovInterpolations[(i + 1) * 4 + 2] / 127 * (fovs[i + 1] * degToRad - fovs[i] * degToRad))
+                    ? new Vector2(fovInterpolations[(i + 1) * 4 + 0] / 127, fovInterpolations[(i + 1) * 4 + 2] / 127)
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false

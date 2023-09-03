@@ -201,23 +201,11 @@ export class BezierAnimation extends Animation {
             }
             }
         } else { // bezier
-            let outTangent = startKey.outTangent;
-            let inTangent = endKey.inTangent;
-            if (this.dataType === Animation.ANIMATIONTYPE_FLOAT) {
-                outTangent = outTangent.scale(frameDelta);
-                inTangent = inTangent.scale(frameDelta);
-            } else if (this.dataType !== BezierAnimation.ANIMATIONTYPE_SLERP_TANGENT_QUATERNION) {
-                for (let i = 0; i < outTangent.length; i++) {
-                    outTangent[i] = outTangent[i].scale(frameDelta);
-                    inTangent[i] = inTangent[i].scale(frameDelta);
-                }
-            }
-
             switch (this.dataType) {
             // Float
             case Animation.ANIMATIONTYPE_FLOAT: {
                 const floatValue = useTangent
-                    ? this.floatInterpolateFunctionWithControlPoints(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.floatInterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.floatInterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -232,7 +220,7 @@ export class BezierAnimation extends Animation {
             // Quaternion
             case Animation.ANIMATIONTYPE_QUATERNION: {
                 const quatValue = useTangent
-                    ? this.quaternionInterpolateFunctionWithControlPoints(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.quaternionInterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.quaternionInterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -248,7 +236,7 @@ export class BezierAnimation extends Animation {
             // Quaternion using slerp
             case BezierAnimation.ANIMATIONTYPE_SLERP_TANGENT_QUATERNION: {
                 const quatValue = useTangent
-                    ? this.quaternionInterpolateFunctionWithSlerpControlPoints(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.quaternionInterpolateFunctionWithSlerpControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.quaternionInterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -264,7 +252,7 @@ export class BezierAnimation extends Animation {
             // Vector3
             case Animation.ANIMATIONTYPE_VECTOR3: {
                 const vec3Value = useTangent
-                    ? this.vector3InterpolateFunctionWithTangents(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.vector3InterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.vector3InterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -279,7 +267,7 @@ export class BezierAnimation extends Animation {
             // Vector2
             case Animation.ANIMATIONTYPE_VECTOR2: {
                 const vec2Value = useTangent
-                    ? this.vector2InterpolateFunctionWithTangents(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.vector2InterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.vector2InterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -306,7 +294,7 @@ export class BezierAnimation extends Animation {
             // Color3
             case Animation.ANIMATIONTYPE_COLOR3: {
                 const color3Value = useTangent
-                    ? this.color3InterpolateFunctionWithTangents(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.color3InterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.color3InterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
@@ -321,7 +309,7 @@ export class BezierAnimation extends Animation {
             // Color4
             case Animation.ANIMATIONTYPE_COLOR4: {
                 const color4Value = useTangent
-                    ? this.color4InterpolateFunctionWithTangents(startValue, outTangent, endValue, inTangent, gradient)
+                    ? this.color4InterpolateFunctionWithControlPoints(startValue, startKey.outTangent, endValue, endKey.inTangent, gradient)
                     : this.color4InterpolateFunction(startValue, endValue, gradient);
                 switch (state.loopMode) {
                 case Animation.ANIMATIONLOOPMODE_CYCLE:
