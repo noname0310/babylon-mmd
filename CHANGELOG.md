@@ -8,7 +8,7 @@
 
 - `MmdPlayerControl` fix time display initialization
 
-- support babylon.js animation runtime #8
+- #8 support babylon.js animation runtime
 
 - some GC optimizations in animation runtime
 
