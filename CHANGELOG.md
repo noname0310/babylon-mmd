@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.26.0
+
+- fix append transform position computation
+
+- support non-PMX model append transform rotation
+
+- `MmdPlayerControl` fix time display initialization
+
+- support babylon.js animation runtime #8
+
+- some GC optimizations in animation runtime
+
 ## 0.25.0
 
 - improve parse speed of PMX, BPMX and VMD

@@ -41,12 +41,12 @@ export class AppendTransformSolver {
         if (this.affectRotation) {
             const appendRotationOffset = this.appendRotationOffset;
             if (this.isLocal) {
-                targetBone.getAnimatedRotationToRef(appendRotationOffset);
+                targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
             } else {
                 if (targetBone.appendTransformSolver !== null) {
                     appendRotationOffset.copyFrom(targetBone.appendTransformSolver.appendRotationOffset);
                 } else {
-                    targetBone.getAnimatedRotationToRef(appendRotationOffset);
+                    targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
                 }
             }
 
@@ -65,12 +65,12 @@ export class AppendTransformSolver {
         if (this.affectPosition) {
             const appendPositionOffset = this.appendPositionOffset;
             if (this.isLocal) {
-                targetBone.getAnimatedPositionToRef(appendPositionOffset);
+                targetBone.getAnimationPositionOffsetToRef(appendPositionOffset);
             } else {
                 if (targetBone.appendTransformSolver !== null) {
                     appendPositionOffset.copyFrom(targetBone.appendTransformSolver.appendPositionOffset);
                 } else {
-                    targetBone.getAnimatedPositionToRef(appendPositionOffset);
+                    targetBone.getAnimationPositionOffsetToRef(appendPositionOffset);
                 }
             }
 
