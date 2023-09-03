@@ -2,8 +2,9 @@ import { Animation } from "@babylonjs/core/Animations/animation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
+import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
@@ -547,6 +548,182 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-// export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationGroupBuilder {
+export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationGroupBuilder {
+    /**
+     * Create mmd camera position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
-// }
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const positions = mmdAnimationTrack.positions;
+        const positionInterpolations = mmdAnimationTrack.positionInterpolations;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
+            const outFrameDelta = nextFrame - frame;
+            const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
+
+            keys[i] = {
+                frame: frame,
+                value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
+                inTangent: hasPreviousFrame
+                    ? [
+                        new Vector2(positionInterpolations[i * 12 + 1] / 127 * inFrameDelta, positionInterpolations[i * 12 + 3] / 127 * (positions[i * 3] - positions[(i - 1) * 3])),
+                        new Vector2(positionInterpolations[i * 12 + 5] / 127 * inFrameDelta, positionInterpolations[i * 12 + 7] / 127 * (positions[i * 3 + 1] - positions[(i - 1) * 3 + 1])),
+                        new Vector2(positionInterpolations[i * 12 + 9] / 127 * inFrameDelta, positionInterpolations[i * 12 + 11] / 127 * (positions[i * 3 + 2] - positions[(i - 1) * 3 + 2]))
+                    ]
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? [
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 2] / 127 * (positions[(i + 1) * 3] - positions[i * 3])),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 6] / 127 * (positions[(i + 1) * 3 + 1] - positions[i * 3 + 1])),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 10] / 127 * (positions[(i + 1) * 3 + 2] - positions[i * 3 + 2]))
+                    ]
+                    : undefined,
+                interpolation: interpolationKind,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createRotationAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_camera_rotation", "rotation", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const rotations = mmdAnimationTrack.rotations;
+        const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
+            const outFrameDelta = nextFrame - frame;
+            const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
+
+            keys[i] = {
+                frame: frame,
+                value: new Vector3(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]),
+                inTangent: hasPreviousFrame
+                    ? [
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3] - rotations[(i - 1) * 3])),
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1])),
+                        new Vector2(rotationInterpolations[i * 4 + 1] / 127 * inFrameDelta, rotationInterpolations[i * 4 + 3] / 127 * (rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2]))
+                    ]
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? [
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3] - rotations[i * 3])),
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1])),
+                        new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, rotationInterpolations[(i + 1) * 4 + 2] / 127 * (rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2]))
+                    ]
+                    : undefined,
+                interpolation: interpolationKind,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera distance animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createDistanceAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_camera_distance", "distance", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const distances = mmdAnimationTrack.distances;
+        const distanceInterpolations = mmdAnimationTrack.distanceInterpolations;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
+            const outFrameDelta = nextFrame - frame;
+            const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
+
+            keys[i] = {
+                frame: frame,
+                value: distances[i],
+                inTangent: hasPreviousFrame
+                    ? new Vector2(distanceInterpolations[i * 4 + 1] / 127 * inFrameDelta, distanceInterpolations[i * 4 + 3] / 127 * (distances[i] - distances[i - 1]))
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? new Vector2(distanceInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, distanceInterpolations[(i + 1) * 4 + 2] / 127 * (distances[i + 1] - distances[i]))
+                    : undefined,
+                interpolation: interpolationKind,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd camera fov animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd camera animation track
+     * @returns babylon.js animation
+     */
+    public createFovAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_camera_fov", "fov", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const fovs = mmdAnimationTrack.fovs;
+        const fovInterpolations = mmdAnimationTrack.fovInterpolations;
+
+        const degToRad = Math.PI / 180;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
+            const outFrameDelta = nextFrame - frame;
+            const interpolationKind = outFrameDelta < 1.0001 ? AnimationKeyInterpolation.STEP : AnimationKeyInterpolationBezier;
+
+            keys[i] = {
+                frame: frame,
+                value: fovs[i] * degToRad,
+                inTangent: hasPreviousFrame
+                    ? new Vector2(fovInterpolations[i * 4 + 1] / 127 * inFrameDelta, fovInterpolations[i * 4 + 3] / 127 * (fovs[i] * degToRad - fovs[i - 1] * degToRad))
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? new Vector2(fovInterpolations[(i + 1) * 4 + 0] / 127 * outFrameDelta, fovInterpolations[(i + 1) * 4 + 2] / 127 * (fovs[i + 1] * degToRad - fovs[i] * degToRad))
+                    : undefined,
+                interpolation: interpolationKind,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+}

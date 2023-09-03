@@ -2,9 +2,10 @@ import { Animation } from "@babylonjs/core/Animations/animation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { IIkSolver } from "@/Runtime/ikSolver";
 import type { MmdModel } from "@/Runtime/mmdModel";
@@ -288,9 +289,13 @@ export interface IMmdModelAnimationGroupBuilder {
 }
 
 /**
+ * @internal
+ *
+ * Contains linear interpolated track builder for mmd model animation group
+ *
  * For reduce duplication of code
  */
-abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnimationGroupBuilder {
+export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnimationGroupBuilder {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -643,6 +648,88 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-// export class MmdModelAnimationGroupBezierBuilder implements IMmdModelAnimationBuilder {
+export class MmdModelAnimationGroupBezierBuilder extends MmdModelAnimationGroupBuilderBase {
+    /**
+     * Create mmd model bone position animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBonePositionAnimation(rootName: string, mmdAnimationTrack: MmdMovableBoneAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_bone_position_" + mmdAnimationTrack.name, "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
-// }
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const positions = mmdAnimationTrack.positions;
+        const positionInterpolations = mmdAnimationTrack.positionInterpolations;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+            const inFrameDelta = frame - (0 < i ? frameNumbers[i - 1] : -30);
+            const outFrameDelta = nextFrame - frame;
+
+            keys[i] = {
+                frame: frame,
+                value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
+                inTangent: hasPreviousFrame
+                    ? [
+                        new Vector2(positionInterpolations[i * 12 + 1] / 127 * inFrameDelta, positionInterpolations[i * 12 + 3] / 127 * (positions[i * 3] - positions[(i - 1) * 3])),
+                        new Vector2(positionInterpolations[i * 12 + 5] / 127 * inFrameDelta, positionInterpolations[i * 12 + 7] / 127 * (positions[i * 3 + 1] - positions[(i - 1) * 3 + 1])),
+                        new Vector2(positionInterpolations[i * 12 + 9] / 127 * inFrameDelta, positionInterpolations[i * 12 + 11] / 127 * (positions[i * 3 + 2] - positions[(i - 1) * 3 + 2]))
+                    ]
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? [
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 0] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 2] / 127 * (positions[(i + 1) * 3] - positions[i * 3])),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 4] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 6] / 127 * (positions[(i + 1) * 3 + 1] - positions[i * 3 + 1])),
+                        new Vector2(positionInterpolations[(i + 1) * 12 + 8] / 127 * outFrameDelta, positionInterpolations[(i + 1) * 12 + 10] / 127 * (positions[(i + 1) * 3 + 2] - positions[i * 3 + 2]))
+                    ]
+                    : undefined,
+                interpolation: AnimationKeyInterpolationBezier,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+
+    /**
+     * Create mmd model bone rotation animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: MmdBoneAnimationTrack | MmdMovableBoneAnimationTrack): Animation {
+        const animation = new BezierAnimation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, BezierAnimation.ANIMATIONTYPE_SLERP_TANGENT_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const rotations = mmdAnimationTrack.rotations;
+        const rotationInterpolations = mmdAnimationTrack.rotationInterpolations;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            const frame = frameNumbers[i];
+            const hasPreviousFrame = 0 < i;
+            const nextFrame = i + 1 < frameNumbers.length ? frameNumbers[i + 1] : Infinity;
+
+            keys[i] = {
+                frame: frame,
+                value: new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]),
+                inTangent: hasPreviousFrame
+                    ? new Vector2(rotationInterpolations[i * 4 + 1] / 127, rotationInterpolations[i * 4 + 3] / 127)
+                    : undefined,
+                outTangent: nextFrame < Infinity
+                    ? new Vector2(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127)
+                    : undefined,
+                interpolation: AnimationKeyInterpolationBezier,
+                lockedTangent: false
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
+}
