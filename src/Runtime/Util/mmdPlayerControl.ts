@@ -251,13 +251,19 @@ export class MmdPlayerControl {
                         curentFrameNumber.style.width = "40px";
                         curentFrameNumber.style.textAlign = "right";
                         curentFrameNumber.style.color = "white";
+                        curentFrameNumber.innerText = this.displayTimeFormat === DisplayTimeFormat.Seconds
+                            ? this._getFormattedTime(mmdRuntime.currentTime)
+                            : Math.floor(mmdRuntime.currentFrameTime).toString();
                         playerLowerLeftContainer.appendChild(curentFrameNumber);
 
                         const endFrameNumber = this._endFrameNumberSpan = ownerDocument.createElement("span");
                         endFrameNumber.style.width = "50px";
                         endFrameNumber.style.textAlign = "left";
                         endFrameNumber.style.color = "white";
-                        endFrameNumber.innerText = "/" + mmdRuntime.animationFrameTimeDuration.toString();
+                        endFrameNumber.innerHTML = "&nbsp;/&nbsp;" +
+                            (this.displayTimeFormat === DisplayTimeFormat.Seconds
+                                ? this._getFormattedTime(mmdRuntime.animationDuration)
+                                : mmdRuntime.animationFrameTimeDuration.toString());
                         playerLowerLeftContainer.appendChild(endFrameNumber);
                     }
 
