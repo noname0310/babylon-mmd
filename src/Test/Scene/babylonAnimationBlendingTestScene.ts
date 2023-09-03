@@ -252,14 +252,14 @@ export class SceneBuilder implements ISceneBuilder {
         bindedCameraAnimationGroup2.play(true);
         bindedModelAnimationGroup2.play(true);
 
-        bindedCameraAnimationGroup1.onAnimationGroupLoopObservable.add(() => {
+        bindedCameraAnimationGroup1.onAnimationGroupLoopObservable.add(async() => {
             audioPlayer1.currentTime = 0;
-            audioPlayer1.play();
+            await audioPlayer1.play();
         });
 
-        bindedCameraAnimationGroup2.onAnimationGroupLoopObservable.add(() => {
+        bindedCameraAnimationGroup2.onAnimationGroupLoopObservable.add(async() => {
             audioPlayer2.currentTime = 0;
-            audioPlayer2.play();
+            await audioPlayer2.play();
         });
 
         // UI
@@ -330,9 +330,17 @@ export class SceneBuilder implements ISceneBuilder {
             motion1Slider.style.flexGrow = "1";
             motion1SliderDiv.appendChild(motion1Slider);
             motion1Slider.oninput = (): void => {
-                audioPlayer1.volume = Number(motion1Slider.value);
-                bindedModelAnimationGroup1.weight = Number(motion1Slider.value);
-                bindedCameraAnimationGroup1.weight = Number(motion1Slider.value);
+                const value = Number(motion1Slider.value);
+                if (audioPlayer1.volume === 0 && value !== 0 && audioPlayer1.paused) {
+                    audioPlayer1.currentTime = bindedCameraAnimationGroup1.animatables[0].masterFrame / 30;
+                    audioPlayer1.play();
+                    setTimeout(() => {
+                        audioPlayer1.currentTime = bindedCameraAnimationGroup1.animatables[0].masterFrame / 30;
+                    }, 1000);
+                }
+                audioPlayer1.volume = value;
+                bindedModelAnimationGroup1.weight = value;
+                bindedCameraAnimationGroup1.weight = value;
             };
 
             const motion2SliderDiv = ownerDocument.createElement("div");
@@ -365,9 +373,17 @@ export class SceneBuilder implements ISceneBuilder {
             motion2Slider.style.flexGrow = "1";
             motion2SliderDiv.appendChild(motion2Slider);
             motion2Slider.oninput = (): void => {
-                audioPlayer2.volume = Number(motion2Slider.value);
-                bindedModelAnimationGroup2.weight = Number(motion2Slider.value);
-                bindedCameraAnimationGroup2.weight = Number(motion2Slider.value);
+                const value = Number(motion2Slider.value);
+                if (audioPlayer2.volume === 0 && value !== 0 && audioPlayer2.paused) {
+                    audioPlayer2.currentTime = bindedCameraAnimationGroup2.animatables[0].masterFrame / 30;
+                    audioPlayer2.play();
+                    setTimeout(() => {
+                        audioPlayer2.currentTime = bindedCameraAnimationGroup2.animatables[0].masterFrame / 30;
+                    }, 1000);
+                }
+                audioPlayer2.volume = value;
+                bindedModelAnimationGroup2.weight = value;
+                bindedCameraAnimationGroup2.weight = value;
             };
 
             const blendSliderDiv = ownerDocument.createElement("div");
