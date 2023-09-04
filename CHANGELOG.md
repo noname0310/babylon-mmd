@@ -12,6 +12,8 @@
 
 - some GC optimizations in animation runtime
 
+- improve physics damping parameter import
+
 ## 0.25.0
 
 - improve parse speed of PMX, BPMX and VMD
