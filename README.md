@@ -144,38 +144,29 @@ Please refer to the documentation for more detailed instructions on how to use i
 **Parser**
 
 - [x] PMX Parser
+- [ ] PMD Parser
 - [x] VMD Parser
+- [ ] VPD Parser
 - [x] Optimized Custom PMX like format
 - [x] Optimized Custom VMD like format
 
 **PMX Loader**
 
 > Mesh
-- [x] Vertex, Normal, UV, Face load
-- [x] Bone weight load / Bone Structure build
-- [x] Morph target load
+- [x] Geometry load
+- [x] Build Bone / MorphTarget
 
 > Material / Shading
 - [x] Basic material parameters load
-- [x] Toon texture support
-- [x] Sphere texture support
-- [x] Edge(outline) rendering support
+- [x] Custom MMD toon fragment shader
 - [x] Spherical Deformation support
-- [x] WebGL 1.0 support
-- [x] WebGL 2.0 support
+- [x] WebGL 1.0 / 2.0 support
 - [x] WebGPU support
-
-> MMD runtime parameters
-- [x] Transform order
-- [x] Additional transform parameters load
-- [x] IK parameters load
-- [x] Rigid body / Joint parameters load
 
 **VMD Loader**
 
-- [x] Basic animation load
-- [x] Support custom retargeting
-- [ ] Load animation using the Babylon.js `Animation` container
+- [x] Basic animation load / custom retargeting
+- [x] Load animation using the Babylon.js `Animation` container
 - [ ] Babylon.js `Animation` container Humanoid to MMD bone mapping
 
 **Animation Runtime**
@@ -186,20 +177,18 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] Solve IK
 - [x] Play audio / sync with animation
 - [x] Basic animation player UI
-- [ ] Animation blending
+- [ ] Animation blending in custom animation runtime
 - [ ] Force Humanoid Model Support
 
 **Physics Runtime**
 
-- [ ] Solve Rigid body / Joint - It's not perfect yet
-- [ ] Support custom physics engine for parallel computing
+- [x] Solve Rigid body / Joint
+- [ ] WASM based runtime for threaded bullet physics and MMD IK
 
 ## Not planned features
 
 - PMX 2.1 support (because 2.1 spec not implemented in MMD)
-- PMD format support
 - Self shadow, Ground shadow spec support
-- Additional UV support
 
 ## References
 
