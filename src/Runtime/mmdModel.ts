@@ -169,7 +169,7 @@ export class MmdModel {
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
-            runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeModelAnimation(this, retargetingMap, this._logger);
+            runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
         } else {
             throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\"?");
         }

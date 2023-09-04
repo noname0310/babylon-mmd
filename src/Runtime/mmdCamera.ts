@@ -72,7 +72,7 @@ export class MmdCamera extends Camera {
     public addAnimation(animation: IMmdBindableCameraAnimation): void {
         let runtimeAnimation: RuntimeCameraAnimation;
         if ((animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation) {
-            runtimeAnimation = (animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation(this);
+            runtimeAnimation = animation.createRuntimeCameraAnimation(this);
         } else {
             throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\"?");
         }
