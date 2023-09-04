@@ -272,6 +272,12 @@ export class MmdPhysics {
         this._scene = scene;
     }
 
+    // ref: https://forum.babylonjs.com/t/convert-bullet-physics-damping-values-correctly-for-havok/43264/3
+    private _convertParameter(parameter: number): number {
+        const timeStep = 1 / 60;
+        return (1 - (1 - parameter) ** timeStep) / timeStep;
+    }
+
     /**
      * Build the physics model of the MMD model
      * @param mesh Mesh
@@ -394,9 +400,9 @@ export class MmdPhysics {
             const body = new PhysicsBody(node, motionType, false, scene);
             body.shape = shape;
             body.setMassProperties({ mass: rigidBody.mass });
-            // TODO: fix linearDamping calculation (multiply by 10 is nonsense)
-            body.setLinearDamping(rigidBody.linearDamping * 10);
-            body.setAngularDamping(rigidBody.angularDamping * 10);
+
+            body.setLinearDamping(this._convertParameter(rigidBody.linearDamping));
+            body.setAngularDamping(this._convertParameter(rigidBody.angularDamping));
             body.computeMassProperties();
 
             nodes[i] = node;
@@ -507,48 +513,51 @@ export class MmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
+            // TODO: not sure that convert also applies to joints
+            const damping = this._convertParameter(1);
+
             const limits: Physics6DoFLimit[] = [
                 {
                     axis: PhysicsConstraintAxis.LINEAR_X,
                     minLimit: joint.positionMin[0],
                     maxLimit: joint.positionMax[0],
-                    stiffness: joint.springPosition[0],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springPosition[0]),
+                    damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.LINEAR_Y,
                     minLimit: joint.positionMin[1],
                     maxLimit: joint.positionMax[1],
-                    stiffness: joint.springPosition[1],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springPosition[1]),
+                    damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.LINEAR_Z,
                     minLimit: joint.positionMin[2],
                     maxLimit: joint.positionMax[2],
-                    stiffness: joint.springPosition[2],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springPosition[2]),
+                    damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_X,
                     minLimit: joint.rotationMin[0],
                     maxLimit: joint.rotationMax[0],
-                    stiffness: joint.springRotation[0],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springRotation[0]),
+                    damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_Y,
                     minLimit: joint.rotationMin[1],
                     maxLimit: joint.rotationMax[1],
-                    stiffness: joint.springRotation[1],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springRotation[1]),
+                    damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_Z,
                     minLimit: joint.rotationMin[2],
                     maxLimit: joint.rotationMax[2],
-                    stiffness: joint.springRotation[2],
-                    damping: 1.0
+                    stiffness: this._convertParameter(joint.springRotation[2]),
+                    damping: damping
                 }
             ];
             for (let j = 0; j < limits.length; ++j) {
