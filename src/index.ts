@@ -10,8 +10,8 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
-export { IMmdCameraAnimationGroupBuilder, MmdCameraAnimationGroup, MmdCameraAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-export { IMmdModelAnimationGroupBuilder, MmdModelAnimationGroup, MmdModelAnimationGroupHermiteBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+export { IMmdCameraAnimationGroupBuilder, MmdCameraAnimationGroup, MmdCameraAnimationGroupHermiteBuilder, MmdCameraAnimationGroupSampleBuilder, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
+export { IMmdModelAnimationGroupBuilder, MmdModelAnimationGroup, MmdModelAnimationGroupHermiteBuilder, MmdModelAnimationGroupSampleBuilder, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 
 // Loader/Optimized/Parser
 export { BpmxObject } from "@/Loader/Optimized/Parser/bpmxObject";
