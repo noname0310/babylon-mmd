@@ -120,6 +120,13 @@ import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 const model = await SceneLoader.ImportMeshAsync(undefined, "your/root/path/", "your_file_name.bpmx", scene).then((result) => result.meshes[0]);
 ```
 
+If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
+
+```typescript
+// side effects for TGA textures
+import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
+```
+
 ### VMD to BVMD
 
 To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
