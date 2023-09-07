@@ -280,6 +280,15 @@ export class MmdPhysics {
         return (1 - (1 - parameter) ** timeStep) / timeStep;
     }
 
+    // it seems havok 6dof constraint does not work well with small angular limits
+    // TODO: investigate why
+    private _clampAngularLimit(limit: number): number {
+        const degToRad = Math.PI / 180;
+        return Math.abs(limit) < 5 * degToRad
+            ? 0
+            : limit;
+    }
+
     /**
      * Build the physics model of the MMD model
      * @param mesh Mesh
@@ -542,22 +551,22 @@ export class MmdPhysics {
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_X,
-                    minLimit: joint.rotationMin[0],
-                    maxLimit: joint.rotationMax[0],
+                    minLimit: this._clampAngularLimit(joint.rotationMin[0]),
+                    maxLimit: this._clampAngularLimit(joint.rotationMax[0]),
                     stiffness: this._convertParameter(joint.springRotation[0]),
                     damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_Y,
-                    minLimit: joint.rotationMin[1],
-                    maxLimit: joint.rotationMax[1],
+                    minLimit: this._clampAngularLimit(joint.rotationMin[1]),
+                    maxLimit: this._clampAngularLimit(joint.rotationMax[1]),
                     stiffness: this._convertParameter(joint.springRotation[1]),
                     damping: damping
                 },
                 {
                     axis: PhysicsConstraintAxis.ANGULAR_Z,
-                    minLimit: joint.rotationMin[2],
-                    maxLimit: joint.rotationMax[2],
+                    minLimit: this._clampAngularLimit(joint.rotationMin[2]),
+                    maxLimit: this._clampAngularLimit(joint.rotationMax[2]),
                     stiffness: this._convertParameter(joint.springRotation[2]),
                     damping: damping
                 }

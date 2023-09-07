@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.0
+
+- fix body offset computation in `PhysicsWithBone`
+- clamp physics constraint angular limit for better result
+
 ## 0.26.0
 
 - fix append transform position computation
