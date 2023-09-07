@@ -228,15 +228,17 @@ export class MmdPhysicsModel {
 
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
                 {
+                    node.linkedBone.worldMatrix.getTranslationToRef(MmdPhysicsModel._BoneWorldPosition);
                     node.bodyOffsetInverseMatrix.multiplyToRef(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
-                            node.linkedBone.worldMatrix.getTranslationToRef(MmdPhysicsModel._BoneWorldPosition),
+                            MmdPhysicsModel._ZeroVector,
                             MmdPhysicsModel._NodeWorldMatrix
                         ),
                         node.linkedBone.worldMatrix
                     );
+                    node.linkedBone.worldMatrix.setTranslation(MmdPhysicsModel._BoneWorldPosition);
 
                     const childBones = node.linkedBone.childBones;
                     for (let j = 0; j < childBones.length; ++j) {

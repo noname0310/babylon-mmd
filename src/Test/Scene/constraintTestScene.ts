@@ -3,13 +3,15 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
+import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -39,7 +41,7 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
-        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
+        // scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
 
         const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;
@@ -80,22 +82,37 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "res/",
-            "constraint_test4.pmx",
+            "res/private_test/model/ふわミクさんセット20230901/F_Miku_202309/",
+            "ふわミクさんver250.pmx",
             scene
-        ).then(result => result.meshes[0]);
+        ).then(result => result.meshes[0]) as Mesh;
+        mmdMesh.scaling.scaleInPlace(5);
         mmdMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         const havokInstance = await HavokPhysics();
         const havokPlugin = new HavokPlugin(true, havokInstance);
-        scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+        scene.enablePhysics(new Vector3(0, -98, 0), havokPlugin);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.register(scene);
-        mmdRuntime.createMmdModel(mmdMesh as Mesh);
+        mmdRuntime.createMmdModel(mmdMesh);
 
         Inspector.Show(scene, { });
+
+        {
+            const physicsViewer = new PhysicsViewer(scene);
+            for (const node of mmdMesh.getChildren()) {
+                if ((node as any).physicsBody) {
+                    physicsViewer.showBody((node as any).physicsBody);
+                }
+            }
+        }
+
+        const skeletionViewer = new SkeletonViewer(mmdMesh.skeleton!, mmdMesh, scene, false, 3, {
+            displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+        });
+        skeletionViewer.isEnabled = true;
 
         return scene;
     }
