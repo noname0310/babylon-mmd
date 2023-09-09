@@ -29,6 +29,9 @@ export { PmxObject } from "@/Loader/Parser/pmxObject";
 export { PmxReader } from "@/Loader/Parser/pmxReader";
 export { VmdData, VmdObject } from "@/Loader/Parser/vmdObject";
 
+// Loader/Util
+export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
+
 // Loader
 export { IMmdMaterialBuilder, MaterialInfo } from "@/Loader/IMmdMaterialBuilder";
 export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/Loader/mmdAsyncTextureLoader";

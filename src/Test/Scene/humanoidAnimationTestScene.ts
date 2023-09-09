@@ -7,6 +7,10 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import type { Animation } from "@babylonjs/core/Animations/animation";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import type { Bone } from "@babylonjs/core/Bones/bone";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
@@ -14,7 +18,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { SceneLoader, SceneLoaderAnimationGroupLoadingMode } from "@babylonjs/core/Loading/sceneLoader";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -25,10 +29,12 @@ import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
+import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
@@ -102,8 +108,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const promises: Promise<any>[] = [];
 
-        promises.push(SceneLoader.ImportAnimationsAsync(
-            "res/", "Silly Dancing.glb", scene, true, SceneLoaderAnimationGroupLoadingMode.NoSync, null, null,
+        promises.push(SceneLoader.LoadAssetContainerAsync(
+            "res/", "Silly Dancing.glb", scene,
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -127,17 +133,62 @@ export class SceneBuilder implements ISceneBuilder {
         loadingTexts = new Array(promises.length).fill("");
 
         const loadResults = await Promise.all(promises);
-
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
+        const motionAssetContainer = loadResults[0] as AssetContainer;
+        const modelMesh = loadResults[1].meshes[0] as Mesh;
+
         {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
+            const mmdHumanoidMapper = new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap);
+            const boneMap = new Map<string, Bone>();
+            {
+                const bones = modelMesh.skeleton!.bones;
+                for (let i = 0; i < bones.length; i++) {
+                    const bone = bones[i];
+                    boneMap.set(bone.name, bone);
+                }
+            }
+            const animationGroup = motionAssetContainer.animationGroups[0];
+            const margedAnimationGroups = motionAssetContainer.mergeAnimationsTo(scene, animationGroup.animatables,
+                (target: any): any => {
+                    const targetName = mmdHumanoidMapper.boneMap[target.name];
+                    if (targetName !== undefined) {
+                        const bone = boneMap.get(targetName);
+                        if (bone !== undefined) return bone;
+                    }
+                    return null;
+                }
+            );
+            const removeUnTargetedAnimation = (animationGroup: AnimationGroup): void => {
+                const unTargetedAnimations: Animation[] = [];
+                for (let i = 0; i < animationGroup.targetedAnimations.length; i++) {
+                    const targetedAnimation = animationGroup.targetedAnimations[i];
+                    if (targetedAnimation.target === null) {
+                        unTargetedAnimations.push(targetedAnimation.animation);
+                    }
+                }
+                for (let i = 0; i < unTargetedAnimations.length; i++) {
+                    animationGroup.removeTargetedAnimation(unTargetedAnimations[i]);
+                }
+            };
+            for (let i = 0; i < margedAnimationGroups.length; i++) removeUnTargetedAnimation(margedAnimationGroups[i]);
+
+            motionAssetContainer.dispose();
+        }
+
+        {
             shadowGenerator.addShadowCaster(modelMesh);
             modelMesh.receiveShadows = true;
 
-            mmdRuntime.createMmdModel(modelMesh, {
+            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true
             });
+
+            const runtimeBones = mmdModel.sortedRuntimeBones;
+            for (let i = 0; i < runtimeBones.length; ++i) {
+                const ikSolver = runtimeBones[i].ikSolver;
+                if (ikSolver !== null) ikSolver.enabled = false;
+            }
 
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
             const meshWorldMatrix = modelMesh.getWorldMatrix();
@@ -157,9 +208,6 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        const gltfAnimation = loadResults[0];
-        console.log(gltfAnimation);
-
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
@@ -172,7 +220,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
 
-        // Inspector.Show(scene, { });
+        Inspector.Show(scene, { });
 
         return scene;
     }
