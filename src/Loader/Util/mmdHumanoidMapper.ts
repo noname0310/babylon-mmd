@@ -579,6 +579,9 @@ export const VrmMmdHumanoidBoneMap = {
     rightLittleDistal: "rightLittleDistal"
 } as const satisfies MmdHumanoidBoneMap;
 
+/**
+ * bone name map generator for interchanging assets between mmd and humanoid rig
+ */
 export class MmdHumanoidMapper {
     private static readonly _PropertyMap = {
         hips: "センター",
@@ -641,8 +644,15 @@ export class MmdHumanoidMapper {
 
     private static readonly _PropertyKeys: readonly (keyof MmdHumanoidBoneMap)[] = Object.keys(MmdHumanoidMapper._PropertyMap) as (keyof MmdHumanoidBoneMap)[];
 
+    /**
+     * Humanoid bone to mmd bone name map
+     */
     public readonly boneMap: { readonly [key: string]: string };
 
+    /**
+     * Create a new `MmdHumanoidMapper` instance
+     * @param mmdHumanoidBoneMap humanoid bone name map
+     */
     public constructor(mmdHumanoidBoneMap: MmdHumanoidBoneMap) {
         const boneMap = this.boneMap = {} as { [key: string]: string };
 

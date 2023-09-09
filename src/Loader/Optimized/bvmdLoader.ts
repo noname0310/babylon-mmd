@@ -28,7 +28,7 @@ export class BvmdLoader {
 
     /**
      * Create a new BvmdLoader
-     * @param scene Scene
+     * @param scene Scene for loading file
      */
     public constructor(scene: Scene) {
         this._loggingEnabled = false;

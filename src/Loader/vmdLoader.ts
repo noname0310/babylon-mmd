@@ -27,6 +27,10 @@ export class VmdLoader {
     /** @internal */
     public error: (message: string) => void;
 
+    /**
+     * Create a new VmdLoader
+     * @param scene Scene for loading file
+     */
     public constructor(scene: Scene) {
         this._loggingEnabled = false;
         this.log = this._logDisabled;
