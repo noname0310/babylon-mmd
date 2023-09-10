@@ -7,10 +7,7 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import type { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
-import type { Bone } from "@babylonjs/core/Bones/bone";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
@@ -34,7 +31,8 @@ import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
+import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
+import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
@@ -109,7 +107,7 @@ export class SceneBuilder implements ISceneBuilder {
         const promises: Promise<any>[] = [];
 
         promises.push(SceneLoader.LoadAssetContainerAsync(
-            "res/", "Silly Dancing.glb", scene,
+            "res/", "Silly Dancing With T pose.glb", scene,
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -139,39 +137,24 @@ export class SceneBuilder implements ISceneBuilder {
         const modelMesh = loadResults[1].meshes[0] as Mesh;
 
         {
-            const mmdHumanoidMapper = new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap);
-            const boneMap = new Map<string, Bone>();
-            {
-                const bones = modelMesh.skeleton!.bones;
-                for (let i = 0; i < bones.length; i++) {
-                    const bone = bones[i];
-                    boneMap.set(bone.name, bone);
-                }
-            }
-            const animationGroup = motionAssetContainer.animationGroups[0];
-            const margedAnimationGroups = motionAssetContainer.mergeAnimationsTo(scene, animationGroup.animatables,
-                (target: any): any => {
-                    const targetName = mmdHumanoidMapper.boneMap[target.name];
-                    if (targetName !== undefined) {
-                        const bone = boneMap.get(targetName);
-                        if (bone !== undefined) return bone;
-                    }
-                    return null;
-                }
+            MmdAnimationConverter.SmartRetargetHumanoidAnimationGroup(
+                MixamoMmdHumanoidBoneMap,
+                motionAssetContainer.animationGroups[1],
+                motionAssetContainer.animationGroups[0],
+                modelMesh.skeleton!,
+                mmdRuntime
             );
-            const removeUnTargetedAnimation = (animationGroup: AnimationGroup): void => {
-                const unTargetedAnimations: Animation[] = [];
-                for (let i = 0; i < animationGroup.targetedAnimations.length; i++) {
-                    const targetedAnimation = animationGroup.targetedAnimations[i];
-                    if (targetedAnimation.target === null) {
-                        unTargetedAnimations.push(targetedAnimation.animation);
-                    }
-                }
-                for (let i = 0; i < unTargetedAnimations.length; i++) {
-                    animationGroup.removeTargetedAnimation(unTargetedAnimations[i]);
-                }
-            };
-            for (let i = 0; i < margedAnimationGroups.length; i++) removeUnTargetedAnimation(margedAnimationGroups[i]);
+
+            motionAssetContainer.animationGroups[0].dispose();
+
+            const margedAnimation = motionAssetContainer.mergeAnimationsTo(
+                scene,
+                motionAssetContainer.animationGroups[0].animatables
+            )[0];
+
+            margedAnimation.isAdditive = true;
+            margedAnimation.weight = 1;
+            margedAnimation.play(true);
 
             motionAssetContainer.dispose();
         }
