@@ -19,40 +19,41 @@ export class MmdAnimationConverter {
      * @param target target model
      * @param logger logger
      */
-    public static SmartRetargetHumanoidAnimationGroup(
+    public static RetargetHumanoidAnimation(
         humanoidBoneMap: MmdHumanoidBoneMap,
         animationGroup: AnimationGroup,
-        originalRestPose: AnimationGroup,
-        target: Skeleton,
+        originalSkeleton: Skeleton,
+        targetSkeleton: Skeleton,
         logger?: ILogger
     ): void {
-        const mmdHumanoidMapper = new MmdHumanoidMapper(humanoidBoneMap);
+        MmdAnimationConverter._RemoveScaleAnimation(animationGroup);
 
+        const targetedAnimations = animationGroup.targetedAnimations;
+        for (let i = 0; i < targetedAnimations.length; i++) {
+            AnimationTools.FlattenAnimationTarget(targetedAnimations[i]);
+        }
+
+        const mmdHumanoidMapper = new MmdHumanoidMapper(humanoidBoneMap);
         const boneMap = new Map<string, Bone>();
         {
-            const bones = target.bones;
+            const bones = targetSkeleton.bones;
             for (let i = 0; i < bones.length; i++) {
                 const bone = bones[i];
                 boneMap.set(bone.name, bone);
             }
         }
 
-        MmdAnimationConverter._RetargetHumanoidAnimationGroupInternal(mmdHumanoidMapper, animationGroup, boneMap, logger);
-
-        originalRestPose = originalRestPose.clone(originalRestPose.name + "_retargeted");
-        MmdAnimationConverter._RetargetHumanoidAnimationGroupInternal(mmdHumanoidMapper, originalRestPose, boneMap, logger);
-
         if (!animationGroup.isAdditive) {
-            AnimationTools.ConvertToAdditiveAnimationGroup(animationGroup, originalRestPose, logger);
+            AnimationTools.ConvertToAdditiveAnimation(animationGroup, originalSkeleton, logger);
         }
 
-        const targetRestPose = AnimationTools.CreateRestPoseAnimationGroup(target);
-        AnimationTools.ChangeAnimationGroupRestPose(animationGroup, originalRestPose, targetRestPose, logger);
+        MmdAnimationConverter._RetargetHumanoidAnimationInternal(mmdHumanoidMapper, animationGroup, boneMap, logger);
 
-        originalRestPose.dispose();
+
+        AnimationTools.ChangeAnimationRestPose(animationGroup, originalSkeleton, targetSkeleton, mmdHumanoidMapper, logger);
     }
 
-    private static _RetargetHumanoidAnimationGroupInternal(
+    private static _RetargetHumanoidAnimationInternal(
         mmdHumanoidMapper: MmdHumanoidMapper,
         animationGroup: AnimationGroup,
         boneMap: Map<string, Bone>,
@@ -101,30 +102,29 @@ export class MmdAnimationConverter {
         targetedAnimations.length -= unTargetedAnimationIndices.length;
     }
 
-    /**
-     * Retarget animation group to mmd model
-     * @param humanoidBoneMap humanoid bone map
-     * @param animationGroup animation group to retarget
-     * @param target target model
-     * @param logger logger
-     */
-    public static RetargetHumanoidAnimationGroup(
-        humanoidBoneMap: MmdHumanoidBoneMap,
-        animationGroup: AnimationGroup,
-        target: Skeleton,
-        logger?: ILogger
-    ): void {
-        const mmdHumanoidMapper = new MmdHumanoidMapper(humanoidBoneMap);
+    private static _RemoveScaleAnimation(animationGroup: AnimationGroup): void {
+        const scaleAnimationIndices: number[] = [];
 
-        const boneMap = new Map<string, Bone>();
-        {
-            const bones = target.bones;
-            for (let i = 0; i < bones.length; i++) {
-                const bone = bones[i];
-                boneMap.set(bone.name, bone);
+        const targetedAnimations = animationGroup.targetedAnimations;
+        for (let i = 0; i < targetedAnimations.length; i++) {
+            const targetedAnimation = targetedAnimations[i];
+
+            if (!targetedAnimation.target) continue;
+
+            const targetProperty = targetedAnimation.animation.targetProperty;
+            if (targetProperty === "scaling") {
+                scaleAnimationIndices.push(i);
             }
         }
 
-        MmdAnimationConverter._RetargetHumanoidAnimationGroupInternal(mmdHumanoidMapper, animationGroup, boneMap, logger);
+        for (let i = 0, j = 0; i < targetedAnimations.length; i++) {
+            if (i === scaleAnimationIndices[j]) {
+                j += 1; // Skip scale animation
+                continue;
+            }
+
+            targetedAnimations[i - j] = targetedAnimations[i];
+        }
+        targetedAnimations.length -= scaleAnimationIndices.length;
     }
 }

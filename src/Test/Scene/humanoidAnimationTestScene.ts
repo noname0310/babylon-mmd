@@ -22,6 +22,7 @@ import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
@@ -31,8 +32,11 @@ import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { AnimationTools } from "@/Loader/Util/animationTools";
 import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
 import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
+// import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
+// import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
@@ -71,10 +75,10 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20;
         directionalLight.shadowMinZ = -20;
-        directionalLight.orthoTop = 18;
+        directionalLight.orthoTop = 18 + 10;
         directionalLight.orthoBottom = -3;
         directionalLight.orthoLeft = -10;
-        directionalLight.orthoRight = 10;
+        directionalLight.orthoRight = 10 + 10;
         directionalLight.shadowOrthoScale = 0;
 
         // const directionalLightFrustumViewer = new DirectionalLightFrustumViewer(directionalLight, mmdCamera);
@@ -107,7 +111,7 @@ export class SceneBuilder implements ISceneBuilder {
         const promises: Promise<any>[] = [];
 
         promises.push(SceneLoader.LoadAssetContainerAsync(
-            "res/", "Silly Dancing With T pose.glb", scene,
+            "res/private_test/", "Capoeira.glb", scene,
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -137,26 +141,30 @@ export class SceneBuilder implements ISceneBuilder {
         const modelMesh = loadResults[1].meshes[0] as Mesh;
 
         {
-            MmdAnimationConverter.SmartRetargetHumanoidAnimationGroup(
+            motionAssetContainer.addAllToScene();
+            const rootNode = motionAssetContainer.rootNodes[0] as TransformNode;
+            rootNode.rotationQuaternion!.set(0, 0, 0, 1);
+            rootNode.scaling.scaleInPlace(100);
+            rootNode.position.set(10, 0, 10);
+            const meshes = motionAssetContainer.meshes;
+            for (let i = 0; i < meshes.length; ++i) {
+                const mesh = meshes[i];
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh);
+            }
+
+            const retargetedAnimation = AnimationTools.DeepCopyAnimationGroup(motionAssetContainer.animationGroups[0], "retargetedAnimation");
+            MmdAnimationConverter.RetargetHumanoidAnimation(
                 MixamoMmdHumanoidBoneMap,
-                motionAssetContainer.animationGroups[1],
-                motionAssetContainer.animationGroups[0],
+                retargetedAnimation,
+                motionAssetContainer.skeletons[0],
                 modelMesh.skeleton!,
                 mmdRuntime
             );
 
-            motionAssetContainer.animationGroups[0].dispose();
-
-            const margedAnimation = motionAssetContainer.mergeAnimationsTo(
-                scene,
-                motionAssetContainer.animationGroups[0].animatables
-            )[0];
-
-            margedAnimation.isAdditive = true;
-            margedAnimation.weight = 1;
-            margedAnimation.play(true);
-
-            motionAssetContainer.dispose();
+            retargetedAnimation.isAdditive = true;
+            retargetedAnimation.weight = 1;
+            retargetedAnimation.play(true);
         }
 
         {
@@ -181,8 +189,8 @@ export class SceneBuilder implements ISceneBuilder {
                 boneWorldMatrix.getTranslationToRef(directionalLight.position);
                 directionalLight.position.y -= 10;
 
-                camera.target.copyFrom(directionalLight.position);
-                camera.target.y += 13;
+                // camera.target.copyFrom(directionalLight.position);
+                // camera.target.y += 13;
             });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
