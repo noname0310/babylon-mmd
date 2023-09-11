@@ -32,15 +32,15 @@ import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import { AnimationTools } from "@/Loader/Util/animationTools";
-import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
-import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
+import { AnimationRetargeter } from "@/Loader/Util/animationRetargeter";
+import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 // import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
 // import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { deepCopyAnimationGroup } from "../Util/testHelpers";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -153,14 +153,18 @@ export class SceneBuilder implements ISceneBuilder {
                 shadowGenerator.addShadowCaster(mesh);
             }
 
-            const retargetedAnimation = AnimationTools.DeepCopyAnimationGroup(motionAssetContainer.animationGroups[0], "retargetedAnimation");
-            MmdAnimationConverter.RetargetHumanoidAnimation(
-                MixamoMmdHumanoidBoneMap,
-                retargetedAnimation,
-                motionAssetContainer.skeletons[0],
-                modelMesh.skeleton!,
-                mmdRuntime
-            );
+            const retargetedAnimation = deepCopyAnimationGroup(motionAssetContainer.animationGroups[0], "retargetedAnimation");
+
+            const animationRetargeter = new AnimationRetargeter();
+
+            animationRetargeter.loggingEnabled = true;
+
+            animationRetargeter
+                .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
+                .setSourceSkeleton(motionAssetContainer.skeletons[0])
+                .setTargetSkeleton(modelMesh.skeleton!);
+
+            animationRetargeter.retargetAnimation(retargetedAnimation);
 
             retargetedAnimation.isAdditive = true;
             retargetedAnimation.weight = 1;
