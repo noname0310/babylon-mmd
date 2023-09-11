@@ -1,3 +1,4 @@
+import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
@@ -11,6 +12,7 @@ import type { ILogger } from "../ILogger";
 import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
+import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
@@ -35,6 +37,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
     private readonly _mesh: RuntimeMmdMesh;
     private readonly _ikSolverBindIndexMap: Nullable<IIkSolver>[];
 
+    private readonly _bonePositionAnimationStates: _IAnimationState[];
+    private readonly _boneRotationAnimationStates: _IAnimationState[];
+    private readonly _morphAnimationStates: _IAnimationState[];
+    private readonly _propertyAnimationStates: _IAnimationState[];
+    private readonly _visibilityAnimationState: _IAnimationState;
+
     private constructor(
         animation: MmdModelAnimationGroup,
         boneBindIndexMap: Nullable<Bone>[],
@@ -52,6 +60,28 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         this._morphBindIndexMap = morphBindIndexMap;
         this._mesh = mesh;
         this._ikSolverBindIndexMap = ikSolverBindIndexMap;
+
+        const bonePositionAnimationStates = this._bonePositionAnimationStates = new Array(animation.bonePositionAnimations.length);
+        for (let i = 0; i < bonePositionAnimationStates.length; ++i) {
+            bonePositionAnimationStates[i] = createAnimationState();
+        }
+
+        const boneRotationAnimationStates = this._boneRotationAnimationStates = new Array(animation.boneRotationAnimations.length);
+        for (let i = 0; i < boneRotationAnimationStates.length; ++i) {
+            boneRotationAnimationStates[i] = createAnimationState();
+        }
+
+        const morphAnimationStates = this._morphAnimationStates = new Array(animation.morphAnimations.length);
+        for (let i = 0; i < morphAnimationStates.length; ++i) {
+            morphAnimationStates[i] = createAnimationState();
+        }
+
+        const propertyAnimationStates = this._propertyAnimationStates = new Array(animation.propertyAnimations.length);
+        for (let i = 0; i < propertyAnimationStates.length; ++i) {
+            propertyAnimationStates[i] = createAnimationState();
+        }
+
+        this._visibilityAnimationState = createAnimationState();
     }
 
     private static readonly _BonePosition = new Vector3();
@@ -72,7 +102,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             if (bone === null) continue;
             Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneRotation);
             bone.setRotationQuaternion(
-                MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack.evaluate(frameTime)),
+                MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i])),
                 Space.LOCAL
             );
         }
@@ -85,7 +115,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             if (bone === null) continue;
             bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BonePosition);
             bone.setPosition(
-                MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack.evaluate(frameTime)),
+                MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i])),
                 Space.LOCAL
             );
         }
@@ -99,7 +129,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             if (morphIndices === null) continue;
             // this clamp will be removed when morph target recompilation problem is solved
             // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
-            const morphWeight = Math.max(morphTrack.evaluate(frameTime), 1e-16);
+            const morphWeight = Math.max(morphTrack._interpolate(frameTime, this._morphAnimationStates[i]), 1e-16);
             for (let j = 0; j < morphIndices.length; ++j) {
                 morphController.setMorphWeightFromIndex(morphIndices[j], morphWeight);
             }
@@ -111,11 +141,11 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const propertyTrack = propertyTracks[i];
             const ikSolver = ikSolverBindIndexMap[i];
             if (ikSolver === null) continue;
-            ikSolver.enabled = 0 < 1 + propertyTrack.evaluate(frameTime);
+            ikSolver.enabled = 0 < 1 + propertyTrack._interpolate(frameTime, this._propertyAnimationStates[i]);
         }
 
         if (animation.visibilityAnimation !== null) {
-            this._mesh.visibility = 1 + animation.visibilityAnimation.evaluate(frameTime) as number;
+            this._mesh.visibility = 1 + animation.visibilityAnimation._interpolate(frameTime, this._visibilityAnimationState) as number;
         }
     }
 
