@@ -182,43 +182,37 @@ export class SceneBuilder implements ISceneBuilder {
             animation.dispose();
             retargetedAnimation.dispose();
 
-            const sourceLeftArm = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftArm")!;
-            const targetLeftArm = modelMesh.skeleton!.bones.find((bone) => bone.name === "左腕")!;
+            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
+            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
 
             // rotate y 90
-            const quaternionX90 = Quaternion.FromEulerAngles(Math.PI / 20, 0, 0);
+            const quaternionXM90 = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
 
             sourceSkeleton.prepare();
-            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftArm.parent.getFinalMatrix());
-            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftArm.parent._matrix);
 
-            console.log(sourceLeftShoulderWorldRotation.toEulerAngles().asArray());
-            console.log(sourceLeftShoulderLocalRotation.toEulerAngles().asArray());
+            const sourceLeftSpineWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent!.getFinalMatrix());
+            const sourceLeftSpineLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent._matrix);
 
-            const sourceLeftShoulderWorldRotationInverse = sourceLeftShoulderWorldRotation.invert();
-            const sourceLeftShoulderLocalRotationInverse = sourceLeftShoulderLocalRotation.invert();
+            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.getFinalMatrix());
+            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder._matrix);
 
-            sourceLeftShoulderWorldRotationInverse;
-            sourceLeftShoulderLocalRotationInverse;
+            sourceLeftSpineLocalRotation;
+            sourceLeftShoulderWorldRotation;
+            sourceLeftShoulderLocalRotation;
 
-            const sourceLeftArmWorldRotation = Quaternion.FromRotationMatrix(sourceLeftArm.getFinalMatrix());
-            const sourceLeftArmLocalRotation = Quaternion.FromRotationMatrix(sourceLeftArm._matrix);
+            // apply same rotation from mmd skeleton to mixamo skeleton
+            targetLeftShoulder.rotationQuaternion = targetLeftShoulder.rotationQuaternion.multiplyInPlace(quaternionXM90);
+            sourceLeftShoulder.rotationQuaternion = sourceLeftSpineWorldRotation.invert()
+                .multiply(quaternionXM90.invert())
+                .multiply(sourceLeftShoulderWorldRotation);
 
-            sourceLeftArmWorldRotation;
-            sourceLeftArmLocalRotation;
 
-            const sourveLeftArmWorldRotationInverse = sourceLeftArmWorldRotation.invert();
-            const sourceLeftArmLocalRotationInverse = sourceLeftArmLocalRotation.invert();
-
-            sourveLeftArmWorldRotationInverse;
-            sourceLeftArmLocalRotationInverse;
-
-            scene.onBeforeRenderObservable.add(() => {
-                targetLeftArm.rotationQuaternion = targetLeftArm.rotationQuaternion.multiplyInPlace(quaternionX90);
-                sourceLeftArm.rotationQuaternion = sourceLeftArmLocalRotation.multiply(
-                    Quaternion.FromEulerAngles(0, 0, 0).multiply(targetLeftArm.rotationQuaternion)
-                );
-            });
+            // apply same rotation from mixamo skeleton to mmd skeleton
+            sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(quaternionXM90);
+            targetLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation
+                .multiply(quaternionXM90)
+                .multiply(sourceLeftShoulderLocalRotation.invert())
+            ;
         }
 
         {
