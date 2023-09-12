@@ -19,7 +19,7 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -40,7 +40,6 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { deepCopyAnimationGroup } from "../Util/testHelpers";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -153,22 +152,73 @@ export class SceneBuilder implements ISceneBuilder {
                 shadowGenerator.addShadowCaster(mesh);
             }
 
-            const retargetedAnimation = deepCopyAnimationGroup(motionAssetContainer.animationGroups[0], "retargetedAnimation");
-
             const animationRetargeter = new AnimationRetargeter();
 
             animationRetargeter.loggingEnabled = true;
 
-            animationRetargeter
-                .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
-                .setSourceSkeleton(motionAssetContainer.skeletons[0])
-                .setTargetSkeleton(modelMesh.skeleton!);
+            const animation = motionAssetContainer.animationGroups[0];
+            const sourceSkeleton = motionAssetContainer.skeletons[0];
 
-            animationRetargeter.retargetAnimation(retargetedAnimation);
+            const retargetedAnimation = animationRetargeter
+                .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
+                .setSourceSkeleton(sourceSkeleton)
+                .setTargetSkeleton(modelMesh.skeleton!)
+                .retargetAnimation(animation)!;
 
             retargetedAnimation.isAdditive = true;
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
+
+            animation.stop();
+            retargetedAnimation.stop();
+            {
+                const bones = sourceSkeleton.bones;
+                for (let i = 0; i < bones.length; ++i) {
+                    const bone = bones[i];
+                    bone.linkTransformNode(null);
+                }
+            }
+
+            animation.dispose();
+            retargetedAnimation.dispose();
+
+            const sourceLeftArm = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftArm")!;
+            const targetLeftArm = modelMesh.skeleton!.bones.find((bone) => bone.name === "左腕")!;
+
+            // rotate y 90
+            const quaternionX90 = Quaternion.FromEulerAngles(Math.PI / 20, 0, 0);
+
+            sourceSkeleton.prepare();
+            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftArm.parent.getFinalMatrix());
+            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftArm.parent._matrix);
+
+            console.log(sourceLeftShoulderWorldRotation.toEulerAngles().asArray());
+            console.log(sourceLeftShoulderLocalRotation.toEulerAngles().asArray());
+
+            const sourceLeftShoulderWorldRotationInverse = sourceLeftShoulderWorldRotation.invert();
+            const sourceLeftShoulderLocalRotationInverse = sourceLeftShoulderLocalRotation.invert();
+
+            sourceLeftShoulderWorldRotationInverse;
+            sourceLeftShoulderLocalRotationInverse;
+
+            const sourceLeftArmWorldRotation = Quaternion.FromRotationMatrix(sourceLeftArm.getFinalMatrix());
+            const sourceLeftArmLocalRotation = Quaternion.FromRotationMatrix(sourceLeftArm._matrix);
+
+            sourceLeftArmWorldRotation;
+            sourceLeftArmLocalRotation;
+
+            const sourveLeftArmWorldRotationInverse = sourceLeftArmWorldRotation.invert();
+            const sourceLeftArmLocalRotationInverse = sourceLeftArmLocalRotation.invert();
+
+            sourveLeftArmWorldRotationInverse;
+            sourceLeftArmLocalRotationInverse;
+
+            scene.onBeforeRenderObservable.add(() => {
+                targetLeftArm.rotationQuaternion = targetLeftArm.rotationQuaternion.multiplyInPlace(quaternionX90);
+                sourceLeftArm.rotationQuaternion = sourceLeftArmLocalRotation.multiply(
+                    Quaternion.FromEulerAngles(0, 0, 0).multiply(targetLeftArm.rotationQuaternion)
+                );
+            });
         }
 
         {

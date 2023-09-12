@@ -1,12 +1,50 @@
+import type { _IAnimationState, Animation } from "@babylonjs/core/Animations/animation";
 import type { AnimationGroup, TargetedAnimation } from "@babylonjs/core/Animations/animationGroup";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { createAnimationState } from "@/Runtime/Animation/Common/createAnimationState";
+
 import { convertToAdditiveAnimation } from "./convertToAdditiveAnimation";
+import { deepCopyAnimationGroup } from "./deepCopyAnimation";
+
+class AnimationEvaluationContext {
+    private readonly _animation: Animation;
+    private readonly _animationState: _IAnimationState;
+
+    public constructor(animation: Animation) {
+        this._animation = animation;
+        this._animationState = createAnimationState();
+    }
+
+    private _upperBoundFrameIndex(currentFrame: number): number {
+        const keys = this._animation.getKeys();
+        const keysLength = keys.length;
+
+        let key = this._animationState.key;
+
+        while (0 < key && currentFrame < keys[key - 1].frame) key -= 1;
+        while (key < keysLength && keys[key].frame <= currentFrame) key += 1;
+
+        this._animationState.key = key;
+
+        return key;
+    }
+
+    public hasKeyAtFrame(currentFrame: number): boolean {
+        const keys = this._animation.getKeys();
+        const upperBoundIndex = this._upperBoundFrameIndex(currentFrame);
+        return keys[upperBoundIndex - 1].frame === currentFrame;
+    }
+
+    public evaluate(currentFrame: number): any {
+        return this._animation._interpolate(currentFrame, this._animationState);
+    }
+}
 
 class VirtualBone {
     public name: string;
@@ -14,22 +52,37 @@ class VirtualBone {
     public readonly children: VirtualBone[];
     public retargetBone: Nullable<VirtualBone>;
 
-    public readonly restMatrix: Matrix;
-    public readonly localMatrix: Matrix;
-    public readonly worldMatrix: Matrix;
+    public readonly restQuaternion: Quaternion;
+    public readonly localQuaternion: Quaternion;
+    public readonly worldQuaternion: Quaternion;
+
+    public isDirty: boolean;
 
     public constructor(
         name: string,
-        restMatrix: Matrix
+        restQuaternion: Quaternion
     ) {
         this.name = name;
         this.parent = null;
         this.children = [];
         this.retargetBone = null;
 
-        this.restMatrix = restMatrix;
-        this.localMatrix = restMatrix.clone();
-        this.worldMatrix = Matrix.Identity();
+        this.restQuaternion = restQuaternion;
+        this.localQuaternion = restQuaternion.clone();
+        this.worldQuaternion = restQuaternion.clone();
+
+        this.isDirty = false;
+    }
+
+    public markAsDirty(): void {
+        this.retargetBone?.markAsDirty();
+
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let bone: Nullable<VirtualBone> = this;
+        while (bone !== null && !bone.isDirty) {
+            bone.isDirty = true;
+            bone = bone.parent;
+        }
     }
 }
 
@@ -50,7 +103,7 @@ class VirtualSkeleton {
             sourceBoneIndexMap.set(sourceBone, i);
             bones[i] = new VirtualBone(
                 sourceBone.name,
-                sourceBone.getRestMatrix().clone()
+                Quaternion.FromRotationMatrix(sourceBone.getRestMatrix())
             );
         }
 
@@ -105,7 +158,7 @@ class VirtualSkeleton {
 
     private static readonly _Stack: VirtualBone[] = [];
 
-    public updateWorldMatrix(): void {
+    public partialUpdateWorldQuaternion(): void {
         const stack = VirtualSkeleton._Stack;
         stack.length = 0;
         stack.push(...this.rootBones);
@@ -114,14 +167,16 @@ class VirtualSkeleton {
             const bone = stack.pop()!;
 
             if (bone.parent) {
-                bone.localMatrix.multiplyToRef(bone.parent.worldMatrix, bone.worldMatrix);
+                bone.parent.worldQuaternion.multiplyToRef(bone.localQuaternion, bone.worldQuaternion);
             } else {
-                bone.worldMatrix.copyFrom(bone.localMatrix);
+                bone.worldQuaternion.copyFrom(bone.localQuaternion);
             }
 
             const childrenBones = bone.children;
             for (let i = 0, l = childrenBones.length; i < l; ++i) {
-                stack.push(childrenBones[i]);
+                if (childrenBones[i].isDirty) {
+                    stack.push(childrenBones[i]);
+                }
             }
         }
     }
@@ -187,12 +242,10 @@ export class AnimationRetargeter {
         return this;
     }
 
-    public retargetAnimation(
-        animationGroup: AnimationGroup
-    ): void {
+    public retargetAnimation(animationGroup: AnimationGroup): Nullable<AnimationGroup> {
         if (!this._isSkeletonAnimation(animationGroup)) {
             this.warn("Animation is not skeleton animation. animation retargeting is aborted.");
-            return;
+            return null;
         }
 
         if (!this._boneNameMap) {
@@ -226,14 +279,18 @@ export class AnimationRetargeter {
             }
         }
 
-        this._removeScaleAnimation(animationGroup);
-        const targetedAnimations = animationGroup.targetedAnimations;
+        const additiveAnimationGroup = animationGroup.isAdditive
+            ? animationGroup.clone(animationGroup.name)
+            : deepCopyAnimationGroup(animationGroup, animationGroup.name);
+
+        this._removeScaleAnimation(additiveAnimationGroup);
+        const targetedAnimations = additiveAnimationGroup.targetedAnimations;
         for (let i = 0; i < targetedAnimations.length; i++) {
             this._flattenAnimationTarget(targetedAnimations[i]);
         }
 
-        if (!animationGroup.isAdditive) {
-            convertToAdditiveAnimation(animationGroup, this._sourceSkeleton);
+        if (!additiveAnimationGroup.isAdditive) {
+            convertToAdditiveAnimation(additiveAnimationGroup, this._sourceSkeleton);
         }
 
         const linkedTransformNodeMap = new Map<TransformNode, Bone>();
@@ -259,9 +316,13 @@ export class AnimationRetargeter {
 
             animationIndexBinding[i] = sourceBoneIndexMap.get(bone)!;
         }
-        this._changeAnimationRestPose(animationGroup, animationIndexBinding, this._sourceVirtualSkeleton, this._targetVirtualSkeleton);
 
-        this._retargetAnimationInternal(animationGroup, this._boneNameMap, this._targetBoneMap);
+        const newAnimationGroup = this._changeAnimationRestPose(additiveAnimationGroup, animationIndexBinding, this._sourceVirtualSkeleton, this._targetVirtualSkeleton);
+        additiveAnimationGroup.dispose();
+
+        this._retargetAnimationInternal; //(newAnimationGroup, this._boneNameMap, this._targetBoneMap);
+
+        return newAnimationGroup;
     }
 
     private _isSkeletonAnimation(animationGroup: AnimationGroup): boolean {
@@ -330,59 +391,34 @@ export class AnimationRetargeter {
         targetedAnimation.animation.targetProperty = targetedAnimation.animation.targetPropertyPath[0];
     }
 
-    private _retargetAnimationInternal(
-        animationGroup: AnimationGroup,
-        sourceToTargetBoneNameMap: { [key: string]: string },
-        targetBoneMap: Map<string, Bone>
-    ): void {
-        const unTargetedAnimationIndices: number[] = [];
-
-        const targetedAnimations = animationGroup.targetedAnimations;
-        for (let i = 0; i < targetedAnimations.length; i++) {
-            const targetedAnimation = targetedAnimations[i];
-
-            if (!targetedAnimation.target) {
-                unTargetedAnimationIndices.push(i);
-                this.warn(`Animation target is null. Animation name: ${targetedAnimation.animation.name}`);
-                continue;
-            }
-
-            const targetName = sourceToTargetBoneNameMap[targetedAnimation.target.name];
-            if (targetName !== undefined) {
-                const bone = targetBoneMap.get(targetName);
-                if (bone !== undefined) {
-                    targetedAnimation.target = bone;
-                } else {
-                    unTargetedAnimationIndices.push(i);
-                    this.warn(`Bone not found. Bone name: ${targetedAnimation.target.name}`);
-                }
-            } else {
-                unTargetedAnimationIndices.push(i);
-                this.warn(`Bone not found. Bone name: ${targetedAnimation.target.name}`);
-            }
-        }
-
-        for (let i = 0, j = 0; i < targetedAnimations.length; i++) {
-            if (i === unTargetedAnimationIndices[j]) {
-                j += 1; // Skip untargeted animation
-                continue;
-            }
-
-            targetedAnimations[i - j] = targetedAnimations[i];
-        }
-        targetedAnimations.length -= unTargetedAnimationIndices.length;
-    }
-
     private _changeAnimationRestPose(
-        animationGroup: AnimationGroup,
+        sourceAnimationGroup: AnimationGroup,
         animationIndexBinding: Int32Array,
         sourceSkeleton: VirtualSkeleton,
         targetSkeleton: VirtualSkeleton
-    ): void {
-        animationGroup;
+    ): AnimationGroup {
+        const destinationAnimationGroup = deepCopyAnimationGroup(sourceAnimationGroup, sourceAnimationGroup.name);
+
+        const targetedAnimations = sourceAnimationGroup.targetedAnimations;
+
+        const startFrame = sourceAnimationGroup.from;
+        const endFrame = sourceAnimationGroup.to;
+
+        const sourceBones = sourceSkeleton.bones;
+        const targetBones = targetSkeleton.bones;
+
+        destinationAnimationGroup;
+        targetedAnimations;
         animationIndexBinding;
-        sourceSkeleton;
-        targetSkeleton;
+        startFrame;
+        endFrame;
+        sourceBones;
+        targetBones;
+
+        AnimationEvaluationContext;
+
+        return destinationAnimationGroup;
+
         // const keys = animation.getKeys();
         // keys;
 
@@ -431,6 +467,49 @@ export class AnimationRetargeter {
         //     break;
         // }
         // }
+    }
+
+    private _retargetAnimationInternal(
+        animationGroup: AnimationGroup,
+        sourceToTargetBoneNameMap: { [key: string]: string },
+        targetBoneMap: Map<string, Bone>
+    ): void {
+        const unTargetedAnimationIndices: number[] = [];
+
+        const targetedAnimations = animationGroup.targetedAnimations;
+        for (let i = 0; i < targetedAnimations.length; i++) {
+            const targetedAnimation = targetedAnimations[i];
+
+            if (!targetedAnimation.target) {
+                unTargetedAnimationIndices.push(i);
+                this.warn(`Animation target is null. Animation name: ${targetedAnimation.animation.name}`);
+                continue;
+            }
+
+            const targetName = sourceToTargetBoneNameMap[targetedAnimation.target.name];
+            if (targetName !== undefined) {
+                const bone = targetBoneMap.get(targetName);
+                if (bone !== undefined) {
+                    targetedAnimation.target = bone;
+                } else {
+                    unTargetedAnimationIndices.push(i);
+                    this.warn(`Bone not found. Bone name: ${targetedAnimation.target.name}`);
+                }
+            } else {
+                unTargetedAnimationIndices.push(i);
+                this.warn(`Bone not found. Bone name: ${targetedAnimation.target.name}`);
+            }
+        }
+
+        for (let i = 0, j = 0; i < targetedAnimations.length; i++) {
+            if (i === unTargetedAnimationIndices[j]) {
+                j += 1; // Skip untargeted animation
+                continue;
+            }
+
+            targetedAnimations[i - j] = targetedAnimations[i];
+        }
+        targetedAnimations.length -= unTargetedAnimationIndices.length;
     }
 
     /**
