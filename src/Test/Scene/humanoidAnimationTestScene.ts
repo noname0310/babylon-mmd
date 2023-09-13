@@ -23,10 +23,10 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import HavokPhysics from "@babylonjs/havok";
+// import HavokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -123,13 +123,13 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(2, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            updateLoadingText(2, "Loading physics engine... Done");
-        })());
+        // promises.push((async(): Promise<void> => {
+        //     updateLoadingText(2, "Loading physics engine...");
+        //     const havokInstance = await HavokPhysics();
+        //     const havokPlugin = new HavokPlugin(true, havokInstance);
+        //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+        //     updateLoadingText(2, "Loading physics engine... Done");
+        // })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -185,7 +185,7 @@ export class SceneBuilder implements ISceneBuilder {
             const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
             const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
 
-            // rotate y 90
+            // rotate x -90
             const quaternionXM90 = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
 
             sourceSkeleton.prepare();
@@ -196,23 +196,64 @@ export class SceneBuilder implements ISceneBuilder {
             const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.getFinalMatrix());
             const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder._matrix);
 
+            sourceLeftShoulder;
+            targetLeftShoulder;
+            quaternionXM90;
+            sourceLeftSpineWorldRotation;
             sourceLeftSpineLocalRotation;
             sourceLeftShoulderWorldRotation;
             sourceLeftShoulderLocalRotation;
 
-            // apply same rotation from mmd skeleton to mixamo skeleton
-            targetLeftShoulder.rotationQuaternion = targetLeftShoulder.rotationQuaternion.multiplyInPlace(quaternionXM90);
-            sourceLeftShoulder.rotationQuaternion = sourceLeftSpineWorldRotation.invert()
-                .multiply(quaternionXM90.invert())
-                .multiply(sourceLeftShoulderWorldRotation);
+            // // apply same rotation from mmd skeleton to mixamo skeleton
+            // targetLeftShoulder.rotationQuaternion = targetLeftShoulder.rotationQuaternion.multiply(quaternionXM90);
+            // sourceLeftShoulder.rotationQuaternion = sourceLeftSpineWorldRotation.invert()
+            //     .multiply(quaternionXM90.invert())
+            //     .multiply(sourceLeftShoulderWorldRotation);
 
 
-            // apply same rotation from mixamo skeleton to mmd skeleton
-            sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(quaternionXM90);
-            targetLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation
-                .multiply(quaternionXM90)
-                .multiply(sourceLeftShoulderLocalRotation.invert())
-            ;
+            // // apply same rotation from mixamo skeleton to mmd skeleton
+            // sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(quaternionXM90);
+            // targetLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation
+            //     .multiply(quaternionXM90)
+            //     .multiply(sourceLeftShoulderLocalRotation.invert())
+            // ;
+
+            const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
+            const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+
+            // position y 5
+            const positionY5 = new Vector3(0, 300, 0);
+
+            const sourceLeftForeArmWorldRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent!.getFinalMatrix());
+            const sourceLeftForeArmLocalRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent._matrix);
+
+            const sourceLeftHandWorldRotation = Quaternion.FromRotationMatrix(sourceLeftHand.getFinalMatrix());
+            const sourceLeftHandLocalRotation = Quaternion.FromRotationMatrix(sourceLeftHand._matrix);
+
+            sourceLeftHand;
+            targetLeftHand;
+            positionY5;
+            sourceLeftForeArmWorldRotation;
+            sourceLeftForeArmLocalRotation;
+            sourceLeftHandWorldRotation;
+            sourceLeftHandLocalRotation;
+
+            // apply same position from mmd skeleton to mixamo skeleton
+            // targetLeftHand.position = targetLeftHand.position.add(positionY5);
+            // sourceLeftHand.position = sourceLeftHand.position.add(
+            //     positionY5.applyRotationQuaternion(
+            //         sourceLeftForeArmWorldRotation.invert()
+            //             .multiply(Quaternion.FromEulerAngles(-Math.PI / 2, 0, 0))
+            //     )
+            // );
+
+            // apply same position from mixamo skeleton to mmd skeleton
+            // sourceLeftHand.position = sourceLeftHand.position.add(positionY5);
+            // targetLeftHand.position = targetLeftHand.position.add(
+            //     positionY5.applyRotationQuaternion(
+            //         Quaternion.FromEulerAngles(Math.PI / 2, 0, 0).multiply(sourceLeftHandWorldRotation)
+            //     )
+            // );
         }
 
         {
@@ -220,7 +261,7 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh.receiveShadows = true;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
+                buildPhysics: false
             });
 
             const runtimeBones = mmdModel.sortedRuntimeBones;
@@ -259,7 +300,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
 
-        Inspector.Show(scene, { });
+        Inspector.Show;//(scene, { });
 
         return scene;
     }
