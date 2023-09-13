@@ -237,7 +237,6 @@ export class IkSolver implements IIkSolver {
     private static readonly _ChainIkPosition = new Vector3();
     private static readonly _ChainTargetPosition = new Vector3();
     private static readonly _Rotation2 = new Quaternion();
-    private static readonly _RotationMatrix = new Matrix();
     private static readonly _TargetVector = new Vector3();
     private static readonly _InversedAnimatedRotation2 = new Quaternion();
 
@@ -292,13 +291,11 @@ export class IkSolver implements IIkSolver {
         angle = Math.max(-this.limitAngle, Math.min(this.limitAngle, angle));
 
         const rot1 = Quaternion.RotationAxisToRef(rotateAxis, angle, IkSolver._Rotation2);
-        const rot1Matrix = rot1.toRotationMatrix(IkSolver._RotationMatrix);
-        const targetVec1 = Vector3.TransformCoordinatesToRef(chainTargetVector, rot1Matrix, IkSolver._TargetVector);
+        const targetVec1 = chainTargetVector.applyRotationQuaternionToRef(rot1, IkSolver._TargetVector);
         const dot1 = Vector3.Dot(targetVec1, chainIkVector);
 
         const rot2 = Quaternion.RotationAxisToRef(rotateAxis, -angle, IkSolver._Rotation2);
-        const rot2Matrix = rot2.toRotationMatrix(IkSolver._RotationMatrix);
-        const targetVec2 = Vector3.TransformCoordinatesToRef(chainTargetVector, rot2Matrix, IkSolver._TargetVector);
+        const targetVec2 = chainTargetVector.applyRotationQuaternionToRef(rot2, IkSolver._TargetVector);
         const dot2 = Vector3.Dot(targetVec2, chainIkVector);
 
         let newAngle = chain.planeModeAngle;
