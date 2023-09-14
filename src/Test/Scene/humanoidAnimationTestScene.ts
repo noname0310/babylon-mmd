@@ -21,6 +21,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
+import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -176,28 +177,35 @@ export class SceneBuilder implements ISceneBuilder {
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
 
-            // animation.stop();
-            // retargetedAnimation.stop();
-            // {
-            //     const bones = sourceSkeleton.bones;
-            //     for (let i = 0; i < bones.length; ++i) {
-            //         const bone = bones[i];
-            //         bone.linkTransformNode(null);
-            //     }
-            // }
+            animation.stop();
+            retargetedAnimation.stop();
+            {
+                const bones = sourceSkeleton.bones;
+                for (let i = 0; i < bones.length; ++i) {
+                    const bone = bones[i];
+                    bone.linkTransformNode(null);
+                }
+            }
 
-            // animation.dispose();
-            // retargetedAnimation.dispose();
+            animation.dispose();
+            retargetedAnimation.dispose();
 
-            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Neck")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "首")!;
             const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
             const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftForeArm")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左ひじ")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
 
             // rotate x -90
             const quaternionXM90 = Quaternion.FromEulerAngles(-Math.PI / 2, 0, 0);
 
+            sourceSkeleton.returnToRest();
+            sourceSkeleton.sortBones();
             sourceSkeleton.prepare();
+            sourceSkeleton.computeAbsoluteMatrices();
 
             const sourceLeftSpineWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent!.getFinalMatrix());
             const sourceLeftSpineLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent._matrix);
@@ -219,14 +227,10 @@ export class SceneBuilder implements ISceneBuilder {
             //     .multiply(quaternionXM90.invert())
             //     .multiply(sourceLeftShoulderWorldRotation);
 
-            // qaR = qa * qv
-            // qbR = qbpw^-1 * qv^-1 * (qbpw * qbr)
-
-            // qbR2 = qbr * qv2
-            // qaR2 = qapw^-1 * qv2^-1 * (qapw * qar)
-
-            // apply same rotation from mixamo skeleton to mmd skeleton
+            // // apply same rotation from mixamo skeleton to mmd skeleton
             // const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, 0, 0);
+
+            // // console.log(sourceLeftShoulderWorldRotation.toEulerAngles().asArray().map((v) => v * 180 / Math.PI));
 
             // let frame = 0;
             // const animatedRotation = (): void => {
@@ -235,23 +239,15 @@ export class SceneBuilder implements ISceneBuilder {
             //         aq.multiplyToRef(quaternionXM9, aq);
             //     }
 
-            //     // local to global
-            //     // globalQuaternion = parentGlobalQuaternion * localQuaternion
-
             //     sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(aq);
 
+            //     const rotationOffset = Quaternion.Identity()
+            //         .multiply(sourceLeftShoulderLocalRotation);
+
             //     targetLeftShoulder.rotationQuaternion = Quaternion.Identity()
-            //         // .multiply(sourceLeftShoulderLocalRotation)
-            //         // // .multiply(Quaternion.FromEulerAngles(Math.PI / 2, 0, 0))
-            //         // .multiply(sourceLeftSpineWorldRotation.invert())
-            //         // .multiply(
-            //         //     Quaternion.Identity()
-            //         //         .multiply(sourceLeftShoulderLocalRotation.multiply(aq))
-            //         //         .multiply(sourceLeftSpineWorldRotation)
-            //         // )
-            //         .multiply(Quaternion.FromEulerAngles(0, -Math.PI / 2, 0))
+            //         .multiply(rotationOffset.invert())
             //         .multiply(aq.invert())
-            //         .multiply(Quaternion.FromEulerAngles(0, Math.PI / 2, 0))
+            //         .multiply(rotationOffset)
             //     ;
             //     frame += 1;
 
@@ -263,11 +259,15 @@ export class SceneBuilder implements ISceneBuilder {
             // }, 3000);
 
 
-            const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
-            const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+            // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Head")!;
+            // const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭")!;
+            const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
+            const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
+            // const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
 
             // position y 5
-            const positionY5 = new Vector3(0, 300, 0);
+            const positionY5 = new Vector3(100, 300, 200);
 
             const sourceLeftForeArmWorldRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent!.getFinalMatrix());
             const sourceLeftForeArmLocalRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent._matrix);
@@ -286,19 +286,29 @@ export class SceneBuilder implements ISceneBuilder {
             // apply same position from mmd skeleton to mixamo skeleton
             // targetLeftHand.position = targetLeftHand.position.add(positionY5);
             // sourceLeftHand.position = sourceLeftHand.position.add(
-            //     positionY5.applyRotationQuaternion(
-            //         sourceLeftForeArmWorldRotation.invert()
-            //             .multiply(Quaternion.FromEulerAngles(-Math.PI / 2, 0, 0))
-            //     )
+            //     Vector3.TransformCoordinates(targetLeftHand.position, sourceLeftHand.parent!.getFinalMatrix().invert())
             // );
 
             // apply same position from mixamo skeleton to mmd skeleton
             // sourceLeftHand.position = sourceLeftHand.position.add(positionY5);
             // targetLeftHand.position = targetLeftHand.position.add(
             //     positionY5.applyRotationQuaternion(
-            //         Quaternion.FromEulerAngles(Math.PI / 2, 0, 0).multiply(sourceLeftHandWorldRotation)
+            //         Quaternion.Identity()
+            //             .multiply(Quaternion.FromEulerAngles(0, -Math.PI / 2, 0))
+            //             .multiply(Quaternion.FromEulerAngles(Math.PI / 2, 0, 0))
+            //             .multiply(sourceLeftHandWorldRotation)
             //     )
             // );
+
+            const sphere = CreateSphere("test_point", { diameter: 1, segments: 32}, scene);
+            const sphereMaterial = sphere.material = new StandardMaterial("test_point_material", scene);
+            sphereMaterial.zOffset = -10000;
+            sphere.position = sourceLeftHand.parent!.getAbsoluteMatrix().getTranslation();
+
+            const viewer2 = new SkeletonViewer(sourceSkeleton, modelMesh, scene, false, 3, {
+                displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+            });
+            viewer2.isEnabled = true;
         }
 
         {
