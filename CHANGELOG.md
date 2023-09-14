@@ -2,8 +2,11 @@
 
 ## 0.27.0
 
-- fix body offset computation in `PhysicsWithBone`
+- fix body offset   computation in `PhysicsWithBone`
+
 - clamp physics constraint angular limit for better result
+
+- improve mmd runtime performance
 
 ## 0.26.0
 
