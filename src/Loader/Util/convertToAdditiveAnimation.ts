@@ -32,7 +32,7 @@ function convertToAdditiveAnimationInternal(animation: Animation, bone: Bone, lo
     // Quaternion
     case Animation.ANIMATIONTYPE_QUATERNION: {
         const restPoseValueInversed = (restPose as Quaternion).clone().invertInPlace();
-        for (let i = 0; i < keys.length; i++) {
+        for (let i = 0; i < keys.length; ++i) {
             restPoseValueInversed.multiplyToRef(keys[i].value, keys[i].value);
         }
         break;
@@ -40,7 +40,7 @@ function convertToAdditiveAnimationInternal(animation: Animation, bone: Bone, lo
 
     // Vector3
     case Animation.ANIMATIONTYPE_VECTOR3: {
-        for (let i = 0; i < keys.length; i++) {
+        for (let i = 0; i < keys.length; ++i) {
             (keys[i].value as Vector3).subtractInPlace(restPose as Vector3);
         }
         break;
@@ -70,7 +70,7 @@ export function convertToAdditiveAnimation(animationGroup: AnimationGroup, skele
     const linkedTransformNodeMap = new Map<TransformNode, Bone>();
     {
         const bones = skeleton.bones;
-        for (let i = 0; i < bones.length; i++) {
+        for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
             const linkedTransformNode = bone.getTransformNode();
             if (linkedTransformNode !== null) {
@@ -80,7 +80,7 @@ export function convertToAdditiveAnimation(animationGroup: AnimationGroup, skele
     }
 
     const targetedAnimations = animationGroup.targetedAnimations;
-    for (let i = 0; i < targetedAnimations.length; i++) {
+    for (let i = 0; i < targetedAnimations.length; ++i) {
         const animation = targetedAnimations[i].animation;
 
         const target = targetedAnimations[i].target;

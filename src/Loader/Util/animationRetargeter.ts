@@ -102,7 +102,7 @@ export class AnimationRetargeter {
             const boneNameMap = this._targetBoneMap = new Map<string, Bone>();
             {
                 const bones = this._targetSkeleton.bones;
-                for (let i = 0; i < bones.length; i++) {
+                for (let i = 0; i < bones.length; ++i) {
                     const bone = bones[i];
                     boneNameMap.set(bone.name, bone);
                 }
@@ -115,7 +115,7 @@ export class AnimationRetargeter {
 
         this._removeScaleAnimation(animationGroup);
         const targetedAnimations = animationGroup.targetedAnimations;
-        for (let i = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0; i < targetedAnimations.length; ++i) {
             this._flattenAnimationTarget(targetedAnimations[i]);
         }
 
@@ -129,7 +129,7 @@ export class AnimationRetargeter {
 
     private _isSkeletonAnimation(animationGroup: AnimationGroup): boolean {
         const targetedAnimations = animationGroup.targetedAnimations;
-        for (let i = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0; i < targetedAnimations.length; ++i) {
             const animation = targetedAnimations[i].animation;
             const property = animation.targetPropertyPath[animation.targetPropertyPath.length - 1];
 
@@ -149,7 +149,7 @@ export class AnimationRetargeter {
 
         const stack = AnimationRetargeter._Stack;
         stack.length = 0;
-        for (let i = 0; i < bones.length; i++) {
+        for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
             boneIndexMap.set(bone, i);
             if (bone.getParent() === null) stack.push(bone);
@@ -167,7 +167,7 @@ export class AnimationRetargeter {
             worldRotations[boneIndexMap.get(bone)!] = Quaternion.FromRotationMatrix(bone.getRestMatrix()).multiplyInPlace(parentWorldRotation);
 
             const children = bone.getChildren();
-            for (let i = 0; i < children.length; i++) {
+            for (let i = 0; i < children.length; ++i) {
                 stack.push(children[i]);
             }
         }
@@ -179,7 +179,7 @@ export class AnimationRetargeter {
         const scaleAnimationIndices: number[] = [];
 
         const targetedAnimations = animationGroup.targetedAnimations;
-        for (let i = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0; i < targetedAnimations.length; ++i) {
             const targetedAnimation = targetedAnimations[i];
 
             if (!targetedAnimation.target) continue;
@@ -190,7 +190,7 @@ export class AnimationRetargeter {
             }
         }
 
-        for (let i = 0, j = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0, j = 0; i < targetedAnimations.length; ++i) {
             if (i === scaleAnimationIndices[j]) {
                 j += 1; // Skip scale animation
                 continue;
@@ -235,7 +235,7 @@ export class AnimationRetargeter {
         const unTargetedAnimationIndices: number[] = [];
 
         const targetedAnimations = animationGroup.targetedAnimations;
-        for (let i = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0; i < targetedAnimations.length; ++i) {
             const targetedAnimation = targetedAnimations[i];
 
             if (!targetedAnimation.target) {
@@ -259,7 +259,7 @@ export class AnimationRetargeter {
             }
         }
 
-        for (let i = 0, j = 0; i < targetedAnimations.length; i++) {
+        for (let i = 0, j = 0; i < targetedAnimations.length; ++i) {
             if (i === unTargetedAnimationIndices[j]) {
                 j += 1; // Skip untargeted animation
                 continue;
