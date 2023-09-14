@@ -48,10 +48,13 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
+        materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            material.ignoreDiffuseWhenToonTextureIsNull = false;
+        };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -163,30 +166,36 @@ export class SceneBuilder implements ISceneBuilder {
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
                 .setSourceSkeleton(sourceSkeleton)
                 .setTargetSkeleton(modelMesh.skeleton!)
-                .retargetAnimation(animation)!;
+                .retargetAnimation(animation, {
+                    cloneAnimation: true,
+                    animationScaling: 1,
+                    removeBoneRotationOffset: true
+                })!;
 
             retargetedAnimation.isAdditive = true;
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
 
-            animation.stop();
-            retargetedAnimation.stop();
-            {
-                const bones = sourceSkeleton.bones;
-                for (let i = 0; i < bones.length; ++i) {
-                    const bone = bones[i];
-                    bone.linkTransformNode(null);
-                }
-            }
+            // animation.stop();
+            // retargetedAnimation.stop();
+            // {
+            //     const bones = sourceSkeleton.bones;
+            //     for (let i = 0; i < bones.length; ++i) {
+            //         const bone = bones[i];
+            //         bone.linkTransformNode(null);
+            //     }
+            // }
 
-            animation.dispose();
-            retargetedAnimation.dispose();
+            // animation.dispose();
+            // retargetedAnimation.dispose();
 
-            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
+            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
 
             // rotate x -90
-            const quaternionXM90 = Quaternion.FromEulerAngles(Math.PI / 2, 0, 0);
+            const quaternionXM90 = Quaternion.FromEulerAngles(-Math.PI / 2, 0, 0);
 
             sourceSkeleton.prepare();
 
@@ -204,19 +213,55 @@ export class SceneBuilder implements ISceneBuilder {
             sourceLeftShoulderWorldRotation;
             sourceLeftShoulderLocalRotation;
 
-            // // apply same rotation from mmd skeleton to mixamo skeleton
+            // apply same rotation from mmd skeleton to mixamo skeleton
             // targetLeftShoulder.rotationQuaternion = targetLeftShoulder.rotationQuaternion.multiply(quaternionXM90);
             // sourceLeftShoulder.rotationQuaternion = sourceLeftSpineWorldRotation.invert()
             //     .multiply(quaternionXM90.invert())
             //     .multiply(sourceLeftShoulderWorldRotation);
 
+            // qaR = qa * qv
+            // qbR = qbpw^-1 * qv^-1 * (qbpw * qbr)
 
-            // // apply same rotation from mixamo skeleton to mmd skeleton
-            // sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(quaternionXM90);
-            // targetLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation
-            //     .multiply(quaternionXM90)
-            //     .multiply(sourceLeftShoulderLocalRotation.invert())
-            // ;
+            // qbR2 = qbr * qv2
+            // qaR2 = qapw^-1 * qv2^-1 * (qapw * qar)
+
+            // apply same rotation from mixamo skeleton to mmd skeleton
+            // const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, 0, 0);
+
+            // let frame = 0;
+            // const animatedRotation = (): void => {
+            //     const aq = Quaternion.Identity();
+            //     for (let i = 0; i < frame; ++i) {
+            //         aq.multiplyToRef(quaternionXM9, aq);
+            //     }
+
+            //     // local to global
+            //     // globalQuaternion = parentGlobalQuaternion * localQuaternion
+
+            //     sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(aq);
+
+            //     targetLeftShoulder.rotationQuaternion = Quaternion.Identity()
+            //         // .multiply(sourceLeftShoulderLocalRotation)
+            //         // // .multiply(Quaternion.FromEulerAngles(Math.PI / 2, 0, 0))
+            //         // .multiply(sourceLeftSpineWorldRotation.invert())
+            //         // .multiply(
+            //         //     Quaternion.Identity()
+            //         //         .multiply(sourceLeftShoulderLocalRotation.multiply(aq))
+            //         //         .multiply(sourceLeftSpineWorldRotation)
+            //         // )
+            //         .multiply(Quaternion.FromEulerAngles(0, -Math.PI / 2, 0))
+            //         .multiply(aq.invert())
+            //         .multiply(Quaternion.FromEulerAngles(0, Math.PI / 2, 0))
+            //     ;
+            //     frame += 1;
+
+            //     if (frame === 100) scene.onAfterRenderObservable.removeCallback(animatedRotation);
+            // };
+            // animatedRotation();
+            // setTimeout(() => {
+            //     scene.onAfterRenderObservable.add(animatedRotation);
+            // }, 3000);
+
 
             const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
             const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
@@ -288,7 +333,7 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [/*camera*/]);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.fxaaEnabled = true;
@@ -300,7 +345,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
 
-        Inspector.Show;//(scene, { });
+        Inspector.Show(scene, { });
 
         return scene;
     }

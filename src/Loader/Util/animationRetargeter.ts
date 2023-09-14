@@ -1,7 +1,9 @@
 import type { AnimationGroup, TargetedAnimation } from "@babylonjs/core/Animations/animationGroup";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -25,7 +27,7 @@ export class AnimationRetargeter {
 
     private _sourceSkeletonAbsoluteRotations: Nullable<Quaternion[]>;
 
-    private _targetBoneMap: Nullable<Map<string, Bone>>;
+    private _targetBoneNameMap: Nullable<Map<string, Bone>>;
 
     private _loggingEnabled: boolean;
 
@@ -44,7 +46,7 @@ export class AnimationRetargeter {
 
         this._sourceSkeletonAbsoluteRotations = null;
 
-        this._targetBoneMap = null;
+        this._targetBoneNameMap = null;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -65,7 +67,7 @@ export class AnimationRetargeter {
 
     public setTargetSkeleton(skeleton: Skeleton): this {
         this._targetSkeleton = skeleton;
-        this._targetBoneMap = null;
+        this._targetBoneNameMap = null;
         return this;
     }
 
@@ -94,12 +96,8 @@ export class AnimationRetargeter {
             throw new Error("Target skeleton is not set");
         }
 
-        if (this._sourceSkeletonAbsoluteRotations === null) {
-            this._sourceSkeletonAbsoluteRotations = this._computeSkeletonAbsoluteRotations(this._sourceSkeleton);
-        }
-
-        if (this._targetBoneMap === null) {
-            const boneNameMap = this._targetBoneMap = new Map<string, Bone>();
+        if (this._targetBoneNameMap === null) {
+            const boneNameMap = this._targetBoneNameMap = new Map<string, Bone>();
             {
                 const bones = this._targetSkeleton.bones;
                 for (let i = 0; i < bones.length; ++i) {
@@ -123,7 +121,51 @@ export class AnimationRetargeter {
             convertToAdditiveAnimation(animationGroup, this._sourceSkeleton);
         }
 
-        this._retargetAnimationInternal(animationGroup, this._boneNameMap, this._targetBoneMap);
+        if (options.removeBoneRotationOffset) {
+            const linkedTransformNodeMap = new Map<TransformNode, Bone>();
+            const sourceBoneIndexMap = new Map<Bone, number>();
+            {
+                const bones = this._sourceSkeleton.bones;
+                for (let i = 0; i < bones.length; ++i) {
+                    const bone = bones[i];
+                    const linkedTransformNode = bone.getTransformNode();
+                    if (linkedTransformNode !== null) {
+                        linkedTransformNodeMap.set(linkedTransformNode, bone);
+                    }
+                    sourceBoneIndexMap.set(bone, i);
+                }
+            }
+            const animationIndexBinding = new Int32Array(targetedAnimations.length);
+            for (let i = 0; i < targetedAnimations.length; ++i) {
+                const target = targetedAnimations[i].target;
+                let bone = linkedTransformNodeMap.get(target); // if target is linked transform node, get linked bone
+                if (bone === undefined) {
+                    bone = target as Bone; // target is bone
+                }
+
+                const boneIndex = sourceBoneIndexMap.get(bone);
+                if (boneIndex === undefined) {
+                    animationIndexBinding[i] = -1;
+                    this.warn(`${bone.name} is not found in source skeleton`);
+                } else {
+                    animationIndexBinding[i] = boneIndex;
+                }
+            }
+
+            if (this._sourceSkeletonAbsoluteRotations === null) {
+                this._sourceSkeletonAbsoluteRotations = this._computeSkeletonAbsoluteRotations(this._sourceSkeleton, sourceBoneIndexMap);
+            }
+
+            this._removeBoneRotationOffset(
+                animationGroup,
+                animationIndexBinding,
+                this._sourceSkeleton,
+                this._sourceSkeletonAbsoluteRotations,
+                sourceBoneIndexMap
+            );
+        }
+
+        this._retargetAnimationInternal(animationGroup, this._boneNameMap, this._targetBoneNameMap);
         return animationGroup;
     }
 
@@ -143,15 +185,13 @@ export class AnimationRetargeter {
 
     private static readonly _Stack: Bone[] = [];
 
-    private _computeSkeletonAbsoluteRotations(skeleton: Skeleton): Quaternion[] {
+    private _computeSkeletonAbsoluteRotations(skeleton: Skeleton, boneIndexMap: Map<Bone, number>): Quaternion[] {
         const bones = skeleton.bones;
-        const boneIndexMap = new Map<Bone, number>();
 
         const stack = AnimationRetargeter._Stack;
         stack.length = 0;
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
-            boneIndexMap.set(bone, i);
             if (bone.getParent() === null) stack.push(bone);
         }
 
@@ -225,6 +265,58 @@ export class AnimationRetargeter {
         targetPropertyPath[0] = targetedAnimation.animation.targetPropertyPath[targetedAnimation.animation.targetPropertyPath.length - 1];
         targetPropertyPath.length = 1;
         targetedAnimation.animation.targetProperty = targetedAnimation.animation.targetPropertyPath[0];
+    }
+
+    private _removeBoneRotationOffset(
+        animationGroup: AnimationGroup,
+        animationIndexBinding: Int32Array,
+        skeleton: Skeleton,
+        skeletonAbsoluteRotations: Quaternion[],
+        boneIndexMap: Map<Bone, number>
+    ): void {
+        const targetedAnimations = animationGroup.targetedAnimations;
+        for (let i = 0; i < targetedAnimations.length; ++i) {
+            const boneIndex = animationIndexBinding[i];
+            if (boneIndex === -1) continue;
+
+            const animation = targetedAnimations[i].animation;
+            const targetProperty = animation.targetProperty;
+
+            const bone = skeleton.bones[boneIndex];
+            const boneAbsoluteRotation = skeletonAbsoluteRotations[boneIndex];
+            boneAbsoluteRotation;
+            boneIndexMap;
+
+            const restMatrix = bone.getRestMatrix();
+
+            if (targetProperty === "rotationQuaternion") {
+                const sourceParentLocalRotation = Quaternion.FromRotationMatrix(bone.getRestMatrix());
+                const sourceParentLocalRotationInverse = sourceParentLocalRotation.invert();
+
+                const sourceLocalRotation = Quaternion.FromRotationMatrix(restMatrix);
+                const sourceLocalRotationInverse = sourceLocalRotation.invert();
+
+                sourceParentLocalRotationInverse;
+                sourceLocalRotationInverse;
+
+                const keys = animation.getKeys();
+                for (let j = 0; j < keys.length; ++j) {
+                    const value = keys[j].value as Quaternion;
+
+                    value;
+                    sourceParentLocalRotation.multiplyToRef(value, value);
+                    value.multiplyInPlace(sourceParentLocalRotationInverse);
+                }
+            } else if (targetProperty === "position") {
+                const keys = animation.getKeys();
+                for (let j = 0; j < keys.length; ++j) {
+                    const value = keys[j].value as Vector3;
+                    value.scaleInPlace(0);
+                }
+            } else {
+                this.warn(`Unsupported target property: ${targetProperty}`);
+            }
+        }
     }
 
     private _retargetAnimationInternal(
