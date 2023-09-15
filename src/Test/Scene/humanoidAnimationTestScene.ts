@@ -21,7 +21,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
+// import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -49,13 +49,13 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
-        materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
+        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.afterBuildSingleMaterial = (material): void => {
-            material.ignoreDiffuseWhenToonTextureIsNull = false;
-        };
+        // materialBuilder.afterBuildSingleMaterial = (material): void => {
+        //     material.ignoreDiffuseWhenToonTextureIsNull = false;
+        // };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -146,9 +146,9 @@ export class SceneBuilder implements ISceneBuilder {
         {
             motionAssetContainer.addAllToScene();
             const rootNode = motionAssetContainer.rootNodes[0] as TransformNode;
-            rootNode.rotationQuaternion!.set(0, 0, 0, 1);
-            rootNode.scaling.scaleInPlace(100);
+            rootNode.rotationQuaternion = Quaternion.Identity();
             rootNode.position.set(10, 0, 10);
+            rootNode.getChildTransformNodes()[0].scaling.setAll(1);
             const meshes = motionAssetContainer.meshes;
             for (let i = 0; i < meshes.length; ++i) {
                 const mesh = meshes[i];
@@ -162,14 +162,18 @@ export class SceneBuilder implements ISceneBuilder {
 
             const animation = motionAssetContainer.animationGroups[0];
             const sourceSkeleton = motionAssetContainer.skeletons[0];
+            const sourceModelMesh = motionAssetContainer.meshes[1] as Mesh;
+
+            sourceModelMesh.computeWorldMatrix(true);
+            const skeletonTransform = sourceModelMesh.getWorldMatrix().clone();
+            skeletonTransform.setTranslationFromFloats(0, 0, 0);
 
             const retargetedAnimation = animationRetargeter
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
-                .setSourceSkeleton(sourceSkeleton)
+                .setSourceSkeleton(sourceSkeleton, skeletonTransform)
                 .setTargetSkeleton(modelMesh.skeleton!)
                 .retargetAnimation(animation, {
                     cloneAnimation: true,
-                    animationScaling: 1,
                     removeBoneRotationOffset: true
                 })!;
 
@@ -190,14 +194,18 @@ export class SceneBuilder implements ISceneBuilder {
             animation.dispose();
             retargetedAnimation.dispose();
 
+
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Neck")!;
             // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "首")!;
-            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
-            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftForeArm")!;
             // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左ひじ")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
             // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftUpLeg")!;
+            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左足")!;
+
 
             // rotate x -90
             const quaternionXM90 = Quaternion.FromEulerAngles(-Math.PI / 2, 0, 0);
@@ -207,11 +215,11 @@ export class SceneBuilder implements ISceneBuilder {
             sourceSkeleton.prepare();
             sourceSkeleton.computeAbsoluteMatrices();
 
-            const sourceLeftSpineWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent!.getFinalMatrix());
-            const sourceLeftSpineLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent._matrix);
+            const sourceLeftSpineWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent!.getFinalMatrix().multiply(skeletonTransform).getRotationMatrix());
+            const sourceLeftSpineLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent._matrix.getRotationMatrix());
 
-            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.getFinalMatrix());
-            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder._matrix);
+            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.getFinalMatrix().multiply(skeletonTransform).getRotationMatrix());
+            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder._matrix.getRotationMatrix());
 
             sourceLeftShoulder;
             targetLeftShoulder;
@@ -222,41 +230,55 @@ export class SceneBuilder implements ISceneBuilder {
             sourceLeftShoulderLocalRotation;
 
             // apply same rotation from mmd skeleton to mixamo skeleton
-            // targetLeftShoulder.rotationQuaternion = targetLeftShoulder.rotationQuaternion.multiply(quaternionXM90);
-            // sourceLeftShoulder.rotationQuaternion = sourceLeftSpineWorldRotation.invert()
-            //     .multiply(quaternionXM90.invert())
-            //     .multiply(sourceLeftShoulderWorldRotation);
-
-            // // apply same rotation from mixamo skeleton to mmd skeleton
             // const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, 0, 0);
-
-            // // console.log(sourceLeftShoulderWorldRotation.toEulerAngles().asArray().map((v) => v * 180 / Math.PI));
-
             // let frame = 0;
             // const animatedRotation = (): void => {
             //     const aq = Quaternion.Identity();
-            //     for (let i = 0; i < frame; ++i) {
-            //         aq.multiplyToRef(quaternionXM9, aq);
-            //     }
+            //     for (let i = 0; i < frame; ++i) aq.multiplyToRef(quaternionXM9, aq);
 
-            //     sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(aq);
+            //     targetLeftShoulder.rotationQuaternion = aq;
 
-            //     const rotationOffset = Quaternion.Identity()
-            //         .multiply(sourceLeftShoulderLocalRotation);
+            //     const sourceLeftShoulderAnimatedWorldRotation = sourceLeftShoulderWorldRotation.multiply(aq);
 
-            //     targetLeftShoulder.rotationQuaternion = Quaternion.Identity()
-            //         .multiply(rotationOffset.invert())
-            //         .multiply(aq.invert())
-            //         .multiply(rotationOffset)
+            //     // world rotation to local rotation
+            //     sourceLeftShoulder.rotationQuaternion = Quaternion.Identity()
+            //         .multiply(sourceLeftShoulderAnimatedWorldRotation)
+            //         .multiply(sourceLeftSpineWorldRotation.invert())
             //     ;
-            //     frame += 1;
 
+            //     const translation = sourceLeftShoulder.getFinalMatrix().getTranslation();
+            //     Matrix.FromQuaternionToRef(sourceLeftShoulderWorldRotation.multiply(aq), sourceLeftShoulder.getFinalMatrix()).setTranslation(translation);
+
+            //     frame += 1;
             //     if (frame === 100) scene.onAfterRenderObservable.removeCallback(animatedRotation);
             // };
             // animatedRotation();
             // setTimeout(() => {
             //     scene.onAfterRenderObservable.add(animatedRotation);
             // }, 3000);
+
+            // apply same rotation from mixamo skeleton to mmd skeleton
+            const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, -Math.PI / 2 / 100, 0);
+            let frame = 0;
+            const animatedRotation = (): void => {
+                const aq = Quaternion.Identity();
+                for (let i = 0; i < frame; ++i) aq.multiplyToRef(quaternionXM9, aq);
+
+                sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(aq);
+
+                targetLeftShoulder.rotationQuaternion = Quaternion.Identity()
+                    .multiply(sourceLeftShoulderWorldRotation)
+                    .multiply(aq.invert())
+                    .multiply(sourceLeftShoulderWorldRotation.invert())
+                ;
+
+                frame += 1;
+                if (frame === 100) scene.onAfterRenderObservable.removeCallback(animatedRotation);
+            };
+            animatedRotation();
+            setTimeout(() => {
+                scene.onAfterRenderObservable.add(animatedRotation);
+            }, 3000);
 
 
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Head")!;
@@ -269,46 +291,41 @@ export class SceneBuilder implements ISceneBuilder {
             // position y 5
             const positionY5 = new Vector3(100, 300, 200);
 
-            const sourceLeftForeArmWorldRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent!.getFinalMatrix());
-            const sourceLeftForeArmLocalRotation = Quaternion.FromRotationMatrix(sourceLeftHand.parent._matrix);
+            const sourceParentWorldMatrix = sourceLeftHand.parent!.getFinalMatrix().multiply(skeletonTransform);
+            const sourceParentLocalMatrix = sourceLeftHand.parent._matrix.clone();
 
-            const sourceLeftHandWorldRotation = Quaternion.FromRotationMatrix(sourceLeftHand.getFinalMatrix());
-            const sourceLeftHandLocalRotation = Quaternion.FromRotationMatrix(sourceLeftHand._matrix);
+            const sourceWorldMatrix = sourceLeftHand.getFinalMatrix().multiply(skeletonTransform);
+            const sourceLocalMatrix = sourceLeftHand._matrix.clone();
 
             sourceLeftHand;
             targetLeftHand;
             positionY5;
-            sourceLeftForeArmWorldRotation;
-            sourceLeftForeArmLocalRotation;
-            sourceLeftHandWorldRotation;
-            sourceLeftHandLocalRotation;
+            sourceParentWorldMatrix;
+            sourceParentLocalMatrix;
+            sourceWorldMatrix;
+            sourceLocalMatrix;
 
             // apply same position from mmd skeleton to mixamo skeleton
             // targetLeftHand.position = targetLeftHand.position.add(positionY5);
             // sourceLeftHand.position = sourceLeftHand.position.add(
-            //     Vector3.TransformCoordinates(targetLeftHand.position, sourceLeftHand.parent!.getFinalMatrix().invert())
+            //     Vector3.TransformNormal(positionY5, sourceParentWorldMatrix.invert())
             // );
 
             // apply same position from mixamo skeleton to mmd skeleton
             // sourceLeftHand.position = sourceLeftHand.position.add(positionY5);
             // targetLeftHand.position = targetLeftHand.position.add(
-            //     positionY5.applyRotationQuaternion(
-            //         Quaternion.Identity()
-            //             .multiply(Quaternion.FromEulerAngles(0, -Math.PI / 2, 0))
-            //             .multiply(Quaternion.FromEulerAngles(Math.PI / 2, 0, 0))
-            //             .multiply(sourceLeftHandWorldRotation)
-            //     )
+            //     Vector3.TransformNormal(positionY5, sourceParentWorldMatrix)
             // );
 
-            const sphere = CreateSphere("test_point", { diameter: 1, segments: 32}, scene);
-            const sphereMaterial = sphere.material = new StandardMaterial("test_point_material", scene);
-            sphereMaterial.zOffset = -10000;
-            sphere.position = sourceLeftHand.parent!.getAbsoluteMatrix().getTranslation();
+            // const sphere = CreateSphere("test_point", { diameter: 1, segments: 32}, scene);
+            // const sphereMaterial = sphere.material = new StandardMaterial("test_point_material", scene);
+            // sphereMaterial.zOffset = -10000;
+            // sphere.position = sourceLeftHand!.getFinalMatrix().multiply(skeletonTransform).getTranslation();
 
-            const viewer2 = new SkeletonViewer(sourceSkeleton, modelMesh, scene, false, 3, {
-                displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-            });
-            viewer2.isEnabled = true;
+            // const viewer2 = new SkeletonViewer(sourceSkeleton, sourceModelMesh, scene, false, 3, {
+            //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+            // });
+            // viewer2.isEnabled = false;
         }
 
         {

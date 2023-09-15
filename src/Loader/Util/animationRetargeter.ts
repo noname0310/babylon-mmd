@@ -1,8 +1,9 @@
 import type { AnimationGroup, TargetedAnimation } from "@babylonjs/core/Animations/animationGroup";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
+import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Nullable } from "@babylonjs/core/types";
@@ -12,7 +13,6 @@ import { deepCopyAnimationGroup } from "./deepCopyAnimation";
 
 export interface RetargetOptions {
     cloneAnimation?: boolean;
-    animationScaling?: number;
     removeBoneRotationOffset?: boolean;
 }
 
@@ -25,7 +25,8 @@ export class AnimationRetargeter {
     private _sourceSkeleton: Nullable<Skeleton>;
     private _targetSkeleton: Nullable<Skeleton>;
 
-    private _sourceSkeletonAbsoluteRotations: Nullable<Quaternion[]>;
+    private _sourceSkeletonTransformOffset: Nullable<Matrix>;
+    private _sourceSkeletonAbsoluteMatrices: Nullable<Matrix[]>;
 
     private _targetBoneNameMap: Nullable<Map<string, Bone>>;
 
@@ -44,7 +45,8 @@ export class AnimationRetargeter {
         this._sourceSkeleton = null;
         this._targetSkeleton = null;
 
-        this._sourceSkeletonAbsoluteRotations = null;
+        this._sourceSkeletonTransformOffset = null;
+        this._sourceSkeletonAbsoluteMatrices = null;
 
         this._targetBoneNameMap = null;
 
@@ -59,9 +61,16 @@ export class AnimationRetargeter {
         return this;
     }
 
-    public setSourceSkeleton(skeleton: Skeleton): this {
+    public setSourceSkeleton(skeleton: Skeleton, transformOffset?: TransformNode | Matrix): this {
         this._sourceSkeleton = skeleton;
-        this._sourceSkeletonAbsoluteRotations = null;
+        if (transformOffset === undefined) {
+            this._sourceSkeletonTransformOffset = null;
+        } else if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {
+            this._sourceSkeletonTransformOffset = (transformOffset as TransformNode).computeWorldMatrix(true).clone();
+        } else {
+            this._sourceSkeletonTransformOffset = (transformOffset as Matrix).clone();
+        }
+        this._sourceSkeletonAbsoluteMatrices = null;
         return this;
     }
 
@@ -81,7 +90,6 @@ export class AnimationRetargeter {
             options = {};
         }
         options.cloneAnimation = options.cloneAnimation ?? true;
-        options.animationScaling = options.animationScaling ?? 1;
         options.removeBoneRotationOffset = options.removeBoneRotationOffset ?? false;
 
         if (this._boneNameMap === null) {
@@ -152,15 +160,19 @@ export class AnimationRetargeter {
                 }
             }
 
-            if (this._sourceSkeletonAbsoluteRotations === null) {
-                this._sourceSkeletonAbsoluteRotations = this._computeSkeletonAbsoluteRotations(this._sourceSkeleton, sourceBoneIndexMap);
+            if (this._sourceSkeletonAbsoluteMatrices === null) {
+                this._sourceSkeletonAbsoluteMatrices = this._computeSkeletonAbsoluteMatrices(
+                    this._sourceSkeleton,
+                    this._sourceSkeletonTransformOffset,
+                    sourceBoneIndexMap
+                );
             }
 
             this._removeBoneRotationOffset(
                 animationGroup,
                 animationIndexBinding,
                 this._sourceSkeleton,
-                this._sourceSkeletonAbsoluteRotations,
+                this._sourceSkeletonAbsoluteMatrices,
                 sourceBoneIndexMap
             );
         }
@@ -185,7 +197,11 @@ export class AnimationRetargeter {
 
     private static readonly _Stack: Bone[] = [];
 
-    private _computeSkeletonAbsoluteRotations(skeleton: Skeleton, boneIndexMap: Map<Bone, number>): Quaternion[] {
+    private _computeSkeletonAbsoluteMatrices(
+        skeleton: Skeleton,
+        skeletonTransformOffset: Nullable<Matrix>,
+        boneIndexMap: Map<Bone, number>
+    ): Matrix[] {
         const bones = skeleton.bones;
 
         const stack = AnimationRetargeter._Stack;
@@ -195,16 +211,20 @@ export class AnimationRetargeter {
             if (bone.getParent() === null) stack.push(bone);
         }
 
-        const worldRotations = new Array<Quaternion>(bones.length);
+        if (skeletonTransformOffset === null) {
+            skeletonTransformOffset = Matrix.Identity();
+        }
+
+        const absoluteMatrices = new Array<Matrix>(bones.length);
         while (stack.length > 0) {
             const bone = stack.pop()!;
             const parent = bone.getParent();
 
-            const parentWorldRotation = parent === null
-                ? Quaternion.Identity()
-                : worldRotations[boneIndexMap.get(parent)!];
+            const parentAbsoluteMatrix = parent === null
+                ? skeletonTransformOffset
+                : absoluteMatrices[boneIndexMap.get(parent)!];
 
-            worldRotations[boneIndexMap.get(bone)!] = Quaternion.FromRotationMatrix(bone.getRestMatrix()).multiplyInPlace(parentWorldRotation);
+            absoluteMatrices[boneIndexMap.get(bone)!] = bone.getRestMatrix().multiply(parentAbsoluteMatrix);
 
             const children = bone.getChildren();
             for (let i = 0; i < children.length; ++i) {
@@ -212,7 +232,7 @@ export class AnimationRetargeter {
             }
         }
 
-        return worldRotations;
+        return absoluteMatrices;
     }
 
     private _removeScaleAnimation(animationGroup: AnimationGroup): void {
@@ -271,10 +291,17 @@ export class AnimationRetargeter {
         animationGroup: AnimationGroup,
         animationIndexBinding: Int32Array,
         skeleton: Skeleton,
-        skeletonAbsoluteRotations: Quaternion[],
+        skeletonAbsoluteMatrices: Matrix[],
         boneIndexMap: Map<Bone, number>
     ): void {
         const targetedAnimations = animationGroup.targetedAnimations;
+
+        const rotationMatrix = new Matrix();
+        const absoluteRotation = new Quaternion();
+        const absoluteRotationInverse = new Quaternion();
+
+        const skeletonTransformOffset = this._sourceSkeletonTransformOffset ?? Matrix.Identity();
+
         for (let i = 0; i < targetedAnimations.length; ++i) {
             const boneIndex = animationIndexBinding[i];
             if (boneIndex === -1) continue;
@@ -283,35 +310,30 @@ export class AnimationRetargeter {
             const targetProperty = animation.targetProperty;
 
             const bone = skeleton.bones[boneIndex];
-            const boneAbsoluteRotation = skeletonAbsoluteRotations[boneIndex];
-            boneAbsoluteRotation;
-            boneIndexMap;
-
-            const restMatrix = bone.getRestMatrix();
 
             if (targetProperty === "rotationQuaternion") {
-                const sourceParentLocalRotation = Quaternion.FromRotationMatrix(bone.getRestMatrix());
-                const sourceParentLocalRotationInverse = sourceParentLocalRotation.invert();
-
-                const sourceLocalRotation = Quaternion.FromRotationMatrix(restMatrix);
-                const sourceLocalRotationInverse = sourceLocalRotation.invert();
-
-                sourceParentLocalRotationInverse;
-                sourceLocalRotationInverse;
+                const boneAbsoluteMatrix = skeletonAbsoluteMatrices[boneIndex];
+                Quaternion.FromRotationMatrixToRef(boneAbsoluteMatrix.getRotationMatrixToRef(rotationMatrix), absoluteRotation);
+                absoluteRotationInverse.copyFrom(absoluteRotation).invertInPlace();
 
                 const keys = animation.getKeys();
                 for (let j = 0; j < keys.length; ++j) {
                     const value = keys[j].value as Quaternion;
 
-                    value;
-                    sourceParentLocalRotation.multiplyToRef(value, value);
-                    value.multiplyInPlace(sourceParentLocalRotationInverse);
+                    value.invertInPlace();
+                    absoluteRotation.multiplyToRef(value, value);
+                    value.multiplyInPlace(absoluteRotationInverse);
                 }
             } else if (targetProperty === "position") {
+                const parentBone = bone.getParent();
+                const parentIndex = parentBone !== null ? boneIndexMap.get(parentBone)! : -1;
+                const boneParentAbsoluteMatrix = skeletonAbsoluteMatrices[parentIndex] ?? skeletonTransformOffset;
+
                 const keys = animation.getKeys();
                 for (let j = 0; j < keys.length; ++j) {
                     const value = keys[j].value as Vector3;
-                    value.scaleInPlace(0);
+
+                    Vector3.TransformNormalToRef(value, boneParentAbsoluteMatrix, value);
                 }
             } else {
                 this.warn(`Unsupported target property: ${targetProperty}`);
