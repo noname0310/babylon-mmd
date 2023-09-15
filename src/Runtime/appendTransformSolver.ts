@@ -41,12 +41,16 @@ export class AppendTransformSolver {
         if (this.affectRotation) {
             const appendRotationOffset = this.appendRotationOffset;
             if (this.isLocal) {
-                targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
+                // Since mmd bones all have identity quaternions, we abandon the compatibility for skeletons that don't and improve performance
+
+                // targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
+                targetBone.getAnimatedRotationToRef(appendRotationOffset);
             } else {
                 if (targetBone.appendTransformSolver !== null) {
                     appendRotationOffset.copyFrom(targetBone.appendTransformSolver.appendRotationOffset);
                 } else {
-                    targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
+                    // targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
+                    targetBone.getAnimatedRotationToRef(appendRotationOffset);
                 }
             }
 

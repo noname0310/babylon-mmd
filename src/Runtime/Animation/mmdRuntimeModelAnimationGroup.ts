@@ -2,7 +2,7 @@ import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
@@ -85,7 +85,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
     }
 
     private static readonly _BonePosition = new Vector3();
-    private static readonly _BoneRotation = new Quaternion();
+    // private static readonly _BoneRotation = new Quaternion();
 
     /**
      * Update animation
@@ -100,9 +100,16 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const boneTrack = boneTracks[i];
             const bone = boneBindIndexMap[i];
             if (bone === null) continue;
-            Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneRotation);
+            // Since mmd bones all have identity quaternions, we abandon the compatibility for skeletons that don't and improve performance
+
+            // Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneRotation);
+            // bone.setRotationQuaternion(
+            //     MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i])),
+            //     Space.LOCAL
+            // );
+
             bone.setRotationQuaternion(
-                MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i])),
+                boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i]),
                 Space.LOCAL
             );
         }

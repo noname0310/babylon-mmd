@@ -84,7 +84,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public getAnimatedPositionToRef: (target: Vector3) => Vector3;
     public getAnimatedRotationToRef: (target: Quaternion) => Quaternion;
     public getAnimationPositionOffsetToRef: (target: Vector3) => Vector3;
-    public getAnimationRotationOffsetToRef: (target: Quaternion) => Quaternion;
+    // public getAnimationRotationOffsetToRef: (target: Quaternion) => Quaternion;
 
     public constructor(babylonBone: Bone, boneMetadata: MmdModelMetadata.Bone) {
         this.babylonBone = babylonBone;
@@ -111,7 +111,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetToRef;
-        this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
+        // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
     }
 
     private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
@@ -158,27 +158,27 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     // to get b from a and c:
     // a^-1 * c = b
 
-    private static readonly _TempQuaternion = new Quaternion();
+    // private static readonly _TempQuaternion = new Quaternion();
 
-    private _getAnimationRotationOffsetToRef(target: Quaternion): Quaternion {
-        this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
-        Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
-        return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
-    }
+    // private _getAnimationRotationOffsetToRef(target: Quaternion): Quaternion {
+    //     this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
+    //     Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
+    //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
+    // }
 
-    private _getAnimationRotationOffsetWithMorphToRef(target: Quaternion): Quaternion {
-        this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
-        target.multiplyInPlace(this.morphRotationOffset);
-        Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
-        return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
-    }
+    // private _getAnimationRotationOffsetWithMorphToRef(target: Quaternion): Quaternion {
+    //     this.babylonBone.getRotationQuaternionToRef(Space.LOCAL, null, target);
+    //     target.multiplyInPlace(this.morphRotationOffset);
+    //     Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
+    //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
+    // }
 
     public enableMorph(): void {
         this.getAnimatedPositionToRef = this._getAnimatedPositionWithMorphToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationWithMorphToRef;
 
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetWithMorphToRef;
-        this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetWithMorphToRef;
+        // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetWithMorphToRef;
     }
 
     public disableMorph(): void {
@@ -186,7 +186,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
 
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetToRef;
-        this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
+        // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
     }
 
     private static readonly _TempScale = Vector3.Zero();
