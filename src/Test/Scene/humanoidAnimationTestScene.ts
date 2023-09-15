@@ -24,12 +24,12 @@ import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 // import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-// import HavokPhysics from "@babylonjs/havok";
-import { Inspector } from "@babylonjs/inspector";
+import HavokPhysics from "@babylonjs/havok";
 
+// import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -127,13 +127,13 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        // promises.push((async(): Promise<void> => {
-        //     updateLoadingText(2, "Loading physics engine...");
-        //     const havokInstance = await HavokPhysics();
-        //     const havokPlugin = new HavokPlugin(true, havokInstance);
-        //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-        //     updateLoadingText(2, "Loading physics engine... Done");
-        // })());
+        promises.push((async(): Promise<void> => {
+            updateLoadingText(2, "Loading physics engine...");
+            const havokInstance = await HavokPhysics();
+            const havokPlugin = new HavokPlugin(true, havokInstance);
+            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+            updateLoadingText(2, "Loading physics engine... Done");
+        })());
 
         loadingTexts = new Array(promises.length).fill("");
 
@@ -147,6 +147,7 @@ export class SceneBuilder implements ISceneBuilder {
             motionAssetContainer.addAllToScene();
             const rootNode = motionAssetContainer.rootNodes[0] as TransformNode;
             rootNode.rotationQuaternion = Quaternion.Identity();
+            // rootNode.scaling.setAll(1);
             rootNode.position.set(10, 0, 10);
             rootNode.getChildTransformNodes()[0].scaling.setAll(1);
             const meshes = motionAssetContainer.meshes;
@@ -166,11 +167,10 @@ export class SceneBuilder implements ISceneBuilder {
 
             sourceModelMesh.computeWorldMatrix(true);
             const skeletonTransform = sourceModelMesh.getWorldMatrix().clone();
-            skeletonTransform.setTranslationFromFloats(0, 0, 0);
 
             const retargetedAnimation = animationRetargeter
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
-                .setSourceSkeleton(sourceSkeleton, skeletonTransform)
+                .setSourceSkeleton(sourceSkeleton, sourceModelMesh)
                 .setTargetSkeleton(modelMesh.skeleton!)
                 .retargetAnimation(animation, {
                     cloneAnimation: true,
@@ -181,18 +181,18 @@ export class SceneBuilder implements ISceneBuilder {
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
 
-            animation.stop();
-            retargetedAnimation.stop();
-            {
-                const bones = sourceSkeleton.bones;
-                for (let i = 0; i < bones.length; ++i) {
-                    const bone = bones[i];
-                    bone.linkTransformNode(null);
-                }
-            }
+            // animation.stop();
+            // retargetedAnimation.stop();
+            // {
+            //     const bones = sourceSkeleton.bones;
+            //     for (let i = 0; i < bones.length; ++i) {
+            //         const bone = bones[i];
+            //         bone.linkTransformNode(null);
+            //     }
+            // }
 
-            animation.dispose();
-            retargetedAnimation.dispose();
+            // animation.dispose();
+            // retargetedAnimation.dispose();
 
 
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Neck")!;
@@ -201,10 +201,10 @@ export class SceneBuilder implements ISceneBuilder {
             // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftForeArm")!;
             // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左ひじ")!;
-            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
-            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftUpLeg")!;
-            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左足")!;
+            const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
+            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftUpLeg")!;
+            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左足")!;
 
 
             // rotate x -90
@@ -215,19 +215,19 @@ export class SceneBuilder implements ISceneBuilder {
             sourceSkeleton.prepare();
             sourceSkeleton.computeAbsoluteMatrices();
 
-            const sourceLeftSpineWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent!.getFinalMatrix().multiply(skeletonTransform).getRotationMatrix());
-            const sourceLeftSpineLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.parent._matrix.getRotationMatrix());
+            const sourceLeftSpineWorldMatrix = sourceLeftShoulder.parent!.getFinalMatrix().multiply(skeletonTransform);
+            const sourceLeftSpineLocalMatrix = sourceLeftShoulder.parent._matrix.clone();
 
-            const sourceLeftShoulderWorldRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder.getFinalMatrix().multiply(skeletonTransform).getRotationMatrix());
-            const sourceLeftShoulderLocalRotation = Quaternion.FromRotationMatrix(sourceLeftShoulder._matrix.getRotationMatrix());
+            const sourceLeftShoulderWorldMatrix = sourceLeftShoulder.getFinalMatrix().multiply(skeletonTransform);
+            const sourceLeftShoulderLocalMatrix = sourceLeftShoulder._matrix.clone();
 
             sourceLeftShoulder;
             targetLeftShoulder;
             quaternionXM90;
-            sourceLeftSpineWorldRotation;
-            sourceLeftSpineLocalRotation;
-            sourceLeftShoulderWorldRotation;
-            sourceLeftShoulderLocalRotation;
+            sourceLeftSpineWorldMatrix;
+            sourceLeftSpineLocalMatrix;
+            sourceLeftShoulderWorldMatrix;
+            sourceLeftShoulderLocalMatrix;
 
             // apply same rotation from mmd skeleton to mixamo skeleton
             // const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, 0, 0);
@@ -258,27 +258,34 @@ export class SceneBuilder implements ISceneBuilder {
             // }, 3000);
 
             // apply same rotation from mixamo skeleton to mmd skeleton
-            const quaternionXM9 = Quaternion.FromEulerAngles(-Math.PI / 2 / 100, -Math.PI / 2 / 100, 0);
-            let frame = 0;
-            const animatedRotation = (): void => {
-                const aq = Quaternion.Identity();
-                for (let i = 0; i < frame; ++i) aq.multiplyToRef(quaternionXM9, aq);
+            // const quaternionXM9 = Quaternion.FromEulerAngles(0 ?? -Math.PI / 2 / 100, 0 ?? -Math.PI / 2 / 100, 0 ?? -Math.PI / 2 / 100);
+            // let frame = 0;
+            // const animatedRotation = (): void => {
+            //     const aq = Quaternion.Identity();
+            //     for (let i = 0; i < frame; ++i) aq.multiplyToRef(quaternionXM9, aq);
 
-                sourceLeftShoulder.rotationQuaternion = sourceLeftShoulderLocalRotation.multiply(aq);
+            //     sourceLeftShoulder.rotationQuaternion = Quaternion.FromRotationMatrix(
+            //         Matrix.FromQuaternionToRef(aq, Matrix.Identity()).multiply(sourceLeftShoulderLocalMatrix)
+            //     );
 
-                targetLeftShoulder.rotationQuaternion = Quaternion.Identity()
-                    .multiply(sourceLeftShoulderWorldRotation)
-                    .multiply(aq.invert())
-                    .multiply(sourceLeftShoulderWorldRotation.invert())
-                ;
+            //     targetLeftShoulder.rotationQuaternion = // Quaternion.Identity()
+            //     // .multiply(sourceLeftShoulderWorldRotation)
+            //     // .multiply(aq.invert())
+            //     // .multiply(sourceLeftShoulderWorldRotation.invert())
+            //         Quaternion.FromRotationMatrix(
+            //             sourceLeftShoulderWorldMatrix.invertToRef(new Matrix())
+            //                 .multiply(Matrix.FromQuaternionToRef(aq, Matrix.Identity()))
+            //                 .multiply(sourceLeftShoulderWorldMatrix)
+            //         )
+            //     ;
 
-                frame += 1;
-                if (frame === 100) scene.onAfterRenderObservable.removeCallback(animatedRotation);
-            };
-            animatedRotation();
-            setTimeout(() => {
-                scene.onAfterRenderObservable.add(animatedRotation);
-            }, 3000);
+            //     frame += 1;
+            //     if (frame === 100) scene.onAfterRenderObservable.removeCallback(animatedRotation);
+            // };
+            // animatedRotation();
+            // setTimeout(() => {
+            //     scene.onAfterRenderObservable.add(animatedRotation);
+            // }, 3000);
 
 
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Head")!;
@@ -333,7 +340,7 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh.receiveShadows = true;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: false
+                buildPhysics: true
             });
 
             const runtimeBones = mmdModel.sortedRuntimeBones;
@@ -360,7 +367,7 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [/*camera*/]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.fxaaEnabled = true;
@@ -372,7 +379,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
 
-        Inspector.Show(scene, { });
+        // Inspector.Show(scene, { });
 
         return scene;
     }

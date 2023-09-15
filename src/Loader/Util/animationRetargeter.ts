@@ -297,8 +297,7 @@ export class AnimationRetargeter {
         const targetedAnimations = animationGroup.targetedAnimations;
 
         const rotationMatrix = new Matrix();
-        const absoluteRotation = new Quaternion();
-        const absoluteRotationInverse = new Quaternion();
+        const absoluteMatrixInverse = new Matrix();
 
         const skeletonTransformOffset = this._sourceSkeletonTransformOffset ?? Matrix.Identity();
 
@@ -312,17 +311,20 @@ export class AnimationRetargeter {
             const bone = skeleton.bones[boneIndex];
 
             if (targetProperty === "rotationQuaternion") {
-                const boneAbsoluteMatrix = skeletonAbsoluteMatrices[boneIndex];
-                Quaternion.FromRotationMatrixToRef(boneAbsoluteMatrix.getRotationMatrixToRef(rotationMatrix), absoluteRotation);
-                absoluteRotationInverse.copyFrom(absoluteRotation).invertInPlace();
+                const absoluteMatrix = skeletonAbsoluteMatrices[boneIndex];
+                absoluteMatrix.invertToRef(absoluteMatrixInverse);
 
                 const keys = animation.getKeys();
                 for (let j = 0; j < keys.length; ++j) {
                     const value = keys[j].value as Quaternion;
 
-                    value.invertInPlace();
-                    absoluteRotation.multiplyToRef(value, value);
-                    value.multiplyInPlace(absoluteRotationInverse);
+                    absoluteMatrixInverse.multiplyToRef(
+                        Matrix.FromQuaternionToRef(value, rotationMatrix),
+                        rotationMatrix
+                    );
+                    rotationMatrix.multiplyToRef(absoluteMatrix, rotationMatrix);
+
+                    Quaternion.FromRotationMatrixToRef(rotationMatrix, value);
                 }
             } else if (targetProperty === "position") {
                 const parentBone = bone.getParent();
