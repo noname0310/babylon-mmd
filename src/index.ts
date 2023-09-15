@@ -30,6 +30,7 @@ export { PmxReader } from "@/Loader/Parser/pmxReader";
 export { VmdData, VmdObject } from "@/Loader/Parser/vmdObject";
 
 // Loader/Util
+export { AnimationRetargeter, RetargetOptions } from "@/Loader/Util/animationRetargeter";
 export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 
 // Loader

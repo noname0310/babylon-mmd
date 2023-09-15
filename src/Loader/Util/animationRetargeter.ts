@@ -11,8 +11,17 @@ import type { Nullable } from "@babylonjs/core/types";
 import { convertToAdditiveAnimation } from "./convertToAdditiveAnimation";
 import { deepCopyAnimationGroup } from "./deepCopyAnimation";
 
+/**
+ * Options for AnimationRetargeter.retargetAnimation
+ */
 export interface RetargetOptions {
+    /**
+     * Clone animation group before retargeting (default: true)
+     */
     cloneAnimation?: boolean;
+    /**
+     * Remove bone rotation offset (default: false)
+     */
     removeBoneRotationOffset?: boolean;
 }
 
@@ -39,6 +48,9 @@ export class AnimationRetargeter {
     /** @internal */
     public error: (message: string) => void;
 
+    /**
+     * Instantiate AnimationRetargeter
+     */
     public constructor() {
         this._boneNameMap = null;
 
@@ -56,11 +68,26 @@ export class AnimationRetargeter {
         this.error = this._errorDisabled;
     }
 
+    /**
+     * Set source bone to target bone name map
+     * @param boneMap source bone to target bone name map
+     * @returns this
+     */
     public setBoneMap(boneMap: { [key: string]: string }): this {
         this._boneNameMap = boneMap;
         return this;
     }
 
+    /**
+     * Set source skeleton that has animation to retarget
+     *
+     * In general use case, the source skeleton and the target skeleton should be looking in the same direction in the world space
+     *
+     * And the `transformOffset` must be set to the mesh that binded to the source skeleton
+     * @param skeleton source skeleton
+     * @param transformOffset transform offset
+     * @returns this
+     */
     public setSourceSkeleton(skeleton: Skeleton, transformOffset?: TransformNode | Matrix): this {
         this._sourceSkeleton = skeleton;
         if (transformOffset === undefined) {
@@ -74,12 +101,30 @@ export class AnimationRetargeter {
         return this;
     }
 
+    /**
+     * Set target skeleton
+     * @param skeleton target skeleton
+     * @returns this
+     */
     public setTargetSkeleton(skeleton: Skeleton): this {
         this._targetSkeleton = skeleton;
         this._targetBoneNameMap = null;
         return this;
     }
 
+    /**
+     * Remap the bone's name and modify the animation data to convert it to a rotation that matches the source skeleton
+     *
+     * In the current implementation, retargeting is performed assuming that all bones in the target skeleton have no rotation offset
+     *
+     * because that's the bone structure of the mmd model
+     *
+     * These limitations may be removed in the future
+     *
+     * @param animationGroup animation group to retarget
+     * @param options rtetarget options
+     * @returns retargeted animation group
+     */
     public retargetAnimation(animationGroup: AnimationGroup, options?: RetargetOptions): Nullable<AnimationGroup> {
         if (!this._isSkeletonAnimation(animationGroup)) {
             this.warn("Animation is not skeleton animation. animation retargeting is aborted.");
@@ -299,7 +344,7 @@ export class AnimationRetargeter {
         const rotationMatrix = new Matrix();
         const absoluteMatrixInverse = new Matrix();
 
-        const skeletonTransformOffset = this._sourceSkeletonTransformOffset ?? Matrix.Identity();
+        const skeletonTransformOffset = this._sourceSkeletonTransformOffset;
 
         for (let i = 0; i < targetedAnimations.length; ++i) {
             const boneIndex = animationIndexBinding[i];
@@ -329,13 +374,15 @@ export class AnimationRetargeter {
             } else if (targetProperty === "position") {
                 const parentBone = bone.getParent();
                 const parentIndex = parentBone !== null ? boneIndexMap.get(parentBone)! : -1;
-                const boneParentAbsoluteMatrix = skeletonAbsoluteMatrices[parentIndex] ?? skeletonTransformOffset;
+                const boneParentAbsoluteMatrix = parentIndex !== -1 ? skeletonAbsoluteMatrices[parentIndex] : skeletonTransformOffset;
 
-                const keys = animation.getKeys();
-                for (let j = 0; j < keys.length; ++j) {
-                    const value = keys[j].value as Vector3;
+                if (boneParentAbsoluteMatrix !== null) {
+                    const keys = animation.getKeys();
+                    for (let j = 0; j < keys.length; ++j) {
+                        const value = keys[j].value as Vector3;
 
-                    Vector3.TransformNormalToRef(value, boneParentAbsoluteMatrix, value);
+                        Vector3.TransformNormalToRef(value, boneParentAbsoluteMatrix, value);
+                    }
                 }
             } else {
                 this.warn(`Unsupported target property: ${targetProperty}`);
