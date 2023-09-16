@@ -353,9 +353,14 @@ export class MmdPlayerControl {
     private readonly _onAnimationTick = (): void => {
         const mmdRuntime = this._mmdRuntime;
         this._timeSlider.value = mmdRuntime.currentFrameTime.toString();
-        this._currentFrameNumberSpan.innerText = this.displayTimeFormat === DisplayTimeFormat.Seconds
-            ? this._getFormattedTime(mmdRuntime.currentTime)
-            : Math.floor(mmdRuntime.currentFrameTime).toString();
+        if (this.displayTimeFormat === DisplayTimeFormat.Seconds) {
+            const formattedTime = this._getFormattedTime(mmdRuntime.currentTime);
+            if (this._currentFrameNumberSpan.innerText !== formattedTime) {
+                this._currentFrameNumberSpan.innerText = formattedTime;
+            }
+        } else {
+            this._currentFrameNumberSpan.innerText = Math.floor(mmdRuntime.currentFrameTime).toString();
+        }
     };
 
     private readonly _onMuteStateChanged = (): void => {
