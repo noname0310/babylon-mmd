@@ -42,7 +42,7 @@
         "ts-patch": "^3.0.2",
         "typescript": "^5.2.2",
         "typescript-transform-paths": "^3.4.6",
-        "url": "^0.11.2",
+        "url": "^0.11.3",
         "webpack": "^5.88.2",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^4.15.1"
