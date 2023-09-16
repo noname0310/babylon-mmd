@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.1
+
+- improve performance of `MmdPlayerControl` by minimizing time display updates
+
+- fix rigidbody bouncing glitch
+    - There seems to be a problem with the algorithm by which babylon js bone updates the local matrix. Bypass it and perform the optimal operation
+
 ## 0.27.0
 
 - fix body offset computation in `PhysicsWithBone`
