@@ -1,7 +1,7 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/babylonAnimationLoadTestScene";
+import { SceneBuilder } from "./Scene/humanoidAnimationTestScene";
 
 window.onload = (): void => {
     const canvas = document.createElement("canvas");

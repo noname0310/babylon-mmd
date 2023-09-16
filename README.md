@@ -174,7 +174,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 
 - [x] Basic animation load / custom retargeting
 - [x] Load animation using the Babylon.js `Animation` container
-- [ ] Babylon.js `Animation` container Humanoid to MMD bone mapping
+- [x] Babylon.js `Animation` Humanoid to MMD bone retargeting
 
 **Animation Runtime**
 

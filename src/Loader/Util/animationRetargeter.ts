@@ -258,6 +258,9 @@ export class AnimationRetargeter {
         }
 
         this._retargetAnimationInternal(animationGroup, this._boneNameMap, this._targetBoneNameMap);
+
+        animationGroup.isAdditive = true;
+        animationGroup.weight = 1;
         return animationGroup;
     }
 
