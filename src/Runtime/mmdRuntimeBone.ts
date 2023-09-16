@@ -1,5 +1,4 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
-import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -115,12 +114,12 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     }
 
     private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
-        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        target.copyFrom(this.babylonBone.position);
         return target.addInPlace(this.morphPositionOffset);
     }
 
     private _getAnimatedPositionToRef(target: Vector3): Vector3 {
-        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        target.copyFrom(this.babylonBone.position);
         return target;
     }
 
@@ -137,13 +136,13 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     private static readonly _TempVector3 = new Vector3();
 
     private _getAnimationPositionOffsetToRef(target: Vector3): Vector3 {
-        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        target.copyFrom(this.babylonBone.position);
         this.babylonBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
         return target.subtractInPlace(MmdRuntimeBone._TempVector3);
     }
 
     private _getAnimationPositionOffsetWithMorphToRef(target: Vector3): Vector3 {
-        this.babylonBone.getPositionToRef(Space.LOCAL, null, target);
+        target.copyFrom(this.babylonBone.position);
         target.addInPlace(this.morphPositionOffset);
         this.babylonBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
         return target.subtractInPlace(MmdRuntimeBone._TempVector3);

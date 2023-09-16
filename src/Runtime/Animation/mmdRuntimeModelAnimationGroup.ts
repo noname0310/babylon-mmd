@@ -121,10 +121,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             const bone = moveableBoneBindIndexMap[i];
             if (bone === null) continue;
             bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BonePosition);
-            bone.setPosition(
-                MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i])),
-                Space.LOCAL
-            );
+            bone.position = MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
         }
 
         const morphTracks = animation.morphAnimations;

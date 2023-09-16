@@ -167,13 +167,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                 if (frameNumberB === undefined) {
                     const positions = boneTrack.positions;
                     bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BonePosition);
-                    bone.setPosition(
-                        MmdRuntimeModelAnimation._BonePosition.addInPlaceFromFloats(
-                            positions[upperBoundIndexMinusOne * 3],
-                            positions[upperBoundIndexMinusOne * 3 + 1],
-                            positions[upperBoundIndexMinusOne * 3 + 2]
-                        ),
-                        Space.LOCAL
+                    bone.position = MmdRuntimeModelAnimation._BonePosition.addInPlaceFromFloats(
+                        positions[upperBoundIndexMinusOne * 3],
+                        positions[upperBoundIndexMinusOne * 3 + 1],
+                        positions[upperBoundIndexMinusOne * 3 + 2]
                     );
 
                     const rotations = boneTrack.rotations;
@@ -244,7 +241,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
                     positionA.y += (positionB.y - positionA.y) * yWeight;
                     positionA.z += (positionB.z - positionA.z) * zWeight;
                     bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BonePosition);
-                    bone.setPosition(MmdRuntimeModelAnimation._BonePosition.addInPlace(positionA), Space.LOCAL);
+                    bone.position = MmdRuntimeModelAnimation._BonePosition.addInPlace(positionA);
 
                     const rotations = boneTrack.rotations;
                     const rotationInterpolations = boneTrack.rotationInterpolations;
