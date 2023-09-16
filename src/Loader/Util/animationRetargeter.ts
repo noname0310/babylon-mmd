@@ -19,10 +19,18 @@ export interface RetargetOptions {
      * Clone animation group before retargeting (default: true)
      */
     cloneAnimation?: boolean;
+
     /**
      * Remove bone rotation offset (default: false)
      */
     removeBoneRotationOffset?: boolean;
+
+    /**
+     * Bone name to euler angle rotation offset map
+     *
+     * Typically used when converting from A to T pose
+     */
+    rotationOffsets?: { [key: string]: Vector3 };
 }
 
 /**
@@ -134,8 +142,8 @@ export class AnimationRetargeter {
         if (options === undefined) {
             options = {};
         }
-        options.cloneAnimation = options.cloneAnimation ?? true;
-        options.removeBoneRotationOffset = options.removeBoneRotationOffset ?? false;
+        options.cloneAnimation ??= true;
+        options.removeBoneRotationOffset ??= false;
 
         if (this._boneNameMap === null) {
             throw new Error("Bone map is not set");
@@ -172,6 +180,33 @@ export class AnimationRetargeter {
 
         if (!animationGroup.isAdditive) {
             convertToAdditiveAnimation(animationGroup, this._sourceSkeleton);
+        }
+
+        if (options.rotationOffsets !== undefined) {
+            const rotationOffsetQuaternion = new Quaternion();
+
+            const rotationOffsets = options.rotationOffsets;
+            const targetedAnimations = animationGroup.targetedAnimations;
+            for (let i = 0; i < targetedAnimations.length; ++i) {
+                const target = targetedAnimations[i].target;
+                const targetPropertyPath = targetedAnimations[i].animation.targetPropertyPath;
+                const targetProperty = targetPropertyPath[targetPropertyPath.length - 1];
+
+                if (targetProperty === "rotationQuaternion") {
+                    const boneName = target.name;
+                    const rotationOffset = rotationOffsets[boneName];
+                    if (rotationOffset !== undefined) {
+                        Quaternion.FromEulerAnglesToRef(rotationOffset.x, rotationOffset.y, rotationOffset.z, rotationOffsetQuaternion);
+
+                        const keys = targetedAnimations[i].animation.getKeys();
+                        for (let j = 0; j < keys.length; ++j) {
+                            const value = keys[j].value as Quaternion;
+
+                            rotationOffsetQuaternion.multiplyToRef(value, value);
+                        }
+                    }
+                }
+            }
         }
 
         if (options.removeBoneRotationOffset) {

@@ -115,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
         const promises: Promise<any>[] = [];
 
         promises.push(SceneLoader.LoadAssetContainerAsync(
-            "res/private_test/mixamo/", "Capoeira.glb", scene,
+            "res/private_test/mixamo/", "Walk In Circle.glb", scene,
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -169,20 +169,26 @@ export class SceneBuilder implements ISceneBuilder {
             sourceModelMesh.computeWorldMatrix(true);
             const skeletonTransform = sourceModelMesh.getWorldMatrix().clone();
 
+            const degToRad = Math.PI / 180;
+
             const retargetedAnimation = animationRetargeter
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
                 .setSourceSkeleton(sourceSkeleton, sourceModelMesh)
                 .setTargetSkeleton(modelMesh.skeleton!)
                 .retargetAnimation(animation, {
                     cloneAnimation: true,
-                    removeBoneRotationOffset: true
+                    removeBoneRotationOffset: true,
+                    rotationOffsets: {
+                        [MixamoMmdHumanoidBoneMap.leftUpperArm]: new Vector3(-10 * degToRad, 0, 0),
+                        [MixamoMmdHumanoidBoneMap.rightUpperArm]: new Vector3(-10 * degToRad, 0, 0)
+                    }
                 })!;
 
             retargetedAnimation.isAdditive = true;
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
 
-            downloadObject("capoeira.babylonanim", retargetedAnimation.serialize());
+            downloadObject("catwalk_walking.babylonanim", retargetedAnimation.serialize());
 
             // animation.stop();
             // retargetedAnimation.stop();

@@ -136,7 +136,7 @@ export class SceneBuilder implements ISceneBuilder {
         const modelMesh = loadResults[0].meshes[0] as Mesh;
 
         {
-            const animationJson = await Tools.LoadFileAsync("res/capoeira.babylonanim", false)
+            const animationJson = await Tools.LoadFileAsync("res/motion/walk_in_circle.babylonanim", false)
                 .then((data) => JSON.parse(data as string));
             const animation = AnimationGroup.Parse(animationJson, scene);
             animation.play(true);
@@ -159,13 +159,16 @@ export class SceneBuilder implements ISceneBuilder {
             const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
             const meshWorldMatrix = modelMesh.getWorldMatrix();
             const boneWorldMatrix = new Matrix();
+            const bonePosition = new Vector3();
             scene.onBeforeRenderObservable.add(() => {
                 boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
+                boneWorldMatrix.getTranslationToRef(bonePosition);
+
+                directionalLight.position.copyFrom(bonePosition);
                 directionalLight.position.y -= 10;
 
-                // camera.target.copyFrom(directionalLight.position);
-                // camera.target.y += 13;
+                camera.target.copyFrom(bonePosition);
+                camera.target.y += 3;
             });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
