@@ -41,6 +41,7 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { downloadObject } from "../Util/downloadObject";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -114,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
         const promises: Promise<any>[] = [];
 
         promises.push(SceneLoader.LoadAssetContainerAsync(
-            "res/private_test/", "Capoeira.glb", scene,
+            "res/private_test/mixamo/", "Capoeira.glb", scene,
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
@@ -180,6 +181,8 @@ export class SceneBuilder implements ISceneBuilder {
             retargetedAnimation.isAdditive = true;
             retargetedAnimation.weight = 1;
             retargetedAnimation.play(true);
+
+            downloadObject("capoeira.babylonanim", retargetedAnimation.serialize());
 
             // animation.stop();
             // retargetedAnimation.stop();
