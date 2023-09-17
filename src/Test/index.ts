@@ -1,7 +1,7 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/humanoidAnimationTestScene";
+import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
 
 window.onload = (): void => {
     const canvas = document.createElement("canvas");
@@ -11,9 +11,12 @@ window.onload = (): void => {
     document.body.appendChild(canvas);
 
     const engine = new Engine(canvas, false, {
-        preserveDrawingBuffer: true,
-        stencil: true,
-        antialias: true,
+        preserveDrawingBuffer: false,
+        stencil: false,
+        premultipliedAlpha: false,
+        antialias: false,
+        doNotHandleTouchAction: true,
+        audioEngine: false,
         powerPreference: "high-performance",
         doNotHandleContextLost: true
     }, true);
