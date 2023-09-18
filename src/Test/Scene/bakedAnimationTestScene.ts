@@ -177,6 +177,8 @@ export class SceneBuilder implements ISceneBuilder {
             scene.skipPointerUpPicking = true;
             scene.skipFrustumClipping = true;
             scene.blockMaterialDirtyMechanism = true;
+            scene.clearCachedVertexData();
+            scene.cleanCachedTextureBuffer();
         });
 
         mmdRuntime.setCamera(mmdCamera);
