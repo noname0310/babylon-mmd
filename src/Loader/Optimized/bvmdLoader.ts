@@ -213,11 +213,7 @@ export class BvmdLoader {
         return this._scene._loadFile(
             fileOrUrl,
             (data: string | ArrayBuffer, _responseURL?: string) => {
-                if (typeof data === "string") {
-                    onError?.(undefined, new LoadFileError("VMD data must be binary."));
-                } else {
-                    onLoad(this.loadFromBuffer(name, data));
-                }
+                onLoad(this.loadFromBuffer(name, data as ArrayBuffer));
             },
             onProgress,
             true,

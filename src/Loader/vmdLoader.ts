@@ -1,6 +1,5 @@
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
-import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import { Tools } from "@babylonjs/core/Misc/tools";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
@@ -867,15 +866,11 @@ export class VmdLoader {
             requests.push(scene._loadFile(
                 item,
                 (data: string | ArrayBuffer, _responseURL?: string) => {
-                    if (typeof data === "string") {
-                        onError?.(undefined, new LoadFileError("VMD data must be binary."));
-                    } else {
-                        arrayBuffers.push(data);
-                        if (arrayBuffers.length === fileOrUrl.length) {
-                            this.loadFromBuffer(name, arrayBuffers, onLoad, onProgress, (event) => {
-                                onError?.(undefined, event);
-                            });
-                        }
+                    arrayBuffers.push(data as ArrayBuffer);
+                    if (arrayBuffers.length === fileOrUrl.length) {
+                        this.loadFromBuffer(name, arrayBuffers, onLoad, onProgress, (event) => {
+                            onError?.(undefined, event);
+                        });
                     }
                 },
                 onProgress,
