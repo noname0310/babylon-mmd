@@ -200,6 +200,7 @@ export class MmdModel {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 this._currentAnimation = null;
+                this._resetPose();
                 this.onCurrentAnimationChangedObservable.notifyObservers(null);
             }
             return;
@@ -210,6 +211,7 @@ export class MmdModel {
             throw new Error(`Animation '${name}' is not found.`);
         }
 
+        if (this._currentAnimation !== null) this._resetPose();
         const animation = this._currentAnimation = this._animations[index];
         animation.induceMaterialRecompile(this._logger);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
@@ -419,5 +421,15 @@ export class MmdModel {
     private _enableSkeletonWorldMatrixUpdate(): void {
         if (this._originalComputeTransformMatrices === null) return;
         (this.mesh.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
+    }
+
+    private _resetPose(): void {
+        const sortedBones = this._sortedRuntimeBones;
+        for (let i = 0; i < sortedBones.length; ++i) {
+            const bone = sortedBones[i].babylonBone;
+            bone.getRestMatrix().getTranslationToRef(bone.position);
+            bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+        }
+        this.mesh.skeleton._markAsDirty();
     }
 }

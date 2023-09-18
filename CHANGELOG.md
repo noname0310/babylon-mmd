@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.0
+
+- auto pose initialization in mmd runtime for play multiple animations in single model
+
 ## 0.27.1
 
 - improve performance of `MmdPlayerControl` by minimizing time display updates
