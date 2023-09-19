@@ -153,7 +153,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] PMX Parser
 - [ ] PMD Parser
 - [x] VMD Parser
-- [ ] VPD Parser
+- [x] VPD Parser
 - [x] Optimized Custom PMX like format
 - [x] Optimized Custom VMD like format
 
@@ -170,7 +170,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] WebGL 1.0 / 2.0 support
 - [x] WebGPU support
 
-**VMD Loader**
+**VMD / VPD Loader**
 
 - [x] Basic animation load / custom retargeting
 - [x] Load animation using the Babylon.js `Animation` container

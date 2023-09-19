@@ -132,8 +132,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const loadResults = await Promise.all(promises);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
-
         scene.onAfterRenderObservable.addOnce(() => {
             engine.hideLoadingUI();
 

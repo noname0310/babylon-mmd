@@ -4,6 +4,8 @@
 
 - auto pose initialization in mmd runtime for play multiple animations in single model
 
+- introduce `VpdLoader` to load VPD file
+
 ## 0.27.1
 
 - improve performance of `MmdPlayerControl` by minimizing time display updates

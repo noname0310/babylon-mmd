@@ -45,6 +45,7 @@ export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
 export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChecker";
 export { VmdLoader } from "@/Loader/vmdLoader";
+export { VpdLoader } from "@/Loader/vpdLoader";
 
 // Runtime/Animation
 export { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "@/Runtime/Animation/IMmdBindableAnimation";

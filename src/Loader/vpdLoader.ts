@@ -4,7 +4,9 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import type { Scene } from "@babylonjs/core/scene";
 
-import type { MmdAnimation } from "./Animation/mmdAnimation";
+import { MmdAnimation } from "./Animation/mmdAnimation";
+import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./Animation/mmdAnimationTrack";
+import type { VpdObject } from "./Parser/vpdObject";
 import { VpdReader } from "./Parser/vpdReader";
 
 /**
@@ -40,6 +42,64 @@ export class VpdLoader {
     }
 
     /**
+     * Load MMD animation data from VPD object
+     * @param name Animation name
+     * @param vpdObject VPD object
+     */
+    public loadFromVpdObject(
+        name: string,
+        vpdObject: VpdObject
+    ): MmdAnimation {
+        const bones = vpdObject.bones;
+        const boneNames = Object.keys(bones);
+        let moveableBoneCount = 0;
+        for (let i = 0; i < boneNames.length; i++) {
+            if (bones[boneNames[i]].position !== undefined) {
+                moveableBoneCount += 1;
+            }
+        }
+        const boneTracks: MmdBoneAnimationTrack[] = new Array(boneNames.length - moveableBoneCount);
+        const moveableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(moveableBoneCount);
+        let boneTrackIndex = 0;
+        let moveableBoneTrackIndex = 0;
+        for (let i = 0; i < boneNames.length; i++) {
+            const boneName = boneNames[i];
+            const bone = bones[boneName];
+            if (bone.position === undefined) {
+                const boneTrack = boneTracks[boneTrackIndex] = new MmdBoneAnimationTrack(boneName, 1);
+                boneTrack.rotations[0] = bone.rotation[0];
+                boneTrack.rotations[1] = bone.rotation[1];
+                boneTrack.rotations[2] = bone.rotation[2];
+                boneTrack.rotations[3] = bone.rotation[3];
+                boneTrackIndex += 1;
+            } else {
+                const moveableBoneTrack = moveableBoneTracks[moveableBoneTrackIndex] = new MmdMovableBoneAnimationTrack(boneName, 1);
+
+                moveableBoneTrack.positions[0] = bone.position[0];
+                moveableBoneTrack.positions[1] = bone.position[1];
+                moveableBoneTrack.positions[2] = bone.position[2];
+
+                moveableBoneTrack.rotations[0] = bone.rotation[0];
+                moveableBoneTrack.rotations[1] = bone.rotation[1];
+                moveableBoneTrack.rotations[2] = bone.rotation[2];
+                moveableBoneTrack.rotations[3] = bone.rotation[3];
+                moveableBoneTrackIndex += 1;
+            }
+        }
+
+        const morphs = vpdObject.morphs;
+        const morphNames = Object.keys(morphs);
+        const morphTracks: MmdMorphAnimationTrack[] = new Array(morphNames.length);
+        for (let i = 0; i < morphNames.length; i++) {
+            const morphName = morphNames[i];
+            const morphTrack = morphTracks[i] = new MmdMorphAnimationTrack(morphName, 1);
+            morphTrack.weights[0] = morphs[morphName];
+        }
+
+        return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, new MmdPropertyAnimationTrack(0, []), new MmdCameraAnimationTrack(0));
+    }
+
+    /**
      * Load MMD animation data from VPD array buffer
      * @param name Animation name
      * @param buffer VPD array buffer
@@ -51,7 +111,8 @@ export class VpdLoader {
         buffer: ArrayBuffer
     ): MmdAnimation {
         const text = this._textDecoder.decode(buffer);
-        return VpdReader.Parse(name, text, this);
+        const vpdObject = VpdReader.Parse(text, this);
+        return this.loadFromVpdObject(name, vpdObject);
     }
 
     /**
