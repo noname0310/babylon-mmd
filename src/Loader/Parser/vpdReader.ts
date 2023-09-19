@@ -39,7 +39,7 @@ export class VpdReader {
 
             const typeAndIndex = VpdReader._ConsumeBeforeOpenBracket(data, state);
             if (typeAndIndex.startsWith("Bone")) {
-                const id = VpdReader._ConsumeBeforeEmpty(data, state);
+                const id = VpdReader._ConsumeBeforeLineEnding(data, state);
 
                 let position: Vec3 | undefined = undefined;
                 let rotation: Vec4 | undefined = undefined;
@@ -87,7 +87,7 @@ export class VpdReader {
                     };
                 }
             } else if (typeAndIndex.startsWith("Morph")) {
-                const id = VpdReader._ConsumeBeforeEmpty(data, state);
+                const id = VpdReader._ConsumeBeforeLineEnding(data, state);
 
                 const weightStmt = VpdReader._ConsumeStatement(data, state);
                 const weight = Number(weightStmt);
@@ -200,19 +200,12 @@ export class VpdReader {
         return resultString;
     }
 
-    private static _ConsumeBeforeEmpty(data: string, state: [number]): string {
+    private static _ConsumeBeforeLineEnding(data: string, state: [number]): string {
         const startIndex = state[0];
         let index = state[0];
 
         while (index < data.length) {
-            if (data[index] === " " || data[index] === "\t" || data[index] === "\r" || data[index] === "\n") {
-                break;
-            }
-
-            if (data[index] === "/" && data[index + 1] === "/") {
-                break;
-            }
-
+            if (data[index] === "\r" || data[index] === "\n") break;
             index += 1;
         }
 
