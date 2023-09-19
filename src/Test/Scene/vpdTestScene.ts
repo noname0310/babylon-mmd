@@ -120,12 +120,13 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
+        promises.push((async(): Promise<HavokPlugin> => {
+            updateLoadingText(2, "Loading physics engine...");
             const havokInstance = await HavokPhysics();
             const havokPlugin = new HavokPlugin(true, havokInstance);
             scene.enablePhysics(new Vector3(0, -9.8 * 10 * worldScale, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
+            updateLoadingText(2, "Loading physics engine... Done");
+            return havokPlugin;
         })());
 
         loadingTexts = new Array(promises.length).fill("");
@@ -181,6 +182,23 @@ export class SceneBuilder implements ISceneBuilder {
                 camera.target.copyFrom(directionalLight.position);
                 camera.target.y += 13 * worldScale;
             });
+
+            let computedFrames = 0;
+            const delayedDispose = (): void => {
+                computedFrames += 1;
+
+                if (computedFrames < 180) {
+                    return;
+                }
+
+                scene.onAfterRenderObservable.removeCallback(delayedDispose);
+                mmdRuntime.destroyMmdModel(mmdModel);
+
+                scene.physicsEnabled = false;
+                (loadResults[2] as HavokPlugin).dispose();
+            };
+
+            scene.onAfterRenderObservable.add(delayedDispose);
         }
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
