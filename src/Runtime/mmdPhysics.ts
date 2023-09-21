@@ -19,7 +19,7 @@ import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 class MmdPhysicsTransformNode extends TransformNode {
     public readonly linkedBone: MmdRuntimeBone;
-    public readonly physicsMode: PmxObject.RigidBody.PhysicsMode;
+    public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
     public readonly bodyOffsetInverseMatrix: Matrix;
 
@@ -613,6 +613,23 @@ export class MmdPhysics {
             bodyA.addConstraint(bodyB, constraint);
 
             constraints[i] = constraint;
+
+            // adjust the physics mode of the rigid bodies
+            // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135
+            const nodeA = nodes[joint.rigidbodyIndexA]!;
+            const nodeB = nodes[joint.rigidbodyIndexB]!;
+
+            if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
+                nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: A is parent of B
+                if (bones[bodyInfoB.boneIndex].parentBone === bones[bodyInfoA.boneIndex]) {
+                    nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                }
+            } else if (nodeB.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
+                nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: B is parent of A
+                if (bones[bodyInfoA.boneIndex].parentBone === bones[bodyInfoB.boneIndex]) {
+                    nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                }
+            }
         }
 
         return new MmdPhysicsModel(this, nodes, bodies, constraints);
