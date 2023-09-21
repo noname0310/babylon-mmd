@@ -1,31 +1,31 @@
 import { type ISceneLoaderPluginAsync, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 
 import type { ILogger } from "./Parser/ILogger";
+import { PmdReader } from "./Parser/pmdReader";
 import type { PmxObject } from "./Parser/pmxObject";
-import { PmxReader } from "./Parser/pmxReader";
 import { PmLoader } from "./pmLoader";
 
 /**
- * PmxLoader is a loader that loads the model in the PMX format
+ * PmdLoader is a loader that loads the model in the PMD format
  *
- * PMX is a binary file format that contains all the data except the texture of the model
+ * PMD is a binary file format that contains all the data except the texture of the model
  */
-export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILogger {
+export class PmdLoader extends PmLoader implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new PmdLoader
      */
     public constructor() {
         super(
-            "pmx",
+            "pmd",
             {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                ".pmx": { isBinary: true }
+                ".pmd": { isBinary: true }
             }
         );
     }
 
     protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<PmxObject> {
-        return await PmxReader.ParseAsync(arrayBuffer, this)
+        return await PmdReader.ParseAsync(arrayBuffer, this)
             .catch((e: any) => {
                 return Promise.reject(e);
             });
@@ -33,5 +33,5 @@ export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
 }
 
 if (SceneLoader) {
-    SceneLoader.RegisterPlugin(new PmxLoader());
+    SceneLoader.RegisterPlugin(new PmdLoader());
 }

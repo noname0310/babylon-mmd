@@ -66,7 +66,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
             (data, responseURL) => {
                 const loadState: BpmxLoadState = {
                     arrayBuffer: data as ArrayBuffer,
-                    pmxFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
+                    pmFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
                     useSdef,
                     buildSkeleton,
@@ -211,7 +211,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
                 modelObject.materials, // materialsInfo
                 texturePathTable, // texturePathTable
                 rootUrl, // rootUrl
-                "file:" + state.pmxFileId + "_", // fileRootId
+                "file:" + state.pmFileId + "_", // fileRootId
                 modelObject.textures, // referenceFiles
                 scene, // scene
                 assetContainer, // assetContainer

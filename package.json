@@ -49,6 +49,7 @@
     },
     "sideEffects": [
         "**/mmdOutlineRenderer.*",
+        "**/pmdLoader.*",
         "**/pmxLoader.*",
         "**/bpmxLoader.*",
         "**/mmdRuntimeCameraAnimation.*",

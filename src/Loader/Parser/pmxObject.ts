@@ -142,7 +142,8 @@ export namespace PmxObject {
          */
         export enum Encoding {
             Utf16le = 0,
-            Utf8 = 1
+            Utf8 = 1,
+            ShiftJis = 2 // for pmd compatibility
         }
     }
 

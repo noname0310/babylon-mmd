@@ -26,7 +26,7 @@ import { SdefMesh } from "./sdefMesh";
 /** @internal */
 export interface MmdModelLoadState {
     readonly arrayBuffer: ArrayBuffer;
-    readonly pmxFileId: string;
+    readonly pmFileId: string;
     readonly materialBuilder: IMmdMaterialBuilder;
     readonly useSdef: boolean;
     readonly buildSkeleton: boolean;
@@ -48,7 +48,7 @@ export interface BuildMaterialResult {
 
 /**
  * @internal
- * base class of loader for MMD model (pmx / bpmx)
+ * Base class of loader for MMD model (pmx / pmd / bpmx)
  */
 export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelObject extends PmxObject | BpmxObject> implements ISceneLoaderPluginAsync, ILogger {
     /**
