@@ -260,6 +260,15 @@ export class MmdPhysicsModel {
  * If you do not want to use a physics engine, you can reduce the bundling size by not import this class
  */
 export class MmdPhysics {
+    /**
+     * Set a threshold in radian to clamp the constraint's angular limit to 0 (default: 5 * Math.PI / 180)
+     *
+     * If your model's constraints have an odd bend, try increasing the value appropriately.
+     *
+     * A value of 5 * Math.PI / 180  to 30 * Math.PI / 180 is expected to work well.
+     */
+    public angularLimitClampThreshold: number;
+
     private readonly _scene: Scene;
 
     private readonly _enablePreStepOnces: PhysicsBody[] = [];
@@ -271,6 +280,8 @@ export class MmdPhysics {
      * @param scene The scene to build the physics model
      */
     public constructor(scene: Scene) {
+        this.angularLimitClampThreshold = 5 * Math.PI / 180;
+
         this._scene = scene;
     }
 
@@ -283,8 +294,7 @@ export class MmdPhysics {
     // it seems havok 6dof constraint does not work well with small angular limits
     // TODO: investigate why
     private _clampAngularLimit(limit: number): number {
-        const degToRad = Math.PI / 180;
-        return Math.abs(limit) < 5 * degToRad
+        return Math.abs(limit) < this.angularLimitClampThreshold
             ? 0
             : limit;
     }
