@@ -6,6 +6,13 @@
 
 - introduce `VpdLoader` to load VPD file
 
+- introduce `PmdLoader` to load PMD file
+
+- improve physics `PhysicsWithBone` behaviour
+
+- make angular limit clamp adjustable
+    - try increase `MmdPhysics.angularLimitClampThreshold` for fix odd bended constraints
+
 ## 0.27.1
 
 - improve performance of `MmdPlayerControl` by minimizing time display updates
