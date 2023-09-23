@@ -274,6 +274,7 @@ export class BpmxReader {
             let tailPosition: number | Vec3;
 
             if (flag & PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) {
+                // note: bpmx 1.0.0 has stores tail bone index as float32
                 tailPosition = dataDeserializer.getInt32();
             } else {
                 tailPosition = dataDeserializer.getFloat32Tuple(3);

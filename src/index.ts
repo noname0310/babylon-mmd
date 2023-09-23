@@ -26,6 +26,7 @@ export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
 // Loader/Parser
 export { ConsoleLogger, ILogger } from "@/Loader/Parser/ILogger";
+export { IPmxReaderConstructor } from "@/Loader/Parser/IPmxReaderConstructor";
 export { PmdReader } from "@/Loader/Parser/pmdReader";
 export { PmxObject } from "@/Loader/Parser/pmxObject";
 export { PmxReader } from "@/Loader/Parser/pmxReader";

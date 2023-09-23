@@ -61,7 +61,7 @@
  *  parentBoneIndex: int32
  *  transformOrder: int32
  *  flag: uint16
- *  tailPosition: float32[3] | float32
+ *  tailPosition: float32[3] | int32
  *  appendTransform: { // if has appendTransform
  *    parentIndex: int32
  *    ratio: float32
@@ -183,8 +183,8 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { MmdTextureLoadResult } from "../mmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "../mmdAsyncTextureLoader";
 import type { ILogger } from "../Parser/ILogger";
+import type { IPmxReaderConstructor } from "../Parser/IPmxReaderConstructor";
 import { PmxObject } from "../Parser/pmxObject";
-import { PmxReader } from "../Parser/pmxReader";
 import { ReferenceFileResolver } from "../referenceFileResolver";
 import { TextureAlphaChecker } from "../textureAlphaChecker";
 import { MmdDataSerializer } from "./mmdDataSerializer";
@@ -254,6 +254,7 @@ export class BpmxConverter implements ILogger {
     /**
      * Convert PMX to BPMX
      * @param scene Scene
+     * @param reader PMX reader static class (PmxReader or PmdReader)
      * @param urlOrFileName if files is undefined, urlOrFileName is url of PMX file. if files is defined, urlOrFileName is file name of PMX file.
      * @param files Dependency files of PMX file (textures, sphere textures, toon textures)
      * @param overrideMaterialTransparency Override alpha evaluation result function
@@ -262,6 +263,7 @@ export class BpmxConverter implements ILogger {
      */
     public async convert(
         scene: Scene,
+        reader: IPmxReaderConstructor,
         urlOrFileName: string,
         files?: File[],
         overrideMaterialTransparency?: (materialsName: readonly string[], textureAlphaEvaluateResults: number[]) => void
@@ -275,7 +277,7 @@ export class BpmxConverter implements ILogger {
         if (files === undefined) {
             const arrayBuffer = await scene._loadFileAsync(urlOrFileName, undefined, true, true);
 
-            pmxObject = await PmxReader.ParseAsync(arrayBuffer as ArrayBuffer, this);
+            pmxObject = await reader.ParseAsync(arrayBuffer as ArrayBuffer, this);
         } else {
             const pmxFile = files.find((file) => file.webkitRelativePath === urlOrFileName);
             if (pmxFile === undefined) {
@@ -284,7 +286,7 @@ export class BpmxConverter implements ILogger {
 
             const arrayBuffer = await pmxFile.arrayBuffer();
 
-            pmxObject = await PmxReader.ParseAsync(arrayBuffer, this);
+            pmxObject = await reader.ParseAsync(arrayBuffer, this);
         }
 
         const vertices = pmxObject.vertices;
@@ -419,12 +421,10 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const textureLoadResults: MmdTextureLoadResult[] = [];
+        const textureLoadResults: MmdTextureLoadResult[] = new Array(pmxObject.textures.length);
 
         // create texture table
         {
-            const textureDatas: MmdTextureLoadResult[] = new Array(pmxObject.textures.length);
-
             const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
 
             const textureLoader = new MmdAsyncTextureLoader();
@@ -446,7 +446,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.textureIndex] = result;
+                            textureLoadResults[materialInfo.textureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -456,7 +456,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.textureIndex] = result;
+                            textureLoadResults[materialInfo.textureIndex] = result;
                         }));
                     }
                 }
@@ -472,7 +472,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.sphereTextureIndex] = result;
+                            textureLoadResults[materialInfo.sphereTextureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -482,7 +482,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.sphereTextureIndex] = result;
+                            textureLoadResults[materialInfo.sphereTextureIndex] = result;
                         }));
                     }
                 }
@@ -498,7 +498,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.toonTextureIndex] = result;
+                            textureLoadResults[materialInfo.toonTextureIndex] = result;
                         }));
                     } else {
                         promises.push(textureLoader.loadTextureAsync(
@@ -508,7 +508,7 @@ export class BpmxConverter implements ILogger {
                             scene,
                             null
                         ).then((result) => {
-                            textureDatas[materialInfo.toonTextureIndex] = result;
+                            textureLoadResults[materialInfo.toonTextureIndex] = result;
                         }));
                     }
                 }
@@ -525,10 +525,6 @@ export class BpmxConverter implements ILogger {
                         resolve();
                     });
                 });
-            }
-
-            for (let i = 0; i < textureDatas.length; ++i) {
-                textureLoadResults[i] = textureDatas[i];
             }
         }
 
@@ -547,7 +543,7 @@ export class BpmxConverter implements ILogger {
                 if (diffuseTexturePath !== undefined) {
                     const textureIndex = materialInfo.textureIndex;
                     const textureData = textureLoadResults[textureIndex];
-                    if (textureData?.arrayBuffer !== null) {
+                    if (textureData !== undefined && textureData.arrayBuffer !== null) {
                         const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
                             textureData.arrayBuffer,
                             textureData.texture,
@@ -610,7 +606,7 @@ export class BpmxConverter implements ILogger {
             const pmxObjectTextures = pmxObject.textures;
             for (let i = 0; i < pmxObjectTextures.length; ++i) {
                 const textureData = textureLoadResults[i];
-                if (textureData.arrayBuffer !== null) {
+                if (textureData !== undefined && textureData.arrayBuffer !== null) {
                     dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
                     dataLength += 4; // textureByteLength
                     dataLength += textureData.arrayBuffer.byteLength; // textureData
@@ -818,7 +814,7 @@ export class BpmxConverter implements ILogger {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setInt8Array([1, 0, 0]); // version
+        serializer.setInt8Array([1, 1, 0]); // version
 
         serializer.setString(pmxObject.header.modelName); // modelName
         serializer.setString(pmxObject.header.englishModelName); // englishModelName
@@ -850,8 +846,8 @@ export class BpmxConverter implements ILogger {
         serializer.setUint32(pmxObject.textures.length); // textureCount
         const pmxObjectTextures = pmxObject.textures;
         for (let i = 0; i < textureLoadResults.length; ++i) {
-            const texture = textureLoadResults[i].arrayBuffer;
-            if (texture !== null) {
+            const texture = textureLoadResults[i]?.arrayBuffer;
+            if (textureLoadResults[i] !== undefined && texture !== null) {
                 serializer.setString(pmxObjectTextures[i]); // textureName
                 serializer.setUint32(texture.byteLength); // textureDataLength
                 serializer.setUint8Array(new Uint8Array(texture)); // textureData
@@ -897,7 +893,7 @@ export class BpmxConverter implements ILogger {
             serializer.setInt32(boneInfo.transformOrder); // transformOrder
             serializer.setUint16(boneInfo.flag); // flag
             if (typeof boneInfo.tailPosition === "number") {
-                serializer.setFloat32(boneInfo.tailPosition); // tailPosition
+                serializer.setInt32(boneInfo.tailPosition); // tailPosition
             } else {
                 serializer.setFloat32Array(boneInfo.tailPosition); // tailPosition
             }
@@ -1070,7 +1066,7 @@ export class BpmxConverter implements ILogger {
 
         // dispose textures
         for (let i = 0; i < textureLoadResults.length; ++i) {
-            textureLoadResults[i].texture?.dispose();
+            textureLoadResults[i]?.texture?.dispose();
         }
 
         return data;
