@@ -151,13 +151,13 @@ Please refer to the documentation for more detailed instructions on how to use i
 **Parser**
 
 - [x] PMX Parser
-- [ ] PMD Parser
+- [x] PMD Parser
 - [x] VMD Parser
 - [x] VPD Parser
 - [x] Optimized Custom PMX like format
 - [x] Optimized Custom VMD like format
 
-**PMX Loader**
+**PMX / PMD Loader**
 
 > Mesh
 - [x] Geometry load
