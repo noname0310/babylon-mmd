@@ -1,4 +1,5 @@
 import "@/Loader/mmdOutlineRenderer";
+import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
@@ -25,6 +26,7 @@ export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
 // Loader/Parser
 export { ConsoleLogger, ILogger } from "@/Loader/Parser/ILogger";
+export { PmdReader } from "@/Loader/Parser/pmdReader";
 export { PmxObject } from "@/Loader/Parser/pmxObject";
 export { PmxReader } from "@/Loader/Parser/pmxReader";
 export { VmdData, VmdObject } from "@/Loader/Parser/vmdObject";
@@ -39,6 +41,7 @@ export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/Loader/mmdAsyncTe
 export { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+export { PmdLoader } from "@/Loader/pmdLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
 export { SdefInjector } from "@/Loader/sdefInjector";

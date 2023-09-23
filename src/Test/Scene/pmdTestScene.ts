@@ -1,9 +1,8 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
-import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
+import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 import "@/Loader/pmdLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
@@ -12,14 +11,12 @@ import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -32,7 +29,6 @@ import { PhysicsShapeBox } from "@babylonjs/core/Physics/v2/physicsShape";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
 
@@ -55,40 +51,14 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.useAlphaEvaluation = false;
         materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         materialBuilder.afterBuildSingleMaterial = (material): void => {
-            if (material.name.toLowerCase() === "body01") material.transparencyMode = Material.MATERIAL_OPAQUE;
-            if (material.name.toLowerCase() === "face02") {
-                material.transparencyMode = Material.MATERIAL_ALPHABLEND;
-                material.useAlphaFromDiffuseTexture = true;
-                material.diffuseTexture!.hasAlpha = true;
-            }
-            if (material.name.toLowerCase() === "hairshadow") {
-                material.transparencyMode = Material.MATERIAL_ALPHABLEND;
-                material.alphaMode = Constants.ALPHA_SUBTRACT;
-                material.useAlphaFromDiffuseTexture = true;
-                material.diffuseTexture!.hasAlpha = true;
-            }
-            if (material.name.toLowerCase() === "t_floor.bmp") {
-                material.specularColor = new Color3(1, 1, 1);
-                material.specularPower = 10;
-            }
-            if (material.name.toLowerCase() === "lace") {
-                material.transparencyMode = Material.MATERIAL_ALPHATEST;
-            }
-            if (material.name.toLowerCase() === "socks") {
-                material.transparencyMode = Material.MATERIAL_OPAQUE;
-            }
-            if (material.name === "ガラス破片") {
-                material.transparencyMode = Material.MATERIAL_ALPHATESTANDBLEND;
-                material.alphaCutOff = 0;
-            }
-
-            material.useLogarithmicDepth = true;
+            material.transparencyMode = 0;
         };
         pmxLoader.boundingBoxMargin = 60;
 
@@ -115,7 +85,7 @@ export class SceneBuilder implements ISceneBuilder {
         hemisphericLight.groundColor = new Color3(1, 1, 1);
 
         const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.8;
+        directionalLight.intensity = 0.5;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20;
@@ -141,7 +111,9 @@ export class SceneBuilder implements ISceneBuilder {
         groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
         ground.setEnabled(false);
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdPhysics = new MmdPhysics(scene);
+        mmdPhysics.angularLimitClampThreshold = 10 * Math.PI / 180;
+        const mmdRuntime = new MmdRuntime(mmdPhysics);
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);
@@ -149,7 +121,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/flos/flos_YuNi.mp3";
+        audioPlayer.source = "res/private_test/motion/pizzicato_drops/pizzicato_drops.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
@@ -168,14 +140,14 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd",
+        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion.bvmd",
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/pmd/",
-            "Miku_Hatsune_Ver2.pmd",
+            "res/private_test/model/pmd/那珂ver1.01/",
+            "那珂ver1.0.1.pmd",
             scene,
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
@@ -194,7 +166,29 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
 
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
+        scene.onAfterRenderObservable.addOnce(() => {
+            engine.hideLoadingUI();
+
+            scene.freezeMaterials();
+
+            const meshes = scene.meshes;
+            for (let i = 0, len = meshes.length; i < len; ++i) {
+                const mesh = meshes[i];
+                mesh.freezeWorldMatrix();
+                mesh.doNotSyncBoundingInfo = true;
+                mesh.isPickable = false;
+                mesh.doNotSyncBoundingInfo = true;
+                mesh.alwaysSelectAsActiveMesh = true;
+            }
+
+            scene.skipPointerMovePicking = true;
+            scene.skipPointerDownPicking = true;
+            scene.skipPointerUpPicking = true;
+            scene.skipFrustumClipping = true;
+            scene.blockMaterialDirtyMechanism = true;
+            scene.clearCachedVertexData();
+            scene.cleanCachedTextureBuffer();
+        });
 
         scene.meshes.forEach((mesh) => {
             if (mesh.name === "skyBox") return;
@@ -252,36 +246,12 @@ export class SceneBuilder implements ISceneBuilder {
             // physicsViewer.showBody(groundRigidBody);
         }
 
-        const useHavyPostProcess = true;
         const useBasicPostProcess = true;
-
-        if (useHavyPostProcess) {
-            const ssr = new SSRRenderingPipeline(
-                "ssr",
-                scene,
-                [mmdCamera, camera],
-                false,
-                Constants.TEXTURETYPE_UNSIGNED_BYTE
-            );
-            ssr.step = 32;
-            ssr.maxSteps = 128;
-            ssr.maxDistance = 500;
-            ssr.enableSmoothReflections = false;
-            ssr.enableAutomaticThicknessComputation = false;
-            ssr.blurDownsample = 2;
-            ssr.ssrDownsample = 2;
-            ssr.thickness = 0.1;
-            ssr.selfCollisionNumSkip = 2;
-            ssr.blurDispersionStrength = 0;
-            ssr.roughnessFactor = 0.1;
-            ssr.reflectivityThreshold = 0.9;
-            ssr.samples = 4;
-        }
 
         if (useBasicPostProcess) {
             const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
             defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = true;
+            defaultPipeline.bloomEnabled = false;
             defaultPipeline.chromaticAberrationEnabled = true;
             defaultPipeline.chromaticAberration.aberrationAmount = 1;
             defaultPipeline.depthOfFieldEnabled = true;
