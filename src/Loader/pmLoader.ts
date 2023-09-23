@@ -371,6 +371,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject> im
         modelObject: PmxObject,
         mesh: Mesh
     ): void {
+        if (mesh.subMeshes === undefined) return;
         mesh.subMeshes.length = 0;
         const materials = modelObject.materials;
         let offset = 0;

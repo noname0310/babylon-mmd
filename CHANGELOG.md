@@ -18,6 +18,8 @@
 - fix pmx converter tail bone type mismatch (bpmx format updated to 1.1.0)
     - `tailPosition` is not currently in use at runtime, so there is no need to update existing bpmx files
 
+- fix crash when loading model with no vertices
+
 ## 0.27.1
 
 - improve performance of `MmdPlayerControl` by minimizing time display updates

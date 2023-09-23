@@ -462,6 +462,7 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
     ): Promise<MorphTargetManager>;
 
     private _applyBoundingBoxMargin(mesh: Mesh, boundingBoxMargin: number): void {
+        if (mesh.subMeshes === undefined) return;
         const subMeshes = mesh.subMeshes;
         for (let i = 0; i < subMeshes.length; ++i) {
             const subMesh = subMeshes[i];

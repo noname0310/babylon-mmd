@@ -242,6 +242,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
         modelObject: BpmxObject,
         mesh: Mesh
     ): void {
+        if (mesh.subMeshes === undefined) return;
         mesh.subMeshes.length = 0;
         const materials = modelObject.materials;
         let offset = 0;
