@@ -173,67 +173,57 @@ export class VmdData {
         }
         dataDeserializer.offset += VmdData.ModelNameBytes;
 
+        let boneKeyFrameCount = 0;
+        let morphKeyFrameCount = 0;
+        let cameraKeyFrameCount = 0;
+        let lightKeyFrameCount = 0;
+        let selfShadowKeyFrameCount = 0;
+        let propertyKeyFrameCount = 0;
+
         if (dataDeserializer.bytesAvailable < 4) return null;
-        const boneKeyFrameCount = dataDeserializer.getUint32();
+        boneKeyFrameCount = dataDeserializer.getUint32();
         if (dataDeserializer.bytesAvailable < boneKeyFrameCount * VmdData.BoneKeyFrameBytes) return null;
         dataDeserializer.offset += boneKeyFrameCount * VmdData.BoneKeyFrameBytes;
 
         if (dataDeserializer.bytesAvailable < 4) return null;
-        const morphKeyFrameCount = dataDeserializer.getUint32();
+        morphKeyFrameCount = dataDeserializer.getUint32();
         if (dataDeserializer.bytesAvailable < morphKeyFrameCount * VmdData.MorphKeyFrameBytes) return null;
         dataDeserializer.offset += morphKeyFrameCount * VmdData.MorphKeyFrameBytes;
 
-        if (dataDeserializer.bytesAvailable === 0) {
-            // some VMD files don't have camera, light, self shadow key frames
-            return new VmdData(
-                dataDeserializer,
-                boneKeyFrameCount,
-                morphKeyFrameCount,
-                0,
-                0,
-                0,
-                0
-            );
-        }
-
-        if (dataDeserializer.bytesAvailable < 4) return null;
-        const cameraKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < cameraKeyFrameCount * VmdData.CameraKeyFrameBytes) return null;
-        dataDeserializer.offset += cameraKeyFrameCount * VmdData.CameraKeyFrameBytes;
-
-        if (dataDeserializer.bytesAvailable < 4) return null;
-        const lightKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < lightKeyFrameCount * VmdData.LightKeyFrameBytes) return null;
-        dataDeserializer.offset += lightKeyFrameCount * VmdData.LightKeyFrameBytes;
-
-        if (dataDeserializer.bytesAvailable < 4) return null;
-        const selfShadowKeyFrameCount = dataDeserializer.getUint32();
-        if (dataDeserializer.bytesAvailable < selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes) return null;
-        dataDeserializer.offset += selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes;
-
-        if (dataDeserializer.bytesAvailable === 0) {
-            // some VMD files don't have property key frames
-            return new VmdData(
-                dataDeserializer,
-                boneKeyFrameCount,
-                morphKeyFrameCount,
-                cameraKeyFrameCount,
-                lightKeyFrameCount,
-                selfShadowKeyFrameCount,
-                0
-            );
-        }
-
-        if (dataDeserializer.bytesAvailable < 4) return null;
-        const propertyKeyFrameCount = dataDeserializer.getUint32();
-        for (let i = 0; i < propertyKeyFrameCount; ++i) {
-            if (dataDeserializer.bytesAvailable < VmdData.PropertyKeyFrameBytes) return null;
-            dataDeserializer.offset += VmdData.PropertyKeyFrameBytes;
+        // some VMD files don't have camera, light key frames
+        if (dataDeserializer.bytesAvailable !== 0) {
+            if (dataDeserializer.bytesAvailable < 4) return null;
+            cameraKeyFrameCount = dataDeserializer.getUint32();
+            if (dataDeserializer.bytesAvailable < cameraKeyFrameCount * VmdData.CameraKeyFrameBytes) return null;
+            dataDeserializer.offset += cameraKeyFrameCount * VmdData.CameraKeyFrameBytes;
 
             if (dataDeserializer.bytesAvailable < 4) return null;
-            const propertyKeyFrameIkStateCount = dataDeserializer.getUint32();
-            if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes) return null;
-            dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes;
+            lightKeyFrameCount = dataDeserializer.getUint32();
+            if (dataDeserializer.bytesAvailable < lightKeyFrameCount * VmdData.LightKeyFrameBytes) return null;
+            dataDeserializer.offset += lightKeyFrameCount * VmdData.LightKeyFrameBytes;
+        }
+
+        // some VMD files don't have self shadow key frames
+        if (dataDeserializer.bytesAvailable !== 0) {
+            if (dataDeserializer.bytesAvailable < 4) return null;
+            selfShadowKeyFrameCount = dataDeserializer.getUint32();
+            if (dataDeserializer.bytesAvailable < selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes) return null;
+            dataDeserializer.offset += selfShadowKeyFrameCount * VmdData.SelfShadowKeyFrameBytes;
+        }
+
+        // some VMD files don't have property key frames
+        if (dataDeserializer.bytesAvailable !== 0) {
+            if (dataDeserializer.bytesAvailable < 4) return null;
+            propertyKeyFrameCount = dataDeserializer.getUint32();
+            for (let i = 0; i < propertyKeyFrameCount; ++i) {
+                if (dataDeserializer.bytesAvailable < VmdData.PropertyKeyFrameBytes) return null;
+                dataDeserializer.offset += VmdData.PropertyKeyFrameBytes;
+
+                if (dataDeserializer.bytesAvailable < 4) return null;
+                const propertyKeyFrameIkStateCount = dataDeserializer.getUint32();
+                if (dataDeserializer.bytesAvailable < propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes) return null;
+                dataDeserializer.offset += propertyKeyFrameIkStateCount * VmdData.PropertyKeyFrameIkStateBytes;
+            }
         }
 
         if (dataDeserializer.bytesAvailable > 0) {
