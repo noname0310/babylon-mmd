@@ -13,7 +13,7 @@ export namespace PmdObject {
          * Bone name
          */
         name: string;
-        
+
         /**
          * Bone name in english
          */
@@ -71,7 +71,7 @@ export namespace PmdObject {
          * Ik bone index
          */
         boneIndex: number;
-        
+
         /**
          * Ik target bone index
          */
@@ -81,7 +81,7 @@ export namespace PmdObject {
          * Ik iteration
          */
         iteration: number;
-        
+
         /**
          * Ik rotation limit
          */

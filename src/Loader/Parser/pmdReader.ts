@@ -509,16 +509,16 @@ export class PmdReader {
     }
 
     private static _ConvertMaterials(materials: PartialMaterial[], textures: string[]): PmxObject.Material[] {
-        const textureIndexMap = new Map<string, number>();
+        const normalizedTextures = new Array(textures.length);
         for (let i = 0; i < textures.length; ++i) {
-            textureIndexMap.set(this._PathNormalize(textures[i]), i);
+            normalizedTextures[i] = this._PathNormalize(textures[i]);
         }
 
         for (let i = 0; i < materials.length; ++i) {
             const material = materials[i];
 
             if (0 <= material.toonTextureIndex && material.toonTextureIndex < textures.length) {
-                const normalizedToonTexturePath = this._PathNormalize(textures[material.toonTextureIndex]);
+                const normalizedToonTexturePath = normalizedTextures[material.toonTextureIndex];
                 if (/toon(10|0[0-9])\.bmp/.test(normalizedToonTexturePath)) { // is default toon texture
                     material.isSharedToonTexture = true;
                     let toonTextureIndex = normalizedToonTexturePath.substring(normalizedToonTexturePath.length - 6, normalizedToonTexturePath.length - 4);
@@ -528,6 +528,11 @@ export class PmdReader {
                     material.toonTextureIndex = parseInt(toonTextureIndex, 10);
                 }
             }
+        }
+
+        const textureIndexMap = new Map<string, number>();
+        for (let i = 0; i < textures.length; ++i) {
+            textureIndexMap.set(this._PathNormalize(textures[i]), i);
         }
 
         for (let i = 0; i < materials.length; ++i) {
@@ -932,6 +937,20 @@ export class PmdReader {
                     pmxBone.transformOrder = transformOrder;
                 }
                 if (!orderUpdated) break;
+            }
+        }
+
+        // fix tail position types
+        for (let i = 0; i < finalBones.length; ++i) {
+            const pmxBone = finalBones[i];
+            if ((pmxBone.flag & PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) !== 0) {
+                if (!(typeof pmxBone.tailPosition === "number")) {
+                    pmxBone.tailPosition = -1;
+                }
+            } else {
+                if (typeof pmxBone.tailPosition === "number") {
+                    pmxBone.tailPosition = [0, 0, 0];
+                }
             }
         }
 

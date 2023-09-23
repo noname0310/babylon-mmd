@@ -2,6 +2,7 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 import "@/Loader/mmdOutlineRenderer";
+import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
@@ -21,7 +22,10 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
+import { PmdReader } from "@/Loader/Parser/pmdReader";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
+import { PmxReader } from "@/Loader/Parser/pmxReader";
+import type { PmdLoader } from "@/Loader/pmdLoader";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
@@ -73,7 +77,6 @@ export class PmxConverterScene implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         pmxLoader.buildSkeleton = false;
         pmxLoader.buildMorph = false;
-        SceneLoader.RegisterPlugin(pmxLoader);
         const pmxMaterialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
 
         const initalBackfaceCullingInfo = new Array<boolean>(1000).fill(true);
@@ -84,6 +87,12 @@ export class PmxConverterScene implements ISceneBuilder {
         ): void => {
             initalBackfaceCullingInfo[materialIndex] = (materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided) === 0;
         };
+
+        const pmdLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
+        pmdLoader.loggingEnabled = true;
+        pmdLoader.buildSkeleton = false;
+        pmdLoader.buildMorph = false;
+        pmdLoader.materialBuilder = pmxLoader.materialBuilder;
 
         const scene = new Scene(engine);
 
@@ -308,7 +317,7 @@ export class PmxConverterScene implements ISceneBuilder {
                 item.style.whiteSpace = "nowrap";
                 const fileRelativePath = file.webkitRelativePath as string;
                 item.textContent = fileRelativePath.substring(fileRelativePath.indexOf("/") + 1);
-                if (file.name.endsWith(".pmx")) {
+                if (file.name.endsWith(".pmx") || file.name.endsWith(".pmd")) {
                     item.style.color = "blue";
                     item.style.cursor = "pointer";
                     item.style.textDecoration = "underline";
@@ -351,12 +360,14 @@ export class PmxConverterScene implements ISceneBuilder {
             files = await entriesToFiles(fileSystemEntries);
             renderLoadedFiles();
             pmxLoader.referenceFiles = files;
+            pmdLoader.referenceFiles = files;
         };
         fileInput.onchange = (): void => {
             if (fileInput.files === null) return;
             files = Array.from(fileInput.files);
             renderLoadedFiles();
             pmxLoader.referenceFiles = files;
+            pmdLoader.referenceFiles = files;
         };
         innerFormDiv.appendChild(fileInput);
 
@@ -620,7 +631,11 @@ export class PmxConverterScene implements ISceneBuilder {
 
             const fileRelativePath = selectedFile.webkitRelativePath as string;
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = await bpmxConverter.convert(scene, fileRelativePath, files,
+            const arrayBuffer = await bpmxConverter.convert(
+                scene,
+                fileRelativePath.endsWith(".pmd") ? PmdReader : PmxReader,
+                fileRelativePath,
+                files,
                 (_materialsName, textureAlphaEvaluterResults) => {
                     for (let i = 0; i < textureAlphaEvaluterResults.length; ++i) {
                         textureAlphaEvaluterResults[i] = mesh!.material.subMaterials[i].transparencyMode ?? 0;
