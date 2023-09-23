@@ -30,6 +30,8 @@ export { PmdReader } from "@/Loader/Parser/pmdReader";
 export { PmxObject } from "@/Loader/Parser/pmxObject";
 export { PmxReader } from "@/Loader/Parser/pmxReader";
 export { VmdData, VmdObject } from "@/Loader/Parser/vmdObject";
+export { VpdObject } from "@/Loader/Parser/vpdObject";
+export { VpdReader } from "@/Loader/Parser/vpdReader";
 
 // Loader/Util
 export { AnimationRetargeter, RetargetOptions } from "@/Loader/Util/animationRetargeter";
