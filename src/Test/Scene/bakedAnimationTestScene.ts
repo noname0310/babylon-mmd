@@ -12,7 +12,7 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -31,6 +31,7 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
@@ -44,27 +45,23 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        // scene.autoClearDepthAndStencil = false;
+        scene.autoClear = false;
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
-        const ground = createDefaultGround(scene);
-        ground.position.z += 50;
+        createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime();
         mmdRuntime.loggingEnabled = true;
-
         mmdRuntime.register(scene);
+
         mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
@@ -135,25 +132,14 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-            const meshWorldMatrix = modelMesh.getWorldMatrix();
-            const boneWorldMatrix = new Matrix();
-            scene.onBeforeRenderObservable.add(() => {
-                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10;
-
-                camera.target.copyFrom(directionalLight.position);
-                camera.target.y += 13;
-            });
-
+            attachToBone(scene, modelMesh, directionalLight.position, camera.target);
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
         const ssr = new SSRRenderingPipeline(
             "ssr",
             scene,
-            [mmdCamera, camera],
+            undefined,
             false,
             Constants.TEXTURETYPE_UNSIGNED_BYTE
         );
@@ -197,7 +183,7 @@ export class SceneBuilder implements ISceneBuilder {
             }
         };
 
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.chromaticAberrationEnabled = false;
@@ -221,9 +207,7 @@ export class SceneBuilder implements ISceneBuilder {
         const modelMaterials = (modelMesh.material as MultiMaterial).subMaterials;
         for (let i = 0; i < modelMaterials.length; ++i) {
             const material = modelMaterials[i] as MmdStandardMaterial;
-            if (material.name === "Hairshadow") {
-                material.alphaMode = Constants.ALPHA_SUBTRACT;
-            }
+            if (material.name === "Hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
         }
 
         return scene;

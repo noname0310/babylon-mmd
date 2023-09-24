@@ -12,7 +12,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -36,6 +36,7 @@ import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCame
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { downloadObject } from "../Util/downloadObject";
+import { attachToBone } from "../Util/attachToBone";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -44,9 +45,6 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.alphaEvaluationResolution = 2048;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         // materialBuilder.afterBuildSingleMaterial = (material): void => {
         //     material.ignoreDiffuseWhenToonTextureIsNull = false;
@@ -54,7 +52,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        const camera = createDefaultArcRotateCamera(scene);
+        createDefaultArcRotateCamera(scene);
 
         const { directionalLight, shadowGenerator } = createLightComponents(scene, {
             shadowMaxZOffset: 10,
@@ -269,18 +267,8 @@ export class SceneBuilder implements ISceneBuilder {
                 const ikSolver = runtimeBones[i].ikSolver;
                 if (ikSolver !== null) ikSolver.enabled = false;
             }
-
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-            const meshWorldMatrix = modelMesh.getWorldMatrix();
-            const boneWorldMatrix = new Matrix();
-            scene.onBeforeRenderObservable.add(() => {
-                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10;
-
-                // camera.target.copyFrom(directionalLight.position);
-                // camera.target.y += 13;
-            });
+            
+            attachToBone(scene, modelMesh, directionalLight.position);
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
@@ -288,7 +276,7 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.fxaaEnabled = true;

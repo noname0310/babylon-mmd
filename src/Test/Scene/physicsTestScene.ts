@@ -1,44 +1,42 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
-import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import HavokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMultiMaterial } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
+import { optimizeScene } from "../Util/optimizeScene";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -46,12 +44,7 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.alphaEvaluationResolution = 2048;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        pmxLoader.boundingBoxMargin = 60;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -94,6 +87,7 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
+        pmxLoader.boundingBoxMargin = 60;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/model/",
@@ -102,6 +96,7 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
         ));
 
+        pmxLoader.boundingBoxMargin = 0;
         pmxLoader.buildSkeleton = false;
         pmxLoader.buildMorph = false;
         promises.push(SceneLoader.ImportMeshAsync(
@@ -121,58 +116,45 @@ export class SceneBuilder implements ISceneBuilder {
         })());
 
         loadingTexts = new Array(promises.length).fill("");
-
         const loadResults = await Promise.all(promises);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
-
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
-
-        scene.meshes.forEach((mesh) => {
-            if (mesh.name === "skyBox") return;
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh);
-        });
+        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            modelMesh.parent = mmdRoot;
+        const modelMesh = loadResults[1].meshes[0] as Mesh;
+        modelMesh.receiveShadows = true;
+        shadowGenerator.addShadowCaster(modelMesh);
+        modelMesh.parent = mmdRoot;
 
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
-            });
-            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
-            mmdModel.setAnimation("motion");
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+            buildPhysics: true
+        });
+        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.setAnimation("motion");
 
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-            const meshWorldMatrix = modelMesh.getWorldMatrix();
-            const boneWorldMatrix = new Matrix();
-            scene.onBeforeRenderObservable.add(() => {
-                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10;
+        attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-                camera.target.copyFrom(directionalLight.position);
-                camera.target.y += 13;
-            });
-
-            const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
-                displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-            });
-            viewer.isEnabled = false;
-        }
+        // const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
+        //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
+        // });
 
         const mmdStageMesh = loadResults[2].meshes[0] as Mesh;
         mmdStageMesh.receiveShadows = true;
         mmdStageMesh.position.y += 0.01;
+        const stageSubMaterials = (mmdStageMesh!.material as MmdMultiMaterial).subMaterials;
+        for (let i = 0; i < stageSubMaterials.length; ++i) {
+            const material = (stageSubMaterials[i] as MmdStandardMaterial);
+            material.ignoreDiffuseWhenToonTextureIsNull = false;
+            material.toonTexture = null;
+        }
 
         {
-            const physicsViewer = new PhysicsViewer(scene);
-            physicsViewer;
+            // const physicsViewer = new PhysicsViewer(scene);
             // const modelMesh = loadResults[1].meshes[0] as Mesh;
             // for (const node of modelMesh.getChildren()) {
             //     if ((node as any).physicsBody) {
@@ -182,55 +164,24 @@ export class SceneBuilder implements ISceneBuilder {
             // physicsViewer.showBody(groundRigidBody);
         }
 
-        const useHavyPostProcess = true;
-        const useBasicPostProcess = true;
-
-        if (useHavyPostProcess) {
-            const ssr = new SSRRenderingPipeline(
-                "ssr",
-                scene,
-                [mmdCamera, camera],
-                false,
-                Constants.TEXTURETYPE_UNSIGNED_BYTE
-            );
-            ssr.step = 32;
-            ssr.maxSteps = 128;
-            ssr.maxDistance = 500;
-            ssr.enableSmoothReflections = false;
-            ssr.enableAutomaticThicknessComputation = false;
-            ssr.blurDownsample = 2;
-            ssr.ssrDownsample = 2;
-            ssr.thickness = 0.1;
-            ssr.selfCollisionNumSkip = 2;
-            ssr.blurDispersionStrength = 0;
-            ssr.roughnessFactor = 0.1;
-            ssr.reflectivityThreshold = 0.9;
-            ssr.samples = 4;
-        }
-
-        if (useBasicPostProcess) {
-            const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
-            defaultPipeline.samples = 4;
-            defaultPipeline.bloomEnabled = true;
-            defaultPipeline.chromaticAberrationEnabled = true;
-            defaultPipeline.chromaticAberration.aberrationAmount = 1;
-            defaultPipeline.depthOfFieldEnabled = true;
-            defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
-            defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessingEnabled = true;
-            defaultPipeline.imageProcessing.toneMappingEnabled = true;
-            defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
-            defaultPipeline.imageProcessing.vignetteWeight = 0.5;
-            defaultPipeline.imageProcessing.vignetteStretch = 0.5;
-            defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
-            defaultPipeline.imageProcessing.vignetteEnabled = true;
-            const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            mmdCameraAutoFocus.setTarget(modelMesh);
-            mmdCameraAutoFocus.register(scene);
-        }
-
-        // Inspector.Show(scene, { });
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
+        defaultPipeline.samples = 4;
+        defaultPipeline.bloomEnabled = true;
+        defaultPipeline.chromaticAberrationEnabled = true;
+        defaultPipeline.chromaticAberration.aberrationAmount = 1;
+        defaultPipeline.depthOfFieldEnabled = true;
+        defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
+        defaultPipeline.fxaaEnabled = true;
+        defaultPipeline.imageProcessingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
+        defaultPipeline.imageProcessing.vignetteWeight = 0.5;
+        defaultPipeline.imageProcessing.vignetteStretch = 0.5;
+        defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
+        defaultPipeline.imageProcessing.vignetteEnabled = true;
+        const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
+        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.register(scene);
 
         return scene;
     }

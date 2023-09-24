@@ -18,7 +18,7 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -45,6 +45,7 @@ import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createLightComponents } from "../Util/createLightComponents";
 import { optimizeScene } from "../Util/optimizeScene";
+import { attachToBone } from "../Util/attachToBone";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -52,9 +53,6 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
@@ -150,19 +148,8 @@ export class SceneBuilder implements ISceneBuilder {
             });
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
-
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-            const meshWorldMatrix = modelMesh.getWorldMatrix();
-            const boneWorldMatrix = new Matrix();
-            scene.onBeforeRenderObservable.add(() => {
-                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10 * worldScale;
-
-                camera.target.copyFrom(directionalLight.position);
-                camera.target.y += 13 * worldScale;
-            });
-
+            
+            attachToBone(scene, modelMesh, directionalLight.position, camera.target);
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
@@ -170,7 +157,7 @@ export class SceneBuilder implements ISceneBuilder {
         stageMesh.receiveShadows = true;
         stageMesh.parent = mmdRoot;
 
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [mmdCamera, camera]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = false;
         defaultPipeline.chromaticAberrationEnabled = false;

@@ -6,7 +6,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -26,6 +26,8 @@ import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
+import { attachToBone } from "../Util/attachToBone";
+import { optimizeScene } from "../Util/optimizeScene";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -33,9 +35,6 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
-        // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
@@ -97,73 +96,40 @@ export class SceneBuilder implements ISceneBuilder {
 
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
-        {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            shadowGenerator.addShadowCaster(modelMesh);
-            modelMesh.receiveShadows = true;
-            modelMesh.parent = mmdRoot;
+        const modelMesh = loadResults[1].meshes[0] as Mesh;
+        shadowGenerator.addShadowCaster(modelMesh);
+        modelMesh.receiveShadows = true;
+        modelMesh.parent = mmdRoot;
 
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
-            });
-            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
-            mmdModel.setAnimation("motion");
-            mmdModel.currentAnimation!.animate(0);
-            mmdModel.initializePhysics();
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+            buildPhysics: true
+        });
+        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.setAnimation("motion");
+        mmdModel.currentAnimation!.animate(0);
+        mmdModel.initializePhysics();
+        
+        attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-            const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");
-            const meshWorldMatrix = modelMesh.getWorldMatrix();
-            const boneWorldMatrix = new Matrix();
-            scene.onBeforeRenderObservable.addOnce(() => {
-                boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
-                boneWorldMatrix.getTranslationToRef(directionalLight.position);
-                directionalLight.position.y -= 10 * worldScale;
+        let computedFrames = 0;
+        const delayedDispose = (): void => {
+            computedFrames += 1;
 
-                camera.target.copyFrom(directionalLight.position);
-                camera.target.y += 13 * worldScale;
-            });
+            if (computedFrames < 180) {
+                return;
+            }
 
-            scene.onAfterRenderObservable.addOnce(() => {
-                scene.freezeMaterials();
+            scene.onAfterRenderObservable.removeCallback(delayedDispose);
+            mmdRuntime.destroyMmdModel(mmdModel);
 
-                const meshes = scene.meshes;
-                for (let i = 0, len = meshes.length; i < len; ++i) {
-                    const mesh = meshes[i];
-                    mesh.freezeWorldMatrix();
-                    mesh.doNotSyncBoundingInfo = true;
-                    mesh.isPickable = false;
-                    mesh.doNotSyncBoundingInfo = true;
-                    mesh.alwaysSelectAsActiveMesh = true;
-                }
+            scene.physicsEnabled = false;
+            (loadResults[2] as HavokPlugin).dispose();
+        };
 
-                scene.skipPointerMovePicking = true;
-                scene.skipPointerDownPicking = true;
-                scene.skipPointerUpPicking = true;
-                scene.skipFrustumClipping = true;
-                scene.blockMaterialDirtyMechanism = true;
-                scene.clearCachedVertexData();
-                scene.cleanCachedTextureBuffer();
-            });
+        scene.onAfterRenderObservable.add(delayedDispose);
 
-            let computedFrames = 0;
-            const delayedDispose = (): void => {
-                computedFrames += 1;
-
-                if (computedFrames < 180) {
-                    return;
-                }
-
-                scene.onAfterRenderObservable.removeCallback(delayedDispose);
-                mmdRuntime.destroyMmdModel(mmdModel);
-
-                scene.physicsEnabled = false;
-                (loadResults[2] as HavokPlugin).dispose();
-            };
-
-            scene.onAfterRenderObservable.add(delayedDispose);
-        }
-
-        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.chromaticAberrationEnabled = true;
