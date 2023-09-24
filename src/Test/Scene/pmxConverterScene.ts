@@ -129,7 +129,6 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const ground = CreateGround("ground1", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
         ground.receiveShadows = true;
-        shadowGenerator.addShadowCaster(ground);
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene, [camera]);
         defaultPipeline.samples = 4;

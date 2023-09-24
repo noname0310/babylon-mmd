@@ -1,5 +1,4 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
@@ -12,20 +11,12 @@ import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
-import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
-import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
-import { PhysicsShapeBox } from "@babylonjs/core/Physics/v2/physicsShape";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -44,6 +35,9 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { createDefaultGround } from "../Util/createDefaultGround";
+import { createLightComponents } from "../Util/createLightComponents";
+import { optimizeScene } from "../Util/optimizeScene";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -52,7 +46,6 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.useAlphaEvaluation = false;
-        materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadDiffuseTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
         // materialBuilder.loadToonTexture = (): void => { /* do nothing */ };
@@ -60,7 +53,6 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.afterBuildSingleMaterial = (material): void => {
             material.transparencyMode = 0;
         };
-        pmxLoader.boundingBoxMargin = 60;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -79,37 +71,8 @@ export class SceneBuilder implements ISceneBuilder {
         camera.inertia = 0.8;
         camera.speed = 10;
 
-        const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
-        hemisphericLight.specular = new Color3(0, 0, 0);
-        hemisphericLight.groundColor = new Color3(1, 1, 1);
-
-        const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.5;
-        directionalLight.autoCalcShadowZBounds = false;
-        directionalLight.autoUpdateExtends = false;
-        directionalLight.shadowMaxZ = 20;
-        directionalLight.shadowMinZ = -20;
-        directionalLight.orthoTop = 18;
-        directionalLight.orthoBottom = -3;
-        directionalLight.orthoLeft = -10;
-        directionalLight.orthoRight = 10;
-        directionalLight.shadowOrthoScale = 0;
-
-        // const directionalLightFrustumViewer = new DirectionalLightFrustumViewer(directionalLight, mmdCamera);
-        // scene.onBeforeRenderObservable.add(() => directionalLightFrustumViewer.update());
-
-        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
-        shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.forceBackFacesOnly = false;
-        shadowGenerator.bias = 0.01;
-        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
-        shadowGenerator.frustumEdgeFalloff = 0.1;
-
-        const ground = CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
-        const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
-        groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
-        ground.setEnabled(false);
+        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        createDefaultGround(scene);
 
         const mmdPhysics = new MmdPhysics(scene);
         mmdPhysics.angularLimitClampThreshold = 10 * Math.PI / 180;
@@ -144,6 +107,7 @@ export class SceneBuilder implements ISceneBuilder {
             (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
         );
 
+        pmxLoader.boundingBoxMargin = 60;
         promises.push(SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/model/pmd/那珂ver1.01/",
@@ -166,35 +130,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
 
-        scene.onAfterRenderObservable.addOnce(() => {
-            engine.hideLoadingUI();
-
-            scene.freezeMaterials();
-
-            const meshes = scene.meshes;
-            for (let i = 0, len = meshes.length; i < len; ++i) {
-                const mesh = meshes[i];
-                mesh.freezeWorldMatrix();
-                mesh.doNotSyncBoundingInfo = true;
-                mesh.isPickable = false;
-                mesh.doNotSyncBoundingInfo = true;
-                mesh.alwaysSelectAsActiveMesh = true;
-            }
-
-            scene.skipPointerMovePicking = true;
-            scene.skipPointerDownPicking = true;
-            scene.skipPointerUpPicking = true;
-            scene.skipFrustumClipping = true;
-            scene.blockMaterialDirtyMechanism = true;
-            scene.clearCachedVertexData();
-            scene.cleanCachedTextureBuffer();
-        });
-
-        scene.meshes.forEach((mesh) => {
-            if (mesh.name === "skyBox") return;
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh);
-        });
+        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
@@ -202,6 +138,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             const modelMesh = loadResults[1].meshes[0] as Mesh;
+            modelMesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(modelMesh);
             modelMesh.parent = mmdRoot;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
@@ -226,13 +164,9 @@ export class SceneBuilder implements ISceneBuilder {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;
-        }
 
-        const groundRigidBody = new PhysicsBody(ground, PhysicsMotionType.STATIC, true, scene);
-        groundRigidBody.shape = new PhysicsShapeBox(
-            new Vector3(0, -1, 0),
-            new Quaternion(),
-            new Vector3(100, 2, 100), scene);
+            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        }
 
         {
             const physicsViewer = new PhysicsViewer(scene);

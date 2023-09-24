@@ -1,6 +1,4 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-import "@babylonjs/core/Meshes/thinInstanceMesh";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
@@ -11,18 +9,11 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
-import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-// import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-// import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -41,6 +32,9 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { createDefaultGround } from "../Util/createDefaultGround";
+import { createLightComponents } from "../Util/createLightComponents";
+import { optimizeScene } from "../Util/optimizeScene";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -67,37 +61,8 @@ export class SceneBuilder implements ISceneBuilder {
         camera.inertia = 0.8;
         camera.speed = 10;
 
-        const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
-        hemisphericLight.specular = new Color3(0, 0, 0);
-        hemisphericLight.groundColor = new Color3(1, 1, 1);
-
-        const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.8;
-        directionalLight.autoCalcShadowZBounds = false;
-        directionalLight.autoUpdateExtends = false;
-        directionalLight.shadowMaxZ = 20;
-        directionalLight.shadowMinZ = -20;
-        directionalLight.orthoTop = 18;
-        directionalLight.orthoBottom = -3;
-        directionalLight.orthoLeft = -10;
-        directionalLight.orthoRight = 10;
-        directionalLight.shadowOrthoScale = 0;
-
-        // const directionalLightFrustumViewer = new DirectionalLightFrustumViewer(directionalLight, mmdCamera);
-        // scene.onBeforeRenderObservable.add(() => directionalLightFrustumViewer.update());
-
-        const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
-        shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.forceBackFacesOnly = false;
-        shadowGenerator.bias = 0.01;
-        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
-        shadowGenerator.frustumEdgeFalloff = 0.1;
-
-        const ground = CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);
-        ground.receiveShadows = true;
-        const groundMaterial = ground.material = new StandardMaterial("groundMaterial", scene);
-        groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02);
+        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const ground = createDefaultGround(scene);
         ground.position.z += 50;
 
         const mmdRuntime = new MmdRuntime();
@@ -157,29 +122,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
 
-        scene.onAfterRenderObservable.addOnce(() => {
-            engine.hideLoadingUI();
-
-            scene.freezeMaterials();
-
-            const meshes = scene.meshes;
-            for (let i = 0, len = meshes.length; i < len; ++i) {
-                const mesh = meshes[i];
-                mesh.freezeWorldMatrix();
-                mesh.doNotSyncBoundingInfo = true;
-                mesh.isPickable = false;
-                mesh.doNotSyncBoundingInfo = true;
-                mesh.alwaysSelectAsActiveMesh = true;
-            }
-
-            scene.skipPointerMovePicking = true;
-            scene.skipPointerDownPicking = true;
-            scene.skipPointerUpPicking = true;
-            scene.skipFrustumClipping = true;
-            scene.blockMaterialDirtyMechanism = true;
-            scene.clearCachedVertexData();
-            scene.cleanCachedTextureBuffer();
-        });
+        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
@@ -207,6 +150,8 @@ export class SceneBuilder implements ISceneBuilder {
                 camera.target.copyFrom(directionalLight.position);
                 camera.target.y += 13;
             });
+
+            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
         const ssr = new SSRRenderingPipeline(
