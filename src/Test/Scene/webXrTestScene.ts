@@ -12,7 +12,6 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
@@ -42,6 +41,8 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { createCameraSwitch } from "../Util/createCameraSwitch";
+import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createLightComponents } from "../Util/createLightComponents";
 import { optimizeScene } from "../Util/optimizeScene";
 
@@ -58,31 +59,20 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        // scene.autoClearDepthAndStencil = false;
-
         const worldScale = 0.09;
-
         const mmdRoot = new TransformNode("mmdRoot", scene);
         mmdRoot.scaling.scaleInPlace(worldScale);
-
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
         mmdCamera.parent = mmdRoot;
-
-        const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
-        camera.maxZ = 5000;
-        camera.setPosition(new Vector3(0, 10, -45));
-        camera.attachControl(canvas, false);
-        camera.inertia = 0.8;
-        camera.speed = 10;
-        camera.parent = mmdRoot;
-
+        const camera = createDefaultArcRotateCamera(scene);
+        createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
-
         mmdRuntime.register(scene);
+
         mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
@@ -195,9 +185,6 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
 
-        defaultPipeline.depthOfField.fStop = 0.05;
-        defaultPipeline.depthOfField.focalLength = 20;
-
         const modelMesh = loadResults[1].meshes[0] as Mesh;
         const modelMaterials = (modelMesh.material as MultiMaterial).subMaterials;
         for (let i = 0; i < modelMaterials.length; ++i) {
@@ -206,26 +193,6 @@ export class SceneBuilder implements ISceneBuilder {
                 material.alphaMode = Constants.ALPHA_SUBTRACT;
             }
         }
-
-        // const stageMesh = loadResults[2].meshes[0] as Mesh;
-        // stageMesh.position.z += 50;
-
-        let lastClickTime = -Infinity;
-        canvas.onclick = (): void => {
-            const currentTime = performance.now();
-            if (500 < currentTime - lastClickTime) {
-                lastClickTime = currentTime;
-                return;
-            }
-
-            lastClickTime = -Infinity;
-
-            if (scene.activeCamera === mmdCamera) {
-                scene.activeCamera = camera;
-            } else {
-                scene.activeCamera = mmdCamera;
-            }
-        };
 
         const xr = await scene.createDefaultXRExperienceAsync({
             outputCanvasOptions: {
@@ -251,7 +218,6 @@ export class SceneBuilder implements ISceneBuilder {
                 defaultPipeline.addCamera(xr.baseExperience.camera);
             });
         }
-
 
         return scene;
     }

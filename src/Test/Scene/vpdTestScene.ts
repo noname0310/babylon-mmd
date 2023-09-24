@@ -2,7 +2,6 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
@@ -24,11 +23,12 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
@@ -46,15 +46,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdRoot = new TransformNode("mmdRoot", scene);
         mmdRoot.scaling.scaleInPlace(worldScale);
-
-        const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
-        camera.maxZ = 5000;
-        camera.setPosition(new Vector3(0, 10, -45));
-        camera.attachControl(canvas, false);
-        camera.inertia = 0.8;
-        camera.speed = 10;
+        const camera = createDefaultArcRotateCamera(scene);
         camera.parent = mmdRoot;
-
         const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
         const ground = createDefaultGround(scene);
         ground.parent = mmdRoot;

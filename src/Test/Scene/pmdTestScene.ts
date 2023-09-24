@@ -6,9 +6,7 @@ import "@/Loader/pmdLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
-// import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
@@ -35,8 +33,11 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { createCameraSwitch } from "../Util/createCameraSwitch";
+import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
+import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -56,21 +57,12 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-
+        const mmdRoot = new TransformNode("mmdRoot", scene);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
-
-        const mmdRoot = new TransformNode("mmdRoot", scene);
         mmdCamera.parent = mmdRoot;
-        mmdRoot.position.z -= 0;
-
-        const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);
-        camera.maxZ = 5000;
-        camera.setPosition(new Vector3(0, 10, -45));
-        camera.attachControl(canvas, false);
-        camera.inertia = 0.8;
-        camera.speed = 10;
-
+        const camera = createDefaultArcRotateCamera(scene);
+        createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
@@ -198,55 +190,10 @@ export class SceneBuilder implements ISceneBuilder {
             defaultPipeline.imageProcessing.vignetteStretch = 0.5;
             defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
             defaultPipeline.imageProcessing.vignetteEnabled = true;
-
-            defaultPipeline.depthOfField.fStop = 0.05;
-            defaultPipeline.depthOfField.focalLength = 20;
-
-            // note: this dof distance compute will broken when camera and mesh is not in same space
-
+            const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
             const modelMesh = loadResults[1].meshes[0] as Mesh;
-            const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
-
-            const rotationMatrix = new Matrix();
-            const cameraNormal = new Vector3();
-            const cameraEyePosition = new Vector3();
-            const headRelativePosition = new Vector3();
-
-            scene.onBeforeRenderObservable.add(() => {
-                const cameraRotation = mmdCamera.rotation;
-                Matrix.RotationYawPitchRollToRef(-cameraRotation.y, -cameraRotation.x, -cameraRotation.z, rotationMatrix);
-
-                Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, cameraNormal);
-
-                mmdCamera.position.addToRef(
-                    Vector3.TransformCoordinatesFromFloatsToRef(0, 0, mmdCamera.distance, rotationMatrix, cameraEyePosition),
-                    cameraEyePosition
-                );
-
-                headBone!.getFinalMatrix().getTranslationToRef(headRelativePosition)
-                    .subtractToRef(cameraEyePosition, headRelativePosition);
-
-                defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;
-            });
-
-            let lastClickTime = -Infinity;
-            canvas.onclick = (): void => {
-                const currentTime = performance.now();
-                if (500 < currentTime - lastClickTime) {
-                    lastClickTime = currentTime;
-                    return;
-                }
-
-                lastClickTime = -Infinity;
-
-                if (scene.activeCamera === mmdCamera) {
-                    defaultPipeline.depthOfFieldEnabled = false;
-                    scene.activeCamera = camera;
-                } else {
-                    defaultPipeline.depthOfFieldEnabled = true;
-                    scene.activeCamera = mmdCamera;
-                }
-            };
+            mmdCameraAutoFocus.setTarget(modelMesh);
+            mmdCameraAutoFocus.register(scene);
         }
 
         // Inspector.Show(scene, { });
