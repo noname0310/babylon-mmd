@@ -85,7 +85,7 @@ export class MmdMorphController {
         morphTargetManager: MorphTargetManager,
         runtimeBones: readonly MmdRuntimeBone[],
         material: MmdMultiMaterial,
-        materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
+        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         logger: ILogger
     ) {
@@ -95,9 +95,13 @@ export class MmdMorphController {
         this._runtimeBones = runtimeBones;
 
         const subMaterials = material.subMaterials;
-        const materials = this._materials = new Array<IMmdMaterialProxy>(subMaterials.length);
-        for (let i = 0; i < subMaterials.length; ++i) {
-            materials[i] = new materialProxyConstructor(subMaterials[i]);
+        if (materialProxyConstructor !== null) {
+            const materials = this._materials = new Array<IMmdMaterialProxy>(subMaterials.length);
+            for (let i = 0; i < subMaterials.length; ++i) {
+                materials[i] = new materialProxyConstructor(subMaterials[i]);
+            }
+        } else {
+            this._materials = [];
         }
 
         const morphs = this._morphs = this._createRuntimeMorphData(morphsMetadata);
@@ -409,6 +413,8 @@ export class MmdMorphController {
                 for (let i = 0; i < indices.length; ++i) {
                     const index = indices[i];
                     const bone = bones[index];
+                    if (bone === undefined) continue;
+
                     bone.morphPositionOffset.set(0, 0, 0);
                     bone.morphRotationOffset.set(0, 0, 0, 1);
                     bone.disableMorph();
@@ -421,14 +427,13 @@ export class MmdMorphController {
                 const elements = morph.materialElements as readonly RuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
+                    const materials = this._materials;
                     if (element.index === -1) { // -1 means "all materials"
-                        for (let i = 0; i < this._materials.length; ++i) {
-                            const material = this._materials[i];
-                            if (material !== undefined) material.reset();
+                        for (let i = 0; i < materials.length; ++i) {
+                            materials[i].reset();
                         }
                     } else {
-                        const material = this._materials[element.index];
-                        material.reset();
+                        materials[element.index]?.reset();
                     }
                 }
             }
@@ -466,6 +471,7 @@ export class MmdMorphController {
                     const index = indices[i];
 
                     const bone = bones[index];
+                    if (bone === undefined) continue;
 
                     bone.morphPositionOffset.addInPlaceFromFloats(
                         positions[i * 3 + 0] * weight,
@@ -502,7 +508,9 @@ export class MmdMorphController {
                         }
                     } else {
                         const material = materials[element.index];
-                        this._applyMaterialMorph(element, material, weight);
+                        if (material !== undefined) {
+                            this._applyMaterialMorph(element, material, weight);
+                        }
                     }
                 }
             }
