@@ -9,6 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -28,10 +29,12 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
-import { attachToBone } from "../Util/attachToBone";
+import { optimizeScene } from "../Util/optimizeScene";
+import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -51,37 +54,25 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        engine.displayLoadingUI();
-
-        let loadingTexts: string[] = [];
-        const updateLoadingText = (updateIndex: number, text: string): void => {
-            loadingTexts[updateIndex] = text;
-            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
-        };
-
-        const promises: Promise<any>[] = [];
-
-        pmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "YYB Hatsune Miku_10th.bpmx",
-            scene,
-            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(2, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            updateLoadingText(2, "Loading physics engine... Done");
-        })());
-
-        loadingTexts = new Array(promises.length).fill("");
-
-        const loadResults = await Promise.all(promises);
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
+        const loadResults = await parallelLoadAsync(scene, [
+            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku_10th.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["physics", async(updateProgress): Promise<void> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await HavokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            }]
+        ]);
 
         {
             const animationJson = await Tools.LoadFileAsync("res/motion/walk_in_circle.babylonanim", false)
@@ -107,6 +98,7 @@ export class SceneBuilder implements ISceneBuilder {
             }
 
             attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS

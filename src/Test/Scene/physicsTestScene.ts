@@ -5,6 +5,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -37,6 +38,7 @@ import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCame
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
+import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -70,59 +72,47 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        engine.displayLoadingUI();
+        const loadResults = await parallelLoadAsync(scene, [
+            ["motion", (updateProgress): Promise<MmdAnimation> => {
+                const bvmdLoader = new BvmdLoader(scene);
+                bvmdLoader.loggingEnabled = true;
+                return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
+            }],
+            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "yyb_deep_canyons_miku.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 0;
+                pmxLoader.buildSkeleton = false;
+                pmxLoader.buildMorph = false;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/stage/",
+                    "water house.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["physics", async(updateProgress): Promise<void> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await HavokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            }]
+        ]);
 
-        let loadingTexts: string[] = [];
-        const updateLoadingText = (updateIndex: number, text: string): void => {
-            loadingTexts[updateIndex] = text;
-            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
-        };
-
-        const promises: Promise<any>[] = [];
-
-        const bvmdLoader = new BvmdLoader(scene);
-        bvmdLoader.loggingEnabled = true;
-
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd",
-            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        pmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "yyb_deep_canyons_miku.bpmx",
-            scene,
-            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        pmxLoader.boundingBoxMargin = 0;
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/stage/",
-            "water house.bpmx",
-            scene,
-            (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(3, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            updateLoadingText(3, "Loading physics engine... Done");
-        })());
-
-        loadingTexts = new Array(promises.length).fill("");
-        const loadResults = await Promise.all(promises);
-
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
+        mmdRuntime.setManualAnimationDuration((loadResults[0]).endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(loadResults[0]);
         mmdCamera.setAnimation("motion");
 
         const modelMesh = loadResults[1].meshes[0] as Mesh;
@@ -133,7 +123,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.addAnimation(loadResults[0]);
         mmdModel.setAnimation("motion");
 
         attachToBone(scene, modelMesh, directionalLight.position, camera.target);

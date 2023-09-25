@@ -8,7 +8,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { ISceneLoaderAsyncResult, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -40,6 +40,7 @@ import { createGroundCollider } from "../Util/createGroundCollider";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { attachToBone } from "../Util/attachToBone";
+import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -67,61 +68,47 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
-
-        engine.displayLoadingUI();
-
-        let loadingTexts: string[] = [];
-        const updateLoadingText = (updateIndex: number, text: string): void => {
-            loadingTexts[updateIndex] = text;
-            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
-        };
-
-        const promises: Promise<any>[] = [];
-
+        
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion1", "res/private_test/motion/intergalactia/intergalactia.bvmd",
-            (event) => updateLoadingText(0, `Loading motion1... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        promises.push(bvmdLoader.loadAsync("motion2", "res/private_test/motion/conqueror/motion_light.bvmd",
-            (event) => updateLoadingText(1, `Loading motion2... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        pmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "YYB miku Crown Knight.bpmx",
-            scene,
-            (event) => updateLoadingText(2, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        pmxLoader.boundingBoxMargin = 0;
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/stage/",
-            "ガラス片ドームB.bpmx",
-            scene,
-            (event) => updateLoadingText(3, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push((async(): Promise<void> => {
-            updateLoadingText(4, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            updateLoadingText(4, "Loading physics engine... Done");
-        })());
-
-        loadingTexts = new Array(promises.length).fill("");
-
-        const loadResults = await Promise.all(promises);
-
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
+        const loadResults = await parallelLoadAsync(scene, [
+            ["motion1", (updateProgress): Promise<MmdAnimation> => {
+                return bvmdLoader.loadAsync("motion1", "res/private_test/motion/intergalactia/intergalactia.bvmd", updateProgress);
+            }],
+            ["motion2", (updateProgress): Promise<MmdAnimation> => {
+                return bvmdLoader.loadAsync("motion2", "res/private_test/motion/conqueror/motion_light.bvmd", updateProgress);
+            }],
+            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB miku Crown Knight.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 0;
+                pmxLoader.buildSkeleton = false;
+                pmxLoader.buildMorph = false;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/stage/",
+                    "ガラス片ドームB.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["physics", async(updateProgress): Promise<void> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await HavokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            }]
+        ]);
 
         const modelMesh = loadResults[2].meshes[0] as Mesh;
         modelMesh.receiveShadows = true;
@@ -148,8 +135,8 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer2 = new StreamAudioPlayer(scene);
         audioPlayer2.source = "res/private_test/motion/conqueror/MMDConquerorIA.mp3";
 
-        const mmdAnimation1 = loadResults[0] as MmdAnimation;
-        const mmdAnimation2 = loadResults[1] as MmdAnimation;
+        const mmdAnimation1 = loadResults[0];
+        const mmdAnimation2 = loadResults[1];
 
         const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupBezierBuilder());
         const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupBezierBuilder());

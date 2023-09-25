@@ -8,9 +8,9 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -20,7 +20,6 @@ import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeli
 import { Scene } from "@babylonjs/core/scene";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -38,6 +37,7 @@ import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
+import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -72,69 +72,54 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        engine.displayLoadingUI();
-
-        let loadingTexts: string[] = [];
-        const updateLoadingText = (updateIndex: number, text: string): void => {
-            loadingTexts[updateIndex] = text;
-            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
-        };
-
-        const promises: Promise<any>[] = [];
-
-        const bvmdLoader = new BvmdLoader(scene);
-        bvmdLoader.loggingEnabled = true;
-
-        promises.push(bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd",
-            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        pmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "YYB Hatsune Miku_10th.bpmx",
-            scene,
-            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        pmxLoader.boundingBoxMargin = 0;
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/stage/",
-            "Stage35_02.bpmx",
-            scene,
-            (event) => updateLoadingText(2, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        loadingTexts = new Array(promises.length).fill("");
-
-        const loadResults = await Promise.all(promises);
+        const loadResults = await parallelLoadAsync(scene, [
+            ["motion", (updateProgress): Promise<MmdAnimation> => {
+                const bvmdLoader = new BvmdLoader(scene);
+                bvmdLoader.loggingEnabled = true;
+                return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd", updateProgress);
+            }],
+            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku_10th.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 0;
+                pmxLoader.buildSkeleton = false;
+                pmxLoader.buildMorph = false;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/stage/",
+                    "Stage35_02.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }]
+        ]);
 
         mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
-
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
         mmdRuntime.setCamera(mmdCamera);
         mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
-            shadowGenerator.addShadowCaster(modelMesh);
-            modelMesh.receiveShadows = true;
+        const modelMesh = loadResults[1].meshes[0] as Mesh;
+        shadowGenerator.addShadowCaster(modelMesh);
+        modelMesh.receiveShadows = true;
 
-            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-                buildPhysics: true
-            });
-            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
-            mmdModel.setAnimation("motion");
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+            buildPhysics: true
+        });
+        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.setAnimation("motion");
 
-            attachToBone(scene, modelMesh, directionalLight.position, camera.target);
-            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
-        }
+        attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",
@@ -197,18 +182,9 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
-
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
-
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(modelMesh);
         mmdCameraAutoFocus.register(scene);
-
-        const modelMaterials = (modelMesh.material as MultiMaterial).subMaterials;
-        for (let i = 0; i < modelMaterials.length; ++i) {
-            const material = modelMaterials[i] as MmdStandardMaterial;
-            if (material.name === "Hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
-        }
 
         return scene;
     }

@@ -3,6 +3,7 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -23,11 +24,12 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
-import { attachToBone } from "../Util/attachToBone";
 import { optimizeScene } from "../Util/optimizeScene";
+import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -56,45 +58,31 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-        engine.displayLoadingUI();
-
-        let loadingTexts: string[] = [];
-        const updateLoadingText = (updateIndex: number, text: string): void => {
-            loadingTexts[updateIndex] = text;
-            engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
-        };
-
-        const promises: Promise<any>[] = [];
-
-        const vpdLoader = new VpdLoader(scene);
-        vpdLoader.loggingEnabled = true;
-
-        promises.push(vpdLoader.loadAsync("motion", "res/private_test/motion/test_pose1.vpd",
-            (event) => updateLoadingText(0, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
-
-        pmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "YYB Hatsune Miku_10th.bpmx",
-            scene,
-            (event) => updateLoadingText(1, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
-        promises.push((async(): Promise<HavokPlugin> => {
-            updateLoadingText(2, "Loading physics engine...");
-            const havokInstance = await HavokPhysics();
-            const havokPlugin = new HavokPlugin(true, havokInstance);
-            scene.enablePhysics(new Vector3(0, -9.8 * 10 * worldScale, 0), havokPlugin);
-            updateLoadingText(2, "Loading physics engine... Done");
-            return havokPlugin;
-        })());
-
-        loadingTexts = new Array(promises.length).fill("");
-        const loadResults = await Promise.all(promises);
-
-        scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
+        const loadResults = await parallelLoadAsync(scene, [
+            ["motion", (updateProgress): Promise<MmdAnimation> => {
+                const vpdLoader = new VpdLoader(scene);
+                vpdLoader.loggingEnabled = true;
+                return vpdLoader.loadAsync("motion", "res/private_test/motion/test_pose1.vpd", updateProgress);
+            }],
+            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku_10th.bpmx",
+                    scene,
+                    updateProgress
+                );
+            }],
+            ["physics", async(updateProgress): Promise<HavokPlugin> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await HavokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10 * worldScale, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+                return havokPlugin;
+            }]
+        ]);
 
         const modelMesh = loadResults[1].meshes[0] as Mesh;
         shadowGenerator.addShadowCaster(modelMesh);
@@ -108,7 +96,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.setAnimation("motion");
         mmdModel.currentAnimation!.animate(0);
         mmdModel.initializePhysics();
-        
+
         attachToBone(scene, modelMesh, directionalLight.position, camera.target);
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
