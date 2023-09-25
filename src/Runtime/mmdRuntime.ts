@@ -22,7 +22,7 @@ export interface CreateMmdModelOptions {
     /**
      * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
      */
-    materialProxyConstructor?: IMmdMaterialProxyConstructor<Material>;
+    materialProxyConstructor?: Nullable<IMmdMaterialProxyConstructor<Material>>;
 
     /**
      * Whether to build physics (default: true)

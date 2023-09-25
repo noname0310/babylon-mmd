@@ -68,7 +68,7 @@ export class MmdModel {
      */
     public constructor(
         mmdMesh: MmdMesh,
-        materialProxyConstructor: IMmdMaterialProxyConstructor<Material>,
+        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         mmdPhysics: Nullable<MmdPhysics>,
         logger: ILogger
     ) {
