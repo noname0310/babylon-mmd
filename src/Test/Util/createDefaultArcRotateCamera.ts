@@ -6,8 +6,7 @@ export interface ICreateDefaultArcRotateCameraOptions {
     worldScale?: number;
 }
 
-export function createDefaultArcRotateCamera(scene: Scene, options?: ICreateDefaultArcRotateCameraOptions): ArcRotateCamera {
-    if (!options) options = { };
+export function createDefaultArcRotateCamera(scene: Scene, options: ICreateDefaultArcRotateCameraOptions = {}): ArcRotateCamera {
     const worldScale = options.worldScale ?? 1;
 
     const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45 * worldScale, new Vector3(0, 10 * worldScale, 0), scene);

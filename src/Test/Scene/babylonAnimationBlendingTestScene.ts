@@ -8,7 +8,8 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import { ISceneLoaderAsyncResult, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import type { ISceneLoaderAsyncResult} from "@babylonjs/core/Loading/sceneLoader";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -33,13 +34,13 @@ import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createGroundCollider } from "../Util/createGroundCollider";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
-import { attachToBone } from "../Util/attachToBone";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -68,7 +69,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
-        
+
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
@@ -363,7 +364,7 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         attachToBone(scene, modelMesh, directionalLight.position, camera.target);
-        
+
         const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
             displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         });

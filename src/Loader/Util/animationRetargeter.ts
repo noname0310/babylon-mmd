@@ -133,14 +133,10 @@ export class AnimationRetargeter {
      * @param options rtetarget options
      * @returns retargeted animation group
      */
-    public retargetAnimation(animationGroup: AnimationGroup, options?: RetargetOptions): Nullable<AnimationGroup> {
+    public retargetAnimation(animationGroup: AnimationGroup, options: RetargetOptions = {}): Nullable<AnimationGroup> {
         if (!this._isSkeletonAnimation(animationGroup)) {
             this.warn("Animation is not skeleton animation. animation retargeting is aborted.");
             return null;
-        }
-
-        if (options === undefined) {
-            options = {};
         }
         options.cloneAnimation ??= true;
         options.removeBoneRotationOffset ??= false;
