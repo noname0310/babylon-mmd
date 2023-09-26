@@ -151,6 +151,7 @@ export class MmdRuntime implements ILogger {
 
         const model = new MmdModel(
             mmdMesh,
+            mmdMesh.skeleton,
             options.materialProxyConstructor,
             options.buildPhysics ? this._physics : null,
             this
@@ -161,6 +162,16 @@ export class MmdRuntime implements ILogger {
         model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
 
         return model;
+    }
+
+    /**
+     * @internal
+     */
+    public addMmdModelInternal(model: MmdModel): void {
+        this._models.push(model);
+        this._needToInitializePhysicsModels.add(model);
+
+        model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
     }
 
     /**

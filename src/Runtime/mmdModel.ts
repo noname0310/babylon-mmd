@@ -1,6 +1,6 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
-import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
@@ -16,7 +16,8 @@ import { AppendTransformSolver } from "./appendTransformSolver";
 import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
+import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
+import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
 import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
@@ -62,12 +63,38 @@ export class MmdModel {
     /**
      * Create a MmdModel
      * @param mmdMesh Mesh that able to instantiate `MmdModel`
+     * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param mmdPhysics Physics builder
      * @param logger Logger
      */
     public constructor(
         mmdMesh: MmdMesh,
+        skeleton: IMmdLinkedBoneContainer,
+        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
+        mmdPhysics: Nullable<MmdPhysics>,
+        logger: ILogger
+    );
+
+    /**
+     * Create a MmdModel from `HumanoidMesh`
+     * @param humanoidMesh Mesh that able to instantiate `MmdModel`
+     * @param skeleton The virtualized bone container of the mesh
+     * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
+     * @param mmdPhysics Physics builder
+     * @param logger Logger
+     */
+    public constructor(
+        humanoidMesh: HumanoidMesh,
+        skeleton: IMmdLinkedBoneContainer,
+        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
+        mmdPhysics: Nullable<MmdPhysics>,
+        logger: ILogger
+    );
+
+    public constructor(
+        mmdMesh: MmdMesh | HumanoidMesh,
+        skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         mmdPhysics: Nullable<MmdPhysics>,
         logger: ILogger
@@ -84,12 +111,12 @@ export class MmdModel {
         this.mesh = runtimeMesh;
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
-        mmdMesh.skeleton.prepare();
+        skeleton.prepare();
 
-        this._disableSkeletonWorldMatrixUpdate(mmdMesh.skeleton);
+        this._disableSkeletonWorldMatrixUpdate(skeleton);
 
         const runtimeBones = this._buildRuntimeSkeleton(
-            mmdMesh.skeleton.bones,
+            skeleton.bones,
             mmdMetadata.bones
         );
 
@@ -109,7 +136,9 @@ export class MmdModel {
         this.morph = new MmdMorphController(
             mmdMesh.morphTargetManager,
             runtimeBones,
-            mmdMesh.material,
+            (mmdMesh.material as MultiMaterial).subMaterials !== undefined
+                ? (mmdMesh.material as MultiMaterial)
+                : null,
             materialProxyConstructor,
             mmdMetadata.morphs,
             logger
@@ -147,6 +176,7 @@ export class MmdModel {
         this._enableSkeletonWorldMatrixUpdate();
         this._physicsModel?.dispose();
         this.onCurrentAnimationChangedObservable.clear();
+        (this.mesh as any).metadata = null;
     }
 
     /**
@@ -330,7 +360,7 @@ export class MmdModel {
     }
 
     private _buildRuntimeSkeleton(
-        bones: Bone[],
+        bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[]
     ): readonly MmdRuntimeBone[] {
         const runtimeBones: MmdRuntimeBone[] = [];
@@ -396,7 +426,9 @@ export class MmdModel {
 
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
 
-    private _disableSkeletonWorldMatrixUpdate(skeleton: Skeleton): void {
+    private _disableSkeletonWorldMatrixUpdate(skeleton: IMmdLinkedBoneContainer): void {
+        if ((skeleton as any)._computeTransformMatrices === undefined) return;
+
         if (this._originalComputeTransformMatrices !== null) return;
 
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
@@ -426,7 +458,7 @@ export class MmdModel {
     private _resetPose(): void {
         const sortedBones = this._sortedRuntimeBones;
         for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i].babylonBone;
+            const bone = sortedBones[i].linkedBone;
             bone.getRestMatrix().getTranslationToRef(bone.position);
             bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
         }

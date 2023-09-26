@@ -73,7 +73,7 @@ export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerCon
 export { IIkSolver } from "@/Runtime/ikSolver";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { MmdCamera } from "@/Runtime/mmdCamera";
-export { MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
+export { MmdMesh, HumanoidMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphController";
 export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/mmdPhysics";

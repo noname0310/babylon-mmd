@@ -3,6 +3,7 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
@@ -14,6 +15,16 @@ export interface MmdMesh extends Mesh {
     material: MmdMultiMaterial;
     skeleton: Skeleton;
     morphTargetManager: MorphTargetManager;
+}
+
+/**
+ * Mesh type that able to force create `MmdModel` instance
+ */
+export interface HumanoidMesh extends Mesh {
+    metadata: MmdModelMetadata;
+    material: Material;
+    skeleton: Skeleton;
+    morphTargetManager: Nullable<MorphTargetManager>;
 }
 
 /**
@@ -78,6 +89,21 @@ export namespace MmdMesh {
         for (const material of (mesh.material as MultiMaterial).subMaterials) {
             if (material === null) return false;
         }
+
+        return true;
+    }
+}
+
+export namespace HumanoidMesh {
+    /**
+     * Check if the mesh is humanoid mesh
+     * @param mesh Mesh to check
+     * @returns `true` if the mesh is `HumanoidMesh`
+     */
+    export function isHumanoidMesh(mesh: Mesh): mesh is HumanoidMesh {
+        if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
+        if (mesh.material === null) return false;
+        if (mesh.skeleton === null) return false;
 
         return true;
     }

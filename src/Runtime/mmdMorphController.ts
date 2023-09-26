@@ -1,4 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
@@ -9,7 +10,6 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { MmdMultiMaterial } from "./mmdMesh";
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 /**
@@ -63,9 +63,9 @@ export interface ReadonlyRuntimeMorph {
 export class MmdMorphController {
     private readonly _logger: ILogger;
 
-    private readonly _morphTargetManager: MorphTargetManager;
+    private readonly _morphTargetManager: Nullable<MorphTargetManager>;
     private readonly _runtimeBones: readonly MmdRuntimeBone[];
-    private readonly _materials: IMmdMaterialProxy[];
+    private readonly _materials: (IMmdMaterialProxy | undefined)[];
 
     private readonly _morphs: RuntimeMorph[];
     private readonly _morphIndexMap: Map<string, number[]>;
@@ -82,9 +82,9 @@ export class MmdMorphController {
      * @param logger Logger
      */
     public constructor(
-        morphTargetManager: MorphTargetManager,
+        morphTargetManager: Nullable<MorphTargetManager>,
         runtimeBones: readonly MmdRuntimeBone[],
-        material: MmdMultiMaterial,
+        material: Nullable<MultiMaterial>,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         logger: ILogger
@@ -94,11 +94,12 @@ export class MmdMorphController {
         this._morphTargetManager = morphTargetManager;
         this._runtimeBones = runtimeBones;
 
-        const subMaterials = material.subMaterials;
-        if (materialProxyConstructor !== null) {
-            const materials = this._materials = new Array<IMmdMaterialProxy>(subMaterials.length);
+        if (material !== null && materialProxyConstructor !== null) {
+            const subMaterials = material.subMaterials;
+            const materials = this._materials = new Array<IMmdMaterialProxy | undefined>(subMaterials.length);
             for (let i = 0; i < subMaterials.length; ++i) {
-                materials[i] = new materialProxyConstructor(subMaterials[i]);
+                const subMaterial = subMaterials[i];
+                materials[i] = subMaterial !== null ? new materialProxyConstructor(subMaterial) : undefined;
             }
         } else {
             this._materials = [];
@@ -430,7 +431,7 @@ export class MmdMorphController {
                     const materials = this._materials;
                     if (element.index === -1) { // -1 means "all materials"
                         for (let i = 0; i < materials.length; ++i) {
-                            materials[i].reset();
+                            materials[i]?.reset();
                         }
                     } else {
                         materials[element.index]?.reset();
@@ -441,7 +442,9 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
-            this._morphTargetManager.getTarget(morph.elements as number).influence = 0;
+            if (this._morphTargetManager !== null) {
+                this._morphTargetManager.getTarget(morph.elements as number).influence = 0;
+            }
             break;
         }
     }
@@ -504,7 +507,10 @@ export class MmdMorphController {
                     const materials = this._materials;
                     if (element.index === -1) { // -1 means "all materials"
                         for (let i = 0; i < materials.length; ++i) {
-                            this._applyMaterialMorph(element, materials[i], weight);
+                            const material = materials[i];
+                            if (material !== undefined) {
+                                this._applyMaterialMorph(element, material, weight);
+                            }
                         }
                     } else {
                         const material = materials[element.index];
@@ -518,7 +524,9 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
-            this._morphTargetManager.getTarget(morph.elements as number).influence += weight;
+            if (this._morphTargetManager !== null) {
+                this._morphTargetManager.getTarget(morph.elements as number).influence += weight;
+            }
             break;
         }
     }

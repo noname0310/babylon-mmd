@@ -1,4 +1,3 @@
-import type { Bone } from "@babylonjs/core/Bones/bone";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -6,6 +5,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
 import type { IIkSolver, IkSolver } from "./ikSolver";
+import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 
 /**
  * Bone for MMD runtime
@@ -18,7 +18,7 @@ export interface IMmdRuntimeBone {
     /**
      * The Babylon.js bone
      */
-    readonly babylonBone: Bone;
+    readonly linkedBone: IMmdRuntimeLinkedBone;
 
     /**
      * Name of the bone
@@ -59,7 +59,7 @@ export interface IMmdRuntimeBone {
 }
 
 export class MmdRuntimeBone implements IMmdRuntimeBone {
-    public readonly babylonBone: Bone;
+    public readonly linkedBone: IMmdRuntimeLinkedBone;
 
     public readonly name: string;
     public parentBone: Nullable<MmdRuntimeBone>;
@@ -85,8 +85,8 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public getAnimationPositionOffsetToRef: (target: Vector3) => Vector3;
     // public getAnimationRotationOffsetToRef: (target: Quaternion) => Quaternion;
 
-    public constructor(babylonBone: Bone, boneMetadata: MmdModelMetadata.Bone) {
-        this.babylonBone = babylonBone;
+    public constructor(babylonBone: IMmdRuntimeLinkedBone, boneMetadata: MmdModelMetadata.Bone) {
+        this.linkedBone = babylonBone;
 
         this.name = boneMetadata.name;
         this.parentBone = null;
@@ -114,36 +114,36 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     }
 
     private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.babylonBone.position);
+        target.copyFrom(this.linkedBone.position);
         return target.addInPlace(this.morphPositionOffset);
     }
 
     private _getAnimatedPositionToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.babylonBone.position);
+        target.copyFrom(this.linkedBone.position);
         return target;
     }
 
     private _getAnimatedRotationToRef(target: Quaternion): Quaternion {
-        return target.copyFrom(this.babylonBone.rotationQuaternion);
+        return target.copyFrom(this.linkedBone.rotationQuaternion);
     }
 
     private _getAnimatedRotationWithMorphToRef(target: Quaternion): Quaternion {
-        target.copyFrom(this.babylonBone.rotationQuaternion);
+        target.copyFrom(this.linkedBone.rotationQuaternion);
         return target.multiplyInPlace(this.morphRotationOffset);
     }
 
     private static readonly _TempVector3 = new Vector3();
 
     private _getAnimationPositionOffsetToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.babylonBone.position);
-        this.babylonBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
+        target.copyFrom(this.linkedBone.position);
+        this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
         return target.subtractInPlace(MmdRuntimeBone._TempVector3);
     }
 
     private _getAnimationPositionOffsetWithMorphToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.babylonBone.position);
+        target.copyFrom(this.linkedBone.position);
         target.addInPlace(this.morphPositionOffset);
-        this.babylonBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
+        this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempVector3);
         return target.subtractInPlace(MmdRuntimeBone._TempVector3);
     }
 
@@ -187,13 +187,10 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
     }
 
-    private static readonly _TempScale = Vector3.Zero();
     private static readonly _TempRotation = Quaternion.Identity();
     private static readonly _TempPosition = Vector3.Zero();
 
     public updateLocalMatrix(): void {
-        this.babylonBone.getScaleToRef(MmdRuntimeBone._TempScale);
-
         const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
         if (this.ikRotation !== null) {
             this.ikRotation.multiplyToRef(rotation, rotation);
@@ -211,7 +208,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         }
 
         Matrix.ComposeToRef(
-            MmdRuntimeBone._TempScale,
+            this.linkedBone.scaling,
             rotation,
             position,
             this.localMatrix
