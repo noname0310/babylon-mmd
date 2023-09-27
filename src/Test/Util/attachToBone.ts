@@ -6,6 +6,7 @@ import type { Scene } from "@babylonjs/core/scene";
 export interface AttachToBoneOptions {
     directionalLightPosition?: Vector3;
     cameraTargetPosition?: Vector3;
+    cameraTargetYpositionOffset?: number;
     worldScale?: number;
     centerBoneName?: string;
 }
@@ -18,6 +19,7 @@ export function attachToBone(
     const {
         directionalLightPosition,
         cameraTargetPosition,
+        cameraTargetYpositionOffset = 0,
         worldScale = 1,
         centerBoneName = "センター"
     } = options;
@@ -26,7 +28,7 @@ export function attachToBone(
     const meshWorldMatrix = mesh.getWorldMatrix();
     const boneWorldMatrix = new Matrix();
     const lightYpositionOffset = -10 * worldScale;
-    const cameraYpositionOffset = 3 * worldScale;
+    const cameraYpositionOffset = 3 * worldScale + cameraTargetYpositionOffset;
     scene.onBeforeRenderObservable.add(() => {
         boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
 

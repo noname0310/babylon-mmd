@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 export interface IMmdRuntimeLinkedBone {
     position: Vector3;
@@ -11,6 +11,6 @@ export interface IMmdRuntimeLinkedBone {
 
 export interface IMmdLinkedBoneContainer {
     bones: IMmdRuntimeLinkedBone[];
-    
+
     prepare(): void;
 }
