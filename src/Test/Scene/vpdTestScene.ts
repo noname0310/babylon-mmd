@@ -97,7 +97,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.currentAnimation!.animate(0);
         mmdModel.initializePhysics();
 
-        attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+        attachToBone(scene, modelMesh, {
+            directionalLightPosition: directionalLight.position,
+            cameraTargetPosition: camera.target
+        });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
         let computedFrames = 0;

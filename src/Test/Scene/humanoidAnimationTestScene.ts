@@ -256,7 +256,9 @@ export class SceneBuilder implements ISceneBuilder {
                 if (ikSolver !== null) ikSolver.enabled = false;
             }
 
-            attachToBone(scene, modelMesh, directionalLight.position);
+            attachToBone(scene, modelMesh, {
+                directionalLightPosition: directionalLight.position
+            });
 
             const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS

@@ -3,14 +3,26 @@ import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 
+export interface AttachToBoneOptions {
+    directionalLightPosition?: Vector3;
+    cameraTargetPosition?: Vector3;
+    worldScale?: number;
+    centerBoneName?: string;
+}
+
 export function attachToBone(
     scene: Scene,
     mesh: Mesh,
-    directionalLightPosition?: Vector3,
-    cameraTargetPosition?: Vector3,
-    worldScale = 1
+    options: AttachToBoneOptions = {}
 ): void {
-    const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === "センター");
+    const {
+        directionalLightPosition,
+        cameraTargetPosition,
+        worldScale = 1,
+        centerBoneName = "センター"
+    } = options;
+
+    const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === centerBoneName);
     const meshWorldMatrix = mesh.getWorldMatrix();
     const boneWorldMatrix = new Matrix();
     const lightYpositionOffset = -10 * worldScale;

@@ -124,7 +124,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, directionalLight.position, camera.target);
+        attachToBone(scene, modelMesh, {
+            directionalLightPosition: directionalLight.position,
+            cameraTargetPosition: camera.target
+        });
 
         const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
             displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS

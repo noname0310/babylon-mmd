@@ -138,7 +138,11 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel.addAnimation(loadResults[0] as MmdAnimation);
             mmdModel.setAnimation("motion");
 
-            attachToBone(scene, modelMesh, directionalLight.position, camera.target, worldScale);
+            attachToBone(scene, modelMesh, {
+                directionalLightPosition: directionalLight.position,
+                cameraTargetPosition: camera.target,
+                worldScale: worldScale
+            });
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 

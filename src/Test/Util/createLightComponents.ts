@@ -27,15 +27,17 @@ export interface ICreateLightComponentsResult {
 }
 
 export function createLightComponents(scene: Scene, options: ICreateLightComponentOptions = {}): ICreateLightComponentsResult {
-    const worldScale = options.worldScale ?? 1;
-    const hemisphericLightIntensity = options.hemisphericLightIntensity ?? 0.4;
-    const directionalLightIntensity = options.directionalLightIntensity ?? 0.8;
-    const shadowMaxZOffset = options.shadowMaxZOffset ?? 0;
-    const shadowMinZOffset = options.shadowMinZOffset ?? 0;
-    const orthoTopOffset = options.orthoTopOffset ?? 0;
-    const orthoBottomOffset = options.orthoBottomOffset ?? 0;
-    const orthoLeftOffset = options.orthoLeftOffset ?? 0;
-    const orthoRightOffset = options.orthoRightOffset ?? 0;
+    const {
+        worldScale = 1,
+        hemisphericLightIntensity = 0.4,
+        directionalLightIntensity = 0.8,
+        shadowMaxZOffset = 0,
+        shadowMinZOffset = 0,
+        orthoTopOffset = 0,
+        orthoBottomOffset = 0,
+        orthoLeftOffset = 0,
+        orthoRightOffset = 0
+    } = options;
 
     const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
     hemisphericLight.intensity = hemisphericLightIntensity;
