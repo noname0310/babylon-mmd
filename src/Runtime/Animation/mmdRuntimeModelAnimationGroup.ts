@@ -1,5 +1,4 @@
 import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -16,6 +15,7 @@ import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
+import { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 
 type MorphIndices = readonly number[];
 
@@ -30,8 +30,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
      */
     public readonly animation: MmdModelAnimationGroup;
 
-    private readonly _boneBindIndexMap: Nullable<Bone>[];
-    private readonly _moveableBoneBindIndexMap: Nullable<Bone>[];
+    private readonly _boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[];
+    private readonly _moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[];
     private readonly _morphController: MmdMorphController;
     private readonly _morphBindIndexMap: Nullable<MorphIndices>[];
     private readonly _mesh: RuntimeMmdMesh;
@@ -45,8 +45,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
 
     private constructor(
         animation: MmdModelAnimationGroup,
-        boneBindIndexMap: Nullable<Bone>[],
-        moveableBoneBindIndexMap: Nullable<Bone>[],
+        boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[],
+        moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphController,
         morphBindIndexMap: Nullable<MorphIndices>[],
         mesh: RuntimeMmdMesh,
@@ -189,10 +189,10 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         retargetingMap?: { [key: string]: string },
         logger?: ILogger
     ): MmdRuntimeModelAnimationGroup {
-        const skeleton = model.mesh.skeleton;
+        const skeleton = model.skeleton;
         const bones = skeleton.bones;
 
-        const boneIndexMap = new Map<string, Bone>();
+        const boneIndexMap = new Map<string, IMmdRuntimeLinkedBone>();
         if (retargetingMap === undefined) {
             for (let i = 0; i < bones.length; ++i) {
                 boneIndexMap.set(bones[i].name, bones[i]);
@@ -203,7 +203,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             }
         }
 
-        const boneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.boneRotationAnimations.length);
+        const boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.boneRotationAnimations.length);
         const boneNameMap = animationGroup.boneRotationAnimationBindMap;
         for (let i = 0; i < boneNameMap.length; ++i) {
             const bone = boneIndexMap.get(boneNameMap[i]);
@@ -215,7 +215,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
             }
         }
 
-        const moveableBoneBindIndexMap: Nullable<Bone>[] = new Array(animationGroup.bonePositionAnimations.length);
+        const moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.bonePositionAnimations.length);
         const moveableBoneNameMap = animationGroup.bonePositionAnimationBindMap;
         for (let i = 0; i < moveableBoneNameMap.length; ++i) {
             const bone = boneIndexMap.get(moveableBoneNameMap[i]);

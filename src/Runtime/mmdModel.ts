@@ -41,6 +41,15 @@ export class MmdModel {
     public readonly mesh: RuntimeMmdMesh;
 
     /**
+     * The skeleton of this model
+     *
+     * This can be a instance of `Skeleton`, or if you are using a humanoid model, it will be referencing a virtualized bone tree
+     *
+     * So MmdModel.mesh.skeleton is not always equal to MmdModel.skeleton
+     */
+    public readonly skeleton: IMmdLinkedBoneContainer;
+
+    /**
      * The morph controller of this model
      *
      * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
@@ -109,6 +118,7 @@ export class MmdModel {
             header: mmdMesh.metadata.header
         };
         this.mesh = runtimeMesh;
+        this.skeleton = skeleton;
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
         skeleton.prepare();
@@ -424,14 +434,12 @@ export class MmdModel {
         return runtimeBones;
     }
 
-    private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
+    private readonly _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
 
     private _disableSkeletonWorldMatrixUpdate(skeleton: IMmdLinkedBoneContainer): void {
         if ((skeleton as any)._computeTransformMatrices === undefined) return;
 
         if (this._originalComputeTransformMatrices !== null) return;
-
-        this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);
@@ -452,7 +460,7 @@ export class MmdModel {
 
     private _enableSkeletonWorldMatrixUpdate(): void {
         if (this._originalComputeTransformMatrices === null) return;
-        (this.mesh.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
+        (this.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
     }
 
     private _resetPose(): void {

@@ -183,7 +183,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         animationGroup.isAdditive = true;
 
         const skeletonBoneMap = new Map<string, number>();
-        const skeletonBones = mmdModel.mesh.skeleton.bones;
+        const skeletonBones = mmdModel.skeleton.bones;
         for (let i = 0; i < skeletonBones.length; ++i) {
             skeletonBoneMap.set(skeletonBones[i].name, i);
         }
