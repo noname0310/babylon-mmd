@@ -245,11 +245,11 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         const runtimeBones = model.sortedRuntimeBones;
         const runtimeBoneIndexMap = new Map<string, number>();
         if (retargetingMap === undefined) {
-            for (let i = 0; i < bones.length; ++i) {
+            for (let i = 0; i < runtimeBones.length; ++i) {
                 runtimeBoneIndexMap.set(runtimeBones[i].name, i);
             }
         } else {
-            for (let i = 0; i < bones.length; ++i) {
+            for (let i = 0; i < runtimeBones.length; ++i) {
                 runtimeBoneIndexMap.set(retargetingMap[runtimeBones[i].name] ?? runtimeBones[i].name, i);
             }
         }
