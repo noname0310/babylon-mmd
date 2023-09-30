@@ -20,12 +20,13 @@ import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depth
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
-import { SdefInjector } from "@/Loader/sdefInjector";
+import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
@@ -43,7 +44,6 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
-        SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
@@ -78,7 +78,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
-                return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd", updateProgress);
+                return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion_nonphys.bvmd", updateProgress);
             }],
             ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
                 return SceneLoader.ImportMeshAsync(
@@ -123,9 +123,70 @@ export class SceneBuilder implements ISceneBuilder {
         }
         const modelMesh = loadResults[1].meshes[1] as Mesh;
 
-        const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelMesh);
+        const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelMesh, {
+            boneMap: new MmdHumanoidMapper({
+                hips: "Hips",
+                spine: "Spine",
+                chest: "Chest",
+                neck: "Neck",
+                head: "Head",
+                leftShoulder: "Left shoulder",
+                leftUpperArm: "Left arm",
+                leftLowerArm: "Left elbow",
+                leftHand: "Left wrist",
+                rightShoulder: "Right shoulder",
+                rightUpperArm: "Right arm",
+                rightLowerArm: "Right elbow",
+                rightHand: "Right wrist",
+                leftUpperLeg: "Left leg",
+                leftLowerLeg: "Left knee",
+                leftFoot: "Left ankle",
+                leftToes: "Left Toe",
+                rightUpperLeg: "Right leg",
+                rightLowerLeg: "Right knee",
+                rightFoot: "Right ankle",
+                rightToes: "Right Toe",
+
+                leftEye: "Eye_L",
+                rightEye: "Eye_R",
+
+                leftThumbProximal: "Thumb_Proximal_L",
+                leftThumbIntermediate: "Thumb_Intermediate_L",
+                leftThumbDistal: "Thumb_Distal_L",
+                leftIndexProximal: "Index_Proximal_L",
+                leftIndexIntermediate: "Index_Intermediate_L",
+                leftIndexDistal: "Index_Distal_L",
+                leftMiddleProximal: "Middle_Proximal_L",
+                leftMiddleIntermediate: "Middle_Intermediate_L",
+                leftMiddleDistal: "Middle_Distal_L",
+                leftRingProximal: "Ring_Proximal_L",
+                leftRingIntermediate: "Ring_Intermediate_L",
+                leftRingDistal: "Ring_Distal_L",
+                leftLittleProximal: "Little_Proximal_L",
+                leftLittleIntermediate: "Little_Intermediate_L",
+                leftLittleDistal: "Little_Distal_L",
+
+                rightThumbProximal: "Thumb_Proximal_R",
+                rightThumbIntermediate: "Thumb_Intermediate_R",
+                rightThumbDistal: "Thumb_Distal_R",
+                rightIndexProximal: "Index_Proximal_R",
+                rightIndexIntermediate: "Index_Intermediate_R",
+                rightIndexDistal: "Index_Distal_R",
+                rightMiddleProximal: "Middle_Proximal_R",
+                rightMiddleIntermediate: "Middle_Intermediate_R",
+                rightMiddleDistal: "Middle_Distal_R",
+                rightRingProximal: "Ring_Proximal_R",
+                rightRingIntermediate: "Ring_Intermediate_R",
+                rightRingDistal: "Ring_Distal_R",
+                rightLittleProximal: "Little_Proximal_R",
+                rightLittleIntermediate: "Little_Intermediate_R",
+                rightLittleDistal: "Little_Distal_R"
+            }).boneMap
+        });
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
+
+        Inspector.Show(scene, { });
 
         attachToBone(scene, modelMesh, {
             directionalLightPosition: directionalLight.position,
