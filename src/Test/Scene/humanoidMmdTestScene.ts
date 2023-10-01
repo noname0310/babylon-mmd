@@ -183,6 +183,7 @@ export class SceneBuilder implements ISceneBuilder {
                 rightLittleDistal: "Little_Distal_R"
             }).boneMap
         });
+        mmdModel.morph.setMorphWeight("口_真顔", 1.0);
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
 
