@@ -1,8 +1,9 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import { Space } from "@babylonjs/core/Maths/math.axis";
 import type { Matrix } from "@babylonjs/core/Maths/math.vector";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -465,10 +466,16 @@ export class MmdModel {
 
     private _resetPose(): void {
         const sortedBones = this._sortedRuntimeBones;
+
+        const position = new Vector3();
+        const identityRotation = Quaternion.Identity();
+
         for (let i = 0; i < sortedBones.length; ++i) {
             const bone = sortedBones[i].linkedBone;
-            bone.getRestMatrix().getTranslationToRef(bone.position);
-            bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+            bone.getRestMatrix().getTranslationToRef(position);
+
+            bone.position = position;
+            bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
         this.mesh.skeleton._markAsDirty();
     }
