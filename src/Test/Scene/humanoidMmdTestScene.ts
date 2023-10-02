@@ -53,9 +53,9 @@ export class SceneBuilder implements ISceneBuilder {
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
 
+        const camera = createDefaultArcRotateCamera(scene);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
-        const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
@@ -64,7 +64,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        // mmdRuntime.playAnimation();
+        mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
@@ -199,14 +199,6 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.morph.setMorphWeight("口_真顔", 1.0);
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
-
-        console.log(loadResults[0]);
-
-        (globalThis as any).skeleton = mmdModel.skeleton;
-        (globalThis as any).setRotation = (index: number, x: number, y: number, z: number): void => {
-            const degToRad = Math.PI / 180;
-            mmdModel.skeleton.bones[index].rotationQuaternion = Quaternion.FromEulerAngles(x * degToRad, y * degToRad, z * degToRad);
-        };
 
         Inspector.Show(scene, { });
 
