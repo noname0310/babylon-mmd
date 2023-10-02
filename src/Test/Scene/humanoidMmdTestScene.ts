@@ -14,7 +14,7 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -64,7 +64,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        mmdRuntime.playAnimation();
+        // mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
@@ -122,6 +122,17 @@ export class SceneBuilder implements ISceneBuilder {
             material.metallic = 0;
         }
         const modelMesh = loadResults[1].meshes[1] as Mesh;
+        {
+            const bones = modelMesh.skeleton!.bones;
+            for (let i = 0; i < bones.length; i++) {
+                bones[i].linkTransformNode(null);
+            }
+            const leftArm = bones.find((bone) => bone.name === "Left arm")!;
+            const rightArm = bones.find((bone) => bone.name === "Right arm")!;
+            const degToRad = Math.PI / 180;
+            leftArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
+            rightArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
+        }
 
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelMesh, {
             boneMap: new MmdHumanoidMapper({
@@ -181,11 +192,21 @@ export class SceneBuilder implements ISceneBuilder {
                 rightLittleProximal: "Little_Proximal_R",
                 rightLittleIntermediate: "Little_Intermediate_R",
                 rightLittleDistal: "Little_Distal_R"
-            }).boneMap
+            }).boneMap,
+            scale: 10,
+            invertZ: true
         });
         mmdModel.morph.setMorphWeight("口_真顔", 1.0);
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
+
+        console.log(loadResults[0]);
+
+        (globalThis as any).skeleton = mmdModel.skeleton;
+        (globalThis as any).setRotation = (index: number, x: number, y: number, z: number): void => {
+            const degToRad = Math.PI / 180;
+            mmdModel.skeleton.bones[index].rotationQuaternion = Quaternion.FromEulerAngles(x * degToRad, y * degToRad, z * degToRad);
+        };
 
         Inspector.Show(scene, { });
 

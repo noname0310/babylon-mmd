@@ -1,8 +1,10 @@
-import { CreateSphere, StandardMaterial } from "@babylonjs/core";
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
+import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
@@ -25,29 +27,35 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public parent: Nullable<LinkedBoneProxy>;
     public readonly children: LinkedBoneProxy[];
 
-    private readonly _bone: Nullable<Bone>;
+    public readonly bone: Nullable<Bone>;
+    private readonly _boneWorldRestMatrix: Nullable<Matrix>;
+    private readonly _boneWorldRestMatrixInverse: Nullable<Matrix>;
+
     private readonly _restMatrix: Matrix;
     private readonly _finalMatrix: Matrix;
 
-    public constructor(name: string, bone: Nullable<Bone>) {
+    private readonly _syncOnlyRotation: boolean;
+    private readonly _positionApplyScale: number;
+
+    public constructor(name: string, bone: Nullable<Bone>, syncOnlyRotation: boolean, positionApplyScale: number) {
         this.name = name;
 
-        if (bone !== null) {
-            this.position = bone.position;
-            this.rotationQuaternion = bone.rotationQuaternion;
-            this.scaling = bone.scaling;
-        } else {
-            this.position = Vector3.Zero();
-            this.rotationQuaternion = Quaternion.Identity();
-            this.scaling = Vector3.One();
-        }
+        this.position = Vector3.Zero();
+        this.rotationQuaternion = Quaternion.Identity();
+        this.scaling = Vector3.One();
 
         this.parent = null;
         this.children = [];
 
-        this._bone = bone;
-        this._restMatrix = bone !== null ? bone.getRestMatrix() : Matrix.Identity();
-        this._finalMatrix = new Matrix();
+        this.bone = bone;
+        this._boneWorldRestMatrix = bone !== null ? bone.getFinalMatrix().clone() : null;
+        this._boneWorldRestMatrixInverse = this._boneWorldRestMatrix !== null ? this._boneWorldRestMatrix.clone().invert() : null;
+
+        this._restMatrix = Matrix.Identity();
+        this._finalMatrix = Matrix.Identity();
+
+        this._syncOnlyRotation = syncOnlyRotation;
+        this._positionApplyScale = positionApplyScale;
     }
 
     public getRestMatrix(): Matrix {
@@ -62,26 +70,125 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this.rotationQuaternion.copyFrom(quat);
     }
 
+    private static readonly _AnimatedMatrix = new Matrix();
+    private static readonly _FinalLocalMatrix = new Matrix();
+    private static readonly _AnimatedRotation = new Quaternion();
+
     public apply(): void {
-        this._bone;
+        let parent = this.parent;
+        if (parent !== null) {
+            while (parent.bone === null) {
+                parent = parent.parent;
+                if (parent === null) return;
+            }
+        }
+
+        const boneAnimatedMatrix = LinkedBoneProxy._AnimatedMatrix;
+        boneAnimatedMatrix.copyFrom(this._boneWorldRestMatrix!);
+
+        if (parent === null) {
+            boneAnimatedMatrix.multiplyToRef(this._finalMatrix, boneAnimatedMatrix);
+        } else {
+            const finalLocalMatrix = LinkedBoneProxy._FinalLocalMatrix.copyFrom(parent._finalMatrix).invert();
+            boneAnimatedMatrix.multiplyToRef(finalLocalMatrix, boneAnimatedMatrix);
+        }
+
+        if (parent !== null) {
+            boneAnimatedMatrix.multiplyToRef(parent._boneWorldRestMatrixInverse!, boneAnimatedMatrix);
+        }
+
+        if (this._syncOnlyRotation) {
+            this.bone!.setRotationQuaternion(
+                Quaternion.FromRotationMatrixToRef(boneAnimatedMatrix, LinkedBoneProxy._AnimatedRotation),
+                Space.LOCAL
+            );
+        } else {
+            if (this._positionApplyScale !== 1) {
+                boneAnimatedMatrix.setTranslationFromFloats(
+                    boneAnimatedMatrix.m[12] * this._positionApplyScale,
+                    boneAnimatedMatrix.m[13] * this._positionApplyScale,
+                    boneAnimatedMatrix.m[14] * this._positionApplyScale
+                );
+            }
+            this.bone!._matrix = boneAnimatedMatrix;
+        }
+    }
+}
+
+class BoneVisualizer {
+    private readonly _bones: LinkedBoneProxy[];
+    private readonly _spheres: Mesh[];
+
+    public constructor(bones: LinkedBoneProxy[]) {
+        this._bones = bones;
+        this._spheres = [];
+        for (let i = 0; i < bones.length; ++i) {
+            const boneProxy = bones[i];
+            const worldPosition = boneProxy.getFinalMatrix().getTranslation();
+            const sphere = CreateSphere("sphere" + boneProxy.name, { diameter: 0.1 });
+            sphere.position = worldPosition;
+            const material = sphere.material = new StandardMaterial("material");
+            material.zOffset = -10000;
+
+            this._spheres.push(sphere);
+        }
+    }
+
+    public update(): void {
+        for (let i = 0; i < this._bones.length; ++i) {
+            const boneProxy = this._bones[i];
+            const worldPosition = boneProxy.getFinalMatrix().getTranslation();
+            const sphere = this._spheres[i];
+            sphere.position = worldPosition;
+        }
     }
 }
 
 class BoneContainer implements IMmdLinkedBoneContainer {
     public bones: LinkedBoneProxy[];
+    private readonly _skeleton: Skeleton;
 
-    public constructor(bones: LinkedBoneProxy[]) {
+    private readonly _boneVisualizer: BoneVisualizer;
+
+    public constructor(bones: LinkedBoneProxy[], skeleton: Skeleton) {
         this.bones = bones;
+
+        this._skeleton = skeleton;
+
+        this._boneVisualizer = new BoneVisualizer(bones);
     }
 
     public prepare(): void {/** do nothing */ }
 
-    public _computeTransformMatrices(): void {/** do nothing */ }
+    public get _computeTransformMatrices(): any {
+        return true;
+    }
+
+    public set _computeTransformMatrices(value: any) {
+        if (value === true) { // restore matrix update policy
+            this._skeleton.onBeforeComputeObservable.removeCallback(this._onBeforeCompute);
+        } else { // override matrix update policy
+            this._skeleton.onBeforeComputeObservable.add(this._onBeforeCompute);
+        }
+    }
+
+    private readonly _onBeforeCompute = (): void => {
+        this._boneVisualizer.update();
+
+        const proxies = this.bones;
+        for (let i = 0; i < proxies.length; ++i) {
+            if (proxies[i].bone !== null) proxies[i].apply();
+        }
+    };
 }
 
 export interface CreateMmdModelFromHumanoidOptions {
     boneMap?: { [key: string]: string };
     morphMap?: { [key: string]: string };
+    scale?: number;
+    invertX?: boolean;
+    invertY?: boolean;
+    invertZ?: boolean;
 }
 
 export class HumanoidMmd {
@@ -193,15 +300,6 @@ export class HumanoidMmd {
         Nullable<NonNullable<MmdModelMetadata.Bone["ik"]>>
     ][];
 
-    private readonly _standardSkeletonMetadataNameMap = new Map<string, number>();
-
-    public constructor() {
-        for (let i = 0; i < HumanoidMmd._StandardSkeletonMetaData.length; ++i) {
-            const metadata = HumanoidMmd._StandardSkeletonMetaData[i];
-            this._standardSkeletonMetadataNameMap.set(metadata[0], i);
-        }
-    }
-
     private _createMetadata(
         name: string,
         morphTargetManager: Nullable<MorphTargetManager>,
@@ -293,9 +391,17 @@ export class HumanoidMmd {
     private _buildBoneProxyTree(
         skeleton: Skeleton,
         boneMap: { [key: string]: string },
-        bonesMetadata: readonly MmdModelMetadata.Bone[]
+        bonesMetadata: readonly MmdModelMetadata.Bone[],
+        scale: number,
+        invertX: boolean,
+        invertY: boolean,
+        invertZ: boolean
     ): LinkedBoneProxy[] {
+        const invScale = 1 / scale;
+        const invertVector = new Vector3(invertX ? -1 : 1, invertY ? -1 : 1, invertZ ? -1 : 1);
+
         const bones = skeleton.bones;
+        const positionInitializedProxies = new Set<string>();
         const boneMappedNameMap = new Map<string, Bone>();
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
@@ -303,7 +409,7 @@ export class HumanoidMmd {
             if (mappedName !== undefined) boneMappedNameMap.set(mappedName, bone);
         }
 
-        skeleton.prepare();
+        skeleton.prepare(true);
 
         const boneProxies: LinkedBoneProxy[] = [];
         const boneProxyMap = new Map<string, LinkedBoneProxy>();
@@ -311,10 +417,17 @@ export class HumanoidMmd {
             const boneMetadata = bonesMetadata[i];
             const bone = boneMappedNameMap.get(boneMetadata.name) ?? null;
 
-            const boneProxy = new LinkedBoneProxy(boneMetadata.name, bone);
+            const boneProxy = new LinkedBoneProxy(
+                boneMetadata.name,
+                bone,
+                (boneMetadata.flag & PmxObject.Bone.Flag.IsMovable) === 0,
+                invScale
+            );
+
             if (bone !== null) {
                 const bonePosition = bone.getFinalMatrix().getTranslation();
                 boneProxy.position.copyFrom(bonePosition);
+                positionInitializedProxies.add(boneProxy.name);
             }
 
             boneProxies.push(boneProxy);
@@ -334,85 +447,238 @@ export class HumanoidMmd {
         }
 
         // initialize bone positions
-        if (!boneMappedNameMap.has("全ての親")) {
-            boneProxyMap.get("全ての親")!.position.y = 0.1;
+
+        // root
+        if (!positionInitializedProxies.has("全ての親")) {
+            boneProxyMap.get("全ての親")!.position.y = 0.1 * invScale;
+            positionInitializedProxies.add("全ての親");
         }
+
+        // center control
         {
-            const hasCenter = boneMappedNameMap.has("センター");
-            const hasGroove = boneMappedNameMap.has("グルーブ");
+            const hasCenter = positionInitializedProxies.has("センター");
+            const hasGroove = positionInitializedProxies.has("グルーブ");
             if (!hasCenter && !hasGroove) {
                 const position = this._getAverageBonePosition(["左足", "左ひざ", "右足", "右ひざ"], boneProxyMap);
                 if (position !== null) {
                     boneProxyMap.get("センター")!.position.copyFrom(position);
                     boneProxyMap.get("グルーブ")!.position.copyFrom(position);
+                    positionInitializedProxies.add("センター");
+                    positionInitializedProxies.add("グルーブ");
                 }
             } else if (!hasCenter) {
-                this._copyBonePosition("グルーブ", "センター", boneProxyMap);
+                const result = this._copyBonePosition("グルーブ", "センター", boneProxyMap);
+                if (result !== null) positionInitializedProxies.add("センター");
             } else if (!hasGroove) {
-                this._copyBonePosition("センター", "グルーブ", boneProxyMap);
+                const result = this._copyBonePosition("センター", "グルーブ", boneProxyMap);
+                if (result !== null) positionInitializedProxies.add("グルーブ");
             }
         }
         {
-            const hasUpperBody = boneMappedNameMap.has("上半身");
-            const hasLowerBody = boneMappedNameMap.has("下半身");
-            const hasWaist = boneMappedNameMap.has("腰");
+            const hasUpperBody = positionInitializedProxies.has("上半身");
+            const hasLowerBody = positionInitializedProxies.has("下半身");
+            const hasWaist = positionInitializedProxies.has("腰");
             if (!hasUpperBody && !hasLowerBody && !hasWaist) {
                 const position = this._getAverageBonePosition(["左足", "左足", "右足", "右足", "首"], boneProxyMap);
                 if (position !== null) {
                     boneProxyMap.get("上半身")!.position.copyFrom(position);
                     boneProxyMap.get("下半身")!.position.copyFrom(position);
+                    boneProxyMap.get("腰")!.position.copyFrom(position);
+                    positionInitializedProxies.add("上半身");
+                    positionInitializedProxies.add("下半身");
+                    positionInitializedProxies.add("腰");
                 }
             } else if (!hasUpperBody) {
-                this._copyBonePosition(hasLowerBody ? "下半身" : "腰", "上半身", boneProxyMap);
+                const result = this._copyBonePosition(hasLowerBody ? "下半身" : "腰", "上半身", boneProxyMap);
+                if (result !== null) positionInitializedProxies.add("上半身");
             } else if (!hasLowerBody) {
-                this._copyBonePosition(hasUpperBody ? "上半身" : "腰", "下半身", boneProxyMap);
-            } else if (!hasWaist) {
-                this._copyBonePosition(hasLowerBody ? "下半身" : "上半身", "腰", boneProxyMap);
+                const result = this._copyBonePosition(hasUpperBody ? "上半身" : "腰", "下半身", boneProxyMap);
+                if (result !== null) positionInitializedProxies.add("下半身");
+            }
+            if (!hasWaist) {
+                const result = this._copyBonePosition(hasLowerBody ? "下半身" : "上半身", "腰", boneProxyMap);
+                if (result !== null) positionInitializedProxies.add("腰");
             }
         }
 
-        if (!boneMappedNameMap.has("右肩P")) {
-            this._copyBonePosition("右肩", "右肩P", boneProxyMap);
+        // eye control
+        if (!positionInitializedProxies.has("両目")) {
+            const position = this._getAverageBonePosition(["右目", "左目"], boneProxyMap);
+            if (position !== null) {
+                const bothEyes = boneProxyMap.get("両目")!;
+                bothEyes.position.copyFrom(position);
+
+                const headPosition = boneProxyMap.get("頭")!.position;
+                const yDiff = headPosition.y - bothEyes.position.y;
+                bothEyes.position.y -= yDiff * 2;
+
+                positionInitializedProxies.add("両目");
+            }
         }
-        if (!boneMappedNameMap.has("左肩P")) {
-            this._copyBonePosition("左肩", "左肩P", boneProxyMap);
+
+        // shoulder support
+        if (!positionInitializedProxies.has("右肩P")) {
+            const result = this._copyBonePosition("右肩", "右肩P", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右肩P");
+        }
+        if (!positionInitializedProxies.has("右肩C")) {
+            const result = this._copyBonePosition("右腕", "右肩C", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右肩C");
+        }
+
+        if (!positionInitializedProxies.has("左肩P")) {
+            const result = this._copyBonePosition("左肩", "左肩P", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左肩P");
+        }
+        if (!positionInitializedProxies.has("左肩C")) {
+            const result = this._copyBonePosition("左腕", "左肩C", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左肩C");
+        }
+
+        // arm support
+        if (!positionInitializedProxies.has("右腕捩")) {
+            const position = this._getAverageBonePosition(["右腕", "右ひじ"], boneProxyMap);
+            if (position !== null) {
+                boneProxyMap.get("右腕捩")!.position.copyFrom(position);
+                positionInitializedProxies.add("右腕捩");
+            }
+        }
+        if (!positionInitializedProxies.has("右手捩")) {
+            const position = this._getAverageBonePosition(["右ひじ", "右手首"], boneProxyMap);
+            if (position !== null) {
+                boneProxyMap.get("右手捩")!.position.copyFrom(position);
+                positionInitializedProxies.add("右手捩");
+            }
+        }
+
+        if (!positionInitializedProxies.has("左腕捩")) {
+            const position = this._getAverageBonePosition(["左腕", "左ひじ"], boneProxyMap);
+            if (position !== null) {
+                boneProxyMap.get("左腕捩")!.position.copyFrom(position);
+                positionInitializedProxies.add("左腕捩");
+            }
+        }
+        if (!positionInitializedProxies.has("左手捩")) {
+            const position = this._getAverageBonePosition(["左ひじ", "左手首"], boneProxyMap);
+            if (position !== null) {
+                boneProxyMap.get("左手捩")!.position.copyFrom(position);
+                positionInitializedProxies.add("左手捩");
+            }
+        }
+
+        // leg rotation support
+        if (!positionInitializedProxies.has("腰キャンセル右")) {
+            const result = this._copyBonePosition("右足", "腰キャンセル右", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("腰キャンセル右");
+        }
+        if (!positionInitializedProxies.has("腰キャンセル左")) {
+            const result = this._copyBonePosition("左足", "腰キャンセル左", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("腰キャンセル左");
         }
 
         // ik
-        if (!boneMappedNameMap.has("右足ＩＫ")) {
-            this._copyBonePosition("右足首", "右足ＩＫ", boneProxyMap);
+        if (!positionInitializedProxies.has("右足ＩＫ")) {
+            const result = this._copyBonePosition("右足首", "右足ＩＫ", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右足ＩＫ");
         }
-        if (!boneMappedNameMap.has("左足ＩＫ")) {
-            this._copyBonePosition("左足首", "左足ＩＫ", boneProxyMap);
-        }
-        if (!boneMappedNameMap.has("右足IK親")) {
+        if (!positionInitializedProxies.has("右足IK親")) {
             const targetBone = this._copyBonePosition("右足首", "右足IK親", boneProxyMap);
-            if (targetBone !== null) targetBone.position.y = 0.1;
+            if (targetBone !== null) {
+                targetBone.position.y = 0.1 * invScale;
+                positionInitializedProxies.add("右足IK親");
+            }
         }
-        if (!boneMappedNameMap.has("左足IK親")) {
-            const targetBone = this._copyBonePosition("左足首", "左足IK親", boneProxyMap);
-            if (targetBone !== null) targetBone.position.y = 0.1;
-        }
-        if (!boneMappedNameMap.has("右つま先ＩＫ")) {
-            this._copyBonePosition("左つま先", "右つま先ＩＫ", boneProxyMap);
-        }
-        if (!boneMappedNameMap.has("左つま先ＩＫ")) {
-            this._copyBonePosition("右つま先", "左つま先ＩＫ", boneProxyMap);
+        if (!positionInitializedProxies.has("右つま先ＩＫ")) {
+            const result = this._copyBonePosition("右つま先", "右つま先ＩＫ", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右つま先ＩＫ");
         }
 
+        if (!positionInitializedProxies.has("左足ＩＫ")) {
+            const result = this._copyBonePosition("左足首", "左足ＩＫ", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左足ＩＫ");
+        }
+        if (!positionInitializedProxies.has("左足IK親")) {
+            const targetBone = this._copyBonePosition("左足首", "左足IK親", boneProxyMap);
+            if (targetBone !== null) {
+                targetBone.position.y = 0.1 * invScale;
+                positionInitializedProxies.add("左足IK親");
+            }
+        }
+        if (!positionInitializedProxies.has("左つま先ＩＫ")) {
+            const result = this._copyBonePosition("左つま先", "左つま先ＩＫ", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左つま先ＩＫ");
+        }
+
+        // ik additional transform controls
+        if (!positionInitializedProxies.has("右足D")) {
+            const result = this._copyBonePosition("右足", "右足D", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右足D");
+        }
+        if (!positionInitializedProxies.has("右ひざD")) {
+            const result = this._copyBonePosition("右ひざ", "右ひざD", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右ひざD");
+        }
+        if (!positionInitializedProxies.has("右足首D")) {
+            const result = this._copyBonePosition("右足首", "右足首D", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右足首D");
+        }
+        if (!positionInitializedProxies.has("右足先EX")) {
+            const result = this._copyBonePosition("右つま先", "右足先EX", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("右足先EX");
+        }
+
+        if (!positionInitializedProxies.has("左足D")) {
+            const result = this._copyBonePosition("左足", "左足D", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左足D");
+        }
+        if (!positionInitializedProxies.has("左ひざD")) {
+            const result = this._copyBonePosition("左ひざ", "左ひざD", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左ひざD");
+        }
+        if (!positionInitializedProxies.has("左足首D")) {
+            const result = this._copyBonePosition("左足首", "左足首D", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左足首D");
+        }
+        if (!positionInitializedProxies.has("左足先EX")) {
+            const result = this._copyBonePosition("左つま先", "左足先EX", boneProxyMap);
+            if (result !== null) positionInitializedProxies.add("左足先EX");
+        }
 
         for (let i = 0; i < boneProxies.length; ++i) {
             const boneProxy = boneProxies[i];
-            const worldPosition = boneProxy.position;
-            const sphere = CreateSphere("sphere", { diameter: 0.1 }, skeleton.getScene());
-            sphere.position.copyFrom(worldPosition).scaleInPlace(10);
-            sphere.position.z = -sphere.position.z;
-            if (sphere.position.x === 0 && sphere.position.y === 0 && sphere.position.z === 0) {
-                console.log(boneProxy.name);
-            }
-            const material = sphere.material = new StandardMaterial("material", skeleton.getScene());
-            material.zOffset = -10000;
+            boneProxy.position.scaleInPlace(scale);
+            boneProxy.position.multiplyInPlace(invertVector);
         }
+
+        // force initialize bone positions
+        let positionUninitializedProxyCount = boneProxies.length - positionInitializedProxies.size;
+        while (0 < positionUninitializedProxyCount) {
+            for (let i = 0; i < boneProxies.length; ++i) {
+                const boneProxy = boneProxies[i];
+                if (positionInitializedProxies.has(boneProxy.name)) continue;
+
+                const parent = boneProxy.parent;
+                if (parent !== null && positionInitializedProxies.has(parent.name)) {
+                    boneProxy.position.copyFrom(parent.position);
+                    positionInitializedProxies.add(boneProxy.name);
+                    positionUninitializedProxyCount -= 1;
+                }
+            }
+        }
+
+        // // debug visualization
+        // for (let i = 0; i < boneProxies.length; ++i) {
+        //     const boneProxy = boneProxies[i];
+        //     const worldPosition = boneProxy.position;
+        //     const sphere = CreateSphere("sphere", { diameter: 0.1 }, skeleton.getScene());
+        //     sphere.position.copyFrom(worldPosition);
+        //     sphere.position.z = -sphere.position.z;
+        //     if (sphere.position.x === 0 && sphere.position.y === 0 && sphere.position.z === 0) {
+        //         console.log(boneProxy.name);
+        //     }
+        //     const material = sphere.material = new StandardMaterial("material", skeleton.getScene());
+        //     material.zOffset = -10000;
+        // }
 
         // world to local
         const worldPositions = new Map<LinkedBoneProxy, Vector3>();
@@ -426,6 +692,7 @@ export class HumanoidMmd {
                 const parentPosition = worldPositions.get(parent)!;
                 boneProxy.position.subtractInPlace(parentPosition);
             }
+            boneProxy.getRestMatrix().setTranslation(boneProxy.position);
         }
 
         return boneProxies;
@@ -434,7 +701,11 @@ export class HumanoidMmd {
     public createMmdModelFromHumanoid(mmdRuntime: MmdRuntime, humanoidMesh: Mesh, options: CreateMmdModelFromHumanoidOptions = {}): MmdModel {
         const {
             boneMap = {},
-            morphMap = {}
+            morphMap = {},
+            scale = 1,
+            invertX = false,
+            invertY = false,
+            invertZ = false
         } = options;
 
         const skeleton = humanoidMesh.skeleton;
@@ -445,8 +716,8 @@ export class HumanoidMmd {
 
         if (!HumanoidMesh.isHumanoidMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
 
-        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones);
-        const mmdModel = new MmdModel(humanoidMesh, new BoneContainer(boneProxies), null, null, mmdRuntime);
+        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, scale, invertX, invertY, invertZ);
+        const mmdModel = new MmdModel(humanoidMesh, new BoneContainer(boneProxies, skeleton), null, null, mmdRuntime);
         mmdRuntime.addMmdModelInternal(mmdModel);
         return mmdModel;
     }

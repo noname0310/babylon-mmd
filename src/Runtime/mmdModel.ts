@@ -434,12 +434,11 @@ export class MmdModel {
         return runtimeBones;
     }
 
-    private readonly _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
+    private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
 
     private _disableSkeletonWorldMatrixUpdate(skeleton: IMmdLinkedBoneContainer): void {
-        if ((skeleton as any)._computeTransformMatrices === undefined) return;
-
         if (this._originalComputeTransformMatrices !== null) return;
+        this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);
@@ -461,6 +460,7 @@ export class MmdModel {
     private _enableSkeletonWorldMatrixUpdate(): void {
         if (this._originalComputeTransformMatrices === null) return;
         (this.skeleton as any)._computeTransformMatrices = this._originalComputeTransformMatrices;
+        this._originalComputeTransformMatrices = null;
     }
 
     private _resetPose(): void {
