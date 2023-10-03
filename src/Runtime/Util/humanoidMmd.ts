@@ -118,13 +118,6 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         // special case for center bone for fix difference between MMD and Humanoid bone hierarchy
         if (this.name === "センター") {
             boneFinalMatrix.copyFrom(upperBodyBone._finalMatrix!);
-
-            const finalMatrix = this._finalMatrix;
-            boneFinalMatrix.setTranslationFromFloats(
-                finalMatrix.m[12],
-                finalMatrix.m[13],
-                finalMatrix.m[14]
-            );
         } else boneFinalMatrix.copyFrom(this._finalMatrix);
 
         this._scalingMatrix.multiplyToRef(boneFinalMatrix, boneFinalMatrix);

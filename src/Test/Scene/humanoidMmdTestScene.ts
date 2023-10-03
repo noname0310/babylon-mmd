@@ -68,7 +68,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
+        audioPlayer.source = "res/private_test/motion/105 degrees Celsius/Japanese Cover.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
@@ -78,7 +78,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
-                return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion_nonphys.bvmd", updateProgress);
+                return bvmdLoader.loadAsync("motion", "res/private_test/motion/105 degrees Celsius/motion.bvmd", updateProgress);
             }],
             ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
                 return SceneLoader.ImportMeshAsync(
@@ -110,7 +110,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.setAnimation("motion");
 
         loadResults[1].meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        loadResults[1].meshes[0].scaling.scaleInPlace(14);
+        loadResults[1].meshes[0].scaling.scaleInPlace(14.3);
         for (const mesh of loadResults[1].meshes as Mesh[]) {
             const boundingInfo = mesh.getBoundingInfo();
             const subMeshes = mesh.subMeshes;
@@ -200,10 +200,10 @@ export class SceneBuilder implements ISceneBuilder {
                 rightLittleIntermediate: "Little_Intermediate_R",
                 rightLittleDistal: "Little_Distal_R"
             }).boneMap,
-            scale: 14,
+            scale: 14.3,
             invertZ: true
         });
-        mmdModel.morph.setMorphWeight("口_真顔", 0.9);
+        mmdModel.morph.setMorphWeight("口_真顔", 0.2);
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
 
