@@ -12,6 +12,7 @@ export class MmdCameraAutoFocus {
     private readonly _pipeline: DefaultRenderingPipeline;
 
     private _headBone: Nullable<Bone>;
+    private _skeletonWorldMatrix: Nullable<Matrix>;
     private _beforeRender: Nullable<() => void>;
 
     public constructor(camera: MmdCamera, pipeline: DefaultRenderingPipeline) {
@@ -21,11 +22,16 @@ export class MmdCameraAutoFocus {
         pipeline.depthOfField.focalLength = 20;
 
         this._headBone = null;
+        this._skeletonWorldMatrix = null;
         this._beforeRender = null;
     }
 
     public setTarget(modelMesh: Mesh, headBoneName: string = "頭"): void {
         this._headBone = modelMesh.skeleton?.bones.find((bone) => bone.name === headBoneName) ?? null;
+    }
+
+    public setSkeletonWorldMatrix(matrix: Matrix): void {
+        this._skeletonWorldMatrix = matrix;
     }
 
     public register(scene: Scene): void {
@@ -36,9 +42,10 @@ export class MmdCameraAutoFocus {
         const rotationMatrix = new Matrix();
         const cameraNormal = new Vector3();
         const cameraEyePosition = new Vector3();
+        const skeletonWorldMatrix = this._skeletonWorldMatrix;
+        const boneWorldMatrix = new Matrix();
         const headRelativePosition = new Vector3();
 
-        // note: this dof distance compute will broken when camera and mesh is not in same space
         this._beforeRender = (): void => {
             if (scene.activeCamera !== camera) {
                 defaultPipeline.depthOfFieldEnabled = false;
@@ -56,7 +63,21 @@ export class MmdCameraAutoFocus {
                 cameraEyePosition
             );
 
-            this._headBone!.getFinalMatrix().getTranslationToRef(headRelativePosition)
+            if (camera.parent !== null) {
+                camera.parent.computeWorldMatrix();
+                const cameraParentWorldMatrix = camera.parent.getWorldMatrix();
+
+                Vector3.TransformCoordinatesToRef(cameraEyePosition, cameraParentWorldMatrix, cameraEyePosition);
+                Vector3.TransformNormalToRef(cameraNormal, cameraParentWorldMatrix, cameraNormal);
+            }
+
+            if (skeletonWorldMatrix !== null) {
+                this._headBone!.getFinalMatrix().multiplyToRef(skeletonWorldMatrix!, boneWorldMatrix);
+            } else {
+                boneWorldMatrix.copyFrom(this._headBone!.getFinalMatrix());
+            }
+
+            boneWorldMatrix.getTranslationToRef(headRelativePosition)
                 .subtractToRef(cameraEyePosition, headRelativePosition);
 
             defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;

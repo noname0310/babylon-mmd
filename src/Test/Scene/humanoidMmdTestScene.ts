@@ -278,6 +278,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(modelMesh, "Head");
+        mmdCameraAutoFocus.setSkeletonWorldMatrix(modelMesh.getWorldMatrix());
         mmdCameraAutoFocus.register(scene);
 
         return scene;
