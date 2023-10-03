@@ -185,7 +185,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] Play audio / sync with animation
 - [x] Basic animation player UI
 - [ ] Animation blending in custom animation runtime
-- [ ] Force Humanoid Model Support
+- [x] Force Humanoid Model Support
 
 **Physics Runtime**
 

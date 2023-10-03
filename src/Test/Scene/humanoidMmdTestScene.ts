@@ -20,7 +20,6 @@ import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depth
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -40,6 +39,7 @@ import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCame
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
+import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -53,9 +53,9 @@ export class SceneBuilder implements ISceneBuilder {
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
 
-        const camera = createDefaultArcRotateCamera(scene);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
+        const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
@@ -112,6 +112,15 @@ export class SceneBuilder implements ISceneBuilder {
         loadResults[1].meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
         loadResults[1].meshes[0].scaling.scaleInPlace(14);
         for (const mesh of loadResults[1].meshes as Mesh[]) {
+            const boundingInfo = mesh.getBoundingInfo();
+            const subMeshes = mesh.subMeshes;
+            if (subMeshes !== undefined) {
+                for (let i = 0; i < subMeshes.length; i++) {
+                    const subMesh = subMeshes[i];
+                    subMesh.setBoundingInfo(boundingInfo);
+                }
+            }
+
             if (mesh.material === null) continue;
             shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
@@ -124,12 +133,9 @@ export class SceneBuilder implements ISceneBuilder {
         }
         const modelMesh = loadResults[1].meshes[1] as Mesh;
         {
-            const bones = modelMesh.skeleton!.bones;
-            for (let i = 0; i < bones.length; i++) {
-                bones[i].linkTransformNode(null);
-            }
-            const leftArm = bones.find((bone) => bone.name === "Left arm")!;
-            const rightArm = bones.find((bone) => bone.name === "Right arm")!;
+            const transformNodes = loadResults[1].transformNodes;
+            const leftArm = transformNodes.find((transformNode) => transformNode.name === "Left arm")!;
+            const rightArm = transformNodes.find((transformNode) => transformNode.name === "Right arm")!;
             const degToRad = Math.PI / 180;
             leftArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
             rightArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
@@ -195,15 +201,11 @@ export class SceneBuilder implements ISceneBuilder {
                 rightLittleDistal: "Little_Distal_R"
             }).boneMap,
             scale: 14,
-            // invertX: true,
-            // invertY: true,
             invertZ: true
         });
-        mmdModel.morph.setMorphWeight("口_真顔", 1.0);
+        mmdModel.morph.setMorphWeight("口_真顔", 0.9);
         mmdModel.addAnimation(loadResults[0] as MmdAnimation);
         mmdModel.setAnimation("motion");
-
-        Inspector.Show(scene, { });
 
         attachToBone(scene, modelMesh, {
             directionalLightPosition: directionalLight.position,
@@ -211,7 +213,7 @@ export class SceneBuilder implements ISceneBuilder {
             cameraTargetYpositionOffset: -3,
             centerBoneName: "Spine"
         });
-        // scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",

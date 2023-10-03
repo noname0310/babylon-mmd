@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.29.0
+
+- support old vmd format
+
+- introduce `HumanoidMmd` to support MMD on generic humanoid model
+
 ## 0.28.0
 
 - auto pose initialization in mmd runtime for play multiple animations in single model
