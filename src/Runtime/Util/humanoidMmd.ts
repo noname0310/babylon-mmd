@@ -1,10 +1,10 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Space } from "@babylonjs/core/Maths/math.axis";
+// import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
+// import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
+// import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
@@ -52,16 +52,20 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public readonly children: LinkedBoneProxy[];
 
     public readonly bone: Nullable<Bone>;
-    private readonly _boneWorldRestMatrix: Nullable<Matrix>;
-    private readonly _boneWorldRestMatrixInverse: Nullable<Matrix>;
+    private readonly _boneWorldRestRotationMatrix: Nullable<Matrix>;
+    private readonly _boneFinalMatrix: Nullable<Matrix>;
+    private readonly _boneFinalMatrixInverse: Nullable<Matrix>;
+    private _boneParent: Nullable<LinkedBoneProxy>;
 
     private readonly _restMatrix: Matrix;
     private readonly _finalMatrix: Matrix;
 
-    private readonly _syncOnlyRotation: boolean;
     private readonly _positionApplyScale: number;
+    private readonly _scalingMatrix: Matrix;
 
-    public constructor(name: string, bone: Nullable<Bone>, syncOnlyRotation: boolean, positionApplyScale: number) {
+    // private _debugSphere: Nullable<Mesh>;
+
+    public constructor(name: string, bone: Nullable<Bone>, positionApplyScale: number, scalingMatrix: Matrix) {
         this.name = name;
 
         this._position = Vector3.Zero();
@@ -72,14 +76,18 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this.children = [];
 
         this.bone = bone;
-        this._boneWorldRestMatrix = bone !== null ? bone.getFinalMatrix().clone() : null;
-        this._boneWorldRestMatrixInverse = this._boneWorldRestMatrix !== null ? this._boneWorldRestMatrix.clone().invert() : null;
+        this._boneWorldRestRotationMatrix = bone !== null ? bone.getFinalMatrix().getRotationMatrix() : null;
+        this._boneFinalMatrix = bone !== null ? Matrix.Identity() : null;
+        this._boneFinalMatrixInverse = bone !== null ? Matrix.Identity() : null;
+        this._boneParent = null;
 
         this._restMatrix = Matrix.Identity();
         this._finalMatrix = Matrix.Identity();
 
-        this._syncOnlyRotation = syncOnlyRotation;
         this._positionApplyScale = positionApplyScale;
+        this._scalingMatrix = scalingMatrix;
+
+        // this._debugSphere = null;
     }
 
     public getRestMatrix(): Matrix {
@@ -94,79 +102,87 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this._rotationQuaternion.copyFrom(quat);
     }
 
-    private static readonly _AnimatedMatrix = new Matrix();
-    private static readonly _FinalLocalMatrix = new Matrix();
-    private static readonly _AnimatedRotation = new Quaternion();
-
-    public apply(): void {
+    public updateBoneParent(): void {
         let parent = this.parent;
         if (parent !== null) {
             while (parent.bone === null) {
                 parent = parent.parent;
-                if (parent === null) return;
+                if (parent === null) break;
             }
         }
+        this._boneParent = parent;
+    }
 
-        const boneAnimatedMatrix = LinkedBoneProxy._AnimatedMatrix;
-        boneAnimatedMatrix.copyFrom(this._boneWorldRestMatrix!);
+    public computeBoneFinalMatrix(): void {
+        const boneFinalMatrix = this._boneFinalMatrix!.copyFrom(this._finalMatrix);
 
-        if (parent === null) {
-            boneAnimatedMatrix.multiplyToRef(this._finalMatrix, boneAnimatedMatrix);
-        } else {
-            const finalLocalMatrix = LinkedBoneProxy._FinalLocalMatrix.copyFrom(parent._finalMatrix).invert();
-            boneAnimatedMatrix.multiplyToRef(finalLocalMatrix, boneAnimatedMatrix);
-        }
+        boneFinalMatrix.multiplyToRef(this._scalingMatrix, boneFinalMatrix);
+        const positionApplyScale = this._positionApplyScale;
+        boneFinalMatrix.setTranslationFromFloats(
+            boneFinalMatrix.m[12] * positionApplyScale,
+            boneFinalMatrix.m[13] * positionApplyScale,
+            boneFinalMatrix.m[14] * positionApplyScale
+        );
 
+        this._boneWorldRestRotationMatrix!.multiplyToRef(boneFinalMatrix, boneFinalMatrix);
+
+        // if (this._debugSphere === null) {
+        //     this._debugSphere = CreateBox("sphere" + this.name, { size: 0.1 });
+        //     const material = this._debugSphere.material = new StandardMaterial("material");
+        //     material.zOffset = -10000;
+        //     this._debugSphere.rotationQuaternion = Quaternion.Identity();
+        // }
+
+        // const debugSphere = this._debugSphere;
+        // boneFinalMatrix.decompose(debugSphere.scaling, debugSphere.rotationQuaternion!, debugSphere.position);
+
+        this._boneFinalMatrixInverse!.copyFrom(boneFinalMatrix).invert();
+    }
+
+    private static readonly _BoneLocalMatrix = new Matrix();
+
+    public apply(): void {
+        const parent = this._boneParent;
+
+        const boneLocalMatrix = LinkedBoneProxy._BoneLocalMatrix.copyFrom(this._boneFinalMatrix!);
         if (parent !== null) {
-            boneAnimatedMatrix.multiplyToRef(parent._boneWorldRestMatrixInverse!, boneAnimatedMatrix);
+            boneLocalMatrix.multiplyToRef(parent._boneFinalMatrixInverse!, boneLocalMatrix);
         }
 
-        if (this._syncOnlyRotation) {
-            this.bone!.setRotationQuaternion(
-                Quaternion.FromRotationMatrixToRef(boneAnimatedMatrix, LinkedBoneProxy._AnimatedRotation),
-                Space.LOCAL
-            );
-        } else {
-            if (this._positionApplyScale !== 1) {
-                boneAnimatedMatrix.setTranslationFromFloats(
-                    boneAnimatedMatrix.m[12] * this._positionApplyScale,
-                    boneAnimatedMatrix.m[13] * this._positionApplyScale,
-                    boneAnimatedMatrix.m[14] * this._positionApplyScale
-                );
-            }
-            this.bone!._matrix = boneAnimatedMatrix;
-        }
+        this.bone!._matrix = boneLocalMatrix;
     }
 }
 
-class BoneVisualizer {
-    private readonly _bones: LinkedBoneProxy[];
-    private readonly _spheres: Mesh[];
+// class BoneVisualizer {
+//     private readonly _bones: LinkedBoneProxy[];
+//     private readonly _spheres: AbstractMesh[];
 
-    public constructor(bones: LinkedBoneProxy[]) {
-        this._bones = bones;
-        this._spheres = [];
-        for (let i = 0; i < bones.length; ++i) {
-            const boneProxy = bones[i];
-            const worldPosition = boneProxy.getFinalMatrix().getTranslation();
-            const sphere = CreateSphere("sphere" + boneProxy.name, { diameter: 0.4 });
-            sphere.position = worldPosition;
-            const material = sphere.material = new StandardMaterial("material");
-            material.zOffset = -10000;
+//     public constructor(bones: LinkedBoneProxy[]) {
+//         this._bones = bones;
 
-            this._spheres.push(sphere);
-        }
-    }
+//         const material = new StandardMaterial("material");
+//         material.zOffset = -10000;
 
-    public update(): void {
-        for (let i = 0; i < this._bones.length; ++i) {
-            const boneProxy = this._bones[i];
-            const worldPosition = boneProxy.getFinalMatrix().getTranslation();
-            const sphere = this._spheres[i];
-            sphere.position = worldPosition;
-        }
-    }
-}
+//         const sourceSphere = CreateSphere("sphere" + bones[0]?.name, { diameter: 0.4 });
+//         sourceSphere.material = material;
+
+//         this._spheres = [ sourceSphere ];
+//         for (let i = 1; i < bones.length; ++i) {
+//             const boneProxy = bones[i];
+//             const sphere = sourceSphere.createInstance("sphere" + boneProxy.name);
+//             this._spheres.push(sphere);
+//         }
+//     }
+
+//     public update(): void {
+//         for (let i = 0; i < this._bones.length; ++i) {
+//             const boneProxy = this._bones[i];
+//             const worldPosition = boneProxy.getFinalMatrix().getTranslation();
+//             const sphere = this._spheres[i];
+//             sphere.position = worldPosition;
+//         }
+//     }
+// }
 
 class BoneContainer implements IMmdLinkedBoneContainer {
     public bones: LinkedBoneProxy[];
@@ -177,8 +193,8 @@ class BoneContainer implements IMmdLinkedBoneContainer {
 
         this._skeleton = skeleton;
 
-        const boneVisualizer = new BoneVisualizer(bones);
-        skeleton.getScene().onAfterRenderObservable.add(() => boneVisualizer.update());
+        // const boneVisualizer = new BoneVisualizer(bones);
+        // skeleton.getScene().onAfterRenderObservable.add(() => boneVisualizer.update());
     }
 
     public prepare(): void {/** do nothing */ }
@@ -197,6 +213,11 @@ class BoneContainer implements IMmdLinkedBoneContainer {
 
     private readonly _onBeforeCompute = (): void => {
         const proxies = this.bones;
+
+        for (let i = 0; i < proxies.length; ++i) {
+            if (proxies[i].bone !== null) proxies[i].computeBoneFinalMatrix();
+        }
+
         for (let i = 0; i < proxies.length; ++i) {
             if (proxies[i].bone !== null) proxies[i].apply();
         }
@@ -420,6 +441,7 @@ export class HumanoidMmd {
     ): LinkedBoneProxy[] {
         const invScale = 1 / scale;
         const invertVector = new Vector3(invertX ? -1 : 1, invertY ? -1 : 1, invertZ ? -1 : 1);
+        const invertMatrix = Matrix.Scaling(invertVector.x, invertVector.y, invertVector.z);
 
         const bones = skeleton.bones;
         const positionInitializedProxies = new Set<string>();
@@ -441,8 +463,8 @@ export class HumanoidMmd {
             const boneProxy = new LinkedBoneProxy(
                 boneMetadata.name,
                 bone,
-                (boneMetadata.flag & PmxObject.Bone.Flag.IsMovable) === 0,
-                invScale
+                invScale,
+                invertMatrix
             );
 
             if (bone !== null) {
@@ -687,7 +709,7 @@ export class HumanoidMmd {
             }
         }
 
-        // world to local
+        // world to local / initialize bone parent
         const worldPositions = new Map<LinkedBoneProxy, Vector3>();
         for (let i = 0; i < boneProxies.length; ++i) {
             worldPositions.set(boneProxies[i], boneProxies[i]._position.clone());
@@ -700,6 +722,8 @@ export class HumanoidMmd {
                 boneProxy._position.subtractInPlace(parentPosition);
             }
             boneProxy.getRestMatrix().setTranslation(boneProxy._position);
+
+            boneProxy.updateBoneParent();
         }
 
         return boneProxies;

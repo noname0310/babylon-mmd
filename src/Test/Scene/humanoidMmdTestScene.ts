@@ -110,11 +110,12 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.setAnimation("motion");
 
         loadResults[1].meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        loadResults[1].meshes[0].scaling.scaleInPlace(10);
+        loadResults[1].meshes[0].scaling.scaleInPlace(14);
         for (const mesh of loadResults[1].meshes as Mesh[]) {
             if (mesh.material === null) continue;
             shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
+            mesh.alwaysSelectAsActiveMesh = true;
             const material = mesh.material as PBRMaterial;
             material.albedoColor = new Color3(1, 1, 1);
             material.emissiveColor.set(0, 0, 0);
@@ -193,7 +194,9 @@ export class SceneBuilder implements ISceneBuilder {
                 rightLittleIntermediate: "Little_Intermediate_R",
                 rightLittleDistal: "Little_Distal_R"
             }).boneMap,
-            scale: 10,
+            scale: 14,
+            // invertX: true,
+            // invertY: true,
             invertZ: true
         });
         mmdModel.morph.setMorphWeight("口_真顔", 1.0);
