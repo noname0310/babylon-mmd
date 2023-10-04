@@ -8,6 +8,7 @@ import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGrou
 
 import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
+import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
@@ -15,7 +16,6 @@ import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
-import { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 
 type MorphIndices = readonly number[];
 
