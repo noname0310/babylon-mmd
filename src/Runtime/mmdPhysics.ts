@@ -321,12 +321,8 @@ export class MmdPhysics {
         {
             mesh.computeWorldMatrix(true);
             const worldMatrix = mesh.getWorldMatrix();
-            const m = worldMatrix.m;
-            const worldScale = new Vector3(
-                Math.sqrt(m[0] * m[0] + m[1] * m[1] + m[2] * m[2]),
-                Math.sqrt(m[4] * m[4] + m[5] * m[5] + m[6] * m[6]),
-                Math.sqrt(m[8] * m[8] + m[9] * m[9] + m[10] * m[10])
-            );
+            const worldScale = new Vector3();
+            worldMatrix.decompose(worldScale);
             if (Math.abs(worldScale.x - worldScale.y) < 0.0001 && Math.abs(worldScale.y - worldScale.z) < 0.0001) {
                 if (Math.abs(worldScale.x - 1) < 0.0001 && Math.abs(worldScale.y - 1) < 0.0001 && Math.abs(worldScale.z - 1) < 0.0001) {
                     scalingFactor = 1;
