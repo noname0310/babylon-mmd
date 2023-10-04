@@ -68,7 +68,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/cinderella/cinderella.mp3";
+        audioPlayer.source = "res/private_test/motion/105 degrees Celsius/Japanese Cover.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
@@ -78,13 +78,13 @@ export class SceneBuilder implements ISceneBuilder {
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
-                return bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd", updateProgress);
+                return bvmdLoader.loadAsync("motion", "res/private_test/motion/105 degrees Celsius/motion.bvmd", updateProgress);
             }],
             ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/model/",
-                    "Moe.glb",
+                    "Karin.glb",
                     scene,
                     updateProgress
                 );
@@ -110,7 +110,9 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.setAnimation("motion");
 
         loadResults[1].meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        loadResults[1].meshes[0].scaling.scaleInPlace(14.3);
+        loadResults[1].meshes[0].scaling.scaleInPlace(0.143);
+        const armature = loadResults[1].transformNodes.find((transformNode) => transformNode.name === "Armature")!;
+        armature.scaling.setAll(1);
         for (const mesh of loadResults[1].meshes as Mesh[]) {
             const boundingInfo = mesh.getBoundingInfo();
             const subMeshes = mesh.subMeshes;
@@ -128,17 +130,16 @@ export class SceneBuilder implements ISceneBuilder {
             const material = mesh.material as PBRMaterial;
             material.albedoColor = new Color3(1, 1, 1);
             material.emissiveColor.set(0, 0, 0);
-            material.albedoTexture = material.emissiveTexture;
             material.metallic = 0;
         }
         const modelMesh = loadResults[1].meshes[1] as Mesh;
         {
             const transformNodes = loadResults[1].transformNodes;
-            const leftArm = transformNodes.find((transformNode) => transformNode.name === "Left arm")!;
-            const rightArm = transformNodes.find((transformNode) => transformNode.name === "Right arm")!;
+            const leftArm = transformNodes.find((transformNode) => transformNode.name === "LeftUpperArm")!;
+            const rightArm = transformNodes.find((transformNode) => transformNode.name === "RightUpperArm")!;
             const degToRad = Math.PI / 180;
-            leftArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
-            rightArm.rotationQuaternion = Quaternion.FromEulerAngles(-35 * degToRad, 0, 0);
+            leftArm.rotationQuaternion = leftArm.rotationQuaternion!.multiply(Quaternion.FromEulerAngles(0, 0, -35 * degToRad));
+            rightArm.rotationQuaternion = rightArm.rotationQuaternion!.multiply(Quaternion.FromEulerAngles(0, 0, 35 * degToRad));
         }
 
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelMesh, {
@@ -148,57 +149,57 @@ export class SceneBuilder implements ISceneBuilder {
                 chest: "Chest",
                 neck: "Neck",
                 head: "Head",
-                leftShoulder: "Left shoulder",
-                leftUpperArm: "Left arm",
-                leftLowerArm: "Left elbow",
-                leftHand: "Left wrist",
-                rightShoulder: "Right shoulder",
-                rightUpperArm: "Right arm",
-                rightLowerArm: "Right elbow",
-                rightHand: "Right wrist",
-                leftUpperLeg: "Left leg",
-                leftLowerLeg: "Left knee",
-                leftFoot: "Left ankle",
-                leftToes: "Left Toe",
-                rightUpperLeg: "Right leg",
-                rightLowerLeg: "Right knee",
-                rightFoot: "Right ankle",
-                rightToes: "Right Toe",
+                leftShoulder: "LeftShoulder",
+                leftUpperArm: "LeftUpperArm",
+                leftLowerArm: "LeftLowerArm",
+                leftHand: "LeftHand",
+                rightShoulder: "RightShoulder",
+                rightUpperArm: "RightUpperArm",
+                rightLowerArm: "RightLowerArm",
+                rightHand: "RightHand",
+                leftUpperLeg: "LeftUpperLeg",
+                leftLowerLeg: "LeftLowerLeg",
+                leftFoot: "LeftFoot",
+                leftToes: "LeftToeBase",
+                rightUpperLeg: "RightUpperLeg",
+                rightLowerLeg: "RightLowerLeg",
+                rightFoot: "RightFoot",
+                rightToes: "RightToeBase",
 
-                leftEye: "Eye_L",
-                rightEye: "Eye_R",
+                leftEye: "LeftEye",
+                rightEye: "RightEye",
 
-                leftThumbProximal: "Thumb_Proximal_L",
-                leftThumbIntermediate: "Thumb_Intermediate_L",
-                leftThumbDistal: "Thumb_Distal_L",
-                leftIndexProximal: "Index_Proximal_L",
-                leftIndexIntermediate: "Index_Intermediate_L",
-                leftIndexDistal: "Index_Distal_L",
-                leftMiddleProximal: "Middle_Proximal_L",
-                leftMiddleIntermediate: "Middle_Intermediate_L",
-                leftMiddleDistal: "Middle_Distal_L",
-                leftRingProximal: "Ring_Proximal_L",
-                leftRingIntermediate: "Ring_Intermediate_L",
-                leftRingDistal: "Ring_Distal_L",
-                leftLittleProximal: "Little_Proximal_L",
-                leftLittleIntermediate: "Little_Intermediate_L",
-                leftLittleDistal: "Little_Distal_L",
+                leftThumbProximal: "LeftThumbProximal",
+                leftThumbIntermediate: "LeftThumbIntermediate",
+                leftThumbDistal: "LeftThumbDistal",
+                leftIndexProximal: "LeftIndexProximal",
+                leftIndexIntermediate: "LeftIndexIntermediate",
+                leftIndexDistal: "LeftIndexDistal",
+                leftMiddleProximal: "LeftMiddleProximal",
+                leftMiddleIntermediate: "LeftMiddleIntermediate",
+                leftMiddleDistal: "LeftMiddleDistal",
+                leftRingProximal: "LeftRingProximal",
+                leftRingIntermediate: "LeftRingIntermediate",
+                leftRingDistal: "LeftRingDistal",
+                leftLittleProximal: "LeftLittleProximal",
+                leftLittleIntermediate: "LeftLittleIntermediate",
+                leftLittleDistal: "LeftLittleDistal",
 
-                rightThumbProximal: "Thumb_Proximal_R",
-                rightThumbIntermediate: "Thumb_Intermediate_R",
-                rightThumbDistal: "Thumb_Distal_R",
-                rightIndexProximal: "Index_Proximal_R",
-                rightIndexIntermediate: "Index_Intermediate_R",
-                rightIndexDistal: "Index_Distal_R",
-                rightMiddleProximal: "Middle_Proximal_R",
-                rightMiddleIntermediate: "Middle_Intermediate_R",
-                rightMiddleDistal: "Middle_Distal_R",
-                rightRingProximal: "Ring_Proximal_R",
-                rightRingIntermediate: "Ring_Intermediate_R",
-                rightRingDistal: "Ring_Distal_R",
-                rightLittleProximal: "Little_Proximal_R",
-                rightLittleIntermediate: "Little_Intermediate_R",
-                rightLittleDistal: "Little_Distal_R"
+                rightThumbProximal: "RightThumbProximal",
+                rightThumbIntermediate: "RightThumbIntermediate",
+                rightThumbDistal: "RightThumbDistal",
+                rightIndexProximal: "RightIndexProximal",
+                rightIndexIntermediate: "RightIndexIntermediate",
+                rightIndexDistal: "RightIndexDistal",
+                rightMiddleProximal: "RightMiddleProximal",
+                rightMiddleIntermediate: "RightMiddleIntermediate",
+                rightMiddleDistal: "RightMiddleDistal",
+                rightRingProximal: "RightRingProximal",
+                rightRingIntermediate: "RightRingIntermediate",
+                rightRingDistal: "RightRingDistal",
+                rightLittleProximal: "RightLittleProximal",
+                rightLittleIntermediate: "RightLittleIntermediate",
+                rightLittleDistal: "RightLittleDistal"
             }).boneMap,
             transformOffset: modelMesh
         });

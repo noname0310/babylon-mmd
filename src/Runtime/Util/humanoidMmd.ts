@@ -5,6 +5,7 @@ import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -59,12 +60,12 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     private readonly _restMatrix: Matrix;
     private readonly _finalMatrix: Matrix;
 
-    private readonly _positionApplyScale: number;
+    private readonly _positionApplyScale: Vector3;
     private readonly _scalingMatrix: Matrix;
 
-    // private _debugSphere: Nullable<Mesh>;
+    // private readonly _debugSphere: Nullable<Mesh>;
 
-    public constructor(name: string, bone: Nullable<Bone>, positionApplyScale: number, scalingMatrix: Matrix) {
+    public constructor(name: string, bone: Nullable<Bone>, positionApplyScale: Vector3, scalingMatrix: Matrix) {
         this.name = name;
 
         this._position = Vector3.Zero();
@@ -124,9 +125,9 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         boneFinalMatrix.multiplyToRef(this._scalingMatrix, boneFinalMatrix);
         const positionApplyScale = this._positionApplyScale;
         boneFinalMatrix.setTranslationFromFloats(
-            boneFinalMatrix.m[12] * positionApplyScale,
-            boneFinalMatrix.m[13] * positionApplyScale,
-            boneFinalMatrix.m[14] * positionApplyScale
+            boneFinalMatrix.m[12] * positionApplyScale.x,
+            boneFinalMatrix.m[13] * positionApplyScale.y,
+            boneFinalMatrix.m[14] * positionApplyScale.z
         );
 
         this._boneWorldRestRotationMatrix!.multiplyToRef(boneFinalMatrix, boneFinalMatrix);
@@ -140,7 +141,11 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
 
         // const debugSphere = this._debugSphere;
         // boneFinalMatrix.decompose(debugSphere.scaling, debugSphere.rotationQuaternion!, debugSphere.position);
-        // debugSphere.position.scaleInPlace(1 / positionApplyScale);
+        // debugSphere.position = debugSphere.position.set(
+        //     this.position.x / positionApplyScale.x,
+        //     this.position.y / positionApplyScale.y,
+        //     this.position.z / positionApplyScale.z
+        // );
 
         this._boneFinalMatrixInverse!.copyFrom(boneFinalMatrix).invert();
     }
@@ -252,24 +257,9 @@ export interface CreateMmdModelFromHumanoidOptions {
     morphMap?: { [key: string]: string };
 
     /**
-     * Scale ratio from Humanoid to MMD (default: 1)
+     * Transform offset for match skeleton space (default: Matrix.Identity())
      */
-    scale?: number;
-
-    /**
-     * Invert axis X (default: false)
-     */
-    invertX?: boolean;
-
-    /**
-     * Invert axis Y (default: false)
-     */
-    invertY?: boolean;
-
-    /**
-     * Invert axis Z (default: true)
-     */
-    invertZ?: boolean;
+    transformOffset?: TransformNode | Matrix;
 }
 
 /**
@@ -450,6 +440,21 @@ export class HumanoidMmd {
         };
     }
 
+    private _removeScaleFromOffsetMatrix(matrix: Matrix): Vector3 {
+        const scale = new Vector3();
+        matrix.decompose(scale);
+
+        scale.x = Math.abs(scale.x);
+        scale.y = Math.abs(scale.y);
+        scale.z = Math.abs(scale.z);
+
+        const m = matrix.m;
+        matrix.setRowFromFloats(0, m[0] / scale.x, m[1] / scale.x, m[2] / scale.x, m[3]);
+        matrix.setRowFromFloats(1, m[4] / scale.y, m[5] / scale.y, m[6] / scale.y, m[7]);
+        matrix.setRowFromFloats(2, m[8] / scale.z, m[9] / scale.z, m[10] / scale.z, m[11]);
+        return scale;
+    }
+
     private _copyBonePosition(source: string, target: string, boneProxyMap: Map<string, LinkedBoneProxy>): Nullable<LinkedBoneProxy> {
         const sourceBoneProxy = boneProxyMap.get(source);
         const targetBoneProxy = boneProxyMap.get(target);
@@ -476,14 +481,11 @@ export class HumanoidMmd {
         skeleton: Skeleton,
         boneMap: { [key: string]: string },
         bonesMetadata: readonly MmdModelMetadata.Bone[],
-        scale: number,
-        invertX: boolean,
-        invertY: boolean,
-        invertZ: boolean
+        transformOffset: Matrix
     ): LinkedBoneProxy[] {
-        const invScale = 1 / scale;
-        const invertVector = new Vector3(invertX ? -1 : 1, invertY ? -1 : 1, invertZ ? -1 : 1);
-        const invertMatrix = Matrix.Scaling(invertVector.x, invertVector.y, invertVector.z);
+        const normalizedTransformOffset = transformOffset.clone();
+        const scale = this._removeScaleFromOffsetMatrix(normalizedTransformOffset);
+        const invScale = new Vector3(1 / scale.x, 1 / scale.y, 1 / scale.z);
 
         const bones = skeleton.bones;
         const positionInitializedProxies = new Set<string>();
@@ -506,7 +508,7 @@ export class HumanoidMmd {
                 boneMetadata.name,
                 bone,
                 invScale,
-                invertMatrix
+                normalizedTransformOffset
             );
 
             if (bone !== null) {
@@ -535,7 +537,7 @@ export class HumanoidMmd {
 
         // root
         if (!positionInitializedProxies.has("全ての親")) {
-            boneProxyMap.get("全ての親")!._position.y = 0.1 * invScale;
+            boneProxyMap.get("全ての親")!._position.y = 0.1 * invScale.y;
             positionInitializedProxies.add("全ての親");
         }
 
@@ -669,7 +671,7 @@ export class HumanoidMmd {
         if (!positionInitializedProxies.has("右足IK親")) {
             const targetBone = this._copyBonePosition("右足首", "右足IK親", boneProxyMap);
             if (targetBone !== null) {
-                targetBone._position.y = 0.1 * invScale;
+                targetBone._position.y = 0.1 * invScale.y;
                 positionInitializedProxies.add("右足IK親");
             }
         }
@@ -685,7 +687,7 @@ export class HumanoidMmd {
         if (!positionInitializedProxies.has("左足IK親")) {
             const targetBone = this._copyBonePosition("左足首", "左足IK親", boneProxyMap);
             if (targetBone !== null) {
-                targetBone._position.y = 0.1 * invScale;
+                targetBone._position.y = 0.1 * invScale.y;
                 positionInitializedProxies.add("左足IK親");
             }
         }
@@ -731,8 +733,8 @@ export class HumanoidMmd {
 
         for (let i = 0; i < boneProxies.length; ++i) {
             const boneProxy = boneProxies[i];
-            boneProxy._position.scaleInPlace(scale);
-            boneProxy._position.multiplyInPlace(invertVector);
+            boneProxy._position.multiplyInPlace(scale);
+            Vector3.TransformCoordinatesToRef(boneProxy._position, normalizedTransformOffset, boneProxy._position);
         }
 
         // force initialize bone positions
@@ -782,10 +784,7 @@ export class HumanoidMmd {
         const {
             boneMap = {},
             morphMap = {},
-            scale = 1,
-            invertX = false,
-            invertY = false,
-            invertZ = false
+            transformOffset = Matrix.Identity()
         } = options;
 
         const skeleton = humanoidMesh.skeleton;
@@ -796,7 +795,14 @@ export class HumanoidMmd {
 
         if (!HumanoidMesh.isHumanoidMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
 
-        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, scale, invertX, invertY, invertZ);
+        let transformOffsetMatrix: Matrix;
+        if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {
+            transformOffsetMatrix = (transformOffset as TransformNode).computeWorldMatrix(true).clone();
+        } else {
+            transformOffsetMatrix = (transformOffset as Matrix).clone();
+        }
+
+        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix);
         const mmdModel = new MmdModel(humanoidMesh, new BoneContainer(boneProxies, skeleton), null, null, mmdRuntime);
         mmdRuntime.addMmdModelInternal(mmdModel);
         return mmdModel;

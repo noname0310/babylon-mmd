@@ -67,6 +67,7 @@ export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
 export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Util
+export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 // Runtime
