@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.30.0
+
+- fix `MmdStandardMaterial` not affected by light intensity
+
 ## 0.29.0
 
 - support old vmd format

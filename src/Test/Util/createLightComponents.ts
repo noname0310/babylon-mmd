@@ -29,8 +29,8 @@ export interface ICreateLightComponentsResult {
 export function createLightComponents(scene: Scene, options: ICreateLightComponentOptions = {}): ICreateLightComponentsResult {
     const {
         worldScale = 1,
-        hemisphericLightIntensity = 0.4,
-        directionalLightIntensity = 0.8,
+        hemisphericLightIntensity = 0.85,
+        directionalLightIntensity = 0.15,
         shadowMaxZOffset = 0,
         shadowMinZOffset = 0,
         orthoTopOffset = 0,

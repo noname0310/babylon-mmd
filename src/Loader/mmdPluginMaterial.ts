@@ -250,23 +250,15 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         if (shaderType === "fragment") {
             const codes: { [pointName: string]: string; } = {};
 
-            codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
-                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
-                    uniform sampler2D sphereSampler;
-                #endif
+            codes["CUSTOM_FRAGMENT_BEGIN"] = /* glsl */`
                 #ifdef TOON_TEXTURE
                     uniform sampler2D toonSampler;
                 #endif
             `;
 
-            codes["CUSTOM_FRAGMENT_MAIN_BEGIN"] = /* glsl */`
-                #ifdef TOON_TEXTURE
-                    vec3 clampedInfoDiffuse;
-                    float infoToonDiffuseR;
-                    float infoToonDiffuseG;
-                    float infoToonDiffuseB;
-
-                    vec3 infoToonDiffuse;
+            codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
+                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
+                    uniform sampler2D sphereSampler;
                 #endif
             `;
 
@@ -286,27 +278,23 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
-            codes[`!${this._escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
+            // ndl might be clamped to 1.0
+            codes[`!${this._escapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
-                    clampedInfoDiffuse = clamp(info.diffuse, 0.0, 1.0);
+                    vec3 toonNdl = vec3(ndl);
+                    toonNdl.r = texture2D(toonSampler, vec2(0.5, toonNdl.r)).r;
+                    toonNdl.g = texture2D(toonSampler, vec2(0.5, toonNdl.g)).g;
+                    toonNdl.b = texture2D(toonSampler, vec2(0.5, toonNdl.b)).b;
 
                     #ifdef TOON_TEXTURE_COLOR
-                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r * toonTextureColor.r * toonTextureColor.a;
-                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g * toonTextureColor.g * toonTextureColor.a;
-                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b * toonTextureColor.b * toonTextureColor.a;
-                    #else
-                        infoToonDiffuseR = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.r)).r;
-                        infoToonDiffuseG = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.g)).g;
-                        infoToonDiffuseB = texture2D(toonSampler, vec2(0.5, clampedInfoDiffuse.b)).b;
+                        toonNdl *= toonTextureColor.rgb * toonTextureColor.a;
                     #endif
-                    
-                    infoToonDiffuse = vec3(infoToonDiffuseR, infoToonDiffuseG, infoToonDiffuseB);
 
-                    diffuseBase += infoToonDiffuse * shadow;
+                    result.diffuse = toonNdl * diffuseColor * attenuation;
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)
-                    diffuseBase += vec3(1.0, 1.0, 1.0) * shadow;
-                #else
-                    diffuseBase += info.diffuse * shadow;
+                    result.diffuse = diffuseColor * attenuation;
+                #else        
+                    result.diffuse = ndl * diffuseColor * attenuation;
                 #endif
             `;
 
