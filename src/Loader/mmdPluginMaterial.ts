@@ -250,15 +250,17 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         if (shaderType === "fragment") {
             const codes: { [pointName: string]: string; } = {};
 
-            codes["CUSTOM_FRAGMENT_BEGIN"] = /* glsl */`
+            codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
+                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
+                    uniform sampler2D sphereSampler;
+                #endif
                 #ifdef TOON_TEXTURE
                     uniform sampler2D toonSampler;
                 #endif
             `;
-
-            codes["CUSTOM_FRAGMENT_DEFINITIONS"] = /* glsl */`
-                #if defined(SPHERE_TEXTURE) && defined(NORMAL)
-                    uniform sampler2D sphereSampler;
+            codes["CUSTOM_FRAGMENT_MAIN_BEGIN"] = /* glsl */`
+                #ifdef TOON_TEXTURE
+                    vec3 toonNdl;
                 #endif
             `;
 
@@ -278,10 +280,29 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            codes[`!${this._escapeRegExp("struct lightingInfo\n{")}`] = /* glsl */`
+                struct lightingInfo
+                {
+                #if defined(TOON_TEXTURE) && !defined(NDOTL)
+                    float ndl;
+                #endif
+            `;
+
             // ndl might be clamped to 1.0
             codes[`!${this._escapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
-                    vec3 toonNdl = vec3(ndl);
+                    result.diffuse = diffuseColor * attenuation;
+                    result.ndl = ndl;
+                #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)   
+                    result.diffuse = diffuseColor * attenuation;
+                #else
+                    result.diffuse = ndl * diffuseColor * attenuation;
+                #endif
+            `;
+
+            codes[`!${this._escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
+                #ifdef TOON_TEXTURE
+                    toonNdl = vec3(info.ndl * shadow);
                     toonNdl.r = texture2D(toonSampler, vec2(0.5, toonNdl.r)).r;
                     toonNdl.g = texture2D(toonSampler, vec2(0.5, toonNdl.g)).g;
                     toonNdl.b = texture2D(toonSampler, vec2(0.5, toonNdl.b)).b;
@@ -290,11 +311,11 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                         toonNdl *= toonTextureColor.rgb * toonTextureColor.a;
                     #endif
 
-                    result.diffuse = toonNdl * diffuseColor * attenuation;
+                    diffuseBase += toonNdl * info.diffuse;
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)
-                    result.diffuse = diffuseColor * attenuation;
-                #else        
-                    result.diffuse = ndl * diffuseColor * attenuation;
+                    diffuseBase += info.diffuse;
+                #else
+                    diffuseBase += info.diffuse * shadow;
                 #endif
             `;
 
