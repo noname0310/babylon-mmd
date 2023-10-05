@@ -281,8 +281,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             `;
 
             codes[`!${this._escapeRegExp("struct lightingInfo\n{")}`] = /* glsl */`
-                struct lightingInfo
-                {
+                struct lightingInfo {
                 #if defined(TOON_TEXTURE) && !defined(NDOTL)
                     float ndl;
                 #endif
