@@ -282,8 +282,11 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
             codes[`!${this._escapeRegExp("struct lightingInfo\n{")}`] = /* glsl */`
                 struct lightingInfo {
-                #if defined(TOON_TEXTURE) && !defined(NDOTL)
-                    float ndl;
+                #ifdef TOON_TEXTURE
+                    #if !defined(NDOTL)
+                        float ndl;
+                    #endif
+                    float isToon;
                 #endif
             `;
 
@@ -292,6 +295,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #ifdef TOON_TEXTURE
                     result.diffuse = diffuseColor * attenuation;
                     result.ndl = ndl;
+                    result.isToon = 1.0;
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)   
                     result.diffuse = diffuseColor * attenuation;
                 #else
@@ -301,7 +305,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
             codes[`!${this._escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
-                    toonNdl = vec3(info.ndl * shadow);
+                    toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
                     toonNdl.r = texture2D(toonSampler, vec2(0.5, toonNdl.r)).r;
                     toonNdl.g = texture2D(toonSampler, vec2(0.5, toonNdl.g)).g;
                     toonNdl.b = texture2D(toonSampler, vec2(0.5, toonNdl.b)).b;
@@ -310,7 +314,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                         toonNdl *= toonTextureColor.rgb * toonTextureColor.a;
                     #endif
 
-                    diffuseBase += toonNdl * info.diffuse;
+                    diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)
                     diffuseBase += info.diffuse;
                 #else
@@ -325,10 +329,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
                     vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
-
                     #ifdef SPHERE_TEXTURE_COLOR
                         sphereReflectionColor *= sphereTextureColor;
                     #endif
+                    sphereReflectionColor.rgb *= diffuseBase;
 
                     #ifdef SPHERE_TEXTURE_BLEND_MODE_MULTIPLY
                         color *= sphereReflectionColor;

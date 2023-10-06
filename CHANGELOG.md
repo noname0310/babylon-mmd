@@ -6,6 +6,8 @@
 
 - fix application of linked transform nodes being applied one frame late in `HumanoidMmd`
 
+- sphere map is now affected by light intensity
+
 ## 0.29.0
 
 - support old vmd format
