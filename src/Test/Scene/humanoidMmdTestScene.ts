@@ -57,7 +57,9 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.maxZ = 5000;
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const { hemisphericLight, directionalLight, shadowGenerator } = createLightComponents(scene);
+        hemisphericLight.intensity = 0.3;
+        directionalLight.intensity = 0.7;
         createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime();

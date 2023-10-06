@@ -4,6 +4,8 @@
 
 - fix `MmdStandardMaterial` not affected by light intensity
 
+- fix application of linked transform nodes being applied one frame late in `HumanoidMmd`
+
 ## 0.29.0
 
 - support old vmd format

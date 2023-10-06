@@ -151,38 +151,14 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     }
 
     private static readonly _BoneLocalMatrix = new Matrix();
-    private static readonly _LinkedTransformNodeRotationQuaternion = new Quaternion();
 
     public apply(): void {
         const parent = this._boneParent;
 
         const boneLocalMatrix = LinkedBoneProxy._BoneLocalMatrix.copyFrom(this._boneFinalMatrix!);
-        if (parent !== null) {
-            boneLocalMatrix.multiplyToRef(parent._boneFinalMatrixInverse!, boneLocalMatrix);
-        }
+        if (parent !== null) boneLocalMatrix.multiplyToRef(parent._boneFinalMatrixInverse!, boneLocalMatrix);
 
-        const bone = this.bone!;
-        if (bone._linkedTransformNode !== null) {
-            const linkedTransformNode = bone._linkedTransformNode;
-            const rotation = LinkedBoneProxy._LinkedTransformNodeRotationQuaternion;
-            boneLocalMatrix.decompose(
-                linkedTransformNode.scaling,
-                rotation,
-                linkedTransformNode.position
-            );
-
-            if (linkedTransformNode.rotationQuaternion !== null) {
-                linkedTransformNode.rotationQuaternion.copyFrom(rotation);
-            } else {
-                rotation.toEulerAnglesToRef(linkedTransformNode.rotation);
-            }
-
-            // for trigger dirty flag
-            // eslint-disable-next-line no-self-assign
-            linkedTransformNode.position = linkedTransformNode.position;
-        } else {
-            bone._matrix = boneLocalMatrix;
-        }
+        this.bone!._matrix = boneLocalMatrix;
     }
 }
 
@@ -217,8 +193,17 @@ class BoneContainer implements IMmdLinkedBoneContainer {
     public set _computeTransformMatrices(value: any) {
         if (value === true) { // restore matrix update policy
             this._skeleton.onBeforeComputeObservable.removeCallback(this._onBeforeCompute);
+
+            const bones = this._skeleton.bones;
+            let numBonesWithLinkedTransformNode = 0;
+            for (let i = 0; i < bones.length; ++i) {
+                if (bones[i]._linkedTransformNode !== null) numBonesWithLinkedTransformNode += 1;
+            }
+            this._skeleton._numBonesWithLinkedTransformNode = numBonesWithLinkedTransformNode; // restore sync with linked transform node
         } else { // override matrix update policy
             this._skeleton.onBeforeComputeObservable.add(this._onBeforeCompute);
+
+            this._skeleton._numBonesWithLinkedTransformNode = 0; // force disable sync with linked transform node
         }
     }
 
