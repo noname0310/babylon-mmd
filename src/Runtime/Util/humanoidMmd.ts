@@ -12,6 +12,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
+import type { ILogger } from "../ILogger";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import { HumanoidMesh } from "../mmdMesh";
 import { MmdModel } from "../mmdModel";
@@ -466,7 +467,8 @@ export class HumanoidMmd {
         skeleton: Skeleton,
         boneMap: { [key: string]: string },
         bonesMetadata: readonly MmdModelMetadata.Bone[],
-        transformOffset: Matrix
+        transformOffset: Matrix,
+        logger: ILogger
     ): LinkedBoneProxy[] {
         const normalizedTransformOffset = transformOffset.clone();
         const scale = this._removeScaleFromOffsetMatrix(normalizedTransformOffset);
@@ -734,6 +736,7 @@ export class HumanoidMmd {
                     boneProxy._position.copyFrom(parent._position);
                     positionInitializedProxies.add(boneProxy.name);
                     positionUninitializedProxyCount -= 1;
+                    logger.warn(`Bone position of ${boneProxy.name} is not initialized. Use parent bone position instead. Animation may not work correctly.`);
                 }
             }
         }
@@ -787,7 +790,7 @@ export class HumanoidMmd {
             transformOffsetMatrix = (transformOffset as Matrix).clone();
         }
 
-        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix);
+        const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);
         const mmdModel = new MmdModel(humanoidMesh, new BoneContainer(boneProxies, skeleton), null, null, mmdRuntime);
         mmdRuntime.addMmdModelInternal(mmdModel);
         return mmdModel;
