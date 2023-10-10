@@ -104,12 +104,12 @@ export class PmxConverterScene implements ISceneBuilder {
         camera.attachControl(canvas, true);
 
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
+        hemisphericLight.intensity = 0.5;
         hemisphericLight.specular = new Color3(0, 0, 0);
         hemisphericLight.groundColor = new Color3(1, 1, 1);
 
         const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.8;
+        directionalLight.intensity = 0.5;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20 * 3;
