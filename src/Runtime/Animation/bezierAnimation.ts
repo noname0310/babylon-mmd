@@ -423,9 +423,9 @@ export class BezierAnimation extends Animation {
      * @param gradient Scalar amount to interpolate (value between 0 and 1)
      * @returns Interpolated Vector2 value
      */
-    public vector2InterpolateFunctionWithControlPoints(startValue: Vector2, outTangent: [Vector2, Vector2], endValue: Vector2, inTangent: Vector2, gradient: number): Vector2 {
-        const weightX = BezierInterpolator.Interpolate(outTangent[0].x, inTangent.x, outTangent[0].y, inTangent.y, gradient);
-        const weightY = BezierInterpolator.Interpolate(outTangent[1].x, inTangent.x, outTangent[1].y, inTangent.y, gradient);
+    public vector2InterpolateFunctionWithControlPoints(startValue: Vector2, outTangent: [Vector2, Vector2], endValue: Vector2, inTangent: [Vector2, Vector2], gradient: number): Vector2 {
+        const weightX = BezierInterpolator.Interpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightY = BezierInterpolator.Interpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
         return new Vector2(
             startValue.x * (1 - weightX) + endValue.x * weightX,
             startValue.y * (1 - weightY) + endValue.y * weightY
@@ -441,10 +441,10 @@ export class BezierAnimation extends Animation {
      * @param gradient Scalar amount to interpolate
      * @returns interpolated value
      */
-    public color3InterpolateFunctionWithControlPoints(startValue: Color3, outTangent: Color3, endValue: Color3, inTangent: Color3, gradient: number): Color3 {
-        const weightR = BezierInterpolator.Interpolate(outTangent.r, inTangent.r, outTangent.g, inTangent.g, gradient);
-        const weightG = BezierInterpolator.Interpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
-        const weightB = BezierInterpolator.Interpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
+    public color3InterpolateFunctionWithControlPoints(startValue: Color3, outTangent: [Vector2, Vector2, Vector2], endValue: Color3, inTangent: [Vector2, Vector2, Vector2], gradient: number): Color3 {
+        const weightR = BezierInterpolator.Interpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightG = BezierInterpolator.Interpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
+        const weightB = BezierInterpolator.Interpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
         return new Color3(
             startValue.r * (1 - weightR) + endValue.r * weightR,
             startValue.g * (1 - weightG) + endValue.g * weightG,
