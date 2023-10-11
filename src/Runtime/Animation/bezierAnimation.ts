@@ -27,7 +27,7 @@ export class BezierAnimation extends Animation {
     /**
      * @internal Internal use only
      */
-    public override _interpolate(currentFrame: number, state: _IAnimationState): any {
+    public override _interpolate(currentFrame: number, state: _IAnimationState, searchClosestKeyOnly = false): any {
         if (state.loopMode === Animation.ANIMATIONLOOPMODE_CONSTANT && state.repeatCount > 0) {
             return state.highLimitValue.clone ? state.highLimitValue.clone() : state.highLimitValue;
         }
@@ -48,13 +48,18 @@ export class BezierAnimation extends Animation {
         state.key = key;
 
         if (key < 0) {
-            return this._getKeyValue(keys[0].value);
+            return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[0].value);
         } else if (key + 1 > keysLength - 1) {
-            return this._getKeyValue(keys[keysLength - 1].value);
+            return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[keysLength - 1].value);
         }
 
         const startKey = keys[key];
         const endKey = keys[key + 1];
+
+        if (searchClosestKeyOnly && (currentFrame === startKey.frame || currentFrame === endKey.frame)) {
+            return undefined;
+        }
+
         const startValue = this._getKeyValue(startKey.value);
         const endValue = this._getKeyValue(endKey.value);
         if (startKey.interpolation === AnimationKeyInterpolation.STEP) {
