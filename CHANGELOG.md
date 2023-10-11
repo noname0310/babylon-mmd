@@ -4,8 +4,6 @@
 
 - fix `MmdStandardMaterial` not affected by light intensity
 
-- sphere map is now affected by light intensity
-
 - fix application of linked transform nodes being applied one frame late in `HumanoidMmd`
 
 ## 0.29.0
