@@ -162,12 +162,12 @@ export class SceneBuilder implements ISceneBuilder {
         arcRotateCamera.speed = 10;
 
         const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
+        hemisphericLight.intensity = 0.3;
         hemisphericLight.specular.set(0, 0, 0);
         hemisphericLight.groundColor.set(1, 1, 1);
 
         const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.8;
+        directionalLight.intensity = 0.7;
         directionalLight.autoCalcShadowZBounds = false;
         directionalLight.autoUpdateExtends = false;
         directionalLight.shadowMaxZ = 20;

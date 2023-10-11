@@ -115,12 +115,12 @@ export class SceneBuilder implements ISceneBuilder {
         const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
 
         const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(0, 1, 0), scene);
-        hemisphericLight.intensity = 0.4;
+        hemisphericLight.intensity = 0.3;
         hemisphericLight.specular.set(0, 0, 0);
         hemisphericLight.groundColor.set(1, 1, 1);
 
         const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
-        directionalLight.intensity = 0.8;
+        directionalLight.intensity = 0.7;
         directionalLight.shadowMaxZ = 20;
         directionalLight.shadowMinZ = -15;
 
