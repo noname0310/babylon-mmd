@@ -228,6 +228,18 @@ export class SceneBuilder implements ISceneBuilder {
             uiContainer.style.fontFamily = "sans-serif";
             newCanvasContainer.appendChild(uiContainer);
 
+            scene.onDisposeObservable.addOnce(() => {
+                newCanvasContainer.removeChild(uiContainer);
+
+                while (newCanvasContainer.childElementCount > 0) {
+                    const child = newCanvasContainer.childNodes[0];
+                    newCanvasContainer.removeChild(child);
+                    parentControl.appendChild(child);
+                }
+
+                parentControl.removeChild(newCanvasContainer);
+            });
+
             const uiInnerContainer = ownerDocument.createElement("div");
             uiInnerContainer.style.position = "absolute";
             uiInnerContainer.style.bottom = "0";
