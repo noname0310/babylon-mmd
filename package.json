@@ -47,6 +47,14 @@
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^4.15.1"
     },
+    "keywords": [
+        "3D",
+        "javascript",
+        "html5",
+        "webgl",
+        "babylon.js",
+        "mmd"
+    ],
     "sideEffects": [
         "**/mmdOutlineRenderer.*",
         "**/pmdLoader.*",
