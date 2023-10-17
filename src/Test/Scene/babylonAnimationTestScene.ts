@@ -50,9 +50,6 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.afterBuildSingleMaterial = (material): void => {
-            material.useLogarithmicDepth = true;
-        };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);

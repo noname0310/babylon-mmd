@@ -52,7 +52,6 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         materialBuilder.afterBuildSingleMaterial = (material): void => {
             if (material.name.toLowerCase() === "hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
-            material.useLogarithmicDepth = true;
         };
 
         const scene = new Scene(engine);
@@ -64,7 +63,7 @@ export class SceneBuilder implements ISceneBuilder {
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, camera, mmdCamera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
-        createDefaultGround(scene, { useLogarithmicDepth: true });
+        createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
