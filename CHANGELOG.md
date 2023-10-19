@@ -5,6 +5,8 @@
 - fix signature validation
     - some PMX files have "PMXP" signature instead of "PMX " (with space)
 
+- fix `PmxLoader` / `PmdLoader` load texture from file edge case
+
 ## 0.30.0
 
 - fix `MmdStandardMaterial` not affected by light intensity

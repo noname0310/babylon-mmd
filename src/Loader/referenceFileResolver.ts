@@ -41,6 +41,8 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
             for (const file of files) {
                 const fileRelativePath = this._pathNormalize((file as File).webkitRelativePath);
 
+                if (!fileRelativePath.startsWith(rootUrl)) continue;
+
                 const relativePath = fileRootId + fileRelativePath.slice(rootUrl.length);
                 this._fileMap.set(this._pathNormalize(relativePath), file);
             }
