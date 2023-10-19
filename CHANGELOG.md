@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.31.0
+
+- fix signature validation
+    - some PMX files have "PMXP" signature instead of "PMX " (with space)
+
 ## 0.30.0
 
 - fix `MmdStandardMaterial` not affected by light intensity

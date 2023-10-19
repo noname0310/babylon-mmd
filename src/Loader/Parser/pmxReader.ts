@@ -150,10 +150,11 @@ export class PmxReader {
         )) {
             throw new RangeError("is not pmx file");
         }
-        const signature = dataDeserializer.getSignatureString(4);
-        if (signature !== "PMX ") {
+        const signature = dataDeserializer.getSignatureString(3);
+        if (signature !== "PMX") {
             throw new RangeError("is not pmx file");
         }
+        dataDeserializer.getInt8(); // skip byte alignment
 
         const version = dataDeserializer.getFloat32();
 
