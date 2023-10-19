@@ -66,7 +66,7 @@ export namespace PmxObject {
      */
     export type Header = Readonly<{
         /**
-         * Signature of the PMX file (always "PMX ")
+         * Signature of the PMX file (always "PMX" and there's one byte garbage after it)
          */
         signature: string;
 
