@@ -353,9 +353,11 @@ export class MmdPhysics {
             const bone = bones[rigidBody.boneIndex];
 
             let shape: PhysicsShape;
+            let isZeroVolume = false;
             switch (rigidBody.shapeType) {
             case PmxObject.RigidBody.ShapeType.Sphere:
                 shape = new PhysicsShapeSphere(new Vector3(), rigidBody.shapeSize[0] * scalingFactor, scene);
+                if (rigidBody.shapeSize[0] === 0) isZeroVolume = true;
                 break;
 
             case PmxObject.RigidBody.ShapeType.Box:
@@ -366,6 +368,7 @@ export class MmdPhysics {
                         rigidBody.shapeSize[2] * 2 * scalingFactor
                     ), scene
                 );
+                if (rigidBody.shapeSize[0] === 0 || rigidBody.shapeSize[1] === 0 || rigidBody.shapeSize[2] === 0) isZeroVolume = true;
                 break;
 
             case PmxObject.RigidBody.ShapeType.Capsule:
@@ -375,6 +378,7 @@ export class MmdPhysics {
                     rigidBody.shapeSize[0] * scalingFactor,
                     scene
                 );
+                if (rigidBody.shapeSize[0] === 0 || rigidBody.shapeSize[1] === 0) isZeroVolume = true;
                 break;
 
             default:
@@ -388,7 +392,7 @@ export class MmdPhysics {
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion
             };
-            shape.filterCollideMask = rigidBody.collisionMask;
+            shape.filterCollideMask = isZeroVolume ? 0 : rigidBody.collisionMask;
             shape.filterMembershipMask = 1 << rigidBody.collisionGroup;
 
             const node = new MmdPhysicsTransformNode(rigidBody.name, scene, bone, rigidBody.physicsMode);

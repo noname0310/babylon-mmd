@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.31.1
+
+- ignore collision with zero volume body
+
 ## 0.31.0
 
 - fix signature validation
