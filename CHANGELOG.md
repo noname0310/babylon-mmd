@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.31.2
+
+- fix wrong camera view matrix computation when distance is zero or positive value
+
 ## 0.31.1
 
 - ignore collision with zero volume body

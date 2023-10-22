@@ -212,31 +212,32 @@ export class MmdCamera extends Camera {
     private static readonly _RotationMatrix = new Matrix();
     private static readonly _CameraEyePosition = new Vector3();
     private static readonly _UpVector = new Vector3();
+    private static readonly _TargetVector = new Vector3();
 
     /** @internal */
     public override _getViewMatrix(): Matrix {
-        const target = this.position;
-
         const rotationMatrix = Matrix.RotationYawPitchRollToRef(
             -this.rotation.y, -this.rotation.x, -this.rotation.z,
             MmdCamera._RotationMatrix
         );
-        const cameraEyePosition = target.addToRef(
+        const cameraEyePosition = this.position.addToRef(
             Vector3.TransformCoordinatesFromFloatsToRef(0, 0, this.distance, rotationMatrix, MmdCamera._CameraEyePosition),
             MmdCamera._CameraEyePosition
         );
+        const targetVector = Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, MmdCamera._TargetVector)
+            .addInPlace(cameraEyePosition);
         const upVector = Vector3.TransformNormalFromFloatsToRef(0, 1, 0, rotationMatrix, MmdCamera._UpVector);
 
         if (this.ignoreParentScaling) {
             if (this.parent) {
                 const parentWorldMatrix = this.parent.getWorldMatrix();
                 Vector3.TransformCoordinatesToRef(cameraEyePosition, parentWorldMatrix, this._globalPosition);
-                Vector3.TransformCoordinatesToRef(target, parentWorldMatrix, this._tmpTargetVector);
+                Vector3.TransformCoordinatesToRef(targetVector, parentWorldMatrix, this._tmpTargetVector);
                 Vector3.TransformNormalToRef(upVector, parentWorldMatrix, this._tmpUpVector);
                 this._markSyncedWithParent();
             } else {
                 this._globalPosition.copyFrom(cameraEyePosition);
-                this._tmpTargetVector.copyFrom(target);
+                this._tmpTargetVector.copyFrom(targetVector);
                 this._tmpUpVector.copyFrom(upVector);
             }
 
@@ -249,9 +250,9 @@ export class MmdCamera extends Camera {
         }
 
         if (this.getScene().useRightHandedSystem) {
-            Matrix.LookAtRHToRef(cameraEyePosition, target, upVector, this._viewMatrix);
+            Matrix.LookAtRHToRef(cameraEyePosition, targetVector, upVector, this._viewMatrix);
         } else {
-            Matrix.LookAtLHToRef(cameraEyePosition, target, upVector, this._viewMatrix);
+            Matrix.LookAtLHToRef(cameraEyePosition, targetVector, upVector, this._viewMatrix);
         }
 
         if (this.parent) {
