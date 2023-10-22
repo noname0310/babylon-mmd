@@ -15,7 +15,7 @@ export async function parallelLoadAsync<const T extends Task<any>[]>(
 
     engine.displayLoadingUI();
 
-    let loadingTexts: string[] = [];
+    const loadingTexts: string[] = new Array(tasks.length).fill("");
     const updateLoadingText = (updateIndex: number, text: string): void => {
         loadingTexts[updateIndex] = text;
         engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
@@ -35,10 +35,7 @@ export async function parallelLoadAsync<const T extends Task<any>[]>(
             })
         );
     }
-
-    loadingTexts = new Array(promises.length).fill("");
     const loadResults = await Promise.all(promises);
-
     scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
     return loadResults as any;
