@@ -488,7 +488,7 @@ export class MmdRuntime implements ILogger {
      * It returns Promise because playing audio is asynchronous
      */
     public async playAnimation(): Promise<void> {
-        if (this._audioPlayer !== null && this._currentFrameTime <= this._audioPlayer.duration * 30) {
+        if (this._audioPlayer !== null && this._currentFrameTime < this._audioPlayer.duration * 30) {
             try {
                 const currentTime = this._currentFrameTime / 30;
                 if (0.05 < Math.abs(this._audioPlayer.currentTime - currentTime)) {
