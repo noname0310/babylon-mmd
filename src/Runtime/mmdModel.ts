@@ -226,7 +226,11 @@ export class MmdModel {
      */
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
-        if (this._currentAnimation === animation) this._currentAnimation = null;
+        if (this._currentAnimation === animation) {
+            this._currentAnimation = null;
+            this._resetPose();
+            this.onCurrentAnimationChangedObservable.notifyObservers(null);
+        }
 
         this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);

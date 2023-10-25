@@ -6,6 +6,8 @@
 
 - fix invalid body dispose null check
 
+- fix `MmdModel.removeAnimation` missing pose reset
+
 ## 0.31.2
 
 - fix wrong camera view matrix computation when distance is zero or positive value
