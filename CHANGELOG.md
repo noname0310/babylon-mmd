@@ -4,6 +4,8 @@
 
 - fix animation not playing at start on audio player with zero duration
 
+- fix invalid body dispose null check
+
 ## 0.31.2
 
 - fix wrong camera view matrix computation when distance is zero or positive value

@@ -102,7 +102,7 @@ export class MmdPhysicsModel {
             const body = bodies[i];
             if (body === null) continue;
 
-            body.shape!.dispose();
+            body.shape?.dispose();
             body.dispose();
         }
 
