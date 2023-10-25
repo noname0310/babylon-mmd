@@ -19,7 +19,7 @@ import { Tools } from "@babylonjs/core/Misc/tools";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import HavokPhysics from "@babylonjs/havok";
+import havokPhysics from "@babylonjs/havok";
 
 // import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -67,7 +67,7 @@ export class SceneBuilder implements ISceneBuilder {
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const havokInstance = await HavokPhysics();
+                const havokInstance = await havokPhysics();
                 const havokPlugin = new HavokPlugin(true, havokInstance);
                 scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });

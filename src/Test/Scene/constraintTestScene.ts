@@ -9,7 +9,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene";
-import HavokPhysics from "@babylonjs/havok";
+import havokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -47,7 +47,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
-        const havokInstance = await HavokPhysics();
+        const havokInstance = await havokPhysics();
         const havokPlugin = new HavokPlugin(true, havokInstance);
         scene.enablePhysics(new Vector3(0, -98, 0), havokPlugin);
 

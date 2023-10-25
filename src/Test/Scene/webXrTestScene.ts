@@ -27,7 +27,7 @@ import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depth
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import { WebXRFeatureName } from "@babylonjs/core/XR/webXRFeaturesManager";
-import HavokPhysics from "@babylonjs/havok";
+import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
@@ -113,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const havokInstance = await HavokPhysics();
+                const havokInstance = await havokPhysics();
                 const havokPlugin = new HavokPlugin(true, havokInstance);
                 scene.enablePhysics(new Vector3(0, -9.8 * 10 * worldScale, 0), havokPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
