@@ -4,14 +4,14 @@ First, you need a basic scene before you load the MMD.
 
 In this tutorial, we will do basic scene setting using minimal code.
 
-## Clone the `babylon-mmd-viewer` repository
+## Clone the `babylon-mmd-template` repository
 
-Project setups can vary widely depending on personal preferences. However, for starters, I recommend the **[babylon-mmd-viewer](https://github.com/noname0310/babylon-mmd-viewer.git)** repository as a template for using babylon-mmd
+Project setups can vary widely depending on personal preferences. However, for starters, I recommend the **[babylon-mmd-template](https://github.com/noname0310/babylon-mmd-template.git)** repository as a template for using babylon-mmd
 
 Clone the repository using git:
 
 ```bash
-git clone https://github.com/noname0310/babylon-mmd-viewer.git
+git clone https://github.com/noname0310/babylon-mmd-template.git
 ```
 
 When you open a cloned repository in vscode, src requires these four sources(other files can be deleted):

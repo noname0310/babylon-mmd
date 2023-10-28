@@ -8,14 +8,14 @@ In this tutorial, we write code that is cumbersome but user-friendly and gives u
 In this example, you can learn how to deal with multiple problem situations using an asset that requires a lot of modification, which can be very cumbersome.
 :::
 
-## Clone the `babylon-mmd-viewer` repository
+## Clone the `babylon-mmd-template` repository
 
-Project setups can vary widely depending on personal preferences. However, for starters, I recommend the **[babylon-mmd-viewer](https://github.com/noname0310/babylon-mmd-viewer.git)** repository as a template for using babylon-mmd
+Project setups can vary widely depending on personal preferences. However, for starters, I recommend the **[babylon-mmd-template](https://github.com/noname0310/babylon-mmd-template.git)** repository as a template for using babylon-mmd
 
 Clone the repository using git:
 
 ```bash
-git clone https://github.com/noname0310/babylon-mmd-viewer.git
+git clone https://github.com/noname0310/babylon-mmd-template.git
 ```
 
 When you open a cloned repository in vscode, src requires these four sources(other files can be deleted):
