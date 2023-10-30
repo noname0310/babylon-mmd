@@ -16,6 +16,7 @@ export function createDefaultArcRotateCamera(scene: Scene, options: ICreateDefau
     camera.attachControl(undefined, false);
     camera.inertia = 0.8;
     camera.speed = 10 * worldScale;
+    camera.wheelPrecision = 3 * (1 / worldScale);
 
     return camera;
 }
