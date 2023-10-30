@@ -86,13 +86,14 @@ export class MmdCameraAutoFocus2 {
 
                 Vector3.TransformCoordinatesToRef(cameraEyePosition, cameraParentWorldMatrix, cameraEyePosition);
                 Vector3.TransformNormalToRef(cameraNormal, cameraParentWorldMatrix, cameraNormal);
+                cameraNormal.normalize();
             }
 
             let closestDistanceSq = Infinity;
             for (let i = 0; i < this._headBones.length; i++) {
                 const headBone = this._headBones[i];
                 if (skeletonWorldMatrix !== null) {
-                    headBone.getFinalMatrix().multiplyToRef(skeletonWorldMatrix!, boneWorldMatrix);
+                    headBone.getFinalMatrix().multiplyToRef(skeletonWorldMatrix, boneWorldMatrix);
                 } else {
                     boneWorldMatrix.copyFrom(headBone.getFinalMatrix());
                 }

@@ -69,6 +69,7 @@ export class MmdCameraAutoFocus {
 
                 Vector3.TransformCoordinatesToRef(cameraEyePosition, cameraParentWorldMatrix, cameraEyePosition);
                 Vector3.TransformNormalToRef(cameraNormal, cameraParentWorldMatrix, cameraNormal);
+                cameraNormal.normalize();
             }
 
             if (skeletonWorldMatrix !== null) {
