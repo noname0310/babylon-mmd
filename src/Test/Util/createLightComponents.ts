@@ -39,12 +39,12 @@ export function createLightComponents(scene: Scene, options: ICreateLightCompone
         orthoRightOffset = 0
     } = options;
 
-    const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene);
+    const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0).scaleInPlace(worldScale), scene);
     hemisphericLight.intensity = hemisphericLightIntensity;
     hemisphericLight.specular = new Color3(0, 0, 0);
     hemisphericLight.groundColor = new Color3(1, 1, 1);
 
-    const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene);
+    const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1).scaleInPlace(worldScale), scene);
     directionalLight.intensity = directionalLightIntensity;
     directionalLight.autoCalcShadowZBounds = false;
     directionalLight.autoUpdateExtends = false;
