@@ -18,7 +18,7 @@ import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoade
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -63,9 +63,12 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRoot = new TransformNode("mmdRoot", scene);
         mmdRoot.scaling.scaleInPlace(worldScale);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 5000;
+        mmdCamera.minZ = 4;
+        mmdCamera.maxZ = 400;
         mmdCamera.parent = mmdRoot;
-        const camera = createDefaultArcRotateCamera(scene, { worldScale });
+        const camera = createDefaultArcRotateCamera(scene);
+        camera.maxZ = 1000;
+        camera.parent = mmdRoot;
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
 
@@ -148,6 +151,14 @@ export class SceneBuilder implements ISceneBuilder {
 
         const stageMesh = loadResults[2].meshes[0] as Mesh;
         stageMesh.receiveShadows = true;
+        const stageMaterials = (stageMesh.material as MultiMaterial).subMaterials;
+        for (let i = 0; i < stageMaterials.length; ++i) {
+            const material = stageMaterials[i] as MmdStandardMaterial;
+            material.ignoreDiffuseWhenToonTextureIsNull = false;
+            material.toonTexture?.dispose();
+            material.toonTexture = null;
+            material.emissiveColor = new Color3(0.5, 0.5, 0.5);
+        }
         stageMesh.parent = mmdRoot;
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
