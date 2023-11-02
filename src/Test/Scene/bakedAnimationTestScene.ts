@@ -8,7 +8,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -72,13 +71,16 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -86,9 +88,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -98,24 +100,23 @@ export class SceneBuilder implements ISceneBuilder {
                     "Stage35_02.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.receiveShadows = true;
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
         attachToBone(scene, modelMesh, {

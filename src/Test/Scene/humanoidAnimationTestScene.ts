@@ -9,7 +9,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -67,11 +66,14 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            motionAssetContainer,
+            modelMesh
+        ] = await parallelLoadAsync(scene, [
             ["source", (updateProgress): Promise<AssetContainer> => {
                 return SceneLoader.LoadAssetContainerAsync("res/private_test/mixamo/", "Walk In Circle.glb", scene, updateProgress);
             }],
-            ["target", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["target", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -79,7 +81,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -89,9 +91,6 @@ export class SceneBuilder implements ISceneBuilder {
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);
-
-        const motionAssetContainer = loadResults[0] as AssetContainer;
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
 
         {
             motionAssetContainer.addAllToScene();

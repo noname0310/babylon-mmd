@@ -5,10 +5,8 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
 import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 
-import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult} from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -22,8 +20,6 @@ import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -32,6 +28,7 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { attachToBone } from "../Util/attachToBone";
@@ -69,17 +66,34 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
+        const audioPlayer = new StreamAudioPlayer(scene);
+        audioPlayer.preservesPitch = false;
+        audioPlayer.source = "res/private_test/motion/kimini_totte/kimini totte.mp3";
+        mmdRuntime.setAudioPlayer(audioPlayer);
+
+        const playerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+        playerControl.showPlayerControl();
+
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            _mmdAnimation1,
+            _mmdAnimation2,
+            _cameraAnimation,
+            modelMesh,
+            stageMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion1", (updateProgress): Promise<MmdAnimation> => {
-                return bvmdLoader.loadAsync("motion1", "res/private_test/motion/intergalactia/intergalactia.bvmd", updateProgress);
+                return bvmdLoader.loadAsync("motion1", "res/private_test/motion/kimini_totte/motion_a.bvmd", updateProgress);
             }],
             ["motion2", (updateProgress): Promise<MmdAnimation> => {
-                return bvmdLoader.loadAsync("motion2", "res/private_test/motion/conqueror/motion_light.bvmd", updateProgress);
+                return bvmdLoader.loadAsync("motion2", "res/private_test/motion/kimini_totte/motion_b.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["camera", (updateProgress): Promise<MmdAnimation> => {
+                return bvmdLoader.loadAsync("camera", "res/private_test/motion/kimini_totte/camera.bvmd", updateProgress);
+            }],
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -87,9 +101,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB miku Crown Knight.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -99,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "ガラス片ドームB.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -110,271 +124,21 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        const modelMesh = loadResults[2].meshes[0] as Mesh;
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
-
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-
-        // disable ik solver for motion captured assets
-        const disableIkBones = [ "右足ＩＫ", "右つま先ＩＫ", "左足ＩＫ", "左つま先ＩＫ", "右ひじＩＫ", "左ひじＩＫ" ];
-        const runtimeBones = mmdModel.sortedRuntimeBones;
-        for (let i = 0; i < runtimeBones.length; ++i) {
-            const runtimeBone = runtimeBones[i];
-            if (disableIkBones.includes(runtimeBone.name)) {
-                if (runtimeBone.ikSolver) runtimeBone.ikSolver.enabled = false;
-            }
-        }
-
-        const audioPlayer1 = new StreamAudioPlayer(scene);
-        audioPlayer1.source = "res/private_test/motion/intergalactia/INTERGALACTIA.mp3";
-
-        const audioPlayer2 = new StreamAudioPlayer(scene);
-        audioPlayer2.source = "res/private_test/motion/conqueror/MMDConquerorIA.mp3";
-
-        const mmdAnimation1 = loadResults[0];
-        const mmdAnimation2 = loadResults[1];
-
-        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupBezierBuilder());
-        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupBezierBuilder());
-
-        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, new MmdModelAnimationGroupBezierBuilder());
-        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, new MmdCameraAnimationGroupBezierBuilder());
-
-        const bindedModelAnimationGroup1 = mmdModelAnimationGroup1.createAnimationGroup(mmdModel);
-        for (const animation of mmdModelAnimationGroup1.propertyAnimations) {
-            bindedModelAnimationGroup1.removeTargetedAnimation(animation);
-        }
-        const bindedCameraAnimationGroup1 = mmdCameraAnimationGroup1.createAnimationGroup(mmdCamera);
-
-        // for match animation duration
-        bindedModelAnimationGroup1.normalize(mmdAnimation1.startFrame, mmdAnimation1.endFrame);
-        bindedCameraAnimationGroup1.normalize(mmdAnimation1.startFrame, mmdAnimation1.endFrame);
-
-
-        const bindedModelAnimationGroup2 = mmdModelAnimationGroup2.createAnimationGroup(mmdModel);
-        for (const animation of mmdModelAnimationGroup2.propertyAnimations) {
-            bindedModelAnimationGroup2.removeTargetedAnimation(animation);
-        }
-        const bindedCameraAnimationGroup2 = mmdCameraAnimationGroup2.createAnimationGroup(mmdCamera);
-
-        // for match animation duration
-        bindedModelAnimationGroup2.normalize(mmdAnimation2.startFrame, mmdAnimation2.endFrame);
-        bindedCameraAnimationGroup2.normalize(mmdAnimation2.startFrame, mmdAnimation2.endFrame);
-
-        bindedModelAnimationGroup1.weight = 1;
-        bindedCameraAnimationGroup1.weight = 1;
-
-        bindedModelAnimationGroup2.weight = 0;
-        bindedCameraAnimationGroup2.weight = 0;
-
-        // wait for audio ready (little tricky method because there is no audio sync implementation with babylon.js animation runtime)
-        await audioPlayer1.play();
-        audioPlayer1.pause();
-        await audioPlayer2.play();
-        audioPlayer2.pause();
-
-        audioPlayer1.volume = 1;
-        audioPlayer2.volume = 0;
-        audioPlayer1.play();
-        audioPlayer2.play();
-
-        bindedCameraAnimationGroup1.play(true);
-        bindedModelAnimationGroup1.play(true);
-
-        bindedCameraAnimationGroup2.play(true);
-        bindedModelAnimationGroup2.play(true);
-
-        bindedCameraAnimationGroup1.onAnimationGroupLoopObservable.add(async() => {
-            audioPlayer1.currentTime = 0;
-            await audioPlayer1.play();
-        });
-
-        bindedCameraAnimationGroup2.onAnimationGroupLoopObservable.add(async() => {
-            audioPlayer2.currentTime = 0;
-            await audioPlayer2.play();
-        });
-
-        // UI
-        {
-            const parentControl = engine.getInputElement()!.parentElement!;
-            const ownerDocument = parentControl.ownerDocument;
-
-            const newCanvasContainer = ownerDocument.createElement("div");
-            {
-                newCanvasContainer.style.display = parentControl.style.display;
-
-                while (parentControl.childElementCount > 0) {
-                    const child = parentControl.childNodes[0];
-                    parentControl.removeChild(child);
-                    newCanvasContainer.appendChild(child);
-                }
-
-                parentControl.appendChild(newCanvasContainer);
-
-                newCanvasContainer.style.width = "100%";
-                newCanvasContainer.style.height = "100%";
-                newCanvasContainer.style.overflow = "hidden";
-            }
-
-            const uiContainer = ownerDocument.createElement("div");
-            uiContainer.style.position = "relative";
-            uiContainer.style.bottom = "0";
-            uiContainer.style.left = "0";
-            uiContainer.style.fontFamily = "sans-serif";
-            newCanvasContainer.appendChild(uiContainer);
-
-            const uiInnerContainer = ownerDocument.createElement("div");
-            uiInnerContainer.style.position = "absolute";
-            uiInnerContainer.style.bottom = "0";
-            uiInnerContainer.style.left = "0";
-            uiInnerContainer.style.boxSizing = "border-box";
-            uiInnerContainer.style.display = "flex";
-            uiInnerContainer.style.flexDirection = "column";
-            uiContainer.appendChild(uiInnerContainer);
-
-            const motion1SliderDiv = ownerDocument.createElement("div");
-            motion1SliderDiv.style.width = "300px";
-            motion1SliderDiv.style.height = "30px";
-            motion1SliderDiv.style.display = "flex";
-            motion1SliderDiv.style.flexDirection = "row";
-            motion1SliderDiv.style.justifyContent = "space-between";
-            motion1SliderDiv.style.alignItems = "center";
-            motion1SliderDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-            motion1SliderDiv.style.margin = "10px";
-            motion1SliderDiv.style.padding = "5px";
-            uiInnerContainer.appendChild(motion1SliderDiv);
-
-            const motion1SliderLabel = ownerDocument.createElement("label");
-            motion1SliderLabel.textContent = "Motion 1";
-            motion1SliderLabel.style.width = "60px";
-            motion1SliderLabel.style.color = "white";
-            motion1SliderLabel.style.textAlign = "left";
-            motion1SliderLabel.style.marginRight = "10px";
-            motion1SliderLabel.style.fontSize = "16px";
-            motion1SliderDiv.appendChild(motion1SliderLabel);
-
-            const motion1Slider = ownerDocument.createElement("input");
-            motion1Slider.type = "range";
-            motion1Slider.min = "0";
-            motion1Slider.max = "1";
-            motion1Slider.step = "0.01";
-            motion1Slider.value = "1";
-            motion1Slider.style.flexGrow = "1";
-            motion1SliderDiv.appendChild(motion1Slider);
-            motion1Slider.oninput = (): void => {
-                const value = Number(motion1Slider.value);
-                if (audioPlayer1.volume === 0 && value !== 0 && audioPlayer1.paused) {
-                    audioPlayer1.currentTime = bindedCameraAnimationGroup1.animatables[0].masterFrame / 30;
-                    audioPlayer1.play();
-                    setTimeout(() => {
-                        audioPlayer1.currentTime = bindedCameraAnimationGroup1.animatables[0].masterFrame / 30;
-                    }, 1000);
-                }
-                audioPlayer1.volume = value;
-                bindedModelAnimationGroup1.weight = value;
-                bindedCameraAnimationGroup1.weight = value;
-            };
-
-            const motion2SliderDiv = ownerDocument.createElement("div");
-            motion2SliderDiv.style.width = "300px";
-            motion2SliderDiv.style.height = "30px";
-            motion2SliderDiv.style.display = "flex";
-            motion2SliderDiv.style.flexDirection = "row";
-            motion2SliderDiv.style.justifyContent = "space-between";
-            motion2SliderDiv.style.alignItems = "center";
-            motion2SliderDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-            motion2SliderDiv.style.margin = "10px";
-            motion2SliderDiv.style.padding = "5px";
-            uiInnerContainer.appendChild(motion2SliderDiv);
-
-            const motion2SliderLabel = ownerDocument.createElement("label");
-            motion2SliderLabel.textContent = "Motion 2";
-            motion2SliderLabel.style.width = "60px";
-            motion2SliderLabel.style.color = "white";
-            motion2SliderLabel.style.textAlign = "left";
-            motion2SliderLabel.style.marginRight = "10px";
-            motion2SliderLabel.style.fontSize = "16px";
-            motion2SliderDiv.appendChild(motion2SliderLabel);
-
-            const motion2Slider = ownerDocument.createElement("input");
-            motion2Slider.type = "range";
-            motion2Slider.min = "0";
-            motion2Slider.max = "1";
-            motion2Slider.step = "0.01";
-            motion2Slider.value = "0";
-            motion2Slider.style.flexGrow = "1";
-            motion2SliderDiv.appendChild(motion2Slider);
-            motion2Slider.oninput = (): void => {
-                const value = Number(motion2Slider.value);
-                if (audioPlayer2.volume === 0 && value !== 0 && audioPlayer2.paused) {
-                    audioPlayer2.currentTime = bindedCameraAnimationGroup2.animatables[0].masterFrame / 30;
-                    audioPlayer2.play();
-                    setTimeout(() => {
-                        audioPlayer2.currentTime = bindedCameraAnimationGroup2.animatables[0].masterFrame / 30;
-                    }, 1000);
-                }
-                audioPlayer2.volume = value;
-                bindedModelAnimationGroup2.weight = value;
-                bindedCameraAnimationGroup2.weight = value;
-            };
-
-            const blendSliderDiv = ownerDocument.createElement("div");
-            blendSliderDiv.style.width = "300px";
-            blendSliderDiv.style.height = "30px";
-            blendSliderDiv.style.display = "flex";
-            blendSliderDiv.style.flexDirection = "row";
-            blendSliderDiv.style.justifyContent = "space-between";
-            blendSliderDiv.style.alignItems = "center";
-            blendSliderDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-            blendSliderDiv.style.margin = "10px";
-            blendSliderDiv.style.padding = "5px";
-            uiInnerContainer.appendChild(blendSliderDiv);
-
-            const blendSliderLabel = ownerDocument.createElement("label");
-            blendSliderLabel.textContent = "Blend";
-            blendSliderLabel.style.width = "60px";
-            blendSliderLabel.style.color = "white";
-            blendSliderLabel.style.textAlign = "left";
-            blendSliderLabel.style.marginRight = "10px";
-            blendSliderLabel.style.fontSize = "16px";
-            blendSliderDiv.appendChild(blendSliderLabel);
-
-            const blendSlider = ownerDocument.createElement("input");
-            blendSlider.type = "range";
-            blendSlider.min = "0";
-            blendSlider.max = "1";
-            blendSlider.step = "0.01";
-            blendSlider.value = "0";
-            blendSlider.style.flexGrow = "1";
-            blendSliderDiv.appendChild(blendSlider);
-            const emptyEvent = new Event("input");
-            blendSlider.oninput = (): void => {
-                const value = Number(blendSlider.value);
-                motion1Slider.value = String(1 - value);
-                motion2Slider.value = String(value);
-
-                motion1Slider.oninput?.(emptyEvent);
-                motion2Slider.oninput?.(emptyEvent);
-            };
-        }
+        mmdModel;
 
         attachToBone(scene, modelMesh, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
 
-        const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
-            displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-        });
-        viewer.isEnabled = false;
-
-        const mmdStageMesh = loadResults[3].meshes[0] as Mesh;
-        mmdStageMesh.receiveShadows = true;
-        mmdStageMesh.position.y += 0.01;
+        stageMesh.receiveShadows = true;
+        stageMesh.position.y += 0.01;
 
         createGroundCollider(scene);
 
@@ -396,8 +160,6 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(modelMesh);
         mmdCameraAutoFocus.register(scene);
-
-        // Inspector.Show(scene, { });
 
         return scene;
     }

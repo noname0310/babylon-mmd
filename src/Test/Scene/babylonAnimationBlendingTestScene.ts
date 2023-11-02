@@ -8,7 +8,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult} from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -72,14 +71,19 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation1,
+            mmdAnimation2,
+            modelMesh,
+            stageMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion1", (updateProgress): Promise<MmdAnimation> => {
                 return bvmdLoader.loadAsync("motion1", "res/private_test/motion/intergalactia/intergalactia.bvmd", updateProgress);
             }],
             ["motion2", (updateProgress): Promise<MmdAnimation> => {
                 return bvmdLoader.loadAsync("motion2", "res/private_test/motion/conqueror/motion_light.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -87,9 +91,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB miku Crown Knight.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -99,7 +103,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "ガラス片ドームB.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -110,7 +114,6 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        const modelMesh = loadResults[2].meshes[0] as Mesh;
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
@@ -134,9 +137,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer2 = new StreamAudioPlayer(scene);
         audioPlayer2.source = "res/private_test/motion/conqueror/MMDConquerorIA.mp3";
-
-        const mmdAnimation1 = loadResults[0];
-        const mmdAnimation2 = loadResults[1];
 
         const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupBezierBuilder());
         const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupBezierBuilder());
@@ -384,9 +384,8 @@ export class SceneBuilder implements ISceneBuilder {
         });
         viewer.isEnabled = false;
 
-        const mmdStageMesh = loadResults[3].meshes[0] as Mesh;
-        mmdStageMesh.receiveShadows = true;
-        mmdStageMesh.position.y += 0.01;
+        stageMesh.receiveShadows = true;
+        stageMesh.position.y += 0.01;
 
         createGroundCollider(scene);
 

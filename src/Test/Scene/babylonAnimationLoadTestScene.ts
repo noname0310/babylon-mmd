@@ -9,7 +9,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -54,8 +53,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        const loadResults = await parallelLoadAsync(scene, [
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+        const [ modelMesh ] = await parallelLoadAsync(scene, [
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -63,7 +62,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -82,8 +81,6 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         {
-            const modelMesh = loadResults[0].meshes[0] as Mesh;
-
             shadowGenerator.addShadowCaster(modelMesh);
             modelMesh.receiveShadows = true;
 

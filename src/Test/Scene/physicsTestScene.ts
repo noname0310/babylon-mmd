@@ -5,7 +5,6 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -72,13 +71,17 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelMesh,
+            stageMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -86,9 +89,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "yyb_deep_canyons_miku.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -98,7 +101,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "water house.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -109,13 +112,12 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0]).endFrame);
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0]);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
@@ -123,7 +125,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(loadResults[0]);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
         attachToBone(scene, modelMesh, {
@@ -136,10 +138,9 @@ export class SceneBuilder implements ISceneBuilder {
         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         // });
 
-        const mmdStageMesh = loadResults[2].meshes[0] as Mesh;
-        mmdStageMesh.receiveShadows = true;
-        mmdStageMesh.position.y += 0.01;
-        const stageSubMaterials = (mmdStageMesh!.material as MmdMultiMaterial).subMaterials;
+        stageMesh.receiveShadows = true;
+        stageMesh.position.y += 0.01;
+        const stageSubMaterials = (stageMesh!.material as MmdMultiMaterial).subMaterials;
         for (let i = 0; i < stageSubMaterials.length; ++i) {
             const material = (stageSubMaterials[i] as MmdStandardMaterial);
             material.ignoreDiffuseWhenToonTextureIsNull = false;

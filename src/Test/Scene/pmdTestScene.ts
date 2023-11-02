@@ -9,7 +9,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult} from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -82,13 +81,16 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/pizzicato_drops/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -96,7 +98,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "那珂ver1.0.1.pmd",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -107,13 +109,12 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
@@ -121,7 +122,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
         attachToBone(scene, modelMesh, {

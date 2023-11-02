@@ -3,7 +3,6 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -58,13 +57,17 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelMesh,
+            havokPlugin
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const vpdLoader = new VpdLoader(scene);
                 vpdLoader.loggingEnabled = true;
                 return vpdLoader.loadAsync("motion", "res/private_test/motion/test_pose1.vpd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -72,7 +75,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<HavokPlugin> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -84,7 +87,6 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.receiveShadows = true;
         modelMesh.parent = mmdRoot;
@@ -92,7 +94,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
         mmdModel.currentAnimation!.animate(0);
         mmdModel.initializePhysics();
@@ -115,7 +117,7 @@ export class SceneBuilder implements ISceneBuilder {
             mmdRuntime.destroyMmdModel(mmdModel);
 
             scene.physicsEnabled = false;
-            (loadResults[2] as HavokPlugin).dispose();
+            havokPlugin.dispose();
         };
 
         scene.onAfterRenderObservable.add(delayedDispose);

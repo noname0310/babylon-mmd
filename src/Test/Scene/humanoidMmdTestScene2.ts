@@ -74,7 +74,10 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelLoadResult
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
@@ -103,17 +106,17 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        loadResults[1].meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        loadResults[1].meshes[0].scaling.scaleInPlace(0.143);
-        const armature = loadResults[1].transformNodes.find((transformNode) => transformNode.name === "Armature")!;
+        modelLoadResult.meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
+        modelLoadResult.meshes[0].scaling.scaleInPlace(0.143);
+        const armature = modelLoadResult.transformNodes.find((transformNode) => transformNode.name === "Armature")!;
         armature.scaling.setAll(1);
-        for (const mesh of loadResults[1].meshes as Mesh[]) {
+        for (const mesh of modelLoadResult.meshes as Mesh[]) {
             const boundingInfo = mesh.getBoundingInfo();
             const subMeshes = mesh.subMeshes;
             if (subMeshes !== undefined) {
@@ -132,9 +135,9 @@ export class SceneBuilder implements ISceneBuilder {
             material.emissiveColor.set(0, 0, 0);
             material.metallic = 0;
         }
-        const modelMesh = loadResults[1].meshes[1] as Mesh;
+        const modelMesh = modelLoadResult.meshes[1] as Mesh;
         {
-            const transformNodes = loadResults[1].transformNodes;
+            const transformNodes = modelLoadResult.transformNodes;
             const leftArm = transformNodes.find((transformNode) => transformNode.name === "LeftUpperArm")!;
             const rightArm = transformNodes.find((transformNode) => transformNode.name === "RightUpperArm")!;
             const degToRad = Math.PI / 180;
@@ -204,7 +207,7 @@ export class SceneBuilder implements ISceneBuilder {
             transformOffset: modelMesh
         });
         mmdModel.morph.setMorphWeight("口_真顔", 0.2);
-        mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
         attachToBone(scene, modelMesh, {

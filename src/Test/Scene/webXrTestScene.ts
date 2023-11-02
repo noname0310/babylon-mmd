@@ -14,7 +14,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
@@ -86,13 +85,17 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
-        const loadResults = await parallelLoadAsync(scene, [
+        const [
+            mmdAnimation,
+            modelMesh,
+            stageMesh
+        ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/intergalactia/intergalactia_ik.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -100,9 +103,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "muubu_miku.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -112,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "舞踏会風ステージVer2_forcemerged.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then(result => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -123,14 +126,13 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration((loadResults[0] as MmdAnimation).endFrame);
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[0] as MmdAnimation);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
         {
-            const modelMesh = loadResults[1].meshes[0] as Mesh;
             shadowGenerator.addShadowCaster(modelMesh);
             modelMesh.receiveShadows = true;
             modelMesh.parent = mmdRoot;
@@ -138,7 +140,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true
             });
-            mmdModel.addAnimation(loadResults[0] as MmdAnimation);
+            mmdModel.addAnimation(mmdAnimation);
             mmdModel.setAnimation("motion");
 
             attachToBone(scene, modelMesh, {
@@ -149,7 +151,6 @@ export class SceneBuilder implements ISceneBuilder {
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
-        const stageMesh = loadResults[2].meshes[0] as Mesh;
         stageMesh.receiveShadows = true;
         const stageMaterials = (stageMesh.material as MultiMaterial).subMaterials;
         for (let i = 0; i < stageMaterials.length; ++i) {
@@ -176,7 +177,6 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
 
-        const modelMesh = loadResults[1].meshes[0] as Mesh;
         const modelMaterials = (modelMesh.material as MultiMaterial).subMaterials;
         for (let i = 0; i < modelMaterials.length; ++i) {
             const material = modelMaterials[i] as MmdStandardMaterial;
