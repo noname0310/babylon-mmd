@@ -21,7 +21,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
     private _onSpanAdded: Nullable<(span: MmdAnimationSpan) => void>;
     private _onSpanRemoved: Nullable<(removeIndex: number) => void>;
 
-    public constructor(
+    private constructor(
         animation: MmdCompositeAnimation,
         runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,

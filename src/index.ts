@@ -57,7 +57,7 @@ export { VpdLoader } from "@/Loader/vpdLoader";
 
 // Runtime/Animation
 export { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "@/Runtime/Animation/IMmdBindableAnimation";
-export { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "@/Runtime/Animation/IMmdRuntimeAnimation";
+export { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 export { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 export { MmdCompositeRuntimeCameraAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
 export { MmdCompositeRuntimeModelAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";

@@ -1,6 +1,10 @@
+import type { Nullable } from "@babylonjs/core/types";
+
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 
+import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
+import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 
 /**
  * MMD Runtime Camera Animation
@@ -24,6 +28,9 @@ export interface IMmdRuntimeCameraAnimation {
  * MMD Runtime Model Animation
  */
 export interface IMmdRuntimeModelAnimation {
+    /**
+     * The animation data
+     */
     readonly animation: IMmdAnimation;
 
     /**
@@ -46,4 +53,31 @@ export interface IMmdRuntimeModelAnimation {
      * Dispose
      */
     dispose?(): void;
+}
+
+type MorphIndices = readonly number[];
+
+/**
+ * MMD Runtime Model Animation with bind index map
+ */
+export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeModelAnimation {
+    /**
+     * Bone bind index map
+     */
+    readonly boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+
+    /**
+     * Moveable bone bind index map
+     */
+    readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+
+    /**
+     * Morph bind index map
+     */
+    readonly morphBindIndexMap: readonly Nullable<MorphIndices>[];
+
+    /**
+     * IK solver bind index map
+     */
+    readonly ikSolverBindIndexMap: readonly Nullable<IIkSolver>[];
 }

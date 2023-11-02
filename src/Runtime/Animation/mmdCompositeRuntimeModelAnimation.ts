@@ -3,7 +3,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { ILogger } from "../ILogger";
 import type { MmdModel } from "../mmdModel";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
+import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
 import { MmdCompositeAnimation } from "./mmdCompositeAnimation";
 
@@ -18,13 +18,13 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      */
     public animation: MmdCompositeAnimation;
 
-    private readonly _runtimeAnimations: Nullable<IMmdRuntimeModelAnimation>[];
+    private readonly _runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[];
     private _onSpanAdded: Nullable<(span: MmdAnimationSpan) => void>;
     private _onSpanRemoved: Nullable<(removeIndex: number) => void>;
 
-    public constructor(
+    private constructor(
         animation: MmdCompositeAnimation,
-        runtimeAnimations: Nullable<IMmdRuntimeModelAnimation>[],
+        runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,
         onSpanRemoved: (removeIndex: number) => void
     ) {
@@ -84,12 +84,12 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      * @return MmdCompositeRuntimeModelAnimation instance
      */
     public static Create(animation: MmdCompositeAnimation, model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdCompositeRuntimeModelAnimation {
-        const runtimeAnimations: Nullable<IMmdRuntimeModelAnimation>[] = new Array(animation.spans.length).fill(null);
+        const runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[] = new Array(animation.spans.length).fill(null);
         const spans = animation.spans;
         for (let i = 0; i < spans.length; ++i) {
             const animation = spans[i].animation;
-            if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
-                const runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeModelAnimation(model, retargetingMap, logger);
+            if ((animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation !== undefined) {
+                const runtimeAnimation = (animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation(model, retargetingMap, logger);
                 runtimeAnimations[i] = runtimeAnimation;
             } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation === undefined) {
                 throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup"?`);
@@ -98,8 +98,8 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
         const onSpanAdded = (span: MmdAnimationSpan): void => {
             const animation = span.animation;
-            if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
-                const runtimeAnimation = (animation as IMmdBindableModelAnimation).createRuntimeModelAnimation(model, retargetingMap, logger);
+            if ((animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation !== undefined) {
+                const runtimeAnimation = (animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation(model, retargetingMap, logger);
                 runtimeAnimations.push(runtimeAnimation);
             } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation === undefined) {
                 throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup"?`);

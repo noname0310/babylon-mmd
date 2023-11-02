@@ -15,7 +15,7 @@ import type { MmdMorphController } from "../mmdMorphController";
 import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
+import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 
 type MorphIndices = readonly number[];
 
@@ -24,18 +24,35 @@ type MorphIndices = readonly number[];
  *
  * An object with mmd animation group and model binding information
  */
-export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation {
+export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationWithBindingInfo {
     /**
      * The animation data
      */
     public readonly animation: MmdModelAnimationGroup;
 
-    private readonly _boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[];
-    private readonly _moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[];
+    /**
+     * Bone bind index map
+     */
+    public readonly boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+
+    /**
+     * Moveable bone bind index map
+     */
+    public readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+
     private readonly _morphController: MmdMorphController;
-    private readonly _morphBindIndexMap: Nullable<MorphIndices>[];
+
+    /**
+     * Morph bind index map
+     */
+    public readonly morphBindIndexMap: readonly Nullable<MorphIndices>[];
+
     private readonly _mesh: RuntimeMmdMesh;
-    private readonly _ikSolverBindIndexMap: Nullable<IIkSolver>[];
+
+    /**
+     * IK solver bind index map
+     */
+    public readonly ikSolverBindIndexMap: readonly Nullable<IIkSolver>[];
 
     private readonly _bonePositionAnimationStates: _IAnimationState[];
     private readonly _boneRotationAnimationStates: _IAnimationState[];
@@ -45,21 +62,21 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
 
     private constructor(
         animation: MmdModelAnimationGroup,
-        boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[],
-        moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[],
+        boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
+        moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphController,
-        morphBindIndexMap: Nullable<MorphIndices>[],
+        morphBindIndexMap: readonly Nullable<MorphIndices>[],
         mesh: RuntimeMmdMesh,
-        ikSolverBindIndexMap: Nullable<IIkSolver>[]
+        ikSolverBindIndexMap: readonly Nullable<IIkSolver>[]
     ) {
         this.animation = animation;
 
-        this._boneBindIndexMap = boneBindIndexMap;
-        this._moveableBoneBindIndexMap = moveableBoneBindIndexMap;
+        this.boneBindIndexMap = boneBindIndexMap;
+        this.moveableBoneBindIndexMap = moveableBoneBindIndexMap;
         this._morphController = morphController;
-        this._morphBindIndexMap = morphBindIndexMap;
+        this.morphBindIndexMap = morphBindIndexMap;
         this._mesh = mesh;
-        this._ikSolverBindIndexMap = ikSolverBindIndexMap;
+        this.ikSolverBindIndexMap = ikSolverBindIndexMap;
 
         const bonePositionAnimationStates = this._bonePositionAnimationStates = new Array(animation.bonePositionAnimations.length);
         for (let i = 0; i < bonePositionAnimationStates.length; ++i) {
@@ -95,7 +112,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         const animation = this.animation;
 
         const boneTracks = animation.boneRotationAnimations;
-        const boneBindIndexMap = this._boneBindIndexMap;
+        const boneBindIndexMap = this.boneBindIndexMap;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
             const bone = boneBindIndexMap[i];
@@ -115,7 +132,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const moveableBoneTracks = animation.bonePositionAnimations;
-        const moveableBoneBindIndexMap = this._moveableBoneBindIndexMap;
+        const moveableBoneBindIndexMap = this.moveableBoneBindIndexMap;
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
             const bone = moveableBoneBindIndexMap[i];
@@ -125,7 +142,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const morphTracks = animation.morphAnimations;
-        const morphBindIndexMap = this._morphBindIndexMap;
+        const morphBindIndexMap = this.morphBindIndexMap;
         const morphController = this._morphController;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -140,7 +157,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         }
 
         const propertyTracks = animation.propertyAnimations;
-        const ikSolverBindIndexMap = this._ikSolverBindIndexMap;
+        const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
         for (let i = 0; i < propertyTracks.length; ++i) {
             const propertyTrack = propertyTracks[i];
             const ikSolver = ikSolverBindIndexMap[i];
@@ -170,7 +187,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
         MmdRuntimeModelAnimationGroup.InduceMaterialRecompile(
             this._mesh.material.subMaterials,
             this._morphController,
-            this._morphBindIndexMap,
+            this.morphBindIndexMap,
             logger
         );
     }
@@ -300,12 +317,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimation 
     public static InduceMaterialRecompile: (
         materials: Material[],
         morphController: MmdMorphController,
-        morphIndices: Nullable<MorphIndices>[],
+        morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void = induceMmdStandardMaterialRecompile as (
         materials: Material[],
         morphController: MmdMorphController,
-        morphIndices: Nullable<MorphIndices>[],
+        morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void;
 }

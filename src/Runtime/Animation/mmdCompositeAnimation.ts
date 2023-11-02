@@ -3,8 +3,9 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 
 import type { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
+import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 
-type IMmdBindableAnimation = IMmdBindableCameraAnimation | IMmdBindableModelAnimation;
+type IMmdBindableAnimation = IMmdBindableCameraAnimation | IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>;
 
 /**
  * Represents a slice of an MMD animation

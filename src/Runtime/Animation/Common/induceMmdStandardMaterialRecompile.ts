@@ -20,7 +20,7 @@ type MorphIndices = readonly number[];
 export function induceMmdStandardMaterialRecompile(
     materials: MmdStandardMaterial[],
     morphController: MmdMorphController,
-    morphIndices: Nullable<MorphIndices>[],
+    morphIndices: readonly Nullable<MorphIndices>[],
     logger?: ILogger
 ): void {
     let allTextureColorPropertiesAreRecompiled = false;
