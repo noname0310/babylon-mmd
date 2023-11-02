@@ -2,8 +2,10 @@ import "@babylonjs/core/Animations/animatable";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
@@ -24,6 +26,7 @@ import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBui
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
@@ -71,6 +74,8 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/private_test/motion/kimini_totte/kimini totte.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
+        mmdRuntime.playAnimation();
+
         const playerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         playerControl.showPlayerControl();
 
@@ -78,9 +83,9 @@ export class SceneBuilder implements ISceneBuilder {
         bvmdLoader.loggingEnabled = true;
 
         const [
-            _mmdAnimation1,
-            _mmdAnimation2,
-            _cameraAnimation,
+            mmdAnimation1,
+            mmdAnimation2,
+            cameraAnimation,
             modelMesh,
             stageMesh
         ] = await parallelLoadAsync(scene, [
@@ -124,13 +129,21 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
+        mmdRuntime.setCamera(mmdCamera);
+        mmdCamera.addAnimation(cameraAnimation);
+        mmdCamera.setAnimation("camera");
+
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel;
+        const compositeAnimation = new MmdCompositeAnimation("composite");
+        compositeAnimation.addSpan(new MmdAnimationSpan(mmdAnimation1));
+        compositeAnimation.addSpan(new MmdAnimationSpan(mmdAnimation2));
+        mmdModel.addAnimation(compositeAnimation);
+        mmdModel.setAnimation("composite");
 
         attachToBone(scene, modelMesh, {
             directionalLightPosition: directionalLight.position,

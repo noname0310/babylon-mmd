@@ -2,6 +2,8 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
 import "@/Loader/Optimized/bpmxLoader";
+import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
+import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
@@ -56,6 +58,9 @@ export { VpdLoader } from "@/Loader/vpdLoader";
 // Runtime/Animation
 export { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "@/Runtime/Animation/IMmdBindableAnimation";
 export { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "@/Runtime/Animation/IMmdRuntimeAnimation";
+export { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
+export { MmdCompositeRuntimeCameraAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
+export { MmdCompositeRuntimeModelAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 export { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 export { MmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 export { MmdRuntimeCameraAnimationGroup } from "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";

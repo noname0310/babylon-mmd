@@ -60,6 +60,8 @@
         "**/pmdLoader.*",
         "**/pmxLoader.*",
         "**/bpmxLoader.*",
+        "**/mmdCompositeRuntimeCameraAnimation.*",
+        "**/mmdCompositeRuntimeModelAnimation.*",
         "**/mmdRuntimeCameraAnimation.*",
         "**/mmdRuntimeCameraAnimationGroup.*",
         "**/mmdRuntimeModelAnimation.*",

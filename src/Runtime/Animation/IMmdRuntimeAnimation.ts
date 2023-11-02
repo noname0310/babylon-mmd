@@ -13,6 +13,11 @@ export interface IMmdRuntimeCameraAnimation {
      * @param frameTime frame time in 30fps
      */
     animate(frameTime: number): void;
+
+    /**
+     * Dispose
+     */
+    dispose?(): void;
 }
 
 /**
@@ -36,4 +41,9 @@ export interface IMmdRuntimeModelAnimation {
      * @param logger logger
      */
     induceMaterialRecompile(logger?: ILogger): void;
+
+    /**
+     * Dispose
+     */
+    dispose?(): void;
 }

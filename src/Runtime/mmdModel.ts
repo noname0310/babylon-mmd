@@ -11,6 +11,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
+import type { MmdCompositeRuntimeModelAnimation } from "./Animation/mmdCompositeRuntimeModelAnimation";
 import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
 import type { MmdRuntimeModelAnimationGroup } from "./Animation/mmdRuntimeModelAnimationGroup";
 import { AppendTransformSolver } from "./appendTransformSolver";
@@ -24,7 +25,7 @@ import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 
-type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | IMmdRuntimeModelAnimation;
+type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
  * MmdModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Runtime
@@ -212,7 +213,7 @@ export class MmdModel {
         if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
             runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
         } else {
-            throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\"?");
+            throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
@@ -234,6 +235,7 @@ export class MmdModel {
 
         this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
+        (animation as IMmdRuntimeModelAnimation).dispose?.();
     }
 
     /**

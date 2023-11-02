@@ -6,10 +6,11 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
+import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
 
-type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | IMmdRuntimeCameraAnimation;
+type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
 /**
  * MMD camera
@@ -74,7 +75,7 @@ export class MmdCamera extends Camera {
         if ((animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation) {
             runtimeAnimation = animation.createRuntimeCameraAnimation(this);
         } else {
-            throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\"?");
+            throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
         }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
@@ -92,6 +93,7 @@ export class MmdCamera extends Camera {
 
         this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
+        (animation as IMmdRuntimeCameraAnimation).dispose?.();
     }
 
     /**
