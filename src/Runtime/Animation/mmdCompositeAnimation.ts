@@ -66,6 +66,14 @@ export class MmdAnimationSpan {
     public get name(): string {
         return this.animation.name;
     }
+
+    public isInSpan(frameTime: number): boolean {
+        return this.startFrame + this.offset <= frameTime && frameTime <= this.endFrame + this.offset;
+    }
+
+    public getFrameTime(frameTime: number): number {
+        return frameTime - this.startFrame - this.offset;
+    }
 }
 
 /**

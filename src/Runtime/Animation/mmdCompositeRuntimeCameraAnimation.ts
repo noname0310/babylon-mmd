@@ -1,3 +1,4 @@
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdCamera } from "../mmdCamera";
@@ -17,18 +18,21 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
      */
     public readonly animation: MmdCompositeAnimation;
 
+    private readonly _camera: MmdCamera;
     private readonly _runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[];
     private _onSpanAdded: Nullable<(span: MmdAnimationSpan) => void>;
     private _onSpanRemoved: Nullable<(removeIndex: number) => void>;
 
     private constructor(
         animation: MmdCompositeAnimation,
+        camera: MmdCamera,
         runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,
         onSpanRemoved: (removeIndex: number) => void
     ) {
         this.animation = animation;
 
+        this._camera = camera;
         this._runtimeAnimations = runtimeAnimations;
         this._onSpanAdded = onSpanAdded;
         this._onSpanRemoved = onSpanRemoved;
@@ -37,14 +41,84 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
         animation.onSpanRemovedObservable.add(onSpanRemoved);
     }
 
+    private static readonly _ActiveAnimationSpans: MmdAnimationSpan[] = [];
+    private static readonly _ActiveRuntimeAnimations: IMmdRuntimeCameraAnimation[] = [];
+
+    private static readonly _CameraPosition = new Vector3();
+    private static readonly _CameraRotation = new Vector3();
+
     /**
      * Update animation
      * @param frameTime frame time in 30fps
      */
     public animate(frameTime: number): void {
-        frameTime;
-        this._runtimeAnimations;
-        throw new Error("Method not implemented.");
+        const spans = this.animation.spans;
+        const runtimeAnimations = this._runtimeAnimations;
+
+        const activeAnimationSpans = MmdCompositeRuntimeCameraAnimation._ActiveAnimationSpans;
+        const activeRuntimeAnimations = MmdCompositeRuntimeCameraAnimation._ActiveRuntimeAnimations;
+
+        for (let i = 0; i < spans.length; ++i) {
+            const span = spans[i];
+            const runtimeAnimation = runtimeAnimations[i];
+            if (runtimeAnimation !== null && 0 < span.weight && span.isInSpan(frameTime)) {
+                activeAnimationSpans.push(spans[i]);
+                activeRuntimeAnimations.push(runtimeAnimation);
+            }
+        }
+
+        let totalWeight = 0;
+        for (let i = 0; i < activeAnimationSpans.length; ++i) totalWeight += activeAnimationSpans[i].weight;
+
+        const camera = this._camera;
+
+        if (totalWeight === 0) { // avoid divide by zero
+            // camera does not have rest pose
+            // camera.position.setAll(0);
+            // camera.rotation.setAll(0);
+            // camera.distance = 0;
+            // camera.fov = 0;
+
+            activeAnimationSpans.length = 0;
+            activeRuntimeAnimations.length = 0;
+            return;
+        }
+
+        if (activeAnimationSpans.length === 1) { // for one animation, just animate it
+            const span = activeAnimationSpans[0];
+            const runtimeAnimation = activeRuntimeAnimations[0];
+
+            runtimeAnimation.animate(span.getFrameTime(frameTime));
+            activeAnimationSpans.length = 0;
+            activeRuntimeAnimations.length = 0;
+            return;
+        }
+
+        const position = MmdCompositeRuntimeCameraAnimation._CameraPosition.setAll(0);
+        const rotation = MmdCompositeRuntimeCameraAnimation._CameraRotation.setAll(0);
+        let distance = 0;
+        let fov = 0;
+
+        for (let i = 0; i < activeAnimationSpans.length; ++i) {
+            const span = activeAnimationSpans[i];
+            const runtimeAnimation = activeRuntimeAnimations[i];
+
+            runtimeAnimation.animate(span.getFrameTime(frameTime));
+
+            const weight = span.weight / totalWeight;
+            camera.position.scaleAndAddToRef(weight, position);
+            camera.rotation.scaleAndAddToRef(weight, rotation);
+            distance += camera.distance * weight;
+            fov += camera.fov * weight;
+        }
+
+        camera.position.copyFrom(position);
+        camera.rotation.copyFrom(rotation);
+        camera.distance = distance;
+        camera.fov = fov;
+
+        activeAnimationSpans.length = 0;
+        activeRuntimeAnimations.length = 0;
     }
 
     /**
@@ -94,7 +168,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             runtimeAnimations.splice(removeIndex, 1);
         };
 
-        return new MmdCompositeRuntimeCameraAnimation(animation, runtimeAnimations, onSpanAdded, onSpanRemoved);
+        return new MmdCompositeRuntimeCameraAnimation(animation, camera, runtimeAnimations, onSpanAdded, onSpanRemoved);
     }
 }
 
