@@ -13,12 +13,13 @@ window.onload = (): void => {
     const engine = new Engine(canvas, false, {
         preserveDrawingBuffer: false,
         stencil: false,
-        premultipliedAlpha: false,
         antialias: false,
-        doNotHandleTouchAction: true,
-        audioEngine: false,
+        alpha: false,
+        premultipliedAlpha: false,
         powerPreference: "high-performance",
-        doNotHandleContextLost: true
+        doNotHandleTouchAction: true,
+        doNotHandleContextLost: true,
+        audioEngine: false
     }, true);
 
     // const webGPUEngine = new WebGPUEngine(canvas, {
