@@ -86,7 +86,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     ): void {
         // Block the marking of materials dirty until all materials are built.
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
-        scene.blockMaterialDirtyMechanism = true;
+        scene._forceBlockMaterialDirtyMechanism(true);
 
         let textureAlphaChecker: Nullable<TextureAlphaChecker> = null;
         const getTextureAlpphaChecker = (): Nullable<TextureAlphaChecker> => {
@@ -219,7 +219,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 Promise.all(promises).then(() => {
                     textureAlphaChecker?.dispose();
                     // Restore the blocking of material dirty.
-                    scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
+                    scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
                     onTextureLoadComplete?.();
                 });
             });
@@ -227,7 +227,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             Promise.all(promises).then(() => {
                 textureAlphaChecker?.dispose();
                 // Restore the blocking of material dirty.
-                scene.blockMaterialDirtyMechanism = oldBlockMaterialDirtyMechanism;
+                scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
                 onTextureLoadComplete?.();
             });
         }
