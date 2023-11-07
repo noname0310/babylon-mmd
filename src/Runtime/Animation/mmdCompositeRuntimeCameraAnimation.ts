@@ -52,6 +52,8 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
      * @param frameTime frame time in 30fps
      */
     public animate(frameTime: number): void {
+        frameTime = Math.max(this.animation.startFrame, Math.min(this.animation.endFrame, frameTime));
+
         const spans = this.animation.spans;
         const runtimeAnimations = this._runtimeAnimations;
 
