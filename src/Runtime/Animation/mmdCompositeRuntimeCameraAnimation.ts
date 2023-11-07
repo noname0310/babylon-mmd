@@ -84,7 +84,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             return;
         }
 
-        if (activeAnimationSpans.length === 1) { // for one animation, just animate it
+        if (totalWeight === 1 && activeAnimationSpans.length === 1) { // for one animation, just animate it
             const span = activeAnimationSpans[0];
             const runtimeAnimation = activeRuntimeAnimations[0];
 
