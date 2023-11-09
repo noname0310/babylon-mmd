@@ -64,7 +64,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             const span = spans[i];
             const runtimeAnimation = runtimeAnimations[i];
             if (runtimeAnimation !== null && 0 < span.weight && span.isInSpan(frameTime)) {
-                activeAnimationSpans.push(spans[i]);
+                activeAnimationSpans.push(span);
                 activeRuntimeAnimations.push(runtimeAnimation);
             }
         }
@@ -96,6 +96,8 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             return;
         }
 
+        const normalizer = totalWeight < 1.0 ? 1.0 : 1.0 / totalWeight;
+
         const position = MmdCompositeRuntimeCameraAnimation._CameraPosition.setAll(0);
         const rotation = MmdCompositeRuntimeCameraAnimation._CameraRotation.setAll(0);
         let distance = 0;
@@ -107,7 +109,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
 
             runtimeAnimation.animate(span.getFrameTime(frameTime));
 
-            const weight = span.weight / totalWeight;
+            const weight = span.weight / normalizer;
             camera.position.scaleAndAddToRef(weight, position);
             camera.rotation.scaleAndAddToRef(weight, rotation);
             distance += camera.distance * weight;
