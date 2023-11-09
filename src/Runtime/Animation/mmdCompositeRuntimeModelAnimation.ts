@@ -1,4 +1,4 @@
-import type { Quaternion} from "@babylonjs/core/Maths/math.vector";
+import { Quaternion} from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -51,15 +51,27 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         animation.onSpanRemovedObservable.add(onSpanRemoved);
     }
 
-    private static readonly _ActiveAnimationSpans: MmdAnimationSpan[] = [];
-    private static readonly _ActiveRuntimeAnimations: IMmdRuntimeModelAnimationWithBindingInfo[] = [];
+    private static readonly _RuntimeAnimationIdMap = new WeakMap<IMmdRuntimeModelAnimationWithBindingInfo, number>();
+    private static _RuntimeAnimationIdCounter = 0;
+
+    private static _GetRuntimeAnimationId(runtimeAnimation: IMmdRuntimeModelAnimationWithBindingInfo): number {
+        let id = MmdCompositeRuntimeModelAnimation._RuntimeAnimationIdMap.get(runtimeAnimation);
+        if (id === undefined) {
+            id = MmdCompositeRuntimeModelAnimation._RuntimeAnimationIdCounter += 1;
+            MmdCompositeRuntimeModelAnimation._RuntimeAnimationIdMap.set(runtimeAnimation, id);
+        }
+        return id;
+    }
 
     private readonly _boneResultMap = new Map<IMmdRuntimeLinkedBone, Quaternion>();
     private readonly _moveableBoneResultMap = new Map<IMmdRuntimeLinkedBone, [Vector3, Quaternion]>();
     private readonly _morphResultMap = new Map<number, number>();
     private readonly _ikSolverResultMap = new Map<IIkSolver, boolean>();
 
-    private _lastSingleRuntimeAnimation: Nullable<IMmdRuntimeModelAnimationWithBindingInfo> = null;
+    private readonly _activeAnimationSpans: MmdAnimationSpan[] = [];
+    private readonly _activeRuntimeAnimations: IMmdRuntimeModelAnimationWithBindingInfo[] = [];
+    private _activeRuntimeAnimationIds: number[] = [];
+    private _lastActiveRuntimeAnimationIds: number[] = [];
 
     private readonly _boneRestPosition = new Vector3();
 
@@ -73,14 +85,14 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         const spans = this.animation.spans;
         const runtimeAnimations = this._runtimeAnimations;
 
-        const activeAnimationSpans = MmdCompositeRuntimeModelAnimation._ActiveAnimationSpans;
-        const activeRuntimeAnimations = MmdCompositeRuntimeModelAnimation._ActiveRuntimeAnimations;
+        const activeAnimationSpans = this._activeAnimationSpans;
+        const activeRuntimeAnimations = this._activeRuntimeAnimations;
 
         for (let i = 0; i < spans.length; ++i) {
             const span = spans[i];
             const runtimeAnimation = runtimeAnimations[i];
             if (runtimeAnimation !== null && 0 < span.weight && span.isInSpan(frameTime)) {
-                activeAnimationSpans.push(spans[i]);
+                activeAnimationSpans.push(span);
                 activeRuntimeAnimations.push(runtimeAnimation);
             }
         }
@@ -96,69 +108,84 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         const morphResultMap = this._morphResultMap;
         const ikSolverResultMap = this._ikSolverResultMap;
 
+        let bindingIsSameWithPrevious = true;
+        const activeRuntimeAnimationIds = this._activeRuntimeAnimationIds;
+        const lastActiveRuntimeAnimationIds = this._lastActiveRuntimeAnimationIds;
+        if (lastActiveRuntimeAnimationIds.length !== activeRuntimeAnimations.length) {
+            bindingIsSameWithPrevious = false;
+            for (let i = 0; i < activeRuntimeAnimations.length; ++i) {
+                activeRuntimeAnimationIds.push(MmdCompositeRuntimeModelAnimation._GetRuntimeAnimationId(activeRuntimeAnimations[i]));
+            }
+        } else {
+            for (let i = 0; i < activeRuntimeAnimations.length; ++i) {
+                const activeRuntimeAnimationId = MmdCompositeRuntimeModelAnimation._GetRuntimeAnimationId(activeRuntimeAnimations[i]);
+                activeRuntimeAnimationIds.push(activeRuntimeAnimationId);
+                if (lastActiveRuntimeAnimationIds[i] !== activeRuntimeAnimationId) bindingIsSameWithPrevious = false;
+            }
+        }
+        this._lastActiveRuntimeAnimationIds = activeRuntimeAnimationIds;
+        this._activeRuntimeAnimationIds = lastActiveRuntimeAnimationIds;
+        lastActiveRuntimeAnimationIds.length = 0;
+
         // restore initial state
-        if (this._lastSingleRuntimeAnimation !== null) {
-            const lastSingleRuntimeAnimation = this._lastSingleRuntimeAnimation;
-
-            // if last single animation is same as current single animation, we don't need to restore
-            if (!(totalWeight === 1 && activeRuntimeAnimations.length === 1 && activeRuntimeAnimations[0] === lastSingleRuntimeAnimation)) {
-                const boneBindIndexMap = lastSingleRuntimeAnimation.boneBindIndexMap;
-                for (let i = 0; i < boneBindIndexMap.length; ++i) {
-                    const bone = boneBindIndexMap[i];
-                    if (bone !== null) bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+        if (bindingIsSameWithPrevious) {
+            if (totalWeight === 0) {
+                for (const [bone, result] of boneResultMap) {
+                    bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+                    result.copyFromFloats(0, 0, 0, 1);
                 }
-
-                const moveableBoneBindIndexMap = lastSingleRuntimeAnimation.moveableBoneBindIndexMap;
-                for (let i = 0; i < moveableBoneBindIndexMap.length; ++i) {
-                    const bone = moveableBoneBindIndexMap[i];
-                    if (bone !== null) {
-                        bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
-                        bone.getRestMatrix().getTranslationToRef(bone.position);
-                    }
+                for (const [bone, result] of moveableBoneResultMap) {
+                    bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+                    bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
+                    result[0].copyFromFloats(0, 0, 0);
+                    result[1].copyFromFloats(0, 0, 0, 1);
                 }
-
-                const morphBindIndexMap = lastSingleRuntimeAnimation.morphBindIndexMap;
-                for (let i = 0; i < morphBindIndexMap.length; ++i) {
-                    const morphIndices = morphBindIndexMap[i];
-                    if (morphIndices !== null) {
-                        for (let j = 0; j < morphIndices.length; ++j) {
-                            const morphIndex = morphIndices[j];
-                            morphController.setMorphWeightFromIndex(morphIndex, 0);
-                        }
-                    }
+                for (const [morphIndex, _result] of morphResultMap) {
+                    morphController.setMorphWeightFromIndex(morphIndex, 0);
+                    morphResultMap.set(morphIndex, 0);
                 }
-
                 mesh.visibility = 1;
-
-                const ikSolverBindIndexMap = lastSingleRuntimeAnimation.ikSolverBindIndexMap;
-                for (let i = 0; i < ikSolverBindIndexMap.length; ++i) {
-                    const ikSolver = ikSolverBindIndexMap[i];
-                    if (ikSolver !== null) ikSolver.enabled = true;
+                for (const [ikSolver, _result] of ikSolverResultMap) {
+                    ikSolver.enabled = true;
+                    ikSolverResultMap.set(ikSolver, true);
                 }
-
-                this._lastSingleRuntimeAnimation = null;
+            } else {
+                for (const [_bone, result] of boneResultMap) {
+                    result.copyFromFloats(0, 0, 0, 1);
+                }
+                for (const [_bone, result] of moveableBoneResultMap) {
+                    result[0].copyFromFloats(0, 0, 0);
+                    result[1].copyFromFloats(0, 0, 0, 1);
+                }
+                for (const [morphIndex, _result] of morphResultMap) {
+                    morphResultMap.set(morphIndex, 0);
+                }
+                for (const [ikSolver, _result] of ikSolverResultMap) {
+                    ikSolverResultMap.set(ikSolver, true);
+                }
             }
         } else {
             for (const [bone, _result] of boneResultMap) {
                 bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
             }
-            boneResultMap.clear();
             for (const [bone, _result] of moveableBoneResultMap) {
                 bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
+                bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
             }
-            moveableBoneResultMap.clear();
             for (const [morphIndex, _result] of morphResultMap) {
                 morphController.setMorphWeightFromIndex(morphIndex, 0);
             }
-            morphResultMap.clear();
             mesh.visibility = 1;
             for (const [ikSolver, _result] of ikSolverResultMap) {
                 ikSolver.enabled = true;
             }
+            boneResultMap.clear();
+            moveableBoneResultMap.clear();
+            morphResultMap.clear();
             ikSolverResultMap.clear();
         }
 
-        if (totalWeight === 0) { // avoid divide by zero
+        if (totalWeight === 0) { // do not animate
             activeAnimationSpans.length = 0;
             activeRuntimeAnimations.length = 0;
             return;
@@ -170,14 +197,60 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
             runtimeAnimation.animate(span.getFrameTime(frameTime));
 
-            this._lastSingleRuntimeAnimation = runtimeAnimation;
+            // just copy bind info purpose
+            const boneBindIndexMap = runtimeAnimation.boneBindIndexMap;
+            for (let i = 0; i < boneBindIndexMap.length; ++i) {
+                const bone = boneBindIndexMap[i];
+                if (bone !== null) {
+                    const result = boneResultMap.get(bone);
+                    if (result === undefined) boneResultMap.set(bone, new Quaternion());
+                }
+            }
+            const moveableBoneBindIndexMap = runtimeAnimation.moveableBoneBindIndexMap;
+            for (let i = 0; i < moveableBoneBindIndexMap.length; ++i) {
+                const bone = moveableBoneBindIndexMap[i];
+                if (bone !== null) {
+                    const result = moveableBoneResultMap.get(bone);
+                    if (result === undefined) {
+                        moveableBoneResultMap.set(bone, [new Vector3(), new Quaternion()]);
+                    }
+                }
+            }
+            const morphBindIndexMap = runtimeAnimation.morphBindIndexMap;
+            for (let i = 0; i < morphBindIndexMap.length; ++i) {
+                const morphIndices = morphBindIndexMap[i];
+                if (morphIndices !== null) {
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const morphIndex = morphIndices[j];
+                        const result = morphResultMap.get(morphIndex);
+                        if (result === undefined) morphResultMap.set(morphIndex, 0);
+                    }
+                }
+            }
+            const ikSolverBindIndexMap = runtimeAnimation.ikSolverBindIndexMap;
+            for (let i = 0; i < ikSolverBindIndexMap.length; ++i) {
+                const ikSolver = ikSolverBindIndexMap[i];
+                if (ikSolver !== null) {
+                    const result = ikSolverResultMap.get(ikSolver);
+                    if (result === undefined) ikSolverResultMap.set(ikSolver, true);
+                }
+            }
 
             activeAnimationSpans.length = 0;
             activeRuntimeAnimations.length = 0;
             return;
         }
 
-        let visibility: Nullable<number> = null;
+        let normalizer: number;
+        let visibility: number;
+
+        if (totalWeight < 1.0) {
+            normalizer = 1.0;
+            visibility = 1 - totalWeight;
+        } else {
+            normalizer = 1.0 / totalWeight;
+            visibility = 0;
+        }
 
         for (let i = 0; i < activeAnimationSpans.length; ++i) {
             const span = activeAnimationSpans[i];
@@ -185,7 +258,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
             runtimeAnimation.animate(span.getFrameTime(frameTime));
 
-            const weight = span.weight / totalWeight;
+            const weight = span.weight / normalizer;
 
             const boneBindIndexMap = runtimeAnimation.boneBindIndexMap;
             for (let i = 0; i < boneBindIndexMap.length; ++i) {
@@ -195,7 +268,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     if (result === undefined) {
                         boneResultMap.set(bone, bone.rotationQuaternion.clone().scaleInPlace(weight));
                     } else {
-                        result.scaleAndAddToRef(weight, bone.rotationQuaternion);
+                        bone.rotationQuaternion.scaleAndAddToRef(weight, result);
                     }
                 }
             }
@@ -213,8 +286,8 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                             bone.rotationQuaternion.clone().scaleInPlace(weight)
                         ]);
                     } else {
-                        result[0].scaleAndAddToRef(weight, bone.position);
-                        result[1].scaleAndAddToRef(weight, bone.rotationQuaternion);
+                        bone.position.subtractInPlace(boneRestPosition).scaleAndAddToRef(weight, result[0]);
+                        bone.rotationQuaternion.scaleAndAddToRef(weight, result[1]);
                     }
                 }
             }
@@ -248,11 +321,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 }
             }
 
-            if (visibility === null) {
-                visibility = mesh.visibility * weight;
-            } else {
-                visibility += mesh.visibility * weight;
-            }
+            visibility += mesh.visibility * weight;
         }
 
         for (const [bone, result] of boneResultMap) {
@@ -260,18 +329,22 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         for (const [bone, result] of moveableBoneResultMap) {
-            bone.rotationQuaternion.copyFrom(result[1]);
             bone.getRestMatrix().getTranslationToRef(bone.position).addInPlace(result[0]);
+            bone.rotationQuaternion.copyFrom(result[1]);
         }
 
         for (const [morphIndex, result] of morphResultMap) {
             morphController.setMorphWeightFromIndex(morphIndex, result);
         }
 
-        if (visibility === null || Math.abs(visibility - 1) < 1e-6) {
+        if (Math.abs(visibility - 1) < 1e-6) {
             mesh.visibility = 1;
         } else {
             mesh.visibility = visibility;
+        }
+
+        for (const [ikSolver, result] of ikSolverResultMap) {
+            ikSolver.enabled = result;
         }
 
         activeAnimationSpans.length = 0;
