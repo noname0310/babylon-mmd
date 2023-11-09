@@ -140,9 +140,12 @@ export class SceneBuilder implements ISceneBuilder {
             buildPhysics: true
         });
         const compositeAnimation = new MmdCompositeAnimation("composite");
-        compositeAnimation.addSpan(new MmdAnimationSpan(mmdAnimation1));
-        mmdAnimation2;
-        // compositeAnimation.addSpan(new MmdAnimationSpan(mmdAnimation2));
+        const animationSpan1 = new MmdAnimationSpan(mmdAnimation1);
+        animationSpan1.weight = 1;
+        const animationSpan2 = new MmdAnimationSpan(mmdAnimation2);
+        animationSpan2.weight = 0;
+        compositeAnimation.addSpan(animationSpan1);
+        compositeAnimation.addSpan(animationSpan2);
         mmdModel.addAnimation(compositeAnimation);
         mmdModel.setAnimation("composite");
 
@@ -174,6 +177,103 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(modelMesh);
         mmdCameraAutoFocus.register(scene);
+
+        const parentControl = engine.getInputElement()!.parentElement!;
+        const ownerDocument = parentControl.ownerDocument;
+
+        const newCanvasContainer = ownerDocument.createElement("div");
+        {
+            newCanvasContainer.style.display = parentControl.style.display;
+
+            while (parentControl.childElementCount > 0) {
+                const child = parentControl.childNodes[0];
+                parentControl.removeChild(child);
+                newCanvasContainer.appendChild(child);
+            }
+
+            parentControl.appendChild(newCanvasContainer);
+
+            newCanvasContainer.style.width = "100%";
+            newCanvasContainer.style.height = "100%";
+            newCanvasContainer.style.overflow = "hidden";
+        }
+
+        const uiContainerRoot = ownerDocument.createElement("div");
+        uiContainerRoot.style.position = "absolute";
+        uiContainerRoot.style.top = "0";
+        uiContainerRoot.style.left = "0";
+        uiContainerRoot.style.width = "100%";
+        uiContainerRoot.style.height = "100%";
+        uiContainerRoot.style.overflow = "hidden";
+        uiContainerRoot.style.pointerEvents = "none";
+        newCanvasContainer.appendChild(uiContainerRoot);
+
+        scene.onDisposeObservable.addOnce(() => {
+            newCanvasContainer.removeChild(uiContainerRoot);
+
+            while (newCanvasContainer.childElementCount > 0) {
+                const child = newCanvasContainer.childNodes[0];
+                newCanvasContainer.removeChild(child);
+                parentControl.appendChild(child);
+            }
+
+            parentControl.removeChild(newCanvasContainer);
+        });
+
+        const uiContainer = ownerDocument.createElement("div");
+        uiContainer.style.position = "absolute";
+        uiContainer.style.top = "0";
+        uiContainer.style.right = "0";
+        uiContainer.style.fontFamily = "sans-serif";
+        uiContainer.style.color = "white";
+        uiContainer.style.transition = "right 0.5s";
+        uiContainer.style.pointerEvents = "auto";
+        uiContainerRoot.appendChild(uiContainer);
+
+        const uiInnerContainer = ownerDocument.createElement("div");
+        uiInnerContainer.style.display = "flex";
+        uiInnerContainer.style.flexDirection = "column";
+        uiInnerContainer.style.justifyContent = "space-between";
+        uiInnerContainer.style.alignItems = "center";
+        uiInnerContainer.style.backgroundColor = "rgba(34, 34, 34, 0.4)";
+        uiInnerContainer.style.padding = "5px";
+        uiInnerContainer.style.boxSizing = "border-box";
+        uiContainer.appendChild(uiInnerContainer);
+
+        const blendSliderDiv = ownerDocument.createElement("div");
+        blendSliderDiv.style.width = "300px";
+        blendSliderDiv.style.height = "30px";
+        blendSliderDiv.style.display = "flex";
+        blendSliderDiv.style.flexDirection = "row";
+        blendSliderDiv.style.justifyContent = "space-between";
+        blendSliderDiv.style.alignItems = "center";
+        blendSliderDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        blendSliderDiv.style.margin = "10px";
+        blendSliderDiv.style.padding = "5px";
+        uiInnerContainer.appendChild(blendSliderDiv);
+
+        const blendSliderLabel = ownerDocument.createElement("label");
+        blendSliderLabel.textContent = "Blend";
+        blendSliderLabel.style.width = "60px";
+        blendSliderLabel.style.color = "white";
+        blendSliderLabel.style.textAlign = "left";
+        blendSliderLabel.style.marginRight = "10px";
+        blendSliderLabel.style.fontSize = "16px";
+        blendSliderDiv.appendChild(blendSliderLabel);
+
+        const blendSlider = ownerDocument.createElement("input");
+        blendSlider.type = "range";
+        blendSlider.min = "0";
+        blendSlider.max = "1";
+        blendSlider.step = "0.02";
+        blendSlider.value = "0";
+        blendSlider.style.flexGrow = "1";
+        blendSliderDiv.appendChild(blendSlider);
+        blendSlider.oninput = (): void => {
+            const value = Number(blendSlider.value);
+            animationSpan1.weight = 1 - value;
+            animationSpan2.weight = value;
+        };
 
         return scene;
     }
