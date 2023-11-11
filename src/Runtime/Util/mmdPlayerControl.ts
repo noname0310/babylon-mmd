@@ -263,7 +263,7 @@ export class MmdPlayerControl {
                         endFrameNumber.innerHTML = "&nbsp;/&nbsp;" +
                             (this.displayTimeFormat === DisplayTimeFormat.Seconds
                                 ? this._getFormattedTime(mmdRuntime.animationDuration)
-                                : mmdRuntime.animationFrameTimeDuration.toString());
+                                : Math.floor(mmdRuntime.animationFrameTimeDuration).toString());
                         playerLowerLeftContainer.appendChild(endFrameNumber);
                     }
 
@@ -347,7 +347,7 @@ export class MmdPlayerControl {
         this._endFrameNumberSpan.innerHTML = "&nbsp;/&nbsp;" +
             (this.displayTimeFormat === DisplayTimeFormat.Seconds
                 ? this._getFormattedTime(mmdRuntime.animationDuration)
-                : mmdRuntime.animationFrameTimeDuration.toString());
+                : Math.floor(mmdRuntime.animationFrameTimeDuration).toString());
     };
 
     private readonly _onAnimationTick = (): void => {
@@ -375,6 +375,13 @@ export class MmdPlayerControl {
     private _getFormattedTime(time: number): string { // 00:00 or 0:00
         const floorTime = Math.floor(time);
         if (floorTime === this._formattedTimeCacheKey) return this._formatterTimeCacheValue;
+
+        if (!isFinite(time)) {
+            this._formattedTimeCacheKey = floorTime;
+            this._formatterTimeCacheValue = "-:--";
+
+            return "-:--";
+        }
 
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
