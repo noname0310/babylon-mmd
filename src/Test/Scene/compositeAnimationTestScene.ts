@@ -140,10 +140,9 @@ export class SceneBuilder implements ISceneBuilder {
             buildPhysics: true
         });
         const compositeAnimation = new MmdCompositeAnimation("composite");
-        const animationSpan1 = new MmdAnimationSpan(mmdAnimation1);
-        animationSpan1.weight = 1;
-        const animationSpan2 = new MmdAnimationSpan(mmdAnimation2);
-        animationSpan2.weight = 0;
+        const duration = Math.max(mmdAnimation1.endFrame, mmdAnimation2.endFrame);
+        const animationSpan1 = new MmdAnimationSpan(mmdAnimation1, undefined, duration, 0, 1);
+        const animationSpan2 = new MmdAnimationSpan(mmdAnimation2, undefined, duration, 0, 0);
         compositeAnimation.addSpan(animationSpan1);
         compositeAnimation.addSpan(animationSpan2);
         mmdModel.addAnimation(compositeAnimation);
