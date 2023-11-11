@@ -281,6 +281,8 @@ export class SceneBuilder implements ISceneBuilder {
             const value = Number(blendSlider.value);
             animationSpan1.weight = 1 - value;
             animationSpan2.weight = value;
+            animationSpan3.weight = 0;
+            animationSpan4.weight = 0;
         };
 
         return scene;
