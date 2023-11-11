@@ -70,7 +70,9 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
         }
 
         let totalWeight = 0;
-        for (let i = 0; i < activeAnimationSpans.length; ++i) totalWeight += activeAnimationSpans[i].weight;
+        for (let i = 0; i < activeAnimationSpans.length; ++i) {
+            totalWeight += activeAnimationSpans[i].getEasedWeight(activeAnimationSpans[i].getFrameTime(frameTime));
+        }
 
         const camera = this._camera;
 
@@ -107,9 +109,10 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             const span = activeAnimationSpans[i];
             const runtimeAnimation = activeRuntimeAnimations[i];
 
-            runtimeAnimation.animate(span.getFrameTime(frameTime));
+            const frameTimeInSpan = span.getFrameTime(frameTime);
+            runtimeAnimation.animate(frameTimeInSpan);
+            const weight = span.getEasedWeight(frameTimeInSpan) * normalizer;
 
-            const weight = span.weight / normalizer;
             camera.position.scaleAndAddToRef(weight, position);
             camera.rotation.scaleAndAddToRef(weight, rotation);
             distance += camera.distance * weight;

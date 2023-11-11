@@ -31,7 +31,7 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
-import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
+import { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { attachToBone } from "../Util/attachToBone";
@@ -77,6 +77,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.playAnimation();
 
         const playerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+        playerControl.displayTimeFormat = DisplayTimeFormat.Frames;
         playerControl.showPlayerControl();
 
         const bvmdLoader = new BvmdLoader(scene);
@@ -141,10 +142,18 @@ export class SceneBuilder implements ISceneBuilder {
         });
         const compositeAnimation = new MmdCompositeAnimation("composite");
         const duration = Math.max(mmdAnimation1.endFrame, mmdAnimation2.endFrame);
-        const animationSpan1 = new MmdAnimationSpan(mmdAnimation1, undefined, duration, 0, 1);
+        const animationSpan1 = new MmdAnimationSpan(mmdAnimation1, undefined, duration, 0, 0);
         const animationSpan2 = new MmdAnimationSpan(mmdAnimation2, undefined, duration, 0, 0);
         compositeAnimation.addSpan(animationSpan1);
         compositeAnimation.addSpan(animationSpan2);
+
+        const animationSpan3 = new MmdAnimationSpan(mmdAnimation1, 0, 600, 1);
+        animationSpan3.easeOutFrameTime = 60;
+        const animationSpan4 = new MmdAnimationSpan(mmdAnimation2, 600 - 60, duration, 1);
+        animationSpan4.easeInFrameTime = 60;
+        compositeAnimation.addSpan(animationSpan3);
+        compositeAnimation.addSpan(animationSpan4);
+
         mmdModel.addAnimation(compositeAnimation);
         mmdModel.setAnimation("composite");
 

@@ -98,7 +98,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         let totalWeight = 0;
-        for (let i = 0; i < activeAnimationSpans.length; ++i) totalWeight += activeAnimationSpans[i].weight;
+        for (let i = 0; i < activeAnimationSpans.length; ++i) {
+            totalWeight += activeAnimationSpans[i].getEasedWeight(activeAnimationSpans[i].getFrameTime(frameTime));
+        }
 
         const morphController = this._morphController;
         const mesh = this._mesh;
@@ -261,9 +263,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             const span = activeAnimationSpans[i];
             const runtimeAnimation = activeRuntimeAnimations[i];
 
-            runtimeAnimation.animate(span.getFrameTime(frameTime));
-
-            const weight = span.weight / normalizer;
+            const frameTimeInSpan = span.getFrameTime(frameTime);
+            runtimeAnimation.animate(frameTimeInSpan);
+            const weight = span.getEasedWeight(frameTimeInSpan) * normalizer;
 
             const boneBindIndexMap = runtimeAnimation.boneBindIndexMap;
             for (let i = 0; i < boneBindIndexMap.length; ++i) {

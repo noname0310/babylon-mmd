@@ -1,4 +1,6 @@
+import type { IEasingFunction } from "@babylonjs/core/Animations/easing";
 import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 
@@ -45,6 +47,21 @@ export class MmdAnimationSpan {
     public weight: number;
 
     /**
+     * easing function of the span (default: null)
+     */
+    public easingFunction: Nullable<IEasingFunction>;
+
+    /**
+     * Ease in frame time of the span (default: 0)
+     */
+    public easeInFrameTime: number;
+
+    /**
+     * Ease out frame time of the span (default: 0)
+     */
+    public easeOutFrameTime: number;
+
+    /**
      * Create a new span
      * @param animation Bindable animation, which typically means `MmdAnimation`
      * @param startFrame Start frame of the span (default: animation.startFrame)
@@ -58,6 +75,9 @@ export class MmdAnimationSpan {
         this.endFrame = endFrame ?? animation.endFrame;
         this.offset = offset ?? 0;
         this.weight = weight ?? 1;
+        this.easingFunction = null;
+        this.easeInFrameTime = 0;
+        this.easeOutFrameTime = 0;
     }
 
     /**
@@ -67,12 +87,57 @@ export class MmdAnimationSpan {
         return this.animation.name;
     }
 
+    /**
+     * Whether the frame time is in the span
+     * @param frameTime frame time in composite animation
+     * @returns Returns true if the frame time is in the span
+     */
     public isInSpan(frameTime: number): boolean {
         return this.startFrame + this.offset <= frameTime && frameTime <= this.endFrame + this.offset;
     }
 
+    /**
+     * Get the frame time in this span
+     * @param frameTime frame time in composite animation
+     * @returns Returns the frame time in this span
+     */
     public getFrameTime(frameTime: number): number {
-        return frameTime - this.startFrame - this.offset;
+        return frameTime - this.offset;
+    }
+
+    /**
+     * Get the eased weight of this span
+     * @param frameTime frame time in this span
+     */
+    public getEasedWeight(frameTime: number): number {
+        const startFrame = this.startFrame;
+        const endFrame = this.endFrame;
+        const easeInFrameTime = this.easeInFrameTime;
+        const easeOutFrameTime = this.easeOutFrameTime;
+
+        if (Math.abs(frameTime - startFrame) < Math.abs(frameTime - endFrame)) {
+            if (startFrame + easeInFrameTime <= frameTime) {
+                return this.weight;
+            } else if (frameTime <= startFrame) {
+                return 0;
+            } else {
+                // ease in
+                const frameTimeInEaseIn = frameTime - startFrame;
+                const weight = this.weight * (this.easingFunction?.ease(frameTimeInEaseIn / easeInFrameTime) ?? frameTimeInEaseIn / easeInFrameTime);
+                return weight;
+            }
+        } else {
+            if (frameTime <= endFrame - easeOutFrameTime) {
+                return this.weight;
+            } else if (endFrame <= frameTime) {
+                return 0;
+            } else {
+                // ease out
+                const frameTimeInEaseOut = frameTime - endFrame + easeOutFrameTime;
+                const weight = this.weight * (1 - (this.easingFunction?.ease(frameTimeInEaseOut / easeOutFrameTime) ?? frameTimeInEaseOut / easeOutFrameTime));
+                return weight;
+            }
+        }
     }
 }
 
