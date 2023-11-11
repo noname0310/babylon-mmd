@@ -184,7 +184,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 - [x] Solve IK
 - [x] Play audio / sync with animation
 - [x] Basic animation player UI
-- [ ] Animation blending in custom animation runtime
+- [x] Animation blending in custom animation runtime
 - [x] Force Humanoid Model Support
 
 **Physics Runtime**

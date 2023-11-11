@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.32.0
+
+- introduce `MmdCompositeAnimation` to blend multiple animations frame perfectly
+
 ## 0.31.3
 
 - fix animation not playing at start on audio player with zero duration
