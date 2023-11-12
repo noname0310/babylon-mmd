@@ -4,6 +4,10 @@
 
 - introduce `MmdCompositeAnimation` to blend multiple animations frame perfectly
 
+- fix `MmdPlayerControl` time formatting
+
+- improve model loading shader compilation performance
+
 ## 0.31.3
 
 - fix animation not playing at start on audio player with zero duration
