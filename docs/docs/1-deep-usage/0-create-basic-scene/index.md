@@ -38,12 +38,13 @@ import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
 import type { ISceneBuilder } from "./baseRuntime";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { Scene } from "@babylonjs/core/scene";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);

@@ -1,5 +1,6 @@
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 
@@ -12,6 +13,7 @@ export class VmdConverterScene implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(1, 1, 1);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
 
         const formDiv = document.createElement("div");

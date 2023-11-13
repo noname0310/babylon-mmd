@@ -1,10 +1,10 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
@@ -24,28 +24,22 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.useAlphaEvaluation = true;
-        // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(1, 1, 1);
-        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
-
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "https://a-cdn.qbox.net/test/models/pmx/[MODELS]%20Lovesick%20girls%20ver.1/",
-            "[LSG]%20Jennie%20(Miku)%20ver.1.pmx",
+            "res/private_test/model/Sour式初音ミクVer.1.02/",
+            "Black.pmx",
             scene
-        ).then(result => result.meshes[0]);
+        ).then(result => result.meshes[0]) as Mesh;
         mmdMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
-        Inspector.Show(scene, { });
+        Inspector.Show(scene, { enablePopup: false });
 
         return scene;
     }

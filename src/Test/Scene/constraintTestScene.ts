@@ -22,6 +22,7 @@ import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
@@ -33,6 +34,7 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(1, 1, 1);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
