@@ -147,9 +147,9 @@ export class SceneBuilder implements ISceneBuilder {
         compositeAnimation.addSpan(animationSpan1);
         compositeAnimation.addSpan(animationSpan2);
 
-        const animationSpan3 = new MmdAnimationSpan(mmdAnimation1, 0, 600, 1);
+        const animationSpan3 = new MmdAnimationSpan(mmdAnimation1, 0, 600, 0, 1);
         animationSpan3.easeOutFrameTime = 60;
-        const animationSpan4 = new MmdAnimationSpan(mmdAnimation2, 600 - 60, duration, 1);
+        const animationSpan4 = new MmdAnimationSpan(mmdAnimation2, 600 - 60, duration, 0, 1);
         animationSpan4.easeInFrameTime = 60;
         compositeAnimation.addSpan(animationSpan3);
         compositeAnimation.addSpan(animationSpan4);
