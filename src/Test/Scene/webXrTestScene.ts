@@ -57,6 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const worldScale = 0.09;
         const mmdRoot = new TransformNode("mmdRoot", scene);
