@@ -1,4 +1,3 @@
-import "@babylonjs/core/Animations/animatable";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
@@ -7,11 +6,12 @@ import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import { BezierCurveEase } from "@babylonjs/core/Animations/easing";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -34,13 +34,13 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createGroundCollider } from "../Util/createGroundCollider";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
+import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -55,15 +55,24 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const mmdRoot = new TransformNode("mmdRoot", scene);
+        const cameraRoot = new TransformNode("cameraRoot", scene);
+        cameraRoot.scaling.y = 0.98;
+        cameraRoot.parent = mmdRoot;
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
-        mmdCamera.parent = mmdRoot;
+        mmdCamera.ignoreParentScaling = true;
+        mmdCamera.parent = cameraRoot;
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, camera, mmdCamera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const { shadowGenerator } = createLightComponents(scene, {
+            orthoLeftOffset: -15,
+            orthoRightOffset: 13,
+            orthoBottomOffset: -5,
+            orthoTopOffset: 10,
+            shadowMaxZOffset: 13
+        });
         createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
@@ -89,7 +98,8 @@ export class SceneBuilder implements ISceneBuilder {
             mmdAnimation2,
             cameraAnimation,
             modelMesh,
-            stageMesh
+            modelMeshA,
+            modelMeshB
         ] = await parallelLoadAsync(scene, [
             ["motion1", (updateProgress): Promise<MmdAnimation> => {
                 return bvmdLoader.loadAsync("motion1", "res/private_test/motion/kimini_totte/motion_a.bvmd", updateProgress);
@@ -110,14 +120,22 @@ export class SceneBuilder implements ISceneBuilder {
                     updateProgress
                 ).then(result => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<Mesh> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
+            ["model_a", (updateProgress): Promise<Mesh> => {
+                pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
-                    "res/private_test/stage/",
-                    "ガラス片ドームB.bpmx",
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku Default.bpmx",
+                    scene,
+                    updateProgress
+                ).then(result => result.meshes[0] as Mesh);
+            }],
+            ["model_b", (updateProgress): Promise<Mesh> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as Mesh);
@@ -148,23 +166,45 @@ export class SceneBuilder implements ISceneBuilder {
         compositeAnimation.addSpan(animationSpan1);
         compositeAnimation.addSpan(animationSpan2);
 
-        const animationSpan3 = new MmdAnimationSpan(mmdAnimation1, 0, 600, 0, 1);
-        animationSpan3.easeOutFrameTime = 60;
-        const animationSpan4 = new MmdAnimationSpan(mmdAnimation2, 600 - 60, duration, 0, 1);
-        animationSpan4.easeInFrameTime = 60;
-        compositeAnimation.addSpan(animationSpan3);
-        compositeAnimation.addSpan(animationSpan4);
+        const easingFunction = new BezierCurveEase(0.7, 0.01, 0.3, 0.99);
+        const transitionPoints = [ 252, 456, 540, 610, 1048, 1281, 1411, 1447, 1516, 1545, 1694, 1913, 2052, 2089, 2274, 2392, 2464, 2756, 2870, 2945, 3024, 3106, 3249, 3395, 3643, 3776, 3881, 4012, 4047, 4151, 4542, 4687, 4739, 4797, 4848, 5013, 5141, 5452, duration ];
+        let lastTransitionPoint = 0;
+        for (let i = 0; i < transitionPoints.length; ++i) {
+            const transitionPoint = transitionPoints[i];
+
+            const animationSpan = new MmdAnimationSpan(i % 2 === 0 ? mmdAnimation1 : mmdAnimation2, lastTransitionPoint - 30, transitionPoint, 0, 1);
+            animationSpan.easeInFrameTime = 30;
+            animationSpan.easeOutFrameTime = 30;
+            animationSpan.easingFunction = easingFunction;
+            compositeAnimation.addSpan(animationSpan);
+
+            lastTransitionPoint = transitionPoints[i];
+        }
 
         mmdModel.addAnimation(compositeAnimation);
         mmdModel.setAnimation("composite");
 
-        attachToBone(scene, modelMesh, {
-            directionalLightPosition: directionalLight.position,
-            cameraTargetPosition: camera.target
+        modelMeshA.receiveShadows = true;
+        shadowGenerator.addShadowCaster(modelMeshA);
+        modelMeshA.parent = mmdRoot;
+        modelMeshA.position.z = 10;
+        const mmdModelA = mmdRuntime.createMmdModel(modelMeshA, {
+            buildPhysics: true
         });
+        mmdModelA.addAnimation(mmdAnimation1);
+        mmdModelA.setAnimation("motion1");
 
-        stageMesh.receiveShadows = true;
-        stageMesh.position.y += 0.01;
+        modelMeshB.receiveShadows = true;
+        shadowGenerator.addShadowCaster(modelMeshB);
+        modelMeshB.parent = mmdRoot;
+        modelMeshB.position.z = 10;
+        const mmdModelB = mmdRuntime.createMmdModel(modelMeshB, {
+            buildPhysics: true
+        });
+        mmdModelB.addAnimation(mmdAnimation2);
+        mmdModelB.setAnimation("motion2");
+
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
         createGroundCollider(scene);
 
@@ -280,10 +320,14 @@ export class SceneBuilder implements ISceneBuilder {
         blendSliderDiv.appendChild(blendSlider);
         blendSlider.oninput = (): void => {
             const value = Number(blendSlider.value);
+
+            const spans = compositeAnimation.spans;
+            for (let i = 0; i < spans.length; ++i) {
+                spans[i].weight = 0;
+            }
+
             animationSpan1.weight = 1 - value;
             animationSpan2.weight = value;
-            animationSpan3.weight = 0;
-            animationSpan4.weight = 0;
         };
 
         return scene;
