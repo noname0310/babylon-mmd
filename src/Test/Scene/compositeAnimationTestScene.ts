@@ -167,7 +167,7 @@ export class SceneBuilder implements ISceneBuilder {
         compositeAnimation.addSpan(animationSpan2);
 
         const easingFunction = new BezierCurveEase(0.7, 0.01, 0.3, 0.99);
-        const transitionPoints = [ 252, 456, 540, 610, 1048, 1281, 1411, 1447, 1516, 1545, 1694, 1913, 2052, 2089, 2274, 2392, 2464, 2756, 2870, 2945, 3024, 3106, 3249, 3395, 3643, 3776, 3881, 4012, 4047, 4151, 4542, 4687, 4739, 4797, 4848, 5013, 5141, 5452, duration ];
+        const transitionPoints = [ 252, 456, 540, 610, 1048, 1281, 1411, 1447, 1516, 1545, 1694, 1913, 2052, 2089, 2274, 2392, 2464, 2756, 2870, 2945, 3024, 3106, 3249, 3395, 3643, 3776, 3881, 4012, 4047, 4151, 4542, 4687, 4739, 4797, 4848, 5013, 5141, 5452, 5722, 6078, 6407, 6644, 6915, duration ];
         let lastTransitionPoint = 0;
         for (let i = 0; i < transitionPoints.length; ++i) {
             const transitionPoint = transitionPoints[i];

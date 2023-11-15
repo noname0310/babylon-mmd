@@ -2,7 +2,7 @@
 
 ## 0.33.0
 
-- fix `MmdCompositeAnimation` Quaternion animation biending not working with single animation
+- fix `MmdCompositeAnimation` Quaternion animation biending not working with weight which is smaller than 1.0
 
 ## 0.32.0
 

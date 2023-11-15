@@ -367,7 +367,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         for (const [bone, result] of boneResultMap) {
-            if (result[2] === 1) {
+            if (totalWeight < 1) {
                 Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[0], result[1], bone.rotationQuaternion);
             } else {
                 bone.rotationQuaternion.copyFrom(result[0]);
@@ -376,7 +376,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
         for (const [bone, result] of moveableBoneResultMap) {
             bone.getRestMatrix().getTranslationToRef(bone.position).addInPlace(result[0]);
-            if (result[3] === 1) {
+            if (totalWeight < 1) {
                 Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[1], result[2], bone.rotationQuaternion);
             } else {
                 bone.rotationQuaternion.copyFrom(result[1]);
