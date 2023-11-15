@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.0
+
+- fix `MmdCompositeAnimation` Quaternion animation biending not working with single animation
+
 ## 0.32.0
 
 - introduce `MmdCompositeAnimation` to blend multiple animations frame perfectly

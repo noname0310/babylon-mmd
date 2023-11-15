@@ -1,6 +1,6 @@
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
@@ -74,6 +74,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     private _lastActiveRuntimeAnimationIds: number[] = [];
 
     private readonly _boneRestPosition = new Vector3();
+    private static readonly _IdentityQuaternion: DeepImmutable<Quaternion> = Quaternion.Identity();
 
     /**
      * Update animation
@@ -366,12 +367,20 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         for (const [bone, result] of boneResultMap) {
-            bone.rotationQuaternion.copyFrom(result[0]);
+            if (result[2] === 1) {
+                Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[0], result[1], bone.rotationQuaternion);
+            } else {
+                bone.rotationQuaternion.copyFrom(result[0]);
+            }
         }
 
         for (const [bone, result] of moveableBoneResultMap) {
             bone.getRestMatrix().getTranslationToRef(bone.position).addInPlace(result[0]);
-            bone.rotationQuaternion.copyFrom(result[1]);
+            if (result[3] === 1) {
+                Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[1], result[2], bone.rotationQuaternion);
+            } else {
+                bone.rotationQuaternion.copyFrom(result[1]);
+            }
         }
 
         for (const [morphIndex, result] of morphResultMap) {
