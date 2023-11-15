@@ -7,27 +7,23 @@ repository = "https://github.com/noname0310/babylon-mmd"
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
-#default = ["wee_alloc"]
+default = ["wee_alloc", "console_error_panic_hook"]
 
 [profile.release]
-lto = true
+opt-level = 3
 
 [dependencies]
+nalgebra = "0.32.3"
 wasm-bindgen = "0.2.88"
 wee_alloc = { version = "0.4.5", optional = true }
+console_error_panic_hook = { version = "0.1.7", optional = true }
 
 [dependencies.web-sys]
-web-sys = "0.3.65"
+version = "0.3.65"
 features = ["console"]
-
-[target."cfg(debug_assertions)".dependencies]
-console_error_panic_hook = "0.1.7"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.38"
-futures = "0.3.29"
-js-sys = "0.3.65"
-wasm-bindgen-futures = "0.4.38"
