@@ -1,3 +1,4 @@
+import wasmPackPlugin from "@wasm-tool/wasm-pack-plugin";
 import compressionWebpackPlugin from "compression-webpack-plugin";
 import copyWebpackPlugin from "copy-webpack-plugin";
 import eslintPlugin from "eslint-webpack-plugin";
@@ -53,6 +54,11 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             patterns: [
                 { from: "res", to: "res" }
             ]
+        }),
+        new wasmPackPlugin({
+            crateDirectory: path.resolve(__dirname, "src/Runtime/Optimized/wasm_src"),
+            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm"),
+            outName: "index"
         })
     ].concat(env.production ? [
         new compressionWebpackPlugin({
@@ -69,5 +75,8 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         hot: true,
         watchFiles: ["src/**/*"]
     },
-    mode: env.production ? "production" : "development"
+    mode: env.production ? "production" : "development",
+    experiments: {
+        asyncWebAssembly: true
+    }
 });

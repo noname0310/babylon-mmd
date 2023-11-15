@@ -11,11 +11,9 @@ import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
@@ -26,8 +24,9 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMultiMaterial } from "@/Runtime/mmdMesh";
-import { MmdPhysics } from "@/Runtime/mmdPhysics";
-import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { createMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -57,24 +56,15 @@ export class SceneBuilder implements ISceneBuilder {
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
-        mmdRuntime.loggingEnabled = true;
-
-        mmdRuntime.register(scene);
-        mmdRuntime.playAnimation();
-
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/flos/flos_YuNi.mp3";
-        mmdRuntime.setAudioPlayer(audioPlayer);
-
-        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
-        mmdPlayerControl.showPlayerControl();
 
         const [
             mmdAnimation,
             modelMesh,
-            stageMesh
+            stageMesh,
+            mmdWasmInstance
         ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
@@ -103,14 +93,24 @@ export class SceneBuilder implements ISceneBuilder {
                     updateProgress
                 ).then(result => result.meshes[0] as Mesh);
             }],
-            ["physics", async(updateProgress): Promise<void> => {
+            ["runtime", async(updateProgress): Promise<MmdWasmInstance> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const havokInstance = await havokPhysics();
-                const havokPlugin = new HavokPlugin(true, havokInstance);
-                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                const mmdWasmInstance = await createMmdWasmInstance();
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+                return mmdWasmInstance;
             }]
         ]);
+
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance);
+        mmdRuntime.loggingEnabled = true;
+
+        mmdRuntime.setAudioPlayer(audioPlayer);
+
+        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+        mmdPlayerControl.showPlayerControl();
+
+        mmdRuntime.register(scene);
+        mmdRuntime.playAnimation();
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
@@ -134,10 +134,6 @@ export class SceneBuilder implements ISceneBuilder {
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-        // const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
-        //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-        // });
-
         stageMesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
         const stageSubMaterials = (stageMesh!.material as MmdMultiMaterial).subMaterials;
@@ -145,17 +141,6 @@ export class SceneBuilder implements ISceneBuilder {
             const material = (stageSubMaterials[i] as MmdStandardMaterial);
             material.ignoreDiffuseWhenToonTextureIsNull = false;
             material.toonTexture = null;
-        }
-
-        {
-            // const physicsViewer = new PhysicsViewer(scene);
-            // const modelMesh = loadResults[1].meshes[0] as Mesh;
-            // for (const node of modelMesh.getChildren()) {
-            //     if ((node as any).physicsBody) {
-            //         physicsViewer.showBody((node as any).physicsBody);
-            //     }
-            // }
-            // physicsViewer.showBody(groundRigidBody);
         }
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);

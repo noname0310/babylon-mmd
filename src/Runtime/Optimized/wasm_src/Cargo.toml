@@ -1,0 +1,33 @@
+[package]
+name = "mmd-wasm-runtime"
+version = "0.32.0"
+edition = "2021"
+description = "Optimized WASM runtime for babylon.js MMD"
+repository = "https://github.com/noname0310/babylon-mmd"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+#default = ["wee_alloc"]
+
+[profile.release]
+lto = true
+
+[dependencies]
+wasm-bindgen = "0.2.88"
+wee_alloc = { version = "0.4.5", optional = true }
+
+[dependencies.web-sys]
+web-sys = "0.3.65"
+features = ["console"]
+
+[target."cfg(debug_assertions)".dependencies]
+console_error_panic_hook = "0.1.7"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.38"
+futures = "0.3.29"
+js-sys = "0.3.65"
+wasm-bindgen-futures = "0.4.38"

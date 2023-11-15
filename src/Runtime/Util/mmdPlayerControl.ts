@@ -2,7 +2,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IAudioPlayer } from "../Audio/IAudioPlayer";
-import type { MmdRuntime } from "../mmdRuntime";
+import type { IMmdRuntime } from "../IMmdRuntime";
 
 /**
  * Display time format
@@ -26,7 +26,7 @@ export class MmdPlayerControl {
     public hidePlayerControlTimeout: number;
     public displayTimeFormat: DisplayTimeFormat;
 
-    private readonly _mmdRuntime: MmdRuntime;
+    private readonly _mmdRuntime: IMmdRuntime;
     private readonly _audioPlayer: Nullable<IAudioPlayer>;
 
     private _newCanvasContainer: Nullable<HTMLElement>;
@@ -51,7 +51,7 @@ export class MmdPlayerControl {
      * @param audioPlayer Audio player
      * @throws {Error} if failed to get root element
      */
-    public constructor(scene: Scene, mmdRuntime: MmdRuntime, audioPlayer?: IAudioPlayer) {
+    public constructor(scene: Scene, mmdRuntime: IMmdRuntime, audioPlayer?: IAudioPlayer) {
         const rootElement = scene.getEngine().getInputElement();
         if (rootElement === null) {
             throw new Error("Failed to get root element.");
@@ -119,7 +119,7 @@ export class MmdPlayerControl {
         parentControl.removeChild(newCanvasContainer);
     }
 
-    private _createPlayerControl(parentControl: HTMLElement, mmdRuntime: MmdRuntime, audioPlayer?: IAudioPlayer): void {
+    private _createPlayerControl(parentControl: HTMLElement, mmdRuntime: IMmdRuntime, audioPlayer?: IAudioPlayer): void {
         const ownerDocument = parentControl.ownerDocument;
 
         const playerContainer = this._playerContainer = ownerDocument.createElement("div");

@@ -43,6 +43,14 @@ export default (env: any): webpack.Configuration => ({
                     root: "BABYLON"
                 });
             }
+            if (request === "./wasm") {
+                return callback(null, {
+                    amd: request,
+                    commonjs: request,
+                    commonjs2: request,
+                    root: "BABYLONMMDWASM"
+                });
+            }
             callback();
         }
     ],

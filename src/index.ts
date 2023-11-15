@@ -71,6 +71,10 @@ export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeMod
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
 export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
+// Runtime/Optimized
+export { createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+export { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+
 // Runtime/Util
 export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -78,6 +82,7 @@ export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerCon
 // Runtime
 export { IIkSolver } from "@/Runtime/ikSolver";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
+export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
 export { MmdCamera } from "@/Runtime/mmdCamera";
 export { HumanoidMesh, MmdMesh, MmdMultiMaterial, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
 export { MmdModel } from "@/Runtime/mmdModel";

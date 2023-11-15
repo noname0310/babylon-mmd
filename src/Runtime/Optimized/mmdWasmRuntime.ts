@@ -5,40 +5,19 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
-import type { IPlayer } from "./Audio/IAudioPlayer";
-import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { IMmdRuntime } from "./IMmdRuntime";
-import type { MmdCamera } from "./mmdCamera";
-import { MmdMesh } from "./mmdMesh";
-import { MmdModel } from "./mmdModel";
-import type { MmdPhysics } from "./mmdPhysics";
-import { MmdStandardMaterialProxy } from "./mmdStandardMaterialProxy";
+import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
+import type { IPlayer } from "../Audio/IAudioPlayer";
+import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
+import type { IMmdRuntime } from "../IMmdRuntime";
+import type { MmdCamera } from "../mmdCamera";
+import { MmdMesh } from "../mmdMesh";
+import { MmdModel } from "../mmdModel";
+import type { CreateMmdModelOptions } from "../mmdRuntime";
+import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
+import type { MmdWasmInstance } from "./mmdWasmInstance";
 
-/**
- * Options for creating MMD model
- */
-export interface CreateMmdModelOptions {
-    /**
-     * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
-     */
-    materialProxyConstructor?: Nullable<IMmdMaterialProxyConstructor<Material>>;
-
-    /**
-     * Whether to build physics (default: true)
-     */
-    buildPhysics?: boolean;
-}
-
-/**
- * MMD runtime orchestrates several MMD components (models, camera, audio)
- *
- * MMD runtime handles updates and synchronization of MMD components
- *
- * It can also create and remove runtime components
- */
-export class MmdRuntime implements IMmdRuntime {
-    private readonly _physics: Nullable<MmdPhysics>;
+export class MmdWasmRuntime implements IMmdRuntime {
+    private readonly _wasmInstance: MmdWasmInstance;
 
     private readonly _models: MmdModel[];
     private _camera: Nullable<MmdCamera>;
@@ -92,11 +71,11 @@ export class MmdRuntime implements IMmdRuntime {
     private readonly _afterPhysicsBinded: () => void;
 
     /**
-     * Creates a new MMD runtime
-     * @param physics Physics builder
+     * Creates a new MMD web assembly runtime
+     * @param wasmInstance MMD WASM instance
      */
-    public constructor(physics: Nullable<MmdPhysics> = null) {
-        this._physics = physics;
+    public constructor(wasmInstance: MmdWasmInstance) {
+        this._wasmInstance = wasmInstance;
 
         this._models = [];
         this._camera = null;
@@ -125,6 +104,8 @@ export class MmdRuntime implements IMmdRuntime {
 
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
+
+        this._wasmInstance.main_js();
     }
 
     /**
@@ -153,7 +134,7 @@ export class MmdRuntime implements IMmdRuntime {
             mmdMesh,
             mmdMesh.skeleton,
             options.materialProxyConstructor,
-            options.buildPhysics ? this._physics : null,
+            null,
             this
         );
         this._models.push(model);
