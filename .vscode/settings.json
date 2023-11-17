@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./src/Runtime/Optimized/wasm_src/Cargo.toml"
+    ]
+}
