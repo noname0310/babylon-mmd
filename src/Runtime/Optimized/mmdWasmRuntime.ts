@@ -105,7 +105,36 @@ export class MmdWasmRuntime implements IMmdRuntime {
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
 
-        this._wasmInstance.main_js();
+        this._wasmInstance.mainJs();
+
+        const f32Buffer = new Float32Array(1000000);
+        for (let i = 0; i < 100; ++i) {
+            const startTime = performance.now();
+            const result = this._wasmInstance.f32BufferReadBenchmark(f32Buffer);
+            console.log(`f32BufferReadBenchmark: ${performance.now() - startTime}ms, result: ${result}`);
+
+            const jsStartTime = performance.now();
+            let jsResult = 0;
+            for (let i = 0; i < f32Buffer.length; ++i) {
+                jsResult += f32Buffer[i];
+            }
+            console.log(`js f32BufferReadBenchmark: ${performance.now() - jsStartTime}ms, result: ${jsResult}`);
+        }
+
+        const vecPtr = this._wasmInstance.getVecPointer(1000000);
+        const f32RustBuffer = this._wasmInstance.getArray(vecPtr, 1000000);
+        for (let i = 0; i < 100; ++i) {
+            const startTime = performance.now();
+            const result = this._wasmInstance.sum(vecPtr, 1000000);
+            console.log(`f32RustBufferReadBenchmark: ${performance.now() - startTime}ms, result: ${result}`);
+
+            const jsStartTime = performance.now();
+            let jsResult = 0;
+            for (let i = 0; i < f32RustBuffer.length; ++i) {
+                jsResult += f32RustBuffer[i];
+            }
+            console.log(`js f32RustBufferReadBenchmark: ${performance.now() - jsStartTime}ms, result: ${jsResult}`);
+        }
     }
 
     /**
