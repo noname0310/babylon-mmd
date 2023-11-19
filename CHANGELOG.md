@@ -4,6 +4,8 @@
 
 - fix `MmdCompositeAnimation` Quaternion animation biending not working with weight which is smaller than 1.0
 
+- fix `IkSolver` wrong rotation computation
+
 ## 0.32.0
 
 - introduce `MmdCompositeAnimation` to blend multiple animations frame perfectly

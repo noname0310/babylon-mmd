@@ -217,7 +217,7 @@ export class IkSolver implements IIkSolver {
                 Matrix.FromQuaternionToRef(rA, chainRotationMatrix);
                 chain.prevAngle.copyFrom(clampXYZ);
 
-                chainRotation.copyFrom(rotation);
+                Quaternion.FromRotationMatrixToRef(chainRotationMatrix, chainRotation);
             }
 
             chainRotation.multiplyToRef(
@@ -302,10 +302,10 @@ export class IkSolver implements IIkSolver {
 
         if (iteration === 0) {
             if (newAngle < minimumAngle || newAngle > maximumAngle) {
-                if (-newAngle > minimumAngle && -newAngle < maximumAngle) newAngle *= -1;
+                if (-newAngle > minimumAngle && -newAngle < maximumAngle) newAngle = -newAngle;
                 else {
                     const halfRad = (minimumAngle + maximumAngle) * 0.5;
-                    if (Math.abs(halfRad - newAngle) > Math.abs(halfRad + newAngle)) newAngle *= -1;
+                    if (Math.abs(halfRad - newAngle) > Math.abs(halfRad + newAngle)) newAngle = -newAngle;
                 }
             }
         }
@@ -368,25 +368,25 @@ export class IkSolver implements IIkSolver {
                 const cx = Math.cos(before.x);
                 if (cx > 0) {
                     r.x = 0;
-                    r.z = Math.asin(-m.m[1]);
+                    r.z = Math.asin(-m.m[4]);
                 } else {
                     r.x = Math.PI;
-                    r.z = Math.asin(m.m[1]);
+                    r.z = Math.asin(m.m[4]);
                 }
             } else {
                 const cz = Math.cos(before.z);
                 if (cz > 0) {
                     r.z = 0;
-                    r.x = Math.asin(-m.m[6]);
+                    r.x = Math.asin(-m.m[9]);
                 } else {
                     r.z = Math.PI;
-                    r.x = Math.asin(m.m[6]);
+                    r.x = Math.asin(m.m[9]);
                 }
             }
         } else {
-            r.x = Math.atan2(m.m[9], m.m[10]);
-            r.y = Math.asin(-m.m[8]);
-            r.z = Math.atan2(m.m[4], m.m[0]);
+            r.x = Math.atan2(m.m[6], m.m[10]);
+            r.y = Math.asin(-m.m[2]);
+            r.z = Math.atan2(m.m[1], m.m[0]);
         }
 
         const pi = Math.PI;
