@@ -55,7 +55,11 @@ impl MmdRuntimeBone<'_> {
         }
     }
 
-    pub fn get_animated_position(&self) -> Vector3<f32> {
+    pub fn world_matrix(&self) -> &Matrix4<f32> {
+        &self.world_matrix
+    }
+
+    pub fn animated_position(&self) -> Vector3<f32> {
         let mut position = self.position;
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
@@ -63,7 +67,7 @@ impl MmdRuntimeBone<'_> {
         position
     }
 
-    pub fn get_animated_rotation(&self) -> UnitQuaternion<f32> {
+    pub fn animated_rotation(&self) -> UnitQuaternion<f32> {
         let mut rotation = self.rotation;
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation = rotation * morph_rotation_offset;
@@ -71,7 +75,7 @@ impl MmdRuntimeBone<'_> {
         rotation
     }
 
-    pub fn get_animation_position_offset(&self) -> Vector3<f32> {
+    pub fn animation_position_offset(&self) -> Vector3<f32> {
         let mut position = Vector3::zeros();
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
@@ -80,19 +84,19 @@ impl MmdRuntimeBone<'_> {
     }
 
     pub fn update_local_matrix(&mut self) {
-        let mut rotation = self.get_animated_rotation();
+        let mut rotation = self.animated_rotation();
         if let Some(ik_rotation) = self.ik_rotation {
             rotation = ik_rotation * rotation;
         }
 
-        let mut position = self.get_animated_position();
+        let mut position = self.animated_position();
         
         if let Some(append_transform_solver) = &self.append_transform_solver {
             if append_transform_solver.is_affect_rotation() {
-                rotation *= append_transform_solver.get_append_rotation_offset();
+                rotation *= append_transform_solver.append_rotation_offset();
             }
             if append_transform_solver.is_affect_position() {
-                position += append_transform_solver.get_append_position_offset();
+                position += append_transform_solver.append_position_offset();
             }
         }
 

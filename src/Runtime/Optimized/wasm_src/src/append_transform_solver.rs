@@ -44,23 +44,23 @@ impl<'a> AppendTransformSolver<'a> {
         self.affect_position
     }
 
-    pub fn get_append_position_offset(&self) -> Vector3<f32> {
-        self.append_position_offset
+    pub fn append_position_offset(&self) -> &Vector3<f32> {
+        &self.append_position_offset
     }
 
-    pub fn get_append_rotation_offset(&self) -> UnitQuaternion<f32> {
-        self.append_rotation_offset
+    pub fn append_rotation_offset(&self) -> &UnitQuaternion<f32> {
+        &self.append_rotation_offset
     }
 
     pub fn update(&mut self) {
         if self.affect_rotation {
             let mut rotation = if self.is_local {
-                self.target_bone.get_animated_rotation()
+                self.target_bone.animated_rotation()
             } else {
                 if let Some(append_transform_solver) = &self.target_bone.append_transform_solver {
                     append_transform_solver.append_rotation_offset
                 } else {
-                    self.target_bone.get_animated_rotation()
+                    self.target_bone.animated_rotation()
                 }
             };
 
@@ -73,12 +73,12 @@ impl<'a> AppendTransformSolver<'a> {
 
         if self.affect_position {
             let position = if self.is_local {
-                self.target_bone.get_animated_position()
+                self.target_bone.animated_position()
             } else {
                 if let Some(append_transform_solver) = &self.target_bone.append_transform_solver {
                     append_transform_solver.append_position_offset
                 } else {
-                    self.target_bone.get_animated_position()
+                    self.target_bone.animated_position()
                 }
             };
 
