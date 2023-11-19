@@ -106,7 +106,7 @@ export class IkSolver implements IIkSolver {
 
             const targetPosition = targetBone.worldMatrix.getTranslationToRef(IkSolver._TargetPosition);
             const ikPosition = ikBone.worldMatrix.getTranslationToRef(IkSolver._IkPosition);
-            const distance = Vector3.Distance(targetPosition, ikPosition);
+            const distance = Vector3.DistanceSquared(targetPosition, ikPosition);
             if (distance < maxDistance) {
                 maxDistance = distance;
                 for (let j = 0; j < chains.length; ++j) {
@@ -148,8 +148,8 @@ export class IkSolver implements IIkSolver {
         const ikPosition = this.ikBone.worldMatrix.getTranslationToRef(IkSolver._IkPosition2);
 
         const chains = this._ikChains;
-        for (let chainIndex = 0; chainIndex < chains.length; ++chainIndex) {
-            const chain = chains[chainIndex];
+        for (let i = 0; i < chains.length; ++i) {
+            const chain = chains[i];
             const chainBone = chain.bone;
             if (chainBone === this.targetBone) continue;
 
@@ -158,19 +158,19 @@ export class IkSolver implements IIkSolver {
                     (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0) &&
                     (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
-                    this._solvePlane(iteration, chainIndex, SolveAxis.X);
+                    this._solvePlane(iteration, chain, SolveAxis.X);
                     continue;
                 } else if ((chain.minimumAngle.y !== 0 || chain.maximumAngle!.y !== 0) &&
                     (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
                     (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
                 ) {
-                    this._solvePlane(iteration, chainIndex, SolveAxis.Y);
+                    this._solvePlane(iteration, chain, SolveAxis.Y);
                     continue;
                 } else if ((chain.minimumAngle.z !== 0 || chain.maximumAngle!.z !== 0) &&
                     (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
                     (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0)
                 ) {
-                    this._solvePlane(iteration, chainIndex, SolveAxis.Z);
+                    this._solvePlane(iteration, chain, SolveAxis.Z);
                     continue;
                 }
             }
@@ -240,13 +240,11 @@ export class IkSolver implements IIkSolver {
     private static readonly _TargetVector = new Vector3();
     private static readonly _InversedAnimatedRotation2 = new Quaternion();
 
-    private _solvePlane(iteration: number, chainIndex: number, solveAxis: SolveAxis): void {
+    private _solvePlane(iteration: number, chain: IkChain, solveAxis: SolveAxis): void {
         let minimumAngle: number;
         let maximumAngle: number;
         let rotateAxis: DeepImmutable<Vector3>;
         const plane = IkSolver._Plane;
-
-        const chain = this._ikChains[chainIndex];
 
         switch (solveAxis) {
         case SolveAxis.X:
