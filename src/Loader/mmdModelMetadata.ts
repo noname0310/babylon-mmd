@@ -228,14 +228,6 @@ export namespace MmdModelMetadata {
 
         // readonly axisLimit: PmxObject.Bone["axisLimit"];
         // readonly localVector: PmxObject.Bone["localVector"];
-
-        /**
-         * Transform after physics (optional)
-         *
-         * @see PmxObject.Bone["transformAfterPhysics"]
-         */
-        readonly transformAfterPhysics: PmxObject.Bone["transformAfterPhysics"];
-
         // readonly externalParentTransform: PmxObject.Bone["externalParentTransform"];
 
         /**

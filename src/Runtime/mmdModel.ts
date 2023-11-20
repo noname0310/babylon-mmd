@@ -401,6 +401,7 @@ export class MmdModel {
                 const targetBoneIndex = boneMetadata.appendTransform.parentIndex;
                 if (0 <= targetBoneIndex && targetBoneIndex < runtimeBones.length) {
                     bone.appendTransformSolver = new AppendTransformSolver(
+                        boneMetadata.flag,
                         boneMetadata.appendTransform,
                         bone,
                         runtimeBones[targetBoneIndex]

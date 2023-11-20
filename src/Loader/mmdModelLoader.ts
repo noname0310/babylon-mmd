@@ -422,7 +422,6 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
                     appendTransform: boneInfo.appendTransform,
                     // axisLimit: boneInfo.axisLimit,
                     // localVector: boneInfo.localVector,
-                    transformAfterPhysics: boneInfo.transformAfterPhysics,
                     // externalParentTransform: boneInfo.externalParentTransform,
                     ik: boneInfo.ik
                 };

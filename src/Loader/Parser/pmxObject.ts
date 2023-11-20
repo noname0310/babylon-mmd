@@ -437,25 +437,6 @@ export namespace PmxObject {
          */
         appendTransform: Readonly<{
             /**
-             * Whether to apply Append transform in a chain
-             *
-             * If this value is false, then in a bone structure with chain-append transform applied
-             *
-             * the append transform works by adding itself to each other's calculation results
-             */
-            isLocal: boolean;
-
-            /**
-             * Whether to apply Append transform to rotation
-             */
-            affectRotation: boolean;
-
-            /**
-             * Whether to apply Append transform to position
-             */
-            affectPosition: boolean;
-
-            /**
              * Parent bone index of the Append transform
              */
             parentIndex: number;
@@ -490,13 +471,6 @@ export namespace PmxObject {
             x: Vec3;
             z: Vec3;
         }> | undefined;
-
-        /**
-         * Whether to apply transform after physics
-         *
-         * If this value is true, the bone transform is applied after physics
-         */
-        transformAfterPhysics: boolean;
 
         /**
          * External parent transform (optional)
@@ -546,11 +520,29 @@ export namespace PmxObject {
             IsControllable = 0x0010,
             IsIkEnabled = 0x0020,
 
+            /**
+             * Whether to apply Append transform in a chain
+             *
+             * If this bit is 0, then in a bone structure with chain-append transform applied
+             *
+             * the append transform works by adding itself to each other's calculation results
+             */
             LocalAppendTransform = 0x0080,
+            /**
+             * Whether to apply Append transform to rotation
+             */
             HasAppendRotate = 0x0100,
+            /**
+             * Whether to apply Append transform to position
+             */
             HasAppendMove = 0x0200,
             HasAxisLimit = 0x0400,
             HasLocalVector = 0x0800,
+            /**
+             * Whether to apply transform after physics
+             *
+             * If this bit is 1, the bone transform is applied after physics
+             */
             TransformAfterPhysics = 0x1000,
             IsExternalParentTransformed = 0x2000,
         }

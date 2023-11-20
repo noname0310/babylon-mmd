@@ -610,8 +610,6 @@ export class PmdReader {
                 axisLimit: undefined,
                 localVector: undefined,
 
-                transformAfterPhysics: false,
-
                 externalParentTransform: undefined,
                 ik: undefined
             };
@@ -642,9 +640,6 @@ export class PmdReader {
                     & ~PmxObject.Bone.Flag.IsVisible;
 
                 pmxBone.appendTransform = {
-                    isLocal: false,
-                    affectRotation: true,
-                    affectPosition: false,
                     parentIndex: bone.tailIndex,
                     ratio: bone.ikIndex * 0.01
                 };
@@ -726,7 +721,6 @@ export class PmdReader {
                                 z: [...pmxBone.localVector.z]
                             }
                             : undefined,
-                        transformAfterPhysics: pmxBone.transformAfterPhysics,
                         externalParentTransform: pmxBone.externalParentTransform,
                         ik: undefined
                     };

@@ -284,9 +284,6 @@ export class BpmxReader {
 
             if (flag & PmxObject.Bone.Flag.HasAppendMove || flag & PmxObject.Bone.Flag.HasAppendRotate) {
                 appendTransform = {
-                    isLocal: (flag & PmxObject.Bone.Flag.LocalAppendTransform) !== 0,
-                    affectRotation: (flag & PmxObject.Bone.Flag.HasAppendRotate) !== 0,
-                    affectPosition: (flag & PmxObject.Bone.Flag.HasAppendMove) !== 0,
                     parentIndex: dataDeserializer.getInt32(),
                     ratio: dataDeserializer.getFloat32()
                 };
@@ -306,8 +303,6 @@ export class BpmxReader {
                     z: dataDeserializer.getFloat32Tuple(3)
                 };
             }
-
-            const transformAfterPhysics = (flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
             let externalParentTransform: number | undefined;
 
@@ -363,7 +358,6 @@ export class BpmxReader {
                 axisLimit,
 
                 localVector,
-                transformAfterPhysics,
                 externalParentTransform,
                 ik
             };

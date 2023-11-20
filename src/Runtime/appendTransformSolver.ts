@@ -1,6 +1,7 @@
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
@@ -20,14 +21,15 @@ export class AppendTransformSolver {
     public readonly appendRotationOffset = Quaternion.Identity();
 
     public constructor(
-        boneMetadata: AppendTransformMetadata,
+        boneFlag: number,
+        boneAppendTransformMetadata: AppendTransformMetadata,
         bone: MmdRuntimeBone,
         targetBone: MmdRuntimeBone
     ) {
-        this.isLocal = boneMetadata.isLocal;
-        this.affectRotation = boneMetadata.affectRotation;
-        this.affectPosition = boneMetadata.affectPosition;
-        this.ratio = boneMetadata.ratio;
+        this.isLocal = (boneFlag & PmxObject.Bone.Flag.LocalAppendTransform) !== 0;
+        this.affectRotation = (boneFlag & PmxObject.Bone.Flag.HasAppendRotate) !== 0;
+        this.affectPosition = (boneFlag & PmxObject.Bone.Flag.HasAppendMove) !== 0;
+        this.ratio = boneAppendTransformMetadata.ratio;
 
         this.bone = bone;
         this.targetBone = targetBone;

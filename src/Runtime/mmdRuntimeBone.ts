@@ -2,6 +2,7 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
+import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
 import type { IIkSolver, IkSolver } from "./ikSolver";
@@ -94,7 +95,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
         this.transformOrder = boneMetadata.transformOrder;
         this.flag = boneMetadata.flag;
-        this.transformAfterPhysics = boneMetadata.transformAfterPhysics;
+        this.transformAfterPhysics = (boneMetadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
         this.appendTransformSolver = null;
         this.ikSolver = null;
