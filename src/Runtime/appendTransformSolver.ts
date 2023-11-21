@@ -14,7 +14,6 @@ export class AppendTransformSolver {
     public readonly affectPosition: boolean;
     public readonly ratio: number;
 
-    public readonly bone: MmdRuntimeBone;
     public readonly targetBone: MmdRuntimeBone;
 
     public readonly appendPositionOffset = Vector3.Zero();
@@ -23,7 +22,6 @@ export class AppendTransformSolver {
     public constructor(
         boneFlag: number,
         boneAppendTransformMetadata: AppendTransformMetadata,
-        bone: MmdRuntimeBone,
         targetBone: MmdRuntimeBone
     ) {
         this.isLocal = (boneFlag & PmxObject.Bone.Flag.LocalAppendTransform) !== 0;
@@ -31,7 +29,6 @@ export class AppendTransformSolver {
         this.affectPosition = (boneFlag & PmxObject.Bone.Flag.HasAppendMove) !== 0;
         this.ratio = boneAppendTransformMetadata.ratio;
 
-        this.bone = bone;
         this.targetBone = targetBone;
     }
 

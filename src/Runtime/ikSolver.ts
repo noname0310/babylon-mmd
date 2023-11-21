@@ -230,7 +230,6 @@ export class IkSolver implements IIkSolver {
         }
     }
 
-    private static readonly _Plane = new Vector3();
     private static readonly _IkPosition3 = new Vector3();
     private static readonly _TargetPosition3 = new Vector3();
     private static readonly _InversedChain2 = new Matrix();
@@ -244,26 +243,22 @@ export class IkSolver implements IIkSolver {
         let minimumAngle: number;
         let maximumAngle: number;
         let rotateAxis: DeepImmutable<Vector3>;
-        const plane = IkSolver._Plane;
 
         switch (solveAxis) {
         case SolveAxis.X:
             minimumAngle = chain.minimumAngle!.x;
             maximumAngle = chain.maximumAngle!.x;
             rotateAxis = IkSolver._Right;
-            plane.set(0, 1, 1);
             break;
         case SolveAxis.Y:
             minimumAngle = chain.minimumAngle!.y;
             maximumAngle = chain.maximumAngle!.y;
             rotateAxis = IkSolver._Up;
-            plane.set(1, 0, 1);
             break;
         case SolveAxis.Z:
             minimumAngle = chain.minimumAngle!.z;
             maximumAngle = chain.maximumAngle!.z;
             rotateAxis = IkSolver._Forward;
-            plane.set(1, 1, 0);
             break;
         default:
             throw new Error("Invalid solve axis");

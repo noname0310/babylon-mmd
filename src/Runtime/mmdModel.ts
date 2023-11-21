@@ -403,7 +403,6 @@ export class MmdModel {
                     bone.appendTransformSolver = new AppendTransformSolver(
                         boneMetadata.flag,
                         boneMetadata.appendTransform,
-                        bone,
                         runtimeBones[targetBoneIndex]
                     );
                 } else {
