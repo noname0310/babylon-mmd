@@ -2,33 +2,33 @@ use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
 
 use crate::{ik_solver::IkSolver, append_transform_solver::AppendTransformSolver};
 
-pub(crate) struct MmdRuntimeBone<'a> {
+pub(crate) struct MmdRuntimeBone {
     rest_position: Vector3<f32>,
     position: Vector3<f32>,
     rotation: UnitQuaternion<f32>,
     scale: Vector3<f32>,
 
-    name: String,
-    parent_bone: Option<&'a mut MmdRuntimeBone<'a>>,
-    child_bones: Vec<&'a mut MmdRuntimeBone<'a>>,
-    transform_order: i32,
+    pub name: String,
+    pub parent_bone: Option<usize>,
+    pub child_bones: Vec<usize>,
+    pub transform_order: i32,
     flag: u16,
     transform_after_physics: bool,
 
-    pub append_transform_solver: Option<AppendTransformSolver<'a>>,
-    ik_solver: Option<IkSolver<'a>>,
+    pub append_transform_solver: Option<AppendTransformSolver>,
+    pub ik_solver: Option<IkSolver>,
 
     morph_position_offset: Option<Vector3<f32>>,
     morph_rotation_offset: Option<UnitQuaternion<f32>>,
 
     pub ik_rotation: Option<UnitQuaternion<f32>>,
 
-    local_matrix: Matrix4<f32>,
-    world_matrix: Matrix4<f32>,
+    pub local_matrix: Matrix4<f32>,
+    pub world_matrix: Matrix4<f32>,
 }
 
-impl MmdRuntimeBone<'_> {
-    fn new<'a>(name: String, rest_position: Vector3<f32>) -> MmdRuntimeBone<'a> {
+impl MmdRuntimeBone {
+    pub fn new(name: String, rest_position: Vector3<f32>) -> MmdRuntimeBone {
         MmdRuntimeBone {
             rest_position,
             position: Vector3::zeros(),
@@ -55,10 +55,6 @@ impl MmdRuntimeBone<'_> {
         }
     }
 
-    pub fn world_matrix(&self) -> &Matrix4<f32> {
-        &self.world_matrix
-    }
-
     pub fn animated_position(&self) -> Vector3<f32> {
         let mut position = self.position;
         if let Some(morph_position_offset) = self.morph_position_offset {
@@ -70,7 +66,7 @@ impl MmdRuntimeBone<'_> {
     pub fn animated_rotation(&self) -> UnitQuaternion<f32> {
         let mut rotation = self.rotation;
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
-            rotation = rotation * morph_rotation_offset;
+            rotation *= morph_rotation_offset;
         }
         rotation
     }
@@ -104,22 +100,5 @@ impl MmdRuntimeBone<'_> {
             Matrix4::new_translation(&position) *
             rotation.to_homogeneous() *
             Matrix4::new_nonuniform_scaling(&self.scale);
-    }
-
-    pub fn update_world_matrix(&mut self) {
-        let mut stack = Vec::new();
-        stack.push(self);
-
-        while let Some(bone) = stack.pop() {
-            if let Some(parent_bone) = &bone.parent_bone {
-                bone.world_matrix = parent_bone.world_matrix * bone.local_matrix;
-            } else {
-                bone.world_matrix = bone.local_matrix;
-            }
-
-            for child_bone in &mut bone.child_bones {
-                stack.push(child_bone);
-            }
-        }
     }
 }

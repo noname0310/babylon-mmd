@@ -1,35 +1,30 @@
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::mmd_runtime_bone::MmdRuntimeBone;
+use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::BoneFlag};
 
-pub(crate) struct AppendTransformSolver<'a> {
+pub(crate) struct AppendTransformSolver {
     is_local: bool,
     affect_rotation: bool,
     affect_position: bool,
     ratio: f32,
 
-    bone: &'a mut MmdRuntimeBone<'a>,
-    target_bone: &'a mut MmdRuntimeBone<'a>,
+    target_bone: usize,
 
     append_position_offset: Vector3<f32>,
     append_rotation_offset: UnitQuaternion<f32>,
 }
 
-impl<'a> AppendTransformSolver<'a> {
+impl AppendTransformSolver {
     pub fn new(
-        bone: &'a mut MmdRuntimeBone<'a>,
-        target_bone: &'a mut MmdRuntimeBone<'a>,
-        is_local: bool,
-        affect_rotation: bool,
-        affect_position: bool,
+        target_bone: usize,
+        bone_flag: u16,
         ratio: f32,
-    ) -> AppendTransformSolver<'a> {
+    ) -> AppendTransformSolver {
         AppendTransformSolver {
-            is_local,
-            affect_rotation,
-            affect_position,
+            is_local: (bone_flag & BoneFlag::LocalAppendTransform as u16) != 0,
+            affect_rotation: (bone_flag & BoneFlag::HasAppendRotate as u16) != 0,
+            affect_position: (bone_flag & BoneFlag::HasAppendMove as u16) != 0,
             ratio,
-            bone,
             target_bone,
             append_position_offset: Vector3::zeros(),
             append_rotation_offset: UnitQuaternion::identity(),
@@ -52,19 +47,19 @@ impl<'a> AppendTransformSolver<'a> {
         &self.append_rotation_offset
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, arena: &mut [MmdRuntimeBone]) {
+        let target_bone = &arena[self.target_bone];
+
         if self.affect_rotation {
             let mut rotation = if self.is_local {
-                self.target_bone.animated_rotation()
+                target_bone.animated_rotation()
+            } else if let Some(append_transform_solver) = &target_bone.append_transform_solver {
+                append_transform_solver.append_rotation_offset
             } else {
-                if let Some(append_transform_solver) = &self.target_bone.append_transform_solver {
-                    append_transform_solver.append_rotation_offset
-                } else {
-                    self.target_bone.animated_rotation()
-                }
+                target_bone.animated_rotation()
             };
 
-            if let Some(ik_rotation) = &self.target_bone.ik_rotation {
+            if let Some(ik_rotation) = &target_bone.ik_rotation {
                 rotation = ik_rotation * rotation;
             }
 
@@ -73,13 +68,11 @@ impl<'a> AppendTransformSolver<'a> {
 
         if self.affect_position {
             let position = if self.is_local {
-                self.target_bone.animated_position()
+                target_bone.animated_position()
+            } else if let Some(append_transform_solver) = &target_bone.append_transform_solver {
+                append_transform_solver.append_position_offset
             } else {
-                if let Some(append_transform_solver) = &self.target_bone.append_transform_solver {
-                    append_transform_solver.append_position_offset
-                } else {
-                    self.target_bone.animated_position()
-                }
+                target_bone.animated_position()
             };
 
             self.append_position_offset = position * self.ratio;

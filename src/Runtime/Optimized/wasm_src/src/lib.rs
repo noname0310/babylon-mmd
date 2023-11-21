@@ -4,6 +4,7 @@ mod mmd_model;
 mod mmd_runtime_bone;
 mod mmd_runtime;
 mod append_transform_solver;
+mod mmd_model_metadata;
 
 use wasm_bindgen::prelude::*;
 use web_sys::{console, js_sys::Float32Array};
@@ -53,7 +54,7 @@ pub fn get_array(ptr: *mut f32, count: usize) -> Float32Array {
 pub fn f32_buffer_read_benchmark(buffer: Float32Array) -> f32 {
     let mut sum = 0.0;
     for i in 0..buffer.length() {
-        sum += buffer.get_index(i as u32);
+        sum += buffer.get_index(i);
     }
     sum
 }

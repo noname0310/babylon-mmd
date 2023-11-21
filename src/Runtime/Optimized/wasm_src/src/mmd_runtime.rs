@@ -10,5 +10,4 @@ impl MmdRuntime {
             mmd_models: Vec::new(),
         }
     }
-
 }

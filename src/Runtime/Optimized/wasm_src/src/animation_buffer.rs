@@ -1,5 +1,3 @@
-use nalgebra::Vector3;
-
 #[repr(packed)]
 struct AnimatedBoneData {
     position: [f32; 3],
