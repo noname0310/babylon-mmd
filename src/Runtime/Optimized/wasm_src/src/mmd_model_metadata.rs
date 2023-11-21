@@ -1,7 +1,6 @@
 use nalgebra::Vector3;
 
 pub(crate) struct BoneMetadata {
-    pub name: String,
     pub rest_position: Vector3<f32>,
     pub parent_bone_index: i32,
     pub transform_order: i32,
@@ -47,20 +46,19 @@ pub(crate) enum BoneFlag {
 }
 
 pub(crate) struct BoneMorphMetadata {
-    name: String,
+    morph_index: u32,
     indices: Vec<i32>,
     positions: Vec<Vector3<f32>>,
     rotations: Vec<Vector3<f32>>,
 }
 
 pub(crate) struct GroupMorphMetadata {
-    name: String,
+    morph_index: u32,
     indices: Vec<i32>,
     ratios: Vec<f32>,
 }
 
 pub(crate) struct RigidbodyMetadata {
-    name: String,
     bone_index: i32,
     collision_group: u8,
     collision_mask: u16,
@@ -89,7 +87,6 @@ pub(crate) enum RigidbodyPhysicsMode {
 }
 
 pub(crate) struct JointMetadata {
-    name: String,
     kind: u8,
     rigidbody_index_a: i32,
     rigidbody_index_b: i32,

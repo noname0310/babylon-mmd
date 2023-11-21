@@ -13,7 +13,6 @@ impl MmdModel {
         for bone_metadata in &metadata.bones {
             arena.push(
                 MmdRuntimeBone::new(
-                    bone_metadata.name.clone(),
                     bone_metadata.rest_position
                 )
             );

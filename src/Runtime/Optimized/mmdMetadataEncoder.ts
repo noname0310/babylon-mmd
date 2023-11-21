@@ -11,7 +11,6 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *
  * boneCount: uint32
  * {
- *  boneName: uint32, uint8[]
  *  restPosition: float32[3]
  *  parentBoneIndex: int32
  *  transformOrder: int32
@@ -38,7 +37,7 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *
  * boneMorphCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
+ *  morphIndex: uint32
  *  boneCount: uint32
  *  indices: int32[boneCount]
  *  positions: float32[boneCount * 3]
@@ -47,7 +46,7 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *
  * groupMorphCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
+ *  morphIndex: uint32
  *  indexCount: uint32
  *  indices: int32[indexCount]
  *  ratios: float32[indexCount]
@@ -55,7 +54,6 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *
  * rigidBodyCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
  *  boneIndex: int32
  *  collisionGroup: uint8
  *  collisionMask: uint16
@@ -73,7 +71,6 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *
  * jointCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
  *  type: uint8
  *  rigidBodyIndexA: int32
  *  rigidBodyIndexB: int32
@@ -91,24 +88,17 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 export class MmdMetadataEncoder {
     public encodePhysics: boolean;
 
-    private readonly _encoder: TextEncoder;
-
     public constructor() {
         this.encodePhysics = true;
-
-        this._encoder = new TextEncoder();
     }
 
     public computeSize(metadata: MmdModelMetadata): number {
         let dataLength =
             4; // boneCount
 
-        const encoder = this._encoder;
-
         const bones = metadata.bones;
         for (let i = 0; i < bones.length; ++i) {
-            dataLength += 4 + encoder.encode(bones[i].name).length // boneName
-                + 4 * 3 // restPosition
+            dataLength += 4 * 3 // restPosition
                 + 4 // parentBoneIndex
                 + 4 // transformOrder
                 + 2; // flag
@@ -147,7 +137,7 @@ export class MmdMetadataEncoder {
             switch (morph.type) {
             case PmxObject.Morph.Type.BoneMorph: {
                 const indices = morph.indices;
-                dataLength += 4 + encoder.encode(morph.name).length // name
+                dataLength += 4 // morphIndex
                     + 4 // boneCount
                     + 4 * indices.length // indices
                     + 4 * 3 * indices.length // positions
@@ -156,7 +146,7 @@ export class MmdMetadataEncoder {
             }
             case PmxObject.Morph.Type.GroupMorph: {
                 const indices = morph.indices;
-                dataLength += 4 + encoder.encode(morph.name).length // name
+                dataLength += 4 // morphIndex
                     + 4 // indexCount
                     + 4 * indices.length // indices
                     + 4 * indices.length; // ratios
@@ -170,8 +160,7 @@ export class MmdMetadataEncoder {
 
             const rigidBodies = metadata.rigidBodies;
             for (let i = 0; i < rigidBodies.length; ++i) {
-                dataLength += 4 + encoder.encode(rigidBodies[i].name).length // name
-                    + 4 // boneIndex
+                dataLength += 4 // boneIndex
                     + 1 // collisionGroup
                     + 2 // collisionMask
                     + 1 // shapeType
@@ -190,8 +179,7 @@ export class MmdMetadataEncoder {
 
             const joints = metadata.joints;
             for (let i = 0; i < joints.length; ++i) {
-                dataLength += 4 + encoder.encode(joints[i].name).length // name
-                    + 1 // type
+                dataLength += 1 // type
                     + 4 // rigidBodyIndexA
                     + 4 // rigidBodyIndexB
                     + 4 * 3 // position
@@ -221,7 +209,6 @@ export class MmdMetadataEncoder {
         serializer.setUint32(bones.length); // boneCount
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
-            serializer.setString(bone.name); // name
             serializer.setFloat32Array(linkedBone[i].getFinalMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
             serializer.setInt32(bone.transformOrder); // transformOrder
@@ -275,7 +262,7 @@ export class MmdMetadataEncoder {
             const morph = morphs[i];
             if (morph.type !== PmxObject.Morph.Type.BoneMorph) continue;
 
-            serializer.setString(morph.name); // name
+            serializer.setUint32(i); // morphIndex
             serializer.setUint32(morph.indices.length); // boneCount
             serializer.setInt32Array(morph.indices); // indices
             serializer.setFloat32Array(morph.positions); // positions
@@ -287,7 +274,7 @@ export class MmdMetadataEncoder {
             const morph = morphs[i];
             if (morph.type !== PmxObject.Morph.Type.GroupMorph) continue;
 
-            serializer.setString(morph.name); // name
+            serializer.setUint32(i); // morphIndex
             serializer.setUint32(morph.indices.length); // indexCount
             serializer.setInt32Array(morph.indices); // indices
             serializer.setFloat32Array(morph.ratios); // ratios
@@ -298,7 +285,6 @@ export class MmdMetadataEncoder {
             serializer.setUint32(rigidBodies.length); // rigidBodyCount
             for (let i = 0; i < rigidBodies.length; ++i) {
                 const rigidBody = rigidBodies[i];
-                serializer.setString(rigidBody.name); // name
                 serializer.setInt32(rigidBody.boneIndex); // boneIndex
                 serializer.setUint8(rigidBody.collisionGroup); // collisionGroup
                 serializer.setUint16(rigidBody.collisionMask); // collisionMask
@@ -318,7 +304,6 @@ export class MmdMetadataEncoder {
             serializer.setUint32(joints.length); // jointCount
             for (let i = 0; i < joints.length; ++i) {
                 const joint = joints[i];
-                serializer.setString(joint.name); // name
                 serializer.setUint8(joint.type); // type
                 serializer.setInt32(joint.rigidbodyIndexA); // rigidBodyIndexA
                 serializer.setInt32(joint.rigidbodyIndexB); // rigidBodyIndexB

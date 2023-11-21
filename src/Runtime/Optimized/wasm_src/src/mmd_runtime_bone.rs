@@ -8,7 +8,6 @@ pub(crate) struct MmdRuntimeBone {
     rotation: UnitQuaternion<f32>,
     scale: Vector3<f32>,
 
-    pub name: String,
     pub parent_bone: Option<usize>,
     pub child_bones: Vec<usize>,
     pub transform_order: i32,
@@ -28,14 +27,13 @@ pub(crate) struct MmdRuntimeBone {
 }
 
 impl MmdRuntimeBone {
-    pub fn new(name: String, rest_position: Vector3<f32>) -> MmdRuntimeBone {
+    pub fn new(rest_position: Vector3<f32>) -> MmdRuntimeBone {
         MmdRuntimeBone {
             rest_position,
             position: Vector3::zeros(),
             rotation: UnitQuaternion::identity(),
             scale: Vector3::new(1.0, 1.0, 1.0),
             
-            name,
             parent_bone: None,
             child_bones: Vec::new(),
             transform_order: 0,
