@@ -423,13 +423,15 @@ export class MmdModel {
                     for (let j = 0; j < ikMetadata.links.length; ++j) {
                         const link = ikMetadata.links[j];
                         const linkBoneIndex = link.target;
-                        if (0 <= linkBoneIndex) {
+                        if (0 <= linkBoneIndex && linkBoneIndex < runtimeBones.length) {
                             const linkBone = runtimeBones[linkBoneIndex];
                             ikSolver.addIkChain(
                                 linkBone,
                                 link.limitation?.minimumAngle ? Vector3.FromArray(link.limitation.minimumAngle) : null,
                                 link.limitation?.maximumAngle ? Vector3.FromArray(link.limitation.maximumAngle) : null
                             );
+                        } else {
+                            this._logger.error(`Invalid IK link bone index: ${linkBoneIndex}`);
                         }
                     }
                 } else {
