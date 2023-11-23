@@ -16,7 +16,7 @@ impl IkChain {
     fn new(
         bone: usize,
         angle_limits: Option<IkChainAngleLimits>,
-    ) -> IkChain {
+    ) -> Self {
         IkChain {
             bone,
             angle_limits,

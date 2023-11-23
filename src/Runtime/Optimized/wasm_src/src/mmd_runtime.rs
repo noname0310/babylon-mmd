@@ -5,7 +5,7 @@ pub(crate) struct MmdRuntime {
 }
 
 impl MmdRuntime {
-    pub fn new() -> MmdRuntime {
+    pub fn new() -> Self {
         MmdRuntime {
             mmd_models: Vec::new(),
         }

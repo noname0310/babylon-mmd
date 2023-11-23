@@ -8,7 +8,7 @@ pub(crate) struct MmdModel {
 }
 
 impl MmdModel {
-    pub fn new(buffer: MetadataBuffer) -> MmdModel {
+    pub fn new(buffer: MetadataBuffer) -> Self {
         let reader = BoneMetadataReader::new(buffer);
 
         let mut arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.count() as usize);

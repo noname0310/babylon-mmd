@@ -12,7 +12,7 @@ pub(crate) struct AnimationArena {
 }
 
 impl AnimationArena {
-    fn new(bone_count: usize, morph_count: usize) -> AnimationArena {
+    fn new(bone_count: usize, morph_count: usize) -> Self {
         AnimationArena {
             bone_arena: vec![AnimatedBoneData {
                 position: [0.0, 0.0, 0.0],

@@ -26,7 +26,7 @@ pub(crate) struct MmdRuntimeBone {
 }
 
 impl MmdRuntimeBone {
-    pub fn new() -> MmdRuntimeBone {
+    pub fn new() -> Self {
         MmdRuntimeBone {
             rest_position: Vector3::zeros(),
             position: Vector3::zeros(),

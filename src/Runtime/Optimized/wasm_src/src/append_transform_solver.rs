@@ -19,7 +19,7 @@ impl AppendTransformSolver {
         target_bone: usize,
         bone_flag: u16,
         ratio: f32,
-    ) -> AppendTransformSolver {
+    ) -> Self {
         AppendTransformSolver {
             is_local: bone_flag & BoneFlag::LocalAppendTransform as u16 != 0,
             affect_rotation: bone_flag & BoneFlag::HasAppendRotate as u16 != 0,
