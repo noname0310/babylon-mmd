@@ -16,8 +16,8 @@ pub(crate) struct MmdRuntimeBone {
     pub append_transform_solver: Option<AppendTransformSolver>,
     pub ik_solver: Option<IkSolver>,
 
-    morph_position_offset: Option<Vector3<f32>>,
-    morph_rotation_offset: Option<UnitQuaternion<f32>>,
+    pub morph_position_offset: Option<Vector3<f32>>,
+    pub morph_rotation_offset: Option<UnitQuaternion<f32>>,
 
     pub ik_rotation: Option<UnitQuaternion<f32>>,
 

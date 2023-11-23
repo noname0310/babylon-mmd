@@ -138,7 +138,7 @@ impl BoneMetadataReader {
         self.count
     }
 
-    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> BoneMorphMetadataReader {
+    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader {
         for i in 0..self.count {
             let rest_position = self.buffer.read_vector();
             let parent_bone_index = self.buffer.read::<i32>();
@@ -189,67 +189,37 @@ impl BoneMetadataReader {
             });
         }
 
-        BoneMorphMetadataReader::new(self.buffer)
+        MorphMetadataReader::new(self.buffer)
     }
 }
 
+pub(crate) enum MorphMetadata {
+    Bone(BoneMorphMetadata),
+    Group(GroupMorphMetadata),
+}
+
 pub(crate) struct BoneMorphMetadata {
-    morph_index: u32,
     indices: Vec<i32>,
     positions: Vec<Vector3<f32>>,
     rotations: Vec<UnitQuaternion<f32>>,
 }
 
-pub(crate) struct BoneMorphMetadataReader {
-    buffer: MetadataBuffer,
-    count: u32,
-}
-
-impl BoneMorphMetadataReader {
-    fn new(mut buffer: MetadataBuffer) -> Self {
-        let count = buffer.read::<u32>();
-
-        Self {
-            buffer,
-            count,
-        }
-    }
-
-    pub fn count(&self) -> u32 {
-        self.count
-    }
-
-    pub fn for_each(mut self, mut f: impl FnMut(BoneMorphMetadata)) -> GroupMorphMetadataReader {
-        for _ in 0..self.count {
-            let morph_index = self.buffer.read::<u32>();
-            let morph_count = self.buffer.read::<i32>();
-            let indices = self.buffer.read_array::<i32>(morph_count as usize);
-            let positions = self.buffer.read_vector_array(morph_count as usize);
-            let rotations = self.buffer.read_quaternion_array(morph_count as usize);
-            f(BoneMorphMetadata {
-                morph_index,
-                indices,
-                positions,
-                rotations,
-            });
-        }
-
-        GroupMorphMetadataReader::new(self.buffer)
-    }
-}
-
 pub(crate) struct GroupMorphMetadata {
-    morph_index: u32,
     indices: Vec<i32>,
     ratios: Vec<f32>,
 }
 
-pub(crate) struct GroupMorphMetadataReader {
+enum MorphKind {
+    GroupMorph = 0,
+    BoneMorph = 2
+}
+
+pub(crate) struct MorphMetadataReader {
     buffer: MetadataBuffer,
     count: u32,
 }
 
-impl GroupMorphMetadataReader {
+impl MorphMetadataReader {
     fn new(mut buffer: MetadataBuffer) -> Self {
         let count = buffer.read::<u32>();
 
@@ -263,17 +233,30 @@ impl GroupMorphMetadataReader {
         self.count
     }
 
-    pub fn for_each(mut self, mut f: impl FnMut(GroupMorphMetadata)) -> RigidbodyMetadataReader {
+    pub fn for_each(mut self, mut f: impl FnMut(MorphMetadata)) -> RigidbodyMetadataReader {
         for _ in 0..self.count {
-            let morph_index = self.buffer.read::<u32>();
-            let morph_count = self.buffer.read::<i32>();
-            let indices = self.buffer.read_array::<i32>(morph_count as usize);
-            let ratios = self.buffer.read_array::<f32>(morph_count as usize);
-            f(GroupMorphMetadata {
-                morph_index,
-                indices,
-                ratios,
-            });
+            let kind = self.buffer.read::<u8>();
+            if kind == MorphKind::BoneMorph as u8 {
+                let morph_count = self.buffer.read::<i32>();
+                let indices = self.buffer.read_array::<i32>(morph_count as usize);
+                let positions = self.buffer.read_vector_array(morph_count as usize);
+                let rotations = self.buffer.read_quaternion_array(morph_count as usize);
+                f(MorphMetadata::Bone(BoneMorphMetadata {
+                    indices,
+                    positions,
+                    rotations,
+                }));
+            } else if kind == MorphKind::GroupMorph as u8 {
+                let morph_count = self.buffer.read::<i32>();
+                let indices = self.buffer.read_array::<i32>(morph_count as usize);
+                let ratios = self.buffer.read_array::<f32>(morph_count as usize);
+                f(MorphMetadata::Group(GroupMorphMetadata {
+                    indices,
+                    ratios,
+                }));
+            } else {
+                unreachable!()
+            }
         }
 
         RigidbodyMetadataReader::new(self.buffer)

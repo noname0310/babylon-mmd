@@ -1,4 +1,4 @@
-mod animation_buffer;
+mod animation_arena;
 mod ik_solver;
 mod mmd_model;
 mod mmd_runtime_bone;

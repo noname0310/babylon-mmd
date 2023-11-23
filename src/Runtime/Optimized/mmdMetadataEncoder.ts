@@ -35,22 +35,19 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *  }
  * }[boneCount]
  *
- * boneMorphCount: uint32
- * {
- *  morphIndex: uint32
+ * morphCount: uint32
+ * { // if boneMorph
+ *  kind: uint8
  *  boneCount: uint32
  *  indices: int32[boneCount]
  *  positions: float32[boneCount * 3]
  *  rotations: float32[boneCount * 4]
- * }[boneMorphCount]
- *
- * groupMorphCount: uint32
- * {
- *  morphIndex: uint32
+ * } | { // if groupMorph
+ *  kind: uint8
  *  indexCount: uint32
  *  indices: int32[indexCount]
  *  ratios: float32[indexCount]
- * }[groupMorphCount]
+ * }[morphCount]
  *
  * rigidBodyCount: uint32
  * {
@@ -128,8 +125,7 @@ export class MmdMetadataEncoder {
             }
         }
 
-        dataLength += 4 // boneMorphCount
-            + 4; // groupMorphCount
+        dataLength += 4; // morphCount
         const morphs = metadata.morphs;
         for (let i = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
@@ -137,7 +133,7 @@ export class MmdMetadataEncoder {
             switch (morph.type) {
             case PmxObject.Morph.Type.BoneMorph: {
                 const indices = morph.indices;
-                dataLength += 4 // morphIndex
+                dataLength += 1 // kind
                     + 4 // boneCount
                     + 4 * indices.length // indices
                     + 4 * 3 * indices.length // positions
@@ -146,7 +142,7 @@ export class MmdMetadataEncoder {
             }
             case PmxObject.Morph.Type.GroupMorph: {
                 const indices = morph.indices;
-                dataLength += 4 // morphIndex
+                dataLength += 1 // kind
                     + 4 // indexCount
                     + 4 * indices.length // indices
                     + 4 * indices.length; // ratios
@@ -199,7 +195,7 @@ export class MmdMetadataEncoder {
         return dataLength;
     }
 
-    public encode(metadata: MmdModelMetadata, linkedBone: IMmdRuntimeLinkedBone[], buffer: Uint8Array): void {
+    public encode(metadata: MmdModelMetadata, linkedBone: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
         const serializer = new MmdDataSerializer(buffer.buffer);
         serializer.offset = buffer.byteOffset;
 
@@ -240,44 +236,60 @@ export class MmdMetadataEncoder {
         }
 
         const morphs = metadata.morphs;
-        let boneMorphCount = 0;
-        let groupMorphCount = 0;
+        let morphCount = 0;
         for (let i = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
 
             switch (morph.type) {
-            case PmxObject.Morph.Type.BoneMorph: {
-                boneMorphCount += 1;
+            case PmxObject.Morph.Type.BoneMorph:
+            case PmxObject.Morph.Type.GroupMorph:
+                morphCount += 1;
                 break;
-            }
-            case PmxObject.Morph.Type.GroupMorph: {
-                groupMorphCount += 1;
-                break;
-            }
             }
         }
 
-        serializer.setUint32(boneMorphCount); // boneMorphCount
-        for (let i = 0; i < morphs.length; ++i) {
+        const wasmMorphMap = new Int32Array(morphs.length).fill(-1);
+        for (let i = 0, nextIndex = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
-            if (morph.type !== PmxObject.Morph.Type.BoneMorph) continue;
+            if (
+                morph.type !== PmxObject.Morph.Type.BoneMorph &&
+                morph.type !== PmxObject.Morph.Type.GroupMorph
+            ) {
+                continue;
+            }
 
-            serializer.setUint32(i); // morphIndex
-            serializer.setUint32(morph.indices.length); // boneCount
-            serializer.setInt32Array(morph.indices); // indices
-            serializer.setFloat32Array(morph.positions); // positions
-            serializer.setFloat32Array(morph.rotations); // rotations
+            wasmMorphMap[i] = nextIndex;
+            nextIndex += 1;
         }
 
-        serializer.setUint32(groupMorphCount); // groupMorphCount
+        serializer.setUint32(morphCount); // morphCount
         for (let i = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
-            if (morph.type !== PmxObject.Morph.Type.GroupMorph) continue;
 
-            serializer.setUint32(i); // morphIndex
-            serializer.setUint32(morph.indices.length); // indexCount
-            serializer.setInt32Array(morph.indices); // indices
-            serializer.setFloat32Array(morph.ratios); // ratios
+            switch (morph.type) {
+            case PmxObject.Morph.Type.BoneMorph:
+                {
+                    serializer.setUint8(morph.type); // kind
+                    serializer.setUint32(morph.indices.length); // boneCount
+                    serializer.setInt32Array(morph.indices); // indices
+                    serializer.setFloat32Array(morph.positions); // positions
+                    serializer.setFloat32Array(morph.rotations); // rotations
+                }
+                break;
+            case PmxObject.Morph.Type.GroupMorph:
+                {
+                    serializer.setUint8(morph.type); // kind
+                    serializer.setUint32(morph.indices.length); // indexCount
+                    const remappedIndices = new Int32Array(morph.indices.length);
+                    remappedIndices.set(morph.indices);
+                    for (let j = 0; j < remappedIndices.length; ++j) {
+                        remappedIndices[j] = wasmMorphMap[remappedIndices[j]];
+                    }
+                    serializer.setInt32Array(morph.indices); // indices
+                    serializer.setFloat32Array(morph.ratios); // ratios
+                }
+                break;
+            }
         }
 
         if (this.encodePhysics) {
@@ -320,5 +332,7 @@ export class MmdMetadataEncoder {
             serializer.setUint32(0); // rigidBodyCount
             serializer.setUint32(0); // jointCount
         }
+
+        return wasmMorphMap;
     }
 }
