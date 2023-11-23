@@ -1,37 +1,40 @@
-use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::MmdModelMetadata, append_transform_solver::AppendTransformSolver, ik_solver::{IkSolver, IkChainAngleLimits}};
+use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::{MetadataBuffer, BoneMetadataReader}, append_transform_solver::AppendTransformSolver, ik_solver::{IkSolver}};
 
 pub(crate) struct MmdModel {
-    bone_arena: Vec<MmdRuntimeBone>,
-    sorted_runtime_bones: Vec<usize>,
-    sorted_runtime_root_bones: Vec<usize>,
+    bone_arena: Box<[MmdRuntimeBone]>,
+    sorted_runtime_bones: Box<[usize]>,
+    sorted_runtime_root_bones: Box<[usize]>,
     bone_stack: Vec<usize>,
 }
 
 impl MmdModel {
-    pub fn new(metadata: &MmdModelMetadata) -> MmdModel {
-        let mut arena = Vec::with_capacity(metadata.bones.len());
-        for bone_metadata in &metadata.bones {
-            arena.push(
-                MmdRuntimeBone::new(
-                    bone_metadata.rest_position
-                )
-            );
-        }
+    pub fn new(buffer: MetadataBuffer) -> MmdModel {
+        let reader = BoneMetadataReader::new(buffer);
 
-        for (i, bone_metadata) in metadata.bones.iter().enumerate() {
-            if 0 <= bone_metadata.parent_bone_index && bone_metadata.parent_bone_index < arena.len() as i32 {
-                let parent_bone = &mut arena[bone_metadata.parent_bone_index as usize];
+        let mut arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.count() as usize);
+        for _ in 0..reader.count() {
+            arena.push(MmdRuntimeBone::new());
+        }
+        let mut arena = arena.into_boxed_slice();
+        
+        let reader = reader.enumerate(|i, metadata| {
+            let i = i as usize;
+
+            arena[i].rest_position = metadata.rest_position;
+
+            if 0 <= metadata.parent_bone_index && metadata.parent_bone_index < arena.len() as i32 {
+                let parent_bone = &mut arena[metadata.parent_bone_index as usize];
                 parent_bone.child_bones.push(i);
                 let bone = &mut arena[i];
-                bone.parent_bone = Some(bone_metadata.parent_bone_index as usize);
+                bone.parent_bone = Some(metadata.parent_bone_index as usize);
             }
             
-            if let Some(append_transform) = &bone_metadata.append_transform {
+            if let Some(append_transform) = metadata.append_transform {
                 let target_bone_index = append_transform.parent_index;
                 if 0 <= target_bone_index && target_bone_index < arena.len() as i32 {
                     let append_transform_solver = Some(AppendTransformSolver::new(
                         target_bone_index as usize,
-                        bone_metadata.flag,
+                        metadata.flag,
                         append_transform.ratio,
                     ));
                     let bone = &mut arena[i];
@@ -42,24 +45,22 @@ impl MmdModel {
                 }
             }
 
-            if let Some(ik) = &bone_metadata.ik {
+            if let Some(ik) = metadata.ik {
                 if 0 <= ik.target && ik.target < arena.len() as i32 {
                     let mut ik_solver = IkSolver::new(
                         i,
                         ik.target as usize,
+                        ik.links.len(),
                     );
                     ik_solver.iteration = ik.iteration;
                     ik_solver.limit_angle = ik.rotation_constraint;
 
-                    for link in &ik.links {
+                    for link in ik.links {
                         if 0 <= link.target && link.target < arena.len() as i32 {
                             ik_solver.add_ik_chain(
                                 &mut arena,
                                 link.target as usize,
-                                Some(IkChainAngleLimits {
-                                    minimum_angle: link.minimum_angle,
-                                    maximum_angle: link.maximum_angle,
-                                })
+                                link.limits,
                             );
                         } else {
                             // todo diagnostic
@@ -72,9 +73,9 @@ impl MmdModel {
                     panic!();
                 }
             }
-        }
+        });
 
-        unimplemented!();
+        unimplemented!()
     }
 
     pub fn bone_arena(&mut self) -> &mut [MmdRuntimeBone] {

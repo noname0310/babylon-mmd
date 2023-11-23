@@ -21,9 +21,9 @@ impl AppendTransformSolver {
         ratio: f32,
     ) -> AppendTransformSolver {
         AppendTransformSolver {
-            is_local: (bone_flag & BoneFlag::LocalAppendTransform as u16) != 0,
-            affect_rotation: (bone_flag & BoneFlag::HasAppendRotate as u16) != 0,
-            affect_position: (bone_flag & BoneFlag::HasAppendMove as u16) != 0,
+            is_local: bone_flag & BoneFlag::LocalAppendTransform as u16 != 0,
+            affect_rotation: bone_flag & BoneFlag::HasAppendRotate as u16 != 0,
+            affect_position: bone_flag & BoneFlag::HasAppendMove as u16 != 0,
             ratio,
             target_bone,
             append_position_offset: Vector3::zeros(),
@@ -47,7 +47,7 @@ impl AppendTransformSolver {
         &self.append_rotation_offset
     }
 
-    pub fn update(&mut self, arena: &mut [MmdRuntimeBone]) {
+    pub fn update(&mut self, arena: &[MmdRuntimeBone]) {
         let target_bone = &arena[self.target_bone];
 
         if self.affect_rotation {

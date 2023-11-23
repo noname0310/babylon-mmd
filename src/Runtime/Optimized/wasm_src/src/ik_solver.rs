@@ -2,12 +2,7 @@ use std::borrow::BorrowMut;
 
 use nalgebra::{UnitQuaternion, Vector3, distance_squared, UnitVector3, Matrix4, SimdPartialOrd};
 
-use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model::MmdModel};
-
-pub(crate) struct IkChainAngleLimits {
-    pub minimum_angle: Vector3<f32>,
-    pub maximum_angle: Vector3<f32>,
-}
+use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model::MmdModel, mmd_model_metadata::IkChainAngleLimits};
 
 struct IkChain {
     bone: usize,
@@ -53,6 +48,7 @@ impl IkSolver {
     pub fn new(
         ik_bone: usize,
         target_bone: usize,
+        chain_capacity: usize,
     ) -> IkSolver {
         IkSolver {
             enabled: true,
@@ -60,7 +56,7 @@ impl IkSolver {
             limit_angle: 0.0,
             ik_bone,
             target_bone,
-            ik_chains: Vec::new(),
+            ik_chains: Vec::with_capacity(chain_capacity),
         }
     }
 

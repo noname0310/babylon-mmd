@@ -5,6 +5,7 @@ mod mmd_runtime_bone;
 mod mmd_runtime;
 mod append_transform_solver;
 mod mmd_model_metadata;
+mod mmd_morph_controller;
 
 use wasm_bindgen::prelude::*;
 use web_sys::{console, js_sys::Float32Array};

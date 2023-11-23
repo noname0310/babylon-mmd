@@ -1,4 +1,74 @@
-use nalgebra::Vector3;
+use byte_slice_cast::{AsSliceOf, FromByteSlice};
+use nalgebra::{Vector3, UnitQuaternion, Quaternion, Vector4};
+use num_traits::FromBytes;
+
+pub(crate) struct MetadataBuffer {
+    bytes: Box<[u8]>,
+    offset: usize,
+}
+
+impl MetadataBuffer {
+    fn new(bytes: Box<[u8]>) -> Self {
+        Self {
+            bytes,
+            offset: 0,
+        }
+    }
+
+    fn read<'a, T>(&'a mut self) -> T
+    where
+        T: FromBytes,
+        <T as FromBytes>::Bytes: 'a,
+        &'a [u8]: TryInto<&'a <T as FromBytes>::Bytes>,
+        <&'a [u8] as TryInto<&'a <T as FromBytes>::Bytes>>::Error: std::fmt::Debug,
+    {
+        let value = T::from_le_bytes(self.bytes[self.offset..self.offset + std::mem::size_of::<T>()].as_ref().try_into().unwrap());
+        self.offset += std::mem::size_of::<T>();
+        value
+    }
+
+    fn read_array<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: FromByteSlice + Clone
+    {
+        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<T>() * n].as_ref().as_slice_of().unwrap();
+        self.offset += std::mem::size_of::<T>() * n;
+        slice.to_vec()
+    }
+
+    fn read_vector(&mut self) -> Vector3<f32> {
+        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3].as_ref().as_slice_of().unwrap();
+        let value = Vector3::from_column_slice(slice);
+        self.offset += std::mem::size_of::<f32>() * 3;
+        value
+    }
+
+    fn read_vector_array(&mut self, n: usize) -> Vec<Vector3<f32>> {
+        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3 * n].as_ref().as_slice_of().unwrap();
+        let mut values = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(Vector3::from_column_slice(&slice[i * 3..i * 3 + 3]));
+        }
+        self.offset += std::mem::size_of::<f32>() * 3 * n;
+        values
+    }
+
+    fn read_quaternion_array(&mut self, n: usize) -> Vec<UnitQuaternion<f32>> {
+        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 4 * n].as_ref().as_slice_of().unwrap();
+        let mut values = Vec::with_capacity(n);
+        for i in 0..n {
+            values.push(
+                UnitQuaternion::from_quaternion(
+                    Quaternion::from_vector(
+                        Vector4::from_column_slice(&slice[i * 4..i * 4 + 4])
+                    )
+                )
+            );
+        }
+        self.offset += std::mem::size_of::<f32>() * 4 * n;
+        values
+    }
+}
 
 pub(crate) struct BoneMetadata {
     pub rest_position: Vector3<f32>,
@@ -23,6 +93,10 @@ pub(crate) struct IkMetadata {
 
 pub(crate) struct IkLinkMetadata {
     pub target: i32,
+    pub limits: Option<IkChainAngleLimits>,
+}
+
+pub(crate) struct IkChainAngleLimits {
     pub minimum_angle: Vector3<f32>,
     pub maximum_angle: Vector3<f32>,
 }
@@ -45,17 +119,165 @@ pub(crate) enum BoneFlag {
     IsExternalParentTransformed = 0x2000,
 }
 
+pub(crate) struct BoneMetadataReader {
+    buffer: MetadataBuffer,
+    count: u32,
+}
+
+impl BoneMetadataReader {
+    pub fn new(mut buffer: MetadataBuffer) -> Self {
+        let count = buffer.read::<u32>();
+
+        Self {
+            buffer,
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> BoneMorphMetadataReader {
+        for i in 0..self.count {
+            let rest_position = self.buffer.read_vector();
+            let parent_bone_index = self.buffer.read::<i32>();
+            let transform_order = self.buffer.read::<i32>();
+            let flag = self.buffer.read::<u16>();
+            let append_transform = if flag & BoneFlag::LocalAppendTransform as u16 != 0 {
+                Some(AppendTransformMetadata {
+                    parent_index: self.buffer.read::<i32>(),
+                    ratio: self.buffer.read::<f32>(),
+                })
+            } else {
+                None
+            };
+            let ik = if flag & BoneFlag::IsIkEnabled as u16 != 0 {
+                Some(Box::new(IkMetadata {
+                    target: self.buffer.read::<i32>(),
+                    iteration: self.buffer.read::<i32>(),
+                    rotation_constraint: self.buffer.read::<f32>(),
+                    links: {
+                        let link_count = self.buffer.read::<i32>();
+                        let mut links = Vec::with_capacity(link_count as usize);
+                        for _ in 0..link_count {
+                            links.push(IkLinkMetadata {
+                                target: self.buffer.read::<i32>(),
+                                limits: if flag & BoneFlag::HasAxisLimit as u16 != 0 {
+                                    Some(IkChainAngleLimits {
+                                        minimum_angle: self.buffer.read_vector(),
+                                        maximum_angle: self.buffer.read_vector(),
+                                    })
+                                } else {
+                                    None
+                                },
+                            });
+                        }
+                        links
+                    },
+                }))
+            } else {
+                None
+            };
+            f(i, BoneMetadata {
+                rest_position,
+                parent_bone_index,
+                transform_order,
+                flag,
+                append_transform,
+                ik,
+            });
+        }
+
+        BoneMorphMetadataReader::new(self.buffer)
+    }
+}
+
 pub(crate) struct BoneMorphMetadata {
     morph_index: u32,
     indices: Vec<i32>,
     positions: Vec<Vector3<f32>>,
-    rotations: Vec<Vector3<f32>>,
+    rotations: Vec<UnitQuaternion<f32>>,
+}
+
+pub(crate) struct BoneMorphMetadataReader {
+    buffer: MetadataBuffer,
+    count: u32,
+}
+
+impl BoneMorphMetadataReader {
+    fn new(mut buffer: MetadataBuffer) -> Self {
+        let count = buffer.read::<u32>();
+
+        Self {
+            buffer,
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    pub fn for_each(mut self, mut f: impl FnMut(BoneMorphMetadata)) -> GroupMorphMetadataReader {
+        for _ in 0..self.count {
+            let morph_index = self.buffer.read::<u32>();
+            let morph_count = self.buffer.read::<i32>();
+            let indices = self.buffer.read_array::<i32>(morph_count as usize);
+            let positions = self.buffer.read_vector_array(morph_count as usize);
+            let rotations = self.buffer.read_quaternion_array(morph_count as usize);
+            f(BoneMorphMetadata {
+                morph_index,
+                indices,
+                positions,
+                rotations,
+            });
+        }
+
+        GroupMorphMetadataReader::new(self.buffer)
+    }
 }
 
 pub(crate) struct GroupMorphMetadata {
     morph_index: u32,
     indices: Vec<i32>,
     ratios: Vec<f32>,
+}
+
+pub(crate) struct GroupMorphMetadataReader {
+    buffer: MetadataBuffer,
+    count: u32,
+}
+
+impl GroupMorphMetadataReader {
+    fn new(mut buffer: MetadataBuffer) -> Self {
+        let count = buffer.read::<u32>();
+
+        Self {
+            buffer,
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    pub fn for_each(mut self, mut f: impl FnMut(GroupMorphMetadata)) -> RigidbodyMetadataReader {
+        for _ in 0..self.count {
+            let morph_index = self.buffer.read::<u32>();
+            let morph_count = self.buffer.read::<i32>();
+            let indices = self.buffer.read_array::<i32>(morph_count as usize);
+            let ratios = self.buffer.read_array::<f32>(morph_count as usize);
+            f(GroupMorphMetadata {
+                morph_index,
+                indices,
+                ratios,
+            });
+        }
+
+        RigidbodyMetadataReader::new(self.buffer)
+    }
 }
 
 pub(crate) struct RigidbodyMetadata {
@@ -86,6 +308,61 @@ pub(crate) enum RigidbodyPhysicsMode {
     PhysicsWithBone = 2,
 }
 
+pub(crate) struct RigidbodyMetadataReader {
+    buffer: MetadataBuffer,
+    count: u32,
+}
+
+impl RigidbodyMetadataReader {
+    fn new(mut buffer: MetadataBuffer) -> Self {
+        let count = buffer.read::<u32>();
+
+        Self {
+            buffer,
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    pub fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader {
+        for _ in 0..self.count {
+            let bone_index = self.buffer.read::<i32>();
+            let collision_group = self.buffer.read::<u8>();
+            let collision_mask = self.buffer.read::<u16>();
+            let shape_type = self.buffer.read::<u8>();
+            let shape_size = self.buffer.read_vector();
+            let shape_position = self.buffer.read_vector();
+            let shape_rotation = self.buffer.read_vector();
+            let mass = self.buffer.read::<f32>();
+            let linear_damping = self.buffer.read::<f32>();
+            let angular_damping = self.buffer.read::<f32>();
+            let repulsion = self.buffer.read::<f32>();
+            let friction = self.buffer.read::<f32>();
+            let physics_mode = self.buffer.read::<u8>();
+            f(RigidbodyMetadata {
+                bone_index,
+                collision_group,
+                collision_mask,
+                shape_type,
+                shape_size,
+                shape_position,
+                shape_rotation,
+                mass,
+                linear_damping,
+                angular_damping,
+                repulsion,
+                friction,
+                physics_mode,
+            });
+        }
+
+        JointMetadataReader::new(self.buffer)
+    }
+}
+
 pub(crate) struct JointMetadata {
     kind: u8,
     rigidbody_index_a: i32,
@@ -109,56 +386,51 @@ pub(crate) enum JointKind {
     Hinge = 5,
 }
 
-pub(crate) struct MmdModelMetadata {
-    pub bones: Vec<BoneMetadata>,
-    pub bone_morphs: Vec<BoneMorphMetadata>,
-    pub group_morphs: Vec<GroupMorphMetadata>,
-    pub rigidbodies: Vec<RigidbodyMetadata>,
-    pub joints: Vec<JointMetadata>,
+pub(crate) struct JointMetadataReader {
+    buffer: MetadataBuffer,
+    count: u32,
 }
 
-impl MmdModelMetadata {
-    pub fn decode(bytes: &[u8]) -> Self {
-//         let mut offset = 0;
-//         let bone_count = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//         offset += 4;
-//         let mut bones = Vec::with_capacity(bone_count as usize);
-//         for _ in 0..bone_count {
-//             let name = decode_string(bytes, &mut offset);
-//             let parent_bone_index = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//             offset += 4;
-//             let transform_order = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//             offset += 4;
-//             let flag = u16::from_le_bytes(bytes[offset..offset + 2].try_into().unwrap());
-//             offset += 2;
-//             let append_transform = if (flag & BoneFlag::HasAppendMove as u16) != 0 || (flag & BoneFlag::HasAppendRotate as u16) != 0 {
-//                 let parent_index = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 let ratio = f32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 Some(AppendTransformMetadata {
-//                     parent_index,
-//                     ratio,
-//                 })
-//             } else {
-//                 None
-//             };
-//             let ik = if (flag & BoneFlag::IsIkEnabled as u16) != 0 {
-//                 let target = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 let iteration = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 let rotation_constraint = f32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 let link_count = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                 offset += 4;
-//                 let mut links = Vec::with_capacity(link_count as usize);
-//                 for _ in 0..link_count {
-//                     let target = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
-//                     offset += 4;
-//                     let minimum_angle = Vector3::new(
-//                         f32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()),
-//                         f32::from_le_bytes()
-       unimplemented!();
+impl JointMetadataReader {
+    fn new(mut buffer: MetadataBuffer) -> Self {
+        let count = buffer.read::<u32>();
+
+        Self {
+            buffer,
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    pub fn for_each(mut self, mut f: impl FnMut(JointMetadata)) {
+        for _ in 0..self.count {
+            let kind = self.buffer.read::<u8>();
+            let rigidbody_index_a = self.buffer.read::<i32>();
+            let rigidbody_index_b = self.buffer.read::<i32>();
+            let position = self.buffer.read_vector();
+            let rotation = self.buffer.read_vector();
+            let position_min = self.buffer.read_vector();
+            let position_max = self.buffer.read_vector();
+            let rotation_min = self.buffer.read_vector();
+            let rotation_max = self.buffer.read_vector();
+            let spring_position = self.buffer.read_vector();
+            let spring_rotation = self.buffer.read_vector();
+            f(JointMetadata {
+                kind,
+                rigidbody_index_a,
+                rigidbody_index_b,
+                position,
+                rotation,
+                position_min,
+                position_max,
+                rotation_min,
+                rotation_max,
+                spring_position,
+                spring_rotation,
+            });
+        }
     }
 }

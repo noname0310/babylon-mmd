@@ -3,7 +3,7 @@ use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
 use crate::{ik_solver::IkSolver, append_transform_solver::AppendTransformSolver};
 
 pub(crate) struct MmdRuntimeBone {
-    rest_position: Vector3<f32>,
+    pub rest_position: Vector3<f32>,
     position: Vector3<f32>,
     rotation: UnitQuaternion<f32>,
     scale: Vector3<f32>,
@@ -11,8 +11,7 @@ pub(crate) struct MmdRuntimeBone {
     pub parent_bone: Option<usize>,
     pub child_bones: Vec<usize>,
     pub transform_order: i32,
-    flag: u16,
-    transform_after_physics: bool,
+    pub transform_after_physics: bool,
 
     pub append_transform_solver: Option<AppendTransformSolver>,
     pub ik_solver: Option<IkSolver>,
@@ -27,9 +26,9 @@ pub(crate) struct MmdRuntimeBone {
 }
 
 impl MmdRuntimeBone {
-    pub fn new(rest_position: Vector3<f32>) -> MmdRuntimeBone {
+    pub fn new() -> MmdRuntimeBone {
         MmdRuntimeBone {
-            rest_position,
+            rest_position: Vector3::zeros(),
             position: Vector3::zeros(),
             rotation: UnitQuaternion::identity(),
             scale: Vector3::new(1.0, 1.0, 1.0),
@@ -37,7 +36,6 @@ impl MmdRuntimeBone {
             parent_bone: None,
             child_bones: Vec::new(),
             transform_order: 0,
-            flag: 0,
             transform_after_physics: false,
 
             append_transform_solver: None,
