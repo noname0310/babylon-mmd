@@ -1,18 +1,33 @@
 use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
+use web_sys::js_sys::Float32Array;
 
 use crate::{animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
 
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,
+    world_matrix_arena: Box<[Matrix4<f32>]>,
     bone_stack: Vec<usize>,
 }
 
 impl MmdRuntimeBoneArena {
-    pub fn new(area: Box<[MmdRuntimeBone]>, bone_stack: Vec<usize>) -> Self {
+    pub fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<usize>) -> Self {
+        let bone_count = arena.len();
         MmdRuntimeBoneArena {
-            arena: area,
+            arena,
+            world_matrix_arena: vec![Matrix4::identity(); bone_count].into_boxed_slice(),
             bone_stack,
         }
+    }
+
+    pub unsafe fn world_matrix_arena_typed_array(&mut self) -> Float32Array {
+        Float32Array::view_mut_raw(
+            self.world_matrix_arena.as_mut_ptr() as *mut f32,
+            self.world_matrix_arena.len() * 16,
+        )
+    }
+
+    pub fn world_matrix(&self, index: usize) -> &Matrix4<f32> {
+        &self.world_matrix_arena[index]
     }
 
     pub fn update_world_matrix(&mut self, root: usize) {
@@ -21,13 +36,10 @@ impl MmdRuntimeBoneArena {
 
         while let Some(bone) = stack.pop() {
             if let Some(parent_bone) = self.arena[bone].parent_bone {
-                let parent_world_matrix = self.arena[parent_bone].world_matrix;
-
-                let bone = &mut self.arena[bone];
-                bone.world_matrix = parent_world_matrix * bone.local_matrix;
+                let parent_world_matrix = self.world_matrix_arena[parent_bone];
+                self.world_matrix_arena[bone] = parent_world_matrix * self.arena[bone].local_matrix;
             } else {
-                let bone = &mut self.arena[bone];
-                bone.world_matrix = bone.local_matrix;
+                self.world_matrix_arena[bone] = self.arena[bone].local_matrix;
             }
 
             let bone = &self.arena[bone];
@@ -70,7 +82,6 @@ pub(crate) struct MmdRuntimeBone {
     pub ik_rotation: Option<UnitQuaternion<f32>>,
 
     pub local_matrix: Matrix4<f32>,
-    pub world_matrix: Matrix4<f32>,
 }
 
 impl MmdRuntimeBone {
@@ -93,12 +104,11 @@ impl MmdRuntimeBone {
             ik_rotation: None,
 
             local_matrix: Matrix4::identity(),
-            world_matrix: Matrix4::identity(),
         }
     }
 
     pub fn animated_position(&self, animation_arena: &AnimationArena) -> Vector3<f32> {
-        let mut position = animation_arena.nth_bone_position(self.index);
+        let mut position = *animation_arena.bone_position(self.index);
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
         }
@@ -106,7 +116,7 @@ impl MmdRuntimeBone {
     }
 
     pub fn animated_rotation(&self, animation_arena: &AnimationArena) -> UnitQuaternion<f32> {
-        let mut rotation = animation_arena.nth_bone_rotation(self.index);
+        let mut rotation = *animation_arena.bone_rotation(self.index);
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation *= morph_rotation_offset;
         }
@@ -143,6 +153,6 @@ impl MmdRuntimeBone {
         self.local_matrix = 
             Matrix4::new_translation(&position) *
             rotation.to_homogeneous() *
-            Matrix4::new_nonuniform_scaling(&animation_arena.nth_bone_scale(self.index));
+            Matrix4::new_nonuniform_scaling(&animation_arena.bone_scale(self.index));
     }
 }

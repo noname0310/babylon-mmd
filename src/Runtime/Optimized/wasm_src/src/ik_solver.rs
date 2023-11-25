@@ -110,10 +110,8 @@ impl IkSolver {
         for i in 0..self.iteration {
             self.solve_core(animation_arena, bone_arena, append_transform_sovler_arena, i);
 
-            let target_bone = &bone_arena[self.target_bone];
-            let target_position = target_bone.world_matrix.column(3).xyz();
-            let ik_bone = &bone_arena[self.ik_bone];
-            let ik_position = ik_bone.world_matrix.column(3).xyz();
+            let target_position = bone_arena.world_matrix(self.target_bone).column(3).xyz();
+            let ik_position = bone_arena.world_matrix(self.ik_bone).column(3).xyz();
             let distance = distance_squared(&target_position.into(), &ik_position.into());
             if distance < max_distance {
                 max_distance = distance;
@@ -133,8 +131,7 @@ impl IkSolver {
     }
 
     fn solve_core(&mut self, animation_arena: &AnimationArena, bone_arena: &mut MmdRuntimeBoneArena, append_transform_sovler_arena: &AppendTransformSolverArena, iteration: i32) {
-        let ik_bone = &bone_arena[self.ik_bone];
-        let ik_position = ik_bone.world_matrix.column(3).xyz();
+        let ik_position = bone_arena.world_matrix(self.ik_bone).column(3).xyz();
 
         for chain_index in 0..self.ik_chains.len() {
             let chain = &mut self.ik_chains[chain_index];
@@ -161,11 +158,8 @@ impl IkSolver {
                 }
             }
 
-            let target_bone = &bone_arena[self.target_bone];
-            let target_position = target_bone.world_matrix.column(3).xyz();
-
-            let chain_bone = &mut bone_arena[chain.bone];
-            let inverse_chain = chain_bone.world_matrix.try_inverse().unwrap();
+            let target_position = bone_arena.world_matrix(self.target_bone).column(3).xyz();
+            let inverse_chain = bone_arena.world_matrix(chain.bone).try_inverse().unwrap();
 
             let chain_ik_position = inverse_chain.transform_point(&ik_position.into());
             let chain_target_position = inverse_chain.transform_point(&target_position.into());
@@ -234,14 +228,9 @@ impl IkSolver {
             ),
         };
         
-        let ik_bone = &bone_arena[self.ik_bone];
-        let ik_position = ik_bone.world_matrix.column(3).xyz();
-
-        let target_bone = &bone_arena[self.target_bone];
-        let target_position = target_bone.world_matrix.column(3).xyz();
-
-        let chain_bone = &mut bone_arena[chain.bone];
-        let inverse_chain = chain_bone.world_matrix.try_inverse().unwrap();
+        let ik_position = bone_arena.world_matrix(self.ik_bone).column(3).xyz();
+        let target_position = bone_arena.world_matrix(self.target_bone).column(3).xyz();
+        let inverse_chain = bone_arena.world_matrix(chain.bone).try_inverse().unwrap();
 
         let chain_ik_position = inverse_chain.transform_point(&ik_position.into());
         let chain_target_position = inverse_chain.transform_point(&target_position.into());
