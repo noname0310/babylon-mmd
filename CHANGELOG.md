@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.34.0
+
+- remove dead code
+
+- more strict bound check in `MmdRuntime` to prevent crash by invalid data
+
 ## 0.33.0
 
 - fix `MmdCompositeAnimation` Quaternion animation biending not working with weight which is smaller than 1.0
