@@ -199,14 +199,14 @@ pub(crate) enum MorphMetadata {
 }
 
 pub(crate) struct BoneMorphMetadata {
-    indices: Vec<i32>,
-    positions: Vec<Vector3<f32>>,
-    rotations: Vec<UnitQuaternion<f32>>,
+    pub indices: Vec<i32>,
+    pub positions: Vec<Vector3<f32>>,
+    pub rotations: Vec<UnitQuaternion<f32>>,
 }
 
 pub(crate) struct GroupMorphMetadata {
-    indices: Vec<i32>,
-    ratios: Vec<f32>,
+    pub indices: Vec<i32>,
+    pub ratios: Vec<f32>,
 }
 
 enum MorphKind {

@@ -1,4 +1,4 @@
-use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::{MetadataBuffer, BoneMetadataReader}, append_transform_solver::AppendTransformSolver, ik_solver::{IkSolver}};
+use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::{MetadataBuffer, BoneMetadataReader}, append_transform_solver::AppendTransformSolver, ik_solver::IkSolver};
 
 pub(crate) struct MmdModel {
     bone_arena: Box<[MmdRuntimeBone]>,
