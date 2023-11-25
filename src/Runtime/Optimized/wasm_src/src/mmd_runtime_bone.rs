@@ -1,8 +1,56 @@
-use std::cell::RefCell;
-
 use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
 
-use crate::{ik_solver::IkSolver, append_transform_solver::AppendTransformSolver, animation_arena::AnimationArena};
+use crate::{animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
+
+pub(crate) struct MmdRuntimeBoneArena {
+    arena: Box<[MmdRuntimeBone]>,
+    bone_stack: Vec<usize>,
+}
+
+impl MmdRuntimeBoneArena {
+    pub fn new(area: Box<[MmdRuntimeBone]>, bone_stack: Vec<usize>) -> Self {
+        MmdRuntimeBoneArena {
+            arena: area,
+            bone_stack,
+        }
+    }
+
+    pub fn update_world_matrix(&mut self, root: usize) {
+        let stack = &mut self.bone_stack;
+        stack.push(root);
+
+        while let Some(bone) = stack.pop() {
+            if let Some(parent_bone) = self.arena[bone].parent_bone {
+                let parent_world_matrix = self.arena[parent_bone].world_matrix;
+
+                let bone = &mut self.arena[bone];
+                bone.world_matrix = parent_world_matrix * bone.local_matrix;
+            } else {
+                let bone = &mut self.arena[bone];
+                bone.world_matrix = bone.local_matrix;
+            }
+
+            let bone = &self.arena[bone];
+            for child_bone in &bone.child_bones {
+                stack.push(*child_bone);
+            }
+        }
+    }
+}
+
+impl std::ops::Deref for MmdRuntimeBoneArena {
+    type Target = [MmdRuntimeBone];
+
+    fn deref(&self) -> &Self::Target {
+        &self.arena
+    }
+}
+
+impl std::ops::DerefMut for MmdRuntimeBoneArena {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.arena
+    }
+}
 
 pub(crate) struct MmdRuntimeBone {
     pub rest_position: Vector3<f32>,
@@ -13,8 +61,8 @@ pub(crate) struct MmdRuntimeBone {
     pub transform_order: i32,
     pub transform_after_physics: bool,
 
-    pub append_transform_solver: Option<RefCell<AppendTransformSolver>>,
-    pub ik_solver: Option<RefCell<IkSolver>>,
+    pub append_transform_solver: Option<usize>,
+    pub ik_solver: Option<usize>,
 
     pub morph_position_offset: Option<Vector3<f32>>,
     pub morph_rotation_offset: Option<UnitQuaternion<f32>>,
@@ -73,7 +121,7 @@ impl MmdRuntimeBone {
         position - self.rest_position
     }
 
-    pub fn update_local_matrix(&mut self, animation_arena: &AnimationArena) {
+    pub fn update_local_matrix(&mut self, animation_arena: &AnimationArena, append_transform_solver_arena: &AppendTransformSolverArena) {
         let mut rotation = self.animated_rotation(animation_arena);
         if let Some(ik_rotation) = self.ik_rotation {
             rotation = ik_rotation * rotation;
@@ -81,9 +129,9 @@ impl MmdRuntimeBone {
 
         let mut position = self.animated_position(animation_arena);
         
-        if let Some(append_transform_solver) = &self.append_transform_solver {
-            let append_transform_solver = append_transform_solver.borrow();
-            
+        if let Some(append_transform_solver) = self.append_transform_solver {
+            let append_transform_solver = &append_transform_solver_arena[append_transform_solver];
+
             if append_transform_solver.is_affect_rotation() {
                 rotation *= append_transform_solver.append_rotation_offset();
             }

@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use nalgebra::UnitQuaternion;
 
-use crate::{mmd_model_metadata::MorphMetadata, mmd_runtime_bone::MmdRuntimeBone};
+use crate::{mmd_model_metadata::MorphMetadata, mmd_runtime_bone::MmdRuntimeBoneArena};
 
 pub(crate) struct MmdMorphController {
     pub morphs: Box<[MorphMetadata]>,
@@ -54,7 +54,7 @@ impl MmdMorphController {
         }
     }
 
-    pub fn update(&mut self, bone_arena: &mut [MmdRuntimeBone], morph_weights: &[f32]) {
+    pub fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: &[f32]) {
         for i in 0..self.active_morphs.len() {
             if self.active_morphs[i] {
                 self.reset_morph(i, bone_arena);
@@ -72,7 +72,7 @@ impl MmdMorphController {
         }
     }
 
-    fn reset_morph(&self, i: usize, arena: &mut [MmdRuntimeBone]) {
+    fn reset_morph(&self, i: usize, arena: &mut MmdRuntimeBoneArena) {
         match &self.morphs[i] {
             MorphMetadata::Bone(bone_morph) => {
                 for index in bone_morph.indices.iter() {
@@ -90,7 +90,7 @@ impl MmdMorphController {
         }
     }
 
-    fn apply_morph(&self, i: usize, arena: &mut [MmdRuntimeBone], weight: f32) {
+    fn apply_morph(&self, i: usize, arena: &mut MmdRuntimeBoneArena, weight: f32) {
         match &self.morphs[i] {
             MorphMetadata::Bone(bone_morph) => {
                 for i in 0..bone_morph.indices.len() {

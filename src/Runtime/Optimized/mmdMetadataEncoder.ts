@@ -10,6 +10,8 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  * mmd model metadata representation in binary
  *
  * boneCount: uint32
+ * appendTransformCount: uint32
+ * ikCount: uint32
  * {
  *  restPosition: float32[3]
  *  parentBoneIndex: int32
@@ -90,8 +92,9 @@ export class MmdMetadataEncoder {
     }
 
     public computeSize(metadata: MmdModelMetadata): number {
-        let dataLength =
-            4; // boneCount
+        let dataLength = 4 // boneCount
+            + 4 // appendTransformCount
+            + 4; // ikCount
 
         const bones = metadata.bones;
         for (let i = 0; i < bones.length; ++i) {
@@ -203,6 +206,19 @@ export class MmdMetadataEncoder {
 
         const bones = metadata.bones;
         serializer.setUint32(bones.length); // boneCount
+        let appendTransformCount = 0;
+        let ikCount = 0;
+        for (let i = 0; i < bones.length; ++i) {
+            const bone = bones[i];
+            if (bone.appendTransform) {
+                appendTransformCount += 1;
+            }
+            if (bone.ik) {
+                ikCount += 1;
+            }
+        }
+        serializer.setUint32(appendTransformCount); // appendTransformCount
+        serializer.setUint32(ikCount); // ikCount
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
             serializer.setFloat32Array(linkedBone[i].getFinalMatrix().getTranslationToRef(restPosition).asArray()); // restPosition

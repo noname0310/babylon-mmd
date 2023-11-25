@@ -1,27 +1,27 @@
-use std::cell::RefCell;
-
-use nalgebra::{Vector3, UnitQuaternion};
-
-use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::{MetadataBuffer, BoneMetadataReader, BoneFlag}, append_transform_solver::AppendTransformSolver, ik_solver::IkSolver, animation_arena::AnimationArena, mmd_morph_controller::MmdMorphController};
+use crate::{mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena}, mmd_model_metadata::{MetadataBuffer, BoneMetadataReader, BoneFlag}, append_transform_solver::{AppendTransformSolver, AppendTransformSolverArena}, ik_solver::{IkSolver, IkSolverArena}, animation_arena::AnimationArena, mmd_morph_controller::MmdMorphController};
 
 pub(crate) struct MmdModel {
     animation_arena: AnimationArena,
-    bone_arena: Box<[MmdRuntimeBone]>,
+    bone_arena: MmdRuntimeBoneArena,
+    append_transform_solver_arena: AppendTransformSolverArena,
+    ik_solver_arena: IkSolverArena,
     morph_controller: MmdMorphController,
     sorted_runtime_bones: Box<[usize]>,
     sorted_runtime_root_bones: Box<[usize]>,
-    bone_stack: Vec<usize>,
 }
 
 impl MmdModel {
     pub fn new(buffer: MetadataBuffer) -> Self {
         let reader = BoneMetadataReader::new(buffer);
 
-        let mut bone_arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.count() as usize);
-        for i in 0..reader.count() {
+        let mut bone_arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.bone_count() as usize);
+        for i in 0..reader.bone_count() {
             bone_arena.push(MmdRuntimeBone::new(i as usize));
         }
         let mut bone_arena = bone_arena.into_boxed_slice();
+
+        let mut append_transform_solver_arena = Vec::with_capacity(reader.append_transform_count() as usize);
+        let mut ik_solver_arena = Vec::with_capacity(reader.ik_count() as usize);
         
         let reader = reader.enumerate(|i, metadata| {
             let i = i as usize;
@@ -49,7 +49,8 @@ impl MmdModel {
                         append_transform.ratio,
                     );
                     let bone = &mut bone_arena[i];
-                    bone.append_transform_solver = Some(RefCell::new(append_transform_solver));
+                    bone.append_transform_solver = Some(append_transform_solver_arena.len());
+                    append_transform_solver_arena.push(append_transform_solver);
                 } else {
                     // todo diagnostic
                     panic!();
@@ -78,7 +79,8 @@ impl MmdModel {
                             panic!();
                         }
                     }
-                    bone_arena[i].ik_solver = Some(RefCell::new(ik_solver));
+                    bone_arena[i].ik_solver = Some(ik_solver_arena.len());
+                    ik_solver_arena.push(ik_solver);
                 } else {
                     // todo diagnostic
                     panic!();
@@ -131,11 +133,12 @@ impl MmdModel {
 
         MmdModel {
             animation_arena,
-            bone_arena,
+            bone_arena: MmdRuntimeBoneArena::new(bone_arena, Vec::with_capacity(bone_max_depth)),
+            append_transform_solver_arena: AppendTransformSolverArena::new(append_transform_solver_arena.into_boxed_slice()),
+            ik_solver_arena: IkSolverArena::new(ik_solver_arena.into_boxed_slice()),
             morph_controller,
             sorted_runtime_bones: sorted_runtime_bones.into_boxed_slice(),
             sorted_runtime_root_bones: sorted_runtime_root_bones.into_boxed_slice(),
-            bone_stack: Vec::with_capacity(bone_max_depth),
         }
     }
 
@@ -143,43 +146,8 @@ impl MmdModel {
         &self.animation_arena
     }
 
-    pub fn bone_arena(&mut self) -> &mut [MmdRuntimeBone] {
-        &mut self.bone_arena
-    }
-
-    pub fn animated_position(&self, bone_index: usize) -> Vector3<f32> {
-        self.bone_arena[bone_index].animated_position(&self.animation_arena)
-    }
-
-    pub fn animated_rotation(&self, bone_index: usize) -> UnitQuaternion<f32> {
-        self.bone_arena[bone_index].animated_rotation(&self.animation_arena)
-    }
-
-    pub fn update_local_matrix(&mut self, bone_index: usize) {
-        let bone = &mut self.bone_arena[bone_index];
-        bone.update_local_matrix(&self.animation_arena);
-    }
-
-    pub fn update_world_matrix(&mut self, root: usize) {
-        let stack = &mut self.bone_stack;
-        stack.push(root);
-
-        while let Some(bone) = stack.pop() {
-            if let Some(parent_bone) = self.bone_arena[bone].parent_bone {
-                let parent_world_matrix = self.bone_arena[parent_bone].world_matrix;
-
-                let bone = &mut self.bone_arena[bone];
-                bone.world_matrix = parent_world_matrix * bone.local_matrix;
-            } else {
-                let bone = &mut self.bone_arena[bone];
-                bone.world_matrix = bone.local_matrix;
-            }
-
-            let bone = &self.bone_arena[bone];
-            for child_bone in &bone.child_bones {
-                stack.push(*child_bone);
-            }
-        }
+    pub fn bone_arena(&self) -> &MmdRuntimeBoneArena {
+        &self.bone_arena
     }
 
     pub fn before_physics(&mut self) {
@@ -198,7 +166,7 @@ impl MmdModel {
                 continue;
             }
 
-            bone.update_local_matrix(&self.animation_arena);
+            bone.update_local_matrix(&self.animation_arena, &self.append_transform_solver_arena);
         }
 
         for i in 0..self.sorted_runtime_root_bones.len() {
@@ -208,7 +176,7 @@ impl MmdModel {
                 continue;
             }
 
-            self.update_world_matrix(bone_index);
+            self.bone_arena.update_world_matrix(bone_index);
         }
 
         for i in 0..self.sorted_runtime_bones.len() {
@@ -218,19 +186,20 @@ impl MmdModel {
                 continue;
             }
 
-            if let Some(append_transform_solver) = &bone.append_transform_solver {
-                append_transform_solver.borrow_mut().update(&self.bone_arena, &self.animation_arena);
+            if let Some(append_transform_solver) = bone.append_transform_solver {
+                self.append_transform_solver_arena.update(append_transform_solver, &self.animation_arena, &self.bone_arena);
                 let bone = &mut self.bone_arena[bone_index];
-                bone.update_local_matrix(&self.animation_arena);
-                self.update_world_matrix(bone_index);
+                bone.update_local_matrix(&self.animation_arena, &self.append_transform_solver_arena);
+                self.bone_arena.update_world_matrix(bone_index);
             }
 
-            let bone = &mut self.bone_arena[bone_index];
-            if let Some(ik_solver) = &mut bone.ik_solver {
+            let bone = &self.bone_arena[bone_index];
+            if let Some(ik_solver) = bone.ik_solver {
                 if self.animation_arena.iksolver_state_arena()[bone_index] {
-                    // ik_solver.solve(self);
+                    let ik_solver = &mut self.ik_solver_arena[ik_solver];
+                    ik_solver.solve(&self.animation_arena, &mut self.bone_arena, &self.append_transform_solver_arena);
+                    self.bone_arena.update_world_matrix(bone_index);
                 }
-                self.update_world_matrix(bone_index);
             }
         }
 
@@ -241,7 +210,7 @@ impl MmdModel {
                 continue;
             }
 
-            self.update_world_matrix(bone_index);
+            self.bone_arena.update_world_matrix(bone_index);
         }
     }
 }

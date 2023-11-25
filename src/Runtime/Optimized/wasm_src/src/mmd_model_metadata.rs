@@ -121,25 +121,39 @@ pub(crate) enum BoneFlag {
 
 pub(crate) struct BoneMetadataReader {
     buffer: MetadataBuffer,
-    count: u32,
+    bone_count: u32,
+    append_transform_count: u32,
+    ik_count: u32,
 }
 
 impl BoneMetadataReader {
     pub fn new(mut buffer: MetadataBuffer) -> Self {
-        let count = buffer.read::<u32>();
+        let bone_count = buffer.read::<u32>();
+        let append_transform_count = buffer.read::<u32>();
+        let ik_count = buffer.read::<u32>();
 
         Self {
             buffer,
-            count,
+            bone_count,
+            append_transform_count,
+            ik_count,
         }
     }
 
-    pub fn count(&self) -> u32 {
-        self.count
+    pub fn bone_count(&self) -> u32 {
+        self.bone_count
+    }
+
+    pub fn append_transform_count(&self) -> u32 {
+        self.append_transform_count
+    }
+
+    pub fn ik_count(&self) -> u32 {
+        self.ik_count
     }
 
     pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader {
-        for i in 0..self.count {
+        for i in 0..self.bone_count {
             let rest_position = self.buffer.read_vector();
             let parent_bone_index = self.buffer.read::<i32>();
             let transform_order = self.buffer.read::<i32>();
