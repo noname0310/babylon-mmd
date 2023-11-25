@@ -354,7 +354,7 @@ export class MmdMorphController {
                         this._logger.warn(`Looping group morph detected resolves to -1: ${morph.name} -> ${morphs[index].name}`);
                         indices[i] = -1;
                     } else {
-                        if (0 <= index) {
+                        if (0 <= index && index < morphs.length) {
                             groupMorphStack.push(morphIndex);
                             fixLoopingGroupMorphs(index);
                             groupMorphStack.pop();
@@ -364,6 +364,7 @@ export class MmdMorphController {
             };
 
             for (let i = 0; i < morphs.length; ++i) {
+                groupMorphStack.push(i);
                 fixLoopingGroupMorphs(i);
                 groupMorphStack.length = 0;
             }
