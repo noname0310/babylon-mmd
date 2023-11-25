@@ -1,6 +1,6 @@
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::BoneFlag};
+use crate::{mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::BoneFlag, animation_arena::AnimationArena};
 
 pub(crate) struct AppendTransformSolver {
     is_local: bool,
@@ -47,16 +47,16 @@ impl AppendTransformSolver {
         &self.append_rotation_offset
     }
 
-    pub fn update(&mut self, arena: &[MmdRuntimeBone]) {
-        let target_bone = &arena[self.target_bone];
+    pub fn update(&mut self, bone_arena: &[MmdRuntimeBone], animation_arena: &AnimationArena) {
+        let target_bone = &bone_arena[self.target_bone];
 
         if self.affect_rotation {
             let mut rotation = if self.is_local {
-                target_bone.animated_rotation()
+                target_bone.animated_rotation(animation_arena)
             } else if let Some(append_transform_solver) = &target_bone.append_transform_solver {
-                append_transform_solver.append_rotation_offset
+                append_transform_solver.borrow().append_rotation_offset
             } else {
-                target_bone.animated_rotation()
+                target_bone.animated_rotation(animation_arena)
             };
 
             if let Some(ik_rotation) = &target_bone.ik_rotation {
@@ -68,11 +68,11 @@ impl AppendTransformSolver {
 
         if self.affect_position {
             let position = if self.is_local {
-                target_bone.animated_position()
+                target_bone.animated_position(animation_arena)
             } else if let Some(append_transform_solver) = &target_bone.append_transform_solver {
-                append_transform_solver.append_position_offset
+                append_transform_solver.borrow().append_position_offset
             } else {
-                target_bone.animated_position()
+                target_bone.animated_position(animation_arena)
             };
 
             self.append_position_offset = position * self.ratio;

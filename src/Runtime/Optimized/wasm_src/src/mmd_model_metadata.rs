@@ -58,7 +58,7 @@ impl MetadataBuffer {
         let mut values = Vec::with_capacity(n);
         for i in 0..n {
             values.push(
-                UnitQuaternion::from_quaternion(
+                UnitQuaternion::new_unchecked(
                     Quaternion::from_vector(
                         Vector4::from_column_slice(&slice[i * 4..i * 4 + 4])
                     )
@@ -233,7 +233,9 @@ impl MorphMetadataReader {
         self.count
     }
 
-    pub fn for_each(mut self, mut f: impl FnMut(MorphMetadata)) -> RigidbodyMetadataReader {
+    pub fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader) {
+        let mut morphs = Vec::with_capacity(self.count as usize);
+
         for _ in 0..self.count {
             let kind = self.buffer.read::<u8>();
             if kind == MorphKind::BoneMorph as u8 {
@@ -241,7 +243,7 @@ impl MorphMetadataReader {
                 let indices = self.buffer.read_array::<i32>(morph_count as usize);
                 let positions = self.buffer.read_vector_array(morph_count as usize);
                 let rotations = self.buffer.read_quaternion_array(morph_count as usize);
-                f(MorphMetadata::Bone(BoneMorphMetadata {
+                morphs.push(MorphMetadata::Bone(BoneMorphMetadata {
                     indices,
                     positions,
                     rotations,
@@ -250,7 +252,7 @@ impl MorphMetadataReader {
                 let morph_count = self.buffer.read::<i32>();
                 let indices = self.buffer.read_array::<i32>(morph_count as usize);
                 let ratios = self.buffer.read_array::<f32>(morph_count as usize);
-                f(MorphMetadata::Group(GroupMorphMetadata {
+                morphs.push(MorphMetadata::Group(GroupMorphMetadata {
                     indices,
                     ratios,
                 }));
@@ -259,7 +261,7 @@ impl MorphMetadataReader {
             }
         }
 
-        RigidbodyMetadataReader::new(self.buffer)
+        (morphs, RigidbodyMetadataReader::new(self.buffer))
     }
 }
 

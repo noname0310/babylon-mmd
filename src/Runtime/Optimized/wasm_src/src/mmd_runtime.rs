@@ -10,4 +10,8 @@ impl MmdRuntime {
             mmd_models: Vec::new(),
         }
     }
+
+    pub fn add_mmd_model(&mut self) {
+        
+    }
 }

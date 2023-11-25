@@ -1,20 +1,20 @@
+use std::cell::RefCell;
+
 use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
 
-use crate::{ik_solver::IkSolver, append_transform_solver::AppendTransformSolver};
+use crate::{ik_solver::IkSolver, append_transform_solver::AppendTransformSolver, animation_arena::AnimationArena};
 
 pub(crate) struct MmdRuntimeBone {
     pub rest_position: Vector3<f32>,
-    position: Vector3<f32>,
-    rotation: UnitQuaternion<f32>,
-    scale: Vector3<f32>,
+    index: usize,
 
     pub parent_bone: Option<usize>,
     pub child_bones: Vec<usize>,
     pub transform_order: i32,
     pub transform_after_physics: bool,
 
-    pub append_transform_solver: Option<AppendTransformSolver>,
-    pub ik_solver: Option<IkSolver>,
+    pub append_transform_solver: Option<RefCell<AppendTransformSolver>>,
+    pub ik_solver: Option<RefCell<IkSolver>>,
 
     pub morph_position_offset: Option<Vector3<f32>>,
     pub morph_rotation_offset: Option<UnitQuaternion<f32>>,
@@ -26,12 +26,10 @@ pub(crate) struct MmdRuntimeBone {
 }
 
 impl MmdRuntimeBone {
-    pub fn new() -> Self {
+    pub fn new(index: usize) -> Self {
         MmdRuntimeBone {
             rest_position: Vector3::zeros(),
-            position: Vector3::zeros(),
-            rotation: UnitQuaternion::identity(),
-            scale: Vector3::new(1.0, 1.0, 1.0),
+            index,
             
             parent_bone: None,
             child_bones: Vec::new(),
@@ -51,16 +49,16 @@ impl MmdRuntimeBone {
         }
     }
 
-    pub fn animated_position(&self) -> Vector3<f32> {
-        let mut position = self.position;
+    pub fn animated_position(&self, animation_arena: &AnimationArena) -> Vector3<f32> {
+        let mut position = animation_arena.nth_bone_position(self.index);
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
         }
         position
     }
 
-    pub fn animated_rotation(&self) -> UnitQuaternion<f32> {
-        let mut rotation = self.rotation;
+    pub fn animated_rotation(&self, animation_arena: &AnimationArena) -> UnitQuaternion<f32> {
+        let mut rotation = animation_arena.nth_bone_rotation(self.index);
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation *= morph_rotation_offset;
         }
@@ -75,15 +73,17 @@ impl MmdRuntimeBone {
         position - self.rest_position
     }
 
-    pub fn update_local_matrix(&mut self) {
-        let mut rotation = self.animated_rotation();
+    pub fn update_local_matrix(&mut self, animation_arena: &AnimationArena) {
+        let mut rotation = self.animated_rotation(animation_arena);
         if let Some(ik_rotation) = self.ik_rotation {
             rotation = ik_rotation * rotation;
         }
 
-        let mut position = self.animated_position();
+        let mut position = self.animated_position(animation_arena);
         
         if let Some(append_transform_solver) = &self.append_transform_solver {
+            let append_transform_solver = append_transform_solver.borrow();
+            
             if append_transform_solver.is_affect_rotation() {
                 rotation *= append_transform_solver.append_rotation_offset();
             }
@@ -95,6 +95,6 @@ impl MmdRuntimeBone {
         self.local_matrix = 
             Matrix4::new_translation(&position) *
             rotation.to_homogeneous() *
-            Matrix4::new_nonuniform_scaling(&self.scale);
+            Matrix4::new_nonuniform_scaling(&animation_arena.nth_bone_scale(self.index));
     }
 }

@@ -5,20 +5,13 @@ use nalgebra::UnitQuaternion;
 use crate::{mmd_model_metadata::MorphMetadata, mmd_runtime_bone::MmdRuntimeBone};
 
 pub(crate) struct MmdMorphController {
-    morphs: Box<[MorphMetadata]>,
-    pub morph_weights: Box<[f32]>,
-    pub active_morphs: Box<[bool]>,
+    pub morphs: Box<[MorphMetadata]>,
+    active_morphs: Box<[bool]>,
     group_morph_stack: RefCell<Vec<(i32, f32)>>,
 }
 
 impl MmdMorphController {
     pub fn new(mut morphs: Box<[MorphMetadata]>) -> Self {
-        let mut morph_weights = Vec::with_capacity(morphs.len());
-        morph_weights.resize(morphs.len(), 0.0);
-
-        let mut active_morphs = Vec::with_capacity(morphs.len());
-        active_morphs.resize(morphs.len(), false);
-
         let mut group_morph_stack = Vec::new();
         {
             fn fix_looping_group_morphs(morphs: &mut [MorphMetadata], group_morph_stack: &mut Vec<(i32, f32)>, morph_index: i32) {
@@ -39,12 +32,10 @@ impl MmdMorphController {
                     if group_morph_stack.iter().any(|(index, _)| *index == morph_index) {
                         // todo diagnostic
                         morph_indices[i] = -1;
-                    } else {
-                        if 0 <= index && index < morphs.len() as i32 {
-                            group_morph_stack.push((morph_index, 0.0));
-                            fix_looping_group_morphs(morphs, group_morph_stack, index);
-                            group_morph_stack.pop();
-                        }
+                    } else if 0 <= index && index < morphs.len() as i32 {
+                        group_morph_stack.push((morph_index, 0.0));
+                        fix_looping_group_morphs(morphs, group_morph_stack, index);
+                        group_morph_stack.pop();
                     }
                 }
             }
@@ -55,30 +46,29 @@ impl MmdMorphController {
             }
         }
 
+        let active_morphs = vec![false; morphs.len()].into_boxed_slice();
         MmdMorphController {
             morphs,
-            morph_weights: morph_weights.into_boxed_slice(),
-            active_morphs: active_morphs.into_boxed_slice(),
+            active_morphs,
             group_morph_stack: RefCell::new(group_morph_stack),
         }
     }
 
-    pub fn update(&mut self, arena: &mut [MmdRuntimeBone]) {
+    pub fn update(&mut self, bone_arena: &mut [MmdRuntimeBone], morph_weights: &[f32]) {
         for i in 0..self.active_morphs.len() {
             if self.active_morphs[i] {
-                self.reset_morph(i, arena);
+                self.reset_morph(i, bone_arena);
             }
         }
 
-        for i in 0..self.morph_weights.len() {
-            let weight = self.morph_weights[i];
-            if weight == 0.0 {
+        for (i, weight) in morph_weights.iter().enumerate() {
+            if *weight == 0.0 {
                 self.active_morphs[i] = false;
                 continue;
             }
 
             self.active_morphs[i] = true;
-            self.apply_morph(i, arena, weight);
+            self.apply_morph(i, bone_arena, *weight);
         }
     }
 

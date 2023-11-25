@@ -364,7 +364,9 @@ export class MmdModel {
 
             if (bone.ikSolver !== null) {
                 bone.ikSolver.solve();
+                // if (bone.ikSolver.enabled) { possible optimization need to be tested
                 bone.updateWorldMatrix();
+                // }
             }
         }
 
