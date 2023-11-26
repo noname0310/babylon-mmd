@@ -65,9 +65,9 @@ export class MmdMorphController {
 
     private readonly _morphTargetManager: Nullable<MorphTargetManager>;
     private readonly _runtimeBones: readonly MmdRuntimeBone[];
-    private readonly _materials: (IMmdMaterialProxy | undefined)[];
+    private readonly _materials: readonly (IMmdMaterialProxy | undefined)[];
 
-    private readonly _morphs: RuntimeMorph[];
+    private readonly _morphs: readonly RuntimeMorph[];
     private readonly _morphIndexMap: Map<string, number[]>;
     private readonly _morphWeights: Float32Array;
     private readonly _activeMorphs: Set<string>;
@@ -83,7 +83,7 @@ export class MmdMorphController {
      */
     public constructor(
         morphTargetManager: Nullable<MorphTargetManager>,
-        runtimeBones: readonly MmdRuntimeBone[],
+        runtimeBones: Nullable<readonly MmdRuntimeBone[]>,
         material: Nullable<MultiMaterial>,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
@@ -92,7 +92,7 @@ export class MmdMorphController {
         this._logger = logger;
 
         this._morphTargetManager = morphTargetManager;
-        this._runtimeBones = runtimeBones;
+        this._runtimeBones = runtimeBones ?? [];
 
         if (material !== null && materialProxyConstructor !== null) {
             const subMaterials = material.subMaterials;
@@ -105,7 +105,11 @@ export class MmdMorphController {
             this._materials = [];
         }
 
-        const morphs = this._morphs = this._createRuntimeMorphData(morphsMetadata);
+        const morphs = this._morphs = this._createRuntimeMorphData(
+            morphsMetadata,
+            runtimeBones !== null,
+            material !== null && materialProxyConstructor !== null
+        );
 
         const morphIndexMap = this._morphIndexMap = new Map<string, number[]>();
         for (let i = 0; i < morphs.length; ++i) {
@@ -198,6 +202,14 @@ export class MmdMorphController {
     }
 
     /**
+     * Gets the weights of all morphs
+     * @returns Weights of all morphs
+     */
+    public getMorphWeights(): Readonly<ArrayLike<number>> {
+        return this._morphWeights;
+    }
+
+    /**
      * Set the weights of all morphs to 0
      */
     public resetMorphWeights(): void {
@@ -250,7 +262,11 @@ export class MmdMorphController {
         return this._morphs;
     }
 
-    private _createRuntimeMorphData(morphsMetadata: readonly MmdModelMetadata.Morph[]): RuntimeMorph[] {
+    private _createRuntimeMorphData(
+        morphsMetadata: readonly MmdModelMetadata.Morph[],
+        createBoneMorphs: boolean,
+        createMaterialMorphs: boolean
+    ): RuntimeMorph[] {
         const morphs: RuntimeMorph[] = [];
 
         for (let i = 0; i < morphsMetadata.length; ++i) {
@@ -270,7 +286,11 @@ export class MmdMorphController {
                 break;
 
             case PmxObject.Morph.Type.BoneMorph:
-                {
+                if (!createBoneMorphs) {
+                    runtimeMorphElements = new Int32Array(0);
+                    runtimeMorphElements2 = new Float32Array(0);
+                    runtimeMorphElements3 = new Float32Array(0);
+                } else {
                     runtimeMorphElements = morphMetadata.indices;
                     runtimeMorphElements2 = morphMetadata.positions;
                     runtimeMorphElements3 = morphMetadata.rotations;
@@ -278,7 +298,9 @@ export class MmdMorphController {
                 break;
 
             case PmxObject.Morph.Type.MaterialMorph:
-                {
+                if (!createMaterialMorphs) {
+                    runtimeMorphMaterialElements = [];
+                } else {
                     const elements = morphMetadata.elements;
                     const morphElements = new Array<RuntimeMaterialMorphElement>(elements.length);
 
