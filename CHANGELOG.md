@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.35.0
+
+- apply typed array on ik solver state for better performance
+    - now, for toggling the ik solver, you need to use `MmdModel.ikSolverStates` instead of `MmdModel.sortedBones[i].ikSolver.enabled`
+
 ## 0.34.0
 
 - remove dead code

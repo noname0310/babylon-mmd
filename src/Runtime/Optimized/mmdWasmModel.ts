@@ -48,6 +48,13 @@ export class MmdWasmModel implements IMmdModel {
     public readonly skeleton: IMmdLinkedBoneContainer;
 
     /**
+     * Uint8Array that stores the state of IK solvers
+     *
+     * if `ikSolverState[MmdModel.sortedRuntimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.sortedRuntimeBones[i]` is disabled and vice versa
+     */
+    public readonly ikSolverStates: Uint8Array;
+
+    /**
      * The morph controller of this model
      *
      * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
@@ -114,6 +121,15 @@ export class MmdWasmModel implements IMmdModel {
         };
         this.mesh = runtimeMesh;
         this.skeleton = skeleton;
+
+        {
+            let ikSolverCount = 0;
+            const bonesMetadata = mmdMetadata.bones;
+            for (let i = 0; i < bonesMetadata.length; ++i) {
+                if (bonesMetadata[i].ik !== undefined) ikSolverCount += 1;
+            }
+            this.ikSolverStates = new Uint8Array(ikSolverCount).fill(1);
+        }
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
         skeleton.prepare();
@@ -247,15 +263,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public resetState(): void {
         this.morph.resetMorphWeights();
-
-        const sortedBones = this._sortedRuntimeBones;
-        for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i];
-
-            if (bone.ikSolver !== null) {
-                bone.ikSolver.enabled = true;
-            }
-        }
+        this.ikSolverStates.fill(1);
     }
 
     /**

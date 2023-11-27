@@ -7,7 +7,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
-import type { IIkSolver } from "@/Runtime/ikSolver";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { MmdMorphController } from "@/Runtime/mmdMorphController";
 
@@ -42,12 +41,12 @@ class MorphProxy {
 class IkSolverProxy {
     private _enabled: number;
 
-    private readonly _ikSolver: IIkSolver;
+    private readonly _ikSolverState: Uint8Array;
 
-    public constructor(ikSolver: IIkSolver) {
-        this._enabled = ikSolver.enabled ? 1 : 0;
+    public constructor(ikSolverStates: Uint8Array, ikSolverIndex: number) {
+        this._enabled = ikSolverStates[ikSolverIndex];
 
-        this._ikSolver = ikSolver;
+        this._ikSolverState = ikSolverStates.slice(ikSolverIndex, ikSolverIndex + 1);
     }
 
     public get enabled(): number {
@@ -56,7 +55,7 @@ class IkSolverProxy {
 
     public set enabled(value: number) {
         this._enabled = value;
-        this._ikSolver.enabled = 0.5 < value;
+        this._ikSolverState[0] = 0.5 < value ? 1 : 0;
     }
 }
 
@@ -224,12 +223,13 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 
         const propertyAnimations = this.propertyAnimations;
         const propertyAnimationBindMap = this.propertyAnimationBindMap;
+        const ikSolverStates = mmdModel.ikSolverStates;
         for (let i = 0; i < propertyAnimations.length; ++i) {
             const boneIndex = runtimeBoneMap.get(propertyAnimationBindMap[i]);
             if (boneIndex !== undefined) {
-                const ikSolver = runtimeBones[boneIndex].ikSolver;
-                if (ikSolver !== null) {
-                    animationGroup.addTargetedAnimation(propertyAnimations[i], new IkSolverProxy(ikSolver));
+                const ikSolverIndex = runtimeBones[boneIndex].ikSolverIndex;
+                if (ikSolverIndex !== -1) {
+                    animationGroup.addTargetedAnimation(propertyAnimations[i], new IkSolverProxy(ikSolverStates, ikSolverIndex));
                 }
             }
         }

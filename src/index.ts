@@ -80,7 +80,6 @@ export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 // Runtime
-export { IIkSolver } from "@/Runtime/ikSolver";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
 export { MmdCamera } from "@/Runtime/mmdCamera";

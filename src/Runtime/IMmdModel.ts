@@ -22,6 +22,13 @@ export interface IMmdModel {
     readonly skeleton: IMmdLinkedBoneContainer;
 
     /**
+     * Uint8Array that stores the state of IK solvers
+     *
+     * if `ikSolverState[MmdModel.sortedRuntimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.sortedRuntimeBones[i]` is disabled and vice versa
+     */
+    readonly ikSolverStates: Uint8Array;
+
+    /**
      * The morph controller of this model
      *
      * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)

@@ -6,7 +6,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 
-import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
@@ -52,7 +51,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     /**
      * IK solver bind index map
      */
-    public readonly ikSolverBindIndexMap: readonly Nullable<IIkSolver>[];
+    public readonly ikSolverBindIndexMap: Int32Array;
+
+    private readonly _ikSolverStates: Uint8Array;
 
     private readonly _bonePositionAnimationStates: _IAnimationState[];
     private readonly _boneRotationAnimationStates: _IAnimationState[];
@@ -67,7 +68,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         morphController: MmdMorphController,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         mesh: RuntimeMmdMesh,
-        ikSolverBindIndexMap: readonly Nullable<IIkSolver>[]
+        ikSolverBindIndexMap: Int32Array,
+        ikSolverStates: Uint8Array
     ) {
         this.animation = animation;
 
@@ -77,6 +79,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         this.morphBindIndexMap = morphBindIndexMap;
         this._mesh = mesh;
         this.ikSolverBindIndexMap = ikSolverBindIndexMap;
+        this._ikSolverStates = ikSolverStates;
 
         const bonePositionAnimationStates = this._bonePositionAnimationStates = new Array(animation.bonePositionAnimations.length);
         for (let i = 0; i < bonePositionAnimationStates.length; ++i) {
@@ -158,11 +161,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
         const propertyTracks = animation.propertyAnimations;
         const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
+        const ikSolverStates = this._ikSolverStates;
         for (let i = 0; i < propertyTracks.length; ++i) {
             const propertyTrack = propertyTracks[i];
-            const ikSolver = ikSolverBindIndexMap[i];
-            if (ikSolver === null) continue;
-            ikSolver.enabled = 0 < 1 + propertyTrack._interpolate(frameTime, this._propertyAnimationStates[i]);
+            const ikSolverIndex = ikSolverBindIndexMap[i];
+            if (ikSolverIndex === -1) continue;
+            ikSolverStates[ikSolverIndex] = (0 < 1 + propertyTrack._interpolate(frameTime, this._propertyAnimationStates[i])) ? 1 : 0;
         }
 
         if (animation.visibilityAnimation !== null) {
@@ -271,21 +275,21 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const ikSolverBindIndexMap: Nullable<IIkSolver>[] = new Array(animationGroup.propertyAnimations.length);
+        const ikSolverBindIndexMap = new Int32Array(animationGroup.propertyAnimations.length);
         const propertyTrackIkBoneNames = animationGroup.propertyAnimationBindMap;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
             const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
             if (ikBoneIndex === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
-                ikSolverBindIndexMap[i] = null;
+                ikSolverBindIndexMap[i] = -1;
             } else {
-                const ikSolver = runtimeBones[ikBoneIndex].ikSolver;
-                if (ikSolver === null) {
+                const ikSolverIndex = runtimeBones[ikBoneIndex].ikSolverIndex;
+                if (ikSolverIndex === -1) {
                     logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
-                    ikSolverBindIndexMap[i] = null;
+                    ikSolverBindIndexMap[i] = -1;
                 } else {
-                    ikSolverBindIndexMap[i] = ikSolver;
+                    ikSolverBindIndexMap[i] = ikSolverIndex;
                 }
             }
         }
@@ -297,7 +301,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             morphController,
             morphBindIndexMap,
             model.mesh,
-            ikSolverBindIndexMap
+            ikSolverBindIndexMap,
+            model.ikSolverStates
         );
     }
 

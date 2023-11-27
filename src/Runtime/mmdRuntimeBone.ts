@@ -5,7 +5,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
-import type { IIkSolver, IkSolver } from "./ikSolver";
+import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 
 /**
@@ -54,9 +54,11 @@ export interface IMmdRuntimeBone {
     readonly transformAfterPhysics: boolean;
 
     /**
-     * IK solver
+     * Get ik solver index
+     *
+     * If the bone does not have an ik solver, it will return -1
      */
-    readonly ikSolver: Nullable<IIkSolver>;
+    get ikSolverIndex(): number;
 }
 
 export class MmdRuntimeBone implements IMmdRuntimeBone {
@@ -238,5 +240,14 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
                 stack.push(childrenBones[i]);
             }
         }
+    }
+
+    /**
+     * Get ik solver index
+     *
+     * If the bone does not have an ik solver, it will return -1
+     */
+    public get ikSolverIndex(): number {
+        return this.ikSolver !== null ? this.ikSolver.index : -1;
     }
 }

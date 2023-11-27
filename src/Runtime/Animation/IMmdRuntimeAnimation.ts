@@ -2,7 +2,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 
-import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 
@@ -79,5 +78,5 @@ export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeMod
     /**
      * IK solver bind index map
      */
-    readonly ikSolverBindIndexMap: readonly Nullable<IIkSolver>[];
+    readonly ikSolverBindIndexMap: Int32Array;
 }

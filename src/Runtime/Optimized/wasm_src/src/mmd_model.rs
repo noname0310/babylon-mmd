@@ -89,7 +89,7 @@ impl MmdModel {
         });
     
         let (morphs, reader) = reader.read();
-        let animation_arena = AnimationArena::new(bone_arena.len(), morphs.len());
+        let animation_arena = AnimationArena::new(bone_arena.len(), ik_solver_arena.len(), morphs.len());
         let morph_controller = MmdMorphController::new(morphs.into_boxed_slice());
 
         let reader = reader.for_each(|_metadata| {
@@ -195,7 +195,7 @@ impl MmdModel {
 
             let bone = &self.bone_arena[bone_index];
             if let Some(ik_solver) = bone.ik_solver {
-                if self.animation_arena.iksolver_state_arena()[bone_index] != 0 {
+                if self.animation_arena.iksolver_state_arena()[ik_solver] != 0 {
                     let ik_solver = &mut self.ik_solver_arena[ik_solver];
                     ik_solver.solve(&self.animation_arena, &mut self.bone_arena, &self.append_transform_solver_arena);
                     self.bone_arena.update_world_matrix(bone_index);

@@ -39,23 +39,17 @@ const enum SolveAxis {
 /**
  * IK solver
  */
-export interface IIkSolver {
+export class IkSolver {
     /**
-     * Whether the IK solver is enabled
+     * Ik solver index
      */
-    enabled: boolean;
+    public readonly index: number;
 
     /**
      * Iteration count
      *
      * The higher the value, the more accurate the IK solver will be, but the more expensive it will be
      */
-    iteration: number;
-}
-
-export class IkSolver implements IIkSolver {
-    public enabled: boolean;
-
     public iteration: number;
     public limitAngle: number;
 
@@ -63,8 +57,8 @@ export class IkSolver implements IIkSolver {
     public readonly targetBone: MmdRuntimeBone;
     private readonly _ikChains: IkChain[];
 
-    public constructor(ikBone: MmdRuntimeBone, targetBone: MmdRuntimeBone) {
-        this.enabled = true;
+    public constructor(index: number, ikBone: MmdRuntimeBone, targetBone: MmdRuntimeBone) {
+        this.index = index;
 
         this.iteration = 0;
         this.limitAngle = 0;
@@ -84,8 +78,6 @@ export class IkSolver implements IIkSolver {
     private static readonly _IkPosition = new Vector3();
 
     public solve(): void {
-        if (!this.enabled) return;
-
         const ikBone = this.ikBone;
         const targetBone = this.targetBone;
         const chains = this._ikChains;

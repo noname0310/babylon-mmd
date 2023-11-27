@@ -2,7 +2,6 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
@@ -24,6 +23,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      */
     public animation: MmdCompositeAnimation;
 
+    private readonly _ikSolverStates: Uint8Array;
     private readonly _morphController: MmdMorphController;
     private readonly _mesh: RuntimeMmdMesh;
 
@@ -33,6 +33,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
     private constructor(
         animation: MmdCompositeAnimation,
+        ikSolverStates: Uint8Array,
         morphController: MmdMorphController,
         mesh: RuntimeMmdMesh,
         runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[],
@@ -41,6 +42,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     ) {
         this.animation = animation;
 
+        this._ikSolverStates = ikSolverStates;
         this._morphController = morphController;
         this._mesh = mesh;
         this._runtimeAnimations = runtimeAnimations;
@@ -66,7 +68,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     private readonly _boneResultMap = new Map<IMmdRuntimeLinkedBone, [Quaternion, number, number]>(); // [result, accWeight, accCount]
     private readonly _moveableBoneResultMap = new Map<IMmdRuntimeLinkedBone, [Vector3, Quaternion, number, number]>(); // [positionResult, rotationResult, accWeight, accCount]
     private readonly _morphResultMap = new Map<number, number>();
-    private readonly _ikSolverResultMap = new Map<IIkSolver, boolean>();
+    private readonly _ikSolverResultMap = new Map<number, boolean>();
 
     private readonly _activeAnimationSpans: MmdAnimationSpan[] = [];
     private readonly _activeRuntimeAnimations: IMmdRuntimeModelAnimationWithBindingInfo[] = [];
@@ -119,6 +121,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         const mesh = this._mesh;
+        const ikSolverStates = this._ikSolverStates;
 
         const boneResultMap = this._boneResultMap;
         const moveableBoneResultMap = this._moveableBoneResultMap;
@@ -166,9 +169,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     morphResultMap.set(morphIndex, 0);
                 }
                 mesh.visibility = 1;
-                for (const [ikSolver, _result] of ikSolverResultMap) {
-                    ikSolver.enabled = true;
-                    ikSolverResultMap.set(ikSolver, true);
+                for (const [ikSolverIndex, _result] of ikSolverResultMap) {
+                    ikSolverStates[ikSolverIndex] = 0;
+                    ikSolverResultMap.set(ikSolverIndex, true);
                 }
             } else {
                 for (const [_bone, result] of boneResultMap) {
@@ -202,7 +205,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             }
             mesh.visibility = 1;
             for (const [ikSolver, _result] of ikSolverResultMap) {
-                ikSolver.enabled = true;
+                ikSolverStates[ikSolver] = 1;
             }
             boneResultMap.clear();
             moveableBoneResultMap.clear();
@@ -352,13 +355,13 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
             const ikSolverBindIndexMap = runtimeAnimation.ikSolverBindIndexMap;
             for (let i = 0; i < ikSolverBindIndexMap.length; ++i) {
-                const ikSolver = ikSolverBindIndexMap[i];
-                if (ikSolver !== null) {
-                    const result = ikSolverResultMap.get(ikSolver);
+                const ikSolverIndex = ikSolverBindIndexMap[i];
+                if (ikSolverIndex !== -1) {
+                    const result = ikSolverResultMap.get(ikSolverIndex);
                     if (result === undefined) {
-                        ikSolverResultMap.set(ikSolver, ikSolver.enabled);
+                        ikSolverResultMap.set(ikSolverIndex, ikSolverStates[ikSolverIndex] !== 0);
                     } else {
-                        ikSolverResultMap.set(ikSolver, result && ikSolver.enabled);
+                        ikSolverResultMap.set(ikSolverIndex, result && ikSolverStates[ikSolverIndex] !== 0);
                     }
                 }
             }
@@ -393,8 +396,8 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             mesh.visibility = visibility;
         }
 
-        for (const [ikSolver, result] of ikSolverResultMap) {
-            ikSolver.enabled = result;
+        for (const [ikSolverIndex, result] of ikSolverResultMap) {
+            ikSolverStates[ikSolverIndex] = result ? 1 : 0;
         }
 
         activeAnimationSpans.length = 0;
@@ -466,7 +469,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             runtimeAnimations.splice(removeIndex, 1);
         };
 
-        return new MmdCompositeRuntimeModelAnimation(animation, model.morph, model.mesh, runtimeAnimations, onSpanAdded, onSpanRemoved);
+        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.mesh, runtimeAnimations, onSpanAdded, onSpanRemoved);
     }
 }
 

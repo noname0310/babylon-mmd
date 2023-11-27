@@ -88,12 +88,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true
             });
-
-            const runtimeBones = mmdModel.sortedRuntimeBones;
-            for (let i = 0; i < runtimeBones.length; ++i) {
-                const ikSolver = runtimeBones[i].ikSolver;
-                if (ikSolver !== null) ikSolver.enabled = false;
-            }
+            mmdModel.ikSolverStates.fill(0); // disable ik
 
             attachToBone(scene, modelMesh, {
                 directionalLightPosition: directionalLight.position,

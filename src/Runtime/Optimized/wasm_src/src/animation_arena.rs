@@ -16,14 +16,14 @@ pub(crate) struct AnimationArena {
 }
 
 impl AnimationArena {
-    pub fn new(bone_count: usize, morph_count: usize) -> Self {
+    pub fn new(bone_count: usize, ik_count: usize, morph_count: usize) -> Self {
         AnimationArena {
             bone_arena: vec![AnimatedBoneData {
                 position: Vector3::new(0.0, 0.0, 0.0),
                 rotation: UnitQuaternion::identity(),
                 scale: Vector3::new(1.0, 1.0, 1.0),
             }; bone_count].into_boxed_slice(),
-            iksolver_state_arena: vec![0; bone_count].into_boxed_slice(),
+            iksolver_state_arena: vec![0; ik_count].into_boxed_slice(),
             morph_arena: vec![0.0; morph_count].into_boxed_slice(),
         }
     }
