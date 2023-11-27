@@ -120,7 +120,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, {
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
@@ -188,7 +188,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
 
         return scene;

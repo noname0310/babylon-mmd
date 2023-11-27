@@ -224,7 +224,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
 
         const parentControl = engine.getInputElement()!.parentElement!;
