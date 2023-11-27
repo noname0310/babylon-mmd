@@ -19,11 +19,11 @@ import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdModel } from "./IMmdModel";
+import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
 import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
-import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;

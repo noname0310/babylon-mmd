@@ -15,10 +15,10 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "./ILogger";
-import type { MmdRuntimeBone } from "./mmdRuntimeBone";
+import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 
 class MmdPhysicsTransformNode extends TransformNode {
-    public readonly linkedBone: MmdRuntimeBone;
+    public readonly linkedBone: IMmdRuntimeBone;
     public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
     public readonly bodyOffsetInverseMatrix: Matrix;
@@ -26,7 +26,7 @@ class MmdPhysicsTransformNode extends TransformNode {
     public constructor(
         name: string,
         scene: Scene,
-        linkedBone: MmdRuntimeBone,
+        linkedBone: IMmdRuntimeBone,
         physicsMode: PmxObject.RigidBody.PhysicsMode,
         isPure?: boolean
     ) {
@@ -308,7 +308,7 @@ export class MmdPhysics {
      */
     public buildPhysics(
         mesh: Mesh,
-        bones: readonly MmdRuntimeBone[],
+        bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger

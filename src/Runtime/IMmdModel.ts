@@ -1,7 +1,7 @@
+import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "./mmdMesh";
 import type { MmdMorphController } from "./mmdMorphController";
-import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
 
 /**
  * IMmdModel is a model that can bind animation.

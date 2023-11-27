@@ -15,9 +15,9 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntime } from "../IMmdRuntime";
+import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import { HumanoidMesh } from "../mmdMesh";
-import type { IMmdRuntimeBone } from "../mmdRuntimeBone";
 
 class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public readonly index: number;

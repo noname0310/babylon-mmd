@@ -15,10 +15,10 @@ import type { MmdRuntimeModelAnimationGroup } from "../Animation/mmdRuntimeModel
 import type { ILogger } from "../ILogger";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
+import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "../mmdMesh";
 import { MmdMorphController } from "../mmdMorphController";
-import type { IMmdRuntimeBone } from "../mmdRuntimeBone";
 import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
