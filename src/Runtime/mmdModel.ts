@@ -374,7 +374,7 @@ export class MmdModel implements IMmdModel {
                 bone.updateWorldMatrix();
             }
 
-            if (bone.ikSolver !== null && this.ikSolverStates[i] !== 0) {
+            if (bone.ikSolver !== null && this.ikSolverStates[bone.ikSolver.index] !== 0) {
                 bone.ikSolver.solve();
                 bone.updateWorldMatrix();
             }
