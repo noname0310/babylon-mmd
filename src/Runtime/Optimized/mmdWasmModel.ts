@@ -28,7 +28,7 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
  *
  * The mesh that instantiates `MmdWasmModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
- * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `mmdModel.finalTransformMatrices`
+ * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `mmdModel.worldTransformMatrices`
  *
  * Final matrix is guaranteed to be updated after `MmdWasmModel.afterPhysics()` stage
  */
@@ -50,7 +50,7 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * The array of final transform matrices of bones (ie. the matrix sent to shaders)
      */
-    public readonly finalTransformMatrices: Float32Array;
+    public readonly worldTransformMatrices: Float32Array;
 
     /**
      * Uint8Array that stores the state of IK solvers
@@ -133,7 +133,7 @@ export class MmdWasmModel implements IMmdModel {
         };
         this.mesh = runtimeMesh;
         this.skeleton = skeleton;
-        this.finalTransformMatrices = new Float32Array(skeleton.bones.length * 16);
+        this.worldTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
             let ikSolverCount = 0;
             const bonesMetadata = mmdMetadata.bones;

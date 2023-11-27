@@ -51,7 +51,7 @@ export interface IMmdRuntimeBone {
     /**
      * World matrix of this bone
      *
-     * Slice of `MmdModel.finalTransformMatrices` that corresponds to this bone
+     * Slice of `MmdModel.worldTransformMatrices` that corresponds to this bone
      */
     readonly worldMatrix: Float32Array;
 

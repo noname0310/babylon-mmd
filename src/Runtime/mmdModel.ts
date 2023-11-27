@@ -33,7 +33,7 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
  *
  * The mesh that instantiates `MmdModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
- * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `mmdModel.finalTransformMatrices`
+ * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `mmdModel.worldTransformMatrices`
  *
  * Final matrix is guaranteed to be updated after `MmdModel.afterPhysics()` stage
  */
@@ -55,7 +55,7 @@ export class MmdModel implements IMmdModel {
     /**
      * The array of final transform matrices of bones (ie. the matrix sent to shaders)
      */
-    public readonly finalTransformMatrices: Float32Array;
+    public readonly worldTransformMatrices: Float32Array;
 
     /**
      * Uint8Array that stores the state of IK solvers
@@ -144,7 +144,7 @@ export class MmdModel implements IMmdModel {
         };
         this.mesh = runtimeMesh;
         this.skeleton = skeleton;
-        const finalTransformMatrices = this.finalTransformMatrices = new Float32Array(skeleton.bones.length * 16);
+        const worldTransformMatrices = this.worldTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
             let ikSolverCount = 0;
             const bonesMetadata = mmdMetadata.bones;
@@ -162,7 +162,7 @@ export class MmdModel implements IMmdModel {
         const runtimeBones = this.runtimeBones = this._buildRuntimeSkeleton(
             skeleton.bones,
             mmdMetadata.bones,
-            finalTransformMatrices
+            worldTransformMatrices
         );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
@@ -404,12 +404,12 @@ export class MmdModel implements IMmdModel {
     private _buildRuntimeSkeleton(
         bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[],
-        finalTransformMatrices: Float32Array
+        worldTransformMatrices: Float32Array
     ): readonly MmdRuntimeBone[] {
         const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
             const boneMetadata = bonesMetadata[i];
-            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, finalTransformMatrices, i));
+            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i));
         }
 
         let ikSolverCount = 0;
@@ -478,7 +478,7 @@ export class MmdModel implements IMmdModel {
         if (this._originalComputeTransformMatrices !== null) return;
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
-        const finalTransformMatrices = this.finalTransformMatrices;
+        const worldTransformMatrices = this.worldTransformMatrices;
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);
@@ -490,7 +490,7 @@ export class MmdModel implements IMmdModel {
                 if (bone._index !== -1) {
                     const mappedIndex = bone._index === null ? index : bone._index;
                     bone.getAbsoluteInverseBindMatrix().multiplyToArray(
-                        Matrix.FromArrayToRef(finalTransformMatrices, index * 16, bone.getFinalMatrix()),
+                        Matrix.FromArrayToRef(worldTransformMatrices, index * 16, bone.getFinalMatrix()),
                         targetMatrix,
                         mappedIndex * 16
                     );

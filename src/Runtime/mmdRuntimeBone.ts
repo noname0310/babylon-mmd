@@ -39,7 +39,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public constructor(
         linkedBone: IMmdRuntimeLinkedBone,
         boneMetadata: MmdModelMetadata.Bone,
-        finalTransformMatrices: Float32Array,
+        worldTransformMatrices: Float32Array,
         boneIndex: number
     ) {
         this.linkedBone = linkedBone;
@@ -61,7 +61,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.ikRotation = null;
 
         this.localMatrix = Matrix.Identity();
-        this.worldMatrix = new Float32Array(finalTransformMatrices.buffer, finalTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
+        this.worldMatrix = new Float32Array(worldTransformMatrices.buffer, worldTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
 
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;

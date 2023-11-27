@@ -24,7 +24,7 @@ export interface IMmdModel {
     /**
      * The array of final transform matrices of bones (ie. the matrix sent to shaders)
      */
-    readonly finalTransformMatrices: Float32Array;
+    readonly worldTransformMatrices: Float32Array;
 
     /**
      * Uint8Array that stores the state of IK solvers
