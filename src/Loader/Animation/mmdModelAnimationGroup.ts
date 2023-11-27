@@ -46,7 +46,7 @@ class IkSolverProxy {
     public constructor(ikSolverStates: Uint8Array, ikSolverIndex: number) {
         this._enabled = ikSolverStates[ikSolverIndex];
 
-        this._ikSolverState = ikSolverStates.slice(ikSolverIndex, ikSolverIndex + 1);
+        this._ikSolverState = new Uint8Array(ikSolverStates.buffer, ikSolverStates.byteOffset + ikSolverIndex, 1);
     }
 
     public get enabled(): number {

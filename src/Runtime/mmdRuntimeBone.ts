@@ -137,7 +137,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.ikRotation = null;
 
         this.localMatrix = Matrix.Identity();
-        this.worldMatrix = finalTransformMatrices.slice(boneIndex * 16, (boneIndex + 1) * 16);
+        this.worldMatrix = new Float32Array(finalTransformMatrices.buffer, finalTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
 
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
