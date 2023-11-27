@@ -221,7 +221,7 @@ export class MmdMetadataEncoder {
         serializer.setUint32(ikCount); // ikCount
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
-            serializer.setFloat32Array(linkedBone[i].getFinalMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
+            serializer.setFloat32Array(linkedBone[i].getRestMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
             serializer.setInt32(bone.transformOrder); // transformOrder
             serializer.setUint16(bone.flag); // flag
