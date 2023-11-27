@@ -8,7 +8,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { IIkSolver } from "@/Runtime/ikSolver";
-import type { MmdModel } from "@/Runtime/mmdModel";
+import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { MmdMorphController } from "@/Runtime/mmdMorphController";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
@@ -178,7 +178,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      * @param mmdModel The mmd model to bind
      * @returns The binded mmd model animation group
      */
-    public createAnimationGroup(mmdModel: MmdModel): AnimationGroup {
+    public createAnimationGroup(mmdModel: IMmdModel): AnimationGroup {
         const animationGroup = new AnimationGroup(this.name, mmdModel.mesh.getScene(), 1);
         animationGroup.isAdditive = true;
 

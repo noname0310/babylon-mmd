@@ -9,17 +9,19 @@ import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "../A
 import type { IPlayer } from "../Audio/IAudioPlayer";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdRuntime } from "../IMmdRuntime";
+import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
+import type { HumanoidMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
-import { MmdModel } from "../mmdModel";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
+import { MmdWasmModel } from "./mmdWasmModel";
 
-export class MmdWasmRuntime implements IMmdRuntime {
+export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private readonly _wasmInstance: MmdWasmInstance;
 
-    private readonly _models: MmdModel[];
+    private readonly _models: MmdWasmModel[];
     private _camera: Nullable<MmdCamera>;
     private _audioPlayer: Nullable<IPlayer>;
 
@@ -65,8 +67,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
     private _animationFrameTimeDuration: number;
     private _useManualAnimationDuration: boolean;
 
-    private readonly _needToInitializePhysicsModels: Set<MmdModel>;
-
     private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
@@ -99,8 +99,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
         this._animationPaused = true;
         this._animationFrameTimeDuration = 0;
         this._useManualAnimationDuration = false;
-
-        this._needToInitializePhysicsModels = new Set<MmdModel>();
 
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
@@ -149,9 +147,24 @@ export class MmdWasmRuntime implements IMmdRuntime {
     public createMmdModel(
         mmdMesh: Mesh,
         options: CreateMmdModelOptions = {}
-    ): MmdModel {
+    ): MmdWasmModel {
         if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
+        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.skeleton, options);
+    }
 
+    /**
+     * Create MMD model from humanoid mesh and virtual skeleton
+     *
+     * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
+     * @param mmdMesh MmdMesh or HumanoidMesh
+     * @param skeleton Virtualized skeleton
+     * @param options Creation options
+     */
+    public createMmdModelFromSkeleton(
+        mmdMesh: MmdMesh | HumanoidMesh,
+        skeleton: IMmdLinkedBoneContainer,
+        options: CreateMmdModelOptions = {}
+    ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
         }
@@ -159,29 +172,18 @@ export class MmdWasmRuntime implements IMmdRuntime {
             options.buildPhysics = true;
         }
 
-        const model = new MmdModel(
+        const model = new MmdWasmModel(
             mmdMesh,
-            mmdMesh.skeleton,
+            skeleton,
             options.materialProxyConstructor,
-            null,
+            false,
             this
         );
         this._models.push(model);
-        this._needToInitializePhysicsModels.add(model);
 
         model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
 
         return model;
-    }
-
-    /**
-     * @internal
-     */
-    public addMmdModelInternal(model: MmdModel): void {
-        this._models.push(model);
-        this._needToInitializePhysicsModels.add(model);
-
-        model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
     }
 
     /**
@@ -193,7 +195,7 @@ export class MmdWasmRuntime implements IMmdRuntime {
      * @param mmdModel MMD model to destroy
      * @throws {Error} if model is not found
      */
-    public destroyMmdModel(mmdModel: MmdModel): void {
+    public destroyMmdModel(mmdModel: MmdWasmModel): void {
         mmdModel.dispose();
 
         const models = this._models;
@@ -319,16 +321,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
                         this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale * 1.1;
                     }
                 } else {
-                    if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
-                        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-                        for (let i = 0; i < this._models.length; ++i) {
-                            const model = this._models[i];
-                            if (model.currentAnimation !== null) {
-                                needToInitializePhysicsModels.add(model);
-                            }
-                        }
-                    }
-
                     this._currentFrameTime = audioPlayerCurrentTime * 30;
                 }
             } else { // only use delta time to calculate animation time
@@ -364,12 +356,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
                 models[i].beforePhysics(null);
             }
         }
-
-        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-        for (const model of needToInitializePhysicsModels) {
-            model.initializePhysics();
-        }
-        needToInitializePhysicsModels.clear();
     }
 
     /**
@@ -479,7 +465,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
             for (let i = 0; i < this._models.length; ++i) {
                 const model = models[i];
                 model.resetState();
-                this._needToInitializePhysicsModels.add(model);
             }
 
             this._animationFrameTimeDuration = this._computeAnimationDuration();
@@ -532,16 +517,6 @@ export class MmdWasmRuntime implements IMmdRuntime {
     }
 
     private _seekAnimationInternal(frameTime: number, forceEvaluate: boolean): void {
-        if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
-            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-            for (let i = 0; i < this._models.length; ++i) {
-                const model = this._models[i];
-                if (model.currentAnimation !== null) {
-                    needToInitializePhysicsModels.add(model);
-                }
-            }
-        }
-
         this._currentFrameTime = frameTime;
 
         if (forceEvaluate) {
@@ -611,7 +586,7 @@ export class MmdWasmRuntime implements IMmdRuntime {
     /**
      * MMD models created by this runtime
      */
-    public get models(): readonly MmdModel[] {
+    public get models(): readonly MmdWasmModel[] {
         return this._models;
     }
 

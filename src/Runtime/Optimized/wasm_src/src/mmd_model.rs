@@ -60,12 +60,12 @@ impl MmdModel {
             if let Some(ik) = metadata.ik {
                 if 0 <= ik.target && ik.target < bone_arena.len() as i32 {
                     let mut ik_solver = IkSolver::new(
+                        ik.iteration,
+                        ik.rotation_constraint,
                         i,
                         ik.target as usize,
                         ik.links.len(),
                     );
-                    ik_solver.iteration = ik.iteration;
-                    ik_solver.limit_angle = ik.rotation_constraint;
 
                     for link in ik.links {
                         if 0 <= link.target && link.target < bone_arena.len() as i32 {

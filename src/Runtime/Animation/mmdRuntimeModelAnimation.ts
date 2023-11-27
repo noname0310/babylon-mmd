@@ -7,9 +7,9 @@ import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 
 import type { IIkSolver } from "../ikSolver";
+import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "../mmdMesh";
-import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
 import { BezierInterpolator } from "./bezierInterpolator";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
@@ -384,7 +384,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
      * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
-    public static Create(animation: MmdAnimation, model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
+    public static Create(animation: MmdAnimation, model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.skeleton;
         const bones = skeleton.bones;
 
@@ -520,7 +520,7 @@ declare module "../../Loader/Animation/mmdAnimation" {
  * @returns MmdRuntimeModelAnimation instance
  */
 MmdAnimation.prototype.createRuntimeModelAnimation = function(
-    model: MmdModel,
+    model: IMmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
 ): MmdRuntimeModelAnimation {

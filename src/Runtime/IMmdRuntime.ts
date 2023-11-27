@@ -5,11 +5,13 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
+import type { IMmdModel } from "./IMmdModel";
+import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "./mmdCamera";
-import type { MmdModel } from "./mmdModel";
+import type { HumanoidMesh, MmdMesh } from "./mmdMesh";
 import type { CreateMmdModelOptions } from "./mmdRuntime";
 
-export interface IMmdRuntime extends ILogger {
+export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     /**
      * This observable is notified when animation duration is changed
      */
@@ -46,13 +48,22 @@ export interface IMmdRuntime extends ILogger {
      */
     createMmdModel(
         mmdMesh: Mesh,
-        options: CreateMmdModelOptions
-    ): MmdModel;
+        options?: CreateMmdModelOptions
+    ): T;
 
     /**
-     * @internal
+     * Create MMD model from humanoid mesh and skeleton
+     *
+     * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
+     * @param mmdMesh MmdMesh or HumanoidMesh
+     * @param skeleton Skeleton or Virtualized skeleton
+     * @param options Creation options
      */
-    addMmdModelInternal(model: MmdModel): void;
+    createMmdModelFromSkeleton(
+        mmdMesh: MmdMesh | HumanoidMesh,
+        skeleton: IMmdLinkedBoneContainer,
+        options?: CreateMmdModelOptions
+    ): T;
 
     /**
      * Destroy MMD model
@@ -63,7 +74,7 @@ export interface IMmdRuntime extends ILogger {
      * @param mmdModel MMD model to destroy
      * @throws {Error} if model is not found
      */
-    destroyMmdModel(mmdModel: MmdModel): void;
+    destroyMmdModel(mmdModel: T): void;
 
     /**
      * Set camera to animate
@@ -139,7 +150,7 @@ export interface IMmdRuntime extends ILogger {
     /**
      * MMD models created by this runtime
      */
-    get models(): readonly MmdModel[];
+    get models(): readonly T[];
 
     /**
      * MMD camera

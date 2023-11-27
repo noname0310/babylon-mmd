@@ -8,9 +8,9 @@ import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGrou
 
 import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
+import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "../mmdMesh";
-import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
 import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
@@ -202,7 +202,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      */
     public static Create(
         animationGroup: MmdModelAnimationGroup,
-        model: MmdModel,
+        model: IMmdModel,
         retargetingMap?: { [key: string]: string },
         logger?: ILogger
     ): MmdRuntimeModelAnimationGroup {
@@ -339,7 +339,7 @@ declare module "../../Loader/Animation/mmdModelAnimationGroup" {
  * @returns MmdRuntimeModelAnimationGroup instance
  */
 MmdModelAnimationGroup.prototype.createRuntimeModelAnimation = function(
-    model: MmdModel,
+    model: IMmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
 ): MmdRuntimeModelAnimationGroup {

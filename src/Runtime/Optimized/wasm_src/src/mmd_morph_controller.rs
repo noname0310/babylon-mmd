@@ -30,7 +30,7 @@ impl MmdMorphController {
                     let index = morph_indices[i];
 
                     if group_morph_stack.iter().any(|(index, _)| *index == morph_index) {
-                        // todo diagnostic
+                        // no need to diagnostic message because same error will be reported in the typescript side
                         morph_indices[i] = -1;
                     } else if 0 <= index && index < morphs.len() as i32 {
                         group_morph_stack.push((morph_index, 0.0));

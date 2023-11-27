@@ -58,8 +58,8 @@ enum SolveAxis {
 }
 
 pub(crate) struct IkSolver {
-    pub iteration: i32,
-    pub limit_angle: f32,
+    iteration: i32,
+    limit_angle: f32,
 
     ik_bone: usize,
     target_bone: usize,
@@ -68,13 +68,15 @@ pub(crate) struct IkSolver {
 
 impl IkSolver {
     pub fn new(
+        iteration: i32,
+        limit_angle: f32,
         ik_bone: usize,
         target_bone: usize,
         chain_capacity: usize,
     ) -> IkSolver {
         IkSolver {
-            iteration: 0,
-            limit_angle: 0.0,
+            iteration,
+            limit_angle,
             ik_bone,
             target_bone,
             ik_chains: Vec::with_capacity(chain_capacity),

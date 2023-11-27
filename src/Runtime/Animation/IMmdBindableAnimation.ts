@@ -1,8 +1,8 @@
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 
+import type { IMmdModel } from "../IMmdModel";
 import type { MmdCamera } from "../mmdCamera";
-import type { MmdModel } from "../mmdModel";
 import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 
 /**
@@ -28,5 +28,5 @@ export interface IMmdBindableModelAnimation<T extends IMmdRuntimeModelAnimation 
      * @param logger Logger
      * @returns Runtime model animation instance
      */
-    createRuntimeModelAnimation(model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): T;
+    createRuntimeModelAnimation(model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): T;
 }

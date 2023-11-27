@@ -7,37 +7,32 @@ import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
-
-import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
-import type { MmdCompositeRuntimeModelAnimation } from "./Animation/mmdCompositeRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimationGroup } from "./Animation/mmdRuntimeModelAnimationGroup";
-import { AppendTransformSolver } from "./appendTransformSolver";
-import { IkSolver } from "./ikSolver";
-import type { ILogger } from "./ILogger";
-import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
-import type { IMmdModel } from "./IMmdModel";
-import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
-import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
-import { MmdMorphController } from "./mmdMorphController";
-import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
-import type { IMmdRuntimeBone } from "./mmdRuntimeBone";
-import { MmdRuntimeBone } from "./mmdRuntimeBone";
+import type { IMmdBindableModelAnimation } from "../Animation/IMmdBindableAnimation";
+import type { IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
+import type { MmdCompositeRuntimeModelAnimation } from "../Animation/mmdCompositeRuntimeModelAnimation";
+import type { MmdRuntimeModelAnimation } from "../Animation/mmdRuntimeModelAnimation";
+import type { MmdRuntimeModelAnimationGroup } from "../Animation/mmdRuntimeModelAnimationGroup";
+import type { ILogger } from "../ILogger";
+import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
+import type { IMmdModel } from "../IMmdModel";
+import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
+import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "../mmdMesh";
+import { MmdMorphController } from "../mmdMorphController";
+import type { IMmdRuntimeBone } from "../mmdRuntimeBone";
+import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
- * MmdModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Runtime
+ * MmdWasmModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Wasm Runtime
  *
- * The mesh that instantiates `MmdModel` ignores some original implementations of Babylon.js and follows the MMD specifications
+ * The mesh that instantiates `MmdWasmModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
  * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `bone.getFinalMatrix()`
  *
- * Final matrix is guaranteed to be updated after `MmdModel.afterPhysics()` stage
+ * Final matrix is guaranteed to be updated after `MmdWasmModel.afterPhysics()` stage
  */
-export class MmdModel implements IMmdModel {
+export class MmdWasmModel implements IMmdModel {
     /**
      * The mesh of this model
      */
@@ -48,7 +43,7 @@ export class MmdModel implements IMmdModel {
      *
      * This can be a instance of `Skeleton`, or if you are using a humanoid model, it will be referencing a virtualized bone tree
      *
-     * So MmdModel.mesh.skeleton is not always equal to MmdModel.skeleton
+     * So MmdWasmModel.mesh.skeleton is not always equal to MmdWasmModel.skeleton
      */
     public readonly skeleton: IMmdLinkedBoneContainer;
 
@@ -59,16 +54,10 @@ export class MmdModel implements IMmdModel {
      */
     public readonly morph: MmdMorphController;
 
-    private readonly _physicsModel: Nullable<MmdPhysicsModel>;
-
     private readonly _logger: ILogger;
 
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
-    private readonly _sortedRuntimeRootBones: readonly MmdRuntimeBone[];
 
-    /**
-     * Observable triggered when the current animation is changed
-     */
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
     private readonly _animations: RuntimeModelAnimation[];
     private readonly _animationIndexMap: Map<string, number>;
@@ -76,34 +65,34 @@ export class MmdModel implements IMmdModel {
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
 
     /**
-     * Create a MmdModel
-     * @param mmdMesh Mesh that able to instantiate `MmdModel`
+     * Create a MmdWasmModel
+     * @param mmdMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
-     * @param mmdPhysics Physics builder
+     * @param buildPhysics Whether to build physics
      * @param logger Logger
      */
     public constructor(
         mmdMesh: MmdMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        mmdPhysics: Nullable<MmdPhysics>,
+        buildPhysics: boolean,
         logger: ILogger
     );
 
     /**
-     * Create a MmdModel from `HumanoidMesh`
-     * @param humanoidMesh Mesh that able to instantiate `MmdModel`
+     * Create a MmdWasmModel from `HumanoidMesh`
+     * @param humanoidMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
-     * @param mmdPhysics Physics builder
+     * @param buildPhysics Whether to build physics
      * @param logger Logger
      */
     public constructor(
         humanoidMesh: HumanoidMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        mmdPhysics: Nullable<MmdPhysics>,
+        buildPhysics: boolean,
         logger: ILogger
     );
 
@@ -111,7 +100,7 @@ export class MmdModel implements IMmdModel {
         mmdMesh: MmdMesh | HumanoidMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        mmdPhysics: Nullable<MmdPhysics>,
+        buildPhysics: boolean,
         logger: ILogger
     ) {
         this._logger = logger;
@@ -131,27 +120,11 @@ export class MmdModel implements IMmdModel {
 
         this._disableSkeletonWorldMatrixUpdate(skeleton);
 
-        const runtimeBones = this._buildRuntimeSkeleton(
-            skeleton.bones,
-            mmdMetadata.bones
-        );
-
-        const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
-        // sort must be stable (require ES2019)
-        sortedBones.sort((a, b) => {
-            return a.transformOrder - b.transformOrder;
-        });
-
-        const sortedRootBones: MmdRuntimeBone[] = [];
-        for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i];
-            if (bone.parentBone === null) sortedRootBones.push(bone);
-        }
-        this._sortedRuntimeRootBones = sortedRootBones;
+        this._sortedRuntimeBones = [];
 
         this.morph = new MmdMorphController(
             mmdMesh.morphTargetManager,
-            runtimeBones,
+            null,
             (mmdMesh.material as MultiMaterial).subMaterials !== undefined
                 ? (mmdMesh.material as MultiMaterial)
                 : null,
@@ -160,19 +133,7 @@ export class MmdModel implements IMmdModel {
             logger
         );
 
-        if (mmdPhysics !== null) {
-            for (let i = 0; i < sortedBones.length; ++i) sortedBones[i].updateLocalMatrix();
-            for (let i = 0; i < sortedRootBones.length; ++i) sortedRootBones[i].updateWorldMatrix();
-            this._physicsModel = mmdPhysics.buildPhysics(
-                mmdMesh,
-                runtimeBones,
-                mmdMetadata.rigidBodies,
-                mmdMetadata.joints,
-                logger
-            );
-        } else {
-            this._physicsModel = null;
-        }
+        buildPhysics;
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
         this._animations = [];
@@ -190,7 +151,6 @@ export class MmdModel implements IMmdModel {
      */
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
-        this._physicsModel?.dispose();
         this.onCurrentAnimationChangedObservable.clear();
         (this.mesh as any).metadata = null;
     }
@@ -299,13 +259,6 @@ export class MmdModel implements IMmdModel {
     }
 
     /**
-     * Reset the rigid body positions and velocities of this model
-     */
-    public initializePhysics(): void {
-        this._physicsModel?.initialize();
-    }
-
-    /**
      * Before the physics stage, update animations and run MMD runtime solvers
      *
      * This method must be called before the physics stage
@@ -321,8 +274,7 @@ export class MmdModel implements IMmdModel {
         }
 
         this.morph.update();
-        this._update(false);
-        this._physicsModel?.syncBodies();
+        // wasm side computes the world matrix of the bones
     }
 
     /**
@@ -331,122 +283,8 @@ export class MmdModel implements IMmdModel {
      * This method must be called after the physics stage
      */
     public afterPhysics(): void {
-        const physicsModel = this._physicsModel;
-        if (physicsModel !== null) {
-            physicsModel.syncBones();
-        }
-        this._update(true);
+        // wasm side computes the world matrix of the bones
         this.mesh.skeleton._markAsDirty();
-    }
-
-    private _update(afterPhysicsStage: boolean): void {
-        const sortedBones = this._sortedRuntimeBones;
-        for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i];
-            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
-
-            bone.updateLocalMatrix();
-        }
-
-        const sortedRootBones = this._sortedRuntimeRootBones;
-        for (let i = 0; i < sortedRootBones.length; ++i) {
-            const bone = sortedRootBones[i];
-            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
-
-            bone.updateWorldMatrix();
-        }
-
-        for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i];
-            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
-
-            if (bone.appendTransformSolver !== null) {
-                bone.appendTransformSolver.update();
-                bone.updateLocalMatrix();
-                bone.updateWorldMatrix();
-            }
-
-            if (bone.ikSolver !== null) {
-                bone.ikSolver.solve();
-                if (bone.ikSolver.enabled) {
-                    bone.updateWorldMatrix();
-                }
-            }
-        }
-
-        for (let i = 0; i < sortedRootBones.length; ++i) {
-            const bone = sortedRootBones[i];
-            if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
-
-            bone.updateWorldMatrix();
-        }
-    }
-
-    private _buildRuntimeSkeleton(
-        bones: IMmdRuntimeLinkedBone[],
-        bonesMetadata: readonly MmdModelMetadata.Bone[]
-    ): readonly MmdRuntimeBone[] {
-        const runtimeBones: MmdRuntimeBone[] = [];
-        for (let i = 0; i < bonesMetadata.length; ++i) {
-            const boneMetadata = bonesMetadata[i];
-            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata));
-        }
-
-        for (let i = 0; i < bonesMetadata.length; ++i) {
-            const boneMetadata = bonesMetadata[i];
-            const bone = runtimeBones[i];
-
-            const parentBoneIndex = boneMetadata.parentBoneIndex;
-            if (0 <= parentBoneIndex && parentBoneIndex < runtimeBones.length) {
-                const parentBone = runtimeBones[parentBoneIndex];
-                bone.parentBone = parentBone;
-                parentBone.childBones.push(bone);
-            }
-
-            if (boneMetadata.appendTransform !== undefined) {
-                const targetBoneIndex = boneMetadata.appendTransform.parentIndex;
-                if (0 <= targetBoneIndex && targetBoneIndex < runtimeBones.length) {
-                    bone.appendTransformSolver = new AppendTransformSolver(
-                        boneMetadata.flag,
-                        boneMetadata.appendTransform,
-                        runtimeBones[targetBoneIndex]
-                    );
-                } else {
-                    this._logger.error(`Invalid append transform target bone index: ${targetBoneIndex}`);
-                }
-            }
-
-            if (boneMetadata.ik !== undefined) {
-                const ikMetadata = boneMetadata.ik;
-                const targetBoneIndex = ikMetadata.target;
-                if (0 <= targetBoneIndex && targetBoneIndex < runtimeBones.length) {
-                    const ikSolver = bone.ikSolver = new IkSolver(
-                        bone,
-                        runtimeBones[targetBoneIndex]
-                    );
-                    ikSolver.iteration = ikMetadata.iteration;
-                    ikSolver.limitAngle = ikMetadata.rotationConstraint;
-                    for (let j = 0; j < ikMetadata.links.length; ++j) {
-                        const link = ikMetadata.links[j];
-                        const linkBoneIndex = link.target;
-                        if (0 <= linkBoneIndex && linkBoneIndex < runtimeBones.length) {
-                            const linkBone = runtimeBones[linkBoneIndex];
-                            ikSolver.addIkChain(
-                                linkBone,
-                                link.limitation?.minimumAngle ? Vector3.FromArray(link.limitation.minimumAngle) : null,
-                                link.limitation?.maximumAngle ? Vector3.FromArray(link.limitation.maximumAngle) : null
-                            );
-                        } else {
-                            this._logger.error(`Invalid IK link bone index: ${linkBoneIndex}`);
-                        }
-                    }
-                } else {
-                    this._logger.error(`Invalid IK target bone index: ${targetBoneIndex}`);
-                }
-            }
-        }
-
-        return runtimeBones;
     }
 
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;

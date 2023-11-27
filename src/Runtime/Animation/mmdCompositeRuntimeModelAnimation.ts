@@ -4,9 +4,9 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IIkSolver } from "../ikSolver";
 import type { ILogger } from "../ILogger";
+import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "../mmdMesh";
-import type { MmdModel } from "../mmdModel";
 import type { MmdMorphController } from "../mmdMorphController";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
@@ -436,7 +436,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      * @param logger Logger
      * @return MmdCompositeRuntimeModelAnimation instance
      */
-    public static Create(animation: MmdCompositeAnimation, model: MmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdCompositeRuntimeModelAnimation {
+    public static Create(animation: MmdCompositeAnimation, model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdCompositeRuntimeModelAnimation {
         const runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[] = new Array(animation.spans.length).fill(null);
         const spans = animation.spans;
 
@@ -480,7 +480,7 @@ declare module "./mmdCompositeAnimation" {
  * @returns MmdRuntimeCameraAnimation instance
  */
 MmdCompositeAnimation.prototype.createRuntimeModelAnimation = function(
-    model: MmdModel,
+    model: IMmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
 ): MmdCompositeRuntimeModelAnimation {

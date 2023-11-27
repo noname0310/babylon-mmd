@@ -13,10 +13,10 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
+import type { IMmdModel } from "../IMmdModel";
+import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import { HumanoidMesh } from "../mmdMesh";
-import { MmdModel } from "../mmdModel";
-import type { MmdRuntime } from "../mmdRuntime";
 
 class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public name: string;
@@ -767,7 +767,11 @@ export class HumanoidMmd {
      * @param options Options
      * @returns MMD model created from humanoid mesh
      */
-    public createMmdModelFromHumanoid(mmdRuntime: MmdRuntime, humanoidMesh: Mesh, options: CreateMmdModelFromHumanoidOptions = {}): MmdModel {
+    public createMmdModelFromHumanoid<T extends IMmdModel>(
+        mmdRuntime: IMmdRuntime<T>,
+        humanoidMesh: Mesh,
+        options: CreateMmdModelFromHumanoidOptions = {}
+    ): T {
         const {
             boneMap = {},
             morphMap = {},
@@ -790,8 +794,9 @@ export class HumanoidMmd {
         }
 
         const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);
-        const mmdModel = new MmdModel(humanoidMesh, new BoneContainer(boneProxies, skeleton), null, null, mmdRuntime);
-        mmdRuntime.addMmdModelInternal(mmdModel);
-        return mmdModel;
+        return mmdRuntime.createMmdModelFromSkeleton(humanoidMesh, new BoneContainer(boneProxies, skeleton), {
+            materialProxyConstructor: null,
+            buildPhysics: false
+        });
     }
 }

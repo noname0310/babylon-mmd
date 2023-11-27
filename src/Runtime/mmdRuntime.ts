@@ -9,7 +9,9 @@ import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./An
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdRuntime } from "./IMmdRuntime";
+import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "./mmdCamera";
+import type { HumanoidMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
 import { MmdModel } from "./mmdModel";
 import type { MmdPhysics } from "./mmdPhysics";
@@ -37,7 +39,7 @@ export interface CreateMmdModelOptions {
  *
  * It can also create and remove runtime components
  */
-export class MmdRuntime implements IMmdRuntime {
+export class MmdRuntime implements IMmdRuntime<MmdModel> {
     private readonly _physics: Nullable<MmdPhysics>;
 
     private readonly _models: MmdModel[];
@@ -141,7 +143,22 @@ export class MmdRuntime implements IMmdRuntime {
         options: CreateMmdModelOptions = {}
     ): MmdModel {
         if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
+        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.skeleton, options);
+    }
 
+    /**
+     * Create MMD model from humanoid mesh and virtual skeleton
+     *
+     * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
+     * @param mmdMesh MmdMesh or HumanoidMesh
+     * @param skeleton Virtualized skeleton
+     * @param options Creation options
+     */
+    public createMmdModelFromSkeleton(
+        mmdMesh: MmdMesh | HumanoidMesh,
+        skeleton: IMmdLinkedBoneContainer,
+        options: CreateMmdModelOptions = {}
+    ): MmdModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
         }
@@ -151,7 +168,7 @@ export class MmdRuntime implements IMmdRuntime {
 
         const model = new MmdModel(
             mmdMesh,
-            mmdMesh.skeleton,
+            skeleton,
             options.materialProxyConstructor,
             options.buildPhysics ? this._physics : null,
             this
@@ -162,16 +179,6 @@ export class MmdRuntime implements IMmdRuntime {
         model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
 
         return model;
-    }
-
-    /**
-     * @internal
-     */
-    public addMmdModelInternal(model: MmdModel): void {
-        this._models.push(model);
-        this._needToInitializePhysicsModels.add(model);
-
-        model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
     }
 
     /**
