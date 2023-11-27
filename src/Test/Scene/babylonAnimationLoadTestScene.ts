@@ -90,7 +90,7 @@ export class SceneBuilder implements ISceneBuilder {
             });
             mmdModel.ikSolverStates.fill(0); // disable ik
 
-            attachToBone(scene, mmdModel, {
+            attachToBone(scene, modelMesh, {
                 directionalLightPosition: directionalLight.position,
                 cameraTargetPosition: camera.target
             });

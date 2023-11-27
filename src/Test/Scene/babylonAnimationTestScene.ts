@@ -132,7 +132,7 @@ export class SceneBuilder implements ISceneBuilder {
         Inspector.Show(scene, { });
 
         {
-            attachToBone(scene, mmdModel, {
+            attachToBone(scene, modelMesh, {
                 directionalLightPosition: directionalLight.position,
                 cameraTargetPosition: camera.target
             });
@@ -163,7 +163,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(mmdModel);
+        mmdCameraAutoFocus.setTarget(modelMesh);
         mmdCameraAutoFocus.register(scene);
 
         return scene;
