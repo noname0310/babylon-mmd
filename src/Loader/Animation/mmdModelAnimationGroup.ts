@@ -215,17 +215,12 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             }
         }
 
-        const runtimeBoneMap = new Map<string, number>();
-        const runtimeBones = mmdModel.sortedRuntimeBones;
-        for (let i = 0; i < runtimeBones.length; ++i) {
-            runtimeBoneMap.set(runtimeBones[i].name, i);
-        }
-
+        const runtimeBones = mmdModel.runtimeBones;
         const propertyAnimations = this.propertyAnimations;
         const propertyAnimationBindMap = this.propertyAnimationBindMap;
         const ikSolverStates = mmdModel.ikSolverStates;
         for (let i = 0; i < propertyAnimations.length; ++i) {
-            const boneIndex = runtimeBoneMap.get(propertyAnimationBindMap[i]);
+            const boneIndex = skeletonBoneMap.get(propertyAnimationBindMap[i]);
             if (boneIndex !== undefined) {
                 const ikSolverIndex = runtimeBones[boneIndex].ikSolverIndex;
                 if (ikSolverIndex !== -1) {

@@ -17,8 +17,10 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import { HumanoidMesh } from "../mmdMesh";
+import type { IMmdRuntimeBone } from "../mmdRuntimeBone";
 
 class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
+    public readonly index: number;
     public name: string;
 
     public get position(): Vector3 {
@@ -59,14 +61,14 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     private _boneParent: Nullable<LinkedBoneProxy>;
 
     private readonly _restMatrix: Matrix;
-    private readonly _finalMatrix: Matrix;
 
     private readonly _positionApplyScale: Vector3;
     private readonly _scalingMatrix: Matrix;
 
     // private readonly _debugSphere: Nullable<Mesh>;
 
-    public constructor(name: string, bone: Nullable<Bone>, positionApplyScale: Vector3, scalingMatrix: Matrix) {
+    public constructor(index: number, name: string, bone: Nullable<Bone>, positionApplyScale: Vector3, scalingMatrix: Matrix) {
+        this.index = index;
         this.name = name;
 
         this._position = Vector3.Zero();
@@ -83,7 +85,6 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this._boneParent = null;
 
         this._restMatrix = Matrix.Identity();
-        this._finalMatrix = Matrix.Identity();
 
         this._positionApplyScale = positionApplyScale;
         this._scalingMatrix = scalingMatrix;
@@ -93,10 +94,6 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
 
     public getRestMatrix(): Matrix {
         return this._restMatrix;
-    }
-
-    public getFinalMatrix(): Matrix {
-        return this._finalMatrix;
     }
 
     public setRotationQuaternion(quat: Quaternion): void {
@@ -114,22 +111,25 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this._boneParent = parent;
     }
 
-    public computeBoneFinalMatrix(upperBodyBone: LinkedBoneProxy): void {
+    public computeBoneFinalMatrix(runtimeBones: readonly IMmdRuntimeBone[], upperBodyBone: IMmdRuntimeBone): void {
         const boneFinalMatrix = this._boneFinalMatrix!;
 
         // special case for center bone for fix difference between MMD and Humanoid bone hierarchy
         if (this.name === "センター") {
-            boneFinalMatrix.copyFrom(upperBodyBone._finalMatrix!);
-        } else boneFinalMatrix.copyFrom(this._finalMatrix);
+            upperBodyBone.getWorldMatrixToRef(boneFinalMatrix);
+        } else runtimeBones[this.index].getWorldMatrixToRef(boneFinalMatrix);
 
         this._scalingMatrix.multiplyToRef(boneFinalMatrix, boneFinalMatrix);
         boneFinalMatrix.multiplyToRef(this._scalingMatrix, boneFinalMatrix);
         const positionApplyScale = this._positionApplyScale;
-        boneFinalMatrix.setTranslationFromFloats(
-            boneFinalMatrix.m[12] * positionApplyScale.x,
-            boneFinalMatrix.m[13] * positionApplyScale.y,
-            boneFinalMatrix.m[14] * positionApplyScale.z
-        );
+        {
+            const m = boneFinalMatrix.m;
+            boneFinalMatrix.setTranslationFromFloats(
+                m[12] * positionApplyScale.x,
+                m[13] * positionApplyScale.y,
+                m[14] * positionApplyScale.z
+            );
+        }
 
         this._boneWorldRestRotationMatrix!.multiplyToRef(boneFinalMatrix, boneFinalMatrix);
 
@@ -165,24 +165,32 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
 
 class BoneContainer implements IMmdLinkedBoneContainer {
     public bones: LinkedBoneProxy[];
-    private readonly _upperBodyBone: LinkedBoneProxy;
 
     private readonly _skeleton: Skeleton;
 
+    private _runtimeBones: Nullable<readonly IMmdRuntimeBone[]>;
+    private _upperBodyBone: Nullable<IMmdRuntimeBone>;
+
     public constructor(bones: LinkedBoneProxy[], skeleton: Skeleton) {
         this.bones = bones;
+        this._skeleton = skeleton;
 
-        let upperBodyBone: LinkedBoneProxy | null = null;
-        for (let i = 0; i < bones.length; ++i) {
-            const boneProxy = bones[i];
+        this._runtimeBones = null;
+        this._upperBodyBone = null;
+    }
+
+    public lateInitialize(runtimeBones: readonly IMmdRuntimeBone[]): void {
+        this._runtimeBones = runtimeBones;
+
+        let upperBodyBone: Nullable<IMmdRuntimeBone> = null;
+        for (let i = 0; i < runtimeBones.length; ++i) {
+            const boneProxy = runtimeBones[i];
             if (boneProxy.name === "上半身") {
                 upperBodyBone = boneProxy;
                 break;
             }
         }
         this._upperBodyBone = upperBodyBone!;
-
-        this._skeleton = skeleton;
     }
 
     public prepare(): void {/** do nothing */ }
@@ -211,9 +219,10 @@ class BoneContainer implements IMmdLinkedBoneContainer {
     private readonly _onBeforeCompute = (): void => {
         const proxies = this.bones;
 
-        const upperBodyBone = this._upperBodyBone;
+        const runtimeBones = this._runtimeBones!;
+        const upperBodyBone = this._upperBodyBone!;
         for (let i = 0; i < proxies.length; ++i) {
-            if (proxies[i].bone !== null) proxies[i].computeBoneFinalMatrix(upperBodyBone);
+            if (proxies[i].bone !== null) proxies[i].computeBoneFinalMatrix(runtimeBones, upperBodyBone);
         }
 
         for (let i = 0; i < proxies.length; ++i) {
@@ -491,6 +500,7 @@ export class HumanoidMmd {
             const bone = boneMappedNameMap.get(boneMetadata.name) ?? null;
 
             const boneProxy = new LinkedBoneProxy(
+                i,
                 boneMetadata.name,
                 bone,
                 invScale,
@@ -498,8 +508,7 @@ export class HumanoidMmd {
             );
 
             if (bone !== null) {
-                const bonePosition = bone.getFinalMatrix().getTranslation();
-                boneProxy._position.copyFrom(bonePosition);
+                bone.getFinalMatrix().getTranslationToRef(boneProxy._position);
                 positionInitializedProxies.add(boneProxy.name);
             }
 
@@ -794,9 +803,12 @@ export class HumanoidMmd {
         }
 
         const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);
-        return mmdRuntime.createMmdModelFromSkeleton(humanoidMesh, new BoneContainer(boneProxies, skeleton), {
+        const virtualSkeleton = new BoneContainer(boneProxies, skeleton);
+        const mmdModel = mmdRuntime.createMmdModelFromSkeleton(humanoidMesh, virtualSkeleton, {
             materialProxyConstructor: null,
             buildPhysics: false
         });
+        virtualSkeleton.lateInitialize(mmdModel.runtimeBones);
+        return mmdModel;
     }
 }

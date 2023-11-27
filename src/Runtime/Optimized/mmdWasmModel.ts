@@ -28,7 +28,7 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
  *
  * The mesh that instantiates `MmdWasmModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
- * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `bone.getFinalMatrix()`
+ * The biggest difference is that the methods that get the absolute transform of `mesh.skeleton.bones` no longer work properly and can only get absolute transform through `mmdModel.finalTransformMatrices`
  *
  * Final matrix is guaranteed to be updated after `MmdWasmModel.afterPhysics()` stage
  */
@@ -48,11 +48,23 @@ export class MmdWasmModel implements IMmdModel {
     public readonly skeleton: IMmdLinkedBoneContainer;
 
     /**
+     * The array of final transform matrices of bones (ie. the matrix sent to shaders)
+     */
+    public readonly finalTransformMatrices: Float32Array;
+
+    /**
      * Uint8Array that stores the state of IK solvers
      *
-     * if `ikSolverState[MmdModel.sortedRuntimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.sortedRuntimeBones[i]` is disabled and vice versa
+     * if `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
      */
     public readonly ikSolverStates: Uint8Array;
+
+    /**
+     * Runtime bones of this model
+     *
+     * You can get the final transform matrix of a bone by `MmdModel.runtimeBones[i].getFinalMatrixToRef()`
+     */
+    public readonly runtimeBones: readonly IMmdRuntimeBone[];
 
     /**
      * The morph controller of this model
@@ -121,7 +133,7 @@ export class MmdWasmModel implements IMmdModel {
         };
         this.mesh = runtimeMesh;
         this.skeleton = skeleton;
-
+        this.finalTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
             let ikSolverCount = 0;
             const bonesMetadata = mmdMetadata.bones;
@@ -135,6 +147,8 @@ export class MmdWasmModel implements IMmdModel {
         skeleton.prepare();
 
         this._disableSkeletonWorldMatrixUpdate(skeleton);
+
+        this.runtimeBones = [];
 
         this._sortedRuntimeBones = [];
 
@@ -242,13 +256,6 @@ export class MmdWasmModel implements IMmdModel {
         const animation = this._currentAnimation = this._animations[index];
         animation.induceMaterialRecompile(this._logger);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
-    }
-
-    /**
-     * Get the animations of this model
-     */
-    public get runtimeAnimations(): readonly RuntimeModelAnimation[] {
-        return this._animations;
     }
 
     /**

@@ -22,11 +22,23 @@ export interface IMmdModel {
     readonly skeleton: IMmdLinkedBoneContainer;
 
     /**
+     * The array of final transform matrices of bones (ie. the matrix sent to shaders)
+     */
+    readonly finalTransformMatrices: Float32Array;
+
+    /**
      * Uint8Array that stores the state of IK solvers
      *
-     * if `ikSolverState[MmdModel.sortedRuntimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.sortedRuntimeBones[i]` is disabled and vice versa
+     * if `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
      */
     readonly ikSolverStates: Uint8Array;
+
+    /**
+     * Runtime bones of this model
+     *
+     * You can get the final transform matrix of a bone by `MmdModel.runtimeBones[i].getFinalMatrixToRef()`
+     */
+    readonly runtimeBones: readonly IMmdRuntimeBone[];
 
     /**
      * The morph controller of this model
@@ -34,11 +46,4 @@ export interface IMmdModel {
      * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
      */
     readonly morph: MmdMorphController;
-
-    /**
-     * Get the sorted bones of this model
-     *
-     * The bones are sorted by `transformOrder`
-     */
-    get sortedRuntimeBones(): readonly IMmdRuntimeBone[];
 }

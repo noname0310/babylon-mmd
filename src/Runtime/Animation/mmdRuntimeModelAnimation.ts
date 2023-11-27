@@ -392,14 +392,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         const skeleton = model.skeleton;
         const bones = skeleton.bones;
 
-        const boneIndexMap = new Map<string, IMmdRuntimeLinkedBone>();
+        const boneIndexMap = new Map<string, number>();
         if (retargetingMap === undefined) {
             for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(bones[i].name, bones[i]);
+                boneIndexMap.set(bones[i].name, i);
             }
         } else {
             for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(retargetingMap[bones[i].name] ?? bones[i].name, bones[i]);
+                boneIndexMap.set(retargetingMap[bones[i].name] ?? bones[i].name, i);
             }
         }
 
@@ -407,12 +407,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         const boneTracks = animation.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
-            const bone = boneIndexMap.get(boneTrack.name);
-            if (bone === undefined) {
+            const boneIndex = boneIndexMap.get(boneTrack.name);
+            if (boneIndex === undefined) {
                 logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
                 boneBindIndexMap[i] = null;
             } else {
-                boneBindIndexMap[i] = bone;
+                boneBindIndexMap[i] = bones[boneIndex];
             }
         }
 
@@ -420,12 +420,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         const moveableBoneTracks = animation.moveableBoneTracks;
         for (let i = 0; i < moveableBoneTracks.length; ++i) {
             const moveableBoneTrack = moveableBoneTracks[i];
-            const bone = boneIndexMap.get(moveableBoneTrack.name);
-            if (bone === undefined) {
+            const boneIndex = boneIndexMap.get(moveableBoneTrack.name);
+            if (boneIndex === undefined) {
                 logger?.warn(`Binding failed: bone ${moveableBoneTrack.name} not found`);
                 moveableBoneBindIndexMap[i] = null;
             } else {
-                moveableBoneBindIndexMap[i] = bone;
+                moveableBoneBindIndexMap[i] = bones[boneIndex];
             }
         }
 
@@ -444,23 +444,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             }
         }
 
-        const runtimeBones = model.sortedRuntimeBones;
-        const runtimeBoneIndexMap = new Map<string, number>();
-        if (retargetingMap === undefined) {
-            for (let i = 0; i < runtimeBones.length; ++i) {
-                runtimeBoneIndexMap.set(runtimeBones[i].name, i);
-            }
-        } else {
-            for (let i = 0; i < runtimeBones.length; ++i) {
-                runtimeBoneIndexMap.set(retargetingMap[runtimeBones[i].name] ?? runtimeBones[i].name, i);
-            }
-        }
-
+        const runtimeBones = model.runtimeBones;
         const ikSolverBindIndexMap = new Int32Array(animation.propertyTrack.ikBoneNames.length);
         const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
-            const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
+            const ikBoneIndex = boneIndexMap.get(ikBoneName);
             if (ikBoneIndex === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
                 ikSolverBindIndexMap[i] = -1;

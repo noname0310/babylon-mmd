@@ -54,6 +54,30 @@ export interface IMmdRuntimeBone {
     readonly transformAfterPhysics: boolean;
 
     /**
+     * Get the world matrix of this bone
+     *
+     * The result of this method is not same as `linkedBone.getFinalMatrix()`
+     *
+     * `linkedBone.getFinalMatrix()` updated at the end of the mmd runtime update, so it may not be the latest value
+     * @param target target matrix
+     * @returns target matrix
+     */
+    getWorldMatrixToRef(target: Matrix): Matrix;
+
+    /**
+     * Get the world translation of this bone
+     * @param target target vector
+     * @returns target vector
+     */
+    getWorldTranslationToRef(target: Vector3): Vector3;
+
+    /**
+     * Set the world translation of this bone
+     * @param source source vector
+     */
+    setWorldTranslationFromRef(source: Vector3): void;
+
+    /**
      * Get ik solver index
      *
      * If the bone does not have an ik solver, it will return -1
@@ -81,15 +105,20 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public ikRotation: Nullable<Quaternion>;
 
     public readonly localMatrix: Matrix;
-    public readonly worldMatrix: Matrix;
+    public readonly worldMatrix: Float32Array;
 
     public getAnimatedPositionToRef: (target: Vector3) => Vector3;
     public getAnimatedRotationToRef: (target: Quaternion) => Quaternion;
     public getAnimationPositionOffsetToRef: (target: Vector3) => Vector3;
     // public getAnimationRotationOffsetToRef: (target: Quaternion) => Quaternion;
 
-    public constructor(babylonBone: IMmdRuntimeLinkedBone, boneMetadata: MmdModelMetadata.Bone) {
-        this.linkedBone = babylonBone;
+    public constructor(
+        linkedBone: IMmdRuntimeLinkedBone,
+        boneMetadata: MmdModelMetadata.Bone,
+        finalTransformMatrices: Float32Array,
+        boneIndex: number
+    ) {
+        this.linkedBone = linkedBone;
 
         this.name = boneMetadata.name;
         this.parentBone = null;
@@ -108,7 +137,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.ikRotation = null;
 
         this.localMatrix = Matrix.Identity();
-        this.worldMatrix = babylonBone.getFinalMatrix();
+        this.worldMatrix = finalTransformMatrices.slice(boneIndex * 16, (boneIndex + 1) * 16);
 
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
@@ -162,15 +191,15 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     // private static readonly _TempQuaternion = new Quaternion();
 
     // private _getAnimationRotationOffsetToRef(target: Quaternion): Quaternion {
-    //     target.copyFrom(this.babylonBone.rotationQuaternion);
-    //     Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
+    //     target.copyFrom(this.linkedBone.rotationQuaternion);
+    //     Quaternion.FromRotationMatrixToRef(this.linkedBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
     //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
     // }
 
     // private _getAnimationRotationOffsetWithMorphToRef(target: Quaternion): Quaternion {
-    //     target.copyFrom(this.babylonBone.rotationQuaternion);
+    //     target.copyFrom(this.linkedBone.rotationQuaternion);
     //     target.multiplyInPlace(this.morphRotationOffset);
-    //     Quaternion.FromRotationMatrixToRef(this.babylonBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
+    //     Quaternion.FromRotationMatrixToRef(this.linkedBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
     //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
     // }
 
@@ -219,20 +248,27 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     }
 
     private static readonly _Stack: MmdRuntimeBone[] = [];
+    private static readonly _ParentWorldMatrix = Matrix.Identity();
 
     public updateWorldMatrix(): void {
         const stack = MmdRuntimeBone._Stack;
         stack.length = 0;
         stack.push(this);
 
+        const parentWorldMatrix = MmdRuntimeBone._ParentWorldMatrix;
+
         while (stack.length > 0) {
             const bone = stack.pop()!;
 
             const parentBone = bone.parentBone;
             if (parentBone !== null) {
-                bone.localMatrix.multiplyToRef(parentBone.worldMatrix, bone.worldMatrix);
+                bone.localMatrix.multiplyToArray(
+                    Matrix.FromArrayToRef(parentBone.worldMatrix, 0, parentWorldMatrix),
+                    bone.worldMatrix,
+                    0
+                );
             } else {
-                bone.worldMatrix.copyFrom(bone.localMatrix);
+                bone.localMatrix.copyToArray(bone.worldMatrix);
             }
 
             const childrenBones = bone.childBones;
@@ -240,6 +276,36 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
                 stack.push(childrenBones[i]);
             }
         }
+    }
+
+    /**
+     * Get the world matrix of this bone
+     *
+     * The result of this method is not same as `linkedBone.getFinalMatrix()`
+     *
+     * `linkedBone.getFinalMatrix()` updated at the end of the mmd runtime update, so it may not be the latest value
+     * @param target target matrix
+     * @returns target matrix
+     */
+    public getWorldMatrixToRef(target: Matrix): Matrix {
+        return Matrix.FromArrayToRef(this.worldMatrix, 0, target);
+    }
+
+    /**
+     * Get the world translation of this bone
+     * @param target target vector
+     * @returns target vector
+     */
+    public getWorldTranslationToRef(target: Vector3): Vector3 {
+        return Vector3.FromArrayToRef(this.worldMatrix, 12, target);
+    }
+
+    /**
+     * Set the world translation of this bone
+     * @param source source vector
+     */
+    public setWorldTranslationFromRef(source: Vector3): void {
+        source.toArray(this.worldMatrix, 12);
     }
 
     /**

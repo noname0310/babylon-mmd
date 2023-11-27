@@ -96,8 +96,8 @@ export class IkSolver {
         for (let i = 0; i < this.iteration; ++i) {
             this._solveCore(i);
 
-            const targetPosition = targetBone.worldMatrix.getTranslationToRef(IkSolver._TargetPosition);
-            const ikPosition = ikBone.worldMatrix.getTranslationToRef(IkSolver._IkPosition);
+            const targetPosition = targetBone.getWorldTranslationToRef(IkSolver._TargetPosition);
+            const ikPosition = ikBone.getWorldTranslationToRef(IkSolver._IkPosition);
             const distance = Vector3.DistanceSquared(targetPosition, ikPosition);
             if (distance < maxDistance) {
                 maxDistance = distance;
@@ -137,7 +137,7 @@ export class IkSolver {
     private static readonly _RadToDeg = 180 / Math.PI;
 
     private _solveCore(iteration: number): void {
-        const ikPosition = this.ikBone.worldMatrix.getTranslationToRef(IkSolver._IkPosition2);
+        const ikPosition = this.ikBone.getWorldTranslationToRef(IkSolver._IkPosition2);
 
         const chains = this._ikChains;
         for (let i = 0; i < chains.length; ++i) {
@@ -167,9 +167,9 @@ export class IkSolver {
                 }
             }
 
-            const targetPosition = this.targetBone.worldMatrix.getTranslationToRef(IkSolver._TargetPosition2);
+            const targetPosition = this.targetBone.getWorldTranslationToRef(IkSolver._TargetPosition2);
 
-            const inverseChain = IkSolver._InversedChain.copyFrom(chainBone.worldMatrix).invert();
+            const inverseChain = chainBone.getWorldMatrixToRef(IkSolver._InversedChain).invert();
 
             const chainIkPosition = Vector3.TransformCoordinatesToRef(ikPosition, inverseChain, IkSolver._IkPosition);
             const chainTargetPosition = Vector3.TransformCoordinatesToRef(targetPosition, inverseChain, IkSolver._TargetPosition);
@@ -256,11 +256,11 @@ export class IkSolver {
             throw new Error("Invalid solve axis");
         }
 
-        const ikPosition = this.ikBone.worldMatrix.getTranslationToRef(IkSolver._IkPosition3);
+        const ikPosition = this.ikBone.getWorldTranslationToRef(IkSolver._IkPosition3);
 
-        const targetPosition = this.targetBone.worldMatrix.getTranslationToRef(IkSolver._TargetPosition3);
+        const targetPosition = this.targetBone.getWorldTranslationToRef(IkSolver._TargetPosition3);
 
-        const inverseChain = IkSolver._InversedChain2.copyFrom(chain.bone.worldMatrix).invert();
+        const inverseChain = chain.bone.getWorldMatrixToRef(IkSolver._InversedChain2).invert();
 
         const chainIkPosition = Vector3.TransformCoordinatesToRef(ikPosition, inverseChain, IkSolver._ChainIkPosition);
         const chainTargetPosition = Vector3.TransformCoordinatesToRef(targetPosition, inverseChain, IkSolver._ChainTargetPosition);

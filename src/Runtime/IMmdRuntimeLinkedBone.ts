@@ -10,7 +10,6 @@ export interface IMmdRuntimeLinkedBone {
     scaling: Vector3;
 
     getRestMatrix(): Matrix;
-    getFinalMatrix(): Matrix;
 
     setRotationQuaternion(quat: Quaternion, space: Space, tNode?: TransformNode): void;
 }

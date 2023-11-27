@@ -42,9 +42,9 @@ class MmdPhysicsTransformNode extends TransformNode {
     private static readonly _WorldMatrix = new Matrix();
 
     public computeBodyOffsetMatrix(): void {
-        const parentWorldMatrixInverse = this.linkedBone.worldMatrix.invertToRef(
+        const parentWorldMatrixInverse = this.linkedBone.getWorldMatrixToRef(
             MmdPhysicsTransformNode._ParentWorldMatrixInverse
-        );
+        ).invert();
 
         const worldMatrix = Matrix.ComposeToRef(
             this.scaling,
@@ -126,10 +126,8 @@ export class MmdPhysicsModel {
             const node = nodes[i];
             if (node === null) continue;
 
-            const nodeWorldMatrix = node.bodyOffsetMatrix.multiplyToRef(
-                node.linkedBone.worldMatrix,
-                MmdPhysicsModel._NodeWorldMatrix
-            );
+            const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdPhysicsModel._NodeWorldMatrix);
+            node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
             nodeWorldMatrix.decompose(
                 node.scaling,
                 node.rotationQuaternion!,
@@ -159,10 +157,8 @@ export class MmdPhysicsModel {
             switch (node.physicsMode) {
             case PmxObject.RigidBody.PhysicsMode.FollowBone:
                 {
-                    const nodeWorldMatrix = node.bodyOffsetMatrix.multiplyToRef(
-                        node.linkedBone.worldMatrix,
-                        MmdPhysicsModel._NodeWorldMatrix
-                    );
+                    const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdPhysicsModel._NodeWorldMatrix);
+                    node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
                     nodeWorldMatrix.decompose(
                         node.scaling,
                         node.rotationQuaternion!,
@@ -209,14 +205,15 @@ export class MmdPhysicsModel {
                 break;
             case PmxObject.RigidBody.PhysicsMode.Physics:
                 {
-                    node.bodyOffsetInverseMatrix.multiplyToRef(
+                    node.bodyOffsetInverseMatrix.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
                             node.position,
                             MmdPhysicsModel._NodeWorldMatrix
                         ),
-                        node.linkedBone.worldMatrix
+                        node.linkedBone.worldMatrix,
+                        0
                     );
 
                     const childBones = node.linkedBone.childBones;
@@ -228,17 +225,18 @@ export class MmdPhysicsModel {
 
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
                 {
-                    node.linkedBone.worldMatrix.getTranslationToRef(MmdPhysicsModel._BoneWorldPosition);
-                    node.bodyOffsetInverseMatrix.multiplyToRef(
+                    node.linkedBone.getWorldTranslationToRef(MmdPhysicsModel._BoneWorldPosition);
+                    node.bodyOffsetInverseMatrix.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
                             MmdPhysicsModel._ZeroVector,
                             MmdPhysicsModel._NodeWorldMatrix
                         ),
-                        node.linkedBone.worldMatrix
+                        node.linkedBone.worldMatrix,
+                        0
                     );
-                    node.linkedBone.worldMatrix.setTranslation(MmdPhysicsModel._BoneWorldPosition);
+                    node.linkedBone.setWorldTranslationFromRef(MmdPhysicsModel._BoneWorldPosition);
 
                     const childBones = node.linkedBone.childBones;
                     for (let j = 0; j < childBones.length; ++j) {
