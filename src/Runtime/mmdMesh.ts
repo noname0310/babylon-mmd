@@ -3,7 +3,6 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
-import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
@@ -14,7 +13,6 @@ export interface MmdMesh extends Mesh {
     metadata: MmdModelMetadata;
     material: MmdMultiMaterial;
     skeleton: Skeleton;
-    morphTargetManager: MorphTargetManager;
 }
 
 /**
@@ -24,7 +22,6 @@ export interface HumanoidMesh extends Mesh {
     metadata: MmdModelMetadata;
     material: Material;
     skeleton: Skeleton;
-    morphTargetManager: Nullable<MorphTargetManager>;
 }
 
 /**
@@ -76,7 +73,6 @@ export namespace MmdMesh {
             if (material === null) return false;
         }
         if (mesh.skeleton === null) return false;
-        if (mesh.morphTargetManager === null) return false;
 
         return true;
     }
