@@ -43,7 +43,6 @@ class MmdTextureData {
     private _arrayBuffer: Nullable<ArrayBuffer>;
     private _texture: Nullable<Texture>;
 
-
     public constructor(
         cacheKey: string,
         scene: Scene,
@@ -102,6 +101,23 @@ class MmdTextureData {
                 this._onError?.(message, exception);
             }
         );
+    }
+
+    private _onDisposeCallback: Nullable<() => void> = null;
+
+    public registerOnDisposeCallback(callback: () => void): void {
+        // dead code. for optimization we don't need to check this
+        // if (this._onDisposeCallback !== null) throw new Error("On dispose callback is already registered");
+        this._onDisposeCallback = callback;
+        this._texture!.onDisposeObservable.addOnce(callback);
+    }
+
+    public unregisterOnDisposeCallback(): Nullable<() => void> {
+        const callback = this._onDisposeCallback;
+        if (callback === null) return null;
+        this._onDisposeCallback = null;
+        this._texture!.onDisposeObservable.removeCallback(callback);
+        return callback;
     }
 
     private _createTexture(
@@ -282,7 +298,7 @@ export class MmdAsyncTextureLoader {
     }
 
     private _handleTextureOnDispose(textureData: MmdTextureData): void {
-        textureData.texture!.onDisposeObservable.addOnce(() => {
+        textureData.registerOnDisposeCallback(() => {
             this._textureLoadInfoMap.delete(textureData.cacheKey);
             this.textureCache.delete(textureData.cacheKey);
             this._errorTexturesReferenceCount.delete(textureData);
@@ -456,5 +472,15 @@ export class MmdAsyncTextureLoader {
             }
         }
         return resultArray.join("/");
+    }
+
+    /**
+     * Flush texture cache
+     */
+    public flushTextureCache(): void {
+        // https://stackoverflow.com/questions/35940216/es6-is-it-dangerous-to-delete-elements-from-set-map-during-set-map-iteration
+        for (const [_cacheKey, textureData] of this.textureCache) {
+            textureData.unregisterOnDisposeCallback()?.();
+        }
     }
 }

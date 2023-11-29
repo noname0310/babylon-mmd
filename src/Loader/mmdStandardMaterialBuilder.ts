@@ -604,4 +604,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };
+
+    /**
+     * If your application is no longer loading models,
+     *
+     * You can aggressively save memory by emptying the texture cache
+     *
+     * However, if you load a model that uses the same texture after the cache has been flushed once, the same data will be loaded twice
+     */
+    public flushTextureCache(): void {
+        this._textureLoader.flushTextureCache();
+    }
 }
