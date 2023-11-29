@@ -29,7 +29,7 @@ export interface IMmdModel {
     /**
      * Uint8Array that stores the state of IK solvers
      *
-     * if `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
      */
     readonly ikSolverStates: Uint8Array;
 

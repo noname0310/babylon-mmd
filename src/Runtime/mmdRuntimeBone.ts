@@ -9,33 +9,123 @@ import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 
+/**
+ * Bone for MMD runtime
+ *
+ * For mmd runtime, it is necessary to override the bone system because it has a different implementation than the usual matrix update method
+ *
+ * Which requires the mmd runtime bone, which is the wrapper of the babylon.js bone
+ */
 export class MmdRuntimeBone implements IMmdRuntimeBone {
+    /**
+     * The Babylon.js bone
+     */
     public readonly linkedBone: IMmdRuntimeLinkedBone;
 
+    /**
+     * Name of the bone
+     */
     public readonly name: string;
+
+    /**
+     * Parent bone
+     */
     public parentBone: Nullable<MmdRuntimeBone>;
+
+    /**
+     * Child bones
+     */
     public readonly childBones: MmdRuntimeBone[];
 
+    /**
+     * Transform order
+     */
     public readonly transformOrder: number;
+
+    /**
+     * Bone flag
+     *
+     * @see PmxObject.Bone.Flag
+     */
     public readonly flag: number;
+
+    /**
+     * Whether the bone transform is applied after physics
+     */
     public readonly transformAfterPhysics: boolean;
 
+    /**
+     * Append transform solver
+     *
+     * If the bone does not have an append transform solver, it will be null
+     */
     public appendTransformSolver: Nullable<AppendTransformSolver>;
+
+    /**
+     * IK solver
+     *
+     * If the bone does not have an ik solver, it will be null
+     */
     public ikSolver: Nullable<IkSolver>;
 
+    /**
+     * The position offset value to be moved by the bone morph
+     *
+     * This is a field that is primarily updated by the append transform solver
+     */
     public readonly morphPositionOffset: Vector3;
+
+    /**
+     * The rotation offset value to be moved by the bone morph
+     *
+     * This is a field that is primarily updated by the append transform solver
+     */
     public readonly morphRotationOffset: Quaternion;
 
+    /**
+     * The rotation offset value to be moved by the IK solver
+     *
+     * If this bone is an Ik chain, this value is non-null
+     */
     public ikRotation: Nullable<Quaternion>;
 
+    /**
+     * Local matrix of this bone
+     */
     public readonly localMatrix: Matrix;
+
+    /**
+     * World matrix of this bone
+     *
+     * Slice of `MmdModel.worldTransformMatrices` that corresponds to this bone
+     */
     public readonly worldMatrix: Float32Array;
 
+    /**
+     * Gets the position of a local transform with animations and bone morphs applied
+     */
     public getAnimatedPositionToRef: (target: Vector3) => Vector3;
+
+    /**
+     * Gets the rotation of a local transform with animations and bone morphs applied
+     */
     public getAnimatedRotationToRef: (target: Quaternion) => Quaternion;
+
+    /**
+     * Get the position offset of the local transform with animation and bone morph applied
+     *
+     * Refers to the change from the rest position
+     */
     public getAnimationPositionOffsetToRef: (target: Vector3) => Vector3;
     // public getAnimationRotationOffsetToRef: (target: Quaternion) => Quaternion;
 
+    /**
+     * Create MMD runtime bone
+     * @param linkedBone Linked Babylon.js bone
+     * @param boneMetadata Bone metadata
+     * @param worldTransformMatrices World transform matrices
+     * @param boneIndex Bone index
+     */
     public constructor(
         linkedBone: IMmdRuntimeLinkedBone,
         boneMetadata: MmdModelMetadata.Bone,
@@ -127,6 +217,9 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
     // }
 
+    /**
+     * Allows the animation of this bone to be affected by the `morphPositionOffset` and `morphRotationOffset` fields
+     */
     public enableMorph(): void {
         this.getAnimatedPositionToRef = this._getAnimatedPositionWithMorphToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationWithMorphToRef;
@@ -135,6 +228,9 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetWithMorphToRef;
     }
 
+    /**
+     * Disables the animation of this bone to be affected by the `morphPositionOffset` and `morphRotationOffset` fields
+     */
     public disableMorph(): void {
         this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
@@ -146,6 +242,9 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     private static readonly _TempRotation = Quaternion.Identity();
     private static readonly _TempPosition = Vector3.Zero();
 
+    /**
+     * Update the local matrix of this bone
+     */
     public updateLocalMatrix(): void {
         const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
         if (this.ikRotation !== null) {
@@ -174,6 +273,9 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     private static readonly _Stack: MmdRuntimeBone[] = [];
     private static readonly _ParentWorldMatrix = Matrix.Identity();
 
+    /**
+     * Update the world matrix of this bone and its children bones recursively
+     */
     public updateWorldMatrix(): void {
         const stack = MmdRuntimeBone._Stack;
         stack.length = 0;

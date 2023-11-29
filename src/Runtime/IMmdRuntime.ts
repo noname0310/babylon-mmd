@@ -11,6 +11,13 @@ import type { MmdCamera } from "./mmdCamera";
 import type { HumanoidMesh, MmdMesh } from "./mmdMesh";
 import type { CreateMmdModelOptions } from "./mmdRuntime";
 
+/**
+ * MMD runtime orchestrates several MMD components (models, camera, audio)
+ *
+ * MMD runtime handles updates and synchronization of MMD components
+ *
+ * It can also create and remove runtime components
+ */
 export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     /**
      * This observable is notified when animation duration is changed

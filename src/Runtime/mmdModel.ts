@@ -60,7 +60,7 @@ export class MmdModel implements IMmdModel {
     /**
      * Uint8Array that stores the state of IK solvers
      *
-     * if `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
      */
     public readonly ikSolverStates: Uint8Array;
 
@@ -255,7 +255,7 @@ export class MmdModel implements IMmdModel {
     /**
      * Remove an animation from this model
      *
-     * if index is out of range, do nothing
+     * If index is out of range, do nothing
      * @param index The index of the animation to remove
      */
     public removeAnimation(index: number): void {
@@ -331,7 +331,7 @@ export class MmdModel implements IMmdModel {
      *
      * This method must be called before the physics stage
      *
-     * if frameTime is null, animations are not updated
+     * If frameTime is null, animations are not updated
      * @param frameTime The time elapsed since the last frame in 30fps
      */
     public beforePhysics(frameTime: Nullable<number>): void {

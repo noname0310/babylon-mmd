@@ -70,7 +70,7 @@ export abstract class MmdAnimationTrack {
     /**
      * The end frame of this animation
      *
-     * if mmdAnimationTrack.validate() is false, the return value is not valid
+     * If mmdAnimationTrack.validate() is false, the return value is not valid
      */
     public get endFrame(): number {
         if (this.frameNumbers.length === 0) return 0;
@@ -81,7 +81,7 @@ export abstract class MmdAnimationTrack {
 /**
  * MMD bone animation track
  *
- * contains bone rotation and rotation cubic interpolation data
+ * Contains bone rotation and rotation cubic interpolation data
  */
 export class MmdBoneAnimationTrack extends MmdAnimationTrack {
     /**
@@ -134,7 +134,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack {
 /**
  * MMD movable bone animation track
  *
- * contains bone position, rotation and position/rotation cubic interpolation data
+ * Contains bone position, rotation and position/rotation cubic interpolation data
  */
 export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
     /**
@@ -214,9 +214,9 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
 /**
  * MMD morph animation track
  *
- * contains morph weight data
+ * Contains morph weight data
  *
- * weight data will be linear interpolated so there is no interpolation data
+ * Weight data will be linear interpolated so there is no interpolation data
  */
 export class MmdMorphAnimationTrack extends MmdAnimationTrack {
     /**
@@ -256,7 +256,7 @@ export class MmdMorphAnimationTrack extends MmdAnimationTrack {
 /**
  * MMD camera animation track
  *
- * contains camera position, rotation, distance, fov and their cubic interpolation data
+ * Contains camera position, rotation, distance, fov and their cubic interpolation data
  */
 export class MmdCameraAnimationTrack extends MmdAnimationTrack {
     /**
@@ -407,9 +407,9 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
 /**
  * MMD property animation track
  *
- * contains visibility and ik state data
+ * Contains visibility and ik state data
  *
- * visibility and ik state will be step interpolated
+ * Visibility and ik state will be step interpolated
  */
 export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
     /**

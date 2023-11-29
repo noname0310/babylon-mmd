@@ -13,7 +13,7 @@ import { SdefBufferKind } from "./sdefBufferKind";
 
 /**
  * IMPORTANT NOTE:
- * if original _InternalMeshDataInfo represents or applySkeleton implementation is changed, this implementation must be updated.
+ * If original _InternalMeshDataInfo represents or applySkeleton implementation is changed, this implementation must be updated.
  */
 
 /* eslint-disable @typescript-eslint/naming-convention */

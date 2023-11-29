@@ -51,12 +51,30 @@ export class IkSolver {
      * The higher the value, the more accurate the IK solver will be, but the more expensive it will be
      */
     public iteration: number;
+
+    /**
+     * Limit angle
+     */
     public limitAngle: number;
 
+    /**
+     * The bone to which the IK solver is attached
+     */
     public readonly ikBone: MmdRuntimeBone;
+
+    /**
+     * Ik target bone
+     */
     public readonly targetBone: MmdRuntimeBone;
+
     private readonly _ikChains: IkChain[];
 
+    /**
+     * Create a new IK solver
+     * @param index Ik solver index
+     * @param ikBone Attach bone
+     * @param targetBone Ik target bone
+     */
     public constructor(index: number, ikBone: MmdRuntimeBone, targetBone: MmdRuntimeBone) {
         this.index = index;
 
@@ -68,6 +86,16 @@ export class IkSolver {
         this._ikChains = [];
     }
 
+    /**
+     * Add an IK chain
+     *
+     * The angle constraint must be either both min max or neither
+     *
+     * For better performance, we do not constrain this to a type
+     * @param bone Bone to add
+     * @param minimumAngle minimum angle
+     * @param maximumAngle maximum angle
+     */
     public addIkChain(bone: MmdRuntimeBone, minimumAngle: Nullable<Vector3>, maximumAngle: Nullable<Vector3>): void {
         bone.ikRotation = Quaternion.Identity();
         const ikChain = new IkChain(bone, minimumAngle, maximumAngle);
@@ -77,6 +105,9 @@ export class IkSolver {
     private static readonly _TargetPosition = new Vector3();
     private static readonly _IkPosition = new Vector3();
 
+    /**
+     * Solve IK
+     */
     public solve(): void {
         const ikBone = this.ikBone;
         const targetBone = this.targetBone;

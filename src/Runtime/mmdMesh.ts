@@ -60,6 +60,9 @@ export interface RuntimeMmdModelMetadata {
     header: MmdModelMetadata.Header;
 }
 
+/**
+ * Provides a way to validate that a mash meets the components to be loaded into the MMD runtime
+ */
 export namespace MmdMesh {
     /**
      * Check if the mesh is MMD mesh
@@ -94,6 +97,9 @@ export namespace MmdMesh {
     }
 }
 
+/**
+ * Provides a way to validate that a mash meets the components for being loaded into the MMD runtime as a humanoid model
+ */
 export namespace HumanoidMesh {
     /**
      * Check if the mesh is humanoid mesh
