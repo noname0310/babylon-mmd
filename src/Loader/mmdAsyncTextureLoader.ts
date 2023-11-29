@@ -33,7 +33,7 @@ class TextureLoadInfo {
     }
 }
 
-class MmdTextureData {
+class MmdTextureData implements MmdTextureLoadResult {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
@@ -153,12 +153,12 @@ class MmdTextureData {
         texture.name = textureName;
     }
 
-    public get arrayBuffer(): Nullable<ArrayBuffer> {
-        return this._arrayBuffer;
-    }
-
     public get texture(): Nullable<Texture> {
         return this._texture;
+    }
+
+    public get arrayBuffer(): Nullable<ArrayBuffer> {
+        return this._arrayBuffer;
     }
 }
 
