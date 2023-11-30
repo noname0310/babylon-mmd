@@ -50,7 +50,7 @@
  *  isSharedToontexture: uint8
  *  toonTextureIndex: int32
  *  comment: uint32, uint8[] - length, string
- *  surfaceCount: uint32
+ *  indexCount: uint32
  * }[materialCount]
  *
  * boneCount: uint32
@@ -548,7 +548,7 @@ export class BpmxConverter implements ILogger {
                             textureData.arrayBuffer,
                             textureData.texture,
                             offset,
-                            materialInfo.surfaceCount,
+                            materialInfo.indexCount,
                             alphaThreshold,
                             alphaBlendThreshold
                         );
@@ -556,7 +556,7 @@ export class BpmxConverter implements ILogger {
                     }
                 }
 
-                offset += materialInfo.surfaceCount;
+                offset += materialInfo.indexCount;
             }
 
             textureAlphaChecker.dispose();
@@ -637,7 +637,7 @@ export class BpmxConverter implements ILogger {
                 dataLength += 1; // isSharedToontexture
                 dataLength += 4; // toonTextureIndex
                 dataLength += 4 + encoder.encode(materialInfo.comment).length; // comment
-                dataLength += 4; // surfaceCount
+                dataLength += 4; // indexCount
             }
 
             dataLength += 4; // boneCount
@@ -878,7 +878,7 @@ export class BpmxConverter implements ILogger {
             serializer.setUint8(materialInfo.isSharedToonTexture ? 1 : 0); // isSharedToontexture
             serializer.setInt32(materialInfo.toonTextureIndex); // toonTextureIndex
             serializer.setString(materialInfo.comment); // comment
-            serializer.setUint32(materialInfo.surfaceCount); // surfaceCount
+            serializer.setUint32(materialInfo.indexCount); // indexCount
         }
 
         serializer.setUint32(pmxObject.bones.length); // boneCount

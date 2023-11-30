@@ -254,11 +254,11 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
                 0, // verticesStart
                 Math.floor(modelObject.geometry.positions.length / 3), // verticesCount
                 offset, // indexStart
-                materialInfo.surfaceCount, // indexCount
+                materialInfo.indexCount, // indexCount
                 mesh
             );
 
-            offset += materialInfo.surfaceCount;
+            offset += materialInfo.indexCount;
         }
     }
 

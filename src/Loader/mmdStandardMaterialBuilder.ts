@@ -208,7 +208,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
             multiMaterial.subMaterials.push(material);
 
-            offset += materialInfo.surfaceCount;
+            offset += materialInfo.indexCount;
         }
 
         this._textureLoader.loadModelTexturesEnd(uniqueId);
@@ -364,7 +364,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                                 textureLoadResult.arrayBuffer!,
                                 textureLoadResult.texture!,
                                 offset,
-                                materialInfo.surfaceCount,
+                                materialInfo.indexCount,
                                 this.alphaThreshold,
                                 this.alphaBlendThreshold
                             );

@@ -213,7 +213,7 @@ export class PmdReader {
 
             const toonTextureIndex = dataDeserializer.getInt8();
             const edgeFlag = dataDeserializer.getUint8();
-            const surfaceCount = dataDeserializer.getUint32();
+            const indexCount = dataDeserializer.getUint32();
             const texturePath = dataDeserializer.getDecoderString(20, true);
 
             let flag: PmxObject.Material.Flag = 0 as PmxObject.Material.Flag;
@@ -270,7 +270,7 @@ export class PmdReader {
                 toonTextureIndex,
 
                 comment: "",
-                surfaceCount
+                indexCount
             };
             materials.push(material);
         }

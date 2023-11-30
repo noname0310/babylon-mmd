@@ -224,7 +224,7 @@ export class BpmxReader {
             const toonTextureIndex = dataDeserializer.getInt32();
 
             const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
-            const surfaceCount = dataDeserializer.getInt32();
+            const indexCount = dataDeserializer.getInt32();
 
             const material: BpmxObject.Material = {
                 name,
@@ -249,7 +249,7 @@ export class BpmxReader {
                 toonTextureIndex,
 
                 comment,
-                surfaceCount
+                indexCount
             };
 
             materials.push(material);

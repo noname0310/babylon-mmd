@@ -344,11 +344,11 @@ export namespace PmxObject {
         comment: string;
 
         /**
-         * Number of surfaces
+         * Number of indices to read from the index buffer
          *
          * This value is used for calculating the number of indices to read from the index buffer
          */
-        surfaceCount: number;
+        indexCount: number;
     }>;
 
     export namespace Material {
