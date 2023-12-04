@@ -28,7 +28,7 @@ import { PmxReader } from "@/Loader/Parser/pmxReader";
 import type { PmdLoader } from "@/Loader/pmdLoader";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import type { MmdStaticMesh } from "@/Runtime/mmdMesh";
+import type { MmdStaticMesh } from "@/Runtime/mmdModelNode";
 
 import type { ISceneBuilder } from "../baseRuntime";
 

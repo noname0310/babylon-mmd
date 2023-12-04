@@ -2,6 +2,7 @@ import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
@@ -9,7 +10,6 @@ import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGrou
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdMorphController } from "../mmdMorphController";
 import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
@@ -46,7 +46,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      */
     public readonly morphBindIndexMap: readonly Nullable<MorphIndices>[];
 
-    private readonly _mesh: RuntimeMmdMesh;
+    private readonly _meshes: readonly Mesh[];
 
     /**
      * IK solver bind index map
@@ -54,6 +54,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     public readonly ikSolverBindIndexMap: Int32Array;
 
     private readonly _ikSolverStates: Uint8Array;
+
+    private _materialRecompileInduceInfo: Material[] | null;
 
     private readonly _bonePositionAnimationStates: _IAnimationState[];
     private readonly _boneRotationAnimationStates: _IAnimationState[];
@@ -67,9 +69,10 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphController,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
-        mesh: RuntimeMmdMesh,
+        meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
-        ikSolverStates: Uint8Array
+        ikSolverStates: Uint8Array,
+        materialRecompileInduceInfo: Material[]
     ) {
         this.animation = animation;
 
@@ -77,9 +80,11 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         this.moveableBoneBindIndexMap = moveableBoneBindIndexMap;
         this._morphController = morphController;
         this.morphBindIndexMap = morphBindIndexMap;
-        this._mesh = mesh;
+        this._meshes = meshes;
         this.ikSolverBindIndexMap = ikSolverBindIndexMap;
         this._ikSolverStates = ikSolverStates;
+
+        this._materialRecompileInduceInfo = materialRecompileInduceInfo;
 
         const bonePositionAnimationStates = this._bonePositionAnimationStates = new Array(animation.bonePositionAnimations.length);
         for (let i = 0; i < bonePositionAnimationStates.length; ++i) {
@@ -159,6 +164,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
+        if (animation.visibilityAnimation !== null) {
+            const meshes = this._meshes;
+            const visibility = 1 + animation.visibilityAnimation._interpolate(frameTime, this._visibilityAnimationState) as number;
+            for (let i = 0; i < meshes.length; ++i) meshes[i].visibility = visibility;
+        }
+
         const propertyTracks = animation.propertyAnimations;
         const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
         const ikSolverStates = this._ikSolverStates;
@@ -168,13 +179,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             if (ikSolverIndex === -1) continue;
             ikSolverStates[ikSolverIndex] = (0 < 1 + propertyTrack._interpolate(frameTime, this._propertyAnimationStates[i])) ? 1 : 0;
         }
-
-        if (animation.visibilityAnimation !== null) {
-            this._mesh.visibility = 1 + animation.visibilityAnimation._interpolate(frameTime, this._visibilityAnimationState) as number;
-        }
     }
-
-    private _materialRecompileInduced = false;
 
     /**
      * Induce material recompile
@@ -185,15 +190,15 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      * @param logger logger
      */
     public induceMaterialRecompile(logger?: ILogger | undefined): void {
-        if (this._materialRecompileInduced) return;
-        this._materialRecompileInduced = true;
+        if (this._materialRecompileInduceInfo === null) return;
 
         MmdRuntimeModelAnimationGroup.InduceMaterialRecompile(
-            this._mesh.material.subMaterials,
+            this._materialRecompileInduceInfo,
             this._morphController,
             this.morphBindIndexMap,
             logger
         );
+        this._materialRecompileInduceInfo = null;
     }
 
     /**
@@ -289,9 +294,10 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             moveableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
-            model.mesh,
+            model.node.metadata.meshes,
             ikSolverBindIndexMap,
-            model.ikSolverStates
+            model.ikSolverStates,
+            model.node.metadata.materials
         );
     }
 

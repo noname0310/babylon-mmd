@@ -6,6 +6,7 @@ import { Matrix } from "@babylonjs/core/Maths/math.vector";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -17,7 +18,6 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import { HumanoidMesh } from "../mmdMesh";
 
 class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public readonly index: number;
@@ -371,8 +371,9 @@ export class HumanoidMmd {
 
     private _createMetadata(
         name: string,
-        morphTargetManager: Nullable<MorphTargetManager>,
-        morphMap: { [key: string]: string }
+        meshes: readonly Mesh[],
+        morphMap: { [key: string]: string },
+        skeleton: Skeleton
     ): MmdModelMetadata {
         const header: MmdModelMetadata.Header = {
             modelName: name,
@@ -407,21 +408,41 @@ export class HumanoidMmd {
             bones.push(bone);
         }
 
-        const morphs: MmdModelMetadata.Morph[] = [];
-        if (morphTargetManager !== null) {
-            const numTargets = morphTargetManager.numTargets;
-            for (let i = 0; i < numTargets; ++i) {
-                const target = morphTargetManager.getTarget(i);
-                const mappedName = morphMap[target.name] ?? target.name;
-                const morph: MmdModelMetadata.Morph = {
-                    name: mappedName,
-                    englishName: mappedName,
-                    category: PmxObject.Morph.Category.Eye,
-                    type: PmxObject.Morph.Type.VertexMorph,
-                    index: i
-                };
-                morphs.push(morph);
+        const morphTargetManagers: MorphTargetManager[] = [];
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            if (mesh.morphTargetManager !== null) {
+                morphTargetManagers.push(mesh.morphTargetManager);
             }
+        }
+
+        const morphTargetNameMap = new Map<string, MorphTarget[]>();
+        for (let i = 0; i < morphTargetManagers.length; ++i) {
+            const morphTargetManager = morphTargetManagers[i];
+            const numTargets = morphTargetManager.numTargets;
+            for (let j = 0; j < numTargets; ++j) {
+                const target = morphTargetManager.getTarget(j);
+                const name = target.name;
+                let morphTargets = morphTargetNameMap.get(name);
+                if (morphTargets === undefined) {
+                    morphTargets = [];
+                    morphTargetNameMap.set(name, morphTargets);
+                }
+                morphTargets.push(target);
+            }
+        }
+
+        const morphs: MmdModelMetadata.Morph[] = [];
+        for (const [name, morphTargets] of morphTargetNameMap) {
+            const mappedName = morphMap[name] ?? name;
+            const morph: MmdModelMetadata.Morph = {
+                name: mappedName,
+                englishName: mappedName,
+                category: PmxObject.Morph.Category.Eye,
+                type: PmxObject.Morph.Type.VertexMorph,
+                morphTargets: morphTargets
+            };
+            morphs.push(morph);
         }
 
         return {
@@ -430,7 +451,10 @@ export class HumanoidMmd {
             bones: bones,
             morphs: morphs,
             rigidBodies: [],
-            joints: []
+            joints: [],
+            meshes: meshes,
+            skeleton: skeleton,
+            materials: []
         };
     }
 
@@ -772,13 +796,15 @@ export class HumanoidMmd {
     /**
      * Force Create MMD model from humanoid mesh
      * @param mmdRuntime MMD runtime
-     * @param humanoidMesh Humanoid mesh
+     * @param humanoidModelNode Humanoid model root node
+     * @param meshes Meshes
      * @param options Options
      * @returns MMD model created from humanoid mesh
      */
     public createMmdModelFromHumanoid<T extends IMmdModel>(
         mmdRuntime: IMmdRuntime<T>,
-        humanoidMesh: Mesh,
+        humanoidModelNode: TransformNode,
+        meshes: Mesh[],
         options: CreateMmdModelFromHumanoidOptions = {}
     ): T {
         const {
@@ -787,13 +813,18 @@ export class HumanoidMmd {
             transformOffset = Matrix.Identity()
         } = options;
 
-        const skeleton = humanoidMesh.skeleton;
+        let skeleton: Nullable<Skeleton> = null;
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            if (mesh.skeleton !== null) {
+                skeleton = mesh.skeleton;
+                break;
+            }
+        }
         if (skeleton === null) throw new Error("Skeleton not found.");
 
-        const metadata = this._createMetadata(humanoidMesh.name, humanoidMesh.morphTargetManager, morphMap);
-        humanoidMesh.metadata = metadata;
-
-        if (!HumanoidMesh.isHumanoidMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
+        const metadata = this._createMetadata(humanoidModelNode.name, meshes.slice(), morphMap, skeleton);
+        humanoidModelNode.metadata = metadata;
 
         let transformOffsetMatrix: Matrix;
         if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {
@@ -804,7 +835,7 @@ export class HumanoidMmd {
 
         const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);
         const virtualSkeleton = new BoneContainer(boneProxies, skeleton);
-        const mmdModel = mmdRuntime.createMmdModelFromSkeleton(humanoidMesh, virtualSkeleton, {
+        const mmdModel = mmdRuntime.createMmdModelFromSkeleton(humanoidModelNode, virtualSkeleton, {
             materialProxyConstructor: null,
             buildPhysics: false
         });

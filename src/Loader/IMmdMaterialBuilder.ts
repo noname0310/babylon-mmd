@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -8,6 +9,7 @@ import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
+import type { IndexedUvGeometry } from "./textureAlphaChecker";
 
 /**
  * Material information
@@ -34,9 +36,7 @@ export interface IMmdMaterialBuilder {
      * @param referenceFiles Reference files for load from files (textures)
      * @param scene Scene
      * @param assetContainer Asset container
-     * @param indices Geometry indices
-     * @param uvs Geometry uvs
-     * @param multiMaterial Multi material
+     * @param indexedUvGeometries geopmetries that only has uv and index
      * @param logger Logger
      * @param onTextureLoadProgress Texture load progress callback
      * @param onTextureLoadComplete Texture load complete callback
@@ -50,11 +50,9 @@ export interface IMmdMaterialBuilder {
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        indices: Uint16Array | Uint32Array,
-        uvs: Float32Array,
-        multiMaterial: MultiMaterial,
+        indexedUvGeometries: IndexedUvGeometry[],
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
-        onTextureLoadComplete?: () => void
-    ): Promise<void> | void;
+        onTextureLoadComplete?: (loadedTextures: Texture[]) => void
+    ): Promise<Material[]> | Material[];
 }

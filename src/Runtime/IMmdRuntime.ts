@@ -1,4 +1,4 @@
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
@@ -8,7 +8,7 @@ import type { ILogger } from "./ILogger";
 import type { IMmdModel } from "./IMmdModel";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "./mmdCamera";
-import type { HumanoidMesh, MmdMesh } from "./mmdMesh";
+import type { MmdModelNode } from "./mmdModelNode";
 import type { CreateMmdModelOptions } from "./mmdRuntime";
 
 /**
@@ -45,29 +45,29 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     readonly onAnimationTickObservable: Observable<void>;
 
     /**
-     * Create MMD model from mesh that has MMD metadata
+     * Create MMD model from transform node that has MMD metadata
      *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
-     * @param mmdMesh MMD mesh
+     * @param mmdModelNode MmdModelNode
      * @param options Creation options
      * @returns MMD model
      * @throws {Error} if mesh is not `MmdMesh`
      */
     createMmdModel(
-        mmdMesh: Mesh,
+        mmdModelNode: TransformNode,
         options?: CreateMmdModelOptions
     ): T;
 
     /**
-     * Create MMD model from humanoid mesh and skeleton
+     * Create MMD model from humanoid mesh and virtual skeleton
      *
      * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
-     * @param mmdMesh MmdMesh or HumanoidMesh
+     * @param mmdModelNode MmdModelNode
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
     createMmdModelFromSkeleton(
-        mmdMesh: MmdMesh | HumanoidMesh,
+        mmdModelNode: MmdModelNode,
         skeleton: IMmdLinkedBoneContainer,
         options?: CreateMmdModelOptions
     ): T;

@@ -1,6 +1,5 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Space } from "@babylonjs/core/Maths/math.axis";
 import type { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -17,7 +16,7 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
-import type { HumanoidMesh, MmdMesh, RuntimeMmdMesh } from "../mmdMesh";
+import type { MmdModelNode, RuntimeMmdModelNode } from "../mmdModelNode";
 import { MmdMorphController } from "../mmdMorphController";
 import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 
@@ -34,9 +33,9 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
  */
 export class MmdWasmModel implements IMmdModel {
     /**
-     * The mesh of this model
+     * The root node of this model
      */
-    public readonly mesh: RuntimeMmdMesh;
+    public readonly node: RuntimeMmdModelNode;
 
     /**
      * The skeleton of this model
@@ -85,38 +84,14 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Create a MmdWasmModel
-     * @param mmdMesh Mesh that able to instantiate `MmdWasmModel`
+     * @param mmdModelNode Transform node that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param buildPhysics Whether to build physics
      * @param logger Logger
      */
     public constructor(
-        mmdMesh: MmdMesh,
-        skeleton: IMmdLinkedBoneContainer,
-        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        buildPhysics: boolean,
-        logger: ILogger
-    );
-
-    /**
-     * Create a MmdWasmModel from `HumanoidMesh`
-     * @param humanoidMesh Mesh that able to instantiate `MmdWasmModel`
-     * @param skeleton The virtualized bone container of the mesh
-     * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
-     * @param buildPhysics Whether to build physics
-     * @param logger Logger
-     */
-    public constructor(
-        humanoidMesh: HumanoidMesh,
-        skeleton: IMmdLinkedBoneContainer,
-        materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        buildPhysics: boolean,
-        logger: ILogger
-    );
-
-    public constructor(
-        mmdMesh: MmdMesh | HumanoidMesh,
+        mmdModelNode: MmdModelNode,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         buildPhysics: boolean,
@@ -124,14 +99,17 @@ export class MmdWasmModel implements IMmdModel {
     ) {
         this._logger = logger;
 
-        const mmdMetadata = mmdMesh.metadata;
+        const mmdMetadata = mmdModelNode.metadata;
 
-        const runtimeMesh = mmdMesh as unknown as RuntimeMmdMesh;
-        runtimeMesh.metadata = {
+        const runtimeModelNode = mmdModelNode as unknown as RuntimeMmdModelNode;
+        runtimeModelNode.metadata = {
             isRuntimeMmdModel: true,
-            header: mmdMesh.metadata.header
+            header: mmdMetadata.header,
+            meshes: mmdMetadata.meshes,
+            skeleton: mmdMetadata.skeleton,
+            materials: mmdMetadata.materials
         };
-        this.mesh = runtimeMesh;
+        this.node = runtimeModelNode;
         this.skeleton = skeleton;
         this.worldTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
@@ -153,11 +131,8 @@ export class MmdWasmModel implements IMmdModel {
         this._sortedRuntimeBones = [];
 
         this.morph = new MmdMorphController(
-            mmdMesh.morphTargetManager,
             null,
-            (mmdMesh.material as MultiMaterial).subMaterials !== undefined
-                ? (mmdMesh.material as MultiMaterial)
-                : null,
+            mmdMetadata.materials,
             materialProxyConstructor,
             mmdMetadata.morphs,
             logger
@@ -182,7 +157,7 @@ export class MmdWasmModel implements IMmdModel {
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this.onCurrentAnimationChangedObservable.clear();
-        (this.mesh as any).metadata = null;
+        (this.node as any).metadata = null;
     }
 
     /**
@@ -299,7 +274,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public afterPhysics(): void {
         // wasm side computes the world matrix of the bones
-        this.mesh.skeleton._markAsDirty();
+        this.node.metadata.skeleton._markAsDirty();
     }
 
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
@@ -344,6 +319,6 @@ export class MmdWasmModel implements IMmdModel {
             bone.position = position;
             bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
-        this.mesh.skeleton._markAsDirty();
+        this.node.metadata.skeleton._markAsDirty();
     }
 }

@@ -1,6 +1,7 @@
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
@@ -8,7 +9,6 @@ import type { ILogger } from "@/Loader/Parser/ILogger";
 
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdMorphController } from "../mmdMorphController";
 import { BezierInterpolator } from "./bezierInterpolator";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
@@ -46,7 +46,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
      */
     public readonly morphBindIndexMap: readonly Nullable<MorphIndices>[];
 
-    private readonly _mesh: RuntimeMmdMesh;
+    private readonly _meshes: readonly Mesh[];
 
     /**
      * IK solver bind index map
@@ -55,15 +55,18 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
 
     private readonly _ikSolverStates: Uint8Array;
 
+    private _materialRecompileInduceInfo: Material[] | null;
+
     private constructor(
         animation: MmdAnimation,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphController,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
-        mesh: RuntimeMmdMesh,
+        meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
-        ikSolverStates: Uint8Array
+        ikSolverStates: Uint8Array,
+        materialRecompileInduceInfo: Material[]
     ) {
         super();
 
@@ -73,9 +76,11 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         this.moveableBoneBindIndexMap = moveableBoneBindIndexMap;
         this._morphController = morphController;
         this.morphBindIndexMap = morphBindIndexMap;
+        this._meshes = meshes;
         this.ikSolverBindIndexMap = ikSolverBindIndexMap;
         this._ikSolverStates = ikSolverStates;
-        this._mesh = mesh;
+
+        this._materialRecompileInduceInfo = materialRecompileInduceInfo;
     }
 
     private static readonly _BonePositionA = new Vector3();
@@ -343,7 +348,11 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             const clampedFrameTime = Math.max(propertyTrack.startFrame, Math.min(propertyTrack.endFrame, frameTime));
             const stepIndex = this._upperBoundFrameIndex(clampedFrameTime, propertyTrack) - 1;
 
-            this._mesh.visibility = propertyTrack.visibles[stepIndex];
+            const visibility = propertyTrack.visibles[stepIndex];
+            const meshes = this._meshes;
+            for (let i = 0; i < meshes.length; ++i) {
+                meshes[i].visibility = visibility;
+            }
 
             const ikSolverStates = this._ikSolverStates;
             const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
@@ -358,8 +367,6 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         }
     }
 
-    private _materialRecompileInduced = false;
-
     /**
      * Induce material recompile
      *
@@ -369,15 +376,15 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
      * @param logger logger
      */
     public induceMaterialRecompile(logger?: ILogger): void {
-        if (this._materialRecompileInduced) return;
-        this._materialRecompileInduced = true;
+        if (this._materialRecompileInduceInfo === null) return;
 
         MmdRuntimeModelAnimation.InduceMaterialRecompile(
-            this._mesh.material.subMaterials,
+            this._materialRecompileInduceInfo,
             this._morphController,
             this.morphBindIndexMap,
             logger
         );
+        this._materialRecompileInduceInfo = null;
     }
 
     /**
@@ -470,9 +477,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             moveableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
-            model.mesh,
+            model.node.metadata.meshes,
             ikSolverBindIndexMap,
-            model.ikSolverStates
+            model.ikSolverStates,
+            model.node.metadata.materials
         );
     }
 

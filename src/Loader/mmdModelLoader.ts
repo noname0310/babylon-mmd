@@ -3,11 +3,13 @@ import { Bone } from "@babylonjs/core/Bones/bone";
 import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
@@ -21,7 +23,7 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { ProgressTask } from "./progress";
 import { Progress } from "./progress";
-import { SdefMesh } from "./sdefMesh";
+import type { IndexedUvGeometry } from "./textureAlphaChecker";
 
 /** @internal */
 export interface MmdModelLoadState {
@@ -35,22 +37,28 @@ export interface MmdModelLoadState {
 }
 
 /** @internal */
-export interface BuildGeometryResult {
-    readonly vertexData: VertexData;
-    readonly geometry: Geometry;
+export interface MmdModelBuildGeometryResult {
+    readonly meshes: Mesh[];
+    readonly geometries: Geometry[];
+    readonly vertexDataArray: VertexData[];
+    readonly indexedUvGeometries: IndexedUvGeometry[];
 }
 
 /** @internal */
 export interface BuildMaterialResult {
-    readonly multiMaterial: MultiMaterial;
-    readonly textureLoadPromise: Promise<void>;
+    readonly materials: Material[];
+    readonly textureLoadPromise: Promise<Texture[]>;
 }
 
 /**
  * @internal
  * Base class of loader for MMD model (pmx / pmd / bpmx)
  */
-export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelObject extends PmxObject | BpmxObject> implements ISceneLoaderPluginAsync, ILogger {
+export abstract class MmdModelLoader<
+    LoadState extends MmdModelLoadState,
+    ModelObject extends PmxObject | BpmxObject,
+    BuildGeometryResult extends MmdModelBuildGeometryResult
+> implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Name of the loader
      */
@@ -187,39 +195,37 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
         progress.invokeProgressEvent();
 
         scene._blockEntityCollection = !!assetContainer;
-        const mesh = new (state.useSdef ? SdefMesh : Mesh)(modelObject.header.modelName, scene);
-        mesh._parentContainer = assetContainer;
+        const rootNode = new TransformNode(modelObject.header.modelName, scene);
+        rootNode._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        mesh.setEnabled(false);
+        rootNode.setEnabled(false);
 
-        const { vertexData, geometry } = await this._buildGeometryAsync(
+        const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
-            mesh,
             scene,
             assetContainer,
             progress
         );
 
-        const { multiMaterial, textureLoadPromise } = await this._buildMaterialAsync(
+        const { materials, textureLoadPromise } = await this._buildMaterialAsync(
             state,
             modelObject,
-            mesh,
+            rootNode,
+            buildGeometryResult.meshes,
             scene,
             assetContainer,
-            vertexData,
+            buildGeometryResult.indexedUvGeometries,
             rootUrl,
             progress
         );
-
-        this._buildSubMeshes(modelObject, mesh);
 
         const bonesMetadata: MmdModelMetadata.Bone[] = [];
         let skeleton: Nullable<Skeleton> = null;
         if (state.buildSkeleton) {
             skeleton = await this._buildSkeletonAsync(
                 modelObject,
-                mesh,
+                buildGeometryResult.meshes,
                 scene,
                 assetContainer,
                 bonesMetadata,
@@ -230,14 +236,13 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
         }
 
         const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManager: Nullable<MorphTargetManager> = null;
+        let morphTargetManagers: MorphTargetManager[] | null = null;
         if (state.buildMorph) {
-            morphTargetManager = await this._buildMorphAsync(
+            morphTargetManagers = await this._buildMorphAsync(
                 modelObject,
-                mesh,
+                buildGeometryResult,
                 scene,
                 assetContainer,
-                vertexData,
                 morphsMetadata,
                 progress
             );
@@ -246,10 +251,10 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
         }
 
         if (state.boundingBoxMargin !== 0) {
-            this._applyBoundingBoxMargin(mesh, state.boundingBoxMargin);
+            this._applyBoundingBoxMargin(buildGeometryResult.meshes, state.boundingBoxMargin);
         }
 
-        mesh.metadata = <MmdModelMetadata>{
+        (rootNode.metadata as MmdModelMetadata) = {
             isMmdModel: true,
             header: {
                 modelName: modelObject.header.modelName,
@@ -260,32 +265,38 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
             bones: bonesMetadata,
             morphs: morphsMetadata,
             rigidBodies: modelObject.rigidBodies,
-            joints: modelObject.joints
+            joints: modelObject.joints,
+            meshes: buildGeometryResult.meshes,
+            skeleton: skeleton,
+            materials: materials
         };
 
         progress.invokeProgressEvent();
 
-        await textureLoadPromise;
+        const textures = await textureLoadPromise;
         progress.endTask("Texture Load");
         progress.invokeProgressEvent();
 
-        mesh.setEnabled(true);
+        rootNode.setEnabled(true);
 
         if (assetContainer !== null) {
-            assetContainer.meshes.push(mesh);
-            assetContainer.geometries.push(geometry);
-            assetContainer.multiMaterials.push(multiMaterial);
+            assetContainer.rootNodes.push(rootNode);
+            assetContainer.meshes.push(...buildGeometryResult.meshes);
+            assetContainer.geometries.push(...buildGeometryResult.geometries);
+            assetContainer.transformNodes.push(rootNode);
+            assetContainer.materials.push(...materials);
+            assetContainer.textures.push(...textures);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
-            if (morphTargetManager !== null) assetContainer.morphTargetManagers.push(morphTargetManager);
+            if (morphTargetManagers !== null) assetContainer.morphTargetManagers.push(...morphTargetManagers);
         }
 
         return {
-            meshes: [mesh],
+            meshes: buildGeometryResult.meshes,
             particleSystems: [],
             skeletons: skeleton !== null ? [skeleton] : [],
             animationGroups: [],
-            transformNodes: [],
-            geometries: [geometry],
+            transformNodes: [rootNode],
+            geometries: buildGeometryResult.geometries,
             lights: []
         };
     }
@@ -326,7 +337,6 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
-        mesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -335,22 +345,18 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
     protected abstract _buildMaterialAsync(
         state: LoadState,
         modelObject: ModelObject,
-        mesh: Mesh,
+        rootNode: TransformNode,
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
+        indexedUvGeometries: IndexedUvGeometry[],
         rootUrl: string,
         progress: Progress
     ): Promise<BuildMaterialResult>;
 
-    protected abstract _buildSubMeshes(
-        modelObject: ModelObject,
-        mesh: Mesh
-    ): void;
-
     protected async _buildSkeletonAsync(
         modelObject: ModelObject,
-        mesh: Mesh,
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         bonesMetadata: MmdModelMetadata.Bone[],
@@ -414,7 +420,7 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
                 bones.push(bone);
                 looped.push(isLooped);
 
-                const boneMetadata = <MmdModelMetadata.Bone>{
+                const boneMetadata: MmdModelMetadata.Bone = {
                     name: boneInfo.name,
                     parentBoneIndex: boneInfo.parentBoneIndex,
                     transformOrder: boneInfo.transformOrder,
@@ -447,42 +453,45 @@ export abstract class MmdModelLoader<LoadState extends MmdModelLoadState, ModelO
         progress.endTask("Build Skeleton");
         progress.invokeProgressEvent();
 
-        return mesh.skeleton = skeleton;
+        for (let i = 0; i < meshes.length; ++i) meshes[i].skeleton = skeleton;
+        return skeleton;
     }
 
     protected abstract _buildMorphAsync(
         modelObject: ModelObject,
-        mesh: Mesh,
+        buildGeometryResult: BuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager>;
+    ): Promise<MorphTargetManager[]>;
 
-    private _applyBoundingBoxMargin(mesh: Mesh, boundingBoxMargin: number): void {
-        if (mesh.subMeshes === undefined) return;
-        const subMeshes = mesh.subMeshes;
-        for (let i = 0; i < subMeshes.length; ++i) {
-            const subMesh = subMeshes[i];
-            const subMeshBoundingInfo = subMesh.getBoundingInfo();
-            subMesh.setBoundingInfo(
+    private _applyBoundingBoxMargin(meshes: Mesh[], boundingBoxMargin: number): void {
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            if (mesh.subMeshes === undefined) continue;
+            const subMeshes = mesh.subMeshes;
+            for (let i = 0; i < subMeshes.length; ++i) {
+                const subMesh = subMeshes[i];
+                const subMeshBoundingInfo = subMesh.getBoundingInfo();
+                subMesh.setBoundingInfo(
+                    new BoundingInfo(
+                        new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
+                        new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                    )
+                );
+            }
+
+            const boundingInfo = mesh.getBoundingInfo();
+            mesh.setBoundingInfo(
                 new BoundingInfo(
-                    new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                    new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                    new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
+                    new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
                 )
             );
+
+            mesh._updateBoundingInfo();
         }
-
-        const boundingInfo = mesh.getBoundingInfo();
-        mesh.setBoundingInfo(
-            new BoundingInfo(
-                new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
-                new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
-            )
-        );
-
-        mesh._updateBoundingInfo();
     }
 
     /**

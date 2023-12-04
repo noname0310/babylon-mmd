@@ -1,7 +1,6 @@
 import "@babylonjs/core/Physics/v2/physicsEngineComponent";
 
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
@@ -299,7 +298,7 @@ export class MmdPhysics {
 
     /**
      * Build the physics model of the MMD model
-     * @param mesh Mesh
+     * @param rootNode Root node of the MMD model
      * @param bones MMD runtime bones
      * @param rigidBodies rigid bodies information
      * @param joints joints information
@@ -307,7 +306,7 @@ export class MmdPhysics {
      * @returns MMD physics model
      */
     public buildPhysics(
-        mesh: Mesh,
+        rootNode: TransformNode,
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
@@ -317,8 +316,8 @@ export class MmdPhysics {
 
         let scalingFactor: number;
         {
-            mesh.computeWorldMatrix(true);
-            const worldMatrix = mesh.getWorldMatrix();
+            rootNode.computeWorldMatrix(true);
+            const worldMatrix = rootNode.getWorldMatrix();
             const worldScale = new Vector3();
             worldMatrix.decompose(worldScale);
             if (Math.abs(worldScale.x - worldScale.y) < 0.0001 && Math.abs(worldScale.y - worldScale.z) < 0.0001) {
@@ -326,11 +325,11 @@ export class MmdPhysics {
                     scalingFactor = 1;
                 } else {
                     scalingFactor = worldScale.x;
-                    logger.warn("Mesh scaling is not 1, simulation may differ from the original");
+                    logger.warn("Root node scaling is not 1, simulation may differ from the original");
                 }
             } else {
                 scalingFactor = Math.max(worldScale.x, worldScale.y, worldScale.z);
-                logger.warn("Mesh scaling is not uniform, physics may not work correctly");
+                logger.warn("Root node scaling is not uniform, physics may not work correctly");
             }
         }
 
@@ -410,7 +409,7 @@ export class MmdPhysics {
             );
 
             node.computeBodyOffsetMatrix();
-            node.setParent(mesh);
+            node.setParent(rootNode);
 
             const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
                 ? PhysicsMotionType.ANIMATED

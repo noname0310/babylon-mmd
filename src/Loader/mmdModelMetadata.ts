@@ -1,3 +1,9 @@
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
+import type { Nullable } from "@babylonjs/core/types";
+
 import type { PmxObject } from "./Parser/pmxObject";
 
 /**
@@ -37,6 +43,21 @@ export interface MmdModelMetadata {
      * Mmd model joints information
      */
     readonly joints: PmxObject["joints"];
+
+    /**
+     * Mmd model meshes
+     */
+    readonly meshes: readonly Mesh[];
+
+    /**
+     * Mmd model skeleton
+     */
+    readonly skeleton: Nullable<Skeleton>;
+
+    /**
+     * Mmd model materials
+     */
+    readonly materials: Material[];
 }
 
 export namespace MmdModelMetadata {
@@ -171,9 +192,9 @@ export namespace MmdModelMetadata {
         readonly type: PmxObject.Morph.VertexMorph["type"];
 
         /**
-         * `mesh.morphTargetManager` morph target index
+         * The morph targets that drive this vertex morph
          */
-        readonly index: number;
+        readonly morphTargets: MorphTarget[];
     }
 
     /**
@@ -186,9 +207,9 @@ export namespace MmdModelMetadata {
         readonly type: PmxObject.Morph.UvMorph["type"];
 
         /**
-         * `mesh.morphTargetManager` morph target index
+         * The morph targets that drive this uv morph
          */
-        readonly index: number;
+        readonly morphTargets: MorphTarget[];
     }
 
     /**

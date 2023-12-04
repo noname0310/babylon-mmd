@@ -1,5 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
@@ -11,8 +11,7 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
-import type { HumanoidMesh } from "../mmdMesh";
-import { MmdMesh } from "../mmdMesh";
+import { MmdModelNode } from "../mmdModelNode";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
@@ -136,32 +135,32 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     /**
-     * Create MMD model from mesh that has MMD metadata
+     * Create MMD model from transform node that has MMD metadata
      *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
-     * @param mmdMesh MMD mesh
+     * @param mmdModelNode MmdModelNode
      * @param options Creation options
      * @returns MMD model
      * @throws {Error} if mesh is not `MmdMesh`
      */
     public createMmdModel(
-        mmdMesh: Mesh,
+        mmdModelNode: TransformNode,
         options: CreateMmdModelOptions = {}
     ): MmdWasmModel {
-        if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
-        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.skeleton, options);
+        if (!MmdModelNode.isMmdModelNode(mmdModelNode)) throw new Error("Mesh validation failed.");
+        return this.createMmdModelFromSkeleton(mmdModelNode, mmdModelNode.metadata.skeleton, options);
     }
 
     /**
      * Create MMD model from humanoid mesh and virtual skeleton
      *
      * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
-     * @param mmdMesh MmdMesh or HumanoidMesh
-     * @param skeleton Virtualized skeleton
+     * @param mmdModelNode MmdModelNode
+     * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
     public createMmdModelFromSkeleton(
-        mmdMesh: MmdMesh | HumanoidMesh,
+        mmdModelNode: MmdModelNode,
         skeleton: IMmdLinkedBoneContainer,
         options: CreateMmdModelOptions = {}
     ): MmdWasmModel {
@@ -173,7 +172,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
 
         const model = new MmdWasmModel(
-            mmdMesh,
+            mmdModelNode,
             skeleton,
             options.materialProxyConstructor,
             false,

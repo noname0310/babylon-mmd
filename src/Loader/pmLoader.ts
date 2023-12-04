@@ -1,10 +1,11 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
-import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
-import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Tools } from "@babylonjs/core/Misc/tools";
@@ -14,7 +15,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { BuildGeometryResult, BuildMaterialResult, MmdModelLoadState } from "./mmdModelLoader";
+import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
@@ -22,16 +23,28 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { Progress, ProgressTask } from "./progress";
 import { SdefBufferKind } from "./sdefBufferKind";
+import { SdefMesh } from "./sdefMesh";
+import type { IndexedUvGeometry } from "./textureAlphaChecker";
 
 interface PmLoadState extends MmdModelLoadState {
     readonly referenceFiles: readonly File[];
+}
+
+interface IndexToSubMeshIndexMap {
+    readonly map: Uint16Array | Uint32Array;
+    readonly isReferencedVertex: Uint8Array;
+}
+
+interface PmBuildGeometryResult extends MmdModelBuildGeometryResult {
+    readonly indices: Uint16Array | Uint32Array;
+    readonly indexMaps: IndexToSubMeshIndexMap[];
 }
 
 /**
  * @internal
  * Base class of pmx / pmd loader
  */
-export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject> implements ISceneLoaderPluginAsync, ILogger {
+export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, PmBuildGeometryResult> implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Reference files for load PMX / PMD from files (textures)
      *
@@ -101,25 +114,16 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject> im
     protected override async _buildGeometryAsync(
         state: PmLoadState,
         modelObject: PmxObject,
-        mesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
-    ): Promise<BuildGeometryResult> {
-        const vertexData = new VertexData();
-        const boneSdefC = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
-        const boneSdefR0 = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
-        const boneSdefR1 = state.useSdef ? new Float32Array(modelObject.vertices.length * 3) : undefined;
-        let hasSdef = false;
+    ): Promise<PmBuildGeometryResult> {
+        const meshes: Mesh[] = [];
+        const geometries: Geometry[] = [];
+        let indices: Uint16Array | Uint32Array;
+        const indexMaps: IndexToSubMeshIndexMap[] = [];
+        const vertexDataArray: VertexData[] = [];
         {
-            const vertices = modelObject.vertices;
-            const positions = new Float32Array(vertices.length * 3);
-            const normals = new Float32Array(vertices.length * 3);
-            const uvs = new Float32Array(vertices.length * 2);
-            const boneIndices = new Float32Array(vertices.length * 4);
-            const boneWeights = new Float32Array(vertices.length * 4);
-
-            let indices;
             if (modelObject.faces instanceof Uint8Array || modelObject.faces instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.faces.length);
             } else {
@@ -146,197 +150,289 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject> im
                 progress.invokeProgressEvent();
             }
 
-            {
-                let time = performance.now();
-                for (let i = 0; i < vertices.length; ++i) {
-                    const vertex = vertices[i];
-                    positions[i * 3 + 0] = vertex.position[0];
-                    positions[i * 3 + 1] = vertex.position[1];
-                    positions[i * 3 + 2] = vertex.position[2];
+            const materials = modelObject.materials;
+            let indexStartOffset = 0;
+            for (let i = 0; i < materials.length; ++i) {
+                const materialInfo = materials[i];
 
-                    normals[i * 3 + 0] = vertex.normal[0];
-                    normals[i * 3 + 1] = vertex.normal[1];
-                    normals[i * 3 + 2] = vertex.normal[2];
-
-                    uvs[i * 2 + 0] = vertex.uv[0];
-                    uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
-
-                    switch (vertex.weightType) {
-                    case PmxObject.Vertex.BoneWeightType.Bdef1:
-                        {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
-
-                            boneIndices[i * 4 + 0] = boneWeight.boneIndices;
-                            boneIndices[i * 4 + 1] = 0;
-                            boneIndices[i * 4 + 2] = 0;
-                            boneIndices[i * 4 + 3] = 0;
-
-                            boneWeights[i * 4 + 0] = 1;
-                            boneWeights[i * 4 + 1] = 0;
-                            boneWeights[i * 4 + 2] = 0;
-                            boneWeights[i * 4 + 3] = 0;
+                const isReferencedVertex = new Uint8Array(modelObject.vertices.length);//.fill(0);
+                let subMeshVertexCount = 0;
+                {
+                    const indexCount = materialInfo.indexCount;
+                    for (let j = 0; j < indexCount; ++j) {
+                        const elementIndex = indices[indexStartOffset + j];
+                        if (isReferencedVertex[elementIndex] === 0) {
+                            isReferencedVertex[elementIndex] = 1;
+                            subMeshVertexCount += 1;
                         }
-                        break;
-
-                    case PmxObject.Vertex.BoneWeightType.Bdef2:
-                        {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
-
-                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                            boneIndices[i * 4 + 2] = 0;
-                            boneIndices[i * 4 + 3] = 0;
-
-                            boneWeights[i * 4 + 0] = boneWeight.boneWeights;
-                            boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights;
-                            boneWeights[i * 4 + 2] = 0;
-                            boneWeights[i * 4 + 3] = 0;
-                        }
-                        break;
-
-                    case PmxObject.Vertex.BoneWeightType.Bdef4:
-                    case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
-                        {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
-
-                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                            boneIndices[i * 4 + 2] = boneWeight.boneIndices[2];
-                            boneIndices[i * 4 + 3] = boneWeight.boneIndices[3];
-
-                            boneWeights[i * 4 + 0] = boneWeight.boneWeights[0];
-                            boneWeights[i * 4 + 1] = boneWeight.boneWeights[1];
-                            boneWeights[i * 4 + 2] = boneWeight.boneWeights[2];
-                            boneWeights[i * 4 + 3] = boneWeight.boneWeights[3];
-                        }
-                        break;
-
-                    case PmxObject.Vertex.BoneWeightType.Sdef:
-                        {
-                            const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
-
-                            boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                            boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                            boneIndices[i * 4 + 2] = 0;
-                            boneIndices[i * 4 + 3] = 0;
-
-                            const sdefWeights = boneWeight.boneWeights;
-                            const boneWeight0 = sdefWeights.boneWeight0;
-                            const boneWeight1 = 1 - boneWeight0;
-
-                            boneWeights[i * 4 + 0] = boneWeight0;
-                            boneWeights[i * 4 + 1] = boneWeight1;
-                            boneWeights[i * 4 + 2] = 0;
-                            boneWeights[i * 4 + 3] = 0;
-
-                            if (state.useSdef) {
-                                const centerX = sdefWeights.c[0];
-                                const centerY = sdefWeights.c[1];
-                                const centerZ = sdefWeights.c[2];
-
-                                // calculate rw0 and rw1
-                                let r0X = sdefWeights.r0[0];
-                                let r0Y = sdefWeights.r0[1];
-                                let r0Z = sdefWeights.r0[2];
-
-                                let r1X = sdefWeights.r1[0];
-                                let r1Y = sdefWeights.r1[1];
-                                let r1Z = sdefWeights.r1[2];
-
-                                const rwX = r0X * boneWeight0 + r1X * boneWeight1;
-                                const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
-                                const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
-
-                                r0X = centerX + r0X - rwX;
-                                r0Y = centerY + r0Y - rwY;
-                                r0Z = centerZ + r0Z - rwZ;
-
-                                r1X = centerX + r1X - rwX;
-                                r1Y = centerY + r1Y - rwY;
-                                r1Z = centerZ + r1Z - rwZ;
-
-                                const cr0X = (centerX + r0X) * 0.5;
-                                const cr0Y = (centerY + r0Y) * 0.5;
-                                const cr0Z = (centerZ + r0Z) * 0.5;
-
-                                const cr1X = (centerX + r1X) * 0.5;
-                                const cr1Y = (centerY + r1Y) * 0.5;
-                                const cr1Z = (centerZ + r1Z) * 0.5;
-
-                                boneSdefC![i * 3 + 0] = centerX;
-                                boneSdefC![i * 3 + 1] = centerY;
-                                boneSdefC![i * 3 + 2] = centerZ;
-
-                                boneSdefR0![i * 3 + 0] = cr0X;
-                                boneSdefR0![i * 3 + 1] = cr0Y;
-                                boneSdefR0![i * 3 + 2] = cr0Z;
-
-                                boneSdefR1![i * 3 + 0] = cr1X;
-                                boneSdefR1![i * 3 + 1] = cr1Y;
-                                boneSdefR1![i * 3 + 2] = cr1Z;
-
-                                hasSdef = true;
-                            }
-                        }
-                        break;
                     }
-
-                    if (i % 10000 === 0 && 100 < performance.now() - time) {
-                        progress.setTaskProgress("Build Vertex", i);
-                        progress.invokeProgressEvent();
-
-                        await Tools.DelayAsync(0);
-                        time = performance.now();
-                    }
+                    isReferencedVertex.fill(0);
                 }
 
-                progress.endTask("Build Vertex");
-                progress.invokeProgressEvent();
+                const vertexData = new VertexData();
+                const boneSdefC = state.useSdef ? new Float32Array(subMeshVertexCount * 3) : undefined;
+                const boneSdefR0 = state.useSdef ? new Float32Array(subMeshVertexCount * 3) : undefined;
+                const boneSdefR1 = state.useSdef ? new Float32Array(subMeshVertexCount * 3) : undefined;
+                let hasSdef = false;
+                const indexToSubMeshIndexMap = new (indices.constructor as new (length: number) => typeof indices)(modelObject.vertices.length);
+                {
+                    const positions = new Float32Array(subMeshVertexCount * 3);
+                    const normals = new Float32Array(subMeshVertexCount * 3);
+                    const uvs = new Float32Array(subMeshVertexCount * 2);
+                    const subMeshIndices = new (indices.constructor as new (length: number) => typeof indices)(subMeshVertexCount);
+                    const boneIndices = new Float32Array(subMeshVertexCount * 4);
+                    const boneWeights = new Float32Array(subMeshVertexCount * 4);
+
+                    let time = performance.now();
+                    let vertexIndex = 0;
+                    let subMeshIndex = 0;
+                    const indexCount = materialInfo.indexCount;
+                    for (let j = 0; j < indexCount; ++j) {
+                        const elementIndex = indices[indexStartOffset + j];
+                        if (isReferencedVertex[elementIndex] === 0) {
+                            isReferencedVertex[elementIndex] = 1;
+
+                            const vertex = modelObject.vertices[elementIndex];
+
+                            positions[vertexIndex * 3 + 0] = vertex.position[0];
+                            positions[vertexIndex * 3 + 1] = vertex.position[1];
+                            positions[vertexIndex * 3 + 2] = vertex.position[2];
+
+                            normals[vertexIndex * 3 + 0] = vertex.normal[0];
+                            normals[vertexIndex * 3 + 1] = vertex.normal[1];
+                            normals[vertexIndex * 3 + 2] = vertex.normal[2];
+
+                            uvs[vertexIndex * 2 + 0] = vertex.uv[0];
+                            uvs[vertexIndex * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
+
+                            switch (vertex.weightType) {
+                            case PmxObject.Vertex.BoneWeightType.Bdef1:
+                                {
+                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
+
+                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices;
+                                    boneIndices[vertexIndex * 4 + 1] = 0;
+                                    boneIndices[vertexIndex * 4 + 2] = 0;
+                                    boneIndices[vertexIndex * 4 + 3] = 0;
+
+                                    boneWeights[vertexIndex * 4 + 0] = 1;
+                                    boneWeights[vertexIndex * 4 + 1] = 0;
+                                    boneWeights[vertexIndex * 4 + 2] = 0;
+                                    boneWeights[vertexIndex * 4 + 3] = 0;
+                                }
+                                break;
+
+                            case PmxObject.Vertex.BoneWeightType.Bdef2:
+                                {
+                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
+
+                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                    boneIndices[vertexIndex * 4 + 2] = 0;
+                                    boneIndices[vertexIndex * 4 + 3] = 0;
+
+                                    boneWeights[vertexIndex * 4 + 0] = boneWeight.boneWeights;
+                                    boneWeights[vertexIndex * 4 + 1] = 1 - boneWeight.boneWeights;
+                                    boneWeights[vertexIndex * 4 + 2] = 0;
+                                    boneWeights[vertexIndex * 4 + 3] = 0;
+                                }
+                                break;
+
+                            case PmxObject.Vertex.BoneWeightType.Bdef4:
+                            case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
+                                {
+                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
+
+                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                    boneIndices[vertexIndex * 4 + 2] = boneWeight.boneIndices[2];
+                                    boneIndices[vertexIndex * 4 + 3] = boneWeight.boneIndices[3];
+
+                                    boneWeights[vertexIndex * 4 + 0] = boneWeight.boneWeights[0];
+                                    boneWeights[vertexIndex * 4 + 1] = boneWeight.boneWeights[1];
+                                    boneWeights[vertexIndex * 4 + 2] = boneWeight.boneWeights[2];
+                                    boneWeights[vertexIndex * 4 + 3] = boneWeight.boneWeights[3];
+                                }
+                                break;
+
+                            case PmxObject.Vertex.BoneWeightType.Sdef:
+                                {
+                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
+
+                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                    boneIndices[vertexIndex * 4 + 2] = 0;
+                                    boneIndices[vertexIndex * 4 + 3] = 0;
+
+                                    const sdefWeights = boneWeight.boneWeights;
+                                    const boneWeight0 = sdefWeights.boneWeight0;
+                                    const boneWeight1 = 1 - boneWeight0;
+
+                                    boneWeights[vertexIndex * 4 + 0] = boneWeight0;
+                                    boneWeights[vertexIndex * 4 + 1] = boneWeight1;
+                                    boneWeights[vertexIndex * 4 + 2] = 0;
+                                    boneWeights[vertexIndex * 4 + 3] = 0;
+
+                                    if (state.useSdef) {
+                                        const centerX = sdefWeights.c[0];
+                                        const centerY = sdefWeights.c[1];
+                                        const centerZ = sdefWeights.c[2];
+
+                                        // calculate rw0 and rw1
+                                        let r0X = sdefWeights.r0[0];
+                                        let r0Y = sdefWeights.r0[1];
+                                        let r0Z = sdefWeights.r0[2];
+
+                                        let r1X = sdefWeights.r1[0];
+                                        let r1Y = sdefWeights.r1[1];
+                                        let r1Z = sdefWeights.r1[2];
+
+                                        const rwX = r0X * boneWeight0 + r1X * boneWeight1;
+                                        const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
+                                        const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
+
+                                        r0X = centerX + r0X - rwX;
+                                        r0Y = centerY + r0Y - rwY;
+                                        r0Z = centerZ + r0Z - rwZ;
+
+                                        r1X = centerX + r1X - rwX;
+                                        r1Y = centerY + r1Y - rwY;
+                                        r1Z = centerZ + r1Z - rwZ;
+
+                                        const cr0X = (centerX + r0X) * 0.5;
+                                        const cr0Y = (centerY + r0Y) * 0.5;
+                                        const cr0Z = (centerZ + r0Z) * 0.5;
+
+                                        const cr1X = (centerX + r1X) * 0.5;
+                                        const cr1Y = (centerY + r1Y) * 0.5;
+                                        const cr1Z = (centerZ + r1Z) * 0.5;
+
+                                        boneSdefC![vertexIndex * 3 + 0] = centerX;
+                                        boneSdefC![vertexIndex * 3 + 1] = centerY;
+                                        boneSdefC![vertexIndex * 3 + 2] = centerZ;
+
+                                        boneSdefR0![vertexIndex * 3 + 0] = cr0X;
+                                        boneSdefR0![vertexIndex * 3 + 1] = cr0Y;
+                                        boneSdefR0![vertexIndex * 3 + 2] = cr0Z;
+
+                                        boneSdefR1![vertexIndex * 3 + 0] = cr1X;
+                                        boneSdefR1![vertexIndex * 3 + 1] = cr1Y;
+                                        boneSdefR1![vertexIndex * 3 + 2] = cr1Z;
+
+                                        hasSdef = true;
+                                    }
+                                }
+                                break;
+                            }
+
+                            subMeshIndices[subMeshIndex] = vertexIndex;
+                            indexToSubMeshIndexMap[elementIndex] = subMeshIndex;
+                            subMeshIndex += 1;
+                            vertexIndex += 1;
+                        } else {
+                            subMeshIndices[subMeshIndex] = indexToSubMeshIndexMap[elementIndex];
+                            subMeshIndex += 1;
+                        }
+
+                        if ((indexStartOffset + j) % 10000 === 0 && 100 < performance.now() - time) {
+                            progress.setTaskProgress("Build Vertex", indexStartOffset + j);
+                            progress.invokeProgressEvent();
+
+                            await Tools.DelayAsync(0);
+                            time = performance.now();
+                        }
+                    }
+
+                    vertexData.positions = positions;
+                    vertexData.normals = normals;
+                    vertexData.uvs = uvs;
+                    vertexData.indices = subMeshIndices;
+                    vertexData.matricesIndices = boneIndices;
+                    vertexData.matricesWeights = boneWeights;
+                }
+
+                scene._blockEntityCollection = !!assetContainer;
+                const mesh = new (state.useSdef && hasSdef ? SdefMesh : Mesh)(materialInfo.name, scene);
+                mesh._parentContainer = assetContainer;
+                scene._blockEntityCollection = false;
+                meshes.push(mesh);
+
+                scene._blockEntityCollection = !!assetContainer;
+                const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
+                geometry._parentContainer = assetContainer;
+                scene._blockEntityCollection = false;
+                if (state.useSdef && hasSdef) {
+                    geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
+                    geometry.setVerticesData(SdefBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+                    geometry.setVerticesData(SdefBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+                }
+                geometry.applyToMesh(mesh);
+                geometries.push(geometry);
+
+                indexMaps.push({
+                    map: indexToSubMeshIndexMap,
+                    isReferencedVertex
+                });
+                vertexDataArray.push(vertexData);
+
+                indexStartOffset += materialInfo.indexCount;
+            }
+        }
+
+        let indexedUvGeometries: IndexedUvGeometry[];
+        {
+            const vertices = modelObject.vertices;
+            const materials = modelObject.materials;
+
+            const uvs = new Float32Array(vertices.length * 2);
+            for (let i = 0; i < vertices.length; ++i) {
+                const uv = vertices[i].uv;
+                uvs[i * 2 + 0] = uv[0];
+                uvs[i * 2 + 1] = 1 - uv[1]; // flip y axis
             }
 
-            vertexData.positions = positions;
-            vertexData.normals = normals;
-            vertexData.uvs = uvs;
-            vertexData.indices = indices;
-            vertexData.matricesIndices = boneIndices;
-            vertexData.matricesWeights = boneWeights;
+            const subMeshIndexCounts = new Int32Array(materials.length);
+            for (let i = 0; i < materials.length; ++i) {
+                subMeshIndexCounts[i] = materials[i].indexCount;
+            }
+
+            indexedUvGeometries = [
+                {
+                    uvs,
+                    indices,
+                    subMeshIndexCounts
+                }
+            ];
         }
 
-        scene._blockEntityCollection = !!assetContainer;
-        const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
-        geometry._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
+        progress.endTask("Build Vertex");
+        progress.invokeProgressEvent();
 
-        if (state.useSdef && hasSdef) {
-            geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
-            geometry.setVerticesData(SdefBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
-            geometry.setVerticesData(SdefBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
-        }
-        geometry.applyToMesh(mesh);
-
-        return { vertexData, geometry };
+        return {
+            meshes,
+            geometries,
+            indices,
+            indexMaps,
+            vertexDataArray,
+            indexedUvGeometries
+        };
     }
 
     protected override async _buildMaterialAsync(
         state: PmLoadState,
         modelObject: PmxObject,
-        mesh: Mesh,
+        rootNode: TransformNode,
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
+        indexedUvGeometries: IndexedUvGeometry[],
         rootUrl: string,
         progress: Progress
     ): Promise<BuildMaterialResult> {
-        scene._blockEntityCollection = !!assetContainer;
-        const multiMaterial = new MultiMaterial(modelObject.header.modelName + "_multi", scene);
-        multiMaterial._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
-
-        let buildMaterialsPromise: void | Promise<void> = undefined;
-
-        const textureLoadPromise = new Promise<void>((resolve) => {
+        let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
+        const textureLoadPromise = new Promise<Texture[]>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                mesh.uniqueId, // uniqueId
+                rootNode.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
                 modelObject.textures, // texturePathTable
                 rootUrl, // rootUrl
@@ -344,182 +440,213 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject> im
                 state.referenceFiles, // referenceFiles
                 scene, // scene
                 assetContainer, // assetContainer
-                vertexData.indices as Uint16Array | Uint32Array, // indices
-                vertexData.uvs as Float32Array, // uvs
-                multiMaterial, // multiMaterial
+                indexedUvGeometries, // indexedUvGeometries
                 this, // logger
                 (event) => {
                     if (!event.lengthComputable) return;
                     progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);
                     progress.invokeProgressEvent();
                 }, // onTextureLoadProgress
-                () => resolve() // onTextureLoadComplete
+                loadedTextures => resolve(loadedTextures) // onTextureLoadComplete
             );
         });
-        if (buildMaterialsPromise !== undefined) {
-            await buildMaterialsPromise;
-        }
-        mesh.material = multiMaterial;
+        const materials: Material[] = Array.isArray(buildMaterialsPromise)
+            ? buildMaterialsPromise
+            : await (buildMaterialsPromise as unknown as Promise<Material[]>);
+
+        for (let i = 0; i < meshes.length; ++i) meshes[i].material = materials[i];
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
 
-        return { multiMaterial, textureLoadPromise };
-    }
-
-    protected override _buildSubMeshes(
-        modelObject: PmxObject,
-        mesh: Mesh
-    ): void {
-        if (mesh.subMeshes === undefined) return;
-        mesh.subMeshes.length = 0;
-        const materials = modelObject.materials;
-        let offset = 0;
-        for (let i = 0; i < materials.length; ++i) {
-            const materialInfo = materials[i];
-
-            new SubMesh(
-                i, // materialIndex
-                0, // verticesStart
-                modelObject.vertices.length, // verticesCount
-                offset, // indexStart
-                materialInfo.indexCount, // indexCount
-                mesh
-            );
-
-            offset += materialInfo.indexCount;
-        }
+        return { materials, textureLoadPromise };
     }
 
     protected override async _buildMorphAsync(
         modelObject: PmxObject,
-        mesh: Mesh,
+        buildGeometryResult: PmBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager> {
-        scene._blockEntityCollection = !!assetContainer;
-        const morphTargetManager = new MorphTargetManager(scene);
-        morphTargetManager._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
+    ): Promise<MorphTargetManager[]> {
+        const vertexToSubMeshIndexMap = new Int32Array(modelObject.vertices.length).fill(-1);
+        // if vertesToSubmeshIndexMap[i] === -2, vertex i has multiple submeshes references
+        // if vertesToSubmeshIndexMap[i] === -1, vertex i has no submeshes references
+        const vertexToSubMeshIndexSlowMap = new Map<number, number[]>();
+
+        const indices = buildGeometryResult.indices;
         {
-            const morphsInfo = modelObject.morphs;
+            const materials = modelObject.materials;
+            let indexOffset = 0;
+            for (let subMeshIndex = 0; subMeshIndex < materials.length; ++subMeshIndex) {
+                const indexCount = materials[subMeshIndex].indexCount;
+                for (let j = 0; j < indexCount; ++j) {
+                    const elementIndex = indices[indexOffset + j];
+                    if (vertexToSubMeshIndexMap[elementIndex] === -1) {
+                        vertexToSubMeshIndexMap[elementIndex] = subMeshIndex;
+                    } else if (vertexToSubMeshIndexMap[elementIndex] !== subMeshIndex) {
+                        vertexToSubMeshIndexMap[elementIndex] = -2;
+                        let subMeshIndices = vertexToSubMeshIndexSlowMap.get(elementIndex);
+                        if (subMeshIndices === undefined) {
+                            subMeshIndices = [subMeshIndex];
+                            vertexToSubMeshIndexSlowMap.set(elementIndex, subMeshIndices);
+                        } else if (!subMeshIndices.includes(subMeshIndex)) {
+                            subMeshIndices.push(subMeshIndex);
+                        }
+                    }
+                }
+
+                indexOffset += indexCount;
+            }
+        }
+
+        const indexMaps = buildGeometryResult.indexMaps;
+        const morphsInfo = modelObject.morphs;
+        const vertexDataArray = buildGeometryResult.vertexDataArray;
+        const subMeshesMorphTargets: MorphTarget[][] = new Array(vertexDataArray.length).fill([]); // morphTargets[subMeshIndex][morphIndex]
+
+        let buildMorphProgress = 0;
+        for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
+            const morphInfo = morphsInfo[morphIndex];
+
             const morphTargets: MorphTarget[] = [];
 
-            let buildMorphProgress = 0;
+            // create morph metadata
+            switch (morphInfo.type) {
+            case PmxObject.Morph.Type.GroupMorph:
+            case PmxObject.Morph.Type.BoneMorph:
+            case PmxObject.Morph.Type.MaterialMorph:
+                morphsMetadata.push(morphInfo);
+                break;
 
-            for (let i = 0; i < morphsInfo.length; ++i) {
-                const morphInfo = morphsInfo[i];
+            case PmxObject.Morph.Type.VertexMorph:
+            case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.AdditionalUvMorph1:
+            case PmxObject.Morph.Type.AdditionalUvMorph2:
+            case PmxObject.Morph.Type.AdditionalUvMorph3:
+            case PmxObject.Morph.Type.AdditionalUvMorph4:
+                morphsMetadata.push(<MmdModelMetadata.VertexMorph | MmdModelMetadata.UvMorph> {
+                    name: morphInfo.name,
+                    englishName: morphInfo.englishName,
 
-                // create morph metadata
-                switch (morphInfo.type) {
-                case PmxObject.Morph.Type.GroupMorph:
-                case PmxObject.Morph.Type.BoneMorph:
-                case PmxObject.Morph.Type.MaterialMorph:
-                    morphsMetadata.push(morphInfo);
-                    break;
+                    category: morphInfo.category,
+                    type: morphInfo.type,
 
-                case PmxObject.Morph.Type.VertexMorph:
-                case PmxObject.Morph.Type.UvMorph:
-                case PmxObject.Morph.Type.AdditionalUvMorph1:
-                case PmxObject.Morph.Type.AdditionalUvMorph2:
-                case PmxObject.Morph.Type.AdditionalUvMorph3:
-                case PmxObject.Morph.Type.AdditionalUvMorph4:
-                    morphsMetadata.push(<MmdModelMetadata.VertexMorph | MmdModelMetadata.UvMorph> {
-                        name: morphInfo.name,
-                        englishName: morphInfo.englishName,
+                    morphTargets
+                });
+                break;
 
-                        category: morphInfo.category,
-                        type: morphInfo.type,
+            default:
+                this.warn(`Unsupported morph type: ${morphInfo.type}`);
+            }
 
-                        index: morphTargets.length
-                    });
-                    break;
+            if (
+                morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
+                morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
+            ) {
+                // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                continue;
+            }
 
-                default:
-                    this.warn(`Unsupported morph type: ${morphInfo.type}`);
+            const referencedSubMeshes: number[] = [];
+            const morphIndices = morphInfo.indices;
+            for (let i = 0; i < morphIndices.length; ++i) {
+                const elementIndex = morphIndices[i];
+                const subMeshIndex = vertexToSubMeshIndexMap[elementIndex];
+                if (subMeshIndex === -1) continue;
+
+                if (subMeshIndex === -2) {
+                    const subMeshIndices = vertexToSubMeshIndexSlowMap.get(elementIndex)!;
+                    for (let j = 0; j < subMeshIndices.length; ++j) {
+                        const subMeshIndex = subMeshIndices[j];
+                        if (!referencedSubMeshes.includes(subMeshIndex)) {
+                            referencedSubMeshes.push(subMeshIndex);
+                        }
+                    }
+                } else if (!referencedSubMeshes.includes(subMeshIndex)) {
+                    referencedSubMeshes.push(subMeshIndex);
                 }
-
-                if (
-                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
-                ) {
-                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
-                    continue;
-                }
-
+            }
+            for (let i = 0; i < referencedSubMeshes.length; ++i) {
                 const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
                 morphTargets.push(morphTarget);
+                subMeshesMorphTargets[referencedSubMeshes[i]].push(morphTarget);
+            }
 
-                if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
-                    const positions = new Float32Array(modelObject.vertices.length * 3);
+            if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
+                for (let i = 0; i < referencedSubMeshes.length; ++i) {
+                    const subMeshIndex = referencedSubMeshes[i];
+
+                    const vertexData = vertexDataArray[subMeshIndex];
+                    const positions = new Float32Array(vertexData.positions!);
                     positions.set(vertexData.positions!);
 
                     const morphIndices = morphInfo.indices;
                     const positionOffsets = morphInfo.positions;
 
-                    let time = performance.now();
+                    const indexToSubMeshIndexMap = indexMaps[subMeshIndex].map;
                     for (let j = 0; j < morphIndices.length; ++j) {
-                        const elementIndex = morphIndices[j];
+                        const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                         positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
                         positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
                         positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
-
-                        if (j % 10000 === 0 && 100 < performance.now() - time) {
-                            progress.setTaskProgress("Build Morph", buildMorphProgress + j);
-                            progress.invokeProgressEvent();
-
-                            await Tools.DelayAsync(0);
-                            time = performance.now();
-                        }
                     }
-                    progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
-                    buildMorphProgress += morphIndices.length;
 
-                    morphTarget.setPositions(positions);
-                } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
-                    const uvs = new Float32Array(modelObject.vertices.length * 2);
+                    morphTargets[i].setPositions(positions);
+                }
+            } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
+                for (let i = 0; i < referencedSubMeshes.length; ++i) {
+                    const subMeshIndex = referencedSubMeshes[i];
+
+                    const vertexData = vertexDataArray[subMeshIndex];
+                    const uvs = new Float32Array(vertexData.uvs!);
                     uvs.set(vertexData.uvs!);
 
                     const morphIndices = morphInfo.indices;
                     const uvOffsets = morphInfo.offsets;
 
-                    let time = performance.now();
+                    const indexToSubMeshIndexMap = indexMaps[subMeshIndex].map;
                     for (let j = 0; j < morphIndices.length; ++j) {
-                        const elementIndex = morphIndices[j];
+                        const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                         uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
                         uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
-
-                        if (j % 10000 === 0 && 100 < performance.now() - time) {
-                            progress.setTaskProgress("Build Morph", buildMorphProgress + j);
-                            progress.invokeProgressEvent();
-
-                            await Tools.DelayAsync(0);
-                            time = performance.now();
-                        }
                     }
-                    progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
-                    buildMorphProgress += morphIndices.length;
 
+                    const morphTarget = morphTargets[i];
                     morphTarget.setPositions(vertexData.positions);
                     morphTarget.setUVs(uvs);
                 }
             }
+            progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
+            buildMorphProgress += morphIndices.length;
+        }
+        progress.endTask("Build Morph");
+
+        const morphTargetManagers: MorphTargetManager[] = [];
+        const meshes = buildGeometryResult.meshes;
+        for (let subMeshIndex = 0; subMeshesMorphTargets.length; ++subMeshIndex) {
+            const subMeshMorphTargets = subMeshesMorphTargets[subMeshIndex];
+            if (subMeshMorphTargets.length === 0) continue;
+
+            scene._blockEntityCollection = !!assetContainer;
+            const morphTargetManager = new MorphTargetManager(scene);
+            morphTargetManager._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
 
             morphTargetManager.areUpdatesFrozen = true;
-            for (let i = 0; i < morphTargets.length; ++i) {
-                morphTargetManager.addTarget(morphTargets[i]);
+            for (let i = 0; i < subMeshMorphTargets.length; ++i) {
+                morphTargetManager.addTarget(subMeshMorphTargets[i]);
             }
             morphTargetManager.areUpdatesFrozen = false;
 
-            progress.endTask("Build Morph");
+            morphTargetManagers.push(morphTargetManager);
+            meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
-        return mesh.morphTargetManager = morphTargetManager;
+        return morphTargetManagers;
     }
 }

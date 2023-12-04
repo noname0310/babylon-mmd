@@ -37,6 +37,34 @@ class TextureContainer {
 }
 
 /**
+ * Geometry that has uvs and indices
+ */
+export interface IndexedUvGeometry {
+    uvs: Float32Array;
+    indices: Uint16Array | Uint32Array;
+    subMeshIndexCounts: Int32Array;
+}
+
+class IndexedUvSubmesh {
+    public readonly uvs: Float32Array;
+    public readonly indices: Uint16Array | Uint32Array;
+    public readonly subMeshIndexOffset: number;
+    public readonly indexCount: number;
+
+    public constructor(
+        uvs: Float32Array,
+        indices: Uint16Array | Uint32Array,
+        subMeshIndexOffset: number,
+        indexCount: number
+    ) {
+        this.uvs = uvs;
+        this.indices = indices;
+        this.subMeshIndexOffset = subMeshIndexOffset;
+        this.indexCount = indexCount;
+    }
+}
+
+/**
  * Texture alpha checker
  *
  * This class is used to check if the texture has alpha on geometry
@@ -50,10 +78,13 @@ export class TextureAlphaChecker {
     private _vertexShader: Nullable<WebGLShader>;
     private _fragmentShader: Nullable<WebGLShader>;
     private _program: Nullable<WebGLProgram>;
-    private _uvBuffer: Nullable<WebGLBuffer>;
-    private _indexBuffer: Nullable<WebGLBuffer>;
 
-    private readonly _indicesBytePerElement: number;
+    private readonly _uvBufferMap: Map<Float32Array, WebGLBuffer>;
+    private readonly _indexBufferMap: Map<Uint16Array | Uint32Array, WebGLBuffer>;
+    private readonly _subMeshes: IndexedUvSubmesh[];
+
+    private _currentTexture: Nullable<WebGLTexture>;
+    private _currentSubmesh: Nullable<IndexedUvSubmesh>;
 
     /**
      * Create a texture alpha checker
@@ -61,7 +92,7 @@ export class TextureAlphaChecker {
      * @param indices Geometry indices
      * @param resolution Resolution of the canvas used to check the texture
      */
-    public constructor(uvs: Float32Array, indices: Uint16Array | Uint32Array, resolution = 512) {
+    public constructor(geometries: IndexedUvGeometry[], resolution = 512) {
         this._resolution = resolution;
         this._textureCache = new Map();
 
@@ -70,14 +101,35 @@ export class TextureAlphaChecker {
         this._vertexShader = null;
         this._fragmentShader = null;
         this._program = null;
-        this._uvBuffer = null;
-        this._indexBuffer = null;
 
-        this._indicesBytePerElement = indices.BYTES_PER_ELEMENT;
+        this._uvBufferMap = new Map();
+        this._indexBufferMap = new Map();
+        const geometryBuffers: IndexedUvSubmesh[] = this._subMeshes = [];
+        for (let i = 0; i < geometries.length; ++i) {
+            const geometry = geometries[i];
+            const uvs = geometry.uvs;
+            const indices = geometry.indices;
 
-        if (this._prepareContext() === false ||
-            this._bindUvAndIndexBuffer(uvs, indices) === false
-        ) {
+            const subMeshIndexCounts = geometry.subMeshIndexCounts;
+            let subMeshIndexOffset = 0;
+            for (let j = 0; j < subMeshIndexCounts.length; ++j) {
+                const indexCount = subMeshIndexCounts[j];
+                geometryBuffers.push(
+                    new IndexedUvSubmesh(
+                        uvs,
+                        indices,
+                        subMeshIndexOffset,
+                        indexCount
+                    )
+                );
+                subMeshIndexOffset += indexCount;
+            }
+        }
+
+        this._currentTexture = null;
+        this._currentSubmesh = null;
+
+        if (this._prepareContext() === false) {
             this.dispose();
         }
     }
@@ -169,6 +221,14 @@ export class TextureAlphaChecker {
 
         context.useProgram(program);
 
+        const uvLocation = context.getAttribLocation(program, "uv");
+        context.enableVertexAttribArray(uvLocation);
+        context.vertexAttribPointer(uvLocation, 2, context.FLOAT, false, 0, 0);
+
+        const textureLocation = context.getUniformLocation(program, "texture");
+        context.activeTexture(context.TEXTURE0);
+        context.uniform1i(textureLocation, 0);
+
         return true;
     }
 
@@ -257,32 +317,39 @@ export class TextureAlphaChecker {
         return webGlTexture;
     }
 
-    private _bindUvAndIndexBuffer(
+    private _getWebGLBuffer(
         uvs: Float32Array,
         indices: Uint16Array | Uint32Array
-    ): boolean {
+    ): [Nullable<WebGLBuffer>, Nullable<WebGLBuffer>] {
         const context = this._context;
-        if (context === null) return false;
-        const program = this._program;
-        if (program === null) return false;
+        if (context === null) return [null, null];
 
-        const uvBuffer = this._uvBuffer = context.createBuffer();
-        if (uvBuffer === null) return false;
+        let uvBuffer = this._uvBufferMap.get(uvs) ?? null;
+        let indexBuffer = this._indexBufferMap.get(indices) ?? null;
 
-        context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
-        context.bufferData(context.ARRAY_BUFFER, uvs, context.STATIC_DRAW);
+        if (uvBuffer !== null && indexBuffer !== null) {
+            return [uvBuffer, indexBuffer];
+        }
 
-        const uvLocation = context.getAttribLocation(program, "uv");
-        context.enableVertexAttribArray(uvLocation);
-        context.vertexAttribPointer(uvLocation, 2, context.FLOAT, false, 0, 0);
+        if (uvBuffer === null) {
+            uvBuffer = context.createBuffer();
+            if (uvBuffer === null) return [null, null];
+            this._uvBufferMap.set(uvs, uvBuffer);
 
-        const indexBuffer = this._indexBuffer = context.createBuffer();
-        if (indexBuffer === null) return false;
+            context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
+            context.bufferData(context.ARRAY_BUFFER, uvs, context.STATIC_DRAW);
+        }
 
-        context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        context.bufferData(context.ELEMENT_ARRAY_BUFFER, indices, context.STATIC_DRAW);
+        if (indexBuffer === null) {
+            indexBuffer = context.createBuffer();
+            if (indexBuffer === null) return [null, null];
+            this._indexBufferMap.set(indices, indexBuffer);
 
-        return true;
+            context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            context.bufferData(context.ELEMENT_ARRAY_BUFFER, indices, context.STATIC_DRAW);
+        }
+
+        return [uvBuffer, indexBuffer];
     }
 
     /**
@@ -300,8 +367,7 @@ export class TextureAlphaChecker {
     public async textureHasAlphaOnGeometry(
         textureBuffer: ArrayBuffer,
         fallbackTexture: Nullable<Texture>,
-        startOffset: number,
-        length: number,
+        subMeshIndex: number,
         alphaThreshold: number,
         alphaBlendThreshold: number
     ): Promise<TransparencyMode> {
@@ -313,14 +379,30 @@ export class TextureAlphaChecker {
         const webGlTexture = await this._getWebGlTexture(textureBuffer, fallbackTexture);
         if (webGlTexture === null) return TransparencyMode.Opaque;
 
+        if (this._currentTexture !== webGlTexture) {
+            context.bindTexture(context.TEXTURE_2D, webGlTexture);
+            this._currentTexture = webGlTexture;
+        }
+
+        const subMesh = this._subMeshes[subMeshIndex];
+        const [uvBuffer, indexBuffer] = this._getWebGLBuffer(subMesh.uvs, subMesh.indices);
+        if (uvBuffer === null || indexBuffer === null) return TransparencyMode.Opaque;
+
+        if (this._currentSubmesh !== subMesh) {
+            context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
+            context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            this._currentSubmesh = subMesh;
+        }
+
         context.clear(context.COLOR_BUFFER_BIT);
-
-        const textureLocation = context.getUniformLocation(program, "texture");
-        context.activeTexture(context.TEXTURE0);
-        context.bindTexture(context.TEXTURE_2D, webGlTexture);
-        context.uniform1i(textureLocation, 0);
-
-        context.drawElements(context.TRIANGLES, length, this._indicesBytePerElement === 2 ? context.UNSIGNED_SHORT : context.UNSIGNED_INT, startOffset * this._indicesBytePerElement);
+        context.drawElements(
+            context.TRIANGLES,
+            subMesh.indexCount,
+            subMesh.indices.BYTES_PER_ELEMENT === 2
+                ? context.UNSIGNED_SHORT
+                : context.UNSIGNED_INT,
+            subMesh.subMeshIndexOffset * subMesh.indices.BYTES_PER_ELEMENT
+        );
 
         const resolution = this._resolution;
         const resultPixelsBufferView = new Uint8Array(resolution * resolution * 4);
@@ -397,8 +479,12 @@ export class TextureAlphaChecker {
         context.bindTexture(context.TEXTURE_2D, null);
         context.useProgram(null);
 
-        context.deleteBuffer(this._uvBuffer);
-        context.deleteBuffer(this._indexBuffer);
+        for (const uvBuffer of this._uvBufferMap.values()) {
+            context.deleteBuffer(uvBuffer);
+        }
+        for (const indexBuffer of this._indexBufferMap.values()) {
+            context.deleteBuffer(indexBuffer);
+        }
         for (const textureContainer of this._textureCache.values()) {
             context.deleteTexture(textureContainer.texture);
         }
@@ -410,7 +496,7 @@ export class TextureAlphaChecker {
         this._vertexShader = null;
         this._fragmentShader = null;
         this._program = null;
-        this._uvBuffer = null;
-        this._indexBuffer = null;
+        this._uvBufferMap.clear();
+        this._indexBufferMap.clear();
     }
 }

@@ -3,6 +3,7 @@ import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
@@ -59,6 +60,24 @@ class IkSolverProxy {
     }
 }
 
+class VisibilityProxy {
+    private readonly _meshes: readonly Mesh[];
+
+    public constructor(meshes: readonly Mesh[]) {
+        this._meshes = meshes;
+    }
+
+    public get visibility(): number {
+        return this._meshes[0].visibility;
+    }
+
+    public set visibility(value: number) {
+        for (let i = 0; i < this._meshes.length; ++i) {
+            this._meshes[i].visibility = value;
+        }
+    }
+}
+
 /**
  * A container type that stores mmd model animations using the `Animation` container in babylon.js
  *
@@ -106,14 +125,14 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
     public readonly propertyAnimations: readonly Animation[];
 
     /**
-     * Property animation track bind map(a.k.a. IK toggle animation) for one `mmdModel`
-     */
-    public readonly propertyAnimationBindMap: readonly string[];
-
-    /**
      * Visibility animation track for one `mesh`
      */
     public readonly visibilityAnimation: Nullable<Animation>;
+
+    /**
+     * Property animation track bind map(a.k.a. IK toggle animation) for one `mmdModel`
+     */
+    public readonly propertyAnimationBindMap: readonly string[];
 
     /**
      * The start frame of this animation
@@ -164,9 +183,9 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             morphAnimationBindMap[i] = morphTracks[i].name;
         }
 
+        this.visibilityAnimation = builder.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
         this.propertyAnimations = builder.createPropertyAnimation(name, mmdAnimation.propertyTrack);
         this.propertyAnimationBindMap = mmdAnimation.propertyTrack.ikBoneNames;
-        this.visibilityAnimation = builder.createVisibilityAnimation(name, mmdAnimation.propertyTrack);
 
         this.startFrame = mmdAnimation.startFrame;
         this.endFrame = mmdAnimation.endFrame;
@@ -178,7 +197,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      * @returns The binded mmd model animation group
      */
     public createAnimationGroup(mmdModel: IMmdModel): AnimationGroup {
-        const animationGroup = new AnimationGroup(this.name, mmdModel.mesh.getScene(), 1);
+        const animationGroup = new AnimationGroup(this.name, mmdModel.node.getScene(), 1);
         animationGroup.isAdditive = true;
 
         const skeletonBoneMap = new Map<string, number>();
@@ -230,8 +249,8 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         }
 
         const visibilityAnimation = this.visibilityAnimation;
-        if (visibilityAnimation !== null) {
-            animationGroup.addTargetedAnimation(visibilityAnimation, mmdModel.mesh);
+        if (visibilityAnimation !== null && mmdModel.node.metadata.meshes.length !== 0) {
+            animationGroup.addTargetedAnimation(visibilityAnimation, new VisibilityProxy(mmdModel.node.metadata.meshes));
         }
 
         return animationGroup;
@@ -267,20 +286,20 @@ export interface IMmdModelAnimationGroupBuilder {
     createMorphAnimation(rootName: string, mmdAnimationTrack: MmdMorphAnimationTrack): Animation;
 
     /**
-     * Create mmd model property animation
-     * @param rootName root animation name
-     * @param mmdAnimationTrack mmd property animation track
-     * @returns babylon.js animations
-     */
-    createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[];
-
-    /**
      * Create mmd model visibility animation
      * @param rootName root animation name
      * @param mmdAnimationTrack mmd property animation track
      * @returns babylon.js animation
      */
     createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation>;
+
+    /**
+     * Create mmd model property animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animations
+     */
+    createPropertyAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Animation[];
 }
 
 /**
@@ -333,6 +352,34 @@ export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnim
     }
 
     /**
+     * Create mmd model visibility animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd property animation track
+     * @returns babylon.js animation
+     */
+    public createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
+        const animation = new Animation(rootName + "_visibility", "visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const visibles = mmdAnimationTrack.visibles;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            keys[i] = {
+                frame: frameNumbers[i],
+                value: visibles[i] - 1,
+                interpolation: AnimationKeyInterpolation.STEP
+            };
+        }
+        animation.setKeys(keys);
+
+        if (frameNumbers.length === 0) return null;
+        else if (frameNumbers.length === 1 && visibles[0] === 1) return null;
+
+        return animation;
+    }
+
+    /**
      * Create mmd model property animation
      * @param rootName root animation name
      * @param mmdAnimationTrack mmd property animation track
@@ -360,34 +407,6 @@ export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnim
         }
 
         return animations;
-    }
-
-    /**
-     * Create mmd model visibility animation
-     * @param rootName root animation name
-     * @param mmdAnimationTrack mmd property animation track
-     * @returns babylon.js animation
-     */
-    public createVisibilityAnimation(rootName: string, mmdAnimationTrack: MmdPropertyAnimationTrack): Nullable<Animation> {
-        const animation = new Animation(rootName + "_visibility", "visibility", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
-
-        const frameNumbers = mmdAnimationTrack.frameNumbers;
-        const visibles = mmdAnimationTrack.visibles;
-
-        const keys = new Array<IAnimationKey>(frameNumbers.length);
-        for (let i = 0; i < frameNumbers.length; ++i) {
-            keys[i] = {
-                frame: frameNumbers[i],
-                value: visibles[i] - 1,
-                interpolation: AnimationKeyInterpolation.STEP
-            };
-        }
-        animation.setKeys(keys);
-
-        if (frameNumbers.length === 0) return null;
-        else if (frameNumbers.length === 1 && visibles[0] === 1) return null;
-
-        return animation;
     }
 }
 

@@ -1,11 +1,11 @@
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdMorphController } from "../mmdMorphController";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
@@ -25,7 +25,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
     private readonly _ikSolverStates: Uint8Array;
     private readonly _morphController: MmdMorphController;
-    private readonly _mesh: RuntimeMmdMesh;
+    private readonly _meshes: readonly Mesh[];
 
     private readonly _runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[];
     private _onSpanAdded: Nullable<(span: MmdAnimationSpan) => void>;
@@ -35,7 +35,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         animation: MmdCompositeAnimation,
         ikSolverStates: Uint8Array,
         morphController: MmdMorphController,
-        mesh: RuntimeMmdMesh,
+        meshes: readonly Mesh[],
         runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,
         onSpanRemoved: (removeIndex: number) => void
@@ -44,7 +44,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
         this._ikSolverStates = ikSolverStates;
         this._morphController = morphController;
-        this._mesh = mesh;
+        this._meshes = meshes;
         this._runtimeAnimations = runtimeAnimations;
         this._onSpanAdded = onSpanAdded;
         this._onSpanRemoved = onSpanRemoved;
@@ -120,7 +120,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             totalWeight += activeAnimationSpans[i].getEasedWeight(activeAnimationSpans[i].getFrameTime(frameTime));
         }
 
-        const mesh = this._mesh;
+        const meshes = this._meshes;
         const ikSolverStates = this._ikSolverStates;
 
         const boneResultMap = this._boneResultMap;
@@ -168,7 +168,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     morphController.setMorphWeightFromIndex(morphIndex, 1e-16);
                     morphResultMap.set(morphIndex, 0);
                 }
-                mesh.visibility = 1;
+                for (let i = 0; i < meshes.length; ++i) {
+                    meshes[i].visibility = 1;
+                }
                 for (const [ikSolverIndex, _result] of ikSolverResultMap) {
                     ikSolverStates[ikSolverIndex] = 0;
                     ikSolverResultMap.set(ikSolverIndex, true);
@@ -203,7 +205,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
                 morphController.setMorphWeightFromIndex(morphIndex, 1e-16);
             }
-            mesh.visibility = 1;
+            for (let i = 0; i < meshes.length; ++i) {
+                meshes[i].visibility = 1;
+            }
             for (const [ikSolver, _result] of ikSolverResultMap) {
                 ikSolverStates[ikSolver] = 1;
             }
@@ -284,6 +288,10 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         for (let i = 0; i < activeAnimationSpans.length; ++i) {
             const span = activeAnimationSpans[i];
             const runtimeAnimation = activeRuntimeAnimations[i];
+
+            if (meshes.length !== 0) {
+                meshes[0].visibility = 1;
+            }
 
             const frameTimeInSpan = span.getFrameTime(frameTime);
             runtimeAnimation.animate(frameTimeInSpan);
@@ -366,7 +374,9 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 }
             }
 
-            visibility += mesh.visibility * weight;
+            if (meshes.length !== 0) {
+                visibility += meshes[0].visibility * weight;
+            }
         }
 
         for (const [bone, result] of boneResultMap) {
@@ -391,9 +401,13 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         if (Math.abs(visibility - 1) < 1e-6) {
-            mesh.visibility = 1;
+            for (let i = 0; i < meshes.length; ++i) {
+                meshes[i].visibility = 1;
+            }
         } else {
-            mesh.visibility = visibility;
+            for (let i = 0; i < meshes.length; ++i) {
+                meshes[i].visibility = visibility;
+            }
         }
 
         for (const [ikSolverIndex, result] of ikSolverResultMap) {
@@ -469,7 +483,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             runtimeAnimations.splice(removeIndex, 1);
         };
 
-        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.mesh, runtimeAnimations, onSpanAdded, onSpanRemoved);
+        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.node.metadata.meshes, runtimeAnimations, onSpanAdded, onSpanRemoved);
     }
 }
 

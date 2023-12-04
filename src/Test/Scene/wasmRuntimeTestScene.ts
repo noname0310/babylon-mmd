@@ -23,7 +23,7 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
-import type { MmdMultiMaterial } from "@/Runtime/mmdMesh";
+import type { MmdMultiMaterial } from "@/Runtime/mmdModelNode";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { createMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";

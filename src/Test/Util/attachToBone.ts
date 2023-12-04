@@ -1,7 +1,8 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
+
+import type { MmdModelNode } from "@/Runtime/mmdModelNode";
 
 export interface AttachToBoneOptions {
     directionalLightPosition?: Vector3;
@@ -13,7 +14,7 @@ export interface AttachToBoneOptions {
 
 export function attachToBone(
     scene: Scene,
-    mesh: Mesh,
+    node: MmdModelNode,
     options: AttachToBoneOptions = {}
 ): void {
     const {
@@ -24,8 +25,8 @@ export function attachToBone(
         centerBoneName = "センター"
     } = options;
 
-    const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === centerBoneName);
-    const meshWorldMatrix = mesh.getWorldMatrix();
+    const bodyBone = node.metadata.skeleton!.bones.find((bone) => bone.name === centerBoneName);
+    const meshWorldMatrix = node.getWorldMatrix();
     const boneWorldMatrix = new Matrix();
     const lightYpositionOffset = -10 * worldScale;
     const cameraYpositionOffset = 3 * worldScale + cameraTargetYpositionOffset;

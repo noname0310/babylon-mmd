@@ -27,9 +27,9 @@ export function optimizeScene(scene: Scene): void {
 
     const extensions = [".pmx", ".pmd", ".bpmx"];
     for (const extension of extensions) {
-        let plugin: MmdModelLoader<any, any>;
+        let plugin: MmdModelLoader<any, any, any>;
         try {
-            plugin = SceneLoader.GetPluginForExtension(extension) as MmdModelLoader<any, any>;
+            plugin = SceneLoader.GetPluginForExtension(extension) as MmdModelLoader<any, any, any>;
         } catch (e) {
             continue;
         }

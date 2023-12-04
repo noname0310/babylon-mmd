@@ -1,10 +1,11 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
-import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Tools } from "@babylonjs/core/Misc/tools";
@@ -14,7 +15,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { BuildGeometryResult, BuildMaterialResult} from "../mmdModelLoader";
+import type { BuildMaterialResult, MmdModelBuildGeometryResult } from "../mmdModelLoader";
 import { MmdModelLoader, type MmdModelLoadState } from "../mmdModelLoader";
 import type { MmdModelMetadata } from "../mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "../objectUniqueIdProvider";
@@ -22,17 +23,28 @@ import type { ILogger } from "../Parser/ILogger";
 import { PmxObject } from "../Parser/pmxObject";
 import type { Progress, ProgressTask } from "../progress";
 import { SdefBufferKind } from "../sdefBufferKind";
+import type { IndexedUvGeometry } from "../textureAlphaChecker";
 import type { BpmxObject } from "./Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 
 interface BpmxLoadState extends MmdModelLoadState { }
+
+interface IndexToSubMeshIndexMap {
+    readonly map: Uint16Array | Uint32Array;
+    readonly isReferencedVertex: Uint8Array;
+}
+
+interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult {
+    readonly indices: Uint16Array | Uint32Array;
+    readonly indexMaps: IndexToSubMeshIndexMap[];
+}
 
 /**
  * BpmxLoader is a loader that loads models in BPMX format
  *
  * BPMX is a single binary file format that contains all the data of a model
  */
-export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implements ISceneLoaderPluginAsync, ILogger {
+export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBuildGeometryResult> implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new BpmxLoader
      */
@@ -99,11 +111,10 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
     protected override async _buildGeometryAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
-        mesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
-    ): Promise<BuildGeometryResult> {
+    ): Promise<BpmxBuildGeometryResult> {
         const vertexData = new VertexData();
         vertexData.positions = modelObject.geometry.positions;
         vertexData.normals = modelObject.geometry.normals;
@@ -186,28 +197,24 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
     protected override async _buildMaterialAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
-        mesh: Mesh,
+        rootNode: TransformNode,
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
+        indexedUvGeometries: IndexedUvGeometry[],
         rootUrl: string,
         progress: Progress
     ): Promise<BuildMaterialResult> {
-        scene._blockEntityCollection = !!assetContainer;
-        const multiMaterial = new MultiMaterial(modelObject.header.modelName + "_multi", scene);
-        multiMaterial._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
-
-        let buildMaterialsPromise: void | Promise<void> = undefined;
+        let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
         const texturePathTable: string[] = new Array(modelObject.textures.length);
         for (let i = 0; i < modelObject.textures.length; ++i) {
             texturePathTable[i] = modelObject.textures[i].relativePath;
         }
 
-        const textureLoadPromise = new Promise<void>((resolve) => {
+        const textureLoadPromise = new Promise<Texture[]>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                mesh.uniqueId, // uniqueId
+                rootNode.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
                 texturePathTable, // texturePathTable
                 rootUrl, // rootUrl
@@ -215,62 +222,36 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject> implem
                 modelObject.textures, // referenceFiles
                 scene, // scene
                 assetContainer, // assetContainer
-                vertexData.indices as Uint16Array | Uint32Array, // indices
-                vertexData.uvs as Float32Array, // uvs
-                multiMaterial, // multiMaterial
+                indexedUvGeometries, // indexedUvGeometries
                 this, // logger
                 (event) => {
                     if (!event.lengthComputable) return;
                     progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);
                     progress.invokeProgressEvent();
                 }, // onTextureLoadProgress
-                () => resolve() // onTextureLoadComplete
+                loadedTextures => resolve(loadedTextures) // onTextureLoadComplete
             );
         });
-        if (buildMaterialsPromise !== undefined) {
-            await buildMaterialsPromise;
-        }
-        mesh.material = multiMaterial;
+        const materials: Material[] = Array.isArray(buildMaterialsPromise)
+            ? buildMaterialsPromise
+            : await (buildMaterialsPromise as unknown as Promise<Material[]>);
+
+        for (let i = 0; i < meshes.length; ++i) meshes[i].material = materials[i];
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
 
-        return { multiMaterial, textureLoadPromise };
-    }
-
-    protected override _buildSubMeshes(
-        modelObject: BpmxObject,
-        mesh: Mesh
-    ): void {
-        if (mesh.subMeshes === undefined) return;
-        mesh.subMeshes.length = 0;
-        const materials = modelObject.materials;
-        let offset = 0;
-        for (let i = 0; i < materials.length; ++i) {
-            const materialInfo = materials[i];
-
-            new SubMesh(
-                i, // materialIndex
-                0, // verticesStart
-                Math.floor(modelObject.geometry.positions.length / 3), // verticesCount
-                offset, // indexStart
-                materialInfo.indexCount, // indexCount
-                mesh
-            );
-
-            offset += materialInfo.indexCount;
-        }
+        return { materials, textureLoadPromise };
     }
 
     protected override async _buildMorphAsync(
         modelObject: BpmxObject,
-        mesh: Mesh,
+        buildGeometryResult: BpmxBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        vertexData: VertexData,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager> {
+    ): Promise<MorphTargetManager[]> {
         scene._blockEntityCollection = !!assetContainer;
         const morphTargetManager = new MorphTargetManager(scene);
         morphTargetManager._parentContainer = assetContainer;

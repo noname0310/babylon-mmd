@@ -1,7 +1,6 @@
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
-import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
+import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
@@ -37,7 +36,7 @@ interface RuntimeMorph {
     readonly materialElements: Nullable<readonly RuntimeMaterialMorphElement[]>;
     readonly elements: Nullable<
         Int32Array // group morph / bone morph indices
-        | number // MorphTargetManager morph target index
+        | MorphTarget[] // MorphTargetManager morph targets
     >;
 
     readonly elements2: Nullable<Float32Array>; // group morph ratios / bone morph positions [..., x, y, z, ...]
@@ -63,7 +62,6 @@ export interface ReadonlyRuntimeMorph {
 export class MmdMorphController {
     private readonly _logger: ILogger;
 
-    private readonly _morphTargetManager: Nullable<MorphTargetManager>;
     private readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _materials: readonly (IMmdMaterialProxy | undefined)[];
 
@@ -74,32 +72,27 @@ export class MmdMorphController {
 
     /**
      * Creates a new MmdMorphController
-     * @param morphTargetManager MorphTargetManager
      * @param runtimeBones MMD runtime bones which are original order
-     * @param material MMD multi material
+     * @param materials MMD materials which are order of mmd metadata
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param morphsMetadata Morphs metadata
      * @param logger Logger
      */
     public constructor(
-        morphTargetManager: Nullable<MorphTargetManager>,
         runtimeBones: Nullable<readonly MmdRuntimeBone[]>,
-        material: Nullable<MultiMaterial>,
+        materials: Material[],
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         logger: ILogger
     ) {
         this._logger = logger;
 
-        this._morphTargetManager = morphTargetManager;
         this._runtimeBones = runtimeBones ?? [];
 
-        if (material !== null && materialProxyConstructor !== null) {
-            const subMaterials = material.subMaterials;
-            const materials = this._materials = new Array<IMmdMaterialProxy | undefined>(subMaterials.length);
-            for (let i = 0; i < subMaterials.length; ++i) {
-                const subMaterial = subMaterials[i];
-                materials[i] = subMaterial !== null ? new materialProxyConstructor(subMaterial) : undefined;
+        if (materialProxyConstructor !== null) {
+            const materialProxies = this._materials = new Array<IMmdMaterialProxy | undefined>(materials.length);
+            for (let i = 0; i < materials.length; ++i) {
+                materialProxies[i] = new materialProxyConstructor(materials[i]);
             }
         } else {
             this._materials = [];
@@ -108,7 +101,7 @@ export class MmdMorphController {
         const morphs = this._morphs = this._createRuntimeMorphData(
             morphsMetadata,
             runtimeBones !== null,
-            material !== null && materialProxyConstructor !== null
+            materialProxyConstructor !== null
         );
 
         const morphIndexMap = this._morphIndexMap = new Map<string, number[]>();
@@ -308,7 +301,7 @@ export class MmdMorphController {
                         const element = elements[j];
 
                         if (element.type === PmxObject.Morph.MaterialMorph.Type.Multiply) {
-                            morphElements[j] = <RuntimeMaterialMorphElement>{
+                            morphElements[j] = {
                                 index: element.index,
                                 type: element.type,
                                 diffuse: element.diffuse[0] !== 1 || element.diffuse[1] !== 1 || element.diffuse[2] !== 1 || element.diffuse[3] !== 1 ? element.diffuse : null,
@@ -322,7 +315,7 @@ export class MmdMorphController {
                                 toonTextureColor: element.toonTextureColor[0] !== 1 || element.toonTextureColor[1] !== 1 || element.toonTextureColor[2] !== 1 || element.toonTextureColor[3] !== 1 ? element.toonTextureColor : null
                             };
                         } else /* if (element.type === PmxObject.Morph.MaterialMorph.Type.Add) */ {
-                            morphElements[j] = <RuntimeMaterialMorphElement>{
+                            morphElements[j] = {
                                 index: element.index,
                                 type: element.type,
                                 diffuse: element.diffuse[0] !== 0 || element.diffuse[1] !== 0 || element.diffuse[2] !== 0 || element.diffuse[3] !== 0 ? element.diffuse : null,
@@ -344,14 +337,14 @@ export class MmdMorphController {
 
             case PmxObject.Morph.Type.UvMorph:
             case PmxObject.Morph.Type.VertexMorph:
-                runtimeMorphElements = morphMetadata.index;
+                runtimeMorphElements = morphMetadata.morphTargets;
                 break;
 
             default:
                 throw new Error(`Unknown morph type: ${morphMetadata.type}`);
             }
 
-            const morph: RuntimeMorph = <RuntimeMorph>{
+            const morph: RuntimeMorph = {
                 name: morphMetadata.name,
                 type: morphMetadata.type,
                 materialElements: runtimeMorphMaterialElements,
@@ -465,8 +458,9 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
-            if (this._morphTargetManager !== null) {
-                this._morphTargetManager.getTarget(morph.elements as number).influence = 0;
+            {
+                const morphTargets = morph.elements as MorphTarget[];
+                for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence = 0;
             }
             break;
         }
@@ -547,8 +541,9 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
-            if (this._morphTargetManager !== null) {
-                this._morphTargetManager.getTarget(morph.elements as number).influence += weight;
+            {
+                const morphTargets = morph.elements as MorphTarget[];
+                for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence += weight;
             }
             break;
         }
