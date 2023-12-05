@@ -32,7 +32,10 @@ interface BpmxLoadState extends MmdModelLoadState { }
 
 interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult {
     readonly indices: Uint16Array | Uint32Array;
-    readonly indexToSubmehIndexMaps: (Uint16Array | Uint32Array)[];
+    readonly indexToSubmehIndexMaps: {
+        map: Uint16Array | Uint32Array;
+        isReferencedVertex: Uint8Array;
+    }[];
 }
 
 /**
@@ -107,6 +110,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     protected override async _buildGeometryAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
+        rootNode: TransformNode,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -114,18 +118,17 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
         const indices = modelObject.geometry.indices;
-        const indexToSubmehIndexMaps: (Uint16Array | Uint32Array)[] = [];
+        const indexToSubmehIndexMaps: BpmxBuildGeometryResult["indexToSubmehIndexMaps"] = [];
         const vertexDataArray: VertexData[] = [];
         {
             const vetexCount = modelObject.geometry.positions.length / 3;
-
-            const isReferencedVertex = new Uint8Array(vetexCount);//.fill(0);
 
             const materials = modelObject.materials;
             let indexStartOffset = 0;
             for (let i = 0; i < materials.length; ++i) {
                 const materialInfo = materials[i];
 
+                const isReferencedVertex = new Uint8Array(vetexCount);//.fill(0);
                 let subMeshVertexCount = 0;
                 {
                     const indexCount = materialInfo.indexCount;
@@ -247,7 +250,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                             }
 
                             subMeshIndices[subMeshIndex] = vertexIndex;
-                            indexToSubMeshIndexMap[elementIndex] = subMeshIndex;
+                            indexToSubMeshIndexMap[elementIndex] = vertexIndex;
                             subMeshIndex += 1;
                             vertexIndex += 1;
                         } else {
@@ -276,6 +279,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
+                mesh.parent = rootNode;
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -290,10 +294,12 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 geometry.applyToMesh(mesh);
                 geometries.push(geometry);
 
-                indexToSubmehIndexMaps.push(indexToSubMeshIndexMap);
+                indexToSubmehIndexMaps.push({
+                    map: indexToSubMeshIndexMap,
+                    isReferencedVertex
+                });
                 vertexDataArray.push(vertexData);
 
-                isReferencedVertex.fill(0);
                 indexStartOffset += materialInfo.indexCount;
             }
         }
@@ -386,10 +392,10 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
     ): Promise<MorphTargetManager[]> {
-        const vertexToSubMeshIndexMap = new Int32Array(modelObject.geometry.positions.length / 3).fill(-1);
-        // if vertexToSubMeshIndexMap[i] === -2, vertex i has multiple submeshes references
-        // if vertexToSubMeshIndexMap[i] === -1, vertex i has no submeshes references
-        const vertexToSubMeshIndexSlowMap = new Map<number, number[]>();
+        const vertexToSubMeshMap = new Int32Array(modelObject.geometry.positions.length / 3).fill(-1);
+        // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
+        // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
+        const vertexToSubMeshSlowMap = new Map<number, number[]>();
 
         const indices = buildGeometryResult.indices;
         {
@@ -399,16 +405,16 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const indexCount = materials[subMeshIndex].indexCount;
                 for (let j = 0; j < indexCount; ++j) {
                     const elementIndex = indices[indexOffset + j];
-                    if (vertexToSubMeshIndexMap[elementIndex] === -1) {
-                        vertexToSubMeshIndexMap[elementIndex] = subMeshIndex;
-                    } else if (vertexToSubMeshIndexMap[elementIndex] === -2) {
-                        const subMeshIndices = vertexToSubMeshIndexSlowMap.get(elementIndex)!;
+                    if (vertexToSubMeshMap[elementIndex] === -1) {
+                        vertexToSubMeshMap[elementIndex] = subMeshIndex;
+                    } else if (vertexToSubMeshMap[elementIndex] === -2) {
+                        const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
                         if (!subMeshIndices.includes(subMeshIndex)) {
                             subMeshIndices.push(subMeshIndex);
                         }
-                    } else if (vertexToSubMeshIndexMap[elementIndex] !== subMeshIndex) {
-                        vertexToSubMeshIndexSlowMap.set(elementIndex, [vertexToSubMeshIndexMap[elementIndex], subMeshIndex]);
-                        vertexToSubMeshIndexMap[elementIndex] = -2;
+                    } else if (vertexToSubMeshMap[elementIndex] !== subMeshIndex) {
+                        vertexToSubMeshSlowMap.set(elementIndex, [vertexToSubMeshMap[elementIndex], subMeshIndex]);
+                        vertexToSubMeshMap[elementIndex] = -2;
                     }
                 }
 
@@ -416,7 +422,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             }
         }
 
-        const indexToSubmehIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
+        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
         const morphsInfo = modelObject.morphs;
         const vertexDataArray = buildGeometryResult.vertexDataArray;
         const subMeshesMorphTargets: MorphTarget[][] = new Array(vertexDataArray.length); // morphTargets[subMeshIndex][morphIndex]
@@ -472,11 +478,11 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             const morphIndices = morphInfo.indices;
             for (let i = 0; i < morphIndices.length; ++i) {
                 const elementIndex = morphIndices[i];
-                const subMeshIndex = vertexToSubMeshIndexMap[elementIndex];
+                const subMeshIndex = vertexToSubMeshMap[elementIndex];
                 if (subMeshIndex === -1) continue;
 
                 if (subMeshIndex === -2) {
-                    const subMeshIndices = vertexToSubMeshIndexSlowMap.get(elementIndex)!;
+                    const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
                     for (let j = 0; j < subMeshIndices.length; ++j) {
                         const subMeshIndex = subMeshIndices[j];
                         if (!referencedSubMeshes.includes(subMeshIndex)) {
@@ -504,13 +510,15 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const morphIndices = morphInfo.indices;
                     const positionOffsets = morphInfo.positions;
 
-                    const indexToSubMeshIndexMap = indexToSubmehIndexMaps[subMeshIndex];
+                    const indexToSubMeshIndexMap = indexToSubmeshIndexMaps[subMeshIndex].map;
+                    const isReferencedVertex = indexToSubmeshIndexMaps[subMeshIndex].isReferencedVertex;
                     for (let j = 0; j < morphIndices.length; ++j) {
-                        const elementIndex = morphIndices[j];
-                        const subMeshElementIndex = indexToSubMeshIndexMap[elementIndex];
-                        positions[subMeshElementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
-                        positions[subMeshElementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
-                        positions[subMeshElementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
+                        if (isReferencedVertex[morphIndices[j]] === 0) continue;
+
+                        const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
+                        positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
+                        positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
+                        positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
                     }
 
                     morphTargets[i].setPositions(positions);
@@ -526,8 +534,11 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const morphIndices = morphInfo.indices;
                     const uvOffsets = morphInfo.offsets;
 
-                    const indexToSubMeshIndexMap = indexToSubmehIndexMaps[subMeshIndex];
+                    const indexToSubMeshIndexMap = indexToSubmeshIndexMaps[subMeshIndex].map;
+                    const isReferencedVertex = indexToSubmeshIndexMaps[subMeshIndex].isReferencedVertex;
                     for (let j = 0; j < morphIndices.length; ++j) {
+                        if (isReferencedVertex[morphIndices[j]] === 0) continue;
+
                         const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                         uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
                         uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];

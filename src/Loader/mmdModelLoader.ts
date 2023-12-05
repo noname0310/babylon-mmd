@@ -203,6 +203,7 @@ export abstract class MmdModelLoader<
         const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
+            rootNode,
             scene,
             assetContainer,
             progress
@@ -337,6 +338,7 @@ export abstract class MmdModelLoader<
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
+        rootNode: TransformNode,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
