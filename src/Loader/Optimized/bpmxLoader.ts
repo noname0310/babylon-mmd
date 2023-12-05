@@ -5,7 +5,6 @@ import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Tools } from "@babylonjs/core/Misc/tools";
@@ -110,7 +109,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     protected override async _buildGeometryAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -279,7 +278,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.parent = rootNode;
+                mesh.setParent(rootMesh);
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -337,7 +336,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     protected override async _buildMaterialAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -354,7 +353,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
 
         const textureLoadPromise = new Promise<Texture[]>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                rootNode.uniqueId, // uniqueId
+                rootMesh.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
                 texturePathTable, // texturePathTable
                 rootUrl, // rootUrl

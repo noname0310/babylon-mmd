@@ -197,7 +197,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      * @returns The binded mmd model animation group
      */
     public createAnimationGroup(mmdModel: IMmdModel): AnimationGroup {
-        const animationGroup = new AnimationGroup(this.name, mmdModel.node.getScene(), 1);
+        const animationGroup = new AnimationGroup(this.name, mmdModel.mesh.getScene(), 1);
         animationGroup.isAdditive = true;
 
         const skeletonBoneMap = new Map<string, number>();
@@ -249,8 +249,8 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
         }
 
         const visibilityAnimation = this.visibilityAnimation;
-        if (visibilityAnimation !== null && mmdModel.node.metadata.meshes.length !== 0) {
-            animationGroup.addTargetedAnimation(visibilityAnimation, new VisibilityProxy(mmdModel.node.metadata.meshes));
+        if (visibilityAnimation !== null && mmdModel.mesh.metadata.meshes.length !== 0) {
+            animationGroup.addTargetedAnimation(visibilityAnimation, new VisibilityProxy(mmdModel.mesh.metadata.meshes));
         }
 
         return animationGroup;

@@ -149,7 +149,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(
             mmdRuntime,
-            modelLoadResult.meshes[0],
+            modelLoadResult.meshes[0] as Mesh,
             [modelMesh],
             {
                 boneMap: new MmdHumanoidMapper({

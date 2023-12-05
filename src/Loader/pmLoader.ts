@@ -5,7 +5,6 @@ import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Tools } from "@babylonjs/core/Misc/tools";
@@ -112,7 +111,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     protected override async _buildGeometryAsync(
         state: PmLoadState,
         modelObject: PmxObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -359,7 +358,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 const mesh = new (state.useSdef && hasSdef ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.parent = rootNode;
+                mesh.setParent(rootMesh);
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -427,7 +426,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     protected override async _buildMaterialAsync(
         state: PmLoadState,
         modelObject: PmxObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -438,7 +437,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
         const textureLoadPromise = new Promise<Texture[]>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
-                rootNode.uniqueId, // uniqueId
+                rootMesh.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
                 modelObject.textures, // texturePathTable
                 rootUrl, // rootUrl

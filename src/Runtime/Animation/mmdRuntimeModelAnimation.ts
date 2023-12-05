@@ -477,10 +477,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             moveableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
-            model.node.metadata.meshes,
+            model.mesh.metadata.meshes,
             ikSolverBindIndexMap,
             model.ikSolverStates,
-            model.node.metadata.materials
+            model.mesh.metadata.materials
         );
     }
 

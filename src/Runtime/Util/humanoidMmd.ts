@@ -18,6 +18,7 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import { MmdMesh } from "../mmdMesh";
 
 class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     public readonly index: number;
@@ -372,8 +373,7 @@ export class HumanoidMmd {
     private _createMetadata(
         name: string,
         meshes: readonly Mesh[],
-        morphMap: { [key: string]: string },
-        skeleton: Skeleton
+        morphMap: { [key: string]: string }
     ): MmdModelMetadata {
         const header: MmdModelMetadata.Header = {
             modelName: name,
@@ -453,7 +453,6 @@ export class HumanoidMmd {
             rigidBodies: [],
             joints: [],
             meshes: meshes,
-            skeleton: skeleton,
             materials: []
         };
     }
@@ -796,14 +795,14 @@ export class HumanoidMmd {
     /**
      * Force Create MMD model from humanoid mesh
      * @param mmdRuntime MMD runtime
-     * @param humanoidModelNode Humanoid model root node
+     * @param humanoidMesh Humanoid model root mesh
      * @param meshes Meshes
      * @param options Options
      * @returns MMD model created from humanoid mesh
      */
     public createMmdModelFromHumanoid<T extends IMmdModel>(
         mmdRuntime: IMmdRuntime<T>,
-        humanoidModelNode: TransformNode,
+        humanoidMesh: Mesh,
         meshes: Mesh[],
         options: CreateMmdModelFromHumanoidOptions = {}
     ): T {
@@ -813,18 +812,13 @@ export class HumanoidMmd {
             transformOffset = Matrix.Identity()
         } = options;
 
-        let skeleton: Nullable<Skeleton> = null;
-        for (let i = 0; i < meshes.length; ++i) {
-            const mesh = meshes[i];
-            if (mesh.skeleton !== null) {
-                skeleton = mesh.skeleton;
-                break;
-            }
-        }
+        const skeleton = humanoidMesh.skeleton;
         if (skeleton === null) throw new Error("Skeleton not found.");
 
-        const metadata = this._createMetadata(humanoidModelNode.name, meshes.slice(), morphMap, skeleton);
-        humanoidModelNode.metadata = metadata;
+        const metadata = this._createMetadata(humanoidMesh.name, meshes.slice(), morphMap);
+        humanoidMesh.metadata = metadata;
+
+        if (!MmdMesh.isMmdMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
 
         let transformOffsetMatrix: Matrix;
         if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {
@@ -835,7 +829,7 @@ export class HumanoidMmd {
 
         const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);
         const virtualSkeleton = new BoneContainer(boneProxies, skeleton);
-        const mmdModel = mmdRuntime.createMmdModelFromSkeleton(humanoidModelNode, virtualSkeleton, {
+        const mmdModel = mmdRuntime.createMmdModelFromSkeleton(humanoidMesh, virtualSkeleton, {
             materialProxyConstructor: null,
             buildPhysics: false
         });

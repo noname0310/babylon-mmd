@@ -16,7 +16,7 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
-import type { MmdModelNode, RuntimeMmdModelNode } from "../mmdModelNode";
+import type { MmdMesh, RuntimeMmdMesh } from "../mmdMesh";
 import { MmdMorphController } from "../mmdMorphController";
 import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 
@@ -33,9 +33,9 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
  */
 export class MmdWasmModel implements IMmdModel {
     /**
-     * The root node of this model
+     * The root mesh of this model
      */
-    public readonly node: RuntimeMmdModelNode;
+    public readonly mesh: RuntimeMmdMesh;
 
     /**
      * The skeleton of this model
@@ -84,14 +84,14 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Create a MmdWasmModel
-     * @param mmdModelNode Transform node that able to instantiate `MmdWasmModel`
+     * @param mmdMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param buildPhysics Whether to build physics
      * @param logger Logger
      */
     public constructor(
-        mmdModelNode: MmdModelNode,
+        mmdMesh: MmdMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         buildPhysics: boolean,
@@ -99,17 +99,16 @@ export class MmdWasmModel implements IMmdModel {
     ) {
         this._logger = logger;
 
-        const mmdMetadata = mmdModelNode.metadata;
+        const mmdMetadata = mmdMesh.metadata;
 
-        const runtimeModelNode = mmdModelNode as unknown as RuntimeMmdModelNode;
+        const runtimeModelNode = mmdMesh as unknown as RuntimeMmdMesh;
         runtimeModelNode.metadata = {
             isRuntimeMmdModel: true,
             header: mmdMetadata.header,
             meshes: mmdMetadata.meshes,
-            skeleton: mmdMetadata.skeleton,
             materials: mmdMetadata.materials
         };
-        this.node = runtimeModelNode;
+        this.mesh = runtimeModelNode;
         this.skeleton = skeleton;
         this.worldTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
@@ -157,7 +156,7 @@ export class MmdWasmModel implements IMmdModel {
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this.onCurrentAnimationChangedObservable.clear();
-        (this.node as any).metadata = null;
+        (this.mesh as any).metadata = null;
     }
 
     /**
@@ -274,7 +273,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public afterPhysics(): void {
         // wasm side computes the world matrix of the bones
-        this.node.metadata.skeleton._markAsDirty();
+        this.mesh.skeleton._markAsDirty();
     }
 
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
@@ -319,6 +318,6 @@ export class MmdWasmModel implements IMmdModel {
             bone.position = position;
             bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
-        this.node.metadata.skeleton._markAsDirty();
+        this.mesh.skeleton._markAsDirty();
     }
 }

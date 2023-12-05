@@ -1,11 +1,11 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdCamera } from "@/Runtime/mmdCamera";
-import type { MmdModelNode } from "@/Runtime/mmdModelNode";
 
 export class MmdCameraAutoFocus {
     private readonly _camera: MmdCamera;
@@ -26,8 +26,8 @@ export class MmdCameraAutoFocus {
         this._beforeRender = null;
     }
 
-    public setTarget(modelNode: MmdModelNode, headBoneName: string = "頭"): void {
-        this._headBone = modelNode.metadata.skeleton.bones.find((bone) => bone.name === headBoneName) ?? null;
+    public setTarget(modelMesh: Mesh, headBoneName: string = "頭"): void {
+        this._headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === headBoneName) ?? null;
     }
 
     public setSkeletonWorldMatrix(matrix: Matrix): void {

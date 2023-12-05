@@ -483,7 +483,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             runtimeAnimations.splice(removeIndex, 1);
         };
 
-        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.node.metadata.meshes, runtimeAnimations, onSpanAdded, onSpanRemoved);
+        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.mesh.metadata.meshes, runtimeAnimations, onSpanAdded, onSpanRemoved);
     }
 }
 

@@ -5,11 +5,11 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
-import type { ISceneLoaderAsyncResult} from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
@@ -72,15 +72,15 @@ export class SceneBuilder implements ISceneBuilder {
 
         const [
             mmdAnimation,
-            modelLoadResult,
-            stageLoadResult
+            modelMesh,
+            stageMesh
         ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["model", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -88,9 +88,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "yyb_deep_canyons_miku.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then((result) => result.meshes[0] as Mesh);
             }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
+            ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -100,7 +100,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "water house.bpmx",
                     scene,
                     updateProgress
-                );
+                ).then((result) => result.meshes[0] as Mesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -117,20 +117,19 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelLoadResult.meshes) {
+        for (const mesh of modelMesh.getChildMeshes()) {
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh);
         }
-        const modelNode = modelLoadResult.transformNodes[0];
-        modelNode.parent = mmdRoot;
+        modelMesh.parent = mmdRoot;
 
-        const mmdModel = mmdRuntime.createMmdModel(modelNode, {
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelNode, {
+        attachToBone(scene, modelMesh, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
@@ -140,12 +139,11 @@ export class SceneBuilder implements ISceneBuilder {
         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         // });
 
-        for (const mesh of stageLoadResult.meshes) {
+        for (const mesh of stageMesh.getChildMeshes()) {
             mesh.receiveShadows = true;
         }
-        const stageNode = stageLoadResult.transformNodes[0];
-        stageNode.position.y += 0.01;
-        for (const mesh of stageLoadResult.meshes) {
+        stageMesh.position.y += 0.01;
+        for (const mesh of stageMesh.getChildMeshes()) {
             const material = mesh.material as MmdStandardMaterial;
             material.ignoreDiffuseWhenToonTextureIsNull = false;
             material.toonTexture = null;
@@ -178,7 +176,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelNode);
+        mmdCameraAutoFocus.setTarget(modelMesh);
         mmdCameraAutoFocus.register(scene);
 
         return scene;

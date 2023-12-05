@@ -1,6 +1,6 @@
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
-import type { RuntimeMmdModelNode } from "./mmdModelNode";
+import type { RuntimeMmdMesh } from "./mmdMesh";
 import type { MmdMorphController } from "./mmdMorphController";
 
 /**
@@ -8,9 +8,9 @@ import type { MmdMorphController } from "./mmdMorphController";
  */
 export interface IMmdModel {
     /**
-     * The root node of this model
+     * The root mesh of this model
      */
-    readonly node: RuntimeMmdModelNode;
+    readonly mesh: RuntimeMmdMesh;
 
     /**
      * The skeleton of this model

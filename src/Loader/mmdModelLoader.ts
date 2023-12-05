@@ -7,9 +7,8 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
@@ -195,15 +194,15 @@ export abstract class MmdModelLoader<
         progress.invokeProgressEvent();
 
         scene._blockEntityCollection = !!assetContainer;
-        const rootNode = new TransformNode(modelObject.header.modelName, scene);
-        rootNode._parentContainer = assetContainer;
+        const rootMesh = new Mesh(modelObject.header.modelName, scene);
+        rootMesh._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
-        rootNode.setEnabled(false);
+        rootMesh.setEnabled(false);
 
         const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
-            rootNode,
+            rootMesh,
             scene,
             assetContainer,
             progress
@@ -212,7 +211,7 @@ export abstract class MmdModelLoader<
         const { materials, textureLoadPromise } = await this._buildMaterialAsync(
             state,
             modelObject,
-            rootNode,
+            rootMesh,
             buildGeometryResult.meshes,
             scene,
             assetContainer,
@@ -226,6 +225,7 @@ export abstract class MmdModelLoader<
         if (state.buildSkeleton) {
             skeleton = await this._buildSkeletonAsync(
                 modelObject,
+                rootMesh,
                 buildGeometryResult.meshes,
                 scene,
                 assetContainer,
@@ -255,7 +255,7 @@ export abstract class MmdModelLoader<
             this._applyBoundingBoxMargin(buildGeometryResult.meshes, state.boundingBoxMargin);
         }
 
-        (rootNode.metadata as MmdModelMetadata) = {
+        (rootMesh.metadata as MmdModelMetadata) = {
             isMmdModel: true,
             header: {
                 modelName: modelObject.header.modelName,
@@ -268,7 +268,6 @@ export abstract class MmdModelLoader<
             rigidBodies: modelObject.rigidBodies,
             joints: modelObject.joints,
             meshes: buildGeometryResult.meshes,
-            skeleton: skeleton,
             materials: materials
         };
 
@@ -278,13 +277,12 @@ export abstract class MmdModelLoader<
         progress.endTask("Texture Load");
         progress.invokeProgressEvent();
 
-        rootNode.setEnabled(true);
+        rootMesh.setEnabled(true);
 
         if (assetContainer !== null) {
-            assetContainer.rootNodes.push(rootNode);
-            assetContainer.meshes.push(...buildGeometryResult.meshes);
+            assetContainer.rootNodes.push(rootMesh);
+            assetContainer.meshes.push(rootMesh, ...buildGeometryResult.meshes);
             assetContainer.geometries.push(...buildGeometryResult.geometries);
-            assetContainer.transformNodes.push(rootNode);
             assetContainer.materials.push(...materials);
             assetContainer.textures.push(...textures);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
@@ -292,11 +290,11 @@ export abstract class MmdModelLoader<
         }
 
         return {
-            meshes: buildGeometryResult.meshes,
+            meshes: [rootMesh, ...buildGeometryResult.meshes],
             particleSystems: [],
             skeletons: skeleton !== null ? [skeleton] : [],
             animationGroups: [],
-            transformNodes: [rootNode],
+            transformNodes: [],
             geometries: buildGeometryResult.geometries,
             lights: []
         };
@@ -338,7 +336,7 @@ export abstract class MmdModelLoader<
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -347,7 +345,7 @@ export abstract class MmdModelLoader<
     protected abstract _buildMaterialAsync(
         state: LoadState,
         modelObject: ModelObject,
-        rootNode: TransformNode,
+        rootMesh: Mesh,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -358,6 +356,7 @@ export abstract class MmdModelLoader<
 
     protected async _buildSkeletonAsync(
         modelObject: ModelObject,
+        rootMesh: Mesh,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -456,7 +455,7 @@ export abstract class MmdModelLoader<
         progress.invokeProgressEvent();
 
         for (let i = 0; i < meshes.length; ++i) meshes[i].skeleton = skeleton;
-        return skeleton;
+        return rootMesh.skeleton = skeleton;
     }
 
     protected abstract _buildMorphAsync(

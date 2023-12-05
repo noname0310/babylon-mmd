@@ -1,8 +1,6 @@
-import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
-import type { Nullable } from "@babylonjs/core/types";
 
 import type { PmxObject } from "./Parser/pmxObject";
 
@@ -48,11 +46,6 @@ export interface MmdModelMetadata {
      * Mmd model meshes
      */
     readonly meshes: readonly Mesh[];
-
-    /**
-     * Mmd model skeleton
-     */
-    readonly skeleton: Nullable<Skeleton>;
 
     /**
      * Mmd model materials
