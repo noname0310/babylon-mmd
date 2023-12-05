@@ -137,7 +137,7 @@ export class SceneBuilder implements ISceneBuilder {
             });
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-            const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
+            const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;
