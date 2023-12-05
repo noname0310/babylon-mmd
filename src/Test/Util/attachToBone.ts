@@ -1,7 +1,8 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
+
+import type { IMmdModel } from "@/Runtime/IMmdModel";
 
 export interface AttachToBoneOptions {
     directionalLightPosition?: Vector3;
@@ -9,11 +10,12 @@ export interface AttachToBoneOptions {
     cameraTargetYpositionOffset?: number;
     worldScale?: number;
     centerBoneName?: string;
+    worldMatrix?: Matrix;
 }
 
 export function attachToBone(
     scene: Scene,
-    mesh: Mesh,
+    mmdModel: IMmdModel,
     options: AttachToBoneOptions = {}
 ): void {
     const {
@@ -21,16 +23,17 @@ export function attachToBone(
         cameraTargetPosition,
         cameraTargetYpositionOffset = 0,
         worldScale = 1,
-        centerBoneName = "センター"
+        centerBoneName = "センター",
+        worldMatrix
     } = options;
 
-    const bodyBone = mesh.skeleton!.bones.find((bone) => bone.name === centerBoneName);
-    const meshWorldMatrix = mesh.getWorldMatrix();
+    const bodyBone = mmdModel.runtimeBones.find((bone) => bone.name === centerBoneName);
+    const meshWorldMatrix = worldMatrix ?? mmdModel.mesh.getWorldMatrix();
     const boneWorldMatrix = new Matrix();
     const lightYpositionOffset = -10 * worldScale;
     const cameraYpositionOffset = 3 * worldScale + cameraTargetYpositionOffset;
     scene.onBeforeRenderObservable.add(() => {
-        boneWorldMatrix.copyFrom(bodyBone!.getFinalMatrix()).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
+        bodyBone!.getWorldMatrixToRef(boneWorldMatrix).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
 
         if (directionalLightPosition !== undefined) {
             boneWorldMatrix.getTranslationToRef(directionalLightPosition);

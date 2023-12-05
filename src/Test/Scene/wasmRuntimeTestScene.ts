@@ -9,7 +9,6 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -23,6 +22,7 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { createMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -70,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
+            ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -78,9 +78,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "yyb_deep_canyons_miku.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
-            ["stage", (updateProgress): Promise<Mesh> => {
+            ["stage", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -90,7 +90,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "water house.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["runtime", async(updateProgress): Promise<MmdWasmInstance> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -117,7 +117,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
 
@@ -127,15 +127,15 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, {
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-        for (const mesh of stageMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of stageMesh.metadata.meshes) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
-        for (const mesh of stageMesh.getChildMeshes()) {
+        for (const mesh of stageMesh.metadata.meshes) {
             const material = mesh.material as MmdStandardMaterial;
             material.ignoreDiffuseWhenToonTextureIsNull = false;
             material.toonTexture = null;
@@ -157,7 +157,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
 
         return scene;

@@ -1,17 +1,17 @@
-import type { Bone } from "@babylonjs/core/Bones/bone";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IMmdModel } from "@/Runtime/IMmdModel";
+import type { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 export class MmdCameraAutoFocus {
     private readonly _camera: MmdCamera;
     private readonly _pipeline: DefaultRenderingPipeline;
 
-    private _headBone: Nullable<Bone>;
+    private _headBone: Nullable<IMmdRuntimeBone>;
     private _skeletonWorldMatrix: Nullable<Matrix>;
     private _beforeRender: Nullable<() => void>;
 
@@ -26,8 +26,8 @@ export class MmdCameraAutoFocus {
         this._beforeRender = null;
     }
 
-    public setTarget(modelMesh: Mesh, headBoneName: string = "頭"): void {
-        this._headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === headBoneName) ?? null;
+    public setTarget(mmdModel: IMmdModel, headBoneName: string = "頭"): void {
+        this._headBone = mmdModel.runtimeBones.find((bone) => bone.name === headBoneName) ?? null;
     }
 
     public setSkeletonWorldMatrix(matrix: Matrix): void {
@@ -73,9 +73,9 @@ export class MmdCameraAutoFocus {
             }
 
             if (skeletonWorldMatrix !== null) {
-                this._headBone!.getFinalMatrix().multiplyToRef(skeletonWorldMatrix!, boneWorldMatrix);
+                this._headBone!.getWorldMatrixToRef(boneWorldMatrix).multiplyToRef(skeletonWorldMatrix!, boneWorldMatrix);
             } else {
-                boneWorldMatrix.copyFrom(this._headBone!.getFinalMatrix());
+                this._headBone!.getWorldMatrixToRef(boneWorldMatrix);
             }
 
             boneWorldMatrix.getTranslationToRef(headRelativePosition)

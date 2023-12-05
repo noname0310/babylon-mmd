@@ -7,7 +7,6 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -19,6 +18,7 @@ import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBui
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VpdLoader } from "@/Loader/vpdLoader";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 
@@ -68,7 +68,7 @@ export class SceneBuilder implements ISceneBuilder {
                 vpdLoader.loggingEnabled = true;
                 return vpdLoader.loadAsync("motion", "res/private_test/motion/test_pose1.vpd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
+            ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -76,7 +76,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["physics", async(updateProgress): Promise<HavokPlugin> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -89,7 +89,7 @@ export class SceneBuilder implements ISceneBuilder {
         ]);
 
         shadowGenerator.addShadowCaster(modelMesh);
-        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         modelMesh.parent = mmdRoot;
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
@@ -100,7 +100,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.currentAnimation!.animate(0);
         mmdModel.initializePhysics();
 
-        attachToBone(scene, modelMesh, {
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });

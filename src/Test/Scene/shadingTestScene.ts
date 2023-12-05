@@ -37,7 +37,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene
         ).then(result => result.meshes[0]) as Mesh;
         shadowGenerator.addShadowCaster(mmdMesh);
-        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
 
         Inspector.Show(scene, { enablePopup: false });
 

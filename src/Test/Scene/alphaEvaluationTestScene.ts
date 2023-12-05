@@ -11,6 +11,7 @@ import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -41,8 +42,8 @@ export class SceneBuilder implements ISceneBuilder {
             "https://a-cdn.qbox.net/test/models/pmx/[MODELS]%20Lovesick%20girls%20ver.1/",
             "[LSG]%20Jennie%20(Miku)%20ver.1.pmx",
             scene
-        ).then(result => result.meshes[0]);
-        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
+        ).then(result => result.meshes[0] as MmdMesh);
+        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         Inspector.Show(scene, { });

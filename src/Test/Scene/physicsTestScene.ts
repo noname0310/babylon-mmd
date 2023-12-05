@@ -25,6 +25,7 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -88,7 +89,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "yyb_deep_canyons_miku.bpmx",
                     scene,
                     updateProgress
-                ).then((result) => result.meshes[0] as Mesh);
+                ).then((result) => result.meshes[0] as MmdMesh);
             }],
             ["stage", (updateProgress): Promise<Mesh> => {
                 pmxLoader.boundingBoxMargin = 0;
@@ -100,7 +101,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "water house.bpmx",
                     scene,
                     updateProgress
-                ).then((result) => result.meshes[0] as Mesh);
+                ).then((result) => result.meshes[0] as MmdMesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -117,7 +118,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
 
@@ -127,19 +128,19 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, {
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
-        // const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
+        // const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         // });
 
-        for (const mesh of stageMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of stageMesh.metadata.meshes) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
-        for (const mesh of stageMesh.getChildMeshes()) {
+        for (const mesh of stageMesh.metadata.meshes) {
             const material = mesh.material as MmdStandardMaterial;
             material.ignoreDiffuseWhenToonTextureIsNull = false;
             material.toonTexture = null;
@@ -172,7 +173,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
 
         return scene;

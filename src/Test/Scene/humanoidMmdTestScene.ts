@@ -46,6 +46,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
+
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
@@ -115,8 +116,9 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        modelLoadResult.meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        modelLoadResult.meshes[0].scaling.scaleInPlace(14.3);
+        const modelRoot = modelLoadResult.meshes[0] as Mesh;
+        modelRoot.rotationQuaternion!.set(0, 0, 0, 1);
+        modelRoot.scaling.scaleInPlace(14.3);
         for (const mesh of modelLoadResult.meshes as Mesh[]) {
             const boundingInfo = mesh.getBoundingInfo();
             const subMeshes = mesh.subMeshes;
@@ -149,7 +151,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(
             mmdRuntime,
-            modelLoadResult.meshes[0] as Mesh,
+            modelRoot,
             [modelMesh],
             {
                 boneMap: new MmdHumanoidMapper({
@@ -217,11 +219,14 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, {
+        const translationMatrix = modelMesh.getWorldMatrix().clone();
+        translationMatrix.removeRotationAndScaling();
+
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target,
             cameraTargetYpositionOffset: -3,
-            centerBoneName: "Spine"
+            worldMatrix: translationMatrix
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
@@ -287,8 +292,8 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh, "Head");
-        mmdCameraAutoFocus.setSkeletonWorldMatrix(modelMesh.getWorldMatrix());
+        mmdCameraAutoFocus.setTarget(mmdModel);
+        mmdCameraAutoFocus.setSkeletonWorldMatrix(translationMatrix);
         mmdCameraAutoFocus.register(scene);
 
         return scene;

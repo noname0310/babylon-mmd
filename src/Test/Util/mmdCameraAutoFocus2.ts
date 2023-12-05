@@ -1,17 +1,17 @@
-import type { Bone } from "@babylonjs/core/Bones/bone";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IMmdModel } from "@/Runtime/IMmdModel";
+import type { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 export class MmdCameraAutoFocus2 {
     private readonly _camera: MmdCamera;
     private readonly _pipeline: DefaultRenderingPipeline;
 
-    private readonly _headBones: Bone[];
+    private readonly _headBones: IMmdRuntimeBone[];
     private _skeletonWorldMatrix: Nullable<Matrix>;
     private _beforeRender: Nullable<() => void>;
 
@@ -26,21 +26,21 @@ export class MmdCameraAutoFocus2 {
         this._beforeRender = null;
     }
 
-    public setTargets(models: ([Mesh, string] | Mesh)[]): void {
+    public setTargets(models: ([IMmdModel, string] | IMmdModel)[]): void {
         for (let i = 0; i < models.length; i++) {
             const model = models[i];
-            let modelMesh: Mesh;
+            let mmdModel: IMmdModel;
             let headBoneName: string;
 
             if (Array.isArray(model)) {
-                modelMesh = model[0];
+                mmdModel = model[0];
                 headBoneName = model[1];
             } else {
-                modelMesh = model;
+                mmdModel = model;
                 headBoneName = "頭";
             }
 
-            const headBone = modelMesh.skeleton?.bones.find((bone) => bone.name === headBoneName);
+            const headBone = mmdModel.runtimeBones.find((bone) => bone.name === headBoneName);
             if (headBone !== undefined) this._headBones.push(headBone);
         }
     }
@@ -93,9 +93,9 @@ export class MmdCameraAutoFocus2 {
             for (let i = 0; i < this._headBones.length; i++) {
                 const headBone = this._headBones[i];
                 if (skeletonWorldMatrix !== null) {
-                    headBone.getFinalMatrix().multiplyToRef(skeletonWorldMatrix, boneWorldMatrix);
+                    headBone.getWorldMatrixToRef(boneWorldMatrix).multiplyToRef(skeletonWorldMatrix, boneWorldMatrix);
                 } else {
-                    boneWorldMatrix.copyFrom(headBone.getFinalMatrix());
+                    headBone.getWorldMatrixToRef(boneWorldMatrix);
                 }
 
                 boneWorldMatrix.getTranslationToRef(headRelativePosition)

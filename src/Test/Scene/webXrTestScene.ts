@@ -18,7 +18,6 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
@@ -35,6 +34,7 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -95,7 +95,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/intergalactia/intergalactia_ik.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
+            ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -103,9 +103,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "muubu_miku.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
-            ["stage", (updateProgress): Promise<Mesh> => {
+            ["stage", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 0;
                 pmxLoader.buildSkeleton = false;
                 pmxLoader.buildMorph = false;
@@ -115,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "舞踏会風ステージVer2_forcemerged.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -134,7 +134,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             shadowGenerator.addShadowCaster(modelMesh);
-            for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+            for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
             modelMesh.parent = mmdRoot;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
@@ -143,7 +143,7 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel.addAnimation(mmdAnimation);
             mmdModel.setAnimation("motion");
 
-            attachToBone(scene, modelMesh, {
+            attachToBone(scene, mmdModel, {
                 directionalLightPosition: directionalLight.position,
                 cameraTargetPosition: camera.target,
                 worldScale: worldScale
@@ -151,7 +151,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
-        for (const mesh of stageMesh.getChildMeshes()) {
+        for (const mesh of stageMesh.metadata.meshes) {
             mesh.receiveShadows = true;
 
             const material = mesh.material as MmdStandardMaterial;
@@ -177,7 +177,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
 
-        for (const mesh of modelMesh.getChildMeshes()) {
+        for (const mesh of modelMesh.metadata.meshes) {
             const material = mesh.material as MmdStandardMaterial;
             if (material.name === "Hairshadow") {
                 material.alphaMode = Constants.ALPHA_SUBTRACT;

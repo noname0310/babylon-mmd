@@ -8,8 +8,17 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
  * Mesh type that able to create `MmdModel` instance
  */
 export interface MmdMesh extends Mesh {
-    metadata: MmdModelMetadata;
-    skeleton: Skeleton;
+    metadata: SkinedMmdModelMetadata;
+}
+
+/**
+ * Metadata for `MmdModel`
+ */
+export interface SkinedMmdModelMetadata extends MmdModelMetadata {
+    /**
+     * Mmd model skeleton
+     */
+    readonly skeleton: Skeleton;
 }
 
 /**
@@ -17,7 +26,6 @@ export interface MmdMesh extends Mesh {
  */
 export interface RuntimeMmdMesh extends Mesh {
     metadata: RuntimeMmdModelMetadata;
-    skeleton: Skeleton;
 }
 
 /**
@@ -36,6 +44,11 @@ export interface RuntimeMmdModelMetadata {
      * Mmd model materials
      */
     readonly materials: Material[];
+
+    /**
+     * Mmd model skeleton
+     */
+    readonly skeleton: Skeleton;
 }
 
 /**
@@ -49,7 +62,7 @@ export namespace MmdMesh {
      */
     export function isMmdMesh(mesh: Mesh): mesh is MmdMesh {
         if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
-        if (mesh.skeleton === null) return false;
+        if (mesh.metadata.skeleton === null) return false;
         return true;
     }
 }

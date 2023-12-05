@@ -225,7 +225,6 @@ export abstract class MmdModelLoader<
         if (state.buildSkeleton) {
             skeleton = await this._buildSkeletonAsync(
                 modelObject,
-                rootMesh,
                 buildGeometryResult.meshes,
                 scene,
                 assetContainer,
@@ -268,7 +267,8 @@ export abstract class MmdModelLoader<
             rigidBodies: modelObject.rigidBodies,
             joints: modelObject.joints,
             meshes: buildGeometryResult.meshes,
-            materials: materials
+            materials: materials,
+            skeleton: skeleton
         };
 
         progress.invokeProgressEvent();
@@ -356,7 +356,6 @@ export abstract class MmdModelLoader<
 
     protected async _buildSkeletonAsync(
         modelObject: ModelObject,
-        rootMesh: Mesh,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -455,7 +454,7 @@ export abstract class MmdModelLoader<
         progress.invokeProgressEvent();
 
         for (let i = 0; i < meshes.length; ++i) meshes[i].skeleton = skeleton;
-        return rootMesh.skeleton = skeleton;
+        return skeleton;
     }
 
     protected abstract _buildMorphAsync(

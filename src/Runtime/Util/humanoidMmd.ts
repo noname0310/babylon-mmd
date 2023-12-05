@@ -373,7 +373,8 @@ export class HumanoidMmd {
     private _createMetadata(
         name: string,
         meshes: readonly Mesh[],
-        morphMap: { [key: string]: string }
+        morphMap: { [key: string]: string },
+        skeleton: Skeleton
     ): MmdModelMetadata {
         const header: MmdModelMetadata.Header = {
             modelName: name,
@@ -453,7 +454,8 @@ export class HumanoidMmd {
             rigidBodies: [],
             joints: [],
             meshes: meshes,
-            materials: []
+            materials: [],
+            skeleton: skeleton
         };
     }
 
@@ -812,19 +814,26 @@ export class HumanoidMmd {
             transformOffset = Matrix.Identity()
         } = options;
 
-        const skeleton = humanoidMesh.skeleton;
+        let skeleton: Nullable<Skeleton> = null;
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            if (mesh.skeleton !== null) {
+                skeleton = mesh.skeleton;
+                break;
+            }
+        }
         if (skeleton === null) throw new Error("Skeleton not found.");
 
-        const metadata = this._createMetadata(humanoidMesh.name, meshes.slice(), morphMap);
+        const metadata = this._createMetadata(humanoidMesh.name, meshes.slice(), morphMap, skeleton);
         humanoidMesh.metadata = metadata;
 
         if (!MmdMesh.isMmdMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
 
         let transformOffsetMatrix: Matrix;
         if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {
-            transformOffsetMatrix = (transformOffset as TransformNode).computeWorldMatrix(true).clone();
+            transformOffsetMatrix = (transformOffset as TransformNode).computeWorldMatrix(true).clone().setTranslationFromFloats(0, 0, 0);
         } else {
-            transformOffsetMatrix = (transformOffset as Matrix).clone();
+            transformOffsetMatrix = (transformOffset as Matrix).clone().setTranslationFromFloats(0, 0, 0);
         }
 
         const boneProxies = this._buildBoneProxyTree(skeleton, boneMap, metadata.bones, transformOffsetMatrix, mmdRuntime);

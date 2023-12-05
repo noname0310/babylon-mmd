@@ -142,7 +142,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         options: CreateMmdModelOptions = {}
     ): MmdModel {
         if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
-        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.skeleton, options);
+        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.metadata.skeleton, options);
     }
 
     /**

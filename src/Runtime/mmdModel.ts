@@ -117,7 +117,8 @@ export class MmdModel implements IMmdModel {
             isRuntimeMmdModel: true,
             header: mmdMetadata.header,
             meshes: mmdMetadata.meshes,
-            materials: mmdMetadata.materials
+            materials: mmdMetadata.materials,
+            skeleton: mmdMetadata.skeleton
         };
         this.mesh = runtimeMesh;
         this.skeleton = skeleton;
@@ -331,7 +332,7 @@ export class MmdModel implements IMmdModel {
             physicsModel.syncBones();
         }
         this._update(true);
-        this.mesh.skeleton._markAsDirty();
+        this.mesh.metadata.skeleton._markAsDirty();
     }
 
     private _update(afterPhysicsStage: boolean): void {
@@ -494,6 +495,6 @@ export class MmdModel implements IMmdModel {
             bone.position = position;
             bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
-        this.mesh.skeleton._markAsDirty();
+        this.mesh.metadata.skeleton._markAsDirty();
     }
 }

@@ -46,7 +46,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene
         ).then(result => result.meshes[0]) as Mesh;
         mmdMesh.scaling.scaleInPlace(5);
-        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         const havokInstance = await havokPhysics();
@@ -68,7 +68,7 @@ export class SceneBuilder implements ISceneBuilder {
             }
         }
 
-        const skeletionViewer = new SkeletonViewer(mmdMesh.skeleton!, mmdMesh, scene, false, 3, {
+        const skeletionViewer = new SkeletonViewer(mmdMesh.metadata.skeleton, mmdMesh, scene, false, 3, {
             displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         });
         skeletionViewer.isEnabled = true;

@@ -13,7 +13,6 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
@@ -29,6 +28,7 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -110,7 +110,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["camera", (updateProgress): Promise<MmdAnimation> => {
                 return bvmdLoader.loadAsync("camera", "res/private_test/motion/kimini_totte/camera.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
+            ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -118,9 +118,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB miku Crown Knight.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
-            ["model_a", (updateProgress): Promise<Mesh> => {
+            ["model_a", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -128,9 +128,9 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku Default.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
-            ["model_b", (updateProgress): Promise<Mesh> => {
+            ["model_b", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -138,7 +138,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -153,7 +153,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(cameraAnimation);
         mmdCamera.setAnimation("camera");
 
-        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
@@ -184,7 +184,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(compositeAnimation);
         mmdModel.setAnimation("composite");
 
-        for (const mesh of modelMeshA.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMeshA.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMeshA);
         modelMeshA.parent = mmdRoot;
         modelMeshA.position.z = 10;
@@ -194,7 +194,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModelA.addAnimation(mmdAnimation1);
         mmdModelA.setAnimation("motion1");
 
-        for (const mesh of modelMeshB.getChildMeshes()) mesh.receiveShadows = true;
+        for (const mesh of modelMeshB.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMeshB);
         modelMeshB.parent = mmdRoot;
         modelMeshB.position.z = 10;
@@ -224,7 +224,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh);
+        mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
 
         const parentControl = engine.getInputElement()!.parentElement!;

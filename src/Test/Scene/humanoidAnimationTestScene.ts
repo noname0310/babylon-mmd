@@ -26,6 +26,7 @@ import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { AnimationRetargeter } from "@/Loader/Util/animationRetargeter";
 import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 // import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
 // import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
@@ -74,7 +75,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["source", (updateProgress): Promise<AssetContainer> => {
                 return SceneLoader.LoadAssetContainerAsync("res/private_test/mixamo/", "Walk In Circle.glb", scene, updateProgress);
             }],
-            ["target", (updateProgress): Promise<Mesh> => {
+            ["target", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
@@ -82,7 +83,7 @@ export class SceneBuilder implements ISceneBuilder {
                     "YYB Hatsune Miku_10th.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -123,7 +124,7 @@ export class SceneBuilder implements ISceneBuilder {
             const retargetedAnimation = animationRetargeter
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
                 .setSourceSkeleton(sourceSkeleton, sourceModelMesh)
-                .setTargetSkeleton(modelMesh.skeleton!)
+                .setTargetSkeleton(modelMesh.metadata.skeleton)
                 .retargetAnimation(animation, {
                     cloneAnimation: true,
                     removeBoneRotationOffset: true,
@@ -150,15 +151,15 @@ export class SceneBuilder implements ISceneBuilder {
             // retargetedAnimation.dispose();
 
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Neck")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "首")!;
+            // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "首")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+            // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左手首")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftForeArm")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左ひじ")!;
+            // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左ひじ")!;
             const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左肩")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftUpLeg")!;
-            // const targetLeftShoulder = modelMesh.skeleton!.bones.find((bone) => bone.name === "左足")!;
+            // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左足")!;
 
 
             // rotate x -90
@@ -212,11 +213,11 @@ export class SceneBuilder implements ISceneBuilder {
             // }, 3000);
 
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Head")!;
-            // const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭")!;
+            // const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "頭")!;
             const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左肩")!;
+            const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左肩")!;
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
-            // const targetLeftHand = modelMesh.skeleton!.bones.find((bone) => bone.name === "左手首")!;
+            // const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左手首")!;
 
             // position y 5
             const positionY5 = new Vector3(100, 300, 200);
@@ -244,18 +245,18 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             shadowGenerator.addShadowCaster(modelMesh);
-            for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
+            for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true
             });
             mmdModel.ikSolverStates.fill(0); // disable ik
 
-            attachToBone(scene, modelMesh, {
+            attachToBone(scene, mmdModel, {
                 directionalLightPosition: directionalLight.position
             });
 
-            const viewer = new SkeletonViewer(modelMesh.skeleton!, modelMesh, scene, false, 3, {
+            const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;

@@ -106,7 +106,8 @@ export class MmdWasmModel implements IMmdModel {
             isRuntimeMmdModel: true,
             header: mmdMetadata.header,
             meshes: mmdMetadata.meshes,
-            materials: mmdMetadata.materials
+            materials: mmdMetadata.materials,
+            skeleton: mmdMetadata.skeleton
         };
         this.mesh = runtimeModelNode;
         this.skeleton = skeleton;
@@ -273,7 +274,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public afterPhysics(): void {
         // wasm side computes the world matrix of the bones
-        this.mesh.skeleton._markAsDirty();
+        this.mesh.metadata.skeleton._markAsDirty();
     }
 
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
@@ -318,6 +319,6 @@ export class MmdWasmModel implements IMmdModel {
             bone.position = position;
             bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
-        this.mesh.skeleton._markAsDirty();
+        this.mesh.metadata.skeleton._markAsDirty();
     }
 }

@@ -113,8 +113,9 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        modelLoadResult.meshes[0].rotationQuaternion!.set(0, 0, 0, 1);
-        modelLoadResult.meshes[0].scaling.scaleInPlace(0.143);
+        const modelRoot = modelLoadResult.meshes[0] as Mesh;
+        modelRoot.rotationQuaternion!.set(0, 0, 0, 1);
+        modelRoot.scaling.scaleInPlace(0.143);
         const armature = modelLoadResult.transformNodes.find((transformNode) => transformNode.name === "Armature")!;
         armature.scaling.setAll(1);
         for (const mesh of modelLoadResult.meshes as Mesh[]) {
@@ -148,7 +149,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(
             mmdRuntime,
-            modelLoadResult.transformNodes[0] as Mesh,
+            modelRoot,
             [modelMesh],
             {
                 boneMap: new MmdHumanoidMapper({
@@ -216,11 +217,14 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, modelMesh, {
+        const translationMatrix = modelMesh.getWorldMatrix().clone();
+        translationMatrix.removeRotationAndScaling();
+
+        attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target,
             cameraTargetYpositionOffset: -3,
-            centerBoneName: "Spine"
+            worldMatrix: translationMatrix
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
@@ -286,8 +290,8 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(modelMesh, "Head");
-        mmdCameraAutoFocus.setSkeletonWorldMatrix(modelMesh.getWorldMatrix());
+        mmdCameraAutoFocus.setTarget(mmdModel);
+        mmdCameraAutoFocus.setSkeletonWorldMatrix(translationMatrix);
         mmdCameraAutoFocus.register(scene);
 
         return scene;
