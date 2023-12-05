@@ -1,7 +1,6 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -53,6 +52,6 @@ export interface IMmdMaterialBuilder {
         indexedUvGeometries: IndexedUvGeometry[],
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
-        onTextureLoadComplete?: (loadedTextures: Texture[]) => void
+        onTextureLoadComplete?: () => void
     ): Promise<Material[]> | Material[];
 }

@@ -80,7 +80,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         indexedUvGeometries: IndexedUvGeometry[],
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
-        onTextureLoadComplete?: (loadedTextures: Texture[]) => void
+        onTextureLoadComplete?: () => void
     ): Material[] {
         // Block the marking of materials dirty until all materials are built.
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
@@ -98,20 +98,17 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
         const promises: Promise<void>[] = [];
 
-        const materials: Material[] = [];
-        const textures: Texture[] = [];
-
         const progressEvent = {
             lengthComputable: true,
             loaded: 0,
             total: materialsInfo.length * 3
         };
-        const addTextureIncrementProgress = (texture: Nullable<Texture>): void => {
-            if (texture !== null) textures.push(texture);
-
+        const incrementProgress = (): void => {
             progressEvent.loaded += 1;
             onTextureLoadProgress?.(progressEvent);
         };
+
+        const materials: Material[] = [];
 
         for (let i = 0; i < materialsInfo.length; ++i) {
             const materialInfo = materialsInfo[i];
@@ -145,7 +142,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     i, // materialIndex
                     logger,
                     getTextureAlpphaChecker,
-                    addTextureIncrementProgress
+                    incrementProgress
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
                     singleMaterialPromises.push(loadDiffuseTexturePromise);
@@ -162,7 +159,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     fileRootId,
                     referenceFileResolver,
                     logger,
-                    addTextureIncrementProgress
+                    incrementProgress
                 );
                 if (loadSphereTexturePromise !== undefined) {
                     singleMaterialPromises.push(loadSphereTexturePromise);
@@ -179,7 +176,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     fileRootId,
                     referenceFileResolver,
                     logger,
-                    addTextureIncrementProgress
+                    incrementProgress
                 );
                 if (loadToonTexturePromise !== undefined) {
                     singleMaterialPromises.push(loadToonTexturePromise);
@@ -219,7 +216,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     textureAlphaChecker?.dispose();
                     // Restore the blocking of material dirty.
                     scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
-                    onTextureLoadComplete?.(textures);
+                    onTextureLoadComplete?.();
                 });
             });
         } else {
@@ -227,7 +224,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 textureAlphaChecker?.dispose();
                 // Restore the blocking of material dirty.
                 scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
-                onTextureLoadComplete?.(textures);
+                onTextureLoadComplete?.();
             });
         }
 
@@ -306,7 +303,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         materialIndex: number,
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
-        onTextureLoadComplete?: (texture: Nullable<Texture>) => void
+        onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
             material,
@@ -380,13 +377,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         if (hasAlpha) material.backFaceCulling = false;
                     }
 
-                    onTextureLoadComplete?.(diffuseTexture);
+                    onTextureLoadComplete?.();
                 } else {
                     logger.error(`Failed to load diffuse texture: ${diffuseTextureFileFullPath}`);
-                    onTextureLoadComplete?.(null);
+                    onTextureLoadComplete?.();
                 }
             } else {
-                onTextureLoadComplete?.(null);
+                onTextureLoadComplete?.();
             }
         };
 
@@ -417,7 +414,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         logger: ILogger,
-        onTextureLoadComplete?: (texture: Nullable<Texture>) => void
+        onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
             material,
@@ -465,12 +462,12 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         logger.error(`Failed to load sphere texture: ${sphereTextureFileFullPath}`);
                     }
 
-                    onTextureLoadComplete?.(sphereTexture);
+                    onTextureLoadComplete?.();
                 } else {
-                    onTextureLoadComplete?.(null);
+                    onTextureLoadComplete?.();
                 }
             } else {
-                onTextureLoadComplete?.(null);
+                onTextureLoadComplete?.();
             }
         };
 
@@ -501,7 +498,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         logger: ILogger,
-        onTextureLoadComplete?: (texture: Nullable<Texture>) => void
+        onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
             material,
@@ -552,9 +549,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     logger.error(`Failed to load toon texture: ${toonTextureFileFullPath}`);
                 }
 
-                onTextureLoadComplete?.(toonTexture);
+                onTextureLoadComplete?.();
             } else {
-                onTextureLoadComplete?.(null);
+                onTextureLoadComplete?.();
             }
         };
 

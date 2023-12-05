@@ -1,7 +1,6 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
@@ -351,7 +350,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             texturePathTable[i] = modelObject.textures[i].relativePath;
         }
 
-        const textureLoadPromise = new Promise<Texture[]>((resolve) => {
+        const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
@@ -368,7 +367,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);
                     progress.invokeProgressEvent();
                 }, // onTextureLoadProgress
-                loadedTextures => resolve(loadedTextures) // onTextureLoadComplete
+                () => resolve() // onTextureLoadComplete
             );
         });
         const materials: Material[] = Array.isArray(buildMaterialsPromise)
