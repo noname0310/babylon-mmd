@@ -36,8 +36,8 @@ export class SceneBuilder implements ISceneBuilder {
             "Black.pmx",
             scene
         ).then(result => result.meshes[0]) as Mesh;
-        mmdMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
+        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
 
         Inspector.Show(scene, { enablePopup: false });
 

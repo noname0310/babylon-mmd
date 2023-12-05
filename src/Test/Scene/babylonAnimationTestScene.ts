@@ -9,7 +9,7 @@ import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -51,7 +51,6 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const mmdRoot = new TransformNode("mmdRoot", scene);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
@@ -114,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        modelMesh.receiveShadows = true;
+        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
 
@@ -144,7 +143,7 @@ export class SceneBuilder implements ISceneBuilder {
             viewer.isEnabled = false;
         }
 
-        stageMesh.receiveShadows = true;
+        for (const mesh of stageMesh.getChildMeshes()) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);

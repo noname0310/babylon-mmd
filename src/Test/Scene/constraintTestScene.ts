@@ -46,7 +46,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene
         ).then(result => result.meshes[0]) as Mesh;
         mmdMesh.scaling.scaleInPlace(5);
-        mmdMesh.receiveShadows = true;
+        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         const havokInstance = await havokPhysics();

@@ -115,7 +115,7 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        modelMesh.receiveShadows = true;
+        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
 
@@ -386,7 +386,7 @@ export class SceneBuilder implements ISceneBuilder {
         });
         viewer.isEnabled = false;
 
-        stageMesh.receiveShadows = true;
+        for (const mesh of stageMesh.getChildMeshes()) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
 
         createGroundCollider(scene);

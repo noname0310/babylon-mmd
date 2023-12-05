@@ -33,6 +33,9 @@ export function optimizeScene(scene: Scene): void {
         } catch (e) {
             continue;
         }
+        if (plugin.extensions[extension] === undefined) {
+            continue;
+        }
         const materialBuilder = plugin.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.flushTextureCache();
     }

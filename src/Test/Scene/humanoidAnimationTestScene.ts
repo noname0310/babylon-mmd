@@ -244,7 +244,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             shadowGenerator.addShadowCaster(modelMesh);
-            modelMesh.receiveShadows = true;
+            for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
                 buildPhysics: true

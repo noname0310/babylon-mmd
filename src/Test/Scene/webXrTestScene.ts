@@ -16,7 +16,6 @@ import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -135,7 +134,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         {
             shadowGenerator.addShadowCaster(modelMesh);
-            modelMesh.receiveShadows = true;
+            for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
             modelMesh.parent = mmdRoot;
 
             const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
@@ -152,10 +151,10 @@ export class SceneBuilder implements ISceneBuilder {
             scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
         }
 
-        stageMesh.receiveShadows = true;
-        const stageMaterials = (stageMesh.material as MultiMaterial).subMaterials;
-        for (let i = 0; i < stageMaterials.length; ++i) {
-            const material = stageMaterials[i] as MmdStandardMaterial;
+        for (const mesh of stageMesh.getChildMeshes()) {
+            mesh.receiveShadows = true;
+
+            const material = mesh.material as MmdStandardMaterial;
             material.ignoreDiffuseWhenToonTextureIsNull = false;
             material.toonTexture?.dispose();
             material.toonTexture = null;
@@ -178,9 +177,8 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
 
-        const modelMaterials = (modelMesh.material as MultiMaterial).subMaterials;
-        for (let i = 0; i < modelMaterials.length; ++i) {
-            const material = modelMaterials[i] as MmdStandardMaterial;
+        for (const mesh of modelMesh.getChildMeshes()) {
+            const material = mesh.material as MmdStandardMaterial;
             if (material.name === "Hairshadow") {
                 material.alphaMode = Constants.ALPHA_SUBTRACT;
             }

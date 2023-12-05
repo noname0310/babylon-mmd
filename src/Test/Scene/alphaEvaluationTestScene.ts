@@ -42,7 +42,7 @@ export class SceneBuilder implements ISceneBuilder {
             "[LSG]%20Jennie%20(Miku)%20ver.1.pmx",
             scene
         ).then(result => result.meshes[0]);
-        mmdMesh.receiveShadows = true;
+        for (const mesh of mmdMesh.getChildMeshes()) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         Inspector.Show(scene, { });

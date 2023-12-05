@@ -116,7 +116,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        modelMesh.receiveShadows = true;
+        for (const mesh of modelMesh.getChildMeshes()) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
         modelMesh.parent = mmdRoot;
 
