@@ -146,7 +146,7 @@ export class SceneBuilder implements ISceneBuilder {
             rightArm.rotationQuaternion = rightArm.rotationQuaternion!.multiply(Quaternion.FromEulerAngles(0, 0, 35 * degToRad));
         }
 
-        const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelMesh, {
+        const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(mmdRuntime, modelLoadResult.transformNodes[0], [modelMesh], {
             boneMap: new MmdHumanoidMapper({
                 hips: "Hips",
                 spine: "Spine",

@@ -186,6 +186,7 @@ import type { ILogger } from "../Parser/ILogger";
 import type { IPmxReaderConstructor } from "../Parser/IPmxReaderConstructor";
 import { PmxObject } from "../Parser/pmxObject";
 import { ReferenceFileResolver } from "../referenceFileResolver";
+import type { IndexedUvGeometry } from "../textureAlphaChecker";
 import { TextureAlphaChecker } from "../textureAlphaChecker";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 
@@ -532,10 +533,22 @@ export class BpmxConverter implements ILogger {
 
         // evaluate texture alpha
         if (useAlphaEvaluation) {
-            const textureAlphaChecker = new TextureAlphaChecker(uvs, indices, alphaEvaluationResolution);
+            const uvGeometry: IndexedUvGeometry = {
+                uvs,
+                indices,
+                subMeshIndexCounts: new Int32Array(pmxObject.materials.length)
+            };
+            {
+                const materials = pmxObject.materials;
+                const subMeshIndexCounts = uvGeometry.subMeshIndexCounts;
+                for (let i = 0; i < materials.length; ++i) {
+                    subMeshIndexCounts[i] = materials[i].indexCount;
+                }
+            }
+
+            const textureAlphaChecker = new TextureAlphaChecker([uvGeometry], alphaEvaluationResolution);
 
             const materials = pmxObject.materials;
-            let offset = 0;
             for (let i = 0; i < materials.length; ++i) {
                 const materialInfo = materials[i];
 
@@ -547,16 +560,13 @@ export class BpmxConverter implements ILogger {
                         const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
                             textureData.arrayBuffer,
                             textureData.texture,
-                            offset,
-                            materialInfo.indexCount,
+                            i,
                             alphaThreshold,
                             alphaBlendThreshold
                         );
                         textureAlphaEvaluateResults[i] = textureAlphaEvaluateResult;
                     }
                 }
-
-                offset += materialInfo.indexCount;
             }
 
             textureAlphaChecker.dispose();

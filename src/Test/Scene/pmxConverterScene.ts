@@ -10,6 +10,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
@@ -28,7 +29,6 @@ import { PmxReader } from "@/Loader/Parser/pmxReader";
 import type { PmdLoader } from "@/Loader/pmdLoader";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import type { MmdStaticMesh } from "@/Runtime/mmdModelNode";
 
 import type { ISceneBuilder } from "../baseRuntime";
 
@@ -139,32 +139,36 @@ export class PmxConverterScene implements ISceneBuilder {
         const loadModelAsync = async(file: File): Promise<void> => {
             if (isLoading) return;
 
-            if (mesh !== null) {
-                shadowGenerator.removeShadowCaster(mesh);
-                mesh.dispose(false, true);
-                mesh = null;
+            if (loadResult !== null) {
+                for (const mesh of loadResult.meshes) {
+                    shadowGenerator.removeShadowCaster(mesh);
+                }
+                loadResult.transformNodes[0].dispose(false, true);
+                loadResult = null;
             }
 
             isLoading = true;
             engine.displayLoadingUI();
             const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
-            mesh = (await SceneLoader.ImportMeshAsync(
+            loadResult = await SceneLoader.ImportMeshAsync(
                 undefined,
                 fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
                 file,
                 scene,
                 (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-            )).meshes[0] as MmdStaticMesh;
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh);
+            );
+            for (const mesh of loadResult.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh);
+            }
             renderMaterialsList();
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);
         };
 
         let selectedFile: Nullable<File> = null;
-        let mesh: Nullable<MmdStaticMesh> = null;
+        let loadResult: Nullable<ISceneLoaderAsyncResult> = null;
         let isLoading = false;
 
         const parentDiv = canvas.parentElement!;
@@ -403,11 +407,11 @@ export class PmxConverterScene implements ISceneBuilder {
         const renderMaterialsList = (): void => {
             materialList.innerHTML = "";
 
-            if (mesh === null) return;
+            if (loadResult === null) return;
 
-            const subMaterials = mesh.material.subMaterials;
-            for (let i = 0; i < subMaterials.length; ++i) {
-                const material = subMaterials[i] as MmdStandardMaterial;
+            const meshes = loadResult.meshes;
+            for (let i = 0; i < meshes.length; ++i) {
+                const material = meshes[i].material as MmdStandardMaterial;
 
                 const item = document.createElement("li");
                 item.style.padding = "5px 0px";
@@ -624,7 +628,7 @@ export class PmxConverterScene implements ISceneBuilder {
         buttonContainer.appendChild(convertButton);
         convertButton.onclick = async(): Promise<void> => {
             if (selectedFile === null) return;
-            if (mesh === null) return;
+            if (loadResult === null) return;
 
             isLoading = true;
             engine.displayLoadingUI();
@@ -638,7 +642,7 @@ export class PmxConverterScene implements ISceneBuilder {
                 files,
                 (_materialsName, textureAlphaEvaluterResults) => {
                     for (let i = 0; i < textureAlphaEvaluterResults.length; ++i) {
-                        textureAlphaEvaluterResults[i] = mesh!.material.subMaterials[i].transparencyMode ?? 0;
+                        textureAlphaEvaluterResults[i] = loadResult!.meshes[i].material!.transparencyMode ?? 0;
                     }
                 }
             );
