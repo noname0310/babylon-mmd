@@ -8,6 +8,11 @@
 - typed array optimization on world matrix computation
     - recommended to use `MmdModel.finalTransformMatrices` or `MmdModel.runtimeBones[i].getWorldMatrixToRef()` instead of `MmdModel.mesh.skeleton.bones[i].getFinalMatrix()`
 
+- optimize to split the SubMesh into individual meshes at load time.
+    - Because of this, to receiveShadows, you now need to change `mmdMesh.receiveShadows = true;` to `for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;`
+
+- fixed a bug where textures were not evaluated properly in texture alpha evaluation by `TextureAlphaChecker`
+
 ## 0.34.0
 
 - remove dead code
