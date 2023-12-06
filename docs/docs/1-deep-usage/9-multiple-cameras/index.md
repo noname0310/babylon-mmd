@@ -115,10 +115,9 @@ import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator"
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -130,6 +129,7 @@ import { BvmdLoader } from "babylon-mmd/esm/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "babylon-mmd/esm/Loader/sdefInjector";
 import { StreamAudioPlayer } from "babylon-mmd/esm/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 import { MmdRuntime } from "babylon-mmd/esm/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "babylon-mmd/esm/Runtime/Util/mmdPlayerControl";
 
@@ -145,7 +145,6 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
 
         const mmdRoot = new TransformNode("mmdRoot", scene);
@@ -224,7 +223,7 @@ export class SceneBuilder implements ISceneBuilder {
             "YYB Piano dress Miku.bpmx",
             scene,
             (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ).then((result) => result.meshes[0] as Mesh));
+        ).then((result) => result.meshes[0]));
 
         bpmxLoader.boundingBoxMargin = 0;
         bpmxLoader.buildSkeleton = false;
@@ -255,9 +254,9 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(loadResults[2]);
         mmdCamera.setAnimation("motion_1");
 
-        const modelMesh = loadResults[0] as Mesh;
+        const modelMesh = loadResults[0] as MmdMesh;
         modelMesh.parent = mmdRoot;
-        modelMesh.receiveShadows = true;
+        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
 
         const bodyBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "センター");

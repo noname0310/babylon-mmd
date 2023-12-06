@@ -82,11 +82,11 @@ So if you want to make any changes to the loaded asset, check the loader option 
 ## Full code applied up to here
 
 ```typescript title="src/sceneBuilder.ts"
-import type { Engine, Mesh } from "@babylonjs/core";
-import { Color3, DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import type { Engine } from "@babylonjs/core";
+import { DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import type { MmdStandardMaterialBuilder } from "babylon-mmd";
-import { MmdCamera, MmdPhysics, MmdPlayerControl, MmdRuntime, PmxLoader, SdefInjector, StreamAudioPlayer, VmdLoader } from "babylon-mmd";
+import { MmdCamera, MmdMesh, MmdPhysics, MmdPlayerControl, MmdRuntime, PmxLoader, SdefInjector, StreamAudioPlayer, VmdLoader } from "babylon-mmd";
 
 import type { ISceneBuilder } from "./baseRuntime";
 
@@ -111,7 +111,6 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
 
         const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
 
@@ -134,8 +133,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         // load mmd model
         const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
-            .then((result) => result.meshes[0] as Mesh);
-        mmdMesh.receiveShadows = true;
+            .then((result) => result.meshes[0] as MmdMesh);
+        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
         // // enable physics

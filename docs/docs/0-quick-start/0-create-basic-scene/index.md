@@ -31,7 +31,7 @@ Start with the blank template.
 
 ```typescript title="src/sceneBuilder.ts"
 import type { Engine } from "@babylonjs/core";
-import { Color3, Scene, Vector3 } from "@babylonjs/core";
+import { Scene, Vector3 } from "@babylonjs/core";
 
 import type { ISceneBuilder } from "./baseRuntime";
 import { MmdCamera } from "babylon-mmd";
@@ -39,7 +39,6 @@ import { MmdCamera } from "babylon-mmd";
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
 
         const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         

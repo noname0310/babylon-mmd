@@ -98,6 +98,13 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 }
 ```
 
+If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
+
+```typescript
+// side effects for TGA textures
+import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
+```
+
 ## Use optimized custom format
 
 The optimized custom formats, BPMX (BabylonPMX) and BVMD (BabylonVMD), handle most of the validation and parsing process required for loading at the conversion stage.
@@ -119,13 +126,6 @@ then you can load the converted files like below.
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 
 const model = await SceneLoader.ImportMeshAsync(undefined, "your/root/path/", "your_file_name.bpmx", scene).then((result) => result.meshes[0]);
-```
-
-If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
-
-```typescript
-// side effects for TGA textures
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 ```
 
 ### VMD to BVMD

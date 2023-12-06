@@ -30,8 +30,8 @@ Then, load the model using the `SceneLoader`.
 
 ```typescript title="src/sceneBuilder.ts"
 const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
-    .then((result) => result.meshes[0] as Mesh);
-mmdMesh.receiveShadows = true;
+    .then((result) => result.meshes[0] as MmdMesh);
+for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(mmdMesh);
 ```
 
@@ -41,7 +41,7 @@ shadowGenerator.addShadowCaster(mmdMesh);
     - `"YYB Hatsune Miku_10th_v1.02.pmx"` - If you pass a File object, you can load the model from the File object.
     - `scene` - the scene to load the model into.
 
-- An importMeshAsync call in pmx file guarantees that result.meshes length is always 1.
+- An importMeshAsync call in pmx file guarantees that result.meshes length is always greater than 0 and result.meshes[0] is always a root mesh which type is MmdMesh.
 
 - Below is the shadow setting I won't explain in detail.
 

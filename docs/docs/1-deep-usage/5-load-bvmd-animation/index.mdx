@@ -126,16 +126,16 @@ import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import type { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "babylon-mmd/esm/Loader/Optimized/bvmdLoader";
 import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 import { MmdRuntime } from "babylon-mmd/esm/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "./baseRuntime";
@@ -148,7 +148,6 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
 
         const mmdRoot = new TransformNode("mmdRoot", scene);
@@ -211,7 +210,7 @@ export class SceneBuilder implements ISceneBuilder {
             "YYB Piano dress Miku.bpmx",
             scene,
             (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ).then((result) => result.meshes[0] as Mesh));
+        ).then((result) => result.meshes[0]));
 
         bpmxLoader.boundingBoxMargin = 0;
         bpmxLoader.buildSkeleton = false;
@@ -242,7 +241,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(loadResults[2]);
         mmdCamera.setAnimation("motion_1");
 
-        const modelMesh = loadResults[0] as Mesh;
+        const modelMesh = loadResults[0] as MmdMesh;
         modelMesh.parent = mmdRoot;
         modelMesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);

@@ -12,6 +12,15 @@ For load bpmx model, we need to import side effects.
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 ```
 
+:::info
+If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
+
+```typescript
+// side effects for TGA textures
+import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
+```
+:::
+
 Then, load the model using the `SceneLoader`.
 
 ```typescript title="src/sceneBuilder.ts"
@@ -29,7 +38,7 @@ const modelMesh = await SceneLoader.ImportMeshAsync(
     "YYB Piano dress Miku.bpmx",
     scene,
     (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-).then((result) => result.meshes[0] as Mesh);
+).then((result) => result.meshes[0] as MmdMesh);
 
 modelMesh;
 
@@ -119,7 +128,7 @@ promises.push(SceneLoader.ImportMeshAsync(
     "YYB Piano dress Miku.bpmx",
     scene,
     (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-).then((result) => result.meshes[0] as Mesh));
+).then((result) => result.meshes[0]));
 
 bpmxLoader.boundingBoxMargin = 0;
 bpmxLoader.buildSkeleton = false;
@@ -145,8 +154,8 @@ loadResults;
 ## Add Shadow to Model
 
 ```typescript title="src/sceneBuilder.ts"
-const modelMesh = loadResults[0] as Mesh;
-modelMesh.receiveShadows = true;
+const modelMesh = loadResults[0] as MmdMesh;
+for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(modelMesh);
 ```
 
