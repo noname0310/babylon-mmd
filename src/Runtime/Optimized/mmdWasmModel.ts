@@ -16,14 +16,14 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
-import type { MmdMesh, RuntimeMmdMesh } from "../mmdMesh";
+import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
 import { MmdMorphController } from "../mmdMorphController";
 import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
- * MmdWasmModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Wasm Runtime
+ * MmdWasmModel is a class that controls the `MmdSkinnedMesh` to animate the Mesh with MMD Wasm Runtime
  *
  * The mesh that instantiates `MmdWasmModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
@@ -84,14 +84,14 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Create a MmdWasmModel
-     * @param mmdMesh Mesh that able to instantiate `MmdWasmModel`
+     * @param mmdSkinnedMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param buildPhysics Whether to build physics
      * @param logger Logger
      */
     public constructor(
-        mmdMesh: MmdMesh,
+        mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         buildPhysics: boolean,
@@ -99,9 +99,9 @@ export class MmdWasmModel implements IMmdModel {
     ) {
         this._logger = logger;
 
-        const mmdMetadata = mmdMesh.metadata;
+        const mmdMetadata = mmdSkinnedMesh.metadata;
 
-        const runtimeModelNode = mmdMesh as unknown as RuntimeMmdMesh;
+        const runtimeModelNode = mmdSkinnedMesh as unknown as RuntimeMmdMesh;
         runtimeModelNode.metadata = {
             isRuntimeMmdModel: true,
             header: mmdMetadata.header,

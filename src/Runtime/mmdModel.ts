@@ -20,7 +20,7 @@ import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdModel } from "./IMmdModel";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
-import type { MmdMesh, RuntimeMmdMesh } from "./mmdMesh";
+import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
 import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
@@ -28,7 +28,7 @@ import { MmdRuntimeBone } from "./mmdRuntimeBone";
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
- * MmdModel is a class that controls the `MmdMesh` to animate the Mesh with MMD Runtime
+ * MmdModel is a class that controls the `MmdSkinnedMesh` to animate the Mesh with MMD Runtime
  *
  * The mesh that instantiates `MmdModel` ignores some original implementations of Babylon.js and follows the MMD specifications
  *
@@ -95,14 +95,14 @@ export class MmdModel implements IMmdModel {
 
     /**
      * Create a MmdModel
-     * @param mmdMesh Mesh that able to instantiate `MmdModel`
+     * @param mmdSkinnedMesh Mesh that able to instantiate `MmdModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param mmdPhysics Physics builder
      * @param logger Logger
      */
     public constructor(
-        mmdMesh: MmdMesh,
+        mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         mmdPhysics: Nullable<MmdPhysics>,
@@ -110,9 +110,9 @@ export class MmdModel implements IMmdModel {
     ) {
         this._logger = logger;
 
-        const mmdMetadata = mmdMesh.metadata;
+        const mmdMetadata = mmdSkinnedMesh.metadata;
 
-        const runtimeMesh = mmdMesh as unknown as RuntimeMmdMesh;
+        const runtimeMesh = mmdSkinnedMesh as unknown as RuntimeMmdMesh;
         runtimeMesh.metadata = {
             isRuntimeMmdModel: true,
             header: mmdMetadata.header,
@@ -168,7 +168,7 @@ export class MmdModel implements IMmdModel {
             for (let i = 0; i < sortedBones.length; ++i) sortedBones[i].updateLocalMatrix();
             for (let i = 0; i < sortedRootBones.length; ++i) sortedRootBones[i].updateWorldMatrix();
             this._physicsModel = mmdPhysics.buildPhysics(
-                mmdMesh,
+                mmdSkinnedMesh,
                 runtimeBones,
                 mmdMetadata.rigidBodies,
                 mmdMetadata.joints,

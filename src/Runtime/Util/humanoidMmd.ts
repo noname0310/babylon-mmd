@@ -827,7 +827,7 @@ export class HumanoidMmd {
         const metadata = this._createMetadata(humanoidMesh.name, meshes.slice(), morphMap, skeleton);
         humanoidMesh.metadata = metadata;
 
-        if (!MmdMesh.isMmdMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
+        if (!MmdMesh.isMmdSkinnedMesh(humanoidMesh)) throw new Error("Mesh validation failed.");
 
         let transformOffsetMatrix: Matrix;
         if ((transformOffset as TransformNode).getWorldMatrix !== undefined) {

@@ -86,7 +86,7 @@ export { IMmdModel } from "@/Runtime/IMmdModel";
 export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
 export { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
 export { MmdCamera } from "@/Runtime/mmdCamera";
-export { MmdMesh, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
+export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphController";
 export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/mmdPhysics";

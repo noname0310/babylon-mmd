@@ -11,6 +11,7 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
+import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
@@ -138,29 +139,29 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * Create MMD model from mesh that has MMD metadata
      *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
-     * @param mmdMesh MmdMesh
+     * @param mmdSkinnedMesh MmdSkinnedMesh
      * @param options Creation options
      * @returns MMD model
-     * @throws {Error} if mesh is not `MmdMesh`
+     * @throws {Error} if mesh is not `MmdSkinnedMesh`
      */
     public createMmdModel(
-        mmdMesh: Mesh,
+        mmdSkinnedMesh: Mesh,
         options: CreateMmdModelOptions = {}
     ): MmdWasmModel {
-        if (!MmdMesh.isMmdMesh(mmdMesh)) throw new Error("Mesh validation failed.");
-        return this.createMmdModelFromSkeleton(mmdMesh, mmdMesh.metadata.skeleton, options);
+        if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
+        return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
     }
 
     /**
      * Create MMD model from humanoid mesh and virtual skeleton
      *
      * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
-     * @param mmdMesh MmdMesh
+     * @param mmdMesh MmdSkinnedMesh
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
     public createMmdModelFromSkeleton(
-        mmdMesh: MmdMesh,
+        mmdMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         options: CreateMmdModelOptions = {}
     ): MmdWasmModel {

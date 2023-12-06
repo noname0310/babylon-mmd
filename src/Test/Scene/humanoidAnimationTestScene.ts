@@ -123,7 +123,7 @@ export class SceneBuilder implements ISceneBuilder {
             const retargetedAnimation = animationRetargeter
                 .setBoneMap(new MmdHumanoidMapper(MixamoMmdHumanoidBoneMap).boneMap)
                 .setSourceSkeleton(sourceSkeleton, sourceModelMesh)
-                .setTargetSkeleton(modelMesh.metadata.skeleton)
+                .setTargetSkeleton(modelMesh.metadata.skeleton!)
                 .retargetAnimation(animation, {
                     cloneAnimation: true,
                     removeBoneRotationOffset: true,
@@ -156,7 +156,7 @@ export class SceneBuilder implements ISceneBuilder {
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftForeArm")!;
             // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左ひじ")!;
             const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左肩")!;
+            const targetLeftShoulder = modelMesh.metadata.skeleton!.bones.find((bone) => bone.name === "左肩")!;
             // const sourceLeftShoulder = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftUpLeg")!;
             // const targetLeftShoulder = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左足")!;
 
@@ -214,7 +214,7 @@ export class SceneBuilder implements ISceneBuilder {
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:Head")!;
             // const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "頭")!;
             const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftShoulder")!;
-            const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左肩")!;
+            const targetLeftHand = modelMesh.metadata.skeleton!.bones.find((bone) => bone.name === "左肩")!;
             // const sourceLeftHand = sourceSkeleton.bones.find((bone) => bone.name === "mixamorig:LeftHand")!;
             // const targetLeftHand = modelMesh.metadata.skeleton.bones.find((bone) => bone.name === "左手首")!;
 
@@ -255,7 +255,7 @@ export class SceneBuilder implements ISceneBuilder {
                 directionalLightPosition: directionalLight.position
             });
 
-            const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
+            const viewer = new SkeletonViewer(modelMesh.metadata.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
             });
             viewer.isEnabled = false;

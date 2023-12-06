@@ -8,7 +8,7 @@ import type { ILogger } from "./ILogger";
 import type { IMmdModel } from "./IMmdModel";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "./mmdCamera";
-import type { MmdMesh } from "./mmdMesh";
+import type { MmdSkinnedMesh } from "./mmdMesh";
 import type { CreateMmdModelOptions } from "./mmdRuntime";
 
 /**
@@ -48,13 +48,13 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * Create MMD model from mesh that has MMD metadata
      *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy
-     * @param mmdMesh MmdMesh
+     * @param mmdMesh MmdSkinnedMesh
      * @param options Creation options
      * @returns MMD model
-     * @throws {Error} if mesh is not `MmdMesh`
+     * @throws {Error} if mesh is not `MmdSkinnedMesh`
      */
     createMmdModel(
-        mmdMesh: Mesh,
+        mmdSkinedMesh: Mesh,
         options?: CreateMmdModelOptions
     ): T;
 
@@ -62,12 +62,12 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * Create MMD model from humanoid mesh and virtual skeleton
      *
      * this method is useful for supporting humanoid models, usually used by `HumanoidMmd`
-     * @param mmdMesh MmdMesh
+     * @param mmdSkinedMesh MmdSkinnedMesh
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
     createMmdModelFromSkeleton(
-        mmdMesh: MmdMesh,
+        mmdSkinedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         options?: CreateMmdModelOptions
     ): T;

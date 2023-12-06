@@ -5,16 +5,25 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 /**
- * Mesh type that able to create `MmdModel` instance
+ * Mesh type that has MMD model metadata
  */
 export interface MmdMesh extends Mesh {
-    metadata: SkinedMmdModelMetadata;
+    _mmdMeshPhantomProperty: true;
+    metadata: MmdModelMetadata;
+}
+
+/**
+ * Mesh type that able to create `MmdModel` instance
+ */
+export interface MmdSkinnedMesh extends Mesh {
+    _mmdSkinnedMeshPhantomProperty: true;
+    metadata: MmdSkinedModelMetadata;
 }
 
 /**
  * Metadata for `MmdModel`
  */
-export interface SkinedMmdModelMetadata extends MmdModelMetadata {
+export interface MmdSkinedModelMetadata extends MmdModelMetadata {
     /**
      * Mmd model skeleton
      */
@@ -57,10 +66,18 @@ export interface RuntimeMmdModelMetadata {
 export namespace MmdMesh {
     /**
      * Check if the mesh is MMD model root mesh
-     * @param mesh Mesh to check
-     * @returns `true` if the mesh is `MmdMesh`
      */
     export function isMmdMesh(mesh: Mesh): mesh is MmdMesh {
+        if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
+        return true;
+    }
+
+    /**
+     * Check if the mesh is MMD model root mesh and can create `MmdModel` instance
+     * @param mesh Mesh to check
+     * @returns `true` if the mesh is `MmdSkinnedMesh`
+     */
+    export function isMmdSkinnedMesh(mesh: Mesh): mesh is MmdSkinnedMesh {
         if (mesh.metadata === null || !mesh.metadata.isMmdModel) return false;
         if (mesh.metadata.skeleton === null) return false;
         return true;
