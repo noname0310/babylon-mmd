@@ -5,7 +5,6 @@ import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -34,7 +33,6 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);

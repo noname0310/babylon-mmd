@@ -95,7 +95,6 @@ export class PmxConverterScene implements ISceneBuilder {
         pmdLoader.materialBuilder = pmxLoader.materialBuilder;
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
 
         const camera = new ArcRotateCamera("camera", 0, 0, 45, new Vector3(0, 10, 0), scene);
         camera.maxZ = 5000;

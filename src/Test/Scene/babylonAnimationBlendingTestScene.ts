@@ -10,7 +10,7 @@ import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
@@ -54,7 +54,6 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const mmdRoot = new TransformNode("mmdRoot", scene);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
