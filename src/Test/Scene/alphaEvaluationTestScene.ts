@@ -39,8 +39,8 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = false;
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "https://a-cdn.qbox.net/test/models/pmx/[MODELS]%20Lovesick%20girls%20ver.1/",
-            "[LSG]%20Jennie%20(Miku)%20ver.1.pmx",
+            "res/private_test/model/YYB Hatsune Miku_10th/",
+            "YYB Hatsune Miku_10th_v1.02.pmx",
             scene
         ).then(result => result.meshes[0] as MmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;

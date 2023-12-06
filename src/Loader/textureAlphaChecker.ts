@@ -78,6 +78,7 @@ export class TextureAlphaChecker {
     private _vertexShader: Nullable<WebGLShader>;
     private _fragmentShader: Nullable<WebGLShader>;
     private _program: Nullable<WebGLProgram>;
+    private _programUvLocation: Nullable<number>;
 
     private readonly _uvBufferMap: Map<Float32Array, WebGLBuffer>;
     private readonly _indexBufferMap: Map<Uint16Array | Uint32Array, WebGLBuffer>;
@@ -101,6 +102,7 @@ export class TextureAlphaChecker {
         this._vertexShader = null;
         this._fragmentShader = null;
         this._program = null;
+        this._programUvLocation = null;
 
         this._uvBufferMap = new Map();
         this._indexBufferMap = new Map();
@@ -221,9 +223,8 @@ export class TextureAlphaChecker {
 
         context.useProgram(program);
 
-        const uvLocation = context.getAttribLocation(program, "uv");
+        const uvLocation = this._programUvLocation = context.getAttribLocation(program, "uv");
         context.enableVertexAttribArray(uvLocation);
-        context.vertexAttribPointer(uvLocation, 2, context.FLOAT, false, 0, 0);
 
         const textureLocation = context.getUniformLocation(program, "texture");
         context.activeTexture(context.TEXTURE0);
@@ -297,6 +298,7 @@ export class TextureAlphaChecker {
         context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.NEAREST);
         context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
         context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+        context.pixelStorei(context.UNPACK_FLIP_Y_WEBGL, imageOrPixelsBuffer instanceof HTMLImageElement ? 1 : 0);
         context.texImage2D(
             context.TEXTURE_2D,
             0, // level
@@ -308,7 +310,6 @@ export class TextureAlphaChecker {
             context.UNSIGNED_BYTE, // type
             imageOrPixelsBuffer as any // HTMLImageElement or pixels ArrayBuffer
         );
-        context.pixelStorei(context.UNPACK_FLIP_Y_WEBGL, 1);
         if (blobCreated) URL.revokeObjectURL((imageOrPixelsBuffer as HTMLImageElement).src);
 
         textureContainer.texture = webGlTexture;
@@ -338,6 +339,7 @@ export class TextureAlphaChecker {
 
             context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
             context.bufferData(context.ARRAY_BUFFER, uvs, context.STATIC_DRAW);
+            context.vertexAttribPointer(this._programUvLocation!, 2, context.FLOAT, false, 0, 0);
         }
 
         if (indexBuffer === null) {
@@ -437,7 +439,7 @@ export class TextureAlphaChecker {
         }
 
         // const div = document.createElement("div");
-        // div.innerText = texture.name + " " + maxValue;
+        // div.innerText = fallbackTexture?.name + " " + maxValue;
         // const debugCanvas = document.createElement("canvas");
         // debugCanvas.width = resolution / 2;
         // debugCanvas.height = resolution / 2;
@@ -451,7 +453,9 @@ export class TextureAlphaChecker {
         //     for (let j = 0; j < resolution; j += 2) {
         //         const index = (i * resolution + j) * 4;
         //         const r = resultPixelsBufferView[index + 0];
-        //         debugContext!.fillStyle = `rgba(${r}, ${r}, ${r}, 1.0)`;
+        //         const g = resultPixelsBufferView[index + 1];
+        //         const b = resultPixelsBufferView[index + 2];
+        //         debugContext!.fillStyle = `rgba(${r}, ${g}, ${b}, 1.0)`;
         //         debugContext!.fillRect(i / 2, j / 2, 1, 1);
         //     }
         // }
