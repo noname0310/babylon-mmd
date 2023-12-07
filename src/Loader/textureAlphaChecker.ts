@@ -113,12 +113,12 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderList = [mesh];
         renderTargetTexture.setMaterialForRendering(mesh, shader);
 
+        // NOTE: there is too much internal api access here, becareful to babylon.js internal changes
         const currentLODIsUpToDate = mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate;
         const currentLOD = mesh._internalAbstractMeshDataInfo._currentLOD;
         mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate = true;
         mesh._internalAbstractMeshDataInfo._currentLOD = mesh;
 
-        // NOTE: there is too much "as any" here, becareful to babylon.js internal changes
         const isEnabled = (mesh as any)._nodeDataStorage._isEnabled;
         const isParentEnabled = (mesh as any)._nodeDataStorage._isParentEnabled;
         (mesh as any)._nodeDataStorage._isEnabled = true;
