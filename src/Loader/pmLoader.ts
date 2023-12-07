@@ -377,7 +377,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 });
                 vertexDataArray.push(vertexData);
 
-                isReferencedVertex.fill(0);
                 indexStartOffset += materialInfo.indexCount;
             }
         }
