@@ -199,6 +199,7 @@ export abstract class MmdModelLoader<
         const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
+            rootMesh,
             scene,
             assetContainer,
             progress
@@ -220,6 +221,7 @@ export abstract class MmdModelLoader<
         if (state.buildSkeleton) {
             skeleton = await this._buildSkeletonAsync(
                 modelObject,
+                buildGeometryResult.meshes,
                 scene,
                 assetContainer,
                 bonesMetadata,
@@ -230,7 +232,7 @@ export abstract class MmdModelLoader<
         }
 
         const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManagers: Nullable<MorphTargetManager>[] | null = null;
+        let morphTargetManagers: MorphTargetManager[] | null = null;
         if (state.buildMorph) {
             morphTargetManagers = await this._buildMorphAsync(
                 modelObject,
@@ -271,18 +273,6 @@ export abstract class MmdModelLoader<
         progress.endTask("Texture Load");
         progress.invokeProgressEvent();
 
-        const nonNullMorphTargetManagers: MorphTargetManager[] = [];
-        {
-            const meshes = buildGeometryResult.meshes;
-            for (let i = 0; i < meshes.length; ++i) meshes[i].setParent(rootMesh);
-            for (let i = 0; i < materials.length; ++i) meshes[i].material = materials[i];
-            if (skeleton !== null) for (let i = 0; i < meshes.length; ++i) meshes[i].skeleton = skeleton;
-            if (morphTargetManagers !== null) for (let i = 0; i < meshes.length; ++i) {
-                const morphTargetManager = morphTargetManagers[i];
-                meshes[i].morphTargetManager = morphTargetManager;
-                if (morphTargetManager !== null) nonNullMorphTargetManagers.push(morphTargetManager);
-            }
-        }
         rootMesh.setEnabled(true);
 
         if (assetContainer !== null) {
@@ -291,7 +281,7 @@ export abstract class MmdModelLoader<
             assetContainer.geometries.push(...buildGeometryResult.geometries);
             assetContainer.materials.push(...materials);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
-            assetContainer.morphTargetManagers.push(...nonNullMorphTargetManagers);
+            if (morphTargetManagers !== null) assetContainer.morphTargetManagers.push(...morphTargetManagers);
         }
 
         return {
@@ -341,6 +331,7 @@ export abstract class MmdModelLoader<
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
+        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -359,6 +350,7 @@ export abstract class MmdModelLoader<
 
     protected async _buildSkeletonAsync(
         modelObject: ModelObject,
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         bonesMetadata: MmdModelMetadata.Bone[],
@@ -455,6 +447,7 @@ export abstract class MmdModelLoader<
         progress.endTask("Build Skeleton");
         progress.invokeProgressEvent();
 
+        for (let i = 0; i < meshes.length; ++i) meshes[i].skeleton = skeleton;
         return skeleton;
     }
 
@@ -465,7 +458,7 @@ export abstract class MmdModelLoader<
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<Nullable<MorphTargetManager>[]>;
+    ): Promise<MorphTargetManager[]>;
 
     private _applyBoundingBoxMargin(meshes: Mesh[], boundingBoxMargin: number): void {
         for (let i = 0; i < meshes.length; ++i) {

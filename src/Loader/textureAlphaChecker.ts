@@ -16,6 +16,15 @@ declare module "@babylonjs/core/scene" {
     }
 }
 
+declare module "@babylonjs/core/Materials/Textures/renderTargetTexture" {
+    export interface RenderTargetTexture {
+        /**
+         * Gets or sets a boolean indicating that the prepass renderer should not be used with this render target
+         */
+        noPrePassRenderer: boolean;
+    }
+}
+
 /**
  * Material transparency mode
  *
@@ -104,7 +113,25 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderList = [mesh];
         renderTargetTexture.setMaterialForRendering(mesh, shader);
 
+        const currentLODIsUpToDate = mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate;
+        const currentLOD = mesh._internalAbstractMeshDataInfo._currentLOD;
+        mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate = true;
+        mesh._internalAbstractMeshDataInfo._currentLOD = mesh;
+
+        // NOTE: there is too much "as any" here, becareful to babylon.js internal changes
+        const isEnabled = (mesh as any)._nodeDataStorage._isEnabled;
+        const isParentEnabled = (mesh as any)._nodeDataStorage._isParentEnabled;
+        (mesh as any)._nodeDataStorage._isEnabled = true;
+        (mesh as any)._nodeDataStorage._isParentEnabled = true;
+
         renderTargetTexture.render(false, false);
+
+        (mesh as any)._nodeDataStorage._isParentEnabled = isParentEnabled;
+        (mesh as any)._nodeDataStorage._isEnabled = isEnabled;
+
+        mesh._internalAbstractMeshDataInfo._currentLOD = currentLOD;
+        mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate = currentLODIsUpToDate;
+
         const effect = shader.getEffect();
         mesh.geometry!._releaseVertexArrayObject(effect);
         const subMeshes = mesh.subMeshes;

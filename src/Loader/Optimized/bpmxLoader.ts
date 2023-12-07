@@ -107,6 +107,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     protected override async _buildGeometryAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
+        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -275,6 +276,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
+                mesh.setParent(rootMesh);
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -352,6 +354,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
 
+        for (let i = 0; i < materials.length; ++i) meshes[i].material = materials[i];
+
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
 
@@ -365,7 +369,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<Nullable<MorphTargetManager>[]> {
+    ): Promise<MorphTargetManager[]> {
         const vertexToSubMeshMap = new Int32Array(modelObject.geometry.positions.length / 3).fill(-1);
         // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
         // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
@@ -528,13 +532,11 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         }
         progress.endTask("Build Morph");
 
-        const morphTargetManagers: Nullable<MorphTargetManager>[] = [];
+        const morphTargetManagers: MorphTargetManager[] = [];
+        const meshes = buildGeometryResult.meshes;
         for (let subMeshIndex = 0; subMeshIndex < subMeshesMorphTargets.length; ++subMeshIndex) {
             const subMeshMorphTargets = subMeshesMorphTargets[subMeshIndex];
-            if (subMeshMorphTargets.length === 0) {
-                morphTargetManagers.push(null);
-                continue;
-            }
+            if (subMeshMorphTargets.length === 0) continue;
 
             scene._blockEntityCollection = !!assetContainer;
             const morphTargetManager = new MorphTargetManager(scene);
@@ -548,6 +550,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             morphTargetManager.areUpdatesFrozen = false;
 
             morphTargetManagers.push(morphTargetManager);
+            meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
         return morphTargetManagers;
     }
