@@ -45,6 +45,7 @@ export class TextureAlphaChecker {
     public constructor(scene: Scene, resolution = 512) {
         this._scene = scene;
 
+        const engine = scene.getEngine();
         const renderTargetTexture = this._renderTargetTexture = new RenderTargetTexture(
             "texture_alpha_checker",
             resolution,
@@ -54,7 +55,7 @@ export class TextureAlphaChecker {
                 generateStencilBuffer: false,
                 generateMipMaps: false,
                 type: Constants.TEXTURETYPE_UNSIGNED_BYTE,
-                format: Constants.TEXTUREFORMAT_RED,
+                format: engine.isWebGPU || engine.webGLVersion > 1 ? Constants.TEXTUREFORMAT_RED : Constants.TEXTUREFORMAT_RGBA,
                 doNotChangeAspectRatio: true
             }
         );
@@ -68,7 +69,8 @@ export class TextureAlphaChecker {
         this._resultPixelsBuffer = new Uint8Array(resolution * resolution * 4);
     }
 
-    private _debugOnce = true;
+    private _blockRendering = false;
+    private readonly _taskQueue: (() => void)[] = [];
 
     /**
      * Check if the texture has alpha on geometry
@@ -89,6 +91,12 @@ export class TextureAlphaChecker {
     ): Promise<TransparencyMode> {
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
+        if (this._blockRendering) {
+            await new Promise<void>(resolve => {
+                this._taskQueue.push(resolve);
+            });
+        }
+
         const shader = TextureAlphaChecker._GetShader(this._scene);
         shader.setTexture("textureSampler", texture);
 
@@ -96,15 +104,25 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderList = [mesh];
         renderTargetTexture.setMaterialForRendering(mesh, shader);
 
-        renderTargetTexture.render(false, this._debugOnce);
-        this._debugOnce = false;
+        renderTargetTexture.render(false, false);
+        const effect = shader.getEffect();
+        mesh.geometry!._releaseVertexArrayObject(effect);
+        const subMeshes = mesh.subMeshes;
+        for (let i = 0, len = subMeshes.length; i < len; ++i) {
+            subMeshes[i]._removeDrawWrapper(renderTargetTexture.renderPassId, true);
+        }
 
         const resultPixelsBuffer = this._resultPixelsBuffer;
+        this._blockRendering = true;
         await renderTargetTexture.readPixels(
             undefined, // faceIndex
             undefined, // level
             resultPixelsBuffer // buffer
         );
+        this._blockRendering = false;
+
+        const nextTask = this._taskQueue.shift();
+        if (nextTask !== undefined) nextTask();
 
         let maxValue = 0;
         let averageMidddleAlpha = 0;
@@ -112,8 +130,8 @@ export class TextureAlphaChecker {
 
         const width = renderTargetTexture.getRenderWidth();
         const height = renderTargetTexture.getRenderHeight();
-        for (let i = 0; i < width; i += 2) {
-            for (let j = 0; j < height; j += 2) {
+        for (let i = 0; i < width; ++i) {
+            for (let j = 0; j < height; ++j) {
                 const index = (i * width + j) * 4;
                 const r = resultPixelsBuffer[index];
                 maxValue = Math.max(maxValue, r);
@@ -156,7 +174,7 @@ export class TextureAlphaChecker {
                         precision highp float;
                         attribute vec2 uv;
                         varying vec2 vUv;
-            
+
                         void main() {
                             vUv = uv;
                             gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
@@ -166,10 +184,9 @@ export class TextureAlphaChecker {
                         precision highp float;
                         uniform sampler2D textureSampler;
                         varying vec2 vUv;
-            
+
                         void main() {
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-                            // gl_FragColor = texture2D(textureSampler, vUv);
+                            gl_FragColor = vec4(vec3(1.0) - vec3(texture2D(textureSampler, vUv).a), 1.0);
                         }
                     `
                 },
@@ -194,5 +211,10 @@ export class TextureAlphaChecker {
         }
 
         return scene._textureAlphaCheckerShader;
+    }
+
+    public static DisposeShader(scene: Scene): void {
+        scene._textureAlphaCheckerShader?.dispose();
+        scene._textureAlphaCheckerShader = null;
     }
 }

@@ -11,6 +11,7 @@ import { Inspector } from "@babylonjs/inspector";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -44,6 +45,8 @@ export class SceneBuilder implements ISceneBuilder {
         ).then(result => result.meshes[0] as MmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
+
+        TextureAlphaChecker.DisposeShader(scene);
 
         Inspector.Show(scene, { });
 
