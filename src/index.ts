@@ -42,7 +42,7 @@ export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmd
 
 // Loader
 export { IMmdMaterialBuilder, MaterialInfo } from "@/Loader/IMmdMaterialBuilder";
-export { MmdAsyncTextureLoader, MmdTextureLoadResult } from "@/Loader/mmdAsyncTextureLoader";
+export { MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
 export { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";

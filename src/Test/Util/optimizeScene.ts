@@ -1,8 +1,4 @@
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Scene } from "@babylonjs/core/scene";
-
-import type { MmdModelLoader } from "@/Loader/mmdModelLoader";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 
 export function optimizeScene(scene: Scene): void {
     scene.freezeMaterials();
@@ -25,18 +21,15 @@ export function optimizeScene(scene: Scene): void {
     scene.clearCachedVertexData();
     scene.cleanCachedTextureBuffer();
 
-    const extensions = [".pmx", ".pmd", ".bpmx"];
-    for (const extension of extensions) {
-        let plugin: MmdModelLoader<any, any, any>;
-        try {
-            plugin = SceneLoader.GetPluginForExtension(extension) as MmdModelLoader<any, any, any>;
-        } catch (e) {
-            continue;
-        }
-        if (plugin.extensions[extension] === undefined) {
-            continue;
-        }
-        const materialBuilder = plugin.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.flushTextureCache();
-    }
+    // very unstable memory optimization
+    // const morphTargetManagers = scene.morphTargetManagers;
+    // for (let i = 0, len = morphTargetManagers.length; i < len; ++i) {
+    //     const morphTargetManager = morphTargetManagers[i];
+    //     const numTargets = morphTargetManager.numTargets;
+    //     for (let j = 0; j < numTargets; ++j) {
+    //         const target = morphTargetManager.getTarget(j) as any;
+    //         target._positions = null;
+    //         target._uvs = null;
+    //     }
+    // }
 }

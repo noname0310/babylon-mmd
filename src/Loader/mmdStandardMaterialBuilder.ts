@@ -8,7 +8,6 @@ import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
-import type { MmdTextureLoadResult } from "./mmdAsyncTextureLoader";
 import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
@@ -325,10 +324,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (diffuseTexturePath !== undefined) {
                 const diffuseTextureFileFullPath = fileRootId + diffuseTexturePath;
 
-                let textureLoadResult: MmdTextureLoadResult;
+                let texture: Nullable<Texture>;
                 const file = referenceFileResolver.resolve(diffuseTextureFileFullPath);
                 if (file !== undefined) {
-                    textureLoadResult = await this._textureLoader.loadTextureFromBufferAsync(
+                    texture = await this._textureLoader.loadTextureFromBufferAsync(
                         uniqueId,
                         diffuseTextureFileFullPath,
                         file instanceof File ? file : file.data,
@@ -336,7 +335,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         assetContainer
                     );
                 } else {
-                    textureLoadResult = await this._textureLoader.loadTextureAsync(
+                    texture = await this._textureLoader.loadTextureAsync(
                         uniqueId,
                         rootUrl,
                         diffuseTexturePath,
@@ -345,7 +344,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     );
                 }
 
-                const diffuseTexture = textureLoadResult.texture;
+                const diffuseTexture = texture;
 
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
@@ -359,7 +358,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         const textureAlphaChecker = getTextureAlphaChecker();
                         if (textureAlphaChecker !== null) {
                             transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                                textureLoadResult.texture!,
+                                diffuseTexture,
                                 mesh,
                                 this.alphaThreshold,
                                 this.alphaBlendThreshold
@@ -441,7 +440,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             file instanceof File ? file : file.data,
                             scene,
                             assetContainer
-                        )).texture;
+                        ));
                     } else {
                         sphereTexture = (await this._textureLoader.loadTextureAsync(
                             uniqueId,
@@ -449,7 +448,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             sphereTexturePath,
                             scene,
                             assetContainer
-                        )).texture;
+                        ));
                     }
 
                     if (sphereTexture !== null) {
@@ -531,7 +530,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         file instanceof File ? file : file.data,
                         scene,
                         assetContainer
-                    )).texture;
+                    ));
                 } else {
                     toonTexture = (await this._textureLoader.loadTextureAsync(
                         uniqueId,
@@ -539,7 +538,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         toonTexturePath,
                         scene,
                         assetContainer
-                    )).texture;
+                    ));
                 }
 
                 if (toonTexture !== null) {
@@ -599,15 +598,4 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };
-
-    /**
-     * If your application is no longer loading models,
-     *
-     * You can aggressively save memory by emptying the texture cache
-     *
-     * However, if you load a model that uses the same texture after the cache has been flushed once, the same data will be loaded twice
-     */
-    public flushTextureCache(): void {
-        this._textureLoader.flushTextureCache();
-    }
 }

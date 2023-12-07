@@ -33,14 +33,13 @@ class TextureLoadInfo {
     }
 }
 
-class MmdTextureData implements MmdTextureLoadResult {
+class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
     private readonly _onLoad: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
-    private _arrayBuffer: Nullable<ArrayBuffer>;
     private _texture: Nullable<Texture>;
 
     public constructor(
@@ -58,22 +57,19 @@ class MmdTextureData implements MmdTextureLoadResult {
         this._onLoad = onLoad;
         this._onError = onError;
 
-        this._arrayBuffer = null;
         this._texture = null;
 
         if (!useLazyLoadWithBuffer) {
             scene._loadFile(
                 urlOrTextureName,
                 (data) => {
-                    const arrayBuffer = this._arrayBuffer = data as ArrayBuffer;
                     this._createTexture(
                         scene,
                         assetContainer,
                         cacheKey,
-                        arrayBuffer,
+                        data as ArrayBuffer,
                         onLoad,
                         (message, exception) => {
-                            this._arrayBuffer = null;
                             onError?.(message, exception);
                         }
                     );
@@ -89,15 +85,13 @@ class MmdTextureData implements MmdTextureLoadResult {
     }
 
     public loadFromArrayBuffer(arrayBuffer: ArrayBuffer): void {
-        this._arrayBuffer = arrayBuffer;
         this._createTexture(
             this._scene,
             this._assetContainer,
             this.cacheKey,
-            this._arrayBuffer,
+            arrayBuffer,
             this._onLoad,
             (message, exception) => {
-                this._arrayBuffer = null;
                 this._onError?.(message, exception);
             }
         );
@@ -156,29 +150,6 @@ class MmdTextureData implements MmdTextureLoadResult {
     public get texture(): Nullable<Texture> {
         return this._texture;
     }
-
-    public get arrayBuffer(): Nullable<ArrayBuffer> {
-        return this._arrayBuffer;
-    }
-}
-
-/**
- * MMD texture load result
- */
-export interface MmdTextureLoadResult {
-    /**
-     * Loaded texture
-     *
-     * If the texture has load error or decoding error, this value is null
-     */
-    readonly texture: Nullable<Texture>;
-
-    /**
-     * Loaded texture data in encoded format(PNG/JPG/BMP)
-     *
-     * If the texture is not loaded, this value is null
-     */
-    readonly arrayBuffer: Nullable<ArrayBuffer>;
 }
 
 /**
@@ -211,11 +182,6 @@ export class MmdAsyncTextureLoader {
     private readonly _loadingModels = new Map<number, TextureLoadingModel>(); // key: uniqueId
 
     private readonly _errorTexturesReferenceCount = new Map<MmdTextureData, number>(); // key: textureName, value: referenceModelCount
-
-    private static readonly _EmptyResult: MmdTextureLoadResult = {
-        texture: null,
-        arrayBuffer: null
-    };
 
     private _incrementLeftLoadCount(uniqueId: number): TextureLoadingModel {
         let model = this._loadingModels.get(uniqueId);
@@ -312,7 +278,7 @@ export class MmdAsyncTextureLoader {
         sharedTextureIndex: Nullable<number>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>
-    ): Promise<MmdTextureLoadResult> {
+    ): Promise<Nullable<Texture>> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
         let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
@@ -362,14 +328,14 @@ export class MmdAsyncTextureLoader {
 
         if (textureData!.texture !== null && textureData!.texture.isReady()) {
             this._decrementLeftLoadCount(model!);
-            if (textureLoadInfo.hasLoadError) return MmdAsyncTextureLoader._EmptyResult;
-            return (textureData!);
+            if (textureLoadInfo.hasLoadError) return null;
+            return textureData!.texture;
         }
 
-        return new Promise<MmdTextureLoadResult>((resolve) => {
+        return new Promise<Nullable<Texture>>((resolve) => {
             textureLoadInfo!.observable.addOnce((hasLoadError) => {
                 this._decrementLeftLoadCount(model);
-                resolve(hasLoadError ? MmdAsyncTextureLoader._EmptyResult : textureData!);
+                resolve(hasLoadError ? null : textureData!.texture);
             });
         });
     }
@@ -386,7 +352,7 @@ export class MmdAsyncTextureLoader {
      * @param relativeTexturePathOrIndex Relative texture path or shared toon texture index
      * @param scene Scene
      * @param assetContainer Asset container
-     * @returns MMD texture load result
+     * @returns Texture
      */
     public async loadTextureAsync(
         uniqueId: number,
@@ -394,7 +360,7 @@ export class MmdAsyncTextureLoader {
         relativeTexturePathOrIndex: string | number,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>
-    ): Promise<MmdTextureLoadResult> {
+    ): Promise<Nullable<Texture>> {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
         const finalRelativeTexturePath = isSharedToonTexture
@@ -428,7 +394,7 @@ export class MmdAsyncTextureLoader {
      * @param scene Scene
      * @param assetContainer Asset container
      * @param applyPathNormalization Whether to apply path normalization to the texture name (default: true)
-     * @returns MMD texture load result
+     * @returns Texture
      */
     public async loadTextureFromBufferAsync(
         uniqueId: number,
@@ -437,7 +403,7 @@ export class MmdAsyncTextureLoader {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         applyPathNormalization = true
-    ): Promise<MmdTextureLoadResult> {
+    ): Promise<Nullable<Texture>> {
         if (applyPathNormalization) {
             textureName = this.pathNormalize(textureName);
         }
@@ -472,15 +438,5 @@ export class MmdAsyncTextureLoader {
             }
         }
         return resultArray.join("/");
-    }
-
-    /**
-     * Flush texture cache
-     */
-    public flushTextureCache(): void {
-        // https://stackoverflow.com/questions/35940216/es6-is-it-dangerous-to-delete-elements-from-set-map-during-set-map-iteration
-        for (const [_cacheKey, textureData] of this.textureCache) {
-            textureData.unregisterOnDisposeCallback()?.();
-        }
     }
 }
