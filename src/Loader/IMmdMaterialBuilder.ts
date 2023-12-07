@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -8,7 +9,6 @@ import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
-import type { IndexedUvGeometry } from "./textureAlphaChecker";
 
 /**
  * Material information
@@ -35,7 +35,7 @@ export interface IMmdMaterialBuilder {
      * @param referenceFiles Reference files for load from files (textures)
      * @param scene Scene
      * @param assetContainer Asset container
-     * @param indexedUvGeometries geopmetries that only has uv and index
+     * @param meshes mesh information for alpha evaluation
      * @param logger Logger
      * @param onTextureLoadProgress Texture load progress callback
      * @param onTextureLoadComplete Texture load complete callback
@@ -49,7 +49,7 @@ export interface IMmdMaterialBuilder {
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        indexedUvGeometries: IndexedUvGeometry[],
+        meshes: Mesh[],
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void

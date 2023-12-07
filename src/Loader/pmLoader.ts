@@ -22,7 +22,6 @@ import { PmxObject } from "./Parser/pmxObject";
 import type { Progress, ProgressTask } from "./progress";
 import { SdefBufferKind } from "./sdefBufferKind";
 import { SdefMesh } from "./sdefMesh";
-import type { IndexedUvGeometry } from "./textureAlphaChecker";
 
 interface PmLoadState extends MmdModelLoadState {
     readonly referenceFiles: readonly File[];
@@ -110,7 +109,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     protected override async _buildGeometryAsync(
         state: PmLoadState,
         modelObject: PmxObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -357,7 +355,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 const mesh = new (state.useSdef && hasSdef ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.setParent(rootMesh);
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -383,32 +380,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             }
         }
 
-        let indexedUvGeometries: IndexedUvGeometry[];
-        {
-            const vertices = modelObject.vertices;
-            const materials = modelObject.materials;
-
-            const uvs = new Float32Array(vertices.length * 2);
-            for (let i = 0; i < vertices.length; ++i) {
-                const uv = vertices[i].uv;
-                uvs[i * 2 + 0] = uv[0];
-                uvs[i * 2 + 1] = 1 - uv[1]; // flip y axis
-            }
-
-            const subMeshIndexCounts = new Int32Array(materials.length);
-            for (let i = 0; i < materials.length; ++i) {
-                subMeshIndexCounts[i] = materials[i].indexCount;
-            }
-
-            indexedUvGeometries = [
-                {
-                    uvs,
-                    indices,
-                    subMeshIndexCounts
-                }
-            ];
-        }
-
         progress.endTask("Build Vertex");
         progress.invokeProgressEvent();
 
@@ -417,8 +388,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             geometries,
             indices,
             indexToSubmehIndexMaps,
-            vertexDataArray,
-            indexedUvGeometries
+            vertexDataArray
         };
     }
 
@@ -429,7 +399,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        indexedUvGeometries: IndexedUvGeometry[],
         rootUrl: string,
         progress: Progress
     ): Promise<BuildMaterialResult> {
@@ -444,7 +413,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 state.referenceFiles, // referenceFiles
                 scene, // scene
                 assetContainer, // assetContainer
-                indexedUvGeometries, // indexedUvGeometries
+                meshes, // meshes
                 this, // logger
                 (event) => {
                     if (!event.lengthComputable) return;
@@ -457,8 +426,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         const materials: Material[] = Array.isArray(buildMaterialsPromise)
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
-
-        for (let i = 0; i < meshes.length; ++i) meshes[i].material = materials[i];
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
@@ -473,7 +440,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]> {
+    ): Promise<Nullable<MorphTargetManager>[]> {
         const vertexToSubMeshMap = new Int32Array(modelObject.vertices.length).fill(-1);
         // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
         // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
@@ -639,11 +606,13 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         }
         progress.endTask("Build Morph");
 
-        const morphTargetManagers: MorphTargetManager[] = [];
-        const meshes = buildGeometryResult.meshes;
+        const morphTargetManagers: Nullable<MorphTargetManager>[] = [];
         for (let subMeshIndex = 0; subMeshIndex < subMeshesMorphTargets.length; ++subMeshIndex) {
             const subMeshMorphTargets = subMeshesMorphTargets[subMeshIndex];
-            if (subMeshMorphTargets.length === 0) continue;
+            if (subMeshMorphTargets.length === 0) {
+                morphTargetManagers.push(null);
+                continue;
+            }
 
             scene._blockEntityCollection = !!assetContainer;
             const morphTargetManager = new MorphTargetManager(scene);
@@ -657,7 +626,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             morphTargetManager.areUpdatesFrozen = false;
 
             morphTargetManagers.push(morphTargetManager);
-            meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
         return morphTargetManagers;
     }

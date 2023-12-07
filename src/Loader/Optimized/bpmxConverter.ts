@@ -186,7 +186,6 @@ import type { ILogger } from "../Parser/ILogger";
 import type { IPmxReaderConstructor } from "../Parser/IPmxReaderConstructor";
 import { PmxObject } from "../Parser/pmxObject";
 import { ReferenceFileResolver } from "../referenceFileResolver";
-import type { IndexedUvGeometry } from "../textureAlphaChecker";
 import { TextureAlphaChecker } from "../textureAlphaChecker";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 
@@ -533,20 +532,8 @@ export class BpmxConverter implements ILogger {
 
         // evaluate texture alpha
         if (useAlphaEvaluation) {
-            const uvGeometry: IndexedUvGeometry = {
-                uvs,
-                indices,
-                subMeshIndexCounts: new Int32Array(pmxObject.materials.length)
-            };
-            {
-                const materials = pmxObject.materials;
-                const subMeshIndexCounts = uvGeometry.subMeshIndexCounts;
-                for (let i = 0; i < materials.length; ++i) {
-                    subMeshIndexCounts[i] = materials[i].indexCount;
-                }
-            }
-
-            const textureAlphaChecker = new TextureAlphaChecker([uvGeometry], alphaEvaluationResolution);
+            // todo: pass submeshes
+            const textureAlphaChecker = new TextureAlphaChecker(scene, alphaEvaluationResolution);
 
             const materials = pmxObject.materials;
             for (let i = 0; i < materials.length; ++i) {
@@ -557,14 +544,16 @@ export class BpmxConverter implements ILogger {
                     const textureIndex = materialInfo.textureIndex;
                     const textureData = textureLoadResults[textureIndex];
                     if (textureData !== undefined && textureData.arrayBuffer !== null) {
-                        const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                            textureData.arrayBuffer,
-                            textureData.texture,
-                            i,
-                            alphaThreshold,
-                            alphaBlendThreshold
-                        );
-                        textureAlphaEvaluateResults[i] = textureAlphaEvaluateResult;
+                        // todo: pass submeshes
+                        // const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                        //     textureData.texture!,
+                        //     mesh,
+                        //     alphaThreshold,
+                        //     alphaBlendThreshold
+                        // );
+                        alphaThreshold;
+                        alphaBlendThreshold;
+                        textureAlphaEvaluateResults[i] = 0;// textureAlphaEvaluateResult;
                     }
                 }
             }

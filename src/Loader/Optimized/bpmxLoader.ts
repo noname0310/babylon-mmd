@@ -22,7 +22,6 @@ import { PmxObject } from "../Parser/pmxObject";
 import type { Progress, ProgressTask } from "../progress";
 import { SdefBufferKind } from "../sdefBufferKind";
 import { SdefMesh } from "../sdefMesh";
-import type { IndexedUvGeometry } from "../textureAlphaChecker";
 import type { BpmxObject } from "./Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 
@@ -108,7 +107,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     protected override async _buildGeometryAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -277,7 +275,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.setParent(rootMesh);
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
@@ -302,23 +299,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             }
         }
 
-        let indexedUvGeometries: IndexedUvGeometry[];
-        {
-            const materials = modelObject.materials;
-            const subMeshIndexCounts = new Int32Array(materials.length);
-            for (let i = 0; i < materials.length; ++i) {
-                subMeshIndexCounts[i] = materials[i].indexCount;
-            }
-
-            indexedUvGeometries = [
-                {
-                    uvs: modelObject.geometry.uvs,
-                    indices,
-                    subMeshIndexCounts
-                }
-            ];
-        }
-
         progress.endTask("Build Geometry");
         progress.invokeProgressEvent();
 
@@ -327,8 +307,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             geometries,
             indices,
             indexToSubmehIndexMaps,
-            vertexDataArray,
-            indexedUvGeometries
+            vertexDataArray
         };
     }
 
@@ -339,7 +318,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        indexedUvGeometries: IndexedUvGeometry[],
         rootUrl: string,
         progress: Progress
     ): Promise<BuildMaterialResult> {
@@ -360,7 +338,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 modelObject.textures, // referenceFiles
                 scene, // scene
                 assetContainer, // assetContainer
-                indexedUvGeometries, // indexedUvGeometries
+                meshes, // meshes
                 this, // logger
                 (event) => {
                     if (!event.lengthComputable) return;
@@ -373,8 +351,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         const materials: Material[] = Array.isArray(buildMaterialsPromise)
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
-
-        for (let i = 0; i < meshes.length; ++i) meshes[i].material = materials[i];
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
@@ -389,7 +365,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]> {
+    ): Promise<Nullable<MorphTargetManager>[]> {
         const vertexToSubMeshMap = new Int32Array(modelObject.geometry.positions.length / 3).fill(-1);
         // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
         // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
@@ -552,11 +528,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         }
         progress.endTask("Build Morph");
 
-        const morphTargetManagers: MorphTargetManager[] = [];
-        const meshes = buildGeometryResult.meshes;
+        const morphTargetManagers: Nullable<MorphTargetManager>[] = [];
         for (let subMeshIndex = 0; subMeshIndex < subMeshesMorphTargets.length; ++subMeshIndex) {
             const subMeshMorphTargets = subMeshesMorphTargets[subMeshIndex];
-            if (subMeshMorphTargets.length === 0) continue;
+            if (subMeshMorphTargets.length === 0) {
+                morphTargetManagers.push(null);
+                continue;
+            }
 
             scene._blockEntityCollection = !!assetContainer;
             const morphTargetManager = new MorphTargetManager(scene);
@@ -570,7 +548,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             morphTargetManager.areUpdatesFrozen = false;
 
             morphTargetManagers.push(morphTargetManager);
-            meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
         return morphTargetManagers;
     }

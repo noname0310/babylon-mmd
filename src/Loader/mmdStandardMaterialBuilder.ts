@@ -3,6 +3,7 @@ import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoa
 import { Material } from "@babylonjs/core/Materials/material";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -16,7 +17,6 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
-import type { IndexedUvGeometry } from "./textureAlphaChecker";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 /**
@@ -77,7 +77,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        indexedUvGeometries: IndexedUvGeometry[],
+        meshes: Mesh[],
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
@@ -90,7 +90,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         const getTextureAlpphaChecker = (): Nullable<TextureAlphaChecker> => {
             if (textureAlphaChecker !== null) return textureAlphaChecker;
             return this.useAlphaEvaluation
-                ? textureAlphaChecker = new TextureAlphaChecker(indexedUvGeometries, this.alphaEvaluationResolution)
+                ? textureAlphaChecker = new TextureAlphaChecker(scene, this.alphaEvaluationResolution)
                 : null;
         };
 
@@ -139,7 +139,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     rootUrl,
                     fileRootId,
                     referenceFileResolver,
-                    i, // materialIndex
+                    meshes[i],
                     logger,
                     getTextureAlpphaChecker,
                     incrementProgress
@@ -300,7 +300,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         rootUrl: string,
         fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
-        materialIndex: number,
+        mesh: Mesh,
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
@@ -314,7 +314,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             rootUrl,
             fileRootId,
             referenceFileResolver,
-            materialIndex,
+            mesh,
             logger,
             getTextureAlphaChecker,
             onTextureLoadComplete
@@ -359,9 +359,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         const textureAlphaChecker = getTextureAlphaChecker();
                         if (textureAlphaChecker !== null) {
                             transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                                textureLoadResult.arrayBuffer!,
                                 textureLoadResult.texture!,
-                                materialIndex,
+                                mesh,
                                 this.alphaThreshold,
                                 this.alphaBlendThreshold
                             );
