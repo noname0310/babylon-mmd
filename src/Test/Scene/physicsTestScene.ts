@@ -150,8 +150,8 @@ export class SceneBuilder implements ISceneBuilder {
             // const physicsViewer = new PhysicsViewer(scene);
             // const modelMesh = loadResults[1].meshes[0] as Mesh;
             // for (const node of modelMesh.getChildren()) {
-            //     if ((node as any).physicsBody) {
-            //         physicsViewer.showBody((node as any).physicsBody);
+            //     if ((node as TransformNode).physicsBody) {
+            //         physicsViewer.showBody((node as TransformNode).physicsBody);
             //     }
             // }
             // physicsViewer.showBody(groundRigidBody);

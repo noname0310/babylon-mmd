@@ -38,5 +38,5 @@ export async function parallelLoadAsync<const T extends Task<any>[]>(
     const loadResults = await Promise.all(promises);
     scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
-    return loadResults as any;
+    return loadResults as LoadResult<T>;
 }

@@ -7,6 +7,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
@@ -60,8 +61,8 @@ export class SceneBuilder implements ISceneBuilder {
         {
             const physicsViewer = new PhysicsViewer(scene);
             for (const node of mmdMesh.getChildren()) {
-                if ((node as any).physicsBody) {
-                    physicsViewer.showBody((node as any).physicsBody);
+                if ((node as TransformNode).physicsBody) {
+                    physicsViewer.showBody((node as TransformNode).physicsBody!);
                 }
             }
         }
