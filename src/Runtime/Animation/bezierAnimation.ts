@@ -1,5 +1,5 @@
 import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import { _staticOffsetValueColor3, _staticOffsetValueColor4, _staticOffsetValueQuaternion,_staticOffsetValueSize,_staticOffsetValueVector2,_staticOffsetValueVector3,Animation } from "@babylonjs/core/Animations/animation";
+import { _staticOffsetValueColor3, _staticOffsetValueColor4, _staticOffsetValueQuaternion, _staticOffsetValueSize, _staticOffsetValueVector2, _staticOffsetValueVector3, Animation } from "@babylonjs/core/Animations/animation";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
