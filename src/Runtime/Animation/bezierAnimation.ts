@@ -1,5 +1,5 @@
 import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import { Animation } from "@babylonjs/core/Animations/animation";
+import { _staticOffsetValueColor3, _staticOffsetValueColor4, _staticOffsetValueQuaternion,_staticOffsetValueSize,_staticOffsetValueVector2,_staticOffsetValueVector3,Animation } from "@babylonjs/core/Animations/animation";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -77,7 +77,7 @@ export class BezierAnimation extends Animation {
         let gradient = (currentFrame - startKey.frame) / frameDelta;
 
         // check for easingFunction and correction of gradient
-        const easingFunction = this.getEasingFunction();
+        const easingFunction = startKey.easingFunction || this.getEasingFunction();
         if (easingFunction !== null) {
             gradient = easingFunction.ease(gradient);
         }
@@ -95,7 +95,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return floatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return state.offsetValue * state.repeatCount + floatValue;
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return (state.offsetValue ?? 0) * state.repeatCount + floatValue;
                 }
                 break;
             }
@@ -110,7 +111,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return quatValue.addInPlace(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -126,7 +128,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return vec3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return vec3Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return vec3Value.add((state.offsetValue || _staticOffsetValueVector3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -141,7 +144,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return vec2Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return vec2Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return vec2Value.add((state.offsetValue || _staticOffsetValueVector2).scale(state.repeatCount));
                 }
                 break;
             }
@@ -153,7 +157,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return this.sizeInterpolateFunction(startValue, endValue, gradient);
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _staticOffsetValueSize).scale(state.repeatCount));
                 }
                 break;
             }
@@ -168,7 +173,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return color3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return color3Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return color3Value.add((state.offsetValue || _staticOffsetValueColor3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -183,7 +189,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return color4Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return color4Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return color4Value.add((state.offsetValue || _staticOffsetValueColor4).scale(state.repeatCount));
                 }
                 break;
             }
@@ -198,7 +205,8 @@ export class BezierAnimation extends Animation {
                     }
                     return startValue;
                 }
-                case Animation.ANIMATIONLOOPMODE_RELATIVE: {
+                case Animation.ANIMATIONLOOPMODE_RELATIVE:
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT: {
                     return startValue;
                 }
                 }
@@ -218,7 +226,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return floatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return state.offsetValue * state.repeatCount + floatValue;
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return (state.offsetValue ?? 0) * state.repeatCount + floatValue;
                 }
                 break;
             }
@@ -233,7 +242,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return quatValue.addInPlace(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -249,7 +259,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return quatValue.addInPlace(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -265,7 +276,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return vec3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return vec3Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return vec3Value.add((state.offsetValue || _staticOffsetValueVector3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -280,7 +292,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return vec2Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return vec2Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return vec2Value.add((state.offsetValue || _staticOffsetValueVector2).scale(state.repeatCount));
                 }
                 break;
             }
@@ -292,7 +305,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return this.sizeInterpolateFunction(startValue, endValue, gradient);
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _staticOffsetValueSize).scale(state.repeatCount));
                 }
                 break;
             }
@@ -307,7 +321,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return color3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return color3Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return color3Value.add((state.offsetValue || _staticOffsetValueColor3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -322,7 +337,8 @@ export class BezierAnimation extends Animation {
                 case Animation.ANIMATIONLOOPMODE_YOYO:
                     return color4Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
-                    return color4Value.add(state.offsetValue.scale(state.repeatCount));
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
+                    return color4Value.add((state.offsetValue || _staticOffsetValueColor4).scale(state.repeatCount));
                 }
                 break;
             }
@@ -337,7 +353,8 @@ export class BezierAnimation extends Animation {
                     }
                     return startValue;
                 }
-                case Animation.ANIMATIONLOOPMODE_RELATIVE: {
+                case Animation.ANIMATIONLOOPMODE_RELATIVE:
+                case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT: {
                     return startValue;
                 }
                 }
