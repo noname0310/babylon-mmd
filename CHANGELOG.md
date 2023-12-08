@@ -13,6 +13,11 @@
 
 - fixed a bug where textures were not evaluated properly in texture alpha evaluation by `TextureAlphaChecker`
 
+- improve `TextureAlphaChecker` performance by using `RenderTargetTexture`
+
+- Apply the changes made to the Animation in Babylon.js to the Bezier Animation
+    - see https://github.com/BabylonJS/Babylon.js/pull/14584
+
 ## 0.34.0
 
 - remove dead code
