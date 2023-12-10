@@ -4,6 +4,8 @@ import copyWebpackPlugin from "copy-webpack-plugin";
 import eslintPlugin from "eslint-webpack-plugin";
 import htmlWebpackPlugin from "html-webpack-plugin";
 import path from "path";
+import type ts from "typescript";
+import glslMinifyTransformer from "typescript-glslminify-transformer";
 import type webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
 
@@ -22,7 +24,12 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         rules: [
             {
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
+                options: {
+                    getCustomTransformers: (program: ts.Program) => ({
+                        before: [glslMinifyTransformer(program)]
+                    })
+                }
             },
             {
                 test: /\.html$/,

@@ -5,6 +5,7 @@
         "outDir": "./dist/esm",
         "declaration": true,
         "plugins": [
+            { "transform": "typescript-glslminify-transformer" },
             { "transform": "typescript-transform-paths" },
             { "transform": "typescript-transform-paths", "afterDeclarations": true }
         ]

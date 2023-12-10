@@ -241,7 +241,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             codes[`!${this._escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
                 ${sdefVertex}
                 
-                finalWorld = finalWorld * influence;
+                finalWorld = (finalWorld * influence);
             `;
 
             return codes;
@@ -276,7 +276,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
                     baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset) * textureColor;
                 #else
-                    baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset);
+                    baseColor = texture2D(diffuseSampler, (vDiffuseUV + uvOffset));
                 #endif
             `;
 
@@ -299,7 +299,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)   
                     result.diffuse = diffuseColor * attenuation;
                 #else
-                    result.diffuse = ndl * diffuseColor * attenuation;
+                    result.diffuse = (ndl * diffuseColor * attenuation);
                 #endif
             `;
 
@@ -318,7 +318,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #elif defined(IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED)
                     diffuseBase += info.diffuse;
                 #else
-                    diffuseBase += info.diffuse * shadow;
+                    diffuseBase += (info.diffuse * shadow);
                 #endif
             `;
 

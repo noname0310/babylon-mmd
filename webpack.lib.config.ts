@@ -1,4 +1,6 @@
 import path from "path";
+import type ts from "typescript";
+import glslMinifyTransformer from "typescript-glslminify-transformer";
 import type webpack from "webpack";
 
 export default (env: any): webpack.Configuration => ({
@@ -23,7 +25,15 @@ export default (env: any): webpack.Configuration => ({
         minimize: env.production
     },
     module: {
-        rules: [{ test: /\.tsx?$/, loader: "ts-loader" }]
+        rules: [{
+            test: /\.tsx?$/,
+            loader: "ts-loader",
+            options: {
+                getCustomTransformers: (program: ts.Program) => ({
+                    before: [glslMinifyTransformer(program)]
+                })
+            }
+        }]
     },
     resolve: {
         alias: {
