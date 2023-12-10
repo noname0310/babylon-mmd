@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 
 if (fs.existsSync("./dist")) {
-    fs.rmdirSync("./dist", { recursive: true });
+    fs.rmSync("./dist", { recursive: true });
 }
 
 try {
