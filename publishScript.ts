@@ -5,7 +5,12 @@ if (fs.existsSync("./dist")) {
     fs.rmdirSync("./dist", { recursive: true });
 }
 
-execSync("npm run build:lib");
+try {
+    execSync("npm run build:lib");
+} catch (error: any) {
+    console.log(error.output.toString());
+    process.exit(1);
+}
 if (!fs.existsSync("./dist")) {
     console.log("build failed");
     process.exit(1);
