@@ -65,6 +65,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      */
     public alphaEvaluationResolution = 512;
 
+    /**
+     * Whether to delete the texture buffer after loading (default: true)
+     */
+    public deleteTextureBufferAfterLoad = true;
+
     private readonly _textureLoader = new MmdAsyncTextureLoader();
 
     public buildMaterials(
@@ -332,7 +337,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         diffuseTextureFileFullPath,
                         file instanceof File ? file : file.data,
                         scene,
-                        assetContainer
+                        assetContainer,
+                        this.deleteTextureBufferAfterLoad
                     );
                 } else {
                     texture = await this._textureLoader.loadTextureAsync(
@@ -340,7 +346,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         rootUrl,
                         diffuseTexturePath,
                         scene,
-                        assetContainer
+                        assetContainer,
+                        this.deleteTextureBufferAfterLoad
                     );
                 }
 
@@ -439,7 +446,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             sphereTextureFileFullPath,
                             file instanceof File ? file : file.data,
                             scene,
-                            assetContainer
+                            assetContainer,
+                            this.deleteTextureBufferAfterLoad
                         ));
                     } else {
                         sphereTexture = (await this._textureLoader.loadTextureAsync(
@@ -447,7 +455,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             rootUrl,
                             sphereTexturePath,
                             scene,
-                            assetContainer
+                            assetContainer,
+                            this.deleteTextureBufferAfterLoad
                         ));
                     }
 
@@ -529,7 +538,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         toonTextureFileFullPath,
                         file instanceof File ? file : file.data,
                         scene,
-                        assetContainer
+                        assetContainer,
+                        this.deleteTextureBufferAfterLoad
                     ));
                 } else {
                     toonTexture = (await this._textureLoader.loadTextureAsync(
@@ -537,7 +547,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         rootUrl,
                         toonTexturePath,
                         scene,
-                        assetContainer
+                        assetContainer,
+                        this.deleteTextureBufferAfterLoad
                     ));
                 }
 

@@ -37,6 +37,7 @@ class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
+    private readonly _deleteBuffer: boolean;
     private readonly _onLoad: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
@@ -48,12 +49,14 @@ class MmdTextureData {
         assetContainer: Nullable<AssetContainer>,
         urlOrTextureName: string,
         useLazyLoadWithBuffer: boolean,
+        deleteBuffer: boolean,
         onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ) {
         this.cacheKey = cacheKey;
         this._scene = scene;
         this._assetContainer = assetContainer;
+        this._deleteBuffer = deleteBuffer;
         this._onLoad = onLoad;
         this._onError = onError;
 
@@ -68,6 +71,7 @@ class MmdTextureData {
                         assetContainer,
                         cacheKey,
                         data as ArrayBuffer,
+                        deleteBuffer,
                         onLoad,
                         (message, exception) => {
                             onError?.(message, exception);
@@ -90,6 +94,7 @@ class MmdTextureData {
             this._assetContainer,
             this.cacheKey,
             arrayBuffer,
+            this._deleteBuffer,
             this._onLoad,
             (message, exception) => {
                 this._onError?.(message, exception);
@@ -119,6 +124,7 @@ class MmdTextureData {
         assetContainer: Nullable<AssetContainer>,
         textureName: string,
         arrayBuffer: ArrayBuffer,
+        deleteBuffer: boolean,
         onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ): void {
@@ -138,7 +144,7 @@ class MmdTextureData {
             },
             onError,
             arrayBuffer,
-            true
+            deleteBuffer
         );
         texture._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
@@ -277,7 +283,8 @@ export class MmdAsyncTextureLoader {
         arrayBufferOrBlob: Nullable<ArrayBuffer | Blob>,
         sharedTextureIndex: Nullable<number>,
         scene: Scene,
-        assetContainer: Nullable<AssetContainer>
+        assetContainer: Nullable<AssetContainer>,
+        deleteBuffer: boolean
     ): Promise<Nullable<Texture>> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
@@ -298,6 +305,7 @@ export class MmdAsyncTextureLoader {
                 assetContainer,
                 blobOrUrl,
                 arrayBufferOrBlob !== null,
+                deleteBuffer,
                 () => {
                     this._handleTextureOnDispose(textureData!);
 
@@ -352,6 +360,7 @@ export class MmdAsyncTextureLoader {
      * @param relativeTexturePathOrIndex Relative texture path or shared toon texture index
      * @param scene Scene
      * @param assetContainer Asset container
+     * @param deleteBuffer Whether to delete the buffer after loading the texture
      * @returns Texture
      */
     public async loadTextureAsync(
@@ -359,7 +368,8 @@ export class MmdAsyncTextureLoader {
         rootUrl: string,
         relativeTexturePathOrIndex: string | number,
         scene: Scene,
-        assetContainer: Nullable<AssetContainer>
+        assetContainer: Nullable<AssetContainer>,
+        deleteBuffer: boolean
     ): Promise<Nullable<Texture>> {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
@@ -377,7 +387,8 @@ export class MmdAsyncTextureLoader {
             null,
             isSharedToonTexture ? relativeTexturePathOrIndex : null,
             scene,
-            assetContainer
+            assetContainer,
+            deleteBuffer
         );
     }
 
@@ -393,6 +404,7 @@ export class MmdAsyncTextureLoader {
      * @param arrayBufferOrBlob Texture data encoded in PNG/JPG/BMP
      * @param scene Scene
      * @param assetContainer Asset container
+     * @param deleteBuffer Whether to delete the buffer after loading the texture
      * @param applyPathNormalization Whether to apply path normalization to the texture name (default: true)
      * @returns Texture
      */
@@ -402,6 +414,7 @@ export class MmdAsyncTextureLoader {
         arrayBufferOrBlob: ArrayBuffer | Blob,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
+        deleteBuffer: boolean,
         applyPathNormalization = true
     ): Promise<Nullable<Texture>> {
         if (applyPathNormalization) {
@@ -414,7 +427,8 @@ export class MmdAsyncTextureLoader {
             arrayBufferOrBlob,
             null,
             scene,
-            assetContainer
+            assetContainer,
+            deleteBuffer
         );
     }
 

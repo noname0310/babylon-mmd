@@ -445,7 +445,8 @@ export class BpmxConverter implements ILogger {
                             diffuseTexturePath,
                             file,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.textureIndex] = result;
                         }));
@@ -455,7 +456,8 @@ export class BpmxConverter implements ILogger {
                             rootUrl,
                             diffuseTexturePath,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.textureIndex] = result;
                         }));
@@ -471,7 +473,8 @@ export class BpmxConverter implements ILogger {
                             sphereTexturePath,
                             file,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.sphereTextureIndex] = result;
                         }));
@@ -481,7 +484,8 @@ export class BpmxConverter implements ILogger {
                             rootUrl,
                             sphereTexturePath,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.sphereTextureIndex] = result;
                         }));
@@ -497,7 +501,8 @@ export class BpmxConverter implements ILogger {
                             toonTexturePath,
                             file,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.toonTextureIndex] = result;
                         }));
@@ -507,7 +512,8 @@ export class BpmxConverter implements ILogger {
                             rootUrl,
                             toonTexturePath,
                             scene,
-                            null
+                            null,
+                            false
                         ).then((result) => {
                             textureLoadResults[materialInfo.toonTextureIndex] = result;
                         }));
