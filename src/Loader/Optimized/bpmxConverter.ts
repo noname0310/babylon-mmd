@@ -611,11 +611,7 @@ export class BpmxConverter implements ILogger {
             dataLength += 4; // textureCount
             const pmxObjectTextures = pmxObject.textures;
             for (let i = 0; i < pmxObjectTextures.length; ++i) {
-                const texture = textureLoadResults[i]?._buffer;
-                if (!(texture instanceof ArrayBuffer)) {
-                    throw new Error(`Texture ${pmxObjectTextures[i]} not found`);
-                    // todo: check this
-                }
+                const texture = textureLoadResults[i]?._buffer as Nullable<ArrayBuffer> | undefined;
                 if (texture !== undefined && texture !== null) {
                     dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
                     dataLength += 4; // textureByteLength
@@ -856,12 +852,8 @@ export class BpmxConverter implements ILogger {
         serializer.setUint32(pmxObject.textures.length); // textureCount
         const pmxObjectTextures = pmxObject.textures;
         for (let i = 0; i < textureLoadResults.length; ++i) {
-            const texture = textureLoadResults[i]?._buffer;
-            if (!(texture instanceof ArrayBuffer)) {
-                throw new Error(`Texture ${pmxObjectTextures[i]} not found`);
-                // todo: check this
-            }
-            if (textureLoadResults[i] !== undefined && texture !== null) {
+            const texture = textureLoadResults[i]?._buffer as Nullable<ArrayBuffer> | undefined;
+            if (texture !== undefined && texture !== null) {
                 serializer.setString(pmxObjectTextures[i]); // textureName
                 serializer.setUint32(texture.byteLength); // textureDataLength
                 serializer.setUint8Array(new Uint8Array(texture)); // textureData
