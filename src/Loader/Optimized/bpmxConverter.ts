@@ -297,10 +297,10 @@ export class BpmxConverter implements ILogger {
         const uvs = new Float32Array(vertices.length * 2);
 
         let indices;
-        if (pmxObject.faces instanceof Uint8Array || pmxObject.faces instanceof Uint16Array) {
-            indices = new Uint16Array(pmxObject.faces.length);
+        if (pmxObject.indices instanceof Uint8Array || pmxObject.indices instanceof Uint16Array) {
+            indices = new Uint16Array(pmxObject.indices.length);
         } else {
-            indices = new Uint32Array(pmxObject.faces.length);
+            indices = new Uint32Array(pmxObject.indices.length);
         }
 
         const boneIndices = new Float32Array(vertices.length * 4);
@@ -314,7 +314,7 @@ export class BpmxConverter implements ILogger {
         {
             const vertices = pmxObject.vertices;
             {
-                const faces = pmxObject.faces;
+                const faces = pmxObject.indices;
                 for (let i = 0; i < indices.length; i += 3) { // reverse winding order
                     indices[i + 0] = faces[i + 0];
                     indices[i + 1] = faces[i + 2];

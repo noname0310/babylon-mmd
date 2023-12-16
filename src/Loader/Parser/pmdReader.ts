@@ -33,7 +33,7 @@ export class PmdReader {
 
         const header = this._ParseHeader(dataDeserializer);
         const vertices = await this._ParseVerticesAsync(dataDeserializer);
-        const faces = this._ParseFaces(dataDeserializer);
+        const indices = this._ParseIndices(dataDeserializer);
         const partialMaterials = this._ParseMaterials(dataDeserializer);
         const bones = this._ParseBones(dataDeserializer);
         const iks = this._ParseIks(dataDeserializer);
@@ -49,7 +49,7 @@ export class PmdReader {
             const pmxObject: PmxObject = {
                 header,
                 vertices,
-                faces,
+                indices,
                 textures,
                 materials,
                 bones: finalBones,
@@ -78,7 +78,7 @@ export class PmdReader {
             const pmxObject: PmxObject = {
                 header,
                 vertices,
-                faces,
+                indices,
                 textures,
                 materials,
                 bones: finalBones,
@@ -105,7 +105,7 @@ export class PmdReader {
         const pmxObject: PmxObject = {
             header,
             vertices,
-            faces,
+            indices,
             textures,
             materials,
             bones: finalBones,
@@ -194,11 +194,11 @@ export class PmdReader {
         return vertices;
     }
 
-    private static _ParseFaces(dataDeserializer: MmdDataDeserializer): Uint16Array {
-        const facesindicesCount = dataDeserializer.getUint32();
-        const faces = new Uint16Array(facesindicesCount);
-        dataDeserializer.getUint16Array(faces);
-        return faces;
+    private static _ParseIndices(dataDeserializer: MmdDataDeserializer): Uint16Array {
+        const indicesCount = dataDeserializer.getUint32();
+        const indices = new Uint16Array(indicesCount);
+        dataDeserializer.getUint16Array(indices);
+        return indices;
     }
 
     private static _ParseMaterials(dataDeserializer: MmdDataDeserializer): PartialMaterial[] {

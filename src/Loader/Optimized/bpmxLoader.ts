@@ -256,7 +256,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                         }
 
                         if ((indexStartOffset + j) % 10000 === 0 && 100 < performance.now() - time) {
-                            progress.setTaskProgress("Build Vertex", indexStartOffset + j);
+                            progress.setTaskProgress("Build Geometry", indexStartOffset + j);
                             progress.invokeProgressEvent();
 
                             await Tools.DelayAsync(0);

@@ -101,7 +101,7 @@ export class PmxReader {
         );
 
         const vertices = await this._ParseVerticesAsync(dataDeserializer, indexReader, header);
-        const faces = this._ParseFaces(dataDeserializer, indexReader, header);
+        const indices = this._ParseIndices(dataDeserializer, indexReader, header);
         const textures = this._ParseTextures(dataDeserializer);
         const materials = this._ParseMaterials(dataDeserializer, indexReader);
         const bones = this._ParseBones(dataDeserializer, indexReader);
@@ -120,7 +120,7 @@ export class PmxReader {
         const pmxObject: PmxObject = {
             header,
             vertices,
-            faces,
+            indices,
             textures,
             materials,
             bones,
@@ -320,39 +320,35 @@ export class PmxReader {
         return vertices;
     }
 
-    private static _ParseFaces(
+    private static _ParseIndices(
         dataDeserializer: MmdDataDeserializer,
         indexReader: IndexReader,
         header: PmxObject.Header
     ): Uint8Array | Uint16Array | Int32Array {
-        const facesindicesCount = dataDeserializer.getInt32();
+        const indicesCount = dataDeserializer.getInt32();
 
-        // const faces: PmxObject.Face[] = [];
-        // for (let i = 0; i < facesIndiceCount; i += 3) {
-        //     faces.push([getVertexIndex(), getVertexIndex(), getVertexIndex()]);
-        // }
-        const faceArrayBuffer = new ArrayBuffer(facesindicesCount * header.vertexIndexSize);
+        const indexArrayBuffer = new ArrayBuffer(indicesCount * header.vertexIndexSize);
 
-        let faces: Uint8Array | Uint16Array | Int32Array;
+        let indices: Uint8Array | Uint16Array | Int32Array;
         switch (header.vertexIndexSize) {
         case 1:
-            faces = new Uint8Array(faceArrayBuffer);
+            indices = new Uint8Array(indexArrayBuffer);
             break;
         case 2:
-            faces = new Uint16Array(faceArrayBuffer);
+            indices = new Uint16Array(indexArrayBuffer);
             break;
         case 4:
-            faces = new Int32Array(faceArrayBuffer);
+            indices = new Int32Array(indexArrayBuffer);
             break;
         default:
             throw new Error(`Invalid vertexIndexSize: ${header.vertexIndexSize}`);
         }
 
-        for (let i = 0; i < facesindicesCount; ++i) {
-            faces[i] = indexReader.getVertexIndex(dataDeserializer);
+        for (let i = 0; i < indicesCount; ++i) {
+            indices[i] = indexReader.getVertexIndex(dataDeserializer);
         }
 
-        return faces;
+        return indices;
     }
 
     private static _ParseTextures(dataDeserializer: MmdDataDeserializer): PmxObject.Texture[] {

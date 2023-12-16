@@ -17,7 +17,7 @@ export type PmxObject = Readonly<{
     /**
      * Indices of the model
      */
-    faces: Uint8Array | Uint16Array | Int32Array;
+    indices: Uint8Array | Uint16Array | Int32Array;
 
     /**
      * Texture data of the model

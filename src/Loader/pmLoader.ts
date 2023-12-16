@@ -101,8 +101,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
     protected override _getProgressTaskCosts(state: PmLoadState, modelObject: PmxObject): ProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
-        tasks.push({ name: "Build Face", cost: modelObject.faces.length });
-        tasks.push({ name: "Build Vertex", cost: modelObject.vertices.length });
+        tasks.push({ name: "Build Geometry", cost: modelObject.indices.length });
         return tasks;
     }
 
@@ -120,18 +119,18 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         const indexToSubmehIndexMaps: PmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
         const vertexDataArray: VertexData[] = [];
         {
-            if (modelObject.faces instanceof Uint8Array || modelObject.faces instanceof Uint16Array) {
-                indices = new Uint16Array(modelObject.faces.length);
+            if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
+                indices = new Uint16Array(modelObject.indices.length);
             } else {
-                indices = new Uint32Array(modelObject.faces.length);
+                indices = new Uint32Array(modelObject.indices.length);
             }
             {
                 let time = performance.now();
-                const faces = modelObject.faces;
+                const indiceInfo = modelObject.indices;
                 for (let i = 0; i < indices.length; i += 3) { // reverse winding order
-                    indices[i + 0] = faces[i + 0];
-                    indices[i + 1] = faces[i + 2];
-                    indices[i + 2] = faces[i + 1];
+                    indices[i + 0] = indiceInfo[i + 0];
+                    indices[i + 1] = indiceInfo[i + 2];
+                    indices[i + 2] = indiceInfo[i + 1];
 
                     if (i % 10000 === 0 && 100 < performance.now() - time) {
                         progress.setTaskProgress("Build Face", i);
@@ -175,7 +174,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
                 }
                 let hasSdef = false;
-                const indexToSubMeshIndexMap = new (modelObject.faces.constructor as new (length: number) => typeof modelObject.faces)(modelObject.vertices.length);
+                const indexToSubMeshIndexMap = new (modelObject.indices.constructor as new (length: number) => typeof modelObject.indices)(modelObject.vertices.length);
                 {
                     const positions = new Float32Array(subMeshVertexCount * 3);
                     const normals = new Float32Array(subMeshVertexCount * 3);
@@ -336,7 +335,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                         }
 
                         if ((indexStartOffset + j) % 10000 === 0 && 100 < performance.now() - time) {
-                            progress.setTaskProgress("Build Vertex", indexStartOffset + j);
+                            progress.setTaskProgress("Build Geometry", indexStartOffset + j);
                             progress.invokeProgressEvent();
 
                             await Tools.DelayAsync(0);
@@ -381,7 +380,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             }
         }
 
-        progress.endTask("Build Vertex");
+        progress.endTask("Build Geometry");
         progress.invokeProgressEvent();
 
         return {
