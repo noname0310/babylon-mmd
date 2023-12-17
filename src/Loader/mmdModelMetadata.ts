@@ -83,11 +83,6 @@ export interface SerializeableMmdModelMetadata extends MmdModelMetadata {
     readonly textureNameMap: Nullable<Map<Texture, string>>;
 
     /**
-     * material edge sizes
-     */
-    readonly edgeSizes: Nullable<number[]>;
-
-    /**
      * Mmd model display frames
      */
     readonly displayFrames: Nullable<PmxObject["displayFrames"]>;

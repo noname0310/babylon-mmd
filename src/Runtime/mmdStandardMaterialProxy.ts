@@ -2,7 +2,6 @@ import { Material } from "@babylonjs/core/Materials/material";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 
 import type { IMmdMaterialProxy } from "./IMmdMaterialProxy";
@@ -94,7 +93,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         const materialOutlineColor = material.outlineColor;
         this.edgeColor = [materialOutlineColor.r, materialOutlineColor.g, materialOutlineColor.b, material.outlineAlpha];
 
-        this.edgeSize = material.outlineWidth / MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
+        this.edgeSize = material.outlineWidth;
 
         this.textureColor = [1, 1, 1, 1];
         this.sphereTextureColor = [1, 1, 1, 1];
@@ -160,7 +159,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         material.outlineColor.set(this.edgeColor[0], this.edgeColor[1], this.edgeColor[2]);
         material.outlineAlpha = this.edgeColor[3];
 
-        material.outlineWidth = this.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
+        material.outlineWidth = this.edgeSize;
 
         material.textureColor.set(this.textureColor[0], this.textureColor[1], this.textureColor[2], this.textureColor[3]);
 

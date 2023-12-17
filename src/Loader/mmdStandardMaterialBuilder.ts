@@ -25,13 +25,6 @@ import { TextureAlphaChecker } from "./textureAlphaChecker";
  */
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
-     * The scale factor of the edge size (default: 0.01)
-     *
-     * The mmd outline parameter needs to be scaled to fit the outline shader of the Babylon.js
-     */
-    public static EdgeSizeScaleFactor = 0.01;
-
-    /**
      * The threshold of material alpha to use transparency mode. (default: 195)
      *
      * lower value is more likely to use transparency mode. (0 - 255)
@@ -587,7 +580,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
 
                 material.renderOutline = true;
-                material.outlineWidth = materialInfo.edgeSize * MmdStandardMaterialBuilder.EdgeSizeScaleFactor;
+                material.outlineWidth = materialInfo.edgeSize;
                 const edgeColor = materialInfo.edgeColor;
                 material.outlineColor = new Color3(
                     edgeColor[0], edgeColor[1], edgeColor[2]

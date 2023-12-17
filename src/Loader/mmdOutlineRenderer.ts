@@ -52,6 +52,15 @@ Scene.prototype.getMmdOutlineRenderer = function(): MmdOutlineRenderer {
  */
 export class MmdOutlineRenderer implements ISceneComponent {
     /**
+     * The scale factor of the outline width (default: 0.01)
+     *
+     * The mmd outline parameter needs to be scaled to fit the outline shader of the Babylon.js
+     *
+     * final outline width = outlineWidth * OutlineWidthScaleFactor
+     */
+    public static OutlineWidthScaleFactor = 0.01;
+
+    /**
      * Stencil value used to avoid outline being seen within the mesh when the mesh is transparent
      */
     private static readonly _StencilReference = 0x04;
@@ -161,7 +170,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             effect.setFloat("logarithmicDepthConstant", 2.0 / (Math.log(scene.activeCamera.maxZ + 1.0) / Math.LN2));
         }
 
-        effect.setFloat("offset", vertexOffset ?? material.outlineWidth);
+        effect.setFloat("offset", vertexOffset ?? (material.outlineWidth * MmdOutlineRenderer.OutlineWidthScaleFactor));
         effect.setColor4("color", material.outlineColor, material.outlineAlpha);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
