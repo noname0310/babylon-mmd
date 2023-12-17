@@ -9,21 +9,26 @@
  * comment: uint32, uint8[] - length, string
  * englishComment: uint32, uint8[] - length, string
  *
- * vertexCount: uint32
- * positions: float32[vertexCount * 3]
- * normals: float32[vertexCount * 3]
- * uvs: float32[vertexCount * 2]
- * indicesBytePerElement: uint8
- * indicesCount: uint32
- * indices: uint16[vertexCount] or uint32[vertexCount]
- * matricesIndices: float32[vertexCount * 4]
- * matricesWeights: float32[vertexCount * 4]
- * hasSdef: uint8 - 0 or 1
- * { // if hasSdef
- *  sdefC: float32[vertexCount * 3]
- *  sdefR0: float32[vertexCount * 3]
- *  sdefR1: float32[vertexCount * 3]
- * }
+ * meshCount: uint32
+ * {
+ *  positions: float32[vertexCount * 3]
+ *  normals: float32[vertexCount * 3]
+ *  uvs: float32[vertexCount * 2]
+ *  indicesBytePerElement: uint8
+ *  indicesCount: uint32
+ *  indices: uint16[vertexCount] or uint32[vertexCount]
+ *  matricesIndices: float32[vertexCount * 4]
+ *  matricesWeights: float32[vertexCount * 4]
+ *  flag: uint8 // 0x01: hasSdef, 0x02: hasEdgeScale
+ *  { // if hasSdef
+ *   sdefC: float32[vertexCount * 3]
+ *   sdefR0: float32[vertexCount * 3]
+ *   sdefR1: float32[vertexCount * 3]
+ *  }
+ *  { // if hasEdgeScale
+ *   edgeScale: float32[vertexCount]
+ *  }
+ * }[meshCount]
  *
  * textureCount: uint32
  * textures: {
@@ -50,7 +55,6 @@
  *  isSharedToontexture: uint8
  *  toonTextureIndex: int32
  *  comment: uint32, uint8[] - length, string
- *  indexCount: uint32
  * }[materialCount]
  *
  * boneCount: uint32
@@ -91,10 +95,9 @@
  *  category: uint8
  *  type: uint8
  *
- *  elementCount: uint32
- *
  *  { // if type is material
- *   index: int32
+ *   materialIndex: int32
+ *   elementCount: uint32
  *   type: uint8
  *   diffuse: float32[4]
  *   specular: float32[3]
@@ -108,24 +111,36 @@
  *  }[elementCount]
  *
  *  { // if type is group
+ *   elementCount: uint32
  *   indices: int32[elementCount]
  *   ratios: float32[elementCount]
  *  }
  *
  *  { // if type is bone
+ *   elementCount: uint32
  *   indices: int32[elementCount]
  *   positions: float32[elementCount * 3]
  *   rotations: float32[elementCount * 4]
  *  }
  *
  *  { // if type is uv
- *   indices: int32[elementCount]
- *   uvs: float32[elementCount * 4]
+ *   meshCount: uint32
+ *   {
+ *    meshIndex: uint32
+ *    elementCount: uint32
+ *    indices: int32[elementCount]
+ *    uvs: float32[elementCount * 4]
+ *   }[meshCount]
  *  }
  *
  *  { // if type is vertex
- *   indices: int32[elementCount]
- *   positions: float32[elementCount * 3]
+ *   meshCount: uint32
+ *   {
+ *    meshIndex: uint32
+ *    elementCount: uint32
+ *    indices: int32[elementCount]
+ *    positions: float32[elementCount * 3]
+ *   }[meshCount]
  *  }
  * }[morphCount]
  *

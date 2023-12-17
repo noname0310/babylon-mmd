@@ -1,5 +1,6 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { Nullable } from "@babylonjs/core/types";
@@ -58,6 +59,38 @@ export interface MmdModelMetadata {
      * Mmd model skeleton
      */
     readonly skeleton: Nullable<Skeleton>;
+}
+
+/**
+ * Serializable mmd model metadata
+ *
+ * Additional information for serialization into bpmx file
+ */
+export interface SerializeableMmdModelMetadata extends MmdModelMetadata {
+    /**
+     * Indicate this metadata is serializable
+     */
+    readonly isSerializable: true;
+
+    /**
+     * Mmd model serializable bones information
+     */
+    readonly bones: readonly MmdModelMetadata.SerializableBone[];
+
+    /**
+     * Mmd model texture original names
+     */
+    readonly textureNameMap: Nullable<Map<Texture, string>>;
+
+    /**
+     * material edge sizes
+     */
+    readonly edgeSizes: Nullable<number[]>;
+
+    /**
+     * Mmd model display frames
+     */
+    readonly displayFrames: Nullable<PmxObject["displayFrames"]>;
 }
 
 export namespace MmdModelMetadata {
@@ -247,15 +280,41 @@ export namespace MmdModelMetadata {
          */
         readonly appendTransform: PmxObject.Bone["appendTransform"];
 
-        // readonly axisLimit: PmxObject.Bone["axisLimit"];
-        // readonly localVector: PmxObject.Bone["localVector"];
-        // readonly externalParentTransform: PmxObject.Bone["externalParentTransform"];
-
         /**
          * IK information (optional)
          *
          * @see PmxObject.Bone["ik"]
          */
         readonly ik: PmxObject.Bone["ik"];
+    }
+
+    /**
+     * Mmd model serializable bone information
+     */
+    export interface SerializableBone extends Bone {
+        /**
+         * This property is not used in runtime but used in editor
+         */
+        readonly englishName: PmxObject.Bone["englishName"];
+
+        /**
+         * This property is not used in runtime but used in editor
+         */
+        readonly tailPosition: PmxObject.Bone["tailPosition"];
+
+        /**
+         * This property is not used in runtime but used in editor
+         */
+        readonly axisLimit: PmxObject.Bone["axisLimit"];
+
+        /**
+         * This property is not used in runtime but used in editor
+         */
+        readonly localVector: PmxObject.Bone["localVector"];
+
+        /**
+         * This property is not used in runtime but used in editor
+         */
+        readonly externalParentTransform: PmxObject.Bone["externalParentTransform"];
     }
 }
