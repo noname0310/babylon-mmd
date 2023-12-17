@@ -125,24 +125,12 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 indices = new Uint32Array(modelObject.indices.length);
             }
             {
-                let time = performance.now();
                 const indiceInfo = modelObject.indices;
                 for (let i = 0; i < indices.length; i += 3) { // reverse winding order
                     indices[i + 0] = indiceInfo[i + 0];
                     indices[i + 1] = indiceInfo[i + 2];
                     indices[i + 2] = indiceInfo[i + 1];
-
-                    if (i % 10000 === 0 && 100 < performance.now() - time) {
-                        progress.setTaskProgress("Build Face", i);
-                        progress.invokeProgressEvent();
-
-                        await Tools.DelayAsync(0);
-                        time = performance.now();
-                    }
                 }
-
-                progress.endTask("Build Face");
-                progress.invokeProgressEvent();
             }
 
             const materials = modelObject.materials;
