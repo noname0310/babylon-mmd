@@ -1,6 +1,6 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import type { Material } from "@babylonjs/core/Materials/material";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { Nullable } from "@babylonjs/core/types";
@@ -66,7 +66,7 @@ export interface MmdModelMetadata {
  *
  * Additional information for serialization into bpmx file
  */
-export interface SerializeableMmdModelMetadata extends MmdModelMetadata {
+export interface MmdSerializeableModelMetadata extends MmdModelMetadata {
     /**
      * Indicate this metadata is serializable
      */
@@ -80,7 +80,7 @@ export interface SerializeableMmdModelMetadata extends MmdModelMetadata {
     /**
      * Mmd model texture original names
      */
-    readonly textureNameMap: Nullable<Map<Texture, string>>;
+    readonly textureNameMap: Nullable<Map<BaseTexture, string>>;
 
     /**
      * Mmd model display frames
@@ -250,6 +250,11 @@ export namespace MmdModelMetadata {
         readonly name: PmxObject.Bone["name"];
 
         /**
+         * Bone name in english
+         */
+        readonly englishName: PmxObject.Bone["englishName"];
+
+        /**
          * Parent bone index
          */
         readonly parentBoneIndex: PmxObject.Bone["parentBoneIndex"];
@@ -287,11 +292,6 @@ export namespace MmdModelMetadata {
      * Mmd model serializable bone information
      */
     export interface SerializableBone extends Bone {
-        /**
-         * This property is not used in runtime but used in editor
-         */
-        readonly englishName: PmxObject.Bone["englishName"];
-
         /**
          * This property is not used in runtime but used in editor
          */

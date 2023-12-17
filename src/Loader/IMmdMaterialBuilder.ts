@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
@@ -36,6 +37,7 @@ export interface IMmdMaterialBuilder {
      * @param scene Scene
      * @param assetContainer Asset container
      * @param meshes mesh information for alpha evaluation
+     * @param textureNameMap Texture name map for preserve texture name
      * @param logger Logger
      * @param onTextureLoadProgress Texture load progress callback
      * @param onTextureLoadComplete Texture load complete callback
@@ -50,6 +52,7 @@ export interface IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         meshes: Mesh[],
+        textureNameMap: Nullable<Map<BaseTexture, string>>,
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void

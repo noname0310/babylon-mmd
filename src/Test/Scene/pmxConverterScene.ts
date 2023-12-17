@@ -75,9 +75,9 @@ export class PmxConverterScene implements ISceneBuilder {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
+        pmxLoader.preserveSerializationData = true;
         const pmxMaterialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        pmxMaterialBuilder.deleteTextureBufferAfterLoad = false;
 
         const initalBackfaceCullingInfo = new Array<boolean>(1000).fill(true);
         pmxMaterialBuilder.afterBuildSingleMaterial = (

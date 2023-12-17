@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
@@ -75,6 +76,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         const buildMorph = this.buildMorph;
         const boundingBoxMargin = this.boundingBoxMargin;
         const referenceFiles = this.referenceFiles;
+        const preserveSerializationData = this.preserveSerializationData;
 
         const request = scene._loadFile(
             fileOrUrl,
@@ -87,7 +89,8 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     buildSkeleton,
                     buildMorph,
                     boundingBoxMargin,
-                    referenceFiles
+                    referenceFiles,
+                    preserveSerializationData
                 };
                 onSuccess(loadState, responseURL);
             },
@@ -385,6 +388,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         modelObject: PmxObject,
         rootMesh: Mesh,
         meshes: Mesh[],
+        textureNameMap: Nullable<Map<BaseTexture, string>>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
@@ -402,6 +406,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 scene, // scene
                 assetContainer, // assetContainer
                 meshes, // meshes
+                textureNameMap, // textureNameMap
                 this, // logger
                 (event) => {
                     if (!event.lengthComputable) return;

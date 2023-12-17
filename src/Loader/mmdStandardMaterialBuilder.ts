@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -75,6 +76,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         meshes: Mesh[],
+        textureNameMap: Nullable<Map<BaseTexture, string>>,
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
@@ -105,7 +107,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             onTextureLoadProgress?.(progressEvent);
         };
 
-        const materials: Material[] = [];
+        const materials: MmdStandardMaterial[] = [];
 
         for (let i = 0; i < materialsInfo.length; ++i) {
             const materialInfo = materialsInfo[i];
@@ -213,6 +215,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     textureAlphaChecker?.dispose();
                     // Restore the blocking of material dirty.
                     scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
+                    if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, texturePathTable, textureNameMap);
                     onTextureLoadComplete?.();
                 });
             });
@@ -221,11 +224,48 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 textureAlphaChecker?.dispose();
                 // Restore the blocking of material dirty.
                 scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
+                if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, texturePathTable, textureNameMap);
                 onTextureLoadComplete?.();
             });
         }
 
         return materials;
+    }
+
+    private _buildTextureNameMap(
+        materialsInfo: readonly MaterialInfo[],
+        materials: MmdStandardMaterial[],
+        texturePathTable: readonly string[],
+        textureNameMap: Map<BaseTexture, string>
+    ): void {
+        for (let i = 0; i < materialsInfo.length; ++i) {
+            const materialInfo = materialsInfo[i];
+            const material = materials[i];
+
+            const diffuseTexturePath = texturePathTable[materialInfo.textureIndex];
+            if (diffuseTexturePath !== undefined) {
+                const diffuseTexture = material.diffuseTexture;
+                if (diffuseTexture !== null) {
+                    textureNameMap.set(diffuseTexture, diffuseTexturePath);
+                }
+            }
+
+            const sphereTexturePath = texturePathTable[materialInfo.sphereTextureIndex];
+            if (sphereTexturePath !== undefined) {
+                const sphereTexture = material.sphereTexture;
+                if (sphereTexture !== null) {
+                    textureNameMap.set(sphereTexture, sphereTexturePath);
+                }
+            }
+
+            const toonTexturePath = texturePathTable[materialInfo.toonTextureIndex];
+            if (toonTexturePath !== undefined) {
+                const toonTexture = material.toonTexture;
+                if (toonTexture !== null) {
+                    textureNameMap.set(toonTexture, toonTexturePath);
+                }
+            }
+        }
     }
 
     /**

@@ -18,6 +18,8 @@
 - Apply the changes made to the Animation in Babylon.js to the Bezier Animation
     - see https://github.com/BabylonJS/Babylon.js/pull/14584
 
+- Add `MmdModelLoader.preserveSerializationData` option for serialize model in bpmx 2.0.0 format
+
 ## 0.34.0
 
 - remove dead code

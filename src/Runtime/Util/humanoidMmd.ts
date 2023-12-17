@@ -392,6 +392,7 @@ export class HumanoidMmd {
 
             const bone: MmdModelMetadata.Bone = {
                 name: metadata[0],
+                englishName: "",
                 parentBoneIndex: metadata[1],
                 transformOrder: metadata[2],
                 flag: metadata[3],

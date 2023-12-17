@@ -4,6 +4,7 @@ import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -31,6 +32,7 @@ export interface MmdModelLoadState {
     readonly buildSkeleton: boolean;
     readonly buildMorph: boolean;
     readonly boundingBoxMargin: number;
+    readonly preserveSerializationData: boolean;
 }
 
 /** @internal */
@@ -112,6 +114,15 @@ export abstract class MmdModelLoader<
      */
     public boundingBoxMargin: number;
 
+    /**
+     * Whether to preserve the data used for serialization (default: false)
+     *
+     * If you want to serialize the model, you need to set this property to true
+     *
+     * This property is used to serialize the model into bpmx file
+     */
+    public preserveSerializationData: boolean;
+
     private _loggingEnabled: boolean;
 
     /** @internal */
@@ -133,6 +144,7 @@ export abstract class MmdModelLoader<
         this.buildSkeleton = true;
         this.buildMorph = true;
         this.boundingBoxMargin = 10;
+        this.preserveSerializationData = false;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -205,21 +217,25 @@ export abstract class MmdModelLoader<
             progress
         );
 
+        const textureNameMap = state.preserveSerializationData ? new Map<BaseTexture, string>() : null;
+
         const { materials, textureLoadPromise } = await this._buildMaterialAsync(
             state,
             modelObject,
             rootMesh,
             buildGeometryResult.meshes,
+            textureNameMap,
             scene,
             assetContainer,
             rootUrl,
             progress
         );
 
-        const bonesMetadata: MmdModelMetadata.Bone[] = [];
+        const bonesMetadata: MmdModelMetadata.Bone[] | MmdModelMetadata.SerializableBone[] = [];
         let skeleton: Nullable<Skeleton> = null;
         if (state.buildSkeleton) {
             skeleton = await this._buildSkeletonAsync(
+                state,
                 modelObject,
                 buildGeometryResult.meshes,
                 scene,
@@ -264,7 +280,13 @@ export abstract class MmdModelLoader<
             joints: modelObject.joints,
             meshes: buildGeometryResult.meshes,
             materials: materials,
-            skeleton: skeleton
+            skeleton: skeleton,
+            ...state.preserveSerializationData ? {
+                ...rootMesh.metadata as MmdModelMetadata & { bones: MmdModelMetadata.SerializableBone[] },
+                isSerializable: true,
+                textureNameMap: textureNameMap,
+                displayFrames: modelObject.displayFrames
+            } : {}
         };
 
         progress.invokeProgressEvent();
@@ -342,6 +364,7 @@ export abstract class MmdModelLoader<
         modelObject: ModelObject,
         rootMesh: Mesh,
         meshes: Mesh[],
+        textureNameMap: Nullable<Map<BaseTexture, string>>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
@@ -349,13 +372,16 @@ export abstract class MmdModelLoader<
     ): Promise<BuildMaterialResult>;
 
     protected async _buildSkeletonAsync(
+        state: LoadState,
         modelObject: ModelObject,
         meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        bonesMetadata: MmdModelMetadata.Bone[],
+        bonesMetadata: MmdModelMetadata.Bone[] | MmdModelMetadata.SerializableBone[],
         progress: Progress
     ): Promise<Skeleton> {
+        const preserveSerializationData = state.preserveSerializationData;
+
         scene._blockEntityCollection = !!assetContainer;
         const skeleton = new Skeleton(modelObject.header.modelName, modelObject.header.modelName + "_skeleton", scene);
         skeleton._parentContainer = assetContainer;
@@ -414,18 +440,22 @@ export abstract class MmdModelLoader<
                 bones.push(bone);
                 looped.push(isLooped);
 
-                const boneMetadata: MmdModelMetadata.Bone = {
+                const boneMetadata: MmdModelMetadata.Bone | MmdModelMetadata.SerializableBone = {
                     name: boneInfo.name,
+                    englishName: boneInfo.englishName,
                     parentBoneIndex: boneInfo.parentBoneIndex,
                     transformOrder: boneInfo.transformOrder,
                     flag: boneInfo.flag,
                     appendTransform: boneInfo.appendTransform,
-                    // axisLimit: boneInfo.axisLimit,
-                    // localVector: boneInfo.localVector,
-                    // externalParentTransform: boneInfo.externalParentTransform,
-                    ik: boneInfo.ik
+                    ik: boneInfo.ik,
+                    ...preserveSerializationData ? {
+                        tailPosition: boneInfo.tailPosition,
+                        axisLimit: boneInfo.axisLimit,
+                        localVector: boneInfo.localVector,
+                        externalParentTransform: boneInfo.externalParentTransform
+                    } : {}
                 };
-                bonesMetadata.push(boneMetadata);
+                bonesMetadata.push(boneMetadata as MmdModelMetadata.SerializableBone);
             }
 
             for (let i = 0; i < bones.length; ++i) {
