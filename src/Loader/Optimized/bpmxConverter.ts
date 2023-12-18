@@ -9,6 +9,7 @@
  * comment: uint32, uint8[] - length, string
  * englishComment: uint32, uint8[] - length, string
  *
+ * meshFlag: uint8 // 0x01: isSkinnedMesh, 0x02: isIndexedMesh, 0x03: hasEdgeScale
  * meshCount: uint32
  * {
  *  positions: float32[vertexCount * 3]
@@ -17,13 +18,15 @@
  *  indicesBytePerElement: uint8
  *  indicesCount: uint32
  *  indices: uint16[vertexCount] or uint32[vertexCount]
- *  matricesIndices: float32[vertexCount * 4]
- *  matricesWeights: float32[vertexCount * 4]
- *  flag: uint8 // 0x01: hasSdef, 0x02: hasEdgeScale
- *  { // if hasSdef
- *   sdefC: float32[vertexCount * 3]
- *   sdefR0: float32[vertexCount * 3]
- *   sdefR1: float32[vertexCount * 3]
+ *  flag: uint8 // 0x01: hasSdef
+ *  { // if meshType is skinned
+ *   matricesIndices: float32[vertexCount * 4]
+ *   matricesWeights: float32[vertexCount * 4]
+ *   { // if hasSdef
+ *    sdefC: float32[vertexCount * 3]
+ *    sdefR0: float32[vertexCount * 3]
+ *    sdefR1: float32[vertexCount * 3]
+ *   }
  *  }
  *  { // if hasEdgeScale
  *   edgeScale: float32[vertexCount]
@@ -57,36 +60,38 @@
  *  comment: uint32, uint8[] - length, string
  * }[materialCount]
  *
- * boneCount: uint32
- * {
- *  boneName: uint32, uint8[] - length, string
- *  englishBoneName: uint32, uint8[] - length, string
- *  position: float32[3]
- *  parentBoneIndex: int32
- *  transformOrder: int32
- *  flag: uint16
- *  tailPosition: float32[3] | int32
- *  appendTransform: { // if has appendTransform
- *    parentIndex: int32
- *    ratio: float32
- *  }
- *  axisLimit: float32[3] // if has axisLimit
- *  localVectorX: float32[3] // if has localVector
- *  localVectorZ: float32[3] // if has localVector
- *  externalParentTransform: int32 // if has externalParentBoneIndex
- *  ikInfo: { // if has ikInfo
- *   target: int32
- *   iteration: int32
- *   rotationConstraint: float32
- *   linkCount: int32
- *   links: {
+ * { // if hasBone
+ *  boneCount: uint32
+ *  {
+ *   boneName: uint32, uint8[] - length, string
+ *   englishBoneName: uint32, uint8[] - length, string
+ *   position: float32[3]
+ *   parentBoneIndex: int32
+ *   transformOrder: int32
+ *   flag: uint16
+ *   tailPosition: float32[3] | int32
+ *   appendTransform: { // if has appendTransform
+ *     parentIndex: int32
+ *     ratio: float32
+ *   }
+ *   axisLimit: float32[3] // if has axisLimit
+ *   localVectorX: float32[3] // if has localVector
+ *   localVectorZ: float32[3] // if has localVector
+ *   externalParentTransform: int32 // if has externalParentBoneIndex
+ *   ikInfo: { // if has ikInfo
  *    target: int32
- *    hasLimit: uint8
- *    minimumAngle: float32[3] // if hasLimit
- *    maximumAngle: float32[3] // if hasLimit
- *   }[linkCount]
- *  }
- * }[boneCount]
+ *    iteration: int32
+ *    rotationConstraint: float32
+ *    linkCount: int32
+ *    links: {
+ *     target: int32
+ *     hasLimit: uint8
+ *     minimumAngle: float32[3] // if hasLimit
+ *     maximumAngle: float32[3] // if hasLimit
+ *    }[linkCount]
+ *   }
+ *  }[boneCount]
+ * }
  *
  * morphCount: uint32
  * {
