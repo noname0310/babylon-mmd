@@ -6,7 +6,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.uniformBuffer";
 // import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { BaseRuntime } from "./baseRuntime";
-import { PmxConverterScene } from "./Scene/pmxConverterScene";
+import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 
@@ -38,5 +38,5 @@ const engine = new Engine(canvas, false, {
 BaseRuntime.Create({
     canvas,
     engine,
-    sceneBuilder: new PmxConverterScene()
+    sceneBuilder: new SceneBuilder()
 }).then(runtime => runtime.run());

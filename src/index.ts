@@ -28,7 +28,6 @@ export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
 // Loader/Parser
 export { ConsoleLogger, ILogger } from "@/Loader/Parser/ILogger";
-export { IPmxReaderConstructor } from "@/Loader/Parser/IPmxReaderConstructor";
 export { PmdReader } from "@/Loader/Parser/pmdReader";
 export { PmxObject } from "@/Loader/Parser/pmxObject";
 export { PmxReader } from "@/Loader/Parser/pmxReader";
@@ -43,7 +42,7 @@ export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmd
 // Loader
 export { IMmdMaterialBuilder, MaterialInfo } from "@/Loader/IMmdMaterialBuilder";
 export { MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
-export { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
+export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";

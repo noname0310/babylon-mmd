@@ -22,9 +22,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-import { PmdReader } from "@/Loader/Parser/pmdReader";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
-import { PmxReader } from "@/Loader/Parser/pmxReader";
 import type { PmdLoader } from "@/Loader/pmdLoader";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -203,7 +201,6 @@ export class PmxConverterScene implements ISceneBuilder {
         formDiv.appendChild(innerFormDiv);
 
         const bpmxConverter = new BpmxConverter();
-        bpmxConverter.useAlphaEvaluation = false;
         bpmxConverter.loggingEnabled = true;
 
         let files: File[] = [];
@@ -630,18 +627,10 @@ export class PmxConverterScene implements ISceneBuilder {
             isLoading = true;
             engine.displayLoadingUI();
 
-            const fileRelativePath = selectedFile.webkitRelativePath as string;
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
             const arrayBuffer = await bpmxConverter.convert(
                 scene,
-                fileRelativePath.endsWith(".pmd") ? PmdReader : PmxReader,
-                fileRelativePath,
-                files,
-                (_materialsName, textureAlphaEvaluterResults) => {
-                    for (let i = 0; i < textureAlphaEvaluterResults.length; ++i) {
-                        textureAlphaEvaluterResults[i] = mesh!.metadata.meshes[i].material!.transparencyMode ?? 0;
-                    }
-                }
+                mesh
             );
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);

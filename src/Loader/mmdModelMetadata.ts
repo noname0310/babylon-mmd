@@ -62,25 +62,35 @@ export interface MmdModelMetadata {
 }
 
 /**
- * Serializable mmd model metadata
+ * mmd model metadata for serialization
  *
  * Additional information for serialization into bpmx file
  */
-export interface MmdSerializeableModelMetadata extends MmdModelMetadata {
+export interface MmdModelSerializationMetadata extends MmdModelMetadata {
     /**
-     * Indicate this metadata is serializable
+     * Indicate this mesh.metadata is a mmd model metadata for serialization
      */
-    readonly isSerializable: true;
+    readonly containsSerializationData: true;
 
     /**
-     * Mmd model serializable bones information
+     * Mmd model bones information for serialization
      */
-    readonly bones: readonly MmdModelMetadata.SerializableBone[];
+    readonly bones: readonly MmdModelMetadata.SerializationBone[];
+
+    /**
+     * Mmd model morphs information for serialization
+     */
+    readonly morphs: readonly MmdModelMetadata.SerializationMorph[];
 
     /**
      * Mmd model texture original names
      */
     readonly textureNameMap: Nullable<Map<BaseTexture, string>>;
+
+    /**
+     * Mmd model material information for serialization
+     */
+    readonly materialsMetadata: MmdModelMetadata.MaterialMetadata[];
 
     /**
      * Mmd model display frames
@@ -289,9 +299,72 @@ export namespace MmdModelMetadata {
     }
 
     /**
-     * Mmd model serializable bone information
+     * Mmd model morph information for serialization
      */
-    export interface SerializableBone extends Bone {
+    export type SerializationMorph = GroupMorph | BoneMorph | MaterialMorph | SerializationVertexMorph | SerializationUvMorph;
+
+    /**
+     * Vertex morph information for serialization
+     */
+    export interface SerializationVertexMorph extends VertexMorph {
+        elements: SerializationVertexMorphElement[];
+    }
+
+    /**
+     * Vertex morph element information for serialization
+     */
+    export interface SerializationVertexMorphElement {
+        /**
+         * Mesh index
+         */
+        readonly meshIndex: number;
+
+        /**
+         * Vertex indices
+         */
+        readonly indices: PmxObject.Morph.VertexMorph["indices"];
+
+        /**
+         * Vertex position offsets
+         *
+         * Repr: [..., x, y, z, ...]
+         */
+        readonly offsets: PmxObject.Morph.VertexMorph["positions"];
+    }
+
+    /**
+     * UV morph information for serialization
+     */
+    export interface SerializationUvMorph extends UvMorph {
+        elements: SerializationUvMorphElement[];
+    }
+
+    /**
+     * UV morph element information for serialization
+     */
+    export interface SerializationUvMorphElement {
+        /**
+         * Mesh index
+         */
+        readonly meshIndex: number;
+
+        /**
+         * Vertex indices
+         */
+        readonly indices: PmxObject.Morph.UvMorph["indices"];
+
+        /**
+         * UV offsets
+         *
+         * Repr: [..., x, y, ...]
+         */
+        readonly offsets: PmxObject.Morph.UvMorph["offsets"];
+    }
+
+    /**
+     * Mmd model bone information for serialization
+     */
+    export interface SerializationBone extends Bone {
         /**
          * This property is not used in runtime but used in editor
          */
@@ -311,5 +384,34 @@ export namespace MmdModelMetadata {
          * This property is not used in runtime but used in editor
          */
         readonly externalParentTransform: PmxObject.Bone["externalParentTransform"];
+    }
+
+    /**
+     * Mmd model material information for serialization
+     */
+    export interface MaterialMetadata {
+        /**
+         * Material name in english
+         */
+        readonly englishName: PmxObject.Material["englishName"];
+
+        /**
+         * Material comment
+         */
+        readonly comment: PmxObject.Material["comment"];
+
+        /**
+         * Is double sided
+         */
+        readonly isDoubleSided: boolean;
+    }
+
+    /**
+     * Check if the metadata is a serialization metadata
+     * @param metadata Metadata to check
+     * @returns `true` if the metadata is a serialization metadata
+     */
+    export function isSerializationMetadata(metadata: MmdModelMetadata): metadata is MmdModelSerializationMetadata {
+        return (metadata as MmdModelSerializationMetadata).containsSerializationData === true;
     }
 }

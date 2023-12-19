@@ -9,16 +9,18 @@
  * comment: uint32, uint8[] - length, string
  * englishComment: uint32, uint8[] - length, string
  *
- * meshFlag: uint8 // 0x01: isSkinnedMesh, 0x02: isIndexedMesh, 0x03: hasEdgeScale
+ * meshFlag: uint8 // 0x01: isSkinnedMesh
  * meshCount: uint32
  * {
  *  positions: float32[vertexCount * 3]
  *  normals: float32[vertexCount * 3]
  *  uvs: float32[vertexCount * 2]
- *  indicesBytePerElement: uint8
- *  indicesCount: uint32
- *  indices: uint16[vertexCount] or uint32[vertexCount]
- *  flag: uint8 // 0x01: hasSdef
+ *  flag: uint8 // 0x01: hasSdef, 0x02: isIndexedMesh, 0x04: hasEdgeScale
+ *  { // if isIndexedMesh
+ *   indicesBytePerElement: uint8
+ *   indicesCount: uint32
+ *   indices: uint16[indicesCount] or uint32[indicesCount]
+ *  }
  *  { // if meshType is skinned
  *   matricesIndices: float32[vertexCount * 4]
  *   matricesWeights: float32[vertexCount * 4]
@@ -49,7 +51,7 @@
  *  shininess: float32
  *  ambient: float32[3]
  *  evauatedTransparency: int8 - -1: not evaluated, 0: opaque, 1: alphatest, 2: alphablend
- *  flag: uint8
+ *  flag: uint8 - 0x01: isDoubleSided, 0x10: EnabledToonEdge
  *  edgeColor: float32[4]
  *  edgeSize: float32
  *  textureIndex: int32
@@ -101,19 +103,21 @@
  *  type: uint8
  *
  *  { // if type is material
- *   materialIndex: int32
  *   elementCount: uint32
- *   type: uint8
- *   diffuse: float32[4]
- *   specular: float32[3]
- *   shininess: float32
- *   ambient: float32[3]
- *   edgeColor: float32[4]
- *   edgeSize: float32
- *   textureColor: float32[4]
- *   sphereTextureColor: float32[4]
- *   toonTextureColor: float32[4]
- *  }[elementCount]
+ *   {
+ *    materialIndex: int32
+ *    type: uint8
+ *    diffuse: float32[4]
+ *    specular: float32[3]
+ *    shininess: float32
+ *    ambient: float32[3]
+ *    edgeColor: float32[4]
+ *    edgeSize: float32
+ *    textureColor: float32[4]
+ *    sphereTextureColor: float32[4]
+ *    toonTextureColor: float32[4]
+ *   }[elementCount]
+ *  }
  *
  *  { // if type is group
  *   elementCount: uint32
@@ -197,57 +201,42 @@
  *  springRotation: float32[3]
  * }[jointCount]
  */
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { MmdAsyncTextureLoader } from "../mmdAsyncTextureLoader";
+import { MmdMesh } from "@/Runtime/mmdMesh";
+
+import { MmdModelMetadata } from "../mmdModelMetadata";
+import type{ MmdStandardMaterial } from "../mmdStandardMaterial";
 import type { ILogger } from "../Parser/ILogger";
-import type { IPmxReaderConstructor } from "../Parser/IPmxReaderConstructor";
 import { PmxObject } from "../Parser/pmxObject";
-import { ReferenceFileResolver } from "../referenceFileResolver";
-import { TextureAlphaChecker } from "../textureAlphaChecker";
+import { SdefBufferKind } from "../sdefBufferKind";
 import { MmdDataSerializer } from "./mmdDataSerializer";
+
+/**
+ * BPMX convert options
+ */
+export interface BpmxConvertOptions {
+    /**
+     * Include skinning data into BPMX data (default: true)
+     */
+    includeSkinningData?: boolean;
+
+    /**
+     * Include morph data into BPMX data (default: true)
+     */
+    includeMorphData?: boolean;
+}
 
 /**
  * BPMX converter
  */
 export class BpmxConverter implements ILogger {
-    /**
-     * The threshold of material alpha to use transparency mode. (default: 195)
-     *
-     * lower value is more likely to use transparency mode. (0 - 255)
-     */
-    public alphaThreshold: number;
-
-    /**
-     * The threshold of transparency mode to use alpha blend. (default: 100)
-     *
-     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode
-     */
-    public alphaBlendThreshold: number;
-
-    /**
-     * Whether to use alpha evaluation (default: true)
-     *
-     * If true, evaluate the alpha of the texture to automatically determine the blending method of the material
-     *
-     * This automatic blend mode decision is not perfect and is quite costly
-     *
-     * For load time optimization, it is recommended to turn off this feature and set the blending mode for the material manually
-     */
-    public useAlphaEvaluation: boolean;
-
-    /**
-     * The canvas resolution to evaluate alpha (default: 512)
-     *
-     * Resolution of the render canvas used to evaluate alpha internally
-     *
-     * The higher the resolution, the higher the accuracy and the longer the load time
-     */
-    public alphaEvaluationResolution: number;
-
     private _loggingEnabled: boolean;
 
     /** @internal */
@@ -261,11 +250,6 @@ export class BpmxConverter implements ILogger {
      * Create a BPMX converter
      */
     public constructor() {
-        this.alphaThreshold = 195;
-        this.alphaBlendThreshold = 100;
-        this.useAlphaEvaluation = true;
-        this.alphaEvaluationResolution = 512;
-
         this._loggingEnabled = true;
         this.log = this._logDisabled;
         this.warn = this._warnDisabled;
@@ -273,330 +257,235 @@ export class BpmxConverter implements ILogger {
     }
 
     /**
-     * Convert PMX to BPMX
+     * Convert MmdMesh into BPMX data
+     *
+     * For convert MmdMesh into BPMX data, you must load MmdMesh with preserveSerilizationData option
      * @param scene Scene
-     * @param reader PMX reader static class (PmxReader or PmdReader)
-     * @param urlOrFileName if files is undefined, urlOrFileName is url of PMX file. if files is defined, urlOrFileName is file name of PMX file.
-     * @param files Dependency files of PMX file (textures, sphere textures, toon textures)
-     * @param overrideMaterialTransparency Override alpha evaluation result function
+     * @param mmdMesh Serializeable MmdMesh
+     * @param options Convert options
      * @returns BPMX data as ArrayBuffer
-     * @throws {Error} if PMX file not found
+     * @throws {Error} Failed to convert BPMX
      */
-    public async convert(
-        scene: Scene,
-        reader: IPmxReaderConstructor,
-        urlOrFileName: string,
-        files?: File[],
-        overrideMaterialTransparency?: (materialsName: readonly string[], textureAlphaEvaluateResults: number[]) => void
-    ): Promise<ArrayBuffer> {
-        const alphaThreshold = this.alphaThreshold;
-        const alphaBlendThreshold = this.alphaBlendThreshold;
-        const useAlphaEvaluation = this.useAlphaEvaluation;
-        const alphaEvaluationResolution = this.alphaEvaluationResolution;
-
-        let pmxObject: PmxObject;
-        if (files === undefined) {
-            const arrayBuffer = await scene._loadFileAsync(urlOrFileName, undefined, true, true);
-
-            pmxObject = await reader.ParseAsync(arrayBuffer as ArrayBuffer, this);
-        } else {
-            const pmxFile = files.find((file) => file.webkitRelativePath === urlOrFileName);
-            if (pmxFile === undefined) {
-                throw new Error(`File ${urlOrFileName} not found`);
-            }
-
-            const arrayBuffer = await pmxFile.arrayBuffer();
-
-            pmxObject = await reader.ParseAsync(arrayBuffer, this);
+    public async convert(scene: Scene, mmdMesh: Mesh, options: BpmxConvertOptions = {}): Promise<ArrayBuffer> {
+        if (!MmdMesh.isMmdMesh(mmdMesh)) {
+            throw new Error(`${mmdMesh.name} is not MmdMesh`);
         }
 
-        const vertices = pmxObject.vertices;
+        const {
+            includeSkinningData = true,
+            includeMorphData = true
+        } = options;
 
-        const positions = new Float32Array(vertices.length * 3);
-        const normals = new Float32Array(vertices.length * 3);
-        const uvs = new Float32Array(vertices.length * 2);
+        const mmdModelMetadata = mmdMesh.metadata;
+        const containsSerializationData = MmdModelMetadata.isSerializationMetadata(mmdModelMetadata);
 
-        let indices;
-        if (pmxObject.indices instanceof Uint8Array || pmxObject.indices instanceof Uint16Array) {
-            indices = new Uint16Array(pmxObject.indices.length);
-        } else {
-            indices = new Uint32Array(pmxObject.indices.length);
+        if (includeSkinningData && mmdMesh.skeleton === null) {
+            this.info("MmdMesh has no skeleton. Skinning data will not be included");
         }
+        const skeleton = !includeSkinningData ? null : mmdMesh.skeleton;
 
-        const boneIndices = new Float32Array(vertices.length * 4);
-        const boneWeights = new Float32Array(vertices.length * 4);
-        let hasSdef = false;
-        const boneSdefC = new Float32Array(pmxObject.vertices.length * 3);
-        const boneSdefR0 = new Float32Array(pmxObject.vertices.length * 3);
-        const boneSdefR1 = new Float32Array(pmxObject.vertices.length * 3);
-
-        // prepare geometry buffers
+        const meshesToSerialize: Mesh[] = [];
+        // validate mesh
         {
-            const vertices = pmxObject.vertices;
-            {
-                const faces = pmxObject.indices;
-                for (let i = 0; i < indices.length; i += 3) { // reverse winding order
-                    indices[i + 0] = faces[i + 0];
-                    indices[i + 1] = faces[i + 2];
-                    indices[i + 2] = faces[i + 1];
+            const meshes = mmdModelMetadata.meshes;
+            for (let i = 0; i < meshes.length; ++i) {
+                const mesh = meshes[i];
+
+                if (mesh.geometry === null) {
+                    this.warn(`mesh ${mesh.name} has no geometry. skippping`);
+                    continue;
                 }
-            }
-
-            for (let i = 0; i < vertices.length; ++i) {
-                const vertex = vertices[i];
-                positions[i * 3 + 0] = vertex.position[0];
-                positions[i * 3 + 1] = vertex.position[1];
-                positions[i * 3 + 2] = vertex.position[2];
-
-                normals[i * 3 + 0] = vertex.normal[0];
-                normals[i * 3 + 1] = vertex.normal[1];
-                normals[i * 3 + 2] = vertex.normal[2];
-
-                uvs[i * 2 + 0] = vertex.uv[0];
-                uvs[i * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
-
-                switch (vertex.weightType) {
-                case PmxObject.Vertex.BoneWeightType.Bdef1:
-                    {
-                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
-
-                        boneIndices[i * 4 + 0] = boneWeight.boneIndices;
-                        boneIndices[i * 4 + 1] = 0;
-                        boneIndices[i * 4 + 2] = 0;
-                        boneIndices[i * 4 + 3] = 0;
-
-                        boneWeights[i * 4 + 0] = 1;
-                        boneWeights[i * 4 + 1] = 0;
-                        boneWeights[i * 4 + 2] = 0;
-                        boneWeights[i * 4 + 3] = 0;
-                    }
-                    break;
-
-                case PmxObject.Vertex.BoneWeightType.Bdef2:
-                    {
-                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
-
-                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                        boneIndices[i * 4 + 2] = 0;
-                        boneIndices[i * 4 + 3] = 0;
-
-                        boneWeights[i * 4 + 0] = boneWeight.boneWeights;
-                        boneWeights[i * 4 + 1] = 1 - boneWeight.boneWeights;
-                        boneWeights[i * 4 + 2] = 0;
-                        boneWeights[i * 4 + 3] = 0;
-                    }
-                    break;
-
-                case PmxObject.Vertex.BoneWeightType.Bdef4:
-                case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
-                    {
-                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
-
-                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                        boneIndices[i * 4 + 2] = boneWeight.boneIndices[2];
-                        boneIndices[i * 4 + 3] = boneWeight.boneIndices[3];
-
-                        boneWeights[i * 4 + 0] = boneWeight.boneWeights[0];
-                        boneWeights[i * 4 + 1] = boneWeight.boneWeights[1];
-                        boneWeights[i * 4 + 2] = boneWeight.boneWeights[2];
-                        boneWeights[i * 4 + 3] = boneWeight.boneWeights[3];
-                    }
-                    break;
-
-                case PmxObject.Vertex.BoneWeightType.Sdef:
-                    {
-                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
-
-                        boneIndices[i * 4 + 0] = boneWeight.boneIndices[0];
-                        boneIndices[i * 4 + 1] = boneWeight.boneIndices[1];
-                        boneIndices[i * 4 + 2] = 0;
-                        boneIndices[i * 4 + 3] = 0;
-
-                        const sdefWeights = boneWeight.boneWeights;
-                        const boneWeight0 = sdefWeights.boneWeight0;
-                        const boneWeight1 = 1 - boneWeight0;
-
-                        boneWeights[i * 4 + 0] = boneWeight0;
-                        boneWeights[i * 4 + 1] = boneWeight1;
-                        boneWeights[i * 4 + 2] = 0;
-                        boneWeights[i * 4 + 3] = 0;
-
-                        boneSdefC[i * 3 + 0] = sdefWeights.c[0];
-                        boneSdefC[i * 3 + 1] = sdefWeights.c[1];
-                        boneSdefC[i * 3 + 2] = sdefWeights.c[2];
-
-                        boneSdefR0[i * 3 + 0] = sdefWeights.r0[0];
-                        boneSdefR0[i * 3 + 1] = sdefWeights.r0[1];
-                        boneSdefR0[i * 3 + 2] = sdefWeights.r0[2];
-
-                        boneSdefR1[i * 3 + 0] = sdefWeights.r1[0];
-                        boneSdefR1[i * 3 + 1] = sdefWeights.r1[1];
-                        boneSdefR1[i * 3 + 2] = sdefWeights.r1[2];
-
-                        hasSdef = true;
-                    }
-                    break;
+                const geometry = mesh.geometry!;
+                if (geometry.getVerticesData(VertexBuffer.PositionKind) === null) {
+                    this.warn(`mesh ${mesh.name} has no position data. skippping`);
+                    continue;
                 }
+                if (geometry.getVerticesData(VertexBuffer.NormalKind) === null) {
+                    this.warn(`mesh ${mesh.name} has no normal data. skippping`);
+                    continue;
+                }
+                if (geometry.getVerticesData(VertexBuffer.UVKind) === null) {
+                    this.warn(`mesh ${mesh.name} has no uv data. skippping`);
+                    continue;
+                }
+                if (!mesh.isUnIndexed && geometry.getIndices() === null) {
+                    this.warn(`mesh ${mesh.name} has no indices data. skippping`);
+                    continue;
+                }
+                if (skeleton !== null && mesh.skeleton !== skeleton) {
+                    this.warn(`mesh ${mesh.name} has different skeleton. skippping`);
+                    continue;
+                }
+
+                meshesToSerialize.push(mesh);
             }
         }
 
-        const textureLoadResults: Nullable<Texture>[] = new Array(pmxObject.textures.length);
+        const texturesToSerialize: BaseTexture[] = [];
+        const textureNameMap = containsSerializationData
+            ? mmdModelMetadata.textureNameMap
+            : null;
+        if (textureNameMap === null) {
+            this.warn("metadata.textureNameMap is not defined. texture names will be fallback to converted string by loader");
+        }
 
-        // create texture table
+        // geather textures
         {
-            const rootUrl = urlOrFileName.substring(0, urlOrFileName.lastIndexOf("/") + 1);
-
-            const textureLoader = new MmdAsyncTextureLoader();
-            const referenceFileResolver = new ReferenceFileResolver<File>(files ?? [], rootUrl, "");
-            const promises: Promise<void>[] = [];
-
-            const materials = pmxObject.materials;
+            const textureSet = new Set<BaseTexture>();
+            const materials = mmdModelMetadata.materials;
             for (let i = 0; i < materials.length; ++i) {
-                const materialInfo = materials[i];
+                const material = materials[i];
 
-                const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
-                if (diffuseTexturePath !== undefined) {
-                    const file = referenceFileResolver.resolve(diffuseTexturePath);
-                    if (file !== undefined) {
-                        promises.push(textureLoader.loadTextureFromBufferAsync(
-                            0,
-                            diffuseTexturePath,
-                            file,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.textureIndex] = result;
-                        }));
-                    } else {
-                        promises.push(textureLoader.loadTextureAsync(
-                            0,
-                            rootUrl,
-                            diffuseTexturePath,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.textureIndex] = result;
-                        }));
-                    }
+                if ((material as MmdStandardMaterial).diffuseTexture) {
+                    textureSet.add((material as MmdStandardMaterial).diffuseTexture!);
                 }
-
-                const sphereTexturePath = pmxObject.textures[materialInfo.sphereTextureIndex];
-                if (sphereTexturePath !== undefined) {
-                    const file = referenceFileResolver.resolve(sphereTexturePath);
-                    if (file !== undefined) {
-                        promises.push(textureLoader.loadTextureFromBufferAsync(
-                            0,
-                            sphereTexturePath,
-                            file,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.sphereTextureIndex] = result;
-                        }));
-                    } else {
-                        promises.push(textureLoader.loadTextureAsync(
-                            0,
-                            rootUrl,
-                            sphereTexturePath,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.sphereTextureIndex] = result;
-                        }));
-                    }
+                if ((material as MmdStandardMaterial).sphereTexture) {
+                    textureSet.add((material as MmdStandardMaterial).sphereTexture!);
                 }
-
-                const toonTexturePath = pmxObject.textures[materialInfo.toonTextureIndex];
-                if (toonTexturePath !== undefined && !materialInfo.isSharedToonTexture) {
-                    const file = referenceFileResolver.resolve(toonTexturePath);
-                    if (file !== undefined) {
-                        promises.push(textureLoader.loadTextureFromBufferAsync(
-                            0,
-                            toonTexturePath,
-                            file,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.toonTextureIndex] = result;
-                        }));
-                    } else {
-                        promises.push(textureLoader.loadTextureAsync(
-                            0,
-                            rootUrl,
-                            toonTexturePath,
-                            scene,
-                            null,
-                            false
-                        ).then((result) => {
-                            textureLoadResults[materialInfo.toonTextureIndex] = result;
-                        }));
+                if ((material as MmdStandardMaterial).toonTexture) {
+                    if (!(material as MmdStandardMaterial).toonTexture!.name.startsWith("file:shared_toon_texture_")) {
+                        textureSet.add((material as MmdStandardMaterial).toonTexture!);
                     }
                 }
             }
-
-            textureLoader.loadModelTexturesEnd(0);
-
-            await Promise.all(promises);
-
-            const onModelTextureLoadedObservable = textureLoader.onModelTextureLoadedObservable.get(0);
-            if (onModelTextureLoadedObservable !== undefined) {
-                await new Promise<void>((resolve) => {
-                    onModelTextureLoadedObservable.addOnce(() => {
-                        resolve();
-                    });
-                });
-            }
+            texturesToSerialize.push(...textureSet);
         }
 
-        const textureAlphaEvaluateResults: number[] = new Array(pmxObject.materials.length).fill(-1);
+        // create morph data
+        const vertexUvMorphs: Nullable<{
+            meshIndex: number;
+            indices: Int32Array;
+            offsets: Float32Array;
+        }[]>[] = new Array(mmdModelMetadata.morphs.length).fill(null); // vertexUvMorphs[morphIndex][meshIndex]
+        for (let i = 0; i < vertexUvMorphs.length; ++i) vertexUvMorphs[i] = [];
+        if (includeMorphData) {
+            if (containsSerializationData) {
+                const morphs = mmdModelMetadata.morphs;
+                for (let morphIndex = 0; morphIndex < morphs.length; ++morphIndex) {
+                    const morph = morphs[morphIndex];
+                    if (morph.type !== PmxObject.Morph.Type.VertexMorph && morph.type !== PmxObject.Morph.Type.UvMorph) continue;
+                    vertexUvMorphs[morphIndex] = morph.elements;
+                }
+            } else {
+                this.warn("metadata.morphsMetadata is not defined. UV morphs will be lossy converted");
 
-        // evaluate texture alpha
-        if (useAlphaEvaluation) {
-            // todo: pass submeshes
-            const textureAlphaChecker = new TextureAlphaChecker(scene, alphaEvaluationResolution);
+                const morphs = mmdModelMetadata.morphs;
+                for (let morphIndex = 0; morphIndex < morphs.length; ++morphIndex) {
+                    const morph = morphs[morphIndex];
+                    if (morph.type !== PmxObject.Morph.Type.VertexMorph && morph.type !== PmxObject.Morph.Type.UvMorph) continue;
 
-            const materials = pmxObject.materials;
-            for (let i = 0; i < materials.length; ++i) {
-                const materialInfo = materials[i];
+                    const morphsForMesh = (vertexUvMorphs[morphIndex] = [] as typeof vertexUvMorphs[number])!;
 
-                const diffuseTexturePath = pmxObject.textures[materialInfo.textureIndex];
-                if (diffuseTexturePath !== undefined) {
-                    const textureIndex = materialInfo.textureIndex;
-                    const texture = textureLoadResults[textureIndex];
-                    if (texture !== undefined && texture?._buffer !== null) {
-                        // todo: pass submeshes
-                        // const textureAlphaEvaluateResult = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                        //     textureData.texture!,
-                        //     mesh,
-                        //     alphaThreshold,
-                        //     alphaBlendThreshold
-                        // );
-                        alphaThreshold;
-                        alphaBlendThreshold;
-                        textureAlphaEvaluateResults[i] = 0;// textureAlphaEvaluateResult;
+                    const morphTargets = morph.morphTargets;
+                    for (let i = 0; i < morphTargets.length; ++i) {
+                        let morphMeshIndex = -1;
+                        const morphTarget = morphTargets[i];
+
+                        findMorphTargets: for (let meshIndex = 0; meshIndex < meshesToSerialize.length; ++meshIndex) {
+                            const morphTargetManager = meshesToSerialize[meshIndex].morphTargetManager;
+                            if (morphTargetManager === null) continue;
+                            const numTargets = morphTargetManager.numTargets;
+                            for (let j = 0; j < numTargets; ++j) {
+                                if (morphTargetManager.getTarget(j) === morphTarget) {
+                                    morphMeshIndex = meshIndex;
+                                    break findMorphTargets;
+                                }
+                            }
+                        }
+                        if (morphMeshIndex === -1) {
+                            this.warn(`morph ${morph.name} has no target mesh. skipping`);
+                            continue;
+                        }
+
+                        let elementCount = 0;
+                        let indices: Int32Array;
+                        let elements: Float32Array;
+
+                        if (morph.type === PmxObject.Morph.Type.VertexMorph) {
+                            const positions = meshesToSerialize[morphMeshIndex].geometry!.getVerticesData(VertexBuffer.PositionKind)!;
+                            const morpedPositions = morphTarget.getPositions();
+
+                            if (morpedPositions === null) {
+                                this.warn(`morph ${morph.name} has no positions data. skipping`);
+                                continue;
+                            }
+
+                            if (positions.length !== morpedPositions.length) {
+                                this.warn(`morph ${morph.name} has different number of positions. skipping`);
+                                continue;
+                            }
+
+                            for (let j = 0; j < positions.length; j += 3) {
+                                if (positions[j + 0] !== morpedPositions[j + 0] ||
+                                    positions[j + 1] !== morpedPositions[j + 1] ||
+                                    positions[j + 2] !== morpedPositions[j + 2]
+                                ) {
+                                    elementCount += 1;
+                                }
+                            }
+
+                            indices = new Int32Array(elementCount);
+                            elements = new Float32Array(elementCount * 3);
+                            const positionCount = positions.length / 3;
+                            for (let j = 0, k = 0; j < positionCount; ++j) {
+                                if (
+                                    positions[j * 3 + 0] !== morpedPositions[j * 3 + 0] ||
+                                    positions[j * 3 + 1] !== morpedPositions[j * 3 + 1] ||
+                                    positions[j * 3 + 2] !== morpedPositions[j * 3 + 2]
+                                ) {
+                                    indices[k] = j;
+                                    elements[k * 3 + 0] = morpedPositions[j * 3 + 0] - positions[j * 3 + 0];
+                                    elements[k * 3 + 1] = morpedPositions[j * 3 + 1] - positions[j * 3 + 1];
+                                    elements[k * 3 + 2] = morpedPositions[j * 3 + 2] - positions[j * 3 + 2];
+                                    k += 1;
+                                }
+                            }
+                        } else {
+                            const uvs = meshesToSerialize[morphMeshIndex].geometry!.getVerticesData(VertexBuffer.UVKind)!;
+                            const morpedUvs = morphTarget.getUVs();
+
+                            if (morpedUvs === null) {
+                                this.warn(`morph ${morph.name} has no uvs data. skipping`);
+                                continue;
+                            }
+
+                            if (uvs.length !== morpedUvs.length) {
+                                this.warn(`morph ${morph.name} has different number of uvs. skipping`);
+                                continue;
+                            }
+
+                            for (let j = 0; j < uvs.length; j += 2) {
+                                if (uvs[j + 0] !== morpedUvs[j + 0] ||
+                                    uvs[j + 1] !== morpedUvs[j + 1]
+                                ) {
+                                    elementCount += 1;
+                                }
+                            }
+
+                            indices = new Int32Array(elementCount);
+                            elements = new Float32Array(elementCount * 4);
+                            const uvCount = uvs.length / 2;
+                            for (let j = 0, k = 0; j < uvCount; ++j) {
+                                if (
+                                    uvs[j * 2 + 0] !== morpedUvs[j * 2 + 0] ||
+                                    uvs[j * 2 + 1] !== morpedUvs[j * 2 + 1]
+                                ) {
+                                    indices[k] = j;
+                                    elements[k * 4 + 0] = morpedUvs[j * 2 + 0] - uvs[j * 2 + 0];
+                                    elements[k * 4 + 1] = morpedUvs[j * 2 + 1] - uvs[j * 2 + 1];
+                                    k += 1;
+                                }
+                            }
+                        }
+
+                        morphsForMesh.push({
+                            meshIndex: morphMeshIndex,
+                            indices,
+                            offsets: elements
+                        });
                     }
                 }
             }
-
-            textureAlphaChecker.dispose();
-        }
-
-        // override material transparency
-        if (overrideMaterialTransparency !== undefined) {
-            const materials = pmxObject.materials;
-            const materialsName: string[] = new Array(materials.length);
-            for (let i = 0; i < materials.length; ++i) {
-                materialsName[i] = materials[i].name;
-            }
-
-            overrideMaterialTransparency(materialsName, textureAlphaEvaluateResults);
         }
 
         const encoder = new TextEncoder();
@@ -606,49 +495,111 @@ export class BpmxConverter implements ILogger {
             3; // version
 
         { // compute dataLength
-            const pmxObjectHeader = pmxObject.header;
-            dataLength += 4 + encoder.encode(pmxObjectHeader.modelName).length; // modelName
-            dataLength += 4 + encoder.encode(pmxObjectHeader.englishModelName).length; // englishModelName
-            dataLength += 4 + encoder.encode(pmxObjectHeader.comment).length; // comment
-            dataLength += 4 + encoder.encode(pmxObjectHeader.englishComment).length; // englishComment
+            const header = mmdModelMetadata.header;
+            dataLength += 4 + encoder.encode(header.modelName).length; // modelName
+            dataLength += 4 + encoder.encode(header.englishModelName).length; // englishModelName
+            dataLength += 4 + encoder.encode(header.comment).length; // comment
+            dataLength += 4 + encoder.encode(header.englishComment).length; // englishComment
 
-            dataLength += 4; // vertexCount
-            dataLength += vertices.length * 3 * 4; // positions
-            dataLength += vertices.length * 3 * 4; // normals
-            dataLength += vertices.length * 2 * 4; // uvs
-            dataLength += 1; // indicesBytePerElement
-            dataLength += 4; // indicesCount
-            dataLength += indices.byteLength; // indices
-            dataLength += vertices.length * 4 * 4; // boneIndices
-            dataLength += vertices.length * 4 * 4; // boneWeights
-            dataLength += 1; // hasSdef
-            if (hasSdef) {
-                dataLength += vertices.length * 3 * 4; // sdefC
-                dataLength += vertices.length * 3 * 4; // sdefR0
-                dataLength += vertices.length * 3 * 4; // sdefR1
+            dataLength += 1; // meshFlag
+            dataLength += 4; // meshCount
+            for (let i = 0; i < meshesToSerialize.length; ++i) {
+                const mesh = meshesToSerialize[i];
+                const geometry = mesh.geometry!;
+
+                dataLength += 4; // vertexCount
+
+                const positions = geometry.getVerticesData(VertexBuffer.PositionKind)!;
+                dataLength += positions.length * 4; // positions
+
+                const normals = geometry.getVerticesData(VertexBuffer.NormalKind)!;
+                dataLength += normals.length * 4; // normals
+
+                const uvs = geometry.getVerticesData(VertexBuffer.UVKind)!;
+                dataLength += uvs.length * 4; // uvs
+
+                dataLength += 1; // flag
+
+                if (!mesh.isUnIndexed) {
+                    dataLength += 1; // indicesBytePerElement
+                    dataLength += 4; // indicesCount
+
+                    const indices = geometry.getIndices()!;
+                    dataLength += Array.isArray(indices)
+                        ? indices.length * 4
+                        : indices.byteLength; // indices
+                }
+
+                if (skeleton !== null) {
+                    const matricesIndices = geometry.getVerticesData(VertexBuffer.MatricesIndicesKind);
+                    if (matricesIndices === null) {
+                        this.warn(`mesh ${mesh.name} has no matricesIndices data. falling back to zero matricesIndices`);
+                        dataLength += positions.length / 3 * 4 * 4; // boneIndices
+                    } else {
+                        dataLength += matricesIndices.length * 4; // boneIndices
+                    }
+                    const matricesWeights = geometry.getVerticesData(VertexBuffer.MatricesWeightsKind);
+                    if (matricesWeights === null) {
+                        this.warn(`mesh ${mesh.name} has no matricesWeights data. falling back to zero matricesWeights`);
+                        dataLength += positions.length / 3 * 4 * 4; // boneWeights
+                    } else {
+                        dataLength += matricesWeights.length * 4; // boneWeights
+                    }
+                }
+
+                const sdefC = geometry.getVerticesData(SdefBufferKind.MatricesSdefCKind);
+                const sdefR0 = geometry.getVerticesData(SdefBufferKind.MatricesSdefR0Kind);
+                const sdefR1 = geometry.getVerticesData(SdefBufferKind.MatricesSdefR1Kind);
+                if (sdefC !== null && sdefR0 !== null && sdefR1 !== null) {
+                    dataLength += sdefC.length * 4; // sdefC
+                    dataLength += sdefR0.length * 4; // sdefR0
+                    dataLength += sdefR1.length * 4; // sdefR1
+                } else if (sdefC === null || sdefR0 === null || sdefR1 === null) {
+                    this.warn(`mesh ${mesh.name} has incomplete sdef data. sdefC, sdefR0, sdefR1 must be all defined or all undefined. falling back to linear blend skinning`);
+                }
+
+                // edgeScale will be implemented in the future
+                const edgeScale = geometry.getVerticesData("edgeScale");
+                if (edgeScale !== null) {
+                    dataLength += edgeScale.length * 4; // edgeScale
+                }
             }
 
             dataLength += 4; // textureCount
-            const pmxObjectTextures = pmxObject.textures;
-            for (let i = 0; i < pmxObjectTextures.length; ++i) {
-                const texture = textureLoadResults[i]?._buffer as Nullable<ArrayBuffer> | undefined;
-                if (texture !== undefined && texture !== null) {
-                    dataLength += 4 + encoder.encode(pmxObjectTextures[i]).length; // textureName
+            for (let i = 0; i < texturesToSerialize.length; ++i) {
+                const texture = texturesToSerialize[i] as Texture;
+                const textureBuffer = texture._buffer as typeof texture._buffer | undefined;
+                if (textureBuffer instanceof ArrayBuffer) {
+                    let textureName = textureNameMap !== null
+                        ? textureNameMap.get(texturesToSerialize[i])
+                        : texturesToSerialize[i].name;
+                    if (textureName === undefined) {
+                        this.warn(`texture ${texture.name} has no name in textureNameMap. falling back to converted string by loader`);
+                        textureName = texturesToSerialize[i].name;
+                    }
+                    dataLength += 4 + encoder.encode(textureName).length; // textureName
                     dataLength += 4; // textureByteLength
-                    dataLength += texture.byteLength; // textureData
+                    dataLength += textureBuffer.byteLength; // textureData
                 } else {
                     dataLength += 4; // textureName
                     dataLength += 4; // textureByteLength
                 }
+                if (textureBuffer === undefined || textureBuffer === null) {
+                    this.warn(`texture ${texture.name} has no texture buffer. make sure load model with materialBuilder.deleteTextureBufferAfterLoad = false`);
+                } else {
+                    this.warn(`texture ${texture.name} has unsupported type of texture buffer. only ArrayBuffer is supported`);
+                }
             }
 
             dataLength += 4; // materialCount
-            const pmxObjectMaterials = pmxObject.materials;
-            for (let i = 0; i < pmxObjectMaterials.length; ++i) {
-                const materialInfo = pmxObjectMaterials[i];
+            const mmdModelMetadataMaterials = mmdModelMetadata.materials;
+            const materialsMatadata = containsSerializationData ? mmdModelMetadata.materialsMetadata : null;
+            for (let i = 0; i < mmdModelMetadataMaterials.length; ++i) {
+                const materialInfo = mmdModelMetadataMaterials[i];
+                const materialMetadata = materialsMatadata !== null ? materialsMatadata[i] : undefined;
 
                 dataLength += 4 + encoder.encode(materialInfo.name).length; // materialName
-                dataLength += 4 + encoder.encode(materialInfo.englishName).length; // englishMaterialName
+                dataLength += 4 + (materialMetadata !== undefined ? encoder.encode(materialMetadata.englishName).length : 0); // englishMaterialName
                 dataLength += 4 * 4; // diffuse
                 dataLength += 3 * 4; // specular
                 dataLength += 4; // shininess
@@ -662,91 +613,115 @@ export class BpmxConverter implements ILogger {
                 dataLength += 1; // sphereTextureMode
                 dataLength += 1; // isSharedToontexture
                 dataLength += 4; // toonTextureIndex
-                dataLength += 4 + encoder.encode(materialInfo.comment).length; // comment
-                dataLength += 4; // indexCount
+                dataLength += 4 + (materialMetadata !== undefined ? encoder.encode(materialMetadata.comment).length : 0); // comment
             }
 
-            dataLength += 4; // boneCount
-            const pmxObjectBones = pmxObject.bones;
-            for (let i = 0; i < pmxObjectBones.length; ++i) {
-                const boneInfo = pmxObjectBones[i];
+            if (skeleton !== null) {
+                dataLength += 4; // boneCount
+                const mmdModelMetadataBones = mmdModelMetadata.bones;
+                if (!containsSerializationData) {
+                    this.warn("metadata.bones has following missing properties: tailPosition, axisLimit, localVector, externalParentTransform. lossy conversion will be applied");
+                }
+                for (let i = 0; i < mmdModelMetadataBones.length; ++i) {
+                    const boneInfo = mmdModelMetadataBones[i];
 
-                dataLength += 4 + encoder.encode(boneInfo.name).length; // boneName
-                dataLength += 4 + encoder.encode(boneInfo.englishName).length; // englishBoneName
-                dataLength += 3 * 4; // position
-                dataLength += 4; // parentBoneIndex
-                dataLength += 4; // transformOrder
-                dataLength += 2; // flag
-                if (typeof boneInfo.tailPosition === "number") {
-                    dataLength += 4; // tailPosition
-                } else {
-                    dataLength += 3 * 4; // tailPosition
-                }
-                if (boneInfo.appendTransform !== undefined) {
-                    dataLength += 4; // appendTransform.parentIndex
-                    dataLength += 4; // appendTransform.ratio
-                }
-                if (boneInfo.axisLimit !== undefined) {
-                    dataLength += 3 * 4; // axisLimit
-                }
-                if (boneInfo.localVector !== undefined) {
-                    dataLength += 3 * 4; // localVectorX
-                    dataLength += 3 * 4; // localVectorZ
-                }
-                if (boneInfo.externalParentTransform !== undefined) {
-                    dataLength += 4; // externalParentTransform
-                }
-                if (boneInfo.ik !== undefined) {
-                    dataLength += 4; // ik.target
-                    dataLength += 4; // ik.iteration
-                    dataLength += 4; // ik.rotationConstraint
-                    dataLength += 4; // ik.linkCount
+                    dataLength += 4 + encoder.encode(boneInfo.name).length; // boneName
+                    dataLength += 4 + encoder.encode(boneInfo.englishName).length; // englishBoneName
+                    dataLength += 3 * 4; // position
+                    dataLength += 4; // parentBoneIndex
+                    dataLength += 4; // transformOrder
+                    dataLength += 2; // flag
+                    if (containsSerializationData) {
+                        const tailPosition = (boneInfo as MmdModelMetadata.SerializationBone).tailPosition;
+                        if (typeof tailPosition === "number") {
+                            dataLength += 4; // tailPosition
+                        } else {
+                            dataLength += 3 * 4; // tailPosition
+                        }
+                    } else {
+                        dataLength += 4; // tailPosition
+                    }
+                    if (boneInfo.appendTransform !== undefined) {
+                        dataLength += 4; // appendTransform.parentIndex
+                        dataLength += 4; // appendTransform.ratio
+                    }
+                    if (containsSerializationData) {
+                        const serializationBoneInfo = boneInfo as MmdModelMetadata.SerializationBone;
+                        if (serializationBoneInfo.axisLimit !== undefined) {
+                            dataLength += 3 * 4; // axisLimit
+                        }
+                        if (serializationBoneInfo.localVector !== undefined) {
+                            dataLength += 3 * 4; // localVectorX
+                            dataLength += 3 * 4; // localVectorZ
+                        }
+                        if (serializationBoneInfo.externalParentTransform !== undefined) {
+                            dataLength += 4; // externalParentTransform
+                        }
+                    }
+                    if (boneInfo.ik !== undefined) {
+                        dataLength += 4; // ik.target
+                        dataLength += 4; // ik.iteration
+                        dataLength += 4; // ik.rotationConstraint
+                        dataLength += 4; // ik.linkCount
 
-                    const ikLinks = boneInfo.ik.links;
-                    for (let j = 0; j < ikLinks.length; ++j) {
-                        const ikLink = ikLinks[j];
+                        const ikLinks = boneInfo.ik.links;
+                        for (let j = 0; j < ikLinks.length; ++j) {
+                            const ikLink = ikLinks[j];
 
-                        dataLength += 4; // ik.link.target
-                        dataLength += 1; // ik.link.hasLimit
-                        if (ikLink.limitation !== undefined) {
-                            dataLength += 3 * 4; // ik.link.minimumAngle
-                            dataLength += 3 * 4; // ik.link.maximumAngle
+                            dataLength += 4; // ik.link.target
+                            dataLength += 1; // ik.link.hasLimit
+                            if (ikLink.limitation !== undefined) {
+                                dataLength += 3 * 4; // ik.link.minimumAngle
+                                dataLength += 3 * 4; // ik.link.maximumAngle
+                            }
                         }
                     }
                 }
             }
 
             dataLength += 4; // morphCount
-            const pmxObjectMorphs = pmxObject.morphs;
-            for (let i = 0; i < pmxObjectMorphs.length; ++i) {
-                const morphInfo = pmxObjectMorphs[i];
+            const mmdModelMetadataMorphs = mmdModelMetadata.morphs;
+            for (let i = 0; i < mmdModelMetadataMorphs.length; ++i) {
+                const morphInfo = mmdModelMetadataMorphs[i];
 
                 dataLength += 4 + encoder.encode(morphInfo.name).length; // morphName
                 dataLength += 4 + encoder.encode(morphInfo.englishName).length; // englishMorphName
                 dataLength += 1; // category
                 dataLength += 1; // type
-                dataLength += 4; // elementCount
                 switch (morphInfo.type) {
                 case PmxObject.Morph.Type.GroupMorph:
-                    dataLength += (
-                        4 + // group.indices
-                        4 // group.ratios
-                    ) * morphInfo.indices.length;
+                    dataLength +=
+                        4 + // elementCount
+                        (
+                            4 + // group.indices
+                            4 // group.ratios
+                        ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.VertexMorph:
-                    dataLength += (
-                        4 + // vertex.indices
-                        3 * 4 // vertex.positions
-                    ) * morphInfo.indices.length;
+                    {
+                        dataLength +=
+                            4; // meshCount
+                        const morphs = vertexUvMorphs[i]!;
+                        for (let j = 0; j < morphs.length; ++j) {
+                            const morph = morphs[j];
+                            dataLength +=
+                                4 + // vertex.meshIndex
+                                4 + // vertex.elementCount
+                                morph.indices.length * 4 + // vertex.indices
+                                morph.offsets.length * 4; // vertex.positions
+                        }
+                    }
                     break;
 
                 case PmxObject.Morph.Type.BoneMorph:
-                    dataLength += (
-                        4 + // bone.indices
-                        3 * 4 + // bone.positions
-                        4 * 4 // bone.rotations
-                    ) * morphInfo.indices.length;
+                    dataLength +=
+                        4 + // elementCount
+                        (
+                            4 + // bone.indices
+                            3 * 4 + // bone.positions
+                            4 * 4 // bone.rotations
+                        ) * morphInfo.indices.length;
                     break;
 
                 case PmxObject.Morph.Type.UvMorph:
@@ -754,49 +729,62 @@ export class BpmxConverter implements ILogger {
                 case PmxObject.Morph.Type.AdditionalUvMorph2:
                 case PmxObject.Morph.Type.AdditionalUvMorph3:
                 case PmxObject.Morph.Type.AdditionalUvMorph4:
-                    dataLength += (
-                        4 + // uv.indices
-                        4 * 4 // uv.uvs
-                    ) * morphInfo.indices.length;
+                    {
+                        dataLength +=
+                            4; // meshCount
+                        const morphs = vertexUvMorphs[i]!;
+                        for (let j = 0; j < morphs.length; ++j) {
+                            const morph = morphs[j];
+                            dataLength +=
+                                4 + // uv.meshIndex
+                                4 + // uv.elementCount
+                                morph.indices.length * 4 + // uv.indices
+                                morph.offsets.length * 4; // uv.uvs
+                        }
+                    }
                     break;
 
                 case PmxObject.Morph.Type.MaterialMorph:
-                    dataLength += (
-                        4 + // material.index
-                        1 + // material.type
-                        4 * 4 + // material.diffuse
-                        3 * 4 + // material.specular
-                        4 + // material.shininess
-                        3 * 4 + // material.ambient
-                        4 * 4 + // material.edgeColor
-                        4 + // material.edgeSize
-                        4 * 4 + // material.textureColor
-                        4 * 4 + // material.sphereTextureColor
-                        4 * 4 // material.toonTextureColor
-                    ) * morphInfo.elements.length;
+                    dataLength +=
+                        4 + // elementCount
+                        (
+                            4 + // material.index
+                            1 + // material.type
+                            4 * 4 + // material.diffuse
+                            3 * 4 + // material.specular
+                            4 + // material.shininess
+                            3 * 4 + // material.ambient
+                            4 * 4 + // material.edgeColor
+                            4 + // material.edgeSize
+                            4 * 4 + // material.textureColor
+                            4 * 4 + // material.sphereTextureColor
+                            4 * 4 // material.toonTextureColor
+                        ) * morphInfo.elements.length;
                     break;
                 }
             }
 
             dataLength += 4; // displayFrameCount
-            const pmxObjectDisplayFrames = pmxObject.displayFrames;
-            for (let i = 0; i < pmxObjectDisplayFrames.length; ++i) {
-                const displayFrameInfo = pmxObjectDisplayFrames[i];
+            if (containsSerializationData && mmdModelMetadata.displayFrames !== null) {
+                const mmdModelMetadataDisplayFrames = mmdModelMetadata.displayFrames;
+                for (let i = 0; i < mmdModelMetadataDisplayFrames.length; ++i) {
+                    const displayFrameInfo = mmdModelMetadataDisplayFrames[i];
 
-                dataLength += 4 + encoder.encode(displayFrameInfo.name).length; // name
-                dataLength += 4 + encoder.encode(displayFrameInfo.englishName).length; // englishName
-                dataLength += 1; // isSpecialFrame
-                dataLength += 4; // elementCount
-                dataLength += (
-                    1 + // element.frameType
-                    4 // element.frameIndex
-                ) * displayFrameInfo.frames.length;
+                    dataLength += 4 + encoder.encode(displayFrameInfo.name).length; // name
+                    dataLength += 4 + encoder.encode(displayFrameInfo.englishName).length; // englishName
+                    dataLength += 1; // isSpecialFrame
+                    dataLength += 4; // elementCount
+                    dataLength += (
+                        1 + // element.frameType
+                        4 // element.frameIndex
+                    ) * displayFrameInfo.frames.length;
+                }
             }
 
             dataLength += 4; // rigidBodyCount
-            const pmxObjectRigidBodies = pmxObject.rigidBodies;
-            for (let i = 0; i < pmxObjectRigidBodies.length; ++i) {
-                const rigidBodyInfo = pmxObjectRigidBodies[i];
+            const mmdModelMetadataRigidBodies = mmdModelMetadata.rigidBodies;
+            for (let i = 0; i < mmdModelMetadataRigidBodies.length; ++i) {
+                const rigidBodyInfo = mmdModelMetadataRigidBodies[i];
 
                 dataLength += 4 + encoder.encode(rigidBodyInfo.name).length; // name
                 dataLength += 4 + encoder.encode(rigidBodyInfo.englishName).length; // englishName
@@ -816,9 +804,9 @@ export class BpmxConverter implements ILogger {
             }
 
             dataLength += 4; // jointCount
-            const pmxObjectJoints = pmxObject.joints;
-            for (let i = 0; i < pmxObjectJoints.length; ++i) {
-                const jointInfo = pmxObjectJoints[i];
+            const mmdModelMetadataJoints = mmdModelMetadata.joints;
+            for (let i = 0; i < mmdModelMetadataJoints.length; ++i) {
+                const jointInfo = mmdModelMetadataJoints[i];
 
                 dataLength += 4 + encoder.encode(jointInfo.name).length; // name
                 dataLength += 4 + encoder.encode(jointInfo.englishName).length; // englishName
