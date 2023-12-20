@@ -336,12 +336,13 @@ export class MmdMorphController {
                 break;
 
             case PmxObject.Morph.Type.UvMorph:
+            case PmxObject.Morph.Type.AdditionalUvMorph1:
+            case PmxObject.Morph.Type.AdditionalUvMorph2:
+            case PmxObject.Morph.Type.AdditionalUvMorph3:
+            case PmxObject.Morph.Type.AdditionalUvMorph4:
             case PmxObject.Morph.Type.VertexMorph:
                 runtimeMorphElements = morphMetadata.morphTargets;
                 break;
-
-            default:
-                throw new Error(`Unknown morph type: ${morphMetadata.type}`);
             }
 
             const morph: RuntimeMorph = {
@@ -458,6 +459,10 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
+        case PmxObject.Morph.Type.AdditionalUvMorph1:
+        case PmxObject.Morph.Type.AdditionalUvMorph2:
+        case PmxObject.Morph.Type.AdditionalUvMorph3:
+        case PmxObject.Morph.Type.AdditionalUvMorph4:
             {
                 const morphTargets = morph.elements as MorphTarget[];
                 for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence = 0;
@@ -541,6 +546,10 @@ export class MmdMorphController {
 
         case PmxObject.Morph.Type.VertexMorph:
         case PmxObject.Morph.Type.UvMorph:
+        case PmxObject.Morph.Type.AdditionalUvMorph1:
+        case PmxObject.Morph.Type.AdditionalUvMorph2:
+        case PmxObject.Morph.Type.AdditionalUvMorph3:
+        case PmxObject.Morph.Type.AdditionalUvMorph4:
             {
                 const morphTargets = morph.elements as MorphTarget[];
                 for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence += weight;
