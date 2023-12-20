@@ -10,7 +10,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
 import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
-import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
@@ -495,9 +494,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                     if (sphereTexture !== null) {
                         material.sphereTexture = sphereTexture;
-                        material.sphereTextureBlendMode = materialInfo.sphereTextureMode === 1
-                            ? MmdPluginMaterialSphereTextureBlendMode.Multiply
-                            : MmdPluginMaterialSphereTextureBlendMode.Add;
+                        material.sphereTextureBlendMode = materialInfo.sphereTextureMode as number;
                     } else {
                         logger.error(`Failed to load sphere texture: ${sphereTextureFileFullPath}`);
                     }

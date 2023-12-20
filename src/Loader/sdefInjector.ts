@@ -4,7 +4,7 @@ import type { IEffectFallbacks } from "@babylonjs/core/Materials/iEffectFallback
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./sdefBufferKind";
+import { MmdBufferKind } from "./mmdBufferKind";
 import { sdefDeclaration } from "./Shader/sdefDeclaration";
 import { sdefVertex } from "./Shader/sdefVertex";
 
@@ -58,9 +58,9 @@ export class SdefInjector {
                 if (effectCreationOptions.uniformsNames.includes("mBones") || effectCreationOptions.samplers.includes("boneSampler")) {
                     if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
 
-                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefCKind);
-                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefR0Kind);
-                        effectCreationOptions.attributes.push(SdefBufferKind.MatricesSdefR1Kind);
+                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefCKind);
+                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefR0Kind);
+                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefR1Kind);
                         effectCreationOptions.defines += "\n#define SDEF";
 
                         const originalProcessCodeAfterIncludes = effectCreationOptions.processCodeAfterIncludes;

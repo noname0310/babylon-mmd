@@ -14,7 +14,7 @@ export type BpmxObject = Readonly<{
     /**
      * Geometry data of the model
      */
-    geometry: BpmxObject.Geometry;
+    geometries: readonly BpmxObject.Geometry[];
 
     /**
      * Textures of the model
@@ -93,6 +93,11 @@ export namespace BpmxObject {
      */
     export type Geometry = Readonly<{
         /**
+         * Name of the geometry
+         */
+        name: string;
+
+        /**
          * Vertex positions
          *
          * Repr: [..., x, y, z, ...]
@@ -114,52 +119,125 @@ export namespace BpmxObject {
         uvs: Float32Array;
 
         /**
+         * Additional vertex texture coordinates
+         *
+         * Repr: [..., x, y, z, w, ...][length = 0..=4]
+         */
+        additionalUvs: readonly Float32Array[];
+
+        /**
          * Indices of the geometry
+         *
+         * If mesh is not indexed, this is undefined
          *
          * Repr: [..., index0, ...]
          */
-        indices: Uint16Array | Uint32Array;
+        indices: Uint16Array | Uint32Array | undefined;
 
         /**
-         * Bone vertex indices
+         * Skinning data of the geometry
          *
-         * Repr: [..., boneIndex0, boneIndex1, boneIndex2, boneIndex3, ...]
+         * If mesh is not skinned, this is undefined
          */
-        matricesIndices: Float32Array;
-
-        /**
-         * Bone vertex weights
-         *
-         * Repr: [..., boneWeight0, boneWeight1, boneWeight2, boneWeight3, ...]
-         */
-        matricesWeights: Float32Array;
-
-        /**
-         * SDEF data(optional)
-         */
-        sdef: {
-            /**
-             * SDEF center
-             *
-             * Repr: [..., x, y, z, ...]
-             */
-            c: Float32Array;
-
-            /**
-             * SDEF r0
-             *
-             * Repr: [..., x, y, z, ...]
-             */
-            r0: Float32Array;
-
-            /**
-             * SDEF r1
-             *
-             * Repr: [..., x, y, z, ...]
-             */
-            r1: Float32Array;
-        } | undefined;
+        skinning: Geometry.Skinning | undefined;
     }>;
+
+    export namespace Geometry {
+        /**
+         * Attributes for all geometries
+         */
+        export enum MeshType {
+            /**
+             * Mesh is skinned (has bone weights and indices)
+             */
+            IsSkinnedMesh = 1 << 0
+        }
+
+        /**
+         * Attributes for each geometry
+         */
+        export enum GeometryType {
+            /**
+             * Geometry has SDEF data
+             */
+            HasSdef = 1 << 0,
+
+            /**
+             * Geometry is indexed
+             */
+            IsIndexed = 1 << 1,
+
+            /**
+             * Geometry has edge scale
+             */
+            HasEdgeScale = 1 << 2
+        }
+
+        /**
+         * Index element type
+         */
+        export enum IndexElementType {
+            /**
+             * 32-bit signed integer
+             */
+            Int32 = 0,
+
+            /**
+             * 32-bit unsigned integer
+             */
+            Uint32 = 1,
+
+            /**
+             * 16-bit unsigned integer
+             */
+            Uint16 = 2
+        }
+
+        /**
+         * Skinning data of the geometry
+         */
+        export type Skinning = Readonly<{
+            /**
+             * Bone vertex indices
+             *
+             * Repr: [..., boneIndex0, boneIndex1, boneIndex2, boneIndex3, ...]
+             */
+            matricesIndices: Float32Array;
+
+            /**
+             * Bone vertex weights
+             *
+             * Repr: [..., boneWeight0, boneWeight1, boneWeight2, boneWeight3, ...]
+             */
+            matricesWeights: Float32Array;
+
+            /**
+             * SDEF data(optional)
+             */
+            sdef: {
+                /**
+                 * SDEF center
+                 *
+                 * Repr: [..., x, y, z, ...]
+                 */
+                c: Float32Array;
+
+                /**
+                 * SDEF r0
+                 *
+                 * Repr: [..., x, y, z, ...]
+                 */
+                r0: Float32Array;
+
+                /**
+                 * SDEF r1
+                 *
+                 * Repr: [..., x, y, z, ...]
+                 */
+                r1: Float32Array;
+            } | undefined;
+        }>;
+    }
 
     /**
      * Texture of the model
@@ -215,9 +293,9 @@ export namespace BpmxObject {
      * @see PmxObject.Morph
      */
     export type Morph = PmxObject.Morph.GroupMorph
-        | PmxObject.Morph.VertexMorph
+        | Morph.VertexMorph
         | PmxObject.Morph.BoneMorph
-        | PmxObject.Morph.UvMorph
+        | Morph.UvMorph
         | PmxObject.Morph.MaterialMorph;
 
     export namespace Morph {
@@ -233,6 +311,84 @@ export namespace BpmxObject {
             | PmxObject.Morph.Type.AdditionalUvMorph3
             | PmxObject.Morph.Type.AdditionalUvMorph4
             | PmxObject.Morph.Type.MaterialMorph;
+
+        /**
+         * Vertex morph is a morph that moves the vertex
+         */
+        export type VertexMorph = PmxObject.Morph.BaseMorph & Readonly<{
+            /**
+             * Type of the morph
+             */
+            type: PmxObject.Morph.Type.VertexMorph;
+
+            /**
+             * Vertex morph elements
+             */
+            elements: readonly VertexMorphElement[];
+        }>;
+
+        /**
+         * Vertex morph element for single mesh
+         */
+        export type VertexMorphElement = Readonly<{
+            /**
+             * mesh index
+             */
+            meshIndex: number;
+
+            /**
+             * Vertex indices
+             */
+            indices: Int32Array;
+
+            /**
+             * Vertex position offsets
+             *
+             * Repr: [..., x, y, z, ...]
+             */
+            positions: Float32Array;
+        }>;
+
+        /**
+         * UV morph is a morph that moves the UV coordinate
+         */
+        export type UvMorph = PmxObject.Morph.BaseMorph & Readonly<{
+            /**
+             * Type of the morph
+             */
+            type: PmxObject.Morph.Type.UvMorph
+                | PmxObject.Morph.Type.AdditionalUvMorph1
+                | PmxObject.Morph.Type.AdditionalUvMorph2
+                | PmxObject.Morph.Type.AdditionalUvMorph3
+                | PmxObject.Morph.Type.AdditionalUvMorph4;
+
+            /**
+             * UV morph elements
+             */
+            elements: readonly UvMorphElement[];
+        }>;
+
+        /**
+         * UV morph element for single mesh
+         */
+        export type UvMorphElement = Readonly<{
+            /**
+             * mesh index
+             */
+            meshIndex: number;
+
+            /**
+             * Vertex indices
+             */
+            indices: Int32Array;
+
+            /**
+             * UV offsets
+             *
+             * Repr: [..., u, v, ...]
+             */
+            uvs: Float32Array;
+        }>;
     }
 
     /**

@@ -628,10 +628,7 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.displayLoadingUI();
 
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = await bpmxConverter.convert(
-                scene,
-                mesh
-            );
+            const arrayBuffer = await bpmxConverter.convert(mesh);
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

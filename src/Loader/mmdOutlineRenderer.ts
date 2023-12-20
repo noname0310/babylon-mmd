@@ -17,7 +17,7 @@ import { SceneComponentConstants } from "@babylonjs/core/sceneComponent";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "./mmdStandardMaterial";
-import { SdefBufferKind } from "./sdefBufferKind";
+import { MmdBufferKind } from "./mmdBufferKind";
 import { SdefInjector } from "./sdefInjector";
 
 declare module "@babylonjs/core/scene" {
@@ -263,10 +263,10 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 attribs.push(VertexBuffer.MatricesIndicesExtraKind);
                 attribs.push(VertexBuffer.MatricesWeightsExtraKind);
             }
-            if (mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind)) {
-                attribs.push(SdefBufferKind.MatricesSdefCKind);
-                attribs.push(SdefBufferKind.MatricesSdefR0Kind);
-                attribs.push(SdefBufferKind.MatricesSdefR1Kind);
+            if (mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind)) {
+                attribs.push(MmdBufferKind.MatricesSdefCKind);
+                attribs.push(MmdBufferKind.MatricesSdefR0Kind);
+                attribs.push(MmdBufferKind.MatricesSdefR1Kind);
                 defines.push("#define SDEF");
             }
             const skeleton = mesh.skeleton;

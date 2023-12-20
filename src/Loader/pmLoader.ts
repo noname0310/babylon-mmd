@@ -1,4 +1,5 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -14,6 +15,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { MmdBufferKind } from "./mmdBufferKind";
 import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
@@ -21,7 +23,6 @@ import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { Progress, ProgressTask } from "./progress";
-import { SdefBufferKind } from "./sdefBufferKind";
 import { SdefMesh } from "./sdefMesh";
 
 interface PmLoadState extends MmdModelLoadState {
@@ -120,7 +121,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         const geometries: Geometry[] = [];
         let indices: Uint16Array | Uint32Array;
         const indexToSubmehIndexMaps: PmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
-        const vertexDataArray: VertexData[] = [];
         {
             if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.indices.length);
@@ -156,6 +156,12 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 }
 
                 const vertexData = new VertexData();
+                const additionalUvs: Float32Array[] = [];
+                if (state.preserveSerializationData) {
+                    for (let j = 0; j < modelObject.header.additionalVec4Count; ++j) {
+                        additionalUvs.push(new Float32Array(subMeshVertexCount * 4));
+                    }
+                }
                 let boneSdefC: Nullable<Float32Array> = null;
                 let boneSdefR0: Nullable<Float32Array> = null;
                 let boneSdefR1: Nullable<Float32Array> = null;
@@ -195,6 +201,14 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
                             uvs[vertexIndex * 2 + 0] = vertex.uv[0];
                             uvs[vertexIndex * 2 + 1] = 1 - vertex.uv[1]; // flip y axis
+
+                            const additionalVec4 = vertex.additionalVec4;
+                            for (let k = 0; k < additionalUvs.length; ++k) {
+                                additionalUvs[k][vertexIndex * 4 + 0] = additionalVec4[k][0];
+                                additionalUvs[k][vertexIndex * 4 + 1] = additionalVec4[k][1];
+                                additionalUvs[k][vertexIndex * 4 + 2] = additionalVec4[k][2];
+                                additionalUvs[k][vertexIndex * 4 + 3] = additionalVec4[k][3];
+                            }
 
                             switch (vertex.weightType) {
                             case PmxObject.Vertex.BoneWeightType.Bdef1:
@@ -353,10 +367,16 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
                 geometry._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
+                if (state.preserveSerializationData) {
+                    if (1 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV1Kind, additionalUvs[0], false, 4);
+                    if (2 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV2Kind, additionalUvs[1], false, 4);
+                    if (3 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV3Kind, additionalUvs[2], false, 4);
+                    if (4 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV4Kind, additionalUvs[3], false, 4);
+                }
                 if (state.useSdef && hasSdef) {
-                    geometry.setVerticesData(SdefBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
-                    geometry.setVerticesData(SdefBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
-                    geometry.setVerticesData(SdefBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
                 }
                 geometry.applyToMesh(mesh);
                 geometries.push(geometry);
@@ -365,7 +385,6 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     map: indexToSubMeshIndexMap,
                     isReferencedVertex
                 });
-                vertexDataArray.push(vertexData);
 
                 indexStartOffset += materialInfo.indexCount;
             }
@@ -378,8 +397,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             meshes,
             geometries,
             indices,
-            indexToSubmehIndexMaps,
-            vertexDataArray
+            indexToSubmehIndexMaps
         };
     }
 
@@ -471,8 +489,8 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
         const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
         const morphsInfo = modelObject.morphs;
-        const vertexDataArray = buildGeometryResult.vertexDataArray;
-        const subMeshesMorphTargets: MorphTarget[][] = new Array(vertexDataArray.length); // morphTargets[subMeshIndex][morphIndex]
+        const geometries = buildGeometryResult.geometries;
+        const subMeshesMorphTargets: MorphTarget[][] = new Array(geometries.length); // morphTargets[subMeshIndex][morphIndex]
         for (let i = 0; i < subMeshesMorphTargets.length; ++i) {
             subMeshesMorphTargets[i] = [];
         }
@@ -530,37 +548,43 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             }
 
             const referencedSubMeshes: number[] = [];
-            const morphIndices = morphInfo.indices;
-            for (let i = 0; i < morphIndices.length; ++i) {
-                const elementIndex = morphIndices[i];
-                const subMeshIndex = vertexToSubMeshMap[elementIndex];
-                if (subMeshIndex === -1) continue;
+            {
+                const morphIndices = morphInfo.indices;
+                for (let i = 0; i < morphIndices.length; ++i) {
+                    const elementIndex = morphIndices[i];
+                    const subMeshIndex = vertexToSubMeshMap[elementIndex];
+                    if (subMeshIndex === -1) continue;
 
-                if (subMeshIndex === -2) {
-                    const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
-                    for (let j = 0; j < subMeshIndices.length; ++j) {
-                        const subMeshIndex = subMeshIndices[j];
-                        if (!referencedSubMeshes.includes(subMeshIndex)) {
-                            referencedSubMeshes.push(subMeshIndex);
+                    if (subMeshIndex === -2) {
+                        const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
+                        for (let j = 0; j < subMeshIndices.length; ++j) {
+                            const subMeshIndex = subMeshIndices[j];
+                            if (!referencedSubMeshes.includes(subMeshIndex)) {
+                                referencedSubMeshes.push(subMeshIndex);
+                            }
                         }
+                    } else if (!referencedSubMeshes.includes(subMeshIndex)) {
+                        referencedSubMeshes.push(subMeshIndex);
                     }
-                } else if (!referencedSubMeshes.includes(subMeshIndex)) {
-                    referencedSubMeshes.push(subMeshIndex);
                 }
-            }
-            for (let i = 0; i < referencedSubMeshes.length; ++i) {
-                const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
-                morphTargets.push(morphTarget);
-                subMeshesMorphTargets[referencedSubMeshes[i]].push(morphTarget);
+                if (morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4) {
+                    for (let i = 0; i < referencedSubMeshes.length; ++i) {
+                        const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
+                        morphTargets.push(morphTarget);
+                        subMeshesMorphTargets[referencedSubMeshes[i]].push(morphTarget);
+                    }
+                }
             }
 
             if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
                 for (let i = 0; i < referencedSubMeshes.length; ++i) {
                     const subMeshIndex = referencedSubMeshes[i];
 
-                    const vertexData = vertexDataArray[subMeshIndex];
-                    const positions = new Float32Array(vertexData.positions!);
-                    positions.set(vertexData.positions!);
+                    const geometry = geometries[subMeshIndex];
+                    const positions = new Float32Array(geometry.getVerticesData(VertexBuffer.PositionKind)!);
 
                     const morphIndices = morphInfo.indices;
                     const positionOffsets = morphInfo.positions;
@@ -609,13 +633,12 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
                     morphTargets[i].setPositions(positions);
                 }
-            } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
+            } else if (morphInfo.type === PmxObject.Morph.Type.UvMorph) {
                 for (let i = 0; i < referencedSubMeshes.length; ++i) {
                     const subMeshIndex = referencedSubMeshes[i];
 
-                    const vertexData = vertexDataArray[subMeshIndex];
-                    const uvs = new Float32Array(vertexData.uvs!);
-                    uvs.set(vertexData.uvs!);
+                    const geometry = geometries[subMeshIndex];
+                    const uvs = new Float32Array(geometry.getVerticesData(VertexBuffer.UVKind)!);
 
                     const morphIndices = morphInfo.indices;
                     const uvOffsets = morphInfo.offsets;
@@ -662,12 +685,48 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     }
 
                     const morphTarget = morphTargets[i];
-                    morphTarget.setPositions(vertexData.positions);
+                    morphTarget.setPositions(geometry.getVerticesData(VertexBuffer.PositionKind)!);
                     morphTarget.setUVs(uvs);
                 }
+            } else {
+                if (preserveSerializationData) {
+                    for (let i = 0; i < referencedSubMeshes.length; ++i) {
+                        const subMeshIndex = referencedSubMeshes[i];
+                        const indexToSubMeshIndexMap = indexToSubmeshIndexMaps[subMeshIndex].map;
+                        const isReferencedVertex = indexToSubmeshIndexMaps[subMeshIndex].isReferencedVertex;
+
+                        const morphIndices = morphInfo.indices;
+                        const uvOffsets = morphInfo.offsets;
+
+                        let indexCount = 0;
+                        for (let j = 0; j < morphIndices.length; ++j) {
+                            if (isReferencedVertex[morphIndices[j]] === 0) continue;
+                            indexCount += 1;
+                        }
+
+                        const indices = new Int32Array(indexCount);
+                        const offsets = new Float32Array(indexCount * 4);
+                        for (let j = 0, k = 0; j < morphIndices.length; ++j) {
+                            if (isReferencedVertex[morphIndices[j]] === 0) continue;
+
+                            const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
+                            indices[k] = elementIndex;
+                            offsets[k * 4 + 0] = uvOffsets[j * 4 + 0];
+                            offsets[k * 4 + 1] = uvOffsets[j * 4 + 1];
+                            offsets[k * 4 + 2] = uvOffsets[j * 4 + 2];
+                            offsets[k * 4 + 3] = uvOffsets[j * 4 + 3];
+                            k += 1;
+                        }
+                        elements.push({
+                            meshIndex: subMeshIndex,
+                            indices,
+                            offsets
+                        });
+                    }
+                }
             }
-            progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
-            buildMorphProgress += morphIndices.length;
+            progress.setTaskProgress("Build Morph", buildMorphProgress + morphInfo.indices.length);
+            buildMorphProgress += morphInfo.indices.length;
         }
         progress.endTask("Build Morph");
 

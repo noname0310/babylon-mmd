@@ -14,7 +14,7 @@ import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./sdefBufferKind";
+import { MmdBufferKind } from "./mmdBufferKind";
 import { sdefDeclaration } from "./Shader/sdefDeclaration";
 import { sdefVertex } from "./Shader/sdefVertex";
 
@@ -68,7 +68,8 @@ export class MmdPluginMererialDefines extends MaterialDefines {
 
 export enum MmdPluginMaterialSphereTextureBlendMode {
     Multiply = 1,
-    Add = 2
+    Add = 2,
+    SubTexture = 3
 }
 
 export class MmdPluginMaterial extends MaterialPluginBase {
@@ -353,12 +354,13 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE = this._sphereTexture !== null && texturesEnabled;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply;
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = this._sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Add;
+            // todo: support sub texture mode
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
             defines.TEXTURE_COLOR = this._useTextureColor;
             defines.SPHERE_TEXTURE_COLOR = this._useSphereTextureColor;
             defines.TOON_TEXTURE_COLOR = this._useToonTextureColor;
-            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind);
+            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
@@ -398,10 +400,10 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     public override getAttributes(attributes: string[], _scene: Scene, mesh: AbstractMesh): void {
         if (this._isEnabled) {
-            if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind)) {
-                attributes.push(SdefBufferKind.MatricesSdefCKind);
-                attributes.push(SdefBufferKind.MatricesSdefR0Kind);
-                attributes.push(SdefBufferKind.MatricesSdefR1Kind);
+            if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind)) {
+                attributes.push(MmdBufferKind.MatricesSdefCKind);
+                attributes.push(MmdBufferKind.MatricesSdefR0Kind);
+                attributes.push(MmdBufferKind.MatricesSdefR1Kind);
             }
         }
     }

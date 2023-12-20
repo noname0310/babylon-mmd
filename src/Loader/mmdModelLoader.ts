@@ -8,7 +8,6 @@ import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
@@ -39,7 +38,6 @@ export interface MmdModelLoadState {
 export interface MmdModelBuildGeometryResult {
     readonly meshes: Mesh[];
     readonly geometries: Geometry[];
-    readonly vertexDataArray: VertexData[];
 }
 
 /** @internal */

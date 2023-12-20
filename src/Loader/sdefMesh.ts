@@ -9,7 +9,7 @@ import type { Observable, Observer } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { FloatArray, Nullable } from "@babylonjs/core/types";
 
-import { SdefBufferKind } from "./sdefBufferKind";
+import { MmdBufferKind } from "./mmdBufferKind";
 
 /**
  * IMPORTANT NOTE:
@@ -120,14 +120,14 @@ export class SdefMesh extends Mesh {
             }
         }
 
-        const hasSdefParams = this.isVerticesDataPresent(SdefBufferKind.MatricesSdefCKind);
+        const hasSdefParams = this.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind);
         let sdefC0Data: Nullable<FloatArray> = null;
         let sdefR0Data: Nullable<FloatArray> = null;
         let sdefR1Data: Nullable<FloatArray> = null;
         if (hasSdefParams) {
-            sdefC0Data = this.getVerticesData(SdefBufferKind.MatricesSdefCKind);
-            sdefR0Data = this.getVerticesData(SdefBufferKind.MatricesSdefR0Kind);
-            sdefR1Data = this.getVerticesData(SdefBufferKind.MatricesSdefR1Kind);
+            sdefC0Data = this.getVerticesData(MmdBufferKind.MatricesSdefCKind);
+            sdefR0Data = this.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
+            sdefR1Data = this.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
         }
 
         const matricesIndicesData = this.getVerticesData(VertexBuffer.MatricesIndicesKind);
