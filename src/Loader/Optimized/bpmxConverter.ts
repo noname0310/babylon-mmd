@@ -25,7 +25,7 @@
  *  { // if isIndexedMesh
  *   indexElementType: uint8 // 0: int32, 1: uint32, 2: uint16
  *   indicesCount: uint32
- *   indices: uint16[indicesCount] or uint32[indicesCount]
+ *   indices: uint16[indicesCount] or int32[indicesCount] or uint32[indicesCount]
  *  }
  *  { // if meshType is skinned
  *   matricesIndices: float32[vertexCount * 4]
@@ -1274,8 +1274,24 @@ export class BpmxConverter implements ILogger {
                 {
                     serializer.setUint32(morphInfo.indices.length); // elementCount
                     serializer.setInt32Array(morphInfo.indices); // bone.indices
-                    serializer.setFloat32Array(morphInfo.positions); // bone.positions
-                    serializer.setFloat32Array(morphInfo.rotations); // bone.rotations
+
+                    let positions = morphInfo.positions;
+                    if (positions.length !== morphInfo.indices.length * 3) {
+                        this.warn(`morph ${morphInfo.name} bone morph position count is different from indices count`);
+                        const newPositions = new Float32Array(morphInfo.indices.length * 3);
+                        newPositions.set(positions);
+                        positions = newPositions;
+                    }
+                    serializer.setFloat32Array(positions); // bone.positions
+
+                    let rotations = morphInfo.rotations;
+                    if (rotations.length !== morphInfo.indices.length * 4) {
+                        this.warn(`morph ${morphInfo.name} bone morph rotation count is different from indices count`);
+                        const newRotations = new Float32Array(morphInfo.indices.length * 4);
+                        newRotations.set(rotations);
+                        rotations = newRotations;
+                    }
+                    serializer.setFloat32Array(rotations); // bone.rotations
                 }
                 break;
 
@@ -1287,6 +1303,7 @@ export class BpmxConverter implements ILogger {
                         const element = elements[j];
                         serializer.setInt32(element.index); // material.index
                         serializer.setUint8(element.type); // material.type
+
                         serializer.setFloat32Array(element.diffuse); // material.diffuse
                         serializer.setFloat32Array(element.specular); // material.specular
                         serializer.setFloat32(element.shininess); // material.shininess

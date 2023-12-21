@@ -4,7 +4,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "../../Parser/ILogger";
 import { ConsoleLogger } from "../../Parser/ILogger";
 import { MmdDataDeserializer } from "../../Parser/mmdDataDeserializer";
-import type { BpmxObject } from "./bpmxObject";
+import { BpmxObject } from "./bpmxObject";
 
 /**
  * BpmxReader is a static class that parses BPMX data
@@ -24,10 +24,11 @@ export class BpmxReader {
         dataDeserializer.initializeTextDecoder("utf-8");
 
         const header = this._ParseHeader(dataDeserializer);
-        const geometry = await this._ParseGeometryAsync(dataDeserializer);
+        const isSkinnedMesh = dataDeserializer.getUint8() === 1;
+        const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
         const textures = await this._ParseTexturesAsync(dataDeserializer);
         const materials = this._ParseMaterials(dataDeserializer);
-        const bones = this._ParseBones(dataDeserializer);
+        const bones = isSkinnedMesh ? this._ParseBones(dataDeserializer) : [];
         const morphs = this._ParseMorphs(dataDeserializer);
         const displayFrames = this._ParseDisplayFrames(dataDeserializer);
         const rigidBodies = this._ParseRigidBodies(dataDeserializer);
@@ -39,7 +40,7 @@ export class BpmxReader {
 
         const bpmxObject: BpmxObject = {
             header,
-            geometry,
+            geometries,
             textures,
             materials,
             bones,
@@ -86,90 +87,130 @@ export class BpmxReader {
         return header;
     }
 
-    private static async _ParseGeometryAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Geometry> {
-        const vertexCount = dataDeserializer.getUint32();
-
+    private static async _ParseGeometriesAsync(dataDeserializer: MmdDataDeserializer, isSkinnedMesh: boolean): Promise<BpmxObject.Geometry[]> {
         let time = performance.now();
 
-        const positions = new Float32Array(vertexCount * 3);
-        dataDeserializer.getFloat32Array(positions);
+        const geometries: BpmxObject.Geometry[] = [];
 
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
+        const meshCount = dataDeserializer.getUint32();
+        for (let i = 0; i < meshCount; ++i) {
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const vertexCount = dataDeserializer.getUint32();
+
+            const positions = new Float32Array(vertexCount * 3);
+            dataDeserializer.getFloat32Array(positions);
+
+            if (100 < performance.now() - time) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                time = performance.now();
+            }
+
+            const normals = new Float32Array(vertexCount * 3);
+            dataDeserializer.getFloat32Array(normals);
+
+            if (100 < performance.now() - time) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                time = performance.now();
+            }
+
+            const uvs = new Float32Array(vertexCount * 2);
+            dataDeserializer.getFloat32Array(uvs);
+
+            const additionalUvs: Float32Array[] = [];
+
+            const additionalUvCount = dataDeserializer.getUint8();
+            for (let i = 0; i < additionalUvCount; ++i) {
+                const additionalUv = new Float32Array(vertexCount * 4);
+                dataDeserializer.getFloat32Array(additionalUv);
+                additionalUvs.push(additionalUv);
+            }
+
+            if (100 < performance.now() - time) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                time = performance.now();
+            }
+
+            const flag = dataDeserializer.getUint8();
+
+            let indices: Int32Array | Uint32Array | Uint16Array | undefined = undefined;
+            if ((flag & BpmxObject.Geometry.GeometryType.IsIndexed) !== 0) {
+                const indexElementType = dataDeserializer.getUint8() as BpmxObject.Geometry.IndexElementType;
+                const indicesCount = dataDeserializer.getUint32();
+
+                if (indexElementType === BpmxObject.Geometry.IndexElementType.Int32) {
+                    indices = new Int32Array(indicesCount);
+                    dataDeserializer.getInt32Array(indices as Int32Array);
+                } else if (indexElementType === BpmxObject.Geometry.IndexElementType.Uint32) {
+                    indices = new Uint32Array(indicesCount);
+                    dataDeserializer.getUint32Array(indices as Uint32Array);
+                } else {
+                    indices = new Uint16Array(indicesCount);
+                    dataDeserializer.getUint16Array(indices as Uint16Array);
+                }
+
+                if (100 < performance.now() - time) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    time = performance.now();
+                }
+            }
+
+            let skinning: BpmxObject.Geometry.Skinning | undefined = undefined;
+            if (isSkinnedMesh) {
+                const matricesIndices = new Float32Array(vertexCount * 4);
+                dataDeserializer.getFloat32Array(matricesIndices);
+
+                const matricesWeights = new Float32Array(vertexCount * 4);
+                dataDeserializer.getFloat32Array(matricesWeights);
+
+                if (100 < performance.now() - time) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    time = performance.now();
+                }
+
+                let sdef: BpmxObject.Geometry.Skinning["sdef"] | undefined = undefined;
+                if ((flag & BpmxObject.Geometry.GeometryType.HasSdef) !== 0) {
+                    const c = new Float32Array(vertexCount * 3);
+                    const r0 = new Float32Array(vertexCount * 3);
+                    const r1 = new Float32Array(vertexCount * 3);
+
+                    dataDeserializer.getFloat32Array(c);
+                    dataDeserializer.getFloat32Array(r0);
+                    dataDeserializer.getFloat32Array(r1);
+
+                    sdef = { c, r0, r1 };
+
+                    if (100 < performance.now() - time) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                        time = performance.now();
+                    }
+                }
+
+                skinning = {
+                    matricesIndices,
+                    matricesWeights,
+                    sdef
+                };
+            }
+
+            let edgeScale: Float32Array | undefined = undefined;
+            if ((flag & BpmxObject.Geometry.GeometryType.HasEdgeScale) !== 0) {
+                edgeScale = new Float32Array(vertexCount);
+                dataDeserializer.getFloat32Array(edgeScale);
+            }
+
+            const geometry: BpmxObject.Geometry = {
+                name,
+                positions,
+                normals,
+                uvs,
+                additionalUvs,
+                indices,
+                skinning,
+                edgeScale
+            };
+            geometries.push(geometry);
         }
-
-        const normals = new Float32Array(vertexCount * 3);
-        dataDeserializer.getFloat32Array(normals);
-
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
-        }
-
-        const uvs = new Float32Array(vertexCount * 2);
-        dataDeserializer.getFloat32Array(uvs);
-
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
-        }
-
-        const indicesBytePerElement = dataDeserializer.getUint8();
-        const indicesCount = dataDeserializer.getUint32();
-        const indices = indicesBytePerElement === 2
-            ? new Uint16Array(indicesCount)
-            : new Uint32Array(indicesCount);
-        if (indicesBytePerElement === 2) {
-            dataDeserializer.getUint16Array(indices as Uint16Array);
-        } else {
-            dataDeserializer.getUint32Array(indices as Uint32Array);
-        }
-
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
-        }
-
-        const matricesIndices = new Float32Array(vertexCount * 4);
-        dataDeserializer.getFloat32Array(matricesIndices);
-
-        const matricesWeights = new Float32Array(vertexCount * 4);
-        dataDeserializer.getFloat32Array(matricesWeights);
-
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
-        }
-
-        const hasSdef = dataDeserializer.getUint8() !== 0;
-        const sdef = hasSdef ? {
-            c: new Float32Array(vertexCount * 3),
-            r0: new Float32Array(vertexCount * 3),
-            r1: new Float32Array(vertexCount * 3)
-        } : undefined;
-
-        if (hasSdef) {
-            dataDeserializer.getFloat32Array(sdef!.c);
-            dataDeserializer.getFloat32Array(sdef!.r0);
-            dataDeserializer.getFloat32Array(sdef!.r1);
-        }
-
-        if (100 < performance.now() - time) {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            time = performance.now();
-        }
-
-        const geometry: BpmxObject.Geometry = {
-            positions,
-            normals,
-            uvs,
-            indices,
-            matricesIndices,
-            matricesWeights,
-            sdef
-        };
-        return geometry;
+        return geometries;
     }
 
     private static async _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Texture[]> {
@@ -224,7 +265,6 @@ export class BpmxReader {
             const toonTextureIndex = dataDeserializer.getInt32();
 
             const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
-            const indexCount = dataDeserializer.getInt32();
 
             const material: BpmxObject.Material = {
                 name,
@@ -248,8 +288,7 @@ export class BpmxReader {
                 isSharedToonTexture,
                 toonTextureIndex,
 
-                comment,
-                indexCount
+                comment
             };
 
             materials.push(material);
@@ -385,11 +424,11 @@ export class BpmxReader {
                 type
             };
 
-            const elementCount = dataDeserializer.getUint32();
-
             switch (type) {
             case PmxObject.Morph.Type.GroupMorph:
                 {
+                    const elementCount = dataDeserializer.getUint32();
+
                     const indices = new Int32Array(elementCount);
                     dataDeserializer.getInt32Array(indices);
 
@@ -406,22 +445,39 @@ export class BpmxReader {
 
             case PmxObject.Morph.Type.VertexMorph:
                 {
-                    const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices);
+                    const meshCount = dataDeserializer.getUint32();
 
-                    const positions = new Float32Array(elementCount * 3);
-                    dataDeserializer.getFloat32Array(positions);
+                    const elements: BpmxObject.Morph.VertexMorphElement[] = [];
+                    for (let i = 0; i < meshCount; ++i) {
+                        const meshIndex = dataDeserializer.getUint32();
 
-                    morph = <PmxObject.Morph.VertexMorph>{
+                        const elementCount = dataDeserializer.getUint32();
+
+                        const indices = new Int32Array(elementCount);
+                        dataDeserializer.getInt32Array(indices);
+
+                        const positions = new Float32Array(elementCount * 3);
+                        dataDeserializer.getFloat32Array(positions);
+
+                        const element: BpmxObject.Morph.VertexMorphElement = {
+                            meshIndex,
+                            indices,
+                            positions
+                        };
+                        elements.push(element);
+                    }
+
+                    morph = <BpmxObject.Morph.VertexMorph>{
                         ...morph,
-                        indices,
-                        positions
+                        elements
                     };
                 }
                 break;
 
             case PmxObject.Morph.Type.BoneMorph:
                 {
+                    const elementCount = dataDeserializer.getUint32();
+
                     const indices = new Int32Array(elementCount);
                     dataDeserializer.getInt32Array(indices);
 
@@ -446,22 +502,39 @@ export class BpmxReader {
             case PmxObject.Morph.Type.AdditionalUvMorph3:
             case PmxObject.Morph.Type.AdditionalUvMorph4:
                 {
-                    const indices = new Int32Array(elementCount);
-                    dataDeserializer.getInt32Array(indices);
+                    const meshCount = dataDeserializer.getUint32();
 
-                    const offsets = new Float32Array(elementCount * 4);
-                    dataDeserializer.getFloat32Array(offsets);
+                    const elements: BpmxObject.Morph.UvMorphElement[] = [];
+                    for (let i = 0; i < meshCount; ++i) {
+                        const meshIndex = dataDeserializer.getUint32();
 
-                    morph = <PmxObject.Morph.UvMorph>{
+                        const elementCount = dataDeserializer.getUint32();
+
+                        const indices = new Int32Array(elementCount);
+                        dataDeserializer.getInt32Array(indices);
+
+                        const uvs = new Float32Array(elementCount * 4);
+                        dataDeserializer.getFloat32Array(uvs);
+
+                        const element: BpmxObject.Morph.UvMorphElement = {
+                            meshIndex,
+                            indices,
+                            uvs
+                        };
+                        elements.push(element);
+                    }
+
+                    morph = <BpmxObject.Morph.UvMorph>{
                         ...morph,
-                        indices,
-                        offsets
+                        elements
                     };
                 }
                 break;
 
             case PmxObject.Morph.Type.MaterialMorph:
                 {
+                    const elementCount = dataDeserializer.getUint32();
+
                     const elements: PmxObject.Morph.MaterialMorph["elements"] = [];
                     for (let i = 0; i < elementCount; ++i) {
                         const materialIndex = dataDeserializer.getInt32();

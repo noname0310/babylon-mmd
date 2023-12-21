@@ -28,13 +28,7 @@ import { BpmxReader } from "./Parser/bpmxReader";
 
 interface BpmxLoadState extends MmdModelLoadState { }
 
-interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult {
-    readonly indices: Uint16Array | Uint32Array;
-    readonly indexToSubmehIndexMaps: {
-        map: Uint16Array | Uint32Array;
-        isReferencedVertex: Uint8Array;
-    }[];
-}
+interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult { }
 
 /**
  * BpmxLoader is a loader that loads models in BPMX format
@@ -117,7 +111,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     ): Promise<BpmxBuildGeometryResult> {
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
-        const indices = modelObject.geometry.indices;
         const indexToSubmehIndexMaps: BpmxBuildGeometryResult["indexToSubmehIndexMaps"] = [];
         const vertexDataArray: VertexData[] = [];
         {

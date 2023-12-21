@@ -132,7 +132,7 @@ export namespace BpmxObject {
          *
          * Repr: [..., index0, ...]
          */
-        indices: Uint16Array | Uint32Array | undefined;
+        indices: Int32Array | Uint32Array | Uint16Array | undefined;
 
         /**
          * Skinning data of the geometry
@@ -140,6 +140,11 @@ export namespace BpmxObject {
          * If mesh is not skinned, this is undefined
          */
         skinning: Geometry.Skinning | undefined;
+
+        /**
+         * Edge scale of the geometry
+         */
+        edgeScale: Float32Array | undefined;
     }>;
 
     export namespace Geometry {
@@ -263,7 +268,7 @@ export namespace BpmxObject {
      *
      * @see PmxObject.Material
      */
-    export type Material = PmxObject.Material & Readonly<{
+    export type Material = Omit<PmxObject.Material, "indexCount"> & Readonly<{
         /**
          * pre-evaluated transparency of the material
          *
