@@ -48,7 +48,6 @@
  *  uint8[texturesCount] - arrayBuffer
  * }[textureCount]
  *
- * materialCount: uint32
  * {
  *  materialName: uint32, uint8[] - length, string
  *  englishMaterialName: uint32, uint8[] - length, string
@@ -66,7 +65,7 @@
  *  isSharedToontexture: uint8
  *  toonTextureIndex: int32
  *  comment: uint32, uint8[] - length, string
- * }[materialCount]
+ * }[meshCount]
  *
  * { // if hasBone
  *  boneCount: uint32
@@ -224,6 +223,8 @@ import type { ILogger } from "../Parser/ILogger";
 import { PmxObject } from "../Parser/pmxObject";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 import { BpmxObject } from "./Parser/bpmxObject";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { Bone } from "@babylonjs/core/Bones/bone";
 
 /**
  * BPMX convert options
@@ -289,11 +290,22 @@ export class BpmxConverter implements ILogger {
             this.log("MmdMesh has no skeleton. Skinning data will not be included");
         }
         const skeleton = !includeSkinningData ? null : mmdMesh.skeleton;
+        const boneMetadataNameMap = skeleton !== null ? new Map<string, MmdModelMetadata.Bone | undefined>() : null;
+        if (skeleton !== null) {
+            const bonesMetadata = mmdModelMetadata.bones;
+            for (let i = 0; i < bonesMetadata.length; ++i) {
+                boneMetadataNameMap!.set(bonesMetadata[i].name, bonesMetadata[i]);
+            }
+        }
 
         const meshesToSerialize: Mesh[] = [];
+        const materialsToSerialize: (Material | undefined)[] = [];
+        const materialsMetadataToSerialize: (MmdModelMetadata.MaterialMetadata | undefined)[] = [];
         // validate mesh
         {
             const meshes = mmdModelMetadata.meshes;
+            const materials = mmdModelMetadata.materials;
+            const materialsMetadata = containsSerializationData ? mmdModelMetadata.materialsMetadata : null;
             for (let i = 0; i < meshes.length; ++i) {
                 const mesh = meshes[i];
 
@@ -324,6 +336,23 @@ export class BpmxConverter implements ILogger {
                 }
 
                 meshesToSerialize.push(mesh);
+
+                let material = materials[i] as Material | undefined;
+                if (material === undefined) {
+                    if (mesh.material === null) {
+                        this.warn(`mesh ${mesh.name} has no material.`);
+                    } else {
+                        this.log(`mesh ${mesh.name} has no material metadata. use material from mesh`);
+                        material = mesh.material;
+                    }
+                }
+                materialsToSerialize.push(material);
+
+                const materialMetadata = materialsMetadata?.[i];
+                if (materialMetadata === undefined) {
+                    this.log(`mesh ${mesh.name} has no additional material metadata`);
+                }
+                materialsMetadataToSerialize.push(materialMetadata);
             }
         }
 
@@ -338,13 +367,15 @@ export class BpmxConverter implements ILogger {
         // geather textures
         {
             const textureSet = new Set<BaseTexture>();
-            const materials = mmdModelMetadata.materials;
-            for (let i = 0; i < materials.length; ++i) {
-                const material = materials[i];
+            for (let i = 0; i < materialsToSerialize.length; ++i) {
+                const material = materialsToSerialize[i];
 
                 if ((material as MmdStandardMaterial).diffuseTexture) {
                     textureSet.add((material as MmdStandardMaterial).diffuseTexture!);
+                } else if ((material as PBRMaterial).albedoTexture) {
+                    textureSet.add((material as PBRMaterial).albedoTexture!);
                 }
+
                 if ((material as MmdStandardMaterial).sphereTexture) {
                     textureSet.add((material as MmdStandardMaterial).sphereTexture!);
                 }
@@ -620,14 +651,11 @@ export class BpmxConverter implements ILogger {
                 dataLength += textureBuffer.byteLength; // textureData
             }
 
-            dataLength += 4; // materialCount
-            const mmdModelMetadataMaterials = mmdModelMetadata.materials;
-            const materialsMatadata = containsSerializationData ? mmdModelMetadata.materialsMetadata : null;
-            for (let i = 0; i < mmdModelMetadataMaterials.length; ++i) {
-                const materialInfo = mmdModelMetadataMaterials[i];
-                const materialMetadata = materialsMatadata !== null ? materialsMatadata[i] : undefined;
+            for (let i = 0; i < meshesToSerialize.length; ++i) { // material count must be equal to mesh count
+                const materialInfo = materialsToSerialize[i];
+                const materialMetadata = materialsMetadataToSerialize[i];
 
-                dataLength += 4 + encoder.encode(materialInfo.name).length; // materialName
+                dataLength += 4 + (materialInfo !== undefined ? encoder.encode(materialInfo.name).length : 0); // materialName
                 dataLength += 4 + (materialMetadata !== undefined ? encoder.encode(materialMetadata.englishName).length : 0); // englishMaterialName
                 dataLength += 4 * 4; // diffuse
                 dataLength += 3 * 4; // specular
@@ -647,15 +675,16 @@ export class BpmxConverter implements ILogger {
 
             if (skeleton !== null) {
                 dataLength += 4; // boneCount
-                const mmdModelMetadataBones = mmdModelMetadata.bones;
+                const skeletonBones = skeleton.bones;
                 if (!containsSerializationData) {
                     this.warn("metadata.bones has following missing properties: tailPosition, axisLimit, localVector, externalParentTransform. lossy conversion will be applied");
                 }
-                for (let i = 0; i < mmdModelMetadataBones.length; ++i) {
-                    const boneInfo = mmdModelMetadataBones[i];
+                for (let i = 0; i < skeletonBones.length; ++i) {
+                    const bone = skeletonBones[i];
+                    const boneInfo = boneMetadataNameMap!.get(bone.name);
 
-                    dataLength += 4 + encoder.encode(boneInfo.name).length; // boneName
-                    dataLength += 4 + encoder.encode(boneInfo.englishName).length; // englishBoneName
+                    dataLength += 4 + encoder.encode(bone.name).length; // boneName
+                    dataLength += 4 + (boneInfo !== undefined ? encoder.encode(boneInfo.englishName).length : 0); // englishBoneName
                     dataLength += 3 * 4; // position
                     dataLength += 4; // parentBoneIndex
                     dataLength += 4; // transformOrder
@@ -670,7 +699,7 @@ export class BpmxConverter implements ILogger {
                     } else {
                         dataLength += 4; // tailPosition
                     }
-                    if (boneInfo.appendTransform !== undefined) {
+                    if (boneInfo?.appendTransform !== undefined) {
                         dataLength += 4; // appendTransform.parentIndex
                         dataLength += 4; // appendTransform.ratio
                     }
@@ -687,7 +716,7 @@ export class BpmxConverter implements ILogger {
                             dataLength += 4; // externalParentTransform
                         }
                     }
-                    if (boneInfo.ik !== undefined) {
+                    if (boneInfo?.ik !== undefined) {
                         dataLength += 4; // ik.target
                         dataLength += 4; // ik.iteration
                         dataLength += 4; // ik.rotationConstraint
@@ -1019,102 +1048,103 @@ export class BpmxConverter implements ILogger {
             serializer.setUint8Array(new Uint8Array(textureBuffer)); // textureData
         }
 
-        serializer.setUint32(mmdModelMetadata.materials.length); // materialCount
-        const mmdModelMetadataMaterials = mmdModelMetadata.materials;
-        const mmdModelMetadataMaterialsMetadata = containsSerializationData ? mmdModelMetadata.materialsMetadata : null;
-        for (let i = 0; i < mmdModelMetadataMaterials.length; ++i) {
-            const material = mmdModelMetadataMaterials[i] as unknown as Partial<MmdStandardMaterial>;
-            const materialMetadata = mmdModelMetadataMaterialsMetadata?.[i];
+        for (let i = 0; i < meshesToSerialize.length; ++i) {
+            const material = materialsToSerialize[i] as (Partial<MmdStandardMaterial> & Partial<PBRMaterial>) | undefined;
+            const materialMetadata = materialsMetadataToSerialize[i];
 
-            serializer.setString(material.name ?? ""); // materialName
+            serializer.setString(material?.name ?? ""); // materialName
             serializer.setString(materialMetadata?.englishName ?? ""); // englishMaterialName
 
-            const diffuse = material.diffuseColor?.asArray() ?? [1, 1, 1];
+            const diffuse = material?.diffuseColor?.asArray() ?? material?.albedoColor?.asArray() ?? [1, 1, 1];
             diffuse.length = 4; // ensure length
-            diffuse[3] = material.alpha ?? 1;
+            diffuse[3] = material?.alpha ?? 1;
             serializer.setFloat32Array(diffuse); // diffuse
 
-            const specular = material.specularColor?.asArray() ?? [0, 0, 0];
+            const specular = material?.specularColor?.asArray() ?? material?.reflectivityColor?.asArray() ?? material.s ?? [0, 0, 0];
             specular.length = 3; // ensure length
             serializer.setFloat32Array(specular); // specular
 
-            serializer.setFloat32(material.specularPower ?? 0); // shininess
+            serializer.setFloat32(material?.specularPower ?? 0); // shininess
 
-            const ambient = material.ambientColor?.asArray() ?? [0, 0, 0];
+            const ambient = material?.ambientColor?.asArray() ?? [0, 0, 0];
             ambient.length = 3; // ensure length
             serializer.setFloat32Array(ambient); // ambient
 
-            serializer.setInt8(material.transparencyMode ?? Material.MATERIAL_OPAQUE); // evauatedTransparency
+            serializer.setInt8(material?.transparencyMode ?? Material.MATERIAL_OPAQUE); // evauatedTransparency
 
-            const flag = ((materialMetadata?.isDoubleSided ?? material.backFaceCulling === false) ? PmxObject.Material.Flag.IsDoubleSided : 0) |
-                ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
+            const flag = ((materialMetadata?.isDoubleSided ?? material?.backFaceCulling === false) ? PmxObject.Material.Flag.IsDoubleSided : 0) |
+                ((material?.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
             serializer.setUint8(flag); // flag
 
-            const edgeColor = material.outlineColor?.asArray() ?? [0, 0, 0];
+            const edgeColor = material?.outlineColor?.asArray() ?? [0, 0, 0];
             edgeColor.length = 4; // ensure length
-            edgeColor[3] = material.outlineAlpha ?? 1;
+            edgeColor[3] = material?.outlineAlpha ?? 1;
             serializer.setFloat32Array(edgeColor); // edgeColor
 
-            serializer.setFloat32(material.outlineWidth ?? 0); // edgeSize
+            serializer.setFloat32(material?.outlineWidth ?? 0); // edgeSize
 
-            serializer.setInt32(material.diffuseTexture ? texturesToSerialize.indexOf(material.diffuseTexture as Texture) : -1); // textureIndex
-            serializer.setInt32(material.sphereTexture ? texturesToSerialize.indexOf(material.sphereTexture as Texture) : -1); // sphereTextureIndex
-            serializer.setUint8(material.sphereTextureBlendMode ?? 0); // sphereTextureMode
+            const diffuseTexture = material?.diffuseTexture ?? material?.albedoTexture;
+            serializer.setInt32(diffuseTexture ? texturesToSerialize.indexOf(diffuseTexture as Texture) : -1); // textureIndex
 
-            const isSharedToonTexture = material.toonTexture &&
+            serializer.setInt32(material?.sphereTexture ? texturesToSerialize.indexOf(material.sphereTexture as Texture) : -1); // sphereTextureIndex
+            serializer.setUint8(material?.sphereTextureBlendMode ?? 0); // sphereTextureMode
+
+            const isSharedToonTexture = material?.toonTexture &&
                 material.toonTexture.name.startsWith("file:shared_toon_texture_") &&
                 material.toonTexture.name.length <= 27 &&
                 !isNaN(Number(material.toonTexture.name.substring(25)));
             serializer.setUint8(isSharedToonTexture ? 1 : 0); // isSharedToontexture
 
-            serializer.setInt32(material.toonTexture ? texturesToSerialize.indexOf(material.toonTexture as Texture) : -1); // toonTextureIndex
+            serializer.setInt32(material?.toonTexture ? texturesToSerialize.indexOf(material.toonTexture as Texture) : -1); // toonTextureIndex
             serializer.setString(materialMetadata?.comment ?? ""); // comment
         }
 
-        serializer.setUint32(mmdModelMetadata.bones.length); // boneCount
-        const mmdModelMetadataBones = mmdModelMetadata.bones;
-        for (let i = 0; i < mmdModelMetadataBones.length; ++i) {
-            const boneInfo = mmdModelMetadataBones[i] as Serlic
+        if (skeleton !== null) {
+            serializer.setUint32(mmdModelMetadata.bones.length); // boneCount
+            const mmdModelMetadataBones = mmdModelMetadata.bones;
+            for (let i = 0; i < mmdModelMetadataBones.length; ++i) {
+                const boneInfo = mmdModelMetadataBones[i] as MmdModelMetadata.SerializationBone;
 
-            serializer.setString(boneInfo.name); // boneName
-            serializer.setString(boneInfo.englishName); // englishBoneName
-            serializer.setFloat32Array(boneInfo.position); // position
-            serializer.setInt32(boneInfo.parentBoneIndex); // parentBoneIndex
-            serializer.setInt32(boneInfo.transformOrder); // transformOrder
-            serializer.setUint16(boneInfo.flag); // flag
-            if (typeof boneInfo.tailPosition === "number") {
-                serializer.setInt32(boneInfo.tailPosition); // tailPosition
-            } else {
-                serializer.setFloat32Array(boneInfo.tailPosition); // tailPosition
-            }
-            if (boneInfo.appendTransform !== undefined) {
-                serializer.setInt32(boneInfo.appendTransform.parentIndex); // appendTransform.parentIndex
-                serializer.setFloat32(boneInfo.appendTransform.ratio); // appendTransform.ratio
-            }
-            if (boneInfo.axisLimit !== undefined) {
-                serializer.setFloat32Array(boneInfo.axisLimit); // axisLimit
-            }
-            if (boneInfo.localVector !== undefined) {
-                serializer.setFloat32Array(boneInfo.localVector.x); // localVectorX
-                serializer.setFloat32Array(boneInfo.localVector.z); // localVectorZ
-            }
-            if (boneInfo.externalParentTransform !== undefined) {
-                serializer.setInt32(boneInfo.externalParentTransform); // externalParentTransform
-            }
-            if (boneInfo.ik !== undefined) {
-                const ik = boneInfo.ik;
-                serializer.setInt32(ik.target); // ik.target
-                serializer.setInt32(ik.iteration); // ik.iteration
-                serializer.setFloat32(ik.rotationConstraint); // ik.rotationConstraint
-                const links = ik.links;
-                serializer.setInt32(links.length); // ik.linkCount
-                for (let j = 0; j < links.length; ++j) {
-                    const link = links[j];
-                    serializer.setInt32(link.target); // ik.links.target
-                    serializer.setUint8(link.limitation !== undefined ? 1 : 0); // ik.links.hasLimit
-                    if (link.limitation !== undefined) {
-                        serializer.setFloat32Array(link.limitation.minimumAngle); // ik.links.minimumAngle
-                        serializer.setFloat32Array(link.limitation.maximumAngle); // ik.links.maximumAngle
+                serializer.setString(boneInfo.name); // boneName
+                serializer.setString(boneInfo.englishName); // englishBoneName
+                serializer.setFloat32Array(boneInfo.position); // position
+                serializer.setInt32(boneInfo.parentBoneIndex); // parentBoneIndex
+                serializer.setInt32(boneInfo.transformOrder); // transformOrder
+                serializer.setUint16(boneInfo.flag); // flag
+                if (typeof boneInfo.tailPosition === "number") {
+                    serializer.setInt32(boneInfo.tailPosition); // tailPosition
+                } else {
+                    serializer.setFloat32Array(boneInfo.tailPosition); // tailPosition
+                }
+                if (boneInfo.appendTransform !== undefined) {
+                    serializer.setInt32(boneInfo.appendTransform.parentIndex); // appendTransform.parentIndex
+                    serializer.setFloat32(boneInfo.appendTransform.ratio); // appendTransform.ratio
+                }
+                if (boneInfo.axisLimit !== undefined) {
+                    serializer.setFloat32Array(boneInfo.axisLimit); // axisLimit
+                }
+                if (boneInfo.localVector !== undefined) {
+                    serializer.setFloat32Array(boneInfo.localVector.x); // localVectorX
+                    serializer.setFloat32Array(boneInfo.localVector.z); // localVectorZ
+                }
+                if (boneInfo.externalParentTransform !== undefined) {
+                    serializer.setInt32(boneInfo.externalParentTransform); // externalParentTransform
+                }
+                if (boneInfo.ik !== undefined) {
+                    const ik = boneInfo.ik;
+                    serializer.setInt32(ik.target); // ik.target
+                    serializer.setInt32(ik.iteration); // ik.iteration
+                    serializer.setFloat32(ik.rotationConstraint); // ik.rotationConstraint
+                    const links = ik.links;
+                    serializer.setInt32(links.length); // ik.linkCount
+                    for (let j = 0; j < links.length; ++j) {
+                        const link = links[j];
+                        serializer.setInt32(link.target); // ik.links.target
+                        serializer.setUint8(link.limitation !== undefined ? 1 : 0); // ik.links.hasLimit
+                        if (link.limitation !== undefined) {
+                            serializer.setFloat32Array(link.limitation.minimumAngle); // ik.links.minimumAngle
+                            serializer.setFloat32Array(link.limitation.maximumAngle); // ik.links.maximumAngle
+                        }
                     }
                 }
             }
