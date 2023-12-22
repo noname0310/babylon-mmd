@@ -165,7 +165,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 let boneSdefC: Nullable<Float32Array> = null;
                 let boneSdefR0: Nullable<Float32Array> = null;
                 let boneSdefR1: Nullable<Float32Array> = null;
-                if (state.useSdef) {
+                if (state.buildSkeleton && state.useSdef) {
                     boneSdefC = new Float32Array(subMeshVertexCount * 3);
                     boneSdefR0 = new Float32Array(subMeshVertexCount * 3);
                     boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
@@ -177,8 +177,12 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     const normals = new Float32Array(subMeshVertexCount * 3);
                     const uvs = new Float32Array(subMeshVertexCount * 2);
                     const subMeshIndices = new (indices.constructor as new (length: number) => typeof indices)(materialInfo.indexCount);
-                    const boneIndices = new Float32Array(subMeshVertexCount * 4);
-                    const boneWeights = new Float32Array(subMeshVertexCount * 4);
+                    let boneIndices: Nullable<Float32Array> = null;
+                    let boneWeights: Nullable<Float32Array> = null;
+                    if (state.buildSkeleton) {
+                        boneIndices = new Float32Array(subMeshVertexCount * 4);
+                        boneWeights = new Float32Array(subMeshVertexCount * 4);
+                    }
 
                     let time = performance.now();
                     let vertexIndex = 0;
@@ -210,124 +214,126 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                                 additionalUvs[k][vertexIndex * 4 + 3] = additionalVec4[k][3];
                             }
 
-                            switch (vertex.weightType) {
-                            case PmxObject.Vertex.BoneWeightType.Bdef1:
-                                {
-                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
+                            if (state.buildSkeleton) {
+                                switch (vertex.weightType) {
+                                case PmxObject.Vertex.BoneWeightType.Bdef1:
+                                    {
+                                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef1>;
 
-                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices;
-                                    boneIndices[vertexIndex * 4 + 1] = 0;
-                                    boneIndices[vertexIndex * 4 + 2] = 0;
-                                    boneIndices[vertexIndex * 4 + 3] = 0;
+                                        boneIndices![vertexIndex * 4 + 0] = boneWeight.boneIndices;
+                                        boneIndices![vertexIndex * 4 + 1] = 0;
+                                        boneIndices![vertexIndex * 4 + 2] = 0;
+                                        boneIndices![vertexIndex * 4 + 3] = 0;
 
-                                    boneWeights[vertexIndex * 4 + 0] = 1;
-                                    boneWeights[vertexIndex * 4 + 1] = 0;
-                                    boneWeights[vertexIndex * 4 + 2] = 0;
-                                    boneWeights[vertexIndex * 4 + 3] = 0;
-                                }
-                                break;
-
-                            case PmxObject.Vertex.BoneWeightType.Bdef2:
-                                {
-                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
-
-                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
-                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
-                                    boneIndices[vertexIndex * 4 + 2] = 0;
-                                    boneIndices[vertexIndex * 4 + 3] = 0;
-
-                                    boneWeights[vertexIndex * 4 + 0] = boneWeight.boneWeights;
-                                    boneWeights[vertexIndex * 4 + 1] = 1 - boneWeight.boneWeights;
-                                    boneWeights[vertexIndex * 4 + 2] = 0;
-                                    boneWeights[vertexIndex * 4 + 3] = 0;
-                                }
-                                break;
-
-                            case PmxObject.Vertex.BoneWeightType.Bdef4:
-                            case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
-                                {
-                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
-
-                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
-                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
-                                    boneIndices[vertexIndex * 4 + 2] = boneWeight.boneIndices[2];
-                                    boneIndices[vertexIndex * 4 + 3] = boneWeight.boneIndices[3];
-
-                                    boneWeights[vertexIndex * 4 + 0] = boneWeight.boneWeights[0];
-                                    boneWeights[vertexIndex * 4 + 1] = boneWeight.boneWeights[1];
-                                    boneWeights[vertexIndex * 4 + 2] = boneWeight.boneWeights[2];
-                                    boneWeights[vertexIndex * 4 + 3] = boneWeight.boneWeights[3];
-                                }
-                                break;
-
-                            case PmxObject.Vertex.BoneWeightType.Sdef:
-                                {
-                                    const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
-
-                                    boneIndices[vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
-                                    boneIndices[vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
-                                    boneIndices[vertexIndex * 4 + 2] = 0;
-                                    boneIndices[vertexIndex * 4 + 3] = 0;
-
-                                    const sdefWeights = boneWeight.boneWeights;
-                                    const boneWeight0 = sdefWeights.boneWeight0;
-                                    const boneWeight1 = 1 - boneWeight0;
-
-                                    boneWeights[vertexIndex * 4 + 0] = boneWeight0;
-                                    boneWeights[vertexIndex * 4 + 1] = boneWeight1;
-                                    boneWeights[vertexIndex * 4 + 2] = 0;
-                                    boneWeights[vertexIndex * 4 + 3] = 0;
-
-                                    if (state.useSdef) {
-                                        const centerX = sdefWeights.c[0];
-                                        const centerY = sdefWeights.c[1];
-                                        const centerZ = sdefWeights.c[2];
-
-                                        // calculate rw0 and rw1
-                                        let r0X = sdefWeights.r0[0];
-                                        let r0Y = sdefWeights.r0[1];
-                                        let r0Z = sdefWeights.r0[2];
-
-                                        let r1X = sdefWeights.r1[0];
-                                        let r1Y = sdefWeights.r1[1];
-                                        let r1Z = sdefWeights.r1[2];
-
-                                        const rwX = r0X * boneWeight0 + r1X * boneWeight1;
-                                        const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
-                                        const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
-
-                                        r0X = centerX + r0X - rwX;
-                                        r0Y = centerY + r0Y - rwY;
-                                        r0Z = centerZ + r0Z - rwZ;
-
-                                        r1X = centerX + r1X - rwX;
-                                        r1Y = centerY + r1Y - rwY;
-                                        r1Z = centerZ + r1Z - rwZ;
-
-                                        const cr0X = (centerX + r0X) * 0.5;
-                                        const cr0Y = (centerY + r0Y) * 0.5;
-                                        const cr0Z = (centerZ + r0Z) * 0.5;
-
-                                        const cr1X = (centerX + r1X) * 0.5;
-                                        const cr1Y = (centerY + r1Y) * 0.5;
-                                        const cr1Z = (centerZ + r1Z) * 0.5;
-
-                                        boneSdefC![vertexIndex * 3 + 0] = centerX;
-                                        boneSdefC![vertexIndex * 3 + 1] = centerY;
-                                        boneSdefC![vertexIndex * 3 + 2] = centerZ;
-
-                                        boneSdefR0![vertexIndex * 3 + 0] = cr0X;
-                                        boneSdefR0![vertexIndex * 3 + 1] = cr0Y;
-                                        boneSdefR0![vertexIndex * 3 + 2] = cr0Z;
-
-                                        boneSdefR1![vertexIndex * 3 + 0] = cr1X;
-                                        boneSdefR1![vertexIndex * 3 + 1] = cr1Y;
-                                        boneSdefR1![vertexIndex * 3 + 2] = cr1Z;
-
-                                        hasSdef = true;
+                                        boneWeights![vertexIndex * 4 + 0] = 1;
+                                        boneWeights![vertexIndex * 4 + 1] = 0;
+                                        boneWeights![vertexIndex * 4 + 2] = 0;
+                                        boneWeights![vertexIndex * 4 + 3] = 0;
                                     }
+                                    break;
+
+                                case PmxObject.Vertex.BoneWeightType.Bdef2:
+                                    {
+                                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef2>;
+
+                                        boneIndices![vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                        boneIndices![vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                        boneIndices![vertexIndex * 4 + 2] = 0;
+                                        boneIndices![vertexIndex * 4 + 3] = 0;
+
+                                        boneWeights![vertexIndex * 4 + 0] = boneWeight.boneWeights;
+                                        boneWeights![vertexIndex * 4 + 1] = 1 - boneWeight.boneWeights;
+                                        boneWeights![vertexIndex * 4 + 2] = 0;
+                                        boneWeights![vertexIndex * 4 + 3] = 0;
+                                    }
+                                    break;
+
+                                case PmxObject.Vertex.BoneWeightType.Bdef4:
+                                case PmxObject.Vertex.BoneWeightType.Qdef: // pmx 2.1 not support fallback to bdef4
+                                    {
+                                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Bdef4>;
+
+                                        boneIndices![vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                        boneIndices![vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                        boneIndices![vertexIndex * 4 + 2] = boneWeight.boneIndices[2];
+                                        boneIndices![vertexIndex * 4 + 3] = boneWeight.boneIndices[3];
+
+                                        boneWeights![vertexIndex * 4 + 0] = boneWeight.boneWeights[0];
+                                        boneWeights![vertexIndex * 4 + 1] = boneWeight.boneWeights[1];
+                                        boneWeights![vertexIndex * 4 + 2] = boneWeight.boneWeights[2];
+                                        boneWeights![vertexIndex * 4 + 3] = boneWeight.boneWeights[3];
+                                    }
+                                    break;
+
+                                case PmxObject.Vertex.BoneWeightType.Sdef:
+                                    {
+                                        const boneWeight = vertex.boneWeight as PmxObject.Vertex.BoneWeight<PmxObject.Vertex.BoneWeightType.Sdef>;
+
+                                        boneIndices![vertexIndex * 4 + 0] = boneWeight.boneIndices[0];
+                                        boneIndices![vertexIndex * 4 + 1] = boneWeight.boneIndices[1];
+                                        boneIndices![vertexIndex * 4 + 2] = 0;
+                                        boneIndices![vertexIndex * 4 + 3] = 0;
+
+                                        const sdefWeights = boneWeight.boneWeights;
+                                        const boneWeight0 = sdefWeights.boneWeight0;
+                                        const boneWeight1 = 1 - boneWeight0;
+
+                                        boneWeights![vertexIndex * 4 + 0] = boneWeight0;
+                                        boneWeights![vertexIndex * 4 + 1] = boneWeight1;
+                                        boneWeights![vertexIndex * 4 + 2] = 0;
+                                        boneWeights![vertexIndex * 4 + 3] = 0;
+
+                                        if (state.useSdef) {
+                                            const centerX = sdefWeights.c[0];
+                                            const centerY = sdefWeights.c[1];
+                                            const centerZ = sdefWeights.c[2];
+
+                                            // calculate rw0 and rw1
+                                            let r0X = sdefWeights.r0[0];
+                                            let r0Y = sdefWeights.r0[1];
+                                            let r0Z = sdefWeights.r0[2];
+
+                                            let r1X = sdefWeights.r1[0];
+                                            let r1Y = sdefWeights.r1[1];
+                                            let r1Z = sdefWeights.r1[2];
+
+                                            const rwX = r0X * boneWeight0 + r1X * boneWeight1;
+                                            const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
+                                            const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
+
+                                            r0X = centerX + r0X - rwX;
+                                            r0Y = centerY + r0Y - rwY;
+                                            r0Z = centerZ + r0Z - rwZ;
+
+                                            r1X = centerX + r1X - rwX;
+                                            r1Y = centerY + r1Y - rwY;
+                                            r1Z = centerZ + r1Z - rwZ;
+
+                                            const cr0X = (centerX + r0X) * 0.5;
+                                            const cr0Y = (centerY + r0Y) * 0.5;
+                                            const cr0Z = (centerZ + r0Z) * 0.5;
+
+                                            const cr1X = (centerX + r1X) * 0.5;
+                                            const cr1Y = (centerY + r1Y) * 0.5;
+                                            const cr1Z = (centerZ + r1Z) * 0.5;
+
+                                            boneSdefC![vertexIndex * 3 + 0] = centerX;
+                                            boneSdefC![vertexIndex * 3 + 1] = centerY;
+                                            boneSdefC![vertexIndex * 3 + 2] = centerZ;
+
+                                            boneSdefR0![vertexIndex * 3 + 0] = cr0X;
+                                            boneSdefR0![vertexIndex * 3 + 1] = cr0Y;
+                                            boneSdefR0![vertexIndex * 3 + 2] = cr0Z;
+
+                                            boneSdefR1![vertexIndex * 3 + 0] = cr1X;
+                                            boneSdefR1![vertexIndex * 3 + 1] = cr1Y;
+                                            boneSdefR1![vertexIndex * 3 + 2] = cr1Z;
+
+                                            hasSdef = true;
+                                        }
+                                    }
+                                    break;
                                 }
-                                break;
                             }
 
                             subMeshIndices[subMeshIndex] = vertexIndex;
