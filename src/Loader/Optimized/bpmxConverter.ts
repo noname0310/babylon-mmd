@@ -279,7 +279,7 @@ export class BpmxConverter implements ILogger {
      * @returns BPMX data as ArrayBuffer
      * @throws {Error} Failed to convert BPMX
      */
-    public async convert(mmdMesh: Mesh, options: BpmxConvertOptions = {}): Promise<ArrayBuffer> {
+    public convert(mmdMesh: Mesh, options: BpmxConvertOptions = {}): ArrayBuffer {
         if (!MmdMesh.isMmdMesh(mmdMesh)) {
             throw new Error(`${mmdMesh.name} is not MmdMesh`);
         }
