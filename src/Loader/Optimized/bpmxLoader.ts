@@ -153,14 +153,14 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             vertexData.normals = geometryInfo.normals;
             vertexData.uvs = geometryInfo.uvs;
             if (geometryInfo.indices !== undefined) vertexData.indices = geometryInfo.indices;
-            if (skinning !== undefined) {
+            if (state.buildSkeleton && skinning !== undefined) {
                 vertexData.matricesIndices = skinning.matricesIndices;
                 vertexData.matricesWeights = skinning.matricesWeights;
             }
             let boneSdefC: Nullable<Float32Array> = null;
             let boneSdefR0: Nullable<Float32Array> = null;
             let boneSdefR1: Nullable<Float32Array> = null;
-            if (state.useSdef && skinning?.sdef !== undefined) {
+            if (state.buildSkeleton && state.useSdef && skinning?.sdef !== undefined) {
                 const elementCount = geometryInfo.positions.length / 3;
                 const matriciesWeights = skinning.matricesWeights;
                 boneSdefC = skinning.sdef.c;
@@ -230,7 +230,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
             geometry._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
-            if (geometryInfo.additionalUvs !== undefined) {
+            if (state.preserveSerializationData && geometryInfo.additionalUvs !== undefined) {
                 const uvKinds = [MmdBufferKind.AdditionalUV1Kind, MmdBufferKind.AdditionalUV2Kind, MmdBufferKind.AdditionalUV3Kind, MmdBufferKind.AdditionalUV4Kind];
                 for (let j = 0; j < geometryInfo.additionalUvs.length; ++j) {
                     geometry.setVerticesData(uvKinds[j], geometryInfo.additionalUvs[j], false, 4);
@@ -241,7 +241,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
             }
-            if (geometryInfo.edgeScale !== undefined) {
+            if (state.preserveSerializationData && geometryInfo.edgeScale !== undefined) {
                 geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, geometryInfo.edgeScale, false, 1);
             }
             geometry.applyToMesh(mesh);
