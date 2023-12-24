@@ -98,9 +98,34 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
 
     protected override _getProgressTaskCosts(state: BpmxLoadState, modelObject: BpmxObject): ProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
+
         let geometriesPositionCount = 0;
         for (let i = 0; i < modelObject.geometries.length; ++i) geometriesPositionCount += modelObject.geometries[i].positions.length;
         tasks.push({ name: "Build Geometry", cost: geometriesPositionCount });
+
+        if (state.buildMorph) {
+            let buildMorphCost = 0;
+            const morphsInfo = modelObject.morphs;
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphInfo = morphsInfo[i];
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph
+                    // morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    // morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    // morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    // morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
+                ) {
+                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                    continue;
+                }
+
+                const elements = morphInfo.elements;
+                for (let j = 0; j < elements.length; ++j) buildMorphCost += elements[j].indices.length;
+            }
+            tasks.push({ name: "Build Morph", cost: buildMorphCost });
+        }
+
         return tasks;
     }
 
@@ -301,7 +326,10 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         bonesMetadata: MmdModelMetadata.Bone[] | MmdModelMetadata.SerializationBone[],
         progress: Progress
     ): Promise<Nullable<Skeleton>> {
-        if (modelObject.bones.length === 0) return Promise.resolve(null);
+        if (modelObject.bones.length === 0) {
+            progress.endTask("Build Skeleton");
+            return Promise.resolve(null);
+        }
         return super._buildSkeletonAsync(state, modelObject, meshes, scene, assetContainer, bonesMetadata, progress);
     }
 
@@ -323,6 +351,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         }
 
         let buildMorphProgress = 0;
+        let time = performance.now();
         for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
             const morphInfo = morphsInfo[morphIndex];
 
@@ -380,6 +409,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
                     morphTargets.push(morphTarget);
                     subMeshesMorphTargets[elements[i].meshIndex].push(morphTarget);
+                    buildMorphProgress += elements[i].indices.length;
                 }
 
                 const geometriesInfo = modelObject.geometries;
@@ -422,8 +452,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     }
                 }
             }
-            progress.setTaskProgress("Build Morph", buildMorphProgress + morphIndices.length);
-            buildMorphProgress += morphIndices.length;
+            if (100 < performance.now() - time) {
+                progress.setTaskProgress("Build Morph", buildMorphProgress);
+                progress.invokeProgressEvent();
+
+                await Tools.DelayAsync(0);
+                time = performance.now();
+            }
         }
         progress.endTask("Build Morph");
 

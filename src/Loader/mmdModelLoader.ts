@@ -257,8 +257,6 @@ export abstract class MmdModelLoader<
                 morphsMetadata,
                 progress
             );
-        } else {
-            progress.endTask("Build Morph");
         }
 
         if (state.boundingBoxMargin !== 0) {
@@ -336,32 +334,10 @@ export abstract class MmdModelLoader<
     protected abstract _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<ModelObject>;
 
     protected _getProgressTaskCosts(state: LoadState, modelObject: ModelObject): ProgressTask[] {
-        let buildMorphCost = 0;
-        if (state.buildMorph) {
-            const morphsInfo = modelObject.morphs;
-            for (let i = 0; i < morphsInfo.length; ++i) {
-                const morphInfo = morphsInfo[i];
-                if (
-                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
-                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
-                ) {
-                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
-                    continue;
-                }
-
-                buildMorphCost += morphInfo.indices.length;
-            }
-        }
-
         return [
             { name: "Parse", cost: Math.floor(state.arrayBuffer.byteLength / 100) },
             { name: "Build Material", cost: 100 * modelObject.materials.length },
             { name: "Build Skeleton", cost: state.buildSkeleton ? 100 * modelObject.bones.length : 0 },
-            { name: "Build Morph", cost: buildMorphCost },
             { name: "Texture Load", cost: 30000 * modelObject.textures.length }
         ];
     }

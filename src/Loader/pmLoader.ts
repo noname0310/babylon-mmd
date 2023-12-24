@@ -105,7 +105,31 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
     protected override _getProgressTaskCosts(state: PmLoadState, modelObject: PmxObject): ProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
+
         tasks.push({ name: "Build Geometry", cost: modelObject.indices.length });
+
+        if (state.buildMorph) {
+            let buildMorphCost = 0;
+            const morphsInfo = modelObject.morphs;
+            for (let i = 0; i < morphsInfo.length; ++i) {
+                const morphInfo = morphsInfo[i];
+                if (
+                    morphInfo.type !== PmxObject.Morph.Type.VertexMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.UvMorph &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
+                    morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4
+                ) {
+                    // group morph, bone morph, material morph will be handled by cpu bound custom runtime
+                    continue;
+                }
+
+                buildMorphCost += morphInfo.indices.length;
+            }
+            tasks.push({ name: "Build Morph", cost: buildMorphCost });
+        }
+
         return tasks;
     }
 
@@ -502,6 +526,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         }
 
         let buildMorphProgress = 0;
+        let time = performance.now();
         for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
             const morphInfo = morphsInfo[morphIndex];
 
@@ -731,8 +756,14 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     }
                 }
             }
-            progress.setTaskProgress("Build Morph", buildMorphProgress + morphInfo.indices.length);
             buildMorphProgress += morphInfo.indices.length;
+            if (100 < performance.now() - time) {
+                progress.setTaskProgress("Build Morph", buildMorphProgress);
+                progress.invokeProgressEvent();
+
+                await Tools.DelayAsync(0);
+                time = performance.now();
+            }
         }
         progress.endTask("Build Morph");
 
