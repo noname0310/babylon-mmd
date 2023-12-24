@@ -30,7 +30,7 @@ export class BpmxReader {
         const isSkinnedMesh = dataDeserializer.getUint8() === 1;
         const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
         const textures = await this._ParseTexturesAsync(dataDeserializer);
-        const materials = this._ParseMaterials(dataDeserializer);
+        const materials = this._ParseMaterials(dataDeserializer, geometries.length);
         const bones = isSkinnedMesh ? this._ParseBones(dataDeserializer) : [];
         const morphs = this._ParseMorphs(dataDeserializer);
         const displayFrames = this._ParseDisplayFrames(dataDeserializer);
@@ -244,9 +244,7 @@ export class BpmxReader {
         return textures;
     }
 
-    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer): BpmxObject.Material[] {
-        const materialCount = dataDeserializer.getUint32();
-
+    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer, materialCount: number): BpmxObject.Material[] {
         const materials: BpmxObject.Material[] = [];
         for (let i = 0; i < materialCount; ++i) {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);

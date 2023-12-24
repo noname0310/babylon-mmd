@@ -425,9 +425,10 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                         const positionOffsets = element.offsets;
 
                         for (let j = 0; j < morphIndices.length; ++j) {
-                            positions[j * 3 + 0] += positionOffsets[j * 3 + 0];
-                            positions[j * 3 + 1] += positionOffsets[j * 3 + 1];
-                            positions[j * 3 + 2] += positionOffsets[j * 3 + 2];
+                            const index = morphIndices[j];
+                            positions[index * 3 + 0] += positionOffsets[j * 3 + 0];
+                            positions[index * 3 + 1] += positionOffsets[j * 3 + 1];
+                            positions[index * 3 + 2] += positionOffsets[j * 3 + 2];
                         }
                         morphTargets[i].setPositions(positions);
                     }
@@ -442,8 +443,9 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                         const uvOffsets = element.offsets;
 
                         for (let j = 0; j < morphIndices.length; ++j) {
-                            uvs[j * 2 + 0] += uvOffsets[j * 4 + 0];
-                            uvs[j * 2 + 1] += uvOffsets[j * 4 + 1];
+                            const index = morphIndices[j];
+                            uvs[index * 2 + 0] += uvOffsets[j * 4 + 0];
+                            uvs[index * 2 + 1] += uvOffsets[j * 4 + 1];
                         }
 
                         const morphTarget = morphTargets[i];

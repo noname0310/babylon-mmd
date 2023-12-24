@@ -292,7 +292,7 @@ export class BpmxConverter implements ILogger {
         const mmdModelMetadata = mmdMesh.metadata;
         const containsSerializationData = MmdModelMetadata.isSerializationMetadata(mmdModelMetadata);
 
-        if (includeSkinningData && mmdMesh.skeleton === null) {
+        if (includeSkinningData && mmdModelMetadata.skeleton === null) {
             this.log("MmdMesh has no skeleton. Skinning data will not be included");
         }
 
@@ -301,11 +301,11 @@ export class BpmxConverter implements ILogger {
         const boneMetadataIndexRemapper: Int32Array = new Int32Array(mmdModelMetadata.bones.length).fill(-1);
 
         let maxBoneIndex = -1;
-        const skeletonBones = mmdMesh.skeleton?.bones ?? [];
+        const skeletonBones = mmdModelMetadata.skeleton?.bones ?? [];
         for (let i = 0; i < skeletonBones.length; ++i) maxBoneIndex = Math.max(maxBoneIndex, skeletonBones[i].getIndex());
         const boneIndexRemapper: Int32Array = new Int32Array(maxBoneIndex + 1).fill(-1);
 
-        if (includeSkinningData && mmdMesh.skeleton !== null) {
+        if (includeSkinningData && mmdModelMetadata.skeleton !== null) {
             const bonesMetadata = mmdModelMetadata.bones;
 
             const metadataToBoneMap = new Map<MmdModelMetadata.Bone, Bone>();
@@ -522,26 +522,29 @@ export class BpmxConverter implements ILogger {
             }
 
             // resolve parentBoneIndex, tailPosition, appendTransform, ik
-            for (let i = 0; i < bonesMetadataToSerialize.length; ++i) {
-                const boneMetadata = bonesMetadataToSerialize[i];
-                const parentBoneIndex = boneMetadata.parentBoneIndex = metadataFinalParents.get(bonesMetadata[boneMetadata.parentBoneIndex]) ?? -1;
-                if (boneMetadata.tailPosition === -2) boneMetadata.tailPosition = parentBoneIndex;
+            for (let i = 0; i < bonesMetadata.length; ++i) {
+                const boneMetadata = bonesMetadata[i];
+                const boneFinalMetadata = bonesMetadataToSerialize[boneMetadataIndexRemapper[i]];
 
-                if (typeof boneMetadata.tailPosition === "number") boneMetadata.tailPosition = boneMetadataIndexRemapper[boneMetadata.tailPosition];
+                const parentBoneIndex = boneFinalMetadata.parentBoneIndex = metadataFinalParents.get(boneMetadata) ?? -1;
+                if (boneFinalMetadata.tailPosition === -2) boneFinalMetadata.tailPosition = parentBoneIndex;
+                else if (typeof boneFinalMetadata.tailPosition === "number" && 0 <= boneFinalMetadata.tailPosition && boneFinalMetadata.tailPosition < bonesMetadata.length) {
+                    boneFinalMetadata.tailPosition = boneMetadataIndexRemapper[boneFinalMetadata.tailPosition];
+                }
 
-                const appendTransform = boneMetadata.appendTransform;
+                const appendTransform = boneFinalMetadata.appendTransform;
                 if (appendTransform !== undefined) {
-                    boneMetadata.appendTransform = {
-                        parentIndex: boneMetadataIndexRemapper[appendTransform.parentIndex],
+                    boneFinalMetadata.appendTransform = {
+                        parentIndex: boneMetadataIndexRemapper[appendTransform.parentIndex] ?? appendTransform.parentIndex,
                         ratio: appendTransform.ratio
                     };
                 }
 
-                const ik = boneMetadata.ik;
+                const ik = boneFinalMetadata.ik;
                 if (ik !== undefined) {
                     const newIkLinks: PmxObject.Bone.IKLink[] = [];
-                    boneMetadata.ik = {
-                        target: boneMetadataIndexRemapper[ik.target],
+                    boneFinalMetadata.ik = {
+                        target: boneMetadataIndexRemapper[ik.target] ?? ik.target,
                         iteration: ik.iteration,
                         rotationConstraint: ik.rotationConstraint,
                         links: newIkLinks
@@ -551,7 +554,7 @@ export class BpmxConverter implements ILogger {
                     for (let i = 0; i < links.length; ++i) {
                         const link = links[i];
                         newIkLinks.push({
-                            target: boneMetadataIndexRemapper[link.target],
+                            target: boneMetadataIndexRemapper[link.target] ?? link.target,
                             limitation: link.limitation
                         });
                     }
@@ -593,7 +596,7 @@ export class BpmxConverter implements ILogger {
                     this.warn(`mesh ${mesh.name} has no indices data. skippping`);
                     continue;
                 }
-                if (mmdMesh.skeleton !== null && mmdMesh.skeleton !== mesh.skeleton) {
+                if (mmdModelMetadata.skeleton !== null && mmdModelMetadata.skeleton !== mesh.skeleton) {
                     this.warn(`mesh ${mesh.name} has different skeleton. skippping`);
                     continue;
                 }
@@ -657,9 +660,7 @@ export class BpmxConverter implements ILogger {
                 const textureBuffer = (texture as Texture)._buffer as typeof Texture.prototype._buffer | undefined;
                 if (textureBuffer instanceof ArrayBuffer) {
                     texturesToSerialize.push(texture as Texture);
-                }
-
-                if (textureBuffer === undefined || textureBuffer === null) {
+                } else if (textureBuffer === undefined || textureBuffer === null) {
                     this.warn(`texture ${texture.name} has no texture buffer. make sure load model with materialBuilder.deleteTextureBufferAfterLoad = false`);
                 } else {
                     this.warn(`texture ${texture.name} has unsupported type of texture buffer. only ArrayBuffer is supported`);
@@ -905,7 +906,7 @@ export class BpmxConverter implements ILogger {
                     dataLength += vertexCount * 3 * 4; // sdefC
                     dataLength += vertexCount * 3 * 4; // sdefR0
                     dataLength += vertexCount * 3 * 4; // sdefR1
-                } else if (sdefC === null || sdefR0 === null || sdefR1 === null) {
+                } else if ((sdefC === null || sdefR0 === null || sdefR1 === null) && (sdefC !== null || sdefR0 !== null || sdefR1 !== null)) {
                     this.warn(`mesh ${mesh.name} has incomplete sdef data. sdefC, sdefR0, sdefR1 must be all defined or all undefined. falling back to linear blend skinning`);
                 }
 
@@ -1263,7 +1264,7 @@ export class BpmxConverter implements ILogger {
                         this.warn(`mesh ${mesh.name} bone indices vertex count is different from positions vertex count`);
                     }
                     if (originalBoneIndices !== null) {
-                        for (let j = 0; j < boneIndices.length; ++j) boneIndices[j] = boneIndexRemapper[originalBoneIndices[j]]; // remap bone indices
+                        for (let j = 0; j < boneIndices.length; ++j) boneIndices[j] = boneIndexRemapper[originalBoneIndices[j]] ?? originalBoneIndices[j]; // remap bone indices
                     }
                 }
                 serializer.setFloat32Array(boneIndices); // boneIndices
@@ -1490,7 +1491,7 @@ export class BpmxConverter implements ILogger {
                     const indices = new Int32Array(morphInfo.indices.length);
                     {
                         const originalIndices = morphInfo.indices;
-                        for (let j = 0; j < originalIndices.length; ++j) indices[j] = boneMetadataIndexRemapper[originalIndices[j]]; // remap bone indices
+                        for (let j = 0; j < originalIndices.length; ++j) indices[j] = boneMetadataIndexRemapper[originalIndices[j]] ?? originalIndices[j]; // remap bone indices
                     }
                     serializer.setUint32(indices.length); // elementCount
                     serializer.setInt32Array(indices); // bone.indices
@@ -1559,7 +1560,7 @@ export class BpmxConverter implements ILogger {
                     const frame = frames[j];
                     serializer.setUint8(frame.type); // element.frameType
                     const index = frame.type === PmxObject.DisplayFrame.FrameData.FrameType.Bone
-                        ? boneMetadataIndexRemapper[frame.index] // remap bone indices
+                        ? (boneMetadataIndexRemapper[frame.index] ?? frame.index) // remap bone indices
                         : frame.index;
                     serializer.setInt32(index); // element.frameIndex
                 }
@@ -1575,7 +1576,7 @@ export class BpmxConverter implements ILogger {
 
             serializer.setString(rigidBodyInfo.name); // name
             serializer.setString(rigidBodyInfo.englishName); // englishName
-            serializer.setInt32(boneMetadataIndexRemapper[rigidBodyInfo.boneIndex]); // boneIndex - remap bone indices
+            serializer.setInt32(boneMetadataIndexRemapper[rigidBodyInfo.boneIndex] ?? rigidBodyInfo.boneIndex); // boneIndex - remap bone indices
             serializer.setUint8(rigidBodyInfo.collisionGroup); // collisionGroup
             serializer.setUint16(rigidBodyInfo.collisionMask); // collisionMask
             serializer.setUint8(rigidBodyInfo.shapeType); // shapeType
@@ -1608,6 +1609,10 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32Array(jointInfo.rotationMax); // rotationMax
             serializer.setFloat32Array(jointInfo.springPosition); // springPosition
             serializer.setFloat32Array(jointInfo.springRotation); // springRotation
+        }
+
+        if (serializer.bytesAvailable !== 0) {
+            this.error(`unexpected bytes available: ${serializer.bytesAvailable}`);
         }
 
         return data;
