@@ -395,7 +395,7 @@ export abstract class MmdModelLoader<
         assetContainer: Nullable<AssetContainer>,
         bonesMetadata: MmdModelMetadata.Bone[] | MmdModelMetadata.SerializationBone[],
         progress: Progress
-    ): Promise<Skeleton> {
+    ): Promise<Nullable<Skeleton>> {
         const preserveSerializationData = state.preserveSerializationData;
 
         scene._blockEntityCollection = !!assetContainer;

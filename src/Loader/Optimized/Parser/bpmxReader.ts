@@ -1,3 +1,5 @@
+import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+
 import type { Vec3 } from "@/Loader/Parser/mmdTypes";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
@@ -18,6 +20,7 @@ export class BpmxReader {
      * @param logger Logger
      * @returns BPMX data
      * @throws {RangeError} If the parse fails
+     * @throws {LoadFileError} If the BPMX version is not supported
      */
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<BpmxObject> {
         const dataDeserializer = new MmdDataDeserializer(data);
@@ -70,6 +73,9 @@ export class BpmxReader {
             dataDeserializer.getInt8(),
             dataDeserializer.getInt8()
         ] as const;
+        if (version[0] !== 2 || version[1] !== 0 || version[2] !== 0) {
+            throw new LoadFileError(`BPMX version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
+        }
 
         const modelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
         const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
@@ -456,13 +462,13 @@ export class BpmxReader {
                         const indices = new Int32Array(elementCount);
                         dataDeserializer.getInt32Array(indices);
 
-                        const positions = new Float32Array(elementCount * 3);
-                        dataDeserializer.getFloat32Array(positions);
+                        const offsets = new Float32Array(elementCount * 3);
+                        dataDeserializer.getFloat32Array(offsets);
 
                         const element: BpmxObject.Morph.VertexMorphElement = {
                             meshIndex,
                             indices,
-                            positions
+                            offsets
                         };
                         elements.push(element);
                     }
@@ -513,13 +519,13 @@ export class BpmxReader {
                         const indices = new Int32Array(elementCount);
                         dataDeserializer.getInt32Array(indices);
 
-                        const uvs = new Float32Array(elementCount * 4);
-                        dataDeserializer.getFloat32Array(uvs);
+                        const offsets = new Float32Array(elementCount * 4);
+                        dataDeserializer.getFloat32Array(offsets);
 
                         const element: BpmxObject.Morph.UvMorphElement = {
                             meshIndex,
                             indices,
-                            uvs
+                            offsets
                         };
                         elements.push(element);
                     }

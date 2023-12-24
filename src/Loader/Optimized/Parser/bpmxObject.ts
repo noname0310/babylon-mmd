@@ -351,7 +351,7 @@ export namespace BpmxObject {
              *
              * Repr: [..., x, y, z, ...]
              */
-            positions: Float32Array;
+            offsets: Float32Array;
         }>;
 
         /**
@@ -392,7 +392,7 @@ export namespace BpmxObject {
              *
              * Repr: [..., u, v, ...]
              */
-            uvs: Float32Array;
+            offsets: Float32Array;
         }>;
     }
 

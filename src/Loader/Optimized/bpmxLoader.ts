@@ -1,4 +1,5 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -97,7 +98,9 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
 
     protected override _getProgressTaskCosts(state: BpmxLoadState, modelObject: BpmxObject): ProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
-        tasks.push({ name: "Build Geometry", cost: modelObject.geometry.indices.length });
+        let geometriesPositionCount = 0;
+        for (let i = 0; i < modelObject.geometries.length; ++i) geometriesPositionCount += modelObject.geometries[i].positions.length;
+        tasks.push({ name: "Build Geometry", cost: geometriesPositionCount });
         return tasks;
     }
 
@@ -111,189 +114,121 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     ): Promise<BpmxBuildGeometryResult> {
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
-        const indexToSubmehIndexMaps: BpmxBuildGeometryResult["indexToSubmehIndexMaps"] = [];
-        const vertexDataArray: VertexData[] = [];
-        {
-            const vetexCount = modelObject.geometry.positions.length / 3;
 
-            const materials = modelObject.materials;
-            let indexStartOffset = 0;
-            for (let i = 0; i < materials.length; ++i) {
-                const materialInfo = materials[i];
+        let time = performance.now();
+        let processedPositionCount = 0;
 
-                const isReferencedVertex = new Uint8Array(vetexCount);//.fill(0);
-                let subMeshVertexCount = 0;
-                {
-                    const indexCount = materialInfo.indexCount;
-                    for (let j = 0; j < indexCount; ++j) {
-                        const elementIndex = indices[indexStartOffset + j];
-                        if (isReferencedVertex[elementIndex] === 0) {
-                            isReferencedVertex[elementIndex] = 1;
-                            subMeshVertexCount += 1;
-                        }
-                    }
-                    isReferencedVertex.fill(0);
+        const geometriesInfo = modelObject.geometries;
+        for (let i = 0; i < geometriesInfo.length; ++i) {
+            const geometryInfo = geometriesInfo[i];
+            const skinning = geometryInfo.skinning;
+
+            const vertexData = new VertexData();
+            vertexData.positions = geometryInfo.positions;
+            vertexData.normals = geometryInfo.normals;
+            vertexData.uvs = geometryInfo.uvs;
+            if (geometryInfo.indices !== undefined) vertexData.indices = geometryInfo.indices;
+            if (skinning !== undefined) {
+                vertexData.matricesIndices = skinning.matricesIndices;
+                vertexData.matricesWeights = skinning.matricesWeights;
+            }
+            let boneSdefC: Nullable<Float32Array> = null;
+            let boneSdefR0: Nullable<Float32Array> = null;
+            let boneSdefR1: Nullable<Float32Array> = null;
+            if (state.useSdef && skinning?.sdef !== undefined) {
+                const elementCount = geometryInfo.positions.length / 3;
+                const matriciesWeights = skinning.matricesWeights;
+                boneSdefC = skinning.sdef.c;
+                boneSdefR0 = skinning.sdef.r0;
+                boneSdefR1 = skinning.sdef.r1;
+
+                for (let elementIndex = 0; elementIndex < elementCount; ++elementIndex) {
+                    const boneWeight0 = matriciesWeights![elementIndex * 4 + 0];
+                    const boneWeight1 = matriciesWeights![elementIndex * 4 + 1];
+
+                    const centerX = boneSdefC[elementIndex * 3 + 0];
+                    const centerY = boneSdefC[elementIndex * 3 + 1];
+                    const centerZ = boneSdefC[elementIndex * 3 + 2];
+
+                    // calculate rw0 and rw1
+                    let r0X = boneSdefR0[elementIndex * 3 + 0];
+                    let r0Y = boneSdefR0[elementIndex * 3 + 1];
+                    let r0Z = boneSdefR0[elementIndex * 3 + 2];
+
+                    let r1X = boneSdefR1[elementIndex * 3 + 0];
+                    let r1Y = boneSdefR1[elementIndex * 3 + 1];
+                    let r1Z = boneSdefR1[elementIndex * 3 + 2];
+
+                    const rwX = r0X * boneWeight0 + r1X * boneWeight1;
+                    const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
+                    const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
+
+                    r0X = centerX + r0X - rwX;
+                    r0Y = centerY + r0Y - rwY;
+                    r0Z = centerZ + r0Z - rwZ;
+
+                    r1X = centerX + r1X - rwX;
+                    r1Y = centerY + r1Y - rwY;
+                    r1Z = centerZ + r1Z - rwZ;
+
+                    const cr0X = (centerX + r0X) * 0.5;
+                    const cr0Y = (centerY + r0Y) * 0.5;
+                    const cr0Z = (centerZ + r0Z) * 0.5;
+
+                    const cr1X = (centerX + r1X) * 0.5;
+                    const cr1Y = (centerY + r1Y) * 0.5;
+                    const cr1Z = (centerZ + r1Z) * 0.5;
+
+                    boneSdefC[elementIndex * 3 + 0] = centerX;
+                    boneSdefC[elementIndex * 3 + 1] = centerY;
+                    boneSdefC[elementIndex * 3 + 2] = centerZ;
+
+                    boneSdefR0![elementIndex * 3 + 0] = cr0X;
+                    boneSdefR0![elementIndex * 3 + 1] = cr0Y;
+                    boneSdefR0![elementIndex * 3 + 2] = cr0Z;
+
+                    boneSdefR1![elementIndex * 3 + 0] = cr1X;
+                    boneSdefR1![elementIndex * 3 + 1] = cr1Y;
+                    boneSdefR1![elementIndex * 3 + 2] = cr1Z;
                 }
-                const vertexData = new VertexData();
-                let boneSdefC: Nullable<Float32Array> = null;
-                let boneSdefR0: Nullable<Float32Array> = null;
-                let boneSdefR1: Nullable<Float32Array> = null;
-                if (state.useSdef && modelObject.geometry.sdef !== undefined) {
-                    boneSdefC = new Float32Array(subMeshVertexCount * 3);
-                    boneSdefR0 = new Float32Array(subMeshVertexCount * 3);
-                    boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
+            }
+
+            scene._blockEntityCollection = !!assetContainer;
+            const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
+            mesh._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
+            if (geometryInfo.indices === undefined) mesh.isUnIndexed = true;
+            mesh.setParent(rootMesh);
+            meshes.push(mesh);
+
+            scene._blockEntityCollection = !!assetContainer;
+            const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
+            geometry._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
+            if (geometryInfo.additionalUvs !== undefined) {
+                const uvKinds = [MmdBufferKind.AdditionalUV1Kind, MmdBufferKind.AdditionalUV2Kind, MmdBufferKind.AdditionalUV3Kind, MmdBufferKind.AdditionalUV4Kind];
+                for (let j = 0; j < geometryInfo.additionalUvs.length; ++j) {
+                    geometry.setVerticesData(uvKinds[j], geometryInfo.additionalUvs[j], false, 4);
                 }
-                const indexToSubMeshIndexMap = new (indices.constructor as new (length: number) => typeof indices)(vetexCount);
-                {
-                    const positions = new Float32Array(subMeshVertexCount * 3);
-                    const normals = new Float32Array(subMeshVertexCount * 3);
-                    const uvs = new Float32Array(subMeshVertexCount * 2);
-                    const subMeshIndices = new (indices.constructor as new (length: number) => typeof indices)(materialInfo.indexCount);
-                    const boneIndices = new Float32Array(subMeshVertexCount * 4);
-                    const boneWeights = new Float32Array(subMeshVertexCount * 4);
+            }
+            if (boneSdefC !== null) {
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+            }
+            if (geometryInfo.edgeScale !== undefined) {
+                geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, geometryInfo.edgeScale, false, 1);
+            }
+            geometry.applyToMesh(mesh);
+            geometries.push(geometry);
 
-                    let time = performance.now();
-                    let vertexIndex = 0;
-                    let subMeshIndex = 0;
-                    const indexCount = materialInfo.indexCount;
-                    const positionData = modelObject.geometry.positions;
-                    const normalData = modelObject.geometry.normals;
-                    const uvData = modelObject.geometry.uvs;
-                    const boneIndexData = modelObject.geometry.matricesIndices;
-                    const boneWeightData = modelObject.geometry.matricesWeights;
-                    const sdefData = modelObject.geometry.sdef;
-                    for (let j = 0; j < indexCount; ++j) {
-                        const elementIndex = indices[indexStartOffset + j];
-                        if (isReferencedVertex[elementIndex] === 0) {
-                            isReferencedVertex[elementIndex] = 1;
+            processedPositionCount += geometryInfo.positions.length;
+            if (processedPositionCount % 10000 === 0 && 100 < performance.now() - time) {
+                progress.setTaskProgress("Build Geometry", processedPositionCount);
+                progress.invokeProgressEvent();
 
-                            positions[vertexIndex * 3 + 0] = positionData[elementIndex * 3 + 0];
-                            positions[vertexIndex * 3 + 1] = positionData[elementIndex * 3 + 1];
-                            positions[vertexIndex * 3 + 2] = positionData[elementIndex * 3 + 2];
-
-                            normals[vertexIndex * 3 + 0] = normalData[elementIndex * 3 + 0];
-                            normals[vertexIndex * 3 + 1] = normalData[elementIndex * 3 + 1];
-                            normals[vertexIndex * 3 + 2] = normalData[elementIndex * 3 + 2];
-
-                            uvs[vertexIndex * 2 + 0] = uvData[elementIndex * 2 + 0];
-                            uvs[vertexIndex * 2 + 1] = uvData[elementIndex * 2 + 1];
-
-                            boneIndices[vertexIndex * 4 + 0] = boneIndexData[elementIndex * 4 + 0];
-                            boneIndices[vertexIndex * 4 + 1] = boneIndexData[elementIndex * 4 + 1];
-                            boneIndices[vertexIndex * 4 + 2] = boneIndexData[elementIndex * 4 + 2];
-                            boneIndices[vertexIndex * 4 + 3] = boneIndexData[elementIndex * 4 + 3];
-
-                            boneWeights[vertexIndex * 4 + 0] = boneWeightData[elementIndex * 4 + 0];
-                            boneWeights[vertexIndex * 4 + 1] = boneWeightData[elementIndex * 4 + 1];
-                            boneWeights[vertexIndex * 4 + 2] = boneWeightData[elementIndex * 4 + 2];
-                            boneWeights[vertexIndex * 4 + 3] = boneWeightData[elementIndex * 4 + 3];
-
-                            if (boneSdefC !== null) {
-                                const boneWeight0 = boneWeightData![elementIndex * 4 + 0];
-                                const boneWeight1 = boneWeightData![elementIndex * 4 + 1];
-
-                                const sdefC = sdefData!.c;
-                                const sdefR0 = sdefData!.r0;
-                                const sdefR1 = sdefData!.r1;
-
-                                const centerX = sdefC[elementIndex * 3 + 0];
-                                const centerY = sdefC[elementIndex * 3 + 1];
-                                const centerZ = sdefC[elementIndex * 3 + 2];
-
-                                // calculate rw0 and rw1
-                                let r0X = sdefR0[elementIndex * 3 + 0];
-                                let r0Y = sdefR0[elementIndex * 3 + 1];
-                                let r0Z = sdefR0[elementIndex * 3 + 2];
-
-                                let r1X = sdefR1[elementIndex * 3 + 0];
-                                let r1Y = sdefR1[elementIndex * 3 + 1];
-                                let r1Z = sdefR1[elementIndex * 3 + 2];
-
-                                const rwX = r0X * boneWeight0 + r1X * boneWeight1;
-                                const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
-                                const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
-
-                                r0X = centerX + r0X - rwX;
-                                r0Y = centerY + r0Y - rwY;
-                                r0Z = centerZ + r0Z - rwZ;
-
-                                r1X = centerX + r1X - rwX;
-                                r1Y = centerY + r1Y - rwY;
-                                r1Z = centerZ + r1Z - rwZ;
-
-                                const cr0X = (centerX + r0X) * 0.5;
-                                const cr0Y = (centerY + r0Y) * 0.5;
-                                const cr0Z = (centerZ + r0Z) * 0.5;
-
-                                const cr1X = (centerX + r1X) * 0.5;
-                                const cr1Y = (centerY + r1Y) * 0.5;
-                                const cr1Z = (centerZ + r1Z) * 0.5;
-
-                                boneSdefC[vertexIndex * 3 + 0] = centerX;
-                                boneSdefC[vertexIndex * 3 + 1] = centerY;
-                                boneSdefC[vertexIndex * 3 + 2] = centerZ;
-
-                                boneSdefR0![vertexIndex * 3 + 0] = cr0X;
-                                boneSdefR0![vertexIndex * 3 + 1] = cr0Y;
-                                boneSdefR0![vertexIndex * 3 + 2] = cr0Z;
-
-                                boneSdefR1![vertexIndex * 3 + 0] = cr1X;
-                                boneSdefR1![vertexIndex * 3 + 1] = cr1Y;
-                                boneSdefR1![vertexIndex * 3 + 2] = cr1Z;
-                            }
-
-                            subMeshIndices[subMeshIndex] = vertexIndex;
-                            indexToSubMeshIndexMap[elementIndex] = vertexIndex;
-                            subMeshIndex += 1;
-                            vertexIndex += 1;
-                        } else {
-                            subMeshIndices[subMeshIndex] = indexToSubMeshIndexMap[elementIndex];
-                            subMeshIndex += 1;
-                        }
-
-                        if ((indexStartOffset + j) % 10000 === 0 && 100 < performance.now() - time) {
-                            progress.setTaskProgress("Build Geometry", indexStartOffset + j);
-                            progress.invokeProgressEvent();
-
-                            await Tools.DelayAsync(0);
-                            time = performance.now();
-                        }
-                    }
-
-                    vertexData.positions = positions;
-                    vertexData.normals = normals;
-                    vertexData.uvs = uvs;
-                    vertexData.indices = subMeshIndices;
-                    vertexData.matricesIndices = boneIndices;
-                    vertexData.matricesWeights = boneWeights;
-                }
-
-                scene._blockEntityCollection = !!assetContainer;
-                const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(materialInfo.name, scene);
-                mesh._parentContainer = assetContainer;
-                scene._blockEntityCollection = false;
-                mesh.setParent(rootMesh);
-                meshes.push(mesh);
-
-                scene._blockEntityCollection = !!assetContainer;
-                const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
-                geometry._parentContainer = assetContainer;
-                scene._blockEntityCollection = false;
-                if (boneSdefC !== null) {
-                    geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC, false, 3);
-                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
-                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
-                }
-                geometry.applyToMesh(mesh);
-                geometries.push(geometry);
-
-                indexToSubmehIndexMaps.push({
-                    map: indexToSubMeshIndexMap,
-                    isReferencedVertex
-                });
-                vertexDataArray.push(vertexData);
-
-                indexStartOffset += materialInfo.indexCount;
+                await Tools.DelayAsync(0);
+                time = performance.now();
             }
         }
 
@@ -302,10 +237,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
 
         return {
             meshes,
-            geometries,
-            indices,
-            indexToSubmehIndexMaps,
-            vertexDataArray
+            geometries
         };
     }
 
@@ -360,6 +292,19 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         return { materials, textureLoadPromise };
     }
 
+    protected override _buildSkeletonAsync(
+        state: BpmxLoadState,
+        modelObject: BpmxObject,
+        meshes: Mesh[],
+        scene: Scene,
+        assetContainer: Nullable<AssetContainer>,
+        bonesMetadata: MmdModelMetadata.Bone[] | MmdModelMetadata.SerializationBone[],
+        progress: Progress
+    ): Promise<Nullable<Skeleton>> {
+        if (modelObject.bones.length === 0) return Promise.resolve(null);
+        return super._buildSkeletonAsync(state, modelObject, meshes, scene, assetContainer, bonesMetadata, progress);
+    }
+
     protected override async _buildMorphAsync(
         state: BpmxLoadState,
         modelObject: BpmxObject,
@@ -370,41 +315,9 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         progress: Progress
     ): Promise<MorphTargetManager[]> {
         const preserveSerializationData = state.preserveSerializationData;
-
-        const vertexToSubMeshMap = new Int32Array(modelObject.geometry.positions.length / 3).fill(-1);
-        // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
-        // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
-        const vertexToSubMeshSlowMap = new Map<number, number[]>();
-
-        const indices = buildGeometryResult.indices;
-        {
-            const materials = modelObject.materials;
-            let indexOffset = 0;
-            for (let subMeshIndex = 0; subMeshIndex < materials.length; ++subMeshIndex) {
-                const indexCount = materials[subMeshIndex].indexCount;
-                for (let j = 0; j < indexCount; ++j) {
-                    const elementIndex = indices[indexOffset + j];
-                    if (vertexToSubMeshMap[elementIndex] === -1) {
-                        vertexToSubMeshMap[elementIndex] = subMeshIndex;
-                    } else if (vertexToSubMeshMap[elementIndex] === -2) {
-                        const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
-                        if (!subMeshIndices.includes(subMeshIndex)) {
-                            subMeshIndices.push(subMeshIndex);
-                        }
-                    } else if (vertexToSubMeshMap[elementIndex] !== subMeshIndex) {
-                        vertexToSubMeshSlowMap.set(elementIndex, [vertexToSubMeshMap[elementIndex], subMeshIndex]);
-                        vertexToSubMeshMap[elementIndex] = -2;
-                    }
-                }
-
-                indexOffset += indexCount;
-            }
-        }
-
-        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
         const morphsInfo = modelObject.morphs;
-        const vertexDataArray = buildGeometryResult.vertexDataArray;
-        const subMeshesMorphTargets: MorphTarget[][] = new Array(vertexDataArray.length); // morphTargets[subMeshIndex][morphIndex]
+
+        const subMeshesMorphTargets: MorphTarget[][] = new Array(modelObject.geometries.length); // morphTargets[subMeshIndex][morphIndex]
         for (let i = 0; i < subMeshesMorphTargets.length; ++i) {
             subMeshesMorphTargets[i] = [];
         }
@@ -414,7 +327,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             const morphInfo = morphsInfo[morphIndex];
 
             const morphTargets: MorphTarget[] = [];
-            const elements: (MmdModelMetadata.SerializationVertexMorphElement | MmdModelMetadata.SerializationUvMorphElement)[] = [];
 
             // create morph metadata
             switch (morphInfo.type) {
@@ -440,7 +352,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     morphTargets,
 
                     ...preserveSerializationData ? {
-                        elements
+                        elements: morphInfo.elements
                     } : undefined
                 });
                 break;
@@ -458,145 +370,54 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 continue;
             }
 
-            const morphIndices = morphInfo.indices;
             if (morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
                 morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
                 morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
                 morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph4 // additional uv morphs are not implemented yet
             ) {
-                const referencedSubMeshes: number[] = [];
-                for (let i = 0; i < morphIndices.length; ++i) {
-                    const elementIndex = morphIndices[i];
-                    const subMeshIndex = vertexToSubMeshMap[elementIndex];
-                    if (subMeshIndex === -1) continue;
-
-                    if (subMeshIndex === -2) {
-                        const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
-                        for (let j = 0; j < subMeshIndices.length; ++j) {
-                            const subMeshIndex = subMeshIndices[j];
-                            if (!referencedSubMeshes.includes(subMeshIndex)) {
-                                referencedSubMeshes.push(subMeshIndex);
-                            }
-                        }
-                    } else if (!referencedSubMeshes.includes(subMeshIndex)) {
-                        referencedSubMeshes.push(subMeshIndex);
-                    }
-                }
-                for (let i = 0; i < referencedSubMeshes.length; ++i) {
+                const elements = morphInfo.elements;
+                for (let i = 0; i < elements.length; ++i) {
                     const morphTarget = new MorphTarget(morphInfo.name, 0, scene);
                     morphTargets.push(morphTarget);
-                    subMeshesMorphTargets[referencedSubMeshes[i]].push(morphTarget);
+                    subMeshesMorphTargets[elements[i].meshIndex].push(morphTarget);
                 }
 
+                const geometriesInfo = modelObject.geometries;
+
                 if (morphInfo.type === PmxObject.Morph.Type.VertexMorph) {
-                    for (let i = 0; i < referencedSubMeshes.length; ++i) {
-                        const subMeshIndex = referencedSubMeshes[i];
+                    for (let i = 0; i < elements.length; ++i) {
+                        const element = elements[i];
+                        const geometryInfo = geometriesInfo[element.meshIndex];
 
-                        const vertexData = vertexDataArray[subMeshIndex];
-                        const positions = new Float32Array(vertexData.positions!);
-                        positions.set(vertexData.positions!);
+                        const positions = new Float32Array(geometryInfo.positions);
 
-                        const morphIndices = morphInfo.indices;
-                        const positionOffsets = morphInfo.positions;
+                        const morphIndices = element.indices;
+                        const positionOffsets = element.offsets;
 
-                        const indexToSubMeshIndexMap = indexToSubmeshIndexMaps[subMeshIndex].map;
-                        const isReferencedVertex = indexToSubmeshIndexMaps[subMeshIndex].isReferencedVertex;
-                        if (preserveSerializationData) {
-                            let indexCount = 0;
-                            for (let j = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
-                                positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
-                                positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
-                                indexCount += 1;
-                            }
-
-                            const indices = new Int32Array(indexCount);
-                            const offsets = new Float32Array(indexCount * 3);
-                            for (let j = 0, k = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                indices[k] = elementIndex;
-                                offsets[k * 3 + 0] = positionOffsets[j * 3 + 0];
-                                offsets[k * 3 + 1] = positionOffsets[j * 3 + 1];
-                                offsets[k * 3 + 2] = positionOffsets[j * 3 + 2];
-                                k += 1;
-                            }
-                            elements.push({
-                                meshIndex: subMeshIndex,
-                                indices,
-                                offsets
-                            });
-                        } else {
-                            for (let j = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                positions[elementIndex * 3 + 0] += positionOffsets[j * 3 + 0];
-                                positions[elementIndex * 3 + 1] += positionOffsets[j * 3 + 1];
-                                positions[elementIndex * 3 + 2] += positionOffsets[j * 3 + 2];
-                            }
+                        for (let j = 0; j < morphIndices.length; ++j) {
+                            positions[j * 3 + 0] += positionOffsets[j * 3 + 0];
+                            positions[j * 3 + 1] += positionOffsets[j * 3 + 1];
+                            positions[j * 3 + 2] += positionOffsets[j * 3 + 2];
                         }
-
                         morphTargets[i].setPositions(positions);
                     }
                 } else /*if (morphInfo.type === PmxObject.Morph.Type.uvMorph)*/ {
-                    for (let i = 0; i < referencedSubMeshes.length; ++i) {
-                        const subMeshIndex = referencedSubMeshes[i];
+                    for (let i = 0; i < elements.length; ++i) {
+                        const element = elements[i];
+                        const geometryInfo = geometriesInfo[element.meshIndex];
 
-                        const vertexData = vertexDataArray[subMeshIndex];
-                        const uvs = new Float32Array(vertexData.uvs!);
-                        uvs.set(vertexData.uvs!);
+                        const uvs = new Float32Array(geometryInfo.uvs);
 
-                        const morphIndices = morphInfo.indices;
-                        const uvOffsets = morphInfo.offsets;
+                        const morphIndices = element.indices;
+                        const uvOffsets = element.offsets;
 
-                        const indexToSubMeshIndexMap = indexToSubmeshIndexMaps[subMeshIndex].map;
-                        const isReferencedVertex = indexToSubmeshIndexMaps[subMeshIndex].isReferencedVertex;
-                        if (preserveSerializationData) {
-                            let indexCount = 0;
-                            for (let j = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
-                                uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
-                                indexCount += 1;
-                            }
-
-                            const indices = new Int32Array(indexCount);
-                            const offsets = new Float32Array(indexCount * 4);
-                            for (let j = 0, k = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                indices[k] = elementIndex;
-                                offsets[k * 4 + 0] = uvOffsets[j * 4 + 0];
-                                offsets[k * 4 + 1] = uvOffsets[j * 4 + 1];
-                                offsets[k * 4 + 2] = uvOffsets[j * 4 + 2];
-                                offsets[k * 4 + 3] = uvOffsets[j * 4 + 3];
-                                k += 1;
-                            }
-                            elements.push({
-                                meshIndex: subMeshIndex,
-                                indices,
-                                offsets
-                            });
-                        } else {
-                            for (let j = 0; j < morphIndices.length; ++j) {
-                                if (isReferencedVertex[morphIndices[j]] === 0) continue;
-
-                                const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
-                                uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
-                                uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
-                            }
+                        for (let j = 0; j < morphIndices.length; ++j) {
+                            uvs[j * 2 + 0] += uvOffsets[j * 4 + 0];
+                            uvs[j * 2 + 1] += uvOffsets[j * 4 + 1];
                         }
 
                         const morphTarget = morphTargets[i];
-                        morphTarget.setPositions(vertexData.positions);
+                        morphTarget.setPositions(geometryInfo.positions);
                         morphTarget.setUVs(uvs);
                     }
                 }
