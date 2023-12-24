@@ -911,7 +911,7 @@ export class BpmxConverter implements ILogger {
                 }
 
                 // edgeScale will be implemented in the future
-                const edgeScale = geometry.getVerticesData("edgeScale");
+                const edgeScale = geometry.getVerticesData(MmdBufferKind.EdgeScaleKind);
                 if (edgeScale !== null) {
                     dataLength += vertexCount * 4; // edgeScale
                 }
@@ -1232,7 +1232,7 @@ export class BpmxConverter implements ILogger {
 
             const hasSdef = sdefC !== null && sdefR0 !== null && sdefR1 !== null;
 
-            let edgeScale = geometry.getVerticesData("edgeScale");
+            let edgeScale = geometry.getVerticesData(MmdBufferKind.EdgeScaleKind);
 
             const geometryType = (hasSdef ? BpmxObject.Geometry.GeometryType.HasSdef : 0) |
                 (!mesh.isUnIndexed ? BpmxObject.Geometry.GeometryType.IsIndexed : 0) |

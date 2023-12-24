@@ -195,6 +195,10 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
                 }
                 let hasSdef = false;
+                let edgeScale: Nullable<Float32Array> = null;
+                if (state.preserveSerializationData) {
+                    edgeScale = new Float32Array(subMeshVertexCount);
+                }
                 const indexToSubMeshIndexMap = new (modelObject.indices.constructor as new (length: number) => typeof modelObject.indices)(modelObject.vertices.length);
                 {
                     const positions = new Float32Array(subMeshVertexCount * 3);
@@ -360,6 +364,10 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                                 }
                             }
 
+                            if (state.preserveSerializationData) {
+                                edgeScale![vertexIndex] = vertex.edgeScale;
+                            }
+
                             subMeshIndices[subMeshIndex] = vertexIndex;
                             indexToSubMeshIndexMap[elementIndex] = vertexIndex;
                             subMeshIndex += 1;
@@ -407,6 +415,9 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+                }
+                if (state.preserveSerializationData) {
+                    geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, edgeScale!, false, 1);
                 }
                 geometry.applyToMesh(mesh);
                 geometries.push(geometry);
