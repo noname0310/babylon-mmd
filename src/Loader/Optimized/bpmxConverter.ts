@@ -1305,9 +1305,9 @@ export class BpmxConverter implements ILogger {
             }
 
             if (edgeScale !== null) {
-                if (edgeScale.length !== vertexCount * 4) {
+                if (edgeScale.length !== vertexCount) {
                     this.warn(`mesh ${mesh.name} edgeScale vertex count is different from positions vertex count`);
-                    const newEdgeScale = new Float32Array(vertexCount * 4);
+                    const newEdgeScale = new Float32Array(vertexCount);
                     newEdgeScale.set(edgeScale);
                     edgeScale = newEdgeScale;
                 }
