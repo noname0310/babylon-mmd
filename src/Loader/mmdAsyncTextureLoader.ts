@@ -6,6 +6,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { SharedToonTextures } from "./sharedToonTextures";
+import { pathNormalize } from "./Util/pathNormalize";
 
 class TextureLoadingModel {
     public readonly uniqueId: number;
@@ -133,7 +134,7 @@ class MmdTextureData {
             "data:" + textureName,
             scene,
             undefined,
-            true,
+            undefined,
             undefined,
             () => {
                 if (this._texture === null) {
@@ -379,7 +380,7 @@ export class MmdAsyncTextureLoader {
 
         const requestString = isSharedToonTexture
             ? finalRelativeTexturePath
-            : this.pathNormalize(rootUrl + relativeTexturePathOrIndex);
+            : pathNormalize(rootUrl + relativeTexturePathOrIndex);
 
         return await this._loadTextureAsyncInternal(
             uniqueId,
@@ -418,7 +419,7 @@ export class MmdAsyncTextureLoader {
         applyPathNormalization = true
     ): Promise<Nullable<Texture>> {
         if (applyPathNormalization) {
-            textureName = this.pathNormalize(textureName);
+            textureName = pathNormalize(textureName);
         }
 
         return await this._loadTextureAsyncInternal(
@@ -430,27 +431,5 @@ export class MmdAsyncTextureLoader {
             assetContainer,
             deleteBuffer
         );
-    }
-
-    /**
-     * Normalize path
-     * @param path Path
-     * @returns Normalized path
-     */
-    public pathNormalize(path: string): string {
-        path = path.replace(/\\/g, "/");
-        const pathArray = path.split("/");
-        const resultArray = [];
-        for (let i = 0; i < pathArray.length; ++i) {
-            const pathElement = pathArray[i];
-            if (pathElement === ".") {
-                continue;
-            } else if (pathElement === "..") {
-                resultArray.pop();
-            } else {
-                resultArray.push(pathElement);
-            }
-        }
-        return resultArray.join("/");
     }
 }

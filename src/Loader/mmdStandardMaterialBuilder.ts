@@ -135,7 +135,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     scene,
                     assetContainer,
                     rootUrl,
-                    fileRootId,
                     referenceFileResolver,
                     meshes[i],
                     logger,
@@ -154,7 +153,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     scene,
                     assetContainer,
                     rootUrl,
-                    fileRootId,
                     referenceFileResolver,
                     logger,
                     incrementProgress
@@ -171,7 +169,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     scene,
                     assetContainer,
                     rootUrl,
-                    fileRootId,
                     referenceFileResolver,
                     logger,
                     incrementProgress
@@ -334,7 +331,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
-        fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         mesh: Mesh,
         logger: ILogger,
@@ -348,7 +344,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             scene,
             assetContainer,
             rootUrl,
-            fileRootId,
             referenceFileResolver,
             mesh,
             logger,
@@ -359,7 +354,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
             const diffuseTexturePath = texturePathTable[materialInfo.textureIndex];
             if (diffuseTexturePath !== undefined) {
-                const diffuseTextureFileFullPath = fileRootId + diffuseTexturePath;
+                const diffuseTextureFileFullPath = referenceFileResolver.createFullPath(diffuseTexturePath);
 
                 let texture: Nullable<Texture>;
                 const file = referenceFileResolver.resolve(diffuseTextureFileFullPath);
@@ -435,7 +430,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
-     * @param fileRootId File root id
      * @param referenceFileResolver Reference file resolver
      * @param logger Logger
      * @param onTextureLoadComplete Texture load complete callback
@@ -448,7 +442,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
-        fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         logger: ILogger,
         onTextureLoadComplete?: () => void
@@ -460,7 +453,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             scene,
             assetContainer,
             rootUrl,
-            fileRootId,
             referenceFileResolver,
             logger,
             onTextureLoadComplete
@@ -468,7 +460,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
                 const sphereTexturePath = texturePathTable[materialInfo.sphereTextureIndex];
                 if (sphereTexturePath !== undefined) {
-                    const sphereTextureFileFullPath = fileRootId + sphereTexturePath;
+                    const sphereTextureFileFullPath = referenceFileResolver.createFullPath(sphereTexturePath);
 
                     let sphereTexture: Nullable<Texture>;
                     const file = referenceFileResolver.resolve(sphereTextureFileFullPath);
@@ -519,7 +511,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
-     * @param fileRootId File root id
      * @param referenceFileResolver Reference file resolver
      * @param logger Logger
      * @param onTextureLoadComplete Texture load complete callback
@@ -532,7 +523,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
-        fileRootId: string,
         referenceFileResolver: ReferenceFileResolver,
         logger: ILogger,
         onTextureLoadComplete?: () => void
@@ -544,7 +534,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             scene,
             assetContainer,
             rootUrl,
-            fileRootId,
             referenceFileResolver,
             logger,
             onTextureLoadComplete
@@ -558,7 +547,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 toonTexturePath = texturePathTable[materialInfo.toonTextureIndex];
             }
             if (toonTexturePath !== undefined) {
-                const toonTextureFileFullPath = fileRootId + toonTexturePath;
+                const toonTextureFileFullPath = referenceFileResolver.createFullPath(toonTexturePath.toString());
 
                 let toonTexture: Nullable<Texture>;
                 const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTextureFileFullPath) : undefined;

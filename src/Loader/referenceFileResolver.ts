@@ -1,3 +1,5 @@
+import { pathNormalize } from "./Util/pathNormalize";
+
 /**
  * This is a wrapper to treat the arraybuffer as a file
  */
@@ -18,6 +20,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * File list that can be resolved
      */
     public readonly files: readonly T[];
+    private readonly _fileRootId: string;
     private readonly _fileMap: Map<string, T> = new Map<string, T>();
 
     /**
@@ -30,28 +33,32 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @returns
      */
     public constructor(files: readonly T[], rootUrl: string, fileRootId: string) {
-        rootUrl = this._pathNormalize(rootUrl);
+        rootUrl = pathNormalize(rootUrl);
 
         this.files = files;
+        this._fileRootId = fileRootId;
 
         if (files.length === 0) return;
 
-
         if (files[0] instanceof File) {
             for (const file of files) {
-                const fileRelativePath = this._pathNormalize((file as File).webkitRelativePath);
+                const fileRelativePath = pathNormalize((file as File).webkitRelativePath);
 
                 if (!fileRelativePath.startsWith(rootUrl)) continue;
 
-                const relativePath = fileRootId + fileRelativePath.slice(rootUrl.length);
-                this._fileMap.set(this._pathNormalize(relativePath), file);
+                const relativePath = fileRootId + pathNormalize(fileRelativePath.slice(rootUrl.length));
+                this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
             }
         } else {
             for (const file of files) {
-                const relativePath = fileRootId + (file as IArrayBufferFile).relativePath;
-                this._fileMap.set(this._pathNormalize(relativePath), file);
+                const relativePath = fileRootId + pathNormalize((file as IArrayBufferFile).relativePath);
+                this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
             }
         }
+    }
+
+    public createFullPath(relativePath: string): string {
+        return this._fileRootId + pathNormalize(relativePath);
     }
 
     /**
@@ -60,16 +67,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @returns File
      */
     public resolve(path: string): T | undefined {
-        const finalPath = this._pathNormalize(path);
-        return this._fileMap.get(finalPath);
-    }
-
-    /**
-     * Normalize the path
-     * @param path Path
-     * @returns Normalized path
-     */
-    private _pathNormalize(path: string): string {
-        return path.replace(/\\/g, "/").toUpperCase();
+        const finalPath = pathNormalize(path);
+        return this._fileMap.get(finalPath.toUpperCase());
     }
 }
