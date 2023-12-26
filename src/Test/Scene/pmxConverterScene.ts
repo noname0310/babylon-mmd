@@ -620,7 +620,7 @@ export class PmxConverterScene implements ISceneBuilder {
         convertButton.style.border = "none";
         convertButton.style.fontSize = "20px";
         buttonContainer.appendChild(convertButton);
-        convertButton.onclick = async(): Promise<void> => {
+        convertButton.onclick = (): void => {
             if (selectedFile === null) return;
             if (mesh === null) return;
 
@@ -628,7 +628,7 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.displayLoadingUI();
 
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = await bpmxConverter.convert(mesh);
+            const arrayBuffer = bpmxConverter.convert(mesh);
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

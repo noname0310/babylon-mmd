@@ -133,7 +133,7 @@ class MmdTextureData {
             "data:" + textureName,
             scene,
             undefined,
-            undefined,
+            true,
             undefined,
             () => {
                 if (this._texture === null) {

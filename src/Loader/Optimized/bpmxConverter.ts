@@ -623,7 +623,10 @@ export class BpmxConverter implements ILogger {
             }
         }
 
-        const texturesToSerialize: Texture[] = [];
+        const texturesToSerialize: {
+            texture: Texture
+            buffer: Uint8Array
+        }[] = [];
         const textureNameMap = containsSerializationData
             ? mmdModelMetadata.textureNameMap
             : null;
@@ -657,13 +660,26 @@ export class BpmxConverter implements ILogger {
                 }
             }
             for (const texture of textureSet) {
+                let buffer: Nullable<Uint8Array> = null;
+
                 const textureBuffer = (texture as Texture)._buffer as typeof Texture.prototype._buffer | undefined;
+                // todo: add invertY option
+                // todo: add single material multi mesh support
                 if (textureBuffer instanceof ArrayBuffer) {
-                    texturesToSerialize.push(texture as Texture);
+                    buffer = new Uint8Array(textureBuffer);
+                } else if ((textureBuffer as Uint8Array).buffer instanceof ArrayBuffer) {
+                    buffer = new Uint8Array((textureBuffer as Uint8Array).buffer, (textureBuffer as Uint8Array).byteOffset, (textureBuffer as Uint8Array).byteLength);
                 } else if (textureBuffer === undefined || textureBuffer === null) {
                     this.warn(`texture ${texture.name} has no texture buffer. make sure load model with materialBuilder.deleteTextureBufferAfterLoad = false`);
                 } else {
-                    this.warn(`texture ${texture.name} has unsupported type of texture buffer. only ArrayBuffer is supported`);
+                    this.warn(`texture ${texture.name} has unsupported type of texture buffer. only ArrayBuffer and TypedArray is supported`);
+                }
+
+                if (buffer !== null) {
+                    texturesToSerialize.push({
+                        texture: texture as Texture,
+                        buffer
+                    });
                 }
             }
         }
@@ -919,18 +935,17 @@ export class BpmxConverter implements ILogger {
 
             dataLength += 4; // textureCount
             for (let i = 0; i < texturesToSerialize.length; ++i) {
-                const texture = texturesToSerialize[i] as Texture;
-                const textureBuffer = texture._buffer as ArrayBuffer;
+                const { texture, buffer } = texturesToSerialize[i];
                 let textureName = textureNameMap !== null
-                    ? textureNameMap.get(texturesToSerialize[i])
-                    : texturesToSerialize[i].name;
+                    ? textureNameMap.get(texture)
+                    : texture.name;
                 if (textureName === undefined) {
                     this.warn(`texture ${texture.name} has no name in textureNameMap. falling back to converted string by loader`);
-                    textureName = texturesToSerialize[i].name;
+                    textureName = texture.name;
                 }
                 dataLength += 4 + encoder.encode(textureName).length; // textureName
                 dataLength += 4; // textureByteLength
-                dataLength += textureBuffer.byteLength; // textureData
+                dataLength += buffer.byteLength; // textureData
             }
 
             for (let i = 0; i < meshesToSerialize.length; ++i) { // material count must be equal to mesh count
@@ -1317,13 +1332,13 @@ export class BpmxConverter implements ILogger {
 
         serializer.setUint32(texturesToSerialize.length); // textureCount
         for (let i = 0; i < texturesToSerialize.length; ++i) {
-            const textureBuffer = texturesToSerialize[i]._buffer as ArrayBuffer;
+            const { texture, buffer } = texturesToSerialize[i];
             const textureName = textureNameMap !== null
-                ? (textureNameMap.get(texturesToSerialize[i]) ?? texturesToSerialize[i].name)
-                : texturesToSerialize[i].name;
+                ? (textureNameMap.get(texture) ?? texture.name)
+                : texture.name;
             serializer.setString(textureName); // textureName
-            serializer.setUint32(textureBuffer.byteLength); // textureByteLength
-            serializer.setUint8Array(new Uint8Array(textureBuffer)); // textureData
+            serializer.setUint32(buffer.byteLength); // textureByteLength
+            serializer.setUint8Array(buffer); // textureData
         }
 
         for (let i = 0; i < meshesToSerialize.length; ++i) {
@@ -1362,9 +1377,10 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32(material?.outlineWidth ?? 0); // edgeSize
 
             const diffuseTexture = material?.diffuseTexture ?? material?.albedoTexture;
-            serializer.setInt32(diffuseTexture ? texturesToSerialize.indexOf(diffuseTexture as Texture) : -1); // textureIndex
+            serializer.setInt32(diffuseTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === diffuseTexture) : -1); // textureIndex
 
-            serializer.setInt32(material?.sphereTexture ? texturesToSerialize.indexOf(material.sphereTexture as Texture) : -1); // sphereTextureIndex
+            const sphereTexture = material?.sphereTexture;
+            serializer.setInt32(sphereTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === sphereTexture) : -1); // sphereTextureIndex
             serializer.setUint8(material?.sphereTextureBlendMode ?? 0); // sphereTextureMode
 
             const isSharedToonTexture = material?.toonTexture &&
@@ -1373,7 +1389,8 @@ export class BpmxConverter implements ILogger {
                 !isNaN(Number(material.toonTexture.name.substring(25)));
             serializer.setUint8(isSharedToonTexture ? 1 : 0); // isSharedToontexture
 
-            serializer.setInt32(material?.toonTexture ? texturesToSerialize.indexOf(material.toonTexture as Texture) : -1); // toonTextureIndex
+            const toonTexture = material?.toonTexture;
+            serializer.setInt32(toonTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === toonTexture) : -1); // toonTextureIndex
             serializer.setString(materialMetadata?.comment ?? ""); // comment
         }
 
