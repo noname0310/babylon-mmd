@@ -13,6 +13,7 @@
  * meshCount: uint32
  * {
  *  meshName: uint32, uint8[] - length, string
+ *  materialIndex: int32
  *  vertexCount: uint32
  *  positions: float32[vertexCount * 3]
  *  normals: float32[vertexCount * 3]
@@ -41,13 +42,33 @@
  *  }
  * }[meshCount]
  *
+ * imageCount: uint32
+ * images: {
+ *  relativePath: uint32, uint8[] - length, string
+ *  flag: uint8 // 0x01: hasMimeType
+ *  { // if hasMimeType
+ *   mimeType: uint32, uint8[] - length, string
+ *  }
+ *  byteLength: uint32
+ *  arrayBuffer: uint8[texturesCount]
+ * }[imageCount]
+ *
+ * samplerCount: uint32
+ * samplers: {
+ *  magFilter: uint16
+ *  minFilter: uint16
+ *  wrapS: uint16
+ *  wrapT: uint16
+ * }[samplerCount]
+ *
  * textureCount: uint32
  * textures: {
- *  uint32, uint8[] - length, string
- *  uint32 - byteLength
- *  uint8[texturesCount] - arrayBuffer
+ *  flag: uint8 // 0x01: invertY
+ *  imageIndex: int32
+ *  samplerIndex: int32
  * }[textureCount]
  *
+ * materialCount: uint32
  * {
  *  materialName: uint32, uint8[] - length, string
  *  englishMaterialName: uint32, uint8[] - length, string
@@ -65,7 +86,7 @@
  *  isSharedToontexture: uint8
  *  toonTextureIndex: int32
  *  comment: uint32, uint8[] - length, string
- * }[meshCount]
+ * }[materialCount]
  *
  * { // if hasBone
  *  boneCount: uint32
