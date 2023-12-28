@@ -150,9 +150,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        mmdMesh.rotationQuaternion = new Vector3(0, Math.PI, 0).toQuaternion();
         mmdMesh.scaling.scaleInPlace(14.3);
-        mmdMesh.scaling.x *= -1;
+        mmdMesh.scaling.z *= -1;
 
         for (const mesh of mmdMesh.metadata.meshes) {
             shadowGenerator.addShadowCaster(mesh);
