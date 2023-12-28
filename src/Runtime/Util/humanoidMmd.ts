@@ -806,7 +806,7 @@ export class HumanoidMmd {
     public createMmdModelFromHumanoid<T extends IMmdModel>(
         mmdRuntime: IMmdRuntime<T>,
         humanoidMesh: Mesh,
-        meshes: Mesh[],
+        meshes: readonly Mesh[],
         options: CreateMmdModelFromHumanoidOptions = {}
     ): T {
         const {

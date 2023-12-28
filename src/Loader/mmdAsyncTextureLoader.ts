@@ -1,4 +1,5 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import type { ITextureCreationOptions } from "@babylonjs/core/Materials/Textures/texture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import { TimingTools } from "@babylonjs/core/Misc/timingTools";
@@ -7,6 +8,36 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import { SharedToonTextures } from "./sharedToonTextures";
 import { pathNormalize } from "./Util/pathNormalize";
+
+/**
+ * MMD texture load options
+ */
+export interface IMmdTextureLoadOptions {
+    /**
+     * Defines if the texture will require mip maps or not (default: false)
+     */
+    noMipmap?: boolean;
+
+    /**
+     * Defines if the texture needs to be inverted on the y axis during loading (default: true)
+     */
+    invertY?: boolean;
+
+    /**
+     * Defines the sampling mode we want for the texture while fetching from it (Texture.NEAREST_SAMPLINGMODE...) (default: Texture.TRILINEAR_SAMPLINGMODE)
+     */
+    samplingMode?: number;
+
+    /**
+     * Defines if the buffer we are loading the texture from should be deleted after load (default: false)
+     */
+    deleteBuffer?: boolean;
+
+    /**
+     * Defines an optional mime type information (default: undefined)
+     */
+    mimeType?: string;
+}
 
 class TextureLoadingModel {
     public readonly uniqueId: number;
@@ -38,7 +69,7 @@ class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
-    private readonly _deleteBuffer: boolean;
+    private readonly _options: IMmdTextureLoadOptions;
     private readonly _onLoad: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
 
@@ -50,14 +81,14 @@ class MmdTextureData {
         assetContainer: Nullable<AssetContainer>,
         urlOrTextureName: string,
         useLazyLoadWithBuffer: boolean,
-        deleteBuffer: boolean,
+        options: IMmdTextureLoadOptions,
         onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ) {
         this.cacheKey = cacheKey;
         this._scene = scene;
         this._assetContainer = assetContainer;
-        this._deleteBuffer = deleteBuffer;
+        this._options = options;
         this._onLoad = onLoad;
         this._onError = onError;
 
@@ -72,7 +103,7 @@ class MmdTextureData {
                         assetContainer,
                         cacheKey,
                         data as ArrayBuffer,
-                        deleteBuffer,
+                        options,
                         onLoad,
                         (message, exception) => {
                             onError?.(message, exception);
@@ -95,7 +126,7 @@ class MmdTextureData {
             this._assetContainer,
             this.cacheKey,
             arrayBuffer,
-            this._deleteBuffer,
+            this._options,
             this._onLoad,
             (message, exception) => {
                 this._onError?.(message, exception);
@@ -124,19 +155,17 @@ class MmdTextureData {
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         textureName: string,
-        arrayBuffer: ArrayBuffer,
-        deleteBuffer: boolean,
+        buffer: ArrayBuffer,
+        options: IMmdTextureLoadOptions,
         onLoad: Nullable<() => void>,
         onError?: Nullable<(message?: string, exception?: any) => void>
     ): void {
         scene._blockEntityCollection = !!assetContainer;
-        const texture = this._texture = new Texture(
-            "data:" + textureName,
-            scene,
-            undefined,
-            undefined,
-            undefined,
-            () => {
+        const textureCreationOptions: ITextureCreationOptions = {
+            noMipmap: options.noMipmap,
+            invertY: options.invertY,
+            samplingMode: options.samplingMode,
+            onLoad: () => {
                 if (this._texture === null) {
                     if (onLoad !== null) TimingTools.SetImmediate(onLoad);
                 } else {
@@ -144,8 +173,14 @@ class MmdTextureData {
                 }
             },
             onError,
-            arrayBuffer,
-            deleteBuffer
+            buffer,
+            deleteBuffer: options.deleteBuffer,
+            mimeType: options.mimeType
+        };
+        const texture = this._texture = new Texture(
+            "data:" + textureName,
+            scene,
+            textureCreationOptions
         );
         texture._parentContainer = assetContainer;
         scene._blockEntityCollection = false;
@@ -285,7 +320,7 @@ export class MmdAsyncTextureLoader {
         sharedTextureIndex: Nullable<number>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        deleteBuffer: boolean
+        options: IMmdTextureLoadOptions
     ): Promise<Nullable<Texture>> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
@@ -306,7 +341,7 @@ export class MmdAsyncTextureLoader {
                 assetContainer,
                 blobOrUrl,
                 arrayBufferOrBlob !== null,
-                deleteBuffer,
+                options,
                 () => {
                     this._handleTextureOnDispose(textureData!);
 
@@ -361,7 +396,7 @@ export class MmdAsyncTextureLoader {
      * @param relativeTexturePathOrIndex Relative texture path or shared toon texture index
      * @param scene Scene
      * @param assetContainer Asset container
-     * @param deleteBuffer Whether to delete the buffer after loading the texture
+     * @param options Texture load options
      * @returns Texture
      */
     public async loadTextureAsync(
@@ -370,7 +405,7 @@ export class MmdAsyncTextureLoader {
         relativeTexturePathOrIndex: string | number,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        deleteBuffer: boolean
+        options: IMmdTextureLoadOptions
     ): Promise<Nullable<Texture>> {
         const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
 
@@ -389,7 +424,7 @@ export class MmdAsyncTextureLoader {
             isSharedToonTexture ? relativeTexturePathOrIndex : null,
             scene,
             assetContainer,
-            deleteBuffer
+            options
         );
     }
 
@@ -405,7 +440,7 @@ export class MmdAsyncTextureLoader {
      * @param arrayBufferOrBlob Texture data encoded in PNG/JPG/BMP
      * @param scene Scene
      * @param assetContainer Asset container
-     * @param deleteBuffer Whether to delete the buffer after loading the texture
+     * @param options Texture load options
      * @param applyPathNormalization Whether to apply path normalization to the texture name (default: true)
      * @returns Texture
      */
@@ -415,7 +450,7 @@ export class MmdAsyncTextureLoader {
         arrayBufferOrBlob: ArrayBuffer | Blob,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        deleteBuffer: boolean,
+        options: IMmdTextureLoadOptions,
         applyPathNormalization = true
     ): Promise<Nullable<Texture>> {
         if (applyPathNormalization) {
@@ -429,7 +464,7 @@ export class MmdAsyncTextureLoader {
             null,
             scene,
             assetContainer,
-            deleteBuffer
+            options
         );
     }
 }

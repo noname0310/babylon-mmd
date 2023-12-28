@@ -8,7 +8,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder, MaterialInfo } from "./IMmdMaterialBuilder";
+import type { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
@@ -68,10 +68,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public buildMaterials(
         uniqueId: number,
         materialsInfo: readonly MaterialInfo[],
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
         rootUrl: string,
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
+        texturesInfo: readonly TextureInfo[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         meshes: Mesh[],
@@ -131,7 +132,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    texturePathTable,
+                    imagePathTable,
+                    (texturesInfo[materialInfo.textureIndex] ?? null) as Nullable<TextureInfo>,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -149,7 +151,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    texturePathTable,
+                    imagePathTable,
+                    (texturesInfo[materialInfo.sphereTextureIndex] ?? null) as Nullable<TextureInfo>,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -165,7 +168,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     uniqueId,
                     material,
                     materialInfo,
-                    texturePathTable,
+                    imagePathTable,
+                    (texturesInfo[materialInfo.toonTextureIndex] ?? null) as Nullable<TextureInfo>,
                     scene,
                     assetContainer,
                     rootUrl,
@@ -193,7 +197,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         material,
                         i, // materialIndex
                         materialInfo,
-                        texturePathTable,
+                        imagePathTable,
+                        texturesInfo,
                         scene,
                         rootUrl
                     );
@@ -211,7 +216,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     textureAlphaChecker?.dispose();
                     // Restore the blocking of material dirty.
                     scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
-                    if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, texturePathTable, textureNameMap);
+                    if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, imagePathTable, texturesInfo, textureNameMap);
                     onTextureLoadComplete?.();
                 });
             });
@@ -220,7 +225,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 textureAlphaChecker?.dispose();
                 // Restore the blocking of material dirty.
                 scene._forceBlockMaterialDirtyMechanism(oldBlockMaterialDirtyMechanism);
-                if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, texturePathTable, textureNameMap);
+                if (textureNameMap !== null) this._buildTextureNameMap(materialsInfo, materials, imagePathTable, texturesInfo, textureNameMap);
                 onTextureLoadComplete?.();
             });
         }
@@ -231,14 +236,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     private _buildTextureNameMap(
         materialsInfo: readonly MaterialInfo[],
         materials: MmdStandardMaterial[],
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
+        texturesInfo: readonly TextureInfo[],
         textureNameMap: Map<BaseTexture, string>
     ): void {
         for (let i = 0; i < materialsInfo.length; ++i) {
             const materialInfo = materialsInfo[i];
             const material = materials[i];
 
-            const diffuseTexturePath = texturePathTable[materialInfo.textureIndex];
+            const diffuseTexturePath = imagePathTable[texturesInfo[materialInfo.textureIndex]?.imagePathIndex];
             if (diffuseTexturePath !== undefined) {
                 const diffuseTexture = material.diffuseTexture;
                 if (diffuseTexture !== null) {
@@ -246,7 +252,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
             }
 
-            const sphereTexturePath = texturePathTable[materialInfo.sphereTextureIndex];
+            const sphereTexturePath = imagePathTable[texturesInfo[materialInfo.sphereTextureIndex]?.imagePathIndex];
             if (sphereTexturePath !== undefined) {
                 const sphereTexture = material.sphereTexture;
                 if (sphereTexture !== null) {
@@ -254,7 +260,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
             }
 
-            const toonTexturePath = texturePathTable[materialInfo.toonTextureIndex];
+            const toonTexturePath = imagePathTable[texturesInfo[materialInfo.toonTextureIndex]?.imagePathIndex];
             if (toonTexturePath !== undefined) {
                 const toonTexture = material.toonTexture;
                 if (toonTexture !== null) {
@@ -312,7 +318,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param uniqueId Model unique id
      * @param material Material
      * @param materialInfo Material information
-     * @param texturePathTable Texture path table
+     * @param imagePathTable Image path table
+     * @param textureInfo Texture information
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
@@ -327,7 +334,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
+        textureInfo: Nullable<TextureInfo>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
@@ -340,7 +348,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            texturePathTable,
+            imagePathTable,
+            textureInfo,
             scene,
             assetContainer,
             rootUrl,
@@ -352,7 +361,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         ): Promise<void> => {
             material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
 
-            const diffuseTexturePath = texturePathTable[materialInfo.textureIndex];
+            const diffuseTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
             if (diffuseTexturePath !== undefined) {
                 const diffuseTextureFileFullPath = referenceFileResolver.createFullPath(diffuseTexturePath);
 
@@ -365,7 +374,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         file instanceof File ? file : file.data,
                         scene,
                         assetContainer,
-                        this.deleteTextureBufferAfterLoad
+                        {
+                            ...textureInfo,
+                            deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            mimeType: file instanceof File ? file.type : file.mimeType
+                        }
                     );
                 } else {
                     texture = await this._textureLoader.loadTextureAsync(
@@ -374,7 +387,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         diffuseTexturePath,
                         scene,
                         assetContainer,
-                        this.deleteTextureBufferAfterLoad
+                        {
+                            ...textureInfo,
+                            deleteBuffer: this.deleteTextureBufferAfterLoad
+                        }
                     );
                 }
 
@@ -426,7 +442,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param uniqueId Model unique id
      * @param material Material
      * @param materialInfo Material information
-     * @param texturePathTable Texture path table
+     * @param imagePathTable Texture path table
+     * @param textureInfo Texture information
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
@@ -438,7 +455,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
+        textureInfo: Nullable<TextureInfo>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
@@ -449,7 +467,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            texturePathTable,
+            imagePathTable,
+            textureInfo,
             scene,
             assetContainer,
             rootUrl,
@@ -458,7 +477,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             onTextureLoadComplete
         ): Promise<void> => {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
-                const sphereTexturePath = texturePathTable[materialInfo.sphereTextureIndex];
+                const sphereTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
                 if (sphereTexturePath !== undefined) {
                     const sphereTextureFileFullPath = referenceFileResolver.createFullPath(sphereTexturePath);
 
@@ -471,7 +490,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             file instanceof File ? file : file.data,
                             scene,
                             assetContainer,
-                            this.deleteTextureBufferAfterLoad
+                            {
+                                ...textureInfo,
+                                deleteBuffer: this.deleteTextureBufferAfterLoad,
+                                mimeType: file instanceof File ? file.type : file.mimeType
+                            }
                         ));
                     } else {
                         sphereTexture = (await this._textureLoader.loadTextureAsync(
@@ -480,7 +503,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             sphereTexturePath,
                             scene,
                             assetContainer,
-                            this.deleteTextureBufferAfterLoad
+                            {
+                                ...textureInfo,
+                                deleteBuffer: this.deleteTextureBufferAfterLoad
+                            }
                         ));
                     }
 
@@ -507,7 +533,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param uniqueId Model unique id
      * @param material Material
      * @param materialInfo Material information
-     * @param texturePathTable Texture path table
+     * @param imagePathTable Image path table
+     * @param textureInfo Texture information
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
@@ -519,7 +546,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         uniqueId: number,
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
+        textureInfo: Nullable<TextureInfo>,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
@@ -530,7 +558,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             uniqueId,
             material,
             materialInfo,
-            texturePathTable,
+            imagePathTable,
+            textureInfo,
             scene,
             assetContainer,
             rootUrl,
@@ -544,7 +573,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     ? undefined
                     : materialInfo.toonTextureIndex;
             } else {
-                toonTexturePath = texturePathTable[materialInfo.toonTextureIndex];
+                toonTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
             }
             if (toonTexturePath !== undefined) {
                 const toonTextureFileFullPath = referenceFileResolver.createFullPath(toonTexturePath.toString());
@@ -558,7 +587,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         file instanceof File ? file : file.data,
                         scene,
                         assetContainer,
-                        this.deleteTextureBufferAfterLoad
+                        {
+                            ...textureInfo,
+                            deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            mimeType: file instanceof File ? file.type : file.mimeType
+                        }
                     ));
                 } else {
                     toonTexture = (await this._textureLoader.loadTextureAsync(
@@ -567,7 +600,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         toonTexturePath,
                         scene,
                         assetContainer,
-                        this.deleteTextureBufferAfterLoad
+                        {
+                            ...textureInfo,
+                            deleteBuffer: this.deleteTextureBufferAfterLoad
+                        }
                     ));
                 }
 
@@ -619,12 +655,20 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * Called after building a single material
      *
      * This method is called after the material and textures have been loaded
+     * @param material Material
+     * @param materialIndex Material index
+     * @param materialInfo Material information
+     * @param imagePathTable Image path table
+     * @param texturesInfo Texture information
+     * @param scene Scene
+     * @param rootUrl Root url
      */
     public afterBuildSingleMaterial: (
         material: MmdStandardMaterial,
         materialIndex: number,
         materialInfo: MaterialInfo,
-        texturePathTable: readonly string[],
+        imagePathTable: readonly string[],
+        texturesInfo: readonly TextureInfo[],
         scene: Scene,
         rootUrl: string
     ) => void = (): void => { /* do nothing */ };

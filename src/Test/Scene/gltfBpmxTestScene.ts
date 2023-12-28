@@ -6,34 +6,45 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
+import type { ILogger } from "@/Loader/Parser/ILogger";
+import type { ReferenceFileResolver } from "@/Loader/referenceFileResolver";
+import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
+import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
+import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
+import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
@@ -43,6 +54,38 @@ export class SceneBuilder implements ISceneBuilder {
 
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        const originalLoadToonTexture = materialBuilder.loadToonTexture;
+        materialBuilder.loadToonTexture = (
+            uniqueId: number,
+            material: MmdStandardMaterial,
+            materialInfo: MaterialInfo,
+            imagePathTable: readonly string[],
+            textureInfo: Nullable<TextureInfo>,
+            scene: Scene,
+            assetContainer: Nullable<AssetContainer>,
+            rootUrl: string,
+            referenceFileResolver: ReferenceFileResolver,
+            logger: ILogger,
+            onTextureLoadComplete?: () => void
+        ): void => {
+            if (!materialInfo.isSharedToonTexture && materialInfo.toonTextureIndex === -1) {
+                (materialInfo as any).isSharedToonTexture = true;
+                (materialInfo as any).toonTextureIndex = 1;
+            }
+            originalLoadToonTexture(
+                uniqueId,
+                material,
+                materialInfo,
+                imagePathTable,
+                textureInfo,
+                scene,
+                assetContainer,
+                rootUrl,
+                referenceFileResolver,
+                logger,
+                onTextureLoadComplete
+            );
+        };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -52,42 +95,42 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.maxZ = 5000;
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { hemisphericLight, directionalLight, shadowGenerator } = createLightComponents(scene);
-        hemisphericLight.intensity = 0.3;
-        directionalLight.intensity = 0.7;
+        const { directionalLight, shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime();
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
-        // mmdRuntime.playAnimation();
+        mmdRuntime.playAnimation();
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/cinderella/cinderella.mp3";
+        audioPlayer.onDurationChangedObservable.add(() => audioPlayer.mute());
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
         const [
-            _mmdAnimation,
-            mmdModel
+            mmdAnimation,
+            mmdMesh
         ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
-                return SceneLoader.ImportMeshAsync(
+            ["model", async(updateProgress): Promise<MmdMesh> => {
+                const result = await SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/model/",
                     "Moe.bpmx",
                     scene,
                     updateProgress
-                ).then(result => result.meshes[0] as Mesh);
+                );
+                return result.meshes[0] as MmdMesh;
             }],
             ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
                 pmxLoader.boundingBoxMargin = 0;
@@ -103,10 +146,107 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        shadowGenerator;
+        mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
-        mmdModel.rotationQuaternion = new Vector3(0, Math.PI, 0).toQuaternion();
-        mmdModel.scaling.scaleInPlace(14.3);
+        mmdRuntime.setCamera(mmdCamera);
+        mmdCamera.addAnimation(mmdAnimation);
+        mmdCamera.setAnimation("motion");
+
+        mmdMesh.rotationQuaternion = new Vector3(0, Math.PI, 0).toQuaternion();
+        mmdMesh.scaling.scaleInPlace(14.3);
+
+        for (const mesh of mmdMesh.metadata.meshes) {
+            shadowGenerator.addShadowCaster(mesh);
+            mesh.receiveShadows = true;
+        }
+        {
+            const bones = mmdMesh.metadata.skeleton!.bones;
+            const leftArm = bones.find(bone => bone.name === "Left arm")!;
+            const rightArm = bones.find(bone => bone.name === "Right arm")!;
+            const degToRad = Math.PI / 180;
+            leftArm.rotationQuaternion = Quaternion.FromEulerAngles(0, 0, -35 * degToRad);
+            rightArm.rotationQuaternion = Quaternion.FromEulerAngles(0, 0, 35 * degToRad);
+        }
+        const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(
+            mmdRuntime,
+            mmdMesh,
+            mmdMesh.metadata.meshes,
+            {
+                boneMap: new MmdHumanoidMapper({
+                    hips: "Hips",
+                    spine: "Spine",
+                    chest: "Chest",
+                    neck: "Neck",
+                    head: "Head",
+                    leftShoulder: "Left shoulder",
+                    leftUpperArm: "Left arm",
+                    leftLowerArm: "Left elbow",
+                    leftHand: "Left wrist",
+                    rightShoulder: "Right shoulder",
+                    rightUpperArm: "Right arm",
+                    rightLowerArm: "Right elbow",
+                    rightHand: "Right wrist",
+                    leftUpperLeg: "Left leg",
+                    leftLowerLeg: "Left knee",
+                    leftFoot: "Left ankle",
+                    leftToes: "Left Toe",
+                    rightUpperLeg: "Right leg",
+                    rightLowerLeg: "Right knee",
+                    rightFoot: "Right ankle",
+                    rightToes: "Right Toe",
+
+                    leftEye: "Eye_L",
+                    rightEye: "Eye_R",
+
+                    leftThumbProximal: "Thumb_Proximal_L",
+                    leftThumbIntermediate: "Thumb_Intermediate_L",
+                    leftThumbDistal: "Thumb_Distal_L",
+                    leftIndexProximal: "Index_Proximal_L",
+                    leftIndexIntermediate: "Index_Intermediate_L",
+                    leftIndexDistal: "Index_Distal_L",
+                    leftMiddleProximal: "Middle_Proximal_L",
+                    leftMiddleIntermediate: "Middle_Intermediate_L",
+                    leftMiddleDistal: "Middle_Distal_L",
+                    leftRingProximal: "Ring_Proximal_L",
+                    leftRingIntermediate: "Ring_Intermediate_L",
+                    leftRingDistal: "Ring_Distal_L",
+                    leftLittleProximal: "Little_Proximal_L",
+                    leftLittleIntermediate: "Little_Intermediate_L",
+                    leftLittleDistal: "Little_Distal_L",
+
+                    rightThumbProximal: "Thumb_Proximal_R",
+                    rightThumbIntermediate: "Thumb_Intermediate_R",
+                    rightThumbDistal: "Thumb_Distal_R",
+                    rightIndexProximal: "Index_Proximal_R",
+                    rightIndexIntermediate: "Index_Intermediate_R",
+                    rightIndexDistal: "Index_Distal_R",
+                    rightMiddleProximal: "Middle_Proximal_R",
+                    rightMiddleIntermediate: "Middle_Intermediate_R",
+                    rightMiddleDistal: "Middle_Distal_R",
+                    rightRingProximal: "Ring_Proximal_R",
+                    rightRingIntermediate: "Ring_Intermediate_R",
+                    rightRingDistal: "Ring_Distal_R",
+                    rightLittleProximal: "Little_Proximal_R",
+                    rightLittleIntermediate: "Little_Intermediate_R",
+                    rightLittleDistal: "Little_Distal_R"
+                }).boneMap,
+                transformOffset: mmdMesh
+            }
+        );
+        mmdModel.morph.setMorphWeight("口_真顔", 0.2);
+        mmdModel.addAnimation(mmdAnimation);
+        mmdModel.setAnimation("motion");
+
+        const translationMatrix = mmdMesh.getWorldMatrix().clone();
+        translationMatrix.removeRotationAndScaling();
+
+        attachToBone(scene, mmdModel, {
+            directionalLightPosition: directionalLight.position,
+            cameraTargetPosition: camera.target,
+            cameraTargetYpositionOffset: -3,
+            worldMatrix: translationMatrix
+        });
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene);//(scene));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",
@@ -169,6 +309,10 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
+        const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
+        mmdCameraAutoFocus.setTarget(mmdModel);
+        mmdCameraAutoFocus.setSkeletonWorldMatrix(translationMatrix);
+        mmdCameraAutoFocus.register(scene);
 
         Inspector.Show(scene, { });
 

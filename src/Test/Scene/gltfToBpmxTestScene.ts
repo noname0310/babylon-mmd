@@ -10,6 +10,7 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
@@ -66,12 +67,42 @@ export class SceneBuilder implements ISceneBuilder {
                     subMesh.setBoundingInfo(boundingInfo);
                 }
             }
-
-            if (mesh.material === null) continue;
             shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
-            mesh.alwaysSelectAsActiveMesh = true;
-            const material = mesh.material as PBRMaterial;
+        }
+
+        const materials = [...new Set(modelLoadResult.meshes.map(mesh => mesh.material).filter(material => material !== null))] as PBRMaterial[];
+        for (const material of materials) {
+            if (material.name === "Effect") {
+                const finalTexture = new Uint8Array((await material.emissiveTexture!.readPixels())!.buffer);
+                const alphaTexture = new Uint8Array((await material.albedoTexture!.readPixels())!.buffer);
+
+                for (let i = 3; i < finalTexture.length; i += 4) {
+                    finalTexture[i] = alphaTexture[i];
+                }
+                const canvas = document.createElement("canvas");
+                const size = material.emissiveTexture!.getSize();
+                canvas.width = size.width;
+                canvas.height = size.height;
+
+                const ctx = canvas.getContext("2d")!;
+                const idata = ctx.createImageData(size.width, size.height);
+                idata.data.set(finalTexture);
+                ctx.putImageData(idata, 0, 0);
+
+                const blob = await new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob!), "image/png"));
+                const arrayBuffer = await blob.arrayBuffer();
+
+                let texture: Nullable<Texture> = null;
+                await new Promise<void>(resolve => {
+                    texture = material.emissiveTexture = new Texture("data:Effect", scene, {
+                        invertY: false,
+                        onLoad: resolve,
+                        buffer: arrayBuffer
+                    });
+                });
+                texture!.name = "Effect";
+            }
             material.albedoColor = new Color3(1, 1, 1);
             material.reflectivityColor.set(0, 0, 0);
             material.emissiveColor.set(0, 0, 0);
@@ -82,7 +113,7 @@ export class SceneBuilder implements ISceneBuilder {
         const rootMesh = modelLoadResult.meshes[0];
         {
             const meshes = modelLoadResult.meshes.slice(1) as Mesh[];
-            const materials = meshes.map(mesh => mesh.material as Material);
+            const materials = [...new Set(meshes.map(mesh => mesh.material as Material))];
 
             const skeleton = modelLoadResult.skeletons[0];
             const bones: MmdModelMetadata.Bone[] = [];
@@ -169,7 +200,7 @@ export class SceneBuilder implements ISceneBuilder {
                     englishComment: "Moe"
                 },
                 bones: bones,
-                morphs: [],
+                morphs: morphs,
                 rigidBodies: [],
                 joints: [],
                 meshes: meshes,

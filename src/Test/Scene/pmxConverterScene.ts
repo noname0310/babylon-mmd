@@ -88,8 +88,7 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const pmdLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
         pmdLoader.loggingEnabled = true;
-        pmdLoader.buildSkeleton = false;
-        pmdLoader.buildMorph = false;
+        pmxLoader.preserveSerializationData = true;
         pmdLoader.materialBuilder = pmxLoader.materialBuilder;
 
         const scene = new Scene(engine);

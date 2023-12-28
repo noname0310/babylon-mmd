@@ -17,6 +17,11 @@ export type BpmxObject = Readonly<{
     geometries: readonly BpmxObject.Geometry[];
 
     /**
+     * Images of the model
+     */
+    images: readonly BpmxObject.Image[];
+
+    /**
      * Textures of the model
      */
     textures: readonly BpmxObject.Texture[];
@@ -96,6 +101,11 @@ export namespace BpmxObject {
          * Name of the geometry
          */
         name: string;
+
+        /**
+         * Material index of the geometry
+         */
+        materialIndex: number;
 
         /**
          * Vertex positions
@@ -245,9 +255,9 @@ export namespace BpmxObject {
     }
 
     /**
-     * Texture of the model
+     * Image data of the texture
      */
-    export type Texture = Readonly<{
+    export type Image = Readonly<{
         /**
          * Relative path of the texture e.g. "tex/texture.png"
          *
@@ -256,10 +266,68 @@ export namespace BpmxObject {
         relativePath: string;
 
         /**
-         * Texture datd encoded in PNG/JPG/BMP
+         * MIME type of the texture
+         *
+         * e.g. "image/png"
+         */
+        mimeType: string | undefined;
+
+        /**
+         * Texture data encoded in PNG/JPG/BMP
          */
         data: ArrayBuffer;
     }>;
+
+    export namespace Image {
+        /**
+         * Flag of the image
+         */
+        export enum Flag {
+            /**
+             * Has mime type
+             */
+            HasMimeType = 1 << 0
+        }
+    }
+
+    /**
+     * Texture of the model
+     */
+    export type Texture = Readonly<{
+        /**
+         * Flag of the texture
+         *
+         * @see BpmxObject.Texture.Flag
+         */
+        flag: number;
+
+        /**
+         * Image sampling mode
+         */
+        samplingMode: number;
+
+        /**
+         * Image index
+         */
+        imageIndex: number;
+    }>;
+
+    export namespace Texture {
+        /**
+         * Flag of the texture
+         */
+        export enum Flag {
+            /**
+             * Disable mipmap
+             */
+            NoMipmap = 1 << 0,
+
+            /**
+             * Invert Y axis of the texture
+             */
+            InvertY = 1 << 1
+        }
+    }
 
     /**
      * Material information of the model

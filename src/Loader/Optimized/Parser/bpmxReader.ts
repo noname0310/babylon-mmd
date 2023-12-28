@@ -29,8 +29,9 @@ export class BpmxReader {
         const header = this._ParseHeader(dataDeserializer);
         const isSkinnedMesh = dataDeserializer.getUint8() === 1;
         const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
-        const textures = await this._ParseTexturesAsync(dataDeserializer);
-        const materials = this._ParseMaterials(dataDeserializer, geometries.length);
+        const images = await this._ParseImagesAsync(dataDeserializer);
+        const textures = this._ParseTexturesAsync(dataDeserializer);
+        const materials = this._ParseMaterials(dataDeserializer);
         const bones = isSkinnedMesh ? this._ParseBones(dataDeserializer) : [];
         const morphs = this._ParseMorphs(dataDeserializer);
         const displayFrames = this._ParseDisplayFrames(dataDeserializer);
@@ -44,6 +45,7 @@ export class BpmxReader {
         const bpmxObject: BpmxObject = {
             header,
             geometries,
+            images,
             textures,
             materials,
             bones,
@@ -101,6 +103,7 @@ export class BpmxReader {
         const meshCount = dataDeserializer.getUint32();
         for (let i = 0; i < meshCount; ++i) {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const materialIndex = dataDeserializer.getInt32();
             const vertexCount = dataDeserializer.getUint32();
 
             const positions = new Float32Array(vertexCount * 3);
@@ -206,6 +209,7 @@ export class BpmxReader {
 
             const geometry: BpmxObject.Geometry = {
                 name,
+                materialIndex,
                 positions,
                 normals,
                 uvs,
@@ -219,20 +223,28 @@ export class BpmxReader {
         return geometries;
     }
 
-    private static async _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Texture[]> {
-        const textureCount = dataDeserializer.getUint32();
+    private static async _ParseImagesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Image[]> {
+        const imageCount = dataDeserializer.getUint32();
 
         let time = performance.now();
 
-        const textures: BpmxObject.Texture[] = [];
-        for (let i = 0; i < textureCount; ++i) {
+        const images: BpmxObject.Image[] = [];
+        for (let i = 0; i < imageCount; ++i) {
             const relativePath = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+
+            const flag = dataDeserializer.getUint8();
+
+            const mimeType = ((flag & BpmxObject.Image.Flag.HasMimeType) !== 0)
+                ? dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false)
+                : undefined;
+
             const byteLength = dataDeserializer.getUint32();
             const data = new ArrayBuffer(byteLength);
             dataDeserializer.getUint8Array(new Uint8Array(data));
 
-            textures.push({
+            images.push({
                 relativePath,
+                mimeType,
                 data
             });
 
@@ -241,10 +253,30 @@ export class BpmxReader {
                 time = performance.now();
             }
         }
+        return images;
+    }
+
+    private static _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): BpmxObject.Texture[] {
+        const textureCount = dataDeserializer.getUint32();
+
+        const textures: BpmxObject.Texture[] = [];
+        for (let i = 0; i < textureCount; ++i) {
+            const flag = dataDeserializer.getUint8();
+            const samplingMode = dataDeserializer.getUint8();
+            const imageIndex = dataDeserializer.getInt32();
+
+            textures.push({
+                flag,
+                samplingMode,
+                imageIndex
+            });
+        }
         return textures;
     }
 
-    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer, materialCount: number): BpmxObject.Material[] {
+    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer): BpmxObject.Material[] {
+        const materialCount = dataDeserializer.getUint32();
+
         const materials: BpmxObject.Material[] = [];
         for (let i = 0; i < materialCount; ++i) {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);

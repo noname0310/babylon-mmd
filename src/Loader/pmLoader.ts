@@ -15,6 +15,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdBufferKind } from "./mmdBufferKind";
 import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
@@ -454,14 +455,26 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         progress: Progress
     ): Promise<BuildMaterialResult> {
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
+
+        const texturesInfo: TextureInfo[] = new Array(modelObject.textures.length);
+        for (let i = 0; i < texturesInfo.length; ++i) {
+            texturesInfo[i] = {
+                noMipmap: false,
+                invertY: true,
+                samplingMode: undefined,
+                imagePathIndex: i
+            };
+        }
+
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
-                modelObject.textures, // texturePathTable
+                modelObject.textures, // imagePathTable
                 rootUrl, // rootUrl
                 "file:" + state.pmFileId + "_", // fileRootId
                 state.referenceFiles, // referenceFiles
+                texturesInfo, // texturesInfo
                 scene, // scene
                 assetContainer, // assetContainer
                 meshes, // meshes

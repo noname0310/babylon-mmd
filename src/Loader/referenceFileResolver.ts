@@ -4,7 +4,23 @@ import { pathNormalize } from "./Util/pathNormalize";
  * This is a wrapper to treat the arraybuffer as a file
  */
 export interface IArrayBufferFile {
+    /**
+     * Relative path of the texture e.g. "tex/texture.png"
+     *
+     * Used as a key to load the texture not as a path
+     */
     readonly relativePath: string;
+
+    /**
+     * MIME type of the texture
+     *
+     * e.g. "image/png"
+     */
+    readonly mimeType: string | undefined;
+
+    /**
+     * Texture data encoded in PNG/JPG/BMP
+     */
     readonly data: ArrayBuffer;
 }
 

@@ -15,6 +15,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
 import type { BuildMaterialResult, MmdModelBuildGeometryResult } from "../mmdModelLoader";
 import { MmdModelLoader, type MmdModelLoadState } from "../mmdModelLoader";
@@ -24,7 +25,7 @@ import type { ILogger } from "../Parser/ILogger";
 import { PmxObject } from "../Parser/pmxObject";
 import type { Progress, ProgressTask } from "../progress";
 import { SdefMesh } from "../sdefMesh";
-import type { BpmxObject } from "./Parser/bpmxObject";
+import { BpmxObject } from "./Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 
 interface BpmxLoadState extends MmdModelLoadState { }
@@ -279,19 +280,31 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     ): Promise<BuildMaterialResult> {
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
-        const texturePathTable: string[] = new Array(modelObject.textures.length);
+        const imagePathTable: string[] = new Array(modelObject.images.length);
+        for (let i = 0; i < modelObject.images.length; ++i) {
+            imagePathTable[i] = modelObject.images[i].relativePath;
+        }
+
+        const texturesInfo: TextureInfo[] = new Array(modelObject.textures.length);
         for (let i = 0; i < modelObject.textures.length; ++i) {
-            texturePathTable[i] = modelObject.textures[i].relativePath;
+            const textureInfo = modelObject.textures[i];
+            texturesInfo[i] = {
+                noMipmap: (textureInfo.flag & BpmxObject.Texture.Flag.NoMipmap) !== 0,
+                invertY: (textureInfo.flag & BpmxObject.Texture.Flag.InvertY) !== 0,
+                samplingMode: textureInfo.samplingMode,
+                imagePathIndex: textureInfo.imageIndex
+            };
         }
 
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
                 modelObject.materials, // materialsInfo
-                texturePathTable, // texturePathTable
+                imagePathTable, // imagePathTable
                 rootUrl, // rootUrl
                 "file:" + state.pmFileId + "_", // fileRootId
-                modelObject.textures, // referenceFiles
+                modelObject.images, // referenceFiles
+                texturesInfo, // texturesInfo
                 scene, // scene
                 assetContainer, // assetContainer
                 meshes, // meshes
@@ -309,7 +322,15 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
 
-        for (let i = 0; i < materials.length; ++i) meshes[i].material = materials[i];
+        const geometriesInfo = modelObject.geometries;
+        for (let i = 0; i < meshes.length; ++i) {
+            const mesh = meshes[i];
+            const materialIndex = geometriesInfo[i].materialIndex;
+            if (materialIndex === -1) continue;
+
+            const material = materials[materialIndex];
+            mesh.material = material;
+        }
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
