@@ -19,7 +19,6 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
-import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
@@ -107,7 +106,6 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/cinderella/cinderella.mp3";
-        audioPlayer.onDurationChangedObservable.add(() => audioPlayer.mute());
         mmdRuntime.setAudioPlayer(audioPlayer);
 
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
@@ -154,11 +152,13 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdMesh.rotationQuaternion = new Vector3(0, Math.PI, 0).toQuaternion();
         mmdMesh.scaling.scaleInPlace(14.3);
+        mmdMesh.scaling.x *= -1;
 
         for (const mesh of mmdMesh.metadata.meshes) {
             shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
         }
+
         {
             const bones = mmdMesh.metadata.skeleton!.bones;
             const leftArm = bones.find(bone => bone.name === "Left arm")!;
@@ -167,6 +167,7 @@ export class SceneBuilder implements ISceneBuilder {
             leftArm.rotationQuaternion = Quaternion.FromEulerAngles(0, 0, -35 * degToRad);
             rightArm.rotationQuaternion = Quaternion.FromEulerAngles(0, 0, 35 * degToRad);
         }
+
         const mmdModel = new HumanoidMmd().createMmdModelFromHumanoid(
             mmdRuntime,
             mmdMesh,
@@ -313,8 +314,6 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.setSkeletonWorldMatrix(translationMatrix);
         mmdCameraAutoFocus.register(scene);
-
-        Inspector.Show(scene, { });
 
         return scene;
     }
