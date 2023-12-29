@@ -17,7 +17,7 @@ export interface IMmdModel {
      *
      * This can be a instance of `Skeleton`, or if you are using a humanoid model, it will be referencing a virtualized bone tree
      *
-     * So MmdModel.mesh.skeleton is not always equal to MmdModel.skeleton
+     * So MmdModel.metadata.skeleton is not always equal to MmdModel.skeleton
      */
     readonly skeleton: IMmdLinkedBoneContainer;
 

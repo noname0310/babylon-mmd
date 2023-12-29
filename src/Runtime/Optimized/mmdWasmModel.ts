@@ -42,7 +42,7 @@ export class MmdWasmModel implements IMmdModel {
      *
      * This can be a instance of `Skeleton`, or if you are using a humanoid model, it will be referencing a virtualized bone tree
      *
-     * So MmdWasmModel.mesh.skeleton is not always equal to MmdWasmModel.skeleton
+     * So MmdWasmModel.metadata.skeleton is not always equal to MmdWasmModel.skeleton
      */
     public readonly skeleton: IMmdLinkedBoneContainer;
 
