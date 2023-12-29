@@ -40,8 +40,8 @@ export { AnimationRetargeter, RetargetOptions } from "@/Loader/Util/animationRet
 export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 
 // Loader
-export { IMmdMaterialBuilder, MaterialInfo } from "@/Loader/IMmdMaterialBuilder";
-export { MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
+export { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
+export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
 export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
