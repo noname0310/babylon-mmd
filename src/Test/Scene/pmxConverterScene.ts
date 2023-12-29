@@ -88,7 +88,7 @@ export class PmxConverterScene implements ISceneBuilder {
 
         const pmdLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
         pmdLoader.loggingEnabled = true;
-        pmxLoader.preserveSerializationData = true;
+        pmdLoader.preserveSerializationData = true;
         pmdLoader.materialBuilder = pmxLoader.materialBuilder;
 
         const scene = new Scene(engine);
@@ -469,124 +469,94 @@ export class PmxConverterScene implements ISceneBuilder {
         convertOptions.style.boxSizing = "border-box";
         innerFormDiv.appendChild(convertOptions);
 
-        const useAlphaEvaluationDiv = document.createElement("div");
-        useAlphaEvaluationDiv.style.width = "100%";
-        useAlphaEvaluationDiv.style.height = "30px";
-        useAlphaEvaluationDiv.style.display = "flex";
-        useAlphaEvaluationDiv.style.flexDirection = "row";
-        useAlphaEvaluationDiv.style.justifyContent = "space-between";
-        useAlphaEvaluationDiv.style.alignItems = "center";
-        useAlphaEvaluationDiv.style.marginBottom = "10px";
-        convertOptions.appendChild(useAlphaEvaluationDiv);
+        const preserveSerializationDataDiv = document.createElement("div");
+        preserveSerializationDataDiv.style.width = "100%";
+        preserveSerializationDataDiv.style.height = "30px";
+        preserveSerializationDataDiv.style.display = "flex";
+        preserveSerializationDataDiv.style.flexDirection = "row";
+        preserveSerializationDataDiv.style.justifyContent = "space-between";
+        preserveSerializationDataDiv.style.alignItems = "center";
+        preserveSerializationDataDiv.style.marginBottom = "10px";
+        convertOptions.appendChild(preserveSerializationDataDiv);
 
-        const useAlphaEvaluationLabel = document.createElement("label");
-        useAlphaEvaluationLabel.textContent = "Use Alpha Evaluation";
-        useAlphaEvaluationLabel.style.textAlign = "left";
-        useAlphaEvaluationLabel.style.marginRight = "10px";
-        useAlphaEvaluationLabel.style.fontSize = "16px";
-        useAlphaEvaluationLabel.style.flexGrow = "1";
-        useAlphaEvaluationDiv.appendChild(useAlphaEvaluationLabel);
+        const preserveSerializationDataLabel = document.createElement("label");
+        preserveSerializationDataLabel.textContent = "Preserve Serialization Data";
+        preserveSerializationDataLabel.title = "If enabled, the converted file will be larger, but the converted file will be able to be converted back to PMX without any loss of data in technically(currently BPMX to PMX conversion is not supported).";
+        preserveSerializationDataLabel.style.textAlign = "left";
+        preserveSerializationDataLabel.style.marginRight = "10px";
+        preserveSerializationDataLabel.style.fontSize = "16px";
+        preserveSerializationDataLabel.style.flexGrow = "1";
+        preserveSerializationDataDiv.appendChild(preserveSerializationDataLabel);
 
-        const useAlphaEvaluationInput = document.createElement("input");
-        useAlphaEvaluationInput.style.width = "16px";
-        useAlphaEvaluationInput.style.height = "16px";
-        useAlphaEvaluationInput.type = "checkbox";
-        useAlphaEvaluationInput.checked = pmxMaterialBuilder.useAlphaEvaluation;
-        useAlphaEvaluationDiv.appendChild(useAlphaEvaluationInput);
-        useAlphaEvaluationInput.onchange = (): void => {
-            pmxMaterialBuilder.useAlphaEvaluation = useAlphaEvaluationInput.checked;
+        const preserveSerializationDataInput = document.createElement("input");
+        preserveSerializationDataInput.style.width = "16px";
+        preserveSerializationDataInput.style.height = "16px";
+        preserveSerializationDataInput.type = "checkbox";
+        preserveSerializationDataInput.checked = pmxLoader.preserveSerializationData;
+        preserveSerializationDataDiv.appendChild(preserveSerializationDataInput);
+        preserveSerializationDataInput.onchange = (): void => {
+            pmxLoader.preserveSerializationData = preserveSerializationDataInput.checked;
+            pmdLoader.preserveSerializationData = preserveSerializationDataInput.checked;
         };
 
-        const alphaEvaluationResolutionDiv = document.createElement("div");
-        alphaEvaluationResolutionDiv.style.width = "100%";
-        alphaEvaluationResolutionDiv.style.height = "30px";
-        alphaEvaluationResolutionDiv.style.display = "flex";
-        alphaEvaluationResolutionDiv.style.flexDirection = "row";
-        alphaEvaluationResolutionDiv.style.justifyContent = "space-between";
-        alphaEvaluationResolutionDiv.style.alignItems = "center";
-        alphaEvaluationResolutionDiv.style.marginBottom = "10px";
-        convertOptions.appendChild(alphaEvaluationResolutionDiv);
+        const buildSkeletonDiv = document.createElement("div");
+        buildSkeletonDiv.style.width = "100%";
+        buildSkeletonDiv.style.height = "30px";
+        buildSkeletonDiv.style.display = "flex";
+        buildSkeletonDiv.style.flexDirection = "row";
+        buildSkeletonDiv.style.justifyContent = "space-between";
+        buildSkeletonDiv.style.alignItems = "center";
+        buildSkeletonDiv.style.marginBottom = "10px";
+        convertOptions.appendChild(buildSkeletonDiv);
 
-        const alphaEvaluationResolutionLabel = document.createElement("label");
-        alphaEvaluationResolutionLabel.textContent = "Alpha Evaluation Resolution";
-        alphaEvaluationResolutionLabel.style.textAlign = "left";
-        alphaEvaluationResolutionLabel.style.marginRight = "10px";
-        alphaEvaluationResolutionLabel.style.fontSize = "16px";
-        alphaEvaluationResolutionLabel.style.flexGrow = "1";
-        alphaEvaluationResolutionDiv.appendChild(alphaEvaluationResolutionLabel);
+        const buildSkeletonLabel = document.createElement("label");
+        buildSkeletonLabel.textContent = "Build Skeleton";
+        buildSkeletonLabel.title = "If your model don't need to be animated by skeleton(e.g. stage model), you can disable this option to reduce the size of the converted file. also, it can improve the performance of the converted model.";
+        buildSkeletonLabel.style.textAlign = "left";
+        buildSkeletonLabel.style.marginRight = "10px";
+        buildSkeletonLabel.style.fontSize = "16px";
+        buildSkeletonLabel.style.flexGrow = "1";
+        buildSkeletonDiv.appendChild(buildSkeletonLabel);
 
-        const alphaEvaluationResolutionInput = document.createElement("input");
-        alphaEvaluationResolutionInput.style.width = "100px";
-        alphaEvaluationResolutionInput.style.height = "20px";
-        alphaEvaluationResolutionInput.style.fontSize = "16px";
-        alphaEvaluationResolutionInput.type = "number";
-        alphaEvaluationResolutionInput.min = "64";
-        alphaEvaluationResolutionInput.max = "4096";
-        alphaEvaluationResolutionInput.value = pmxMaterialBuilder.alphaEvaluationResolution.toString();
-        alphaEvaluationResolutionDiv.appendChild(alphaEvaluationResolutionInput);
-        alphaEvaluationResolutionInput.onchange = (): void => {
-            pmxMaterialBuilder.alphaEvaluationResolution = Number(alphaEvaluationResolutionInput.value);
+        const buildSkeletonInput = document.createElement("input");
+        buildSkeletonInput.style.width = "16px";
+        buildSkeletonInput.style.height = "16px";
+        buildSkeletonInput.type = "checkbox";
+        buildSkeletonInput.checked = pmxLoader.buildSkeleton;
+        buildSkeletonDiv.appendChild(buildSkeletonInput);
+        buildSkeletonInput.onchange = (): void => {
+            pmxLoader.buildSkeleton = buildSkeletonInput.checked;
+            pmdLoader.buildSkeleton = buildSkeletonInput.checked;
         };
 
-        const alphaThresholdDiv = document.createElement("div");
-        alphaThresholdDiv.style.width = "100%";
-        alphaThresholdDiv.style.height = "30px";
-        alphaThresholdDiv.style.display = "flex";
-        alphaThresholdDiv.style.flexDirection = "row";
-        alphaThresholdDiv.style.justifyContent = "space-between";
-        alphaThresholdDiv.style.alignItems = "center";
-        alphaThresholdDiv.style.marginBottom = "10px";
-        convertOptions.appendChild(alphaThresholdDiv);
+        const buildMorphDiv = document.createElement("div");
+        buildMorphDiv.style.width = "100%";
+        buildMorphDiv.style.height = "30px";
+        buildMorphDiv.style.display = "flex";
+        buildMorphDiv.style.flexDirection = "row";
+        buildMorphDiv.style.justifyContent = "space-between";
+        buildMorphDiv.style.alignItems = "center";
+        buildMorphDiv.style.marginBottom = "10px";
+        convertOptions.appendChild(buildMorphDiv);
 
-        const alphaThresholdLabel = document.createElement("label");
-        alphaThresholdLabel.textContent = "Alpha Threshold";
-        alphaThresholdLabel.style.textAlign = "left";
-        alphaThresholdLabel.style.marginRight = "10px";
-        alphaThresholdLabel.style.fontSize = "16px";
-        alphaThresholdLabel.style.flexGrow = "1";
-        alphaThresholdDiv.appendChild(alphaThresholdLabel);
+        const buildMorphLabel = document.createElement("label");
+        buildMorphLabel.textContent = "Build Morph";
+        buildMorphLabel.title = "If your model don't need to be animated by morph targets(e.g. stage model), you can disable this option to reduce the size of the converted file. also, it can improve the performance of the converted model.";
+        buildMorphLabel.style.textAlign = "left";
+        buildMorphLabel.style.marginRight = "10px";
+        buildMorphLabel.style.fontSize = "16px";
+        buildMorphLabel.style.flexGrow = "1";
+        buildMorphDiv.appendChild(buildMorphLabel);
 
-        const alphaThresholdInput = document.createElement("input");
-        alphaThresholdInput.style.width = "100px";
-        alphaThresholdInput.style.height = "20px";
-        alphaThresholdInput.style.fontSize = "16px";
-        alphaThresholdInput.type = "number";
-        alphaThresholdInput.min = "0";
-        alphaThresholdInput.max = "255";
-        alphaThresholdInput.value = pmxMaterialBuilder.alphaThreshold.toString();
-        alphaThresholdDiv.appendChild(alphaThresholdInput);
-        alphaThresholdInput.onchange = (): void => {
-            pmxMaterialBuilder.alphaThreshold = Number(alphaThresholdInput.value);
-        };
-
-        const alphaBlendThresholdDiv = document.createElement("div");
-        alphaBlendThresholdDiv.style.width = "100%";
-        alphaBlendThresholdDiv.style.height = "30px";
-        alphaBlendThresholdDiv.style.display = "flex";
-        alphaBlendThresholdDiv.style.flexDirection = "row";
-        alphaBlendThresholdDiv.style.justifyContent = "space-between";
-        alphaBlendThresholdDiv.style.alignItems = "center";
-        convertOptions.appendChild(alphaBlendThresholdDiv);
-
-        const alphaBlendThresholdLabel = document.createElement("label");
-        alphaBlendThresholdLabel.textContent = "Alpha Blend Threshold";
-        alphaBlendThresholdLabel.style.textAlign = "left";
-        alphaBlendThresholdLabel.style.marginRight = "10px";
-        alphaBlendThresholdLabel.style.fontSize = "16px";
-        alphaBlendThresholdLabel.style.flexGrow = "1";
-        alphaBlendThresholdDiv.appendChild(alphaBlendThresholdLabel);
-
-        const alphaBlendThresholdInput = document.createElement("input");
-        alphaBlendThresholdInput.style.width = "100px";
-        alphaBlendThresholdInput.style.height = "20px";
-        alphaBlendThresholdInput.style.fontSize = "16px";
-        alphaBlendThresholdInput.type = "number";
-        alphaBlendThresholdInput.min = "-500";
-        alphaBlendThresholdInput.max = "500";
-        alphaBlendThresholdInput.value = pmxMaterialBuilder.alphaBlendThreshold.toString();
-        alphaBlendThresholdDiv.appendChild(alphaBlendThresholdInput);
-        alphaBlendThresholdInput.onchange = (): void => {
-            pmxMaterialBuilder.alphaBlendThreshold = Number(alphaBlendThresholdInput.value);
+        const buildMorphInput = document.createElement("input");
+        buildMorphInput.style.width = "16px";
+        buildMorphInput.style.height = "16px";
+        buildMorphInput.type = "checkbox";
+        buildMorphInput.checked = pmxLoader.buildMorph;
+        buildMorphDiv.appendChild(buildMorphInput);
+        buildMorphInput.onchange = (): void => {
+            pmxLoader.buildMorph = buildMorphInput.checked;
+            pmdLoader.buildMorph = buildMorphInput.checked;
         };
 
         const buttonContainer = document.createElement("div");
@@ -619,7 +589,8 @@ export class PmxConverterScene implements ISceneBuilder {
         convertButton.style.border = "none";
         convertButton.style.fontSize = "20px";
         buttonContainer.appendChild(convertButton);
-        convertButton.onclick = (): void => {
+        convertButton.onclick = async(): Promise<void> => {
+            if (isLoading) return;
             if (selectedFile === null) return;
             if (mesh === null) return;
 
@@ -637,8 +608,13 @@ export class PmxConverterScene implements ISceneBuilder {
             URL.revokeObjectURL(url);
             a.remove();
 
-            engine.hideLoadingUI();
-            setTimeout(() => isLoading = false, 1500);
+            await new Promise<void>(resolve => {
+                setTimeout(() => {
+                    engine.hideLoadingUI();
+                    resolve();
+                }, 1500);
+            });
+            isLoading = false;
         };
 
         loadModelTab.click();
