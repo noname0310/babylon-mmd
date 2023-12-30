@@ -17,6 +17,7 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *  parentBoneIndex: int32
  *  transformOrder: int32
  *  flag: uint16
+ *  -- padding: uint16
  *  appendTransform: { // optional
  *   parentIndex: int32
  *   ratio: float32
@@ -29,6 +30,8 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *   {
  *    target: int32
  *    hasLimitation: uint8
+ *    -- padding: uint8
+ *    -- padding: uint16
  *    limitation: { // optional
  *     minimumAngle: float32[3]
  *     maximumAngle: float32[3]
@@ -40,12 +43,16 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  * morphCount: uint32
  * { // if boneMorph
  *  kind: uint8
+ *  -- padding: uint8
+ *  -- padding: uint16
  *  boneCount: uint32
  *  indices: int32[boneCount]
  *  positions: float32[boneCount * 3]
  *  rotations: float32[boneCount * 4]
  * } | { // if groupMorph
  *  kind: uint8
+ *  -- padding: uint8
+ *  -- padding: uint16
  *  indexCount: uint32
  *  indices: int32[indexCount]
  *  ratios: float32[indexCount]
@@ -55,8 +62,8 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  * {
  *  boneIndex: int32
  *  collisionGroup: uint8
- *  collisionMask: uint16
  *  shapeType: uint8
+ *  collisionMask: uint16
  *  shapeSize: float32[3]
  *  shapePosition: float32[3]
  *  shapeRotation: float32[3]
@@ -66,11 +73,15 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *  repulsion: float32
  *  friction: float32
  *  physicsMode: uint8
+ *  -- padding: uint8
+ *  -- padding: uint16
  * }[rigidBodyCount]
  *
  * jointCount: uint32
  * {
  *  type: uint8
+ *  -- padding: uint8
+ *  -- padding: uint16
  *  rigidBodyIndexA: int32
  *  rigidBodyIndexB: int32
  *  position: float32[3]
@@ -101,7 +112,8 @@ export class MmdMetadataEncoder {
             dataLength += 4 * 3 // restPosition
                 + 4 // parentBoneIndex
                 + 4 // transformOrder
-                + 2; // flag
+                + 2 // flag
+                + 2; // padding
 
             const bone = bones[i];
             if (bone.appendTransform) {
@@ -117,7 +129,8 @@ export class MmdMetadataEncoder {
                 const links = bone.ik.links;
                 for (let j = 0; j < links.length; ++j) {
                     dataLength += 4 // target
-                        + 1; // hasLimitation
+                        + 1 // hasLimitation
+                        + 3; // padding
 
                     const link = links[j];
                     if (link.limitation) {
@@ -137,6 +150,7 @@ export class MmdMetadataEncoder {
             case PmxObject.Morph.Type.BoneMorph: {
                 const indices = morph.indices;
                 dataLength += 1 // kind
+                    + 3 // padding
                     + 4 // boneCount
                     + 4 * indices.length // indices
                     + 4 * 3 * indices.length // positions
@@ -146,6 +160,7 @@ export class MmdMetadataEncoder {
             case PmxObject.Morph.Type.GroupMorph: {
                 const indices = morph.indices;
                 dataLength += 1 // kind
+                    + 3 // padding
                     + 4 // indexCount
                     + 4 * indices.length // indices
                     + 4 * indices.length; // ratios
@@ -161,8 +176,8 @@ export class MmdMetadataEncoder {
             for (let i = 0; i < rigidBodies.length; ++i) {
                 dataLength += 4 // boneIndex
                     + 1 // collisionGroup
-                    + 2 // collisionMask
                     + 1 // shapeType
+                    + 2 // collisionMask
                     + 4 * 3 // shapeSize
                     + 4 * 3 // shapePosition
                     + 4 * 3 // shapeRotation
@@ -171,7 +186,8 @@ export class MmdMetadataEncoder {
                     + 4 // angularDamping
                     + 4 // repulsion
                     + 4 // friction
-                    + 1; // physicsMode
+                    + 1 // physicsMode
+                    + 3; // padding
             }
 
             dataLength += 4; // jointCount
@@ -179,6 +195,7 @@ export class MmdMetadataEncoder {
             const joints = metadata.joints;
             for (let i = 0; i < joints.length; ++i) {
                 dataLength += 1 // type
+                    + 3 // padding
                     + 4 // rigidBodyIndexA
                     + 4 // rigidBodyIndexB
                     + 4 * 3 // position
@@ -225,6 +242,7 @@ export class MmdMetadataEncoder {
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
             serializer.setInt32(bone.transformOrder); // transformOrder
             serializer.setUint16(bone.flag); // flag
+            serializer.offset += 2; // padding
 
             if (bone.appendTransform) {
                 serializer.setInt32(bone.appendTransform.parentIndex); // parentIndex
@@ -242,6 +260,7 @@ export class MmdMetadataEncoder {
                     const link = links[j];
                     serializer.setInt32(link.target); // target
                     serializer.setUint8(link.limitation ? 1 : 0); // hasLimitation
+                    serializer.offset += 3; // padding
 
                     if (link.limitation) {
                         serializer.setFloat32Array(link.limitation.minimumAngle); // minimumAngle
@@ -282,10 +301,12 @@ export class MmdMetadataEncoder {
         for (let i = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
 
+
             switch (morph.type) {
             case PmxObject.Morph.Type.BoneMorph:
                 {
                     serializer.setUint8(morph.type); // kind
+                    serializer.offset += 3; // padding
                     serializer.setUint32(morph.indices.length); // boneCount
                     serializer.setInt32Array(morph.indices); // indices
                     serializer.setFloat32Array(morph.positions); // positions
@@ -295,6 +316,7 @@ export class MmdMetadataEncoder {
             case PmxObject.Morph.Type.GroupMorph:
                 {
                     serializer.setUint8(morph.type); // kind
+                    serializer.offset += 3; // padding
                     serializer.setUint32(morph.indices.length); // indexCount
                     const remappedIndices = new Int32Array(morph.indices.length);
                     remappedIndices.set(morph.indices);
@@ -315,8 +337,8 @@ export class MmdMetadataEncoder {
                 const rigidBody = rigidBodies[i];
                 serializer.setInt32(rigidBody.boneIndex); // boneIndex
                 serializer.setUint8(rigidBody.collisionGroup); // collisionGroup
-                serializer.setUint16(rigidBody.collisionMask); // collisionMask
                 serializer.setUint8(rigidBody.shapeType); // shapeType
+                serializer.setUint16(rigidBody.collisionMask); // collisionMask
                 serializer.setFloat32Array(rigidBody.shapeSize); // shapeSize
                 serializer.setFloat32Array(rigidBody.shapePosition); // shapePosition
                 serializer.setFloat32Array(rigidBody.shapeRotation); // shapeRotation
@@ -326,6 +348,7 @@ export class MmdMetadataEncoder {
                 serializer.setFloat32(rigidBody.repulsion); // repulsion
                 serializer.setFloat32(rigidBody.friction); // friction
                 serializer.setUint8(rigidBody.physicsMode); // physicsMode
+                serializer.offset += 3; // padding
             }
 
             const joints = metadata.joints;
@@ -333,6 +356,7 @@ export class MmdMetadataEncoder {
             for (let i = 0; i < joints.length; ++i) {
                 const joint = joints[i];
                 serializer.setUint8(joint.type); // type
+                serializer.offset += 3; // padding
                 serializer.setInt32(joint.rigidbodyIndexA); // rigidBodyIndexA
                 serializer.setInt32(joint.rigidbodyIndexB); // rigidBodyIndexB
                 serializer.setFloat32Array(joint.position); // position

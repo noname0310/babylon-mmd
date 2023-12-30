@@ -55,11 +55,11 @@ impl<'a> MetadataBuffer<'a> {
                 Vector3::from_column_slice(slice)
             },
             Err(_) => {
-                let mut vector = Vector3::new(0.0, 0.0, 0.0);
-                vector.x = self.read::<f32>();
-                vector.y = self.read::<f32>();
-                vector.z = self.read::<f32>();
-                vector
+                Vector3::new(
+                    self.read::<f32>(),
+                    self.read::<f32>(),
+                    self.read::<f32>()
+                )
             }
         };
         value
@@ -207,6 +207,7 @@ impl<'a> BoneMetadataReader<'a> {
             let parent_bone_index = self.buffer.read::<i32>();
             let transform_order = self.buffer.read::<i32>();
             let flag = self.buffer.read::<u16>();
+            self.buffer.offset += 2; // padding
             let append_transform = if flag & BoneFlag::HasAppendMove as u16 != 0 || flag & BoneFlag::HasAppendRotate as u16 != 0 {
                 Some(AppendTransformMetadata {
                     parent_index: self.buffer.read::<i32>(),
@@ -230,6 +231,8 @@ impl<'a> BoneMetadataReader<'a> {
                             } else {
                                 false
                             };
+                            self.buffer.offset += 3; // padding
+
                             let limits = if has_limits {
                                 Some(IkChainAngleLimits {
                                     minimum_angle: self.buffer.read_vector(),
@@ -309,6 +312,8 @@ impl<'a> MorphMetadataReader<'a> {
 
         for _ in 0..self.count {
             let kind = self.buffer.read::<u8>();
+            self.buffer.offset += 3; // padding
+
             if kind == MorphKind::BoneMorph as u8 {
                 let morph_count = self.buffer.read::<i32>();
                 let indices = self.buffer.read_array::<i32>(morph_count as usize);
@@ -387,8 +392,8 @@ impl<'a> RigidbodyMetadataReader<'a> {
         for _ in 0..self.count {
             let bone_index = self.buffer.read::<i32>();
             let collision_group = self.buffer.read::<u8>();
-            let collision_mask = self.buffer.read::<u16>();
             let shape_type = self.buffer.read::<u8>();
+            let collision_mask = self.buffer.read::<u16>();
             let shape_size = self.buffer.read_vector();
             let shape_position = self.buffer.read_vector();
             let shape_rotation = self.buffer.read_vector();
@@ -398,6 +403,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
             let repulsion = self.buffer.read::<f32>();
             let friction = self.buffer.read::<f32>();
             let physics_mode = self.buffer.read::<u8>();
+            self.buffer.offset += 3; // padding
             f(RigidbodyMetadata {
                 bone_index,
                 collision_group,
@@ -464,6 +470,7 @@ impl<'a> JointMetadataReader<'a> {
     pub fn for_each(mut self, mut f: impl FnMut(JointMetadata)) {
         for _ in 0..self.count {
             let kind = self.buffer.read::<u8>();
+            self.buffer.offset += 3; // padding
             let rigidbody_index_a = self.buffer.read::<i32>();
             let rigidbody_index_b = self.buffer.read::<i32>();
             let position = self.buffer.read_vector();
