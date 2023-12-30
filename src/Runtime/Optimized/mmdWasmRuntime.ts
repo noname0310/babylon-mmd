@@ -15,11 +15,14 @@ import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
+import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
+import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
 
 export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
-    private readonly _wasmInstance: MmdWasmInstance;
+    private readonly _wasmRuntime: MmdWasmRuntimeInternal;
+    private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
 
     private readonly _models: MmdWasmModel[];
     private _camera: Nullable<MmdCamera>;
@@ -75,7 +78,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param wasmInstance MMD WASM instance
      */
     public constructor(wasmInstance: MmdWasmInstance) {
-        this._wasmInstance = wasmInstance;
+        this._wasmRuntime = wasmInstance.createMmdRuntime();
+        this._mmdMetadataEncoder = new MmdMetadataEncoder();
 
         this._models = [];
         this._camera = null;
@@ -102,37 +106,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
+    }
 
-        this._wasmInstance.mainJs();
-
-        const f32Buffer = new Float32Array(1000000);
-        for (let i = 0; i < 100; ++i) {
-            const startTime = performance.now();
-            const result = this._wasmInstance.f32BufferReadBenchmark(f32Buffer);
-            console.log(`f32BufferReadBenchmark: ${performance.now() - startTime}ms, result: ${result}`);
-
-            const jsStartTime = performance.now();
-            let jsResult = 0;
-            for (let i = 0; i < f32Buffer.length; ++i) {
-                jsResult += f32Buffer[i];
-            }
-            console.log(`js f32BufferReadBenchmark: ${performance.now() - jsStartTime}ms, result: ${jsResult}`);
-        }
-
-        const vecPtr = this._wasmInstance.getVecPointer(1000000);
-        const f32RustBuffer = this._wasmInstance.getArray(vecPtr, 1000000);
-        for (let i = 0; i < 100; ++i) {
-            const startTime = performance.now();
-            const result = this._wasmInstance.sum(vecPtr, 1000000);
-            console.log(`f32RustBufferReadBenchmark: ${performance.now() - startTime}ms, result: ${result}`);
-
-            const jsStartTime = performance.now();
-            let jsResult = 0;
-            for (let i = 0; i < f32RustBuffer.length; ++i) {
-                jsResult += f32RustBuffer[i];
-            }
-            console.log(`js f32RustBufferReadBenchmark: ${performance.now() - jsStartTime}ms, result: ${jsResult}`);
-        }
+    /**
+     * Dispose MMD WASM runtime
+     */
+    public dispose(scene: Scene): void {
+        this.unregister(scene);
+        this._wasmRuntime.free();
     }
 
     /**
@@ -172,6 +153,20 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             options.buildPhysics = true;
         }
 
+        const metadataEncoder = this._mmdMetadataEncoder;
+        metadataEncoder.encodePhysics = options.buildPhysics;
+
+        const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
+
+        const wasmRuntime = this._wasmRuntime;
+        const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
+
+        const metadataBuffer = wasmRuntime.bufferToUint8Array(metadataBufferPtr, metadataSize);
+        metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer);
+
+        const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
+        mmdModelPtr;
+
         const model = new MmdWasmModel(
             mmdMesh,
             skeleton,
@@ -180,6 +175,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             this
         );
         this._models.push(model);
+
+        wasmRuntime.deallocateBuffer(metadataBufferPtr, metadataSize);
 
         model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
 

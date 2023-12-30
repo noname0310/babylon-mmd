@@ -23,7 +23,7 @@ impl AnimationArena {
                 rotation: UnitQuaternion::identity(),
                 scale: Vector3::new(1.0, 1.0, 1.0),
             }; bone_count].into_boxed_slice(),
-            iksolver_state_arena: vec![0; ik_count].into_boxed_slice(),
+            iksolver_state_arena: vec![1; ik_count].into_boxed_slice(),
             morph_arena: vec![0.0; morph_count].into_boxed_slice(),
         }
     }

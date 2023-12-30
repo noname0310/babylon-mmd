@@ -3,6 +3,8 @@ type MmdWasmType = typeof import("./wasm");
 
 export interface MmdWasmInstance extends MmdWasmType {}
 
-export function createMmdWasmInstance(): Promise<MmdWasmInstance> {
+export async function createMmdWasmInstance(): Promise<MmdWasmInstance> {
+    const wasm = await import("./wasm");
+    wasm.init();
     return import("./wasm");
 }

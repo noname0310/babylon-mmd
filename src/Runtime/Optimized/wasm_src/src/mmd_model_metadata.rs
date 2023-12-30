@@ -1,26 +1,27 @@
 use byte_slice_cast::{AsSliceOf, FromByteSlice};
 use nalgebra::{Vector3, UnitQuaternion, Quaternion, Vector4};
 use num_traits::FromBytes;
+use web_sys::console;
 
-pub(crate) struct MetadataBuffer {
-    bytes: Box<[u8]>,
+pub(crate) struct MetadataBuffer<'a> {
+    bytes: &'a [u8],
     offset: usize,
 }
 
-impl MetadataBuffer {
-    fn new(bytes: Box<[u8]>) -> Self {
+impl<'a> MetadataBuffer<'a> {
+    pub fn new(bytes: &'a [u8]) -> Self {
         Self {
             bytes,
             offset: 0,
         }
     }
 
-    fn read<'a, T>(&'a mut self) -> T
+    fn read<'b, T>(&'b mut self) -> T
     where
         T: FromBytes,
-        <T as FromBytes>::Bytes: 'a,
-        &'a [u8]: TryInto<&'a <T as FromBytes>::Bytes>,
-        <&'a [u8] as TryInto<&'a <T as FromBytes>::Bytes>>::Error: std::fmt::Debug,
+        <T as FromBytes>::Bytes: 'b,
+        &'b [u8]: TryInto<&'b <T as FromBytes>::Bytes>,
+        <&'b [u8] as TryInto<&'b <T as FromBytes>::Bytes>>::Error: std::fmt::Debug,
     {
         let value = T::from_le_bytes(self.bytes[self.offset..self.offset + std::mem::size_of::<T>()].as_ref().try_into().unwrap());
         self.offset += std::mem::size_of::<T>();
@@ -119,15 +120,15 @@ pub(crate) enum BoneFlag {
     IsExternalParentTransformed = 0x2000,
 }
 
-pub(crate) struct BoneMetadataReader {
-    buffer: MetadataBuffer,
+pub(crate) struct BoneMetadataReader<'a> {
+    buffer: MetadataBuffer<'a>,
     bone_count: u32,
     append_transform_count: u32,
     ik_count: u32,
 }
 
-impl BoneMetadataReader {
-    pub fn new(mut buffer: MetadataBuffer) -> Self {
+impl<'a> BoneMetadataReader<'a> {
+    pub fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let bone_count = buffer.read::<u32>();
         let append_transform_count = buffer.read::<u32>();
         let ik_count = buffer.read::<u32>();
@@ -152,7 +153,7 @@ impl BoneMetadataReader {
         self.ik_count
     }
 
-    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader {
+    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader<'a> {
         for i in 0..self.bone_count {
             let rest_position = self.buffer.read_vector();
             let parent_bone_index = self.buffer.read::<i32>();
@@ -172,19 +173,27 @@ impl BoneMetadataReader {
                     iteration: self.buffer.read::<i32>(),
                     rotation_constraint: self.buffer.read::<f32>(),
                     links: {
-                        let link_count = self.buffer.read::<i32>();
+                        let link_count = self.buffer.read::<u32>();
                         let mut links = Vec::with_capacity(link_count as usize);
                         for _ in 0..link_count {
+                            let target = self.buffer.read::<i32>();
+                            let has_limits = if self.buffer.read::<u8>() != 0 {
+                                true
+                            } else {
+                                false
+                            };
+                            let limits = if has_limits {
+                                Some(IkChainAngleLimits {
+                                    minimum_angle: self.buffer.read_vector(),
+                                    maximum_angle: self.buffer.read_vector(),
+                                })
+                            } else {
+                                None
+                            };
+
                             links.push(IkLinkMetadata {
-                                target: self.buffer.read::<i32>(),
-                                limits: if flag & BoneFlag::HasAxisLimit as u16 != 0 {
-                                    Some(IkChainAngleLimits {
-                                        minimum_angle: self.buffer.read_vector(),
-                                        maximum_angle: self.buffer.read_vector(),
-                                    })
-                                } else {
-                                    None
-                                },
+                                target,
+                                limits,
                             });
                         }
                         links
@@ -228,13 +237,13 @@ enum MorphKind {
     BoneMorph = 2
 }
 
-pub(crate) struct MorphMetadataReader {
-    buffer: MetadataBuffer,
+pub(crate) struct MorphMetadataReader<'a> {
+    buffer: MetadataBuffer<'a>,
     count: u32,
 }
 
-impl MorphMetadataReader {
-    fn new(mut buffer: MetadataBuffer) -> Self {
+impl<'a> MorphMetadataReader<'a> {
+    fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let count = buffer.read::<u32>();
 
         Self {
@@ -247,7 +256,7 @@ impl MorphMetadataReader {
         self.count
     }
 
-    pub fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader) {
+    pub fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader<'a>) {
         let mut morphs = Vec::with_capacity(self.count as usize);
 
         for _ in 0..self.count {
@@ -307,13 +316,13 @@ pub(crate) enum RigidbodyPhysicsMode {
     PhysicsWithBone = 2,
 }
 
-pub(crate) struct RigidbodyMetadataReader {
-    buffer: MetadataBuffer,
+pub(crate) struct RigidbodyMetadataReader<'a> {
+    buffer: MetadataBuffer<'a>,
     count: u32,
 }
 
-impl RigidbodyMetadataReader {
-    fn new(mut buffer: MetadataBuffer) -> Self {
+impl<'a> RigidbodyMetadataReader<'a> {
+    fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let count = buffer.read::<u32>();
 
         Self {
@@ -326,7 +335,7 @@ impl RigidbodyMetadataReader {
         self.count
     }
 
-    pub fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader {
+    pub fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader<'a> {
         for _ in 0..self.count {
             let bone_index = self.buffer.read::<i32>();
             let collision_group = self.buffer.read::<u8>();
@@ -385,13 +394,13 @@ pub(crate) enum JointKind {
     Hinge = 5,
 }
 
-pub(crate) struct JointMetadataReader {
-    buffer: MetadataBuffer,
+pub(crate) struct JointMetadataReader<'a> {
+    buffer: MetadataBuffer<'a>,
     count: u32,
 }
 
-impl JointMetadataReader {
-    fn new(mut buffer: MetadataBuffer) -> Self {
+impl<'a> JointMetadataReader<'a> {
+    fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let count = buffer.read::<u32>();
 
         Self {
