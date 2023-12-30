@@ -29,7 +29,7 @@ impl<'a> MetadataBuffer<'a> {
 
     fn read_array<'b, T>(&'b mut self, n: usize) -> Vec<T>
     where
-        T: FromByteSlice + num_traits::FromBytes,
+        T: FromByteSlice + Clone + num_traits::FromBytes,
         <T as FromBytes>::Bytes: 'b,
         &'b [u8]: TryInto<&'b <T as FromBytes>::Bytes>,
         <&'b [u8] as TryInto<&'b <T as FromBytes>::Bytes>>::Error: std::fmt::Debug,
