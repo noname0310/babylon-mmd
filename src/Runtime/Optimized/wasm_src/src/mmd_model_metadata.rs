@@ -1,7 +1,6 @@
 use byte_slice_cast::{AsSliceOf, FromByteSlice};
 use nalgebra::{Vector3, UnitQuaternion, Quaternion, Vector4};
 use num_traits::FromBytes;
-use web_sys::console;
 
 pub(crate) struct MetadataBuffer<'a> {
     bytes: &'a [u8],
@@ -28,45 +27,94 @@ impl<'a> MetadataBuffer<'a> {
         value
     }
 
-    fn read_array<T>(&mut self, n: usize) -> Vec<T>
+    fn read_array<'b, T>(&'b mut self, n: usize) -> Vec<T>
     where
-        T: FromByteSlice + Clone
+        T: FromByteSlice + num_traits::FromBytes,
+        <T as FromBytes>::Bytes: 'b,
+        &'b [u8]: TryInto<&'b <T as FromBytes>::Bytes>,
+        <&'b [u8] as TryInto<&'b <T as FromBytes>::Bytes>>::Error: std::fmt::Debug,
     {
-        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<T>() * n].as_ref().as_slice_of().unwrap();
+        let vec = match self.bytes[self.offset..self.offset + std::mem::size_of::<T>() * n].as_ref().as_slice_of() {
+            Ok(slice) => slice.to_vec(),
+            Err(_) => {
+                let mut vec = Vec::with_capacity(n);
+                for _ in 0..n {
+                    vec.push(T::from_le_bytes(self.bytes[self.offset..self.offset + std::mem::size_of::<T>()].as_ref().try_into().unwrap()));
+                }
+                vec
+            }
+        };
         self.offset += std::mem::size_of::<T>() * n;
-        slice.to_vec()
+        vec
     }
 
     fn read_vector(&mut self) -> Vector3<f32> {
-        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3].as_ref().as_slice_of().unwrap();
-        let value = Vector3::from_column_slice(slice);
-        self.offset += std::mem::size_of::<f32>() * 3;
+        let value = match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3].as_ref().as_slice_of() {
+            Ok(slice) => {
+                self.offset += std::mem::size_of::<f32>() * 3;
+                Vector3::from_column_slice(slice)
+            },
+            Err(_) => {
+                let mut vector = Vector3::new(0.0, 0.0, 0.0);
+                vector.x = self.read::<f32>();
+                vector.y = self.read::<f32>();
+                vector.z = self.read::<f32>();
+                vector
+            }
+        };
         value
     }
 
     fn read_vector_array(&mut self, n: usize) -> Vec<Vector3<f32>> {
-        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3 * n].as_ref().as_slice_of().unwrap();
         let mut values = Vec::with_capacity(n);
-        for i in 0..n {
-            values.push(Vector3::from_column_slice(&slice[i * 3..i * 3 + 3]));
-        }
-        self.offset += std::mem::size_of::<f32>() * 3 * n;
+        match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3 * n].as_ref().as_slice_of() {
+            Ok(slice) => {
+                for i in 0..n {
+                    values.push(Vector3::from_column_slice(&slice[i * 3..i * 3 + 3]));
+                }
+                self.offset += std::mem::size_of::<f32>() * 3 * n;
+            },
+            Err(_) => {
+                for _ in 0..n {
+                    values.push(self.read_vector());
+                }
+            }
+        };
         values
     }
 
     fn read_quaternion_array(&mut self, n: usize) -> Vec<UnitQuaternion<f32>> {
-        let slice = self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 4 * n].as_ref().as_slice_of().unwrap();
         let mut values = Vec::with_capacity(n);
-        for i in 0..n {
-            values.push(
-                UnitQuaternion::new_unchecked(
-                    Quaternion::from_vector(
-                        Vector4::from_column_slice(&slice[i * 4..i * 4 + 4])
-                    )
-                )
-            );
-        }
-        self.offset += std::mem::size_of::<f32>() * 4 * n;
+        match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 4 * n].as_ref().as_slice_of() {
+            Ok(slice) => {
+                for i in 0..n {
+                    values.push(
+                        UnitQuaternion::new_unchecked(
+                            Quaternion::from_vector(
+                                Vector4::from_column_slice(&slice[i * 4..i * 4 + 4])
+                            )
+                        )
+                    );
+                }
+                self.offset += std::mem::size_of::<f32>() * 4 * n;
+            },
+            Err(_) => {
+                for _ in 0..n {
+                    values.push(
+                        UnitQuaternion::new_unchecked(
+                            Quaternion::from_vector(
+                                Vector4::new(
+                                    self.read::<f32>(),
+                                    self.read::<f32>(),
+                                    self.read::<f32>(),
+                                    self.read::<f32>(),
+                                )
+                            )
+                        )
+                    );
+                }
+            }
+        };
         values
     }
 }
@@ -103,21 +151,21 @@ pub(crate) struct IkChainAngleLimits {
 }
 
 pub(crate) enum BoneFlag {
-    UseBoneIndexAsTailPosition = 0x0001,
+    // UseBoneIndexAsTailPosition = 0x0001,
 
-    IsRotatable = 0x0002,
-    IsMovable = 0x0004,
-    IsVisible = 0x0008,
-    IsControllable = 0x0010,
+    // IsRotatable = 0x0002,
+    // IsMovable = 0x0004,
+    // IsVisible = 0x0008,
+    // IsControllable = 0x0010,
     IsIkEnabled = 0x0020,
 
     LocalAppendTransform = 0x0080,
     HasAppendRotate = 0x0100,
     HasAppendMove = 0x0200,
-    HasAxisLimit = 0x0400,
-    HasLocalVector = 0x0800,
+    // HasAxisLimit = 0x0400,
+    // HasLocalVector = 0x0800,
     TransformAfterPhysics = 0x1000,
-    IsExternalParentTransformed = 0x2000,
+    // IsExternalParentTransformed = 0x2000,
 }
 
 pub(crate) struct BoneMetadataReader<'a> {
@@ -159,7 +207,7 @@ impl<'a> BoneMetadataReader<'a> {
             let parent_bone_index = self.buffer.read::<i32>();
             let transform_order = self.buffer.read::<i32>();
             let flag = self.buffer.read::<u16>();
-            let append_transform = if flag & BoneFlag::LocalAppendTransform as u16 != 0 {
+            let append_transform = if flag & BoneFlag::HasAppendMove as u16 != 0 || flag & BoneFlag::HasAppendRotate as u16 != 0 {
                 Some(AppendTransformMetadata {
                     parent_index: self.buffer.read::<i32>(),
                     ratio: self.buffer.read::<f32>(),
@@ -387,11 +435,11 @@ pub(crate) struct JointMetadata {
 
 pub(crate) enum JointKind {
     Spring6Dof = 0,
-    SixDof = 1,
-    P2p = 2,
-    ConeTwist = 3,
-    Slider = 4,
-    Hinge = 5,
+    // SixDof = 1,
+    // P2p = 2,
+    // ConeTwist = 3,
+    // Slider = 4,
+    // Hinge = 5,
 }
 
 pub(crate) struct JointMetadataReader<'a> {
