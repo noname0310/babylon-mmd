@@ -1,4 +1,4 @@
-use nalgebra::{UnitQuaternion, Vector3, distance_squared, UnitVector3, Matrix4, SimdPartialOrd};
+use nalgebra::{UnitQuaternion, Vector3, distance_squared, UnitVector3, Matrix4};
 
 use crate::{mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena}, mmd_model_metadata::IkChainAngleLimits, animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
 
@@ -137,7 +137,7 @@ impl IkSolver {
 
         for chain_index in 0..self.ik_chains.len() {
             let chain = &mut self.ik_chains[chain_index];
-            if chain.bone == self.ik_bone {
+            if chain.bone == self.target_bone {
                 continue;
             }
 
@@ -187,11 +187,18 @@ impl IkSolver {
             if let Some(IkChainAngleLimits{minimum_angle, maximum_angle}) = &chain.angle_limits {
                 let mut chain_rotation_matrix = chain_rotation.to_homogeneous();
                 let rotation_xyz = IkSolver::decompose(&chain_rotation_matrix, chain.prev_angle);
-                let mut clamp_xyz = rotation_xyz
-                    .simd_clamp(*minimum_angle, *maximum_angle);
+                let mut clamp_xyz = Vector3::new(
+                    rotation_xyz.x.clamp(minimum_angle.x, maximum_angle.x),
+                    rotation_xyz.y.clamp(minimum_angle.y, maximum_angle.y),
+                    rotation_xyz.z.clamp(minimum_angle.z, maximum_angle.z),
+                );
 
-                clamp_xyz = (clamp_xyz - chain.prev_angle)
-                    .simd_clamp(Vector3::from_element(-self.limit_angle), Vector3::from_element(self.limit_angle)) + chain.prev_angle;
+                clamp_xyz = clamp_xyz - chain.prev_angle;
+                clamp_xyz.x = clamp_xyz.x.clamp(-self.limit_angle, self.limit_angle);
+                clamp_xyz.y = clamp_xyz.y.clamp(-self.limit_angle, self.limit_angle);
+                clamp_xyz.z = clamp_xyz.z.clamp(-self.limit_angle, self.limit_angle);
+                clamp_xyz = clamp_xyz + chain.prev_angle;
+
                 let r = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), clamp_xyz.x)
                     * UnitQuaternion::from_axis_angle(&Vector3::y_axis(), clamp_xyz.y)
                     * UnitQuaternion::from_axis_angle(&Vector3::z_axis(), clamp_xyz.z);
@@ -201,12 +208,11 @@ impl IkSolver {
                 chain_rotation = UnitQuaternion::from_matrix(&chain_rotation_matrix.fixed_view::<3, 3>(0, 0).into_owned());
             }
 
-            let animated_rotation = bone_arena[chain.bone].animated_rotation(animation_arena);
             let chain_bone = &mut bone_arena[chain.bone];
             chain_bone.ik_rotation = Some(chain_rotation * animated_rotation.inverse());
 
             chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
-            // mmd_model.update_world_matrix(chain.bone);
+            bone_arena.update_world_matrix(chain.bone);
         }
     }
 
@@ -315,7 +321,7 @@ impl IkSolver {
                     r.x = 0.0;
                     r.z = (-matrix[(0, 1)]).asin();
                 } else {
-                    r.x = 0.0;
+                    r.x = std::f32::consts::PI;
                     r.z = matrix[(0, 1)].asin();
                 }
             } else {
@@ -324,7 +330,7 @@ impl IkSolver {
                     r.z = 0.0;
                     r.x = (-matrix[(1, 2)]).asin();
                 } else {
-                    r.z = 0.0;
+                    r.z = std::f32::consts::PI;
                     r.x = matrix[(1, 2)].asin();
                 }
             }
