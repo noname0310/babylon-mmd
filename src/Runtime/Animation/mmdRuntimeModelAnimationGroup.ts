@@ -10,7 +10,7 @@ import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGrou
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { MmdMorphController } from "../mmdMorphController";
+import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
@@ -39,7 +39,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      */
     public readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
-    private readonly _morphController: MmdMorphController;
+    private readonly _morphController: MmdMorphControllerBase;
 
     /**
      * Morph bind index map
@@ -67,7 +67,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         animation: MmdModelAnimationGroup,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
-        morphController: MmdMorphController,
+        morphController: MmdMorphControllerBase,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
@@ -316,12 +316,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      */
     public static InduceMaterialRecompile: (
         materials: Material[],
-        morphController: MmdMorphController,
+        morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void = induceMmdStandardMaterialRecompile as (
         materials: Material[],
-        morphController: MmdMorphController,
+        morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void;

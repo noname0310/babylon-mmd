@@ -3,7 +3,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "@/Runtime/ILogger";
-import type { MmdMorphController } from "@/Runtime/mmdMorphController";
+import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 type MorphIndices = readonly number[];
 
@@ -19,7 +19,7 @@ type MorphIndices = readonly number[];
  */
 export function induceMmdStandardMaterialRecompile(
     materials: MmdStandardMaterial[],
-    morphController: MmdMorphController,
+    morphController: MmdMorphControllerBase,
     morphIndices: readonly Nullable<MorphIndices>[],
     logger?: ILogger
 ): void {

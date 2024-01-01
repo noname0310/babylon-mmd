@@ -57,7 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/flos/flos_YuNi.mp3";
+        audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
 
         const [
             mmdAnimation,

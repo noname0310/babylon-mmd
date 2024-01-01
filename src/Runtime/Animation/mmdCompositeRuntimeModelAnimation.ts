@@ -6,7 +6,7 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { MmdMorphController } from "../mmdMorphController";
+import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
@@ -24,7 +24,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     public animation: MmdCompositeAnimation;
 
     private readonly _ikSolverStates: Uint8Array;
-    private readonly _morphController: MmdMorphController;
+    private readonly _morphController: MmdMorphControllerBase;
     private readonly _meshes: readonly Mesh[];
 
     private readonly _runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[];
@@ -34,7 +34,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     private constructor(
         animation: MmdCompositeAnimation,
         ikSolverStates: Uint8Array,
-        morphController: MmdMorphController,
+        morphController: MmdMorphControllerBase,
         meshes: readonly Mesh[],
         runtimeAnimations: Nullable<IMmdRuntimeModelAnimationWithBindingInfo>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,

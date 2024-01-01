@@ -58,7 +58,7 @@ impl<'a> MetadataBuffer<'a> {
                 Vector3::new(
                     self.read::<f32>(),
                     self.read::<f32>(),
-                    self.read::<f32>()
+                    self.read::<f32>(),
                 )
             }
         };
@@ -226,11 +226,7 @@ impl<'a> BoneMetadataReader<'a> {
                         let mut links = Vec::with_capacity(link_count as usize);
                         for _ in 0..link_count {
                             let target = self.buffer.read::<i32>();
-                            let has_limits = if self.buffer.read::<u8>() != 0 {
-                                true
-                            } else {
-                                false
-                            };
+                            let has_limits = self.buffer.read::<u8>() != 0;
                             self.buffer.offset += 3; // padding
 
                             let limits = if has_limits {
@@ -285,7 +281,7 @@ pub(crate) struct GroupMorphMetadata {
 
 enum MorphKind {
     GroupMorph = 0,
-    BoneMorph = 2
+    BoneMorph = 2,
 }
 
 pub(crate) struct MorphMetadataReader<'a> {

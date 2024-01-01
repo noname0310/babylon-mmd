@@ -9,7 +9,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
-import type { MmdMorphController } from "@/Runtime/mmdMorphController";
+import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
@@ -17,10 +17,10 @@ import type { MmdAnimation } from "./mmdAnimation";
 import type { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./mmdAnimationTrack";
 
 class MorphProxy {
-    private readonly _morphController: MmdMorphController;
+    private readonly _morphController: MmdMorphControllerBase;
     private readonly _morphIndices: readonly number[];
 
-    public constructor(morphController: MmdMorphController, morphIndices: readonly number[]) {
+    public constructor(morphController: MmdMorphControllerBase, morphIndices: readonly number[]) {
         this._morphController = morphController;
         this._morphIndices = morphIndices;
     }

@@ -162,16 +162,24 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
 
         const metadataBuffer = wasmRuntime.bufferToUint8Array(metadataBufferPtr, metadataSize);
-        metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer);
+        const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer);
 
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
-        mmdModelPtr;
+        const worldTransformMatrices = wasmRuntime.getBoneWorldMatrixArena(mmdModelPtr);
+        const boneAnimationStates = wasmRuntime.getAnimationArena(mmdModelPtr);
+        const ikSolverStates = wasmRuntime.getAnimationIkSolverStateArena(mmdModelPtr);
+        const morphWeights = wasmRuntime.getAnimationMorphArena(mmdModelPtr);
 
         const model = new MmdWasmModel(
+            mmdModelPtr,
             mmdMesh,
             skeleton,
             options.materialProxyConstructor,
-            false,
+            worldTransformMatrices,
+            boneAnimationStates,
+            ikSolverStates,
+            morphWeights,
+            wasmMorphIndexMap,
             this
         );
         this._models.push(model);
@@ -200,6 +208,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (index < 0) throw new Error("Model not found.");
 
         models.splice(index, 1);
+        this._wasmRuntime.destroyMmdModel(mmdModel.ptr);
     }
 
     /**
@@ -341,6 +350,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             for (let i = 0; i < models.length; ++i) {
                 models[i].beforePhysics(elapsedFrameTime);
             }
+            this._wasmRuntime.beforePhysics();
 
             if (this._camera !== null) {
                 this._camera.animate(elapsedFrameTime);
@@ -352,6 +362,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             for (let i = 0; i < models.length; ++i) {
                 models[i].beforePhysics(null);
             }
+            this._wasmRuntime.beforePhysics();
         }
     }
 
@@ -359,6 +370,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * After the physics stage, update physics and run MMD runtime solvers
      */
     public afterPhysics(): void {
+        this._wasmRuntime.afterPhysics();
+
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
             models[i].afterPhysics();

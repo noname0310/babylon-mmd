@@ -123,12 +123,8 @@ impl MmdRuntimeBone {
         rotation
     }
 
-    pub fn animation_position_offset(&self) -> Vector3<f32> {
-        let mut position = Vector3::zeros();
-        if let Some(morph_position_offset) = self.morph_position_offset {
-            position += morph_position_offset;
-        }
-        position - self.rest_position
+    pub fn animation_position_offset(&self, animation_arena: &AnimationArena) -> Vector3<f32> {
+        self.animated_position(animation_arena) - self.rest_position
     }
 
     pub fn update_local_matrix(&mut self, animation_arena: &AnimationArena, append_transform_solver_arena: &AppendTransformSolverArena) {
@@ -153,6 +149,6 @@ impl MmdRuntimeBone {
         self.local_matrix = 
             Matrix4::new_translation(&position) *
             rotation.to_homogeneous() *
-            Matrix4::new_nonuniform_scaling(&animation_arena.bone_scale(self.index));
+            Matrix4::new_nonuniform_scaling(animation_arena.bone_scale(self.index));
     }
 }

@@ -142,12 +142,12 @@ impl MmdModel {
         }
     }
 
-    pub fn animation_arena(&self) -> &AnimationArena {
-        &self.animation_arena
+    pub fn animation_arena(&mut self) -> &mut AnimationArena {
+        &mut self.animation_arena
     }
 
-    pub fn bone_arena(&self) -> &MmdRuntimeBoneArena {
-        &self.bone_arena
+    pub fn bone_arena(&mut self) -> &mut MmdRuntimeBoneArena {
+        &mut self.bone_arena
     }
 
     pub fn before_physics(&mut self) {

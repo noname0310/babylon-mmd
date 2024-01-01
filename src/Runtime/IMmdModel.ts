@@ -1,7 +1,7 @@
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "./mmdMesh";
-import type { MmdMorphController } from "./mmdMorphController";
+import type { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 
 /**
  * IMmdModel is a model that can bind animation.
@@ -43,7 +43,7 @@ export interface IMmdModel {
     /**
      * The morph controller of this model
      *
-     * The `MmdMorphController` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
+     * The `MmdMorphControllerBase` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
      */
-    readonly morph: MmdMorphController;
+    readonly morph: MmdMorphControllerBase;
 }

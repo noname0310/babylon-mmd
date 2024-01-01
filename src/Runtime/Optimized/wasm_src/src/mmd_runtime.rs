@@ -1,11 +1,12 @@
 use wasm_bindgen::prelude::*;
-use web_sys::js_sys::Uint8Array;
+use web_sys::js_sys::{Uint8Array, Float32Array};
 
 use crate::{mmd_model::MmdModel, mmd_model_metadata::MetadataBuffer};
 
 #[wasm_bindgen]
 pub struct MmdRuntime {
-    mmd_models: Vec<MmdModel>,
+    #[allow(clippy::vec_box)]
+    mmd_models: Vec<Box<MmdModel>>,
 }
 
 #[wasm_bindgen]
@@ -42,14 +43,89 @@ impl MmdRuntime {
     }
 
     #[wasm_bindgen(js_name = "createMmdModel")]
-    pub fn create_mmd_model(&mut self, serialized_metadata_ptr: *const u8, serialized_metadata_size: usize) -> usize {
+    pub fn create_mmd_model(&mut self, serialized_metadata_ptr: *const u8, serialized_metadata_size: usize) -> *mut usize {
         let serialized_metadata = unsafe {
             std::slice::from_raw_parts(serialized_metadata_ptr, serialized_metadata_size)
         };
         let metadata_buffer = MetadataBuffer::new(serialized_metadata);
 
-        let mmd_model = MmdModel::new(metadata_buffer);
+        let mmd_model = Box::new(MmdModel::new(metadata_buffer));
+        let ptr = &*mmd_model as *const MmdModel as *mut usize;
         self.mmd_models.push(mmd_model);
-        self.mmd_models.len() - 1
+        ptr
+    }
+
+    #[wasm_bindgen(js_name = "destroyMmdModel")]
+    pub fn destroy_mmd_model(&mut self, ptr: *mut usize) {
+        let ptr = ptr as *mut MmdModel;
+        let index = match self.mmd_models.iter().position(|mmd_model| &**mmd_model as *const MmdModel == ptr) {
+            Some(index) => index,
+            None => return,
+        };
+        self.mmd_models.remove(index);
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationArena")]
+    pub fn get_animation_bone_arena(&mut self, ptr: *mut usize) -> Float32Array {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena();
+        unsafe {
+            animation_arena.bone_arena_typed_array()
+        }
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationIkSolverStateArena")]
+    pub fn get_animation_iksolver_state_arena(&mut self, ptr: *mut usize) -> Uint8Array {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena();
+        unsafe {
+            animation_arena.iksolver_state_arena_typed_array()
+        }
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationMorphArena")]
+    pub fn get_animation_morph_arena(&mut self, ptr: *mut usize) -> Float32Array {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena();
+        unsafe {
+            animation_arena.morph_arena_typed_array()
+        }
+    }
+    
+    #[wasm_bindgen(js_name = "getBoneWorldMatrixArena")]
+    pub fn get_bone_world_matrix_arena(&mut self, ptr: *mut usize) -> Float32Array {
+        let ptr = ptr as *mut MmdModel;
+        let bone_arena = unsafe {
+            &mut *ptr
+        }.bone_arena();
+        unsafe {
+            bone_arena.world_matrix_arena_typed_array()
+        }
+    }
+
+    #[wasm_bindgen(js_name = "beforePhysics")]
+    pub fn before_physics(&mut self) {
+        for mmd_model in &mut self.mmd_models {
+            mmd_model.before_physics();
+        }
+    }
+
+    #[wasm_bindgen(js_name = "afterPhysics")]
+    pub fn after_physics(&mut self) {
+        for mmd_model in &mut self.mmd_models {
+            mmd_model.after_physics();
+        }
+    }
+}
+
+impl Default for MmdRuntime {
+    fn default() -> Self {
+        Self::new()
     }
 }

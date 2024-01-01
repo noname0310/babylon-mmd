@@ -37,11 +37,11 @@ impl AppendTransformSolverArena {
         let solver = &self.arena[index];
         if solver.affect_position {
             let position = if solver.is_local {
-                target_bone.animated_position(animation_arena)
+                target_bone.animation_position_offset(animation_arena)
             } else if let Some(append_transform_solver) = target_bone.append_transform_solver {
                 self.arena[append_transform_solver].append_position_offset
             } else {
-                target_bone.animated_position(animation_arena)
+                target_bone.animation_position_offset(animation_arena)
             };
 
             let solver = &mut self.arena[index];

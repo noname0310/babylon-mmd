@@ -73,6 +73,7 @@ export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAud
 // Runtime/Optimized
 export { createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
+export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
 export { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 
 // Runtime/Util
@@ -87,7 +88,8 @@ export { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
 export { MmdCamera } from "@/Runtime/mmdCamera";
 export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
 export { MmdModel } from "@/Runtime/mmdModel";
-export { MmdMorphController, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphController";
+export { MmdMorphController } from "@/Runtime/mmdMorphController";
+export { MmdMorphControllerBase, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphControllerBase";
 export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/mmdPhysics";
 export { CreateMmdModelOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";
