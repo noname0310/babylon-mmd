@@ -99,10 +99,10 @@ impl IkSolver {
     pub fn solve(&mut self, animation_arena: &AnimationArena, bone_arena: &mut MmdRuntimeBoneArena, append_transform_sovler_arena: &AppendTransformSolverArena) {
         for chain in &mut self.ik_chains {
             chain.prev_angle = Vector3::zeros();
-            chain.saved_ik_rotation = UnitQuaternion::identity();
             chain.plane_mode_angle = 0.0;
 
             let chain_bone = &mut bone_arena[chain.bone];
+            chain_bone.ik_rotation = Some(UnitQuaternion::identity());
             chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
             bone_arena.update_world_matrix(chain.bone);
         };
