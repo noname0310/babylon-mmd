@@ -75,6 +75,7 @@ export { createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdW
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
 export { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
 // Runtime/Util
 export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
