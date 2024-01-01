@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.36.0
+
+- introduce `MmdWasmRuntime` for WASM driven MMD animation runtime
+
 ## 0.35.0
 
 - apply typed array on ik solver state for better performance
