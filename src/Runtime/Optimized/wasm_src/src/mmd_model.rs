@@ -101,7 +101,7 @@ impl MmdModel {
         });
 
         let mut sorted_runtime_bones = Vec::with_capacity(bone_arena.len());
-        for i in 0..sorted_runtime_bones.len() {
+        for i in 0..bone_arena.len() {
             sorted_runtime_bones.push(i);
         }
         sorted_runtime_bones.sort_by(|a, b| {
@@ -111,7 +111,7 @@ impl MmdModel {
         });
 
         let mut sorted_runtime_root_bones = Vec::with_capacity(bone_arena.len());
-        for i in 0..sorted_runtime_bones.len() {
+        for i in 0..bone_arena.len() {
             let bone = &bone_arena[sorted_runtime_bones[i]];
             if bone.parent_bone.is_none() {
                 sorted_runtime_root_bones.push(i);

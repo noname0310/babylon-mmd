@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
-use web_sys::js_sys::{Uint8Array, Float32Array};
+use web_sys::{js_sys::{Uint8Array, Float32Array}, console};
 
-use crate::{mmd_model::MmdModel, mmd_model_metadata::MetadataBuffer};
+use crate::{mmd_model::MmdModel, mmd_model_metadata::MetadataBuffer, animation_arena};
 
 #[wasm_bindgen]
 pub struct MmdRuntime {
@@ -121,6 +121,15 @@ impl MmdRuntime {
         for mmd_model in &mut self.mmd_models {
             mmd_model.after_physics();
         }
+    }
+
+    #[wasm_bindgen(js_name = "updateBoneWorldMatrix")]
+    pub fn update_bone_world_matrix(&mut self, ptr: *mut usize, root: usize) {
+        let ptr = ptr as *mut MmdModel;
+        let bone_arena = unsafe {
+            &mut *ptr
+        }.bone_arena();
+        bone_arena.update_world_matrix(root);
     }
 }
 

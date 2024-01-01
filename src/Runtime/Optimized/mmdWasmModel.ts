@@ -1,10 +1,12 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Space } from "@babylonjs/core/Maths/math.axis";
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
+import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
+
+import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 import type { IMmdBindableModelAnimation } from "../Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
@@ -15,10 +17,11 @@ import type { ILogger } from "../ILogger";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
-import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
+import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
-import type { MmdRuntimeBone } from "../mmdRuntimeBone";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
+import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
+import type { MmdRuntime } from "./wasm";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
@@ -57,6 +60,13 @@ export class MmdWasmModel implements IMmdModel {
     public readonly worldTransformMatrices: Float32Array;
 
     /**
+     * Wasm side bone animation states. this value is automatically synchronized with `MmdWasmModel.skeleton` on `MmdWasmModel.beforePhysics()` stage
+     *
+     * repr: [..., positionX, positionY, positionZ, rotationX, rotationY, rotationZ, rotationW, scaleX, scaleY, scaleZ, ...]
+     */
+    public readonly boneAnimationStates: Float32Array;
+
+    /**
      * Uint8Array that stores the state of IK solvers
      *
      * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
@@ -79,7 +89,7 @@ export class MmdWasmModel implements IMmdModel {
 
     private readonly _logger: ILogger;
 
-    private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
+    private readonly _sortedRuntimeBones: readonly MmdWasmRuntimeBone[];
 
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
     private readonly _animations: RuntimeModelAnimation[];
@@ -89,26 +99,20 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Create a MmdWasmModel
+     * @param wasmRuntime MMD WASM runtime
      * @param ptr Pointer to wasm side MmdModel
      * @param mmdSkinnedMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
-     * @param worldTransformMatrices The array of final transform matrices of bones (ie. the matrix sent to shaders). repr: [..., worldTransformMatrix(16 x float32), ...]
-     * @param boneAnimationStates The array of bone animation states. repr: [..., positionX, positionY, positionZ, rotationX, rotationY, rotationZ, rotationW, scaleX, scaleY, scaleZ, ...]
-     * @param ikSolverStates Uint8Array that stores the state of IK solvers. repr: [..., ikSolverState, ...]
-     * @param morphWeights The array of WASM side morph weights. repr: [..., morphWeight, ...]
      * @param wasmMorphIndexMap Mmd morph to WASM morph index map
      * @param logger Logger
      */
     public constructor(
+        wasmRuntime: MmdRuntime,
         ptr: number,
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        worldTransformMatrices: Float32Array,
-        boneAnimationStates: Float32Array,
-        ikSolverStates: Uint8Array,
-        morphWeights: Float32Array,
         wasmMorphIndexMap: Int32Array,
         logger: ILogger
     ) {
@@ -127,7 +131,14 @@ export class MmdWasmModel implements IMmdModel {
         this.ptr = ptr;
         this.mesh = runtimeModelNode;
         this.skeleton = skeleton;
+
+        const worldTransformMatrices = wasmRuntime.getBoneWorldMatrixArena(ptr);
+        const boneAnimationStates = wasmRuntime.getAnimationArena(ptr);
+        const ikSolverStates = wasmRuntime.getAnimationIkSolverStateArena(ptr);
+        const morphWeights = wasmRuntime.getAnimationMorphArena(ptr);
+
         this.worldTransformMatrices = worldTransformMatrices;
+        this.boneAnimationStates = boneAnimationStates;
         this.ikSolverStates = ikSolverStates;
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
@@ -135,10 +146,19 @@ export class MmdWasmModel implements IMmdModel {
 
         this._disableSkeletonWorldMatrixUpdate(skeleton);
 
-        boneAnimationStates;
-        this.runtimeBones = [];
+        const runtimeBones = this.runtimeBones = this._buildRuntimeSkeleton(
+            skeleton.bones,
+            mmdMetadata.bones,
+            worldTransformMatrices,
+            wasmRuntime,
+            ptr
+        );
 
-        this._sortedRuntimeBones = [];
+        const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
+        // sort must be stable (require ES2019)
+        sortedBones.sort((a, b) => {
+            return a.transformOrder - b.transformOrder;
+        });
 
         this.morph = new MmdWasmMorphController(
             morphWeights,
@@ -243,6 +263,13 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     /**
+     * Get the animations of this model
+     */
+    public get runtimeAnimations(): readonly RuntimeModelAnimation[] {
+        return this._animations;
+    }
+
+    /**
      * Get the current animation of this model
      */
     public get currentAnimation(): Nullable<RuntimeModelAnimation> {
@@ -258,7 +285,9 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     /**
-     * Before the physics stage, update animations and run MMD runtime solvers
+     * Before the physics stage, update animations
+     *
+     * mmd solvers are run by wasm runtime
      *
      * This method must be called before the physics stage
      *
@@ -273,10 +302,38 @@ export class MmdWasmModel implements IMmdModel {
         }
 
         this.morph.update();
+
+        const bones = this.skeleton.bones;
+        const boneAnimationStates = this.boneAnimationStates;
+        for (let i = 0; i < bones.length; ++i) {
+            const bone = bones[i];
+            const boneAnimationStateIndex = i * 10;
+            {
+                const { x, y, z } = bone.position;
+                boneAnimationStates[boneAnimationStateIndex + 0] = x;
+                boneAnimationStates[boneAnimationStateIndex + 1] = y;
+                boneAnimationStates[boneAnimationStateIndex + 2] = z;
+            }
+            {
+                const { x, y, z, w } = bone.rotationQuaternion;
+                boneAnimationStates[boneAnimationStateIndex + 3] = x;
+                boneAnimationStates[boneAnimationStateIndex + 4] = y;
+                boneAnimationStates[boneAnimationStateIndex + 5] = z;
+                boneAnimationStates[boneAnimationStateIndex + 6] = w;
+            }
+            {
+                const { x, y, z } = bone.scaling;
+                boneAnimationStates[boneAnimationStateIndex + 7] = x;
+                boneAnimationStates[boneAnimationStateIndex + 8] = y;
+                boneAnimationStates[boneAnimationStateIndex + 9] = z;
+            }
+        }
     }
 
     /**
-     * After the physics stage, run MMD runtime solvers
+     * After the physics stage
+     *
+     * mmd solvers are run by wasm runtime
      *
      * This method must be called after the physics stage
      */
@@ -284,11 +341,54 @@ export class MmdWasmModel implements IMmdModel {
         this.mesh.metadata.skeleton._markAsDirty();
     }
 
+    private _buildRuntimeSkeleton(
+        bones: IMmdRuntimeLinkedBone[],
+        bonesMetadata: readonly MmdModelMetadata.Bone[],
+        worldTransformMatrices: Float32Array,
+        wasmRuntime: MmdRuntime,
+        mmdModelPtr: number
+    ): readonly MmdWasmRuntimeBone[] {
+        const runtimeBones: MmdWasmRuntimeBone[] = [];
+
+        let ikSolverCount = 0;
+        for (let i = 0; i < bonesMetadata.length; ++i) {
+            const boneMetadata = bonesMetadata[i];
+
+            let ikSolverIndex = -1;
+            if (boneMetadata.ik !== undefined) {
+                ikSolverIndex = ikSolverCount;
+                ikSolverCount += 1;
+            }
+
+            runtimeBones.push(new MmdWasmRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i, ikSolverIndex, wasmRuntime, mmdModelPtr));
+        }
+
+        for (let i = 0; i < bonesMetadata.length; ++i) {
+            const boneMetadata = bonesMetadata[i];
+            const bone = runtimeBones[i];
+
+            const parentBoneIndex = boneMetadata.parentBoneIndex;
+            if (0 <= parentBoneIndex && parentBoneIndex < runtimeBones.length) {
+                const parentBone = runtimeBones[parentBoneIndex];
+                bone.parentBone = parentBone;
+                parentBone.childBones.push(bone);
+            }
+        }
+
+        return runtimeBones;
+    }
+
     private _originalComputeTransformMatrices: Nullable<(targetMatrix: Float32Array, initialSkinMatrix: Nullable<Matrix>) => void> = null;
 
     private _disableSkeletonWorldMatrixUpdate(skeleton: IMmdLinkedBoneContainer): void {
         if (this._originalComputeTransformMatrices !== null) return;
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
+
+        const worldTransformMatrices = this.worldTransformMatrices;
+
+        (globalThis as any).consoleMatrix = (): void => {
+            console.log(worldTransformMatrices);
+        };
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);
@@ -299,7 +399,11 @@ export class MmdWasmModel implements IMmdModel {
 
                 if (bone._index !== -1) {
                     const mappedIndex = bone._index === null ? index : bone._index;
-                    bone.getAbsoluteInverseBindMatrix().multiplyToArray(bone.getFinalMatrix(), targetMatrix, mappedIndex * 16);
+                    bone.getAbsoluteInverseBindMatrix().multiplyToArray(
+                        Matrix.FromArrayToRef(worldTransformMatrices, index * 16, bone.getFinalMatrix()),
+                        targetMatrix,
+                        mappedIndex * 16
+                    );
                 }
             }
 

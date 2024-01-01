@@ -165,20 +165,13 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer);
 
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
-        const worldTransformMatrices = wasmRuntime.getBoneWorldMatrixArena(mmdModelPtr);
-        const boneAnimationStates = wasmRuntime.getAnimationArena(mmdModelPtr);
-        const ikSolverStates = wasmRuntime.getAnimationIkSolverStateArena(mmdModelPtr);
-        const morphWeights = wasmRuntime.getAnimationMorphArena(mmdModelPtr);
 
         const model = new MmdWasmModel(
+            wasmRuntime,
             mmdModelPtr,
             mmdMesh,
             skeleton,
             options.materialProxyConstructor,
-            worldTransformMatrices,
-            boneAnimationStates,
-            ikSolverStates,
-            morphWeights,
             wasmMorphIndexMap,
             this
         );
