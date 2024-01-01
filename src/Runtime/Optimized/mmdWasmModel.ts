@@ -19,6 +19,7 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
+import type { MmdPhysics, MmdPhysicsModel } from "../mmdPhysics";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
 import type { MmdRuntime } from "./wasm";
@@ -87,6 +88,8 @@ export class MmdWasmModel implements IMmdModel {
      */
     public readonly morph: MmdWasmMorphController;
 
+    private readonly _physicsModel: Nullable<MmdPhysicsModel>;
+
     private readonly _logger: ILogger;
 
     private readonly _sortedRuntimeBones: readonly MmdWasmRuntimeBone[];
@@ -105,6 +108,7 @@ export class MmdWasmModel implements IMmdModel {
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param wasmMorphIndexMap Mmd morph to WASM morph index map
+     * @param externalPhysics The external physics engine
      * @param logger Logger
      */
     public constructor(
@@ -114,6 +118,7 @@ export class MmdWasmModel implements IMmdModel {
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         wasmMorphIndexMap: Int32Array,
+        externalPhysics: Nullable<MmdPhysics>,
         logger: ILogger
     ) {
         this._logger = logger;
@@ -168,6 +173,23 @@ export class MmdWasmModel implements IMmdModel {
             mmdMetadata.morphs,
             logger
         );
+
+        if (externalPhysics !== null) {
+            this.beforePhysicsAndWasm(null);
+            wasmRuntime.updataBoneLocalMatrices(ptr);
+            for (let i = 0; i < sortedBones.length; ++i) {
+                if (sortedBones[i].parentBone === null) sortedBones[i].updateWorldMatrix();
+            }
+            this._physicsModel = externalPhysics.buildPhysics(
+                mmdSkinnedMesh,
+                runtimeBones,
+                mmdMetadata.rigidBodies,
+                mmdMetadata.joints,
+                logger
+            );
+        } else {
+            this._physicsModel = null;
+        }
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
         this._animations = [];
@@ -285,16 +307,21 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     /**
-     * Before the physics stage, update animations
-     *
-     * mmd solvers are run by wasm runtime
+     * Reset the rigid body positions and velocities of this model
+     */
+    public initializePhysics(): void {
+        this._physicsModel?.initialize();
+    }
+
+    /**
+     * Before the "physics stage" and before the "wasm before solver" stage
      *
      * This method must be called before the physics stage
      *
      * If frameTime is null, animations are not updated
      * @param frameTime The time elapsed since the last frame in 30fps
      */
-    public beforePhysics(frameTime: Nullable<number>): void {
+    public beforePhysicsAndWasm(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
             if (this._currentAnimation !== null) {
                 this._currentAnimation.animate(frameTime);
@@ -331,7 +358,24 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     /**
-     * After the physics stage
+     * Before the "physics stage" and after the "wasm before solver" stage
+     */
+    public beforePhysics(): void {
+        this._physicsModel?.syncBodies();
+    }
+
+    /**
+     * After the "physics stage" and before the "wasm after solver" stage
+     */
+    public afterPhysicsAndWasm(): void {
+        const physicsModel = this._physicsModel;
+        if (physicsModel !== null) {
+            physicsModel.syncBones();
+        }
+    }
+
+    /**
+     * After the "physics stage" and after the "wasm after solver" stage
      *
      * mmd solvers are run by wasm runtime
      *
@@ -385,10 +429,6 @@ export class MmdWasmModel implements IMmdModel {
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
         const worldTransformMatrices = this.worldTransformMatrices;
-
-        (globalThis as any).consoleMatrix = (): void => {
-            console.log(worldTransformMatrices);
-        };
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);

@@ -1,19 +1,8 @@
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IDisposeObservable } from "../IDisposeObserable";
 import type { IAudioPlayer } from "./IAudioPlayer";
-
-/**
- * Disposeable object interface
- */
-export interface IDisposeObservable {
-    /**
-     * On dispose observable
-     *
-     * This observable is notified when the object is disposed
-     */
-    readonly onDisposeObservable: Observable<any>;
-}
 
 /**
  * Stream audio player

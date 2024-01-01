@@ -7,12 +7,14 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "../Audio/IAudioPlayer";
+import type { IDisposeObservable } from "../IDisposeObserable";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
 import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
+import type { MmdPhysics } from "../mmdPhysics";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
@@ -23,6 +25,7 @@ import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
 export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private readonly _wasmRuntime: MmdWasmRuntimeInternal;
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
+    private readonly _physics: Nullable<MmdPhysics>;
 
     private readonly _models: MmdWasmModel[];
     private _camera: Nullable<MmdCamera>;
@@ -70,16 +73,26 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private _animationFrameTimeDuration: number;
     private _useManualAnimationDuration: boolean;
 
+    private readonly _needToInitializePhysicsModels: Set<MmdWasmModel>;
+
     private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
+    private readonly _bindedDispose: Nullable<(scene: Scene) => void>;
+    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+
     /**
      * Creates a new MMD web assembly runtime
+     *
+     * For use havok physics, you need to set `physics` to `MmdPhysics` instance
      * @param wasmInstance MMD WASM instance
+     * @param scene Objects that limit the lifetime of this instance
+     * @param physics MMD physics
      */
-    public constructor(wasmInstance: MmdWasmInstance) {
+    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
         this._wasmRuntime = wasmInstance.createMmdRuntime();
         this._mmdMetadataEncoder = new MmdMetadataEncoder();
+        this._physics = physics;
 
         this._models = [];
         this._camera = null;
@@ -104,8 +117,21 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this._animationFrameTimeDuration = 0;
         this._useManualAnimationDuration = false;
 
+        this._needToInitializePhysicsModels = new Set<MmdWasmModel>();
+
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
+
+        if (scene !== null) {
+            this._bindedDispose = (): void => this.dispose(scene);
+            this._disposeObservableObject = scene;
+            if (this._disposeObservableObject !== null) {
+                this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
+            }
+        } else {
+            this._bindedDispose = null;
+            this._disposeObservableObject = null;
+        }
     }
 
     /**
@@ -114,6 +140,10 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public dispose(scene: Scene): void {
         this.unregister(scene);
         this._wasmRuntime.free();
+
+        if (this._disposeObservableObject !== null && this._bindedDispose !== null) {
+            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
+        }
     }
 
     /**
@@ -173,9 +203,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             skeleton,
             options.materialProxyConstructor,
             wasmMorphIndexMap,
+            options.buildPhysics ? this._physics : null,
             this
         );
         this._models.push(model);
+        this._needToInitializePhysicsModels.add(model);
 
         wasmRuntime.deallocateBuffer(metadataBufferPtr, metadataSize);
 
@@ -320,6 +352,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                         this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale * 1.1;
                     }
                 } else {
+                    if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
+                        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                        for (let i = 0; i < this._models.length; ++i) {
+                            const model = this._models[i];
+                            if (model.currentAnimation !== null) {
+                                needToInitializePhysicsModels.add(model);
+                            }
+                        }
+                    }
+
                     this._currentFrameTime = audioPlayerCurrentTime * 30;
                 }
             } else { // only use delta time to calculate animation time
@@ -340,10 +382,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             const models = this._models;
-            for (let i = 0; i < models.length; ++i) {
-                models[i].beforePhysics(elapsedFrameTime);
-            }
+            for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(elapsedFrameTime);
             this._wasmRuntime.beforePhysics();
+            for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
 
             if (this._camera !== null) {
                 this._camera.animate(elapsedFrameTime);
@@ -352,23 +393,27 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             this.onAnimationTickObservable.notifyObservers();
         } else {
             const models = this._models;
-            for (let i = 0; i < models.length; ++i) {
-                models[i].beforePhysics(null);
-            }
+            for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(null);
             this._wasmRuntime.beforePhysics();
+            for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
         }
+
+        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+        for (const model of needToInitializePhysicsModels) {
+            model.initializePhysics();
+        }
+        needToInitializePhysicsModels.clear();
     }
 
     /**
      * After the physics stage, update physics and run MMD runtime solvers
      */
     public afterPhysics(): void {
-        this._wasmRuntime.afterPhysics();
-
         const models = this._models;
-        for (let i = 0; i < models.length; ++i) {
-            models[i].afterPhysics();
-        }
+
+        for (let i = 0; i < models.length; ++i) models[i].afterPhysicsAndWasm();
+        this._wasmRuntime.afterPhysics();
+        for (let i = 0; i < models.length; ++i) models[i].afterPhysics();
     }
 
     private readonly _onAnimationChanged = (newAnimation: Nullable<IMmdRuntimeCameraAnimation | IMmdRuntimeModelAnimation>): void => {
@@ -468,6 +513,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             for (let i = 0; i < this._models.length; ++i) {
                 const model = models[i];
                 model.resetState();
+                this._needToInitializePhysicsModels.add(model);
             }
 
             this._animationFrameTimeDuration = this._computeAnimationDuration();
@@ -520,6 +566,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     private _seekAnimationInternal(frameTime: number, forceEvaluate: boolean): void {
+        if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
+            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+            for (let i = 0; i < this._models.length; ++i) {
+                const model = this._models[i];
+                if (model.currentAnimation !== null) {
+                    needToInitializePhysicsModels.add(model);
+                }
+            }
+        }
+
         this._currentFrameTime = frameTime;
 
         if (forceEvaluate) {

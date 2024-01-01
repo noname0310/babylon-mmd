@@ -10,9 +10,11 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
@@ -23,6 +25,7 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
+import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { createMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -97,10 +100,17 @@ export class SceneBuilder implements ISceneBuilder {
                 const mmdWasmInstance = await createMmdWasmInstance();
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
                 return mmdWasmInstance;
+            }],
+            ["physics", async(updateProgress): Promise<void> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await havokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);
 
-        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance);
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.setAudioPlayer(audioPlayer);

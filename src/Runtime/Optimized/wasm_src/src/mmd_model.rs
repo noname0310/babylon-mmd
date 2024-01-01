@@ -159,6 +159,13 @@ impl MmdModel {
         self.update(true);
     }
 
+    pub fn update_local_matrices(&mut self) {
+        for bone in self.sorted_runtime_bones.iter() {
+            let bone = &mut self.bone_arena[*bone];
+            bone.update_local_matrix(&self.animation_arena, &self.append_transform_solver_arena);
+        }
+    }
+
     fn update(&mut self, after_physics_stage: bool) {
         for bone in self.sorted_runtime_bones.iter() {
             let bone = &mut self.bone_arena[*bone];

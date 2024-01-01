@@ -68,7 +68,7 @@ export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeMod
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
-export { IDisposeObservable, StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
+export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Optimized
 export { createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
@@ -81,6 +81,7 @@ export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 // Runtime
+export { IDisposeObservable } from "@/Runtime/IDisposeObserable";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { IMmdModel } from "@/Runtime/IMmdModel";
 export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
