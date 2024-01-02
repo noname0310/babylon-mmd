@@ -6,6 +6,7 @@ mod mmd_runtime;
 mod append_transform_solver;
 mod mmd_model_metadata;
 mod mmd_morph_controller;
+mod animation;
 
 use wasm_bindgen::prelude::*;
 

@@ -1,6 +1,6 @@
 [package]
 name = "mmd-wasm-runtime"
-version = "0.32.0"
+version = "0.36.0"
 edition = "2021"
 description = "Optimized WASM runtime for babylon.js MMD"
 repository = "https://github.com/noname0310/babylon-mmd"

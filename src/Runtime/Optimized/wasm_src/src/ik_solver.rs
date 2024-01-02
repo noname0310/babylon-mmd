@@ -193,11 +193,11 @@ impl IkSolver {
                     rotation_xyz.z.clamp(minimum_angle.z, maximum_angle.z),
                 );
 
-                clamp_xyz = clamp_xyz - chain.prev_angle;
+                clamp_xyz -= chain.prev_angle;
                 clamp_xyz.x = clamp_xyz.x.clamp(-self.limit_angle, self.limit_angle);
                 clamp_xyz.y = clamp_xyz.y.clamp(-self.limit_angle, self.limit_angle);
                 clamp_xyz.z = clamp_xyz.z.clamp(-self.limit_angle, self.limit_angle);
-                clamp_xyz = clamp_xyz + chain.prev_angle;
+                clamp_xyz += chain.prev_angle;
 
                 let r = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), clamp_xyz.x)
                     * UnitQuaternion::from_axis_angle(&Vector3::y_axis(), clamp_xyz.y)

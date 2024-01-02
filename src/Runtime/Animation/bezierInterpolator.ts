@@ -65,7 +65,7 @@ export class BezierInterpolator {
 
             if (math.abs(ft) < eps) break;
 
-            c /= 2.0;
+            c *= 0.5;
 
             t += (ft < 0) ? c : -c;
             s = 1.0 - t;
