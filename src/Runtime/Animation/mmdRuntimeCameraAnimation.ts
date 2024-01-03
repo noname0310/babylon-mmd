@@ -1,6 +1,6 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
-import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import type { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 
 import type { MmdCamera } from "../mmdCamera";
@@ -23,7 +23,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
     private readonly _camera: MmdCamera;
 
     private constructor(
-        animation: MmdAnimation,
+        animation: MmdAnimationBase,
         camera: MmdCamera
     ) {
         super();
@@ -181,13 +181,13 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
      * @param camera bind target
      * @returns MmdRuntimeCameraAnimation instance
      */
-    public static Create(animation: MmdAnimation, camera: MmdCamera): MmdRuntimeCameraAnimation {
+    public static Create(animation: MmdAnimationBase, camera: MmdCamera): MmdRuntimeCameraAnimation {
         return new MmdRuntimeCameraAnimation(animation, camera);
     }
 }
 
-declare module "../../Loader/Animation/mmdAnimation" {
-    export interface MmdAnimation extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimation> { }
+declare module "../../Loader/Animation/mmdAnimationBase" {
+    export interface MmdAnimationBase extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimation> { }
 }
 
 /**
@@ -195,6 +195,6 @@ declare module "../../Loader/Animation/mmdAnimation" {
  * @param camera bind target
  * @returns MmdRuntimeCameraAnimation instance
  */
-MmdAnimation.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimation {
+MmdAnimationBase.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimation {
     return MmdRuntimeCameraAnimation.Create(this, camera);
 };

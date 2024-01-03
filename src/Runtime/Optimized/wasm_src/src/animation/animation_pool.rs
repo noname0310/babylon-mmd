@@ -24,8 +24,33 @@ impl AnimationPool {
         }
     }
 
+    #[wasm_bindgen(js_name = "allocateTrackLengthsBuffer")]
+    pub fn allocate_track_lengths_buffer(&self, track_count: usize) -> *mut u32 {
+        let mut vec = vec![0; track_count].into_boxed_slice();
+        let ptr = vec.as_mut_ptr();
+        std::mem::forget(vec);
+        ptr
+    }
+
+    #[wasm_bindgen(js_name = "deallocateTrackLengthsBuffer")]
+    pub fn deallocate_track_lengths_buffer(&self, ptr: *mut u32, track_count: usize) {
+        unsafe {
+            let _ = Box::from_raw(std::slice::from_raw_parts_mut(ptr, track_count));
+        }
+    }
+
+    #[wasm_bindgen(js_name = "trackLengthsBufferToUint32Array")]
+    pub fn track_lengths_buffer_to_uint32_array(&self, ptr: *mut u32, track_count: usize) -> Uint32Array {
+        let slice = unsafe {
+            std::slice::from_raw_parts_mut(ptr, track_count)
+        };
+        unsafe {
+            Uint32Array::view(slice)
+        }
+    }
+
     #[wasm_bindgen(js_name = "createBoneTracks")]
-    pub fn create_bone_tracks(&mut self, track_lengths: *const u8, track_count: usize) -> *mut usize {
+    pub fn create_bone_tracks(&mut self, track_lengths: *const u32, track_count: usize) -> *mut usize {
         let mut tracks = Vec::with_capacity(track_count);
         for i in 0..track_count {
             let track_length = unsafe {
@@ -40,8 +65,8 @@ impl AnimationPool {
         ptr as *mut usize
     }
 
-    #[wasm_bindgen(js_name = "getBoneTrackFrameCount")]
-    pub fn get_bone_track_frame_count(&self, tracks: *mut usize, index: usize) -> Uint32Array {
+    #[wasm_bindgen(js_name = "getBoneTrackFrameNumbers")]
+    pub fn get_bone_track_frame_numbers(&self, tracks: *mut usize, index: usize) -> Uint32Array {
         let tracks = tracks as *mut MmdBoneAnimationTrack;
         let track = unsafe {
             &mut *tracks.add(index)
@@ -74,7 +99,7 @@ impl AnimationPool {
     }
 
     #[wasm_bindgen(js_name = "createMovableBoneTracks")]
-    pub fn create_movable_bone_tracks(&mut self, track_lengths: *const u8, track_count: usize) -> *mut usize {
+    pub fn create_movable_bone_tracks(&mut self, track_lengths: *const u32, track_count: usize) -> *mut usize {
         let mut tracks = Vec::with_capacity(track_count);
         for i in 0..track_count {
             let track_length = unsafe {
@@ -89,8 +114,8 @@ impl AnimationPool {
         ptr as *mut usize
     }
 
-    #[wasm_bindgen(js_name = "getMovableBoneTrackFrameCount")]
-    pub fn get_movable_bone_track_frame_count(&self, tracks: *mut usize, index: usize) -> Uint32Array {
+    #[wasm_bindgen(js_name = "getMovableBoneTrackFrameNumbers")]
+    pub fn get_movable_bone_track_frame_numbers(&self, tracks: *mut usize, index: usize) -> Uint32Array {
         let tracks = tracks as *mut MmdMovableBoneAnimationTrack;
         let track = unsafe {
             &mut *tracks.add(index)
@@ -145,7 +170,7 @@ impl AnimationPool {
     }
 
     #[wasm_bindgen(js_name = "createMorphTracks")]
-    pub fn create_morph_tracks(&mut self, track_lengths: *const u8, track_count: usize) -> *mut usize {
+    pub fn create_morph_tracks(&mut self, track_lengths: *const u32, track_count: usize) -> *mut usize {
         let mut tracks = Vec::with_capacity(track_count);
         for i in 0..track_count {
             let track_length = unsafe {
@@ -160,8 +185,8 @@ impl AnimationPool {
         ptr as *mut usize
     }
 
-    #[wasm_bindgen(js_name = "getMorphTrackFrameCount")]
-    pub fn get_morph_track_frame_count(&self, tracks: *mut usize, index: usize) -> Uint32Array {
+    #[wasm_bindgen(js_name = "getMorphTrackFrameNumbers")]
+    pub fn get_morph_track_frame_numbers(&self, tracks: *mut usize, index: usize) -> Uint32Array {
         let tracks = tracks as *mut MmdMorphAnimationTrack;
         let track = unsafe {
             &mut *tracks.add(index)
@@ -220,6 +245,49 @@ impl AnimationPool {
         self.animations.push(animation);
         self.next_animation_id += 1;
         id
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationPtr")]
+    pub fn get_animation_ptr(&self, id: u32) -> *mut usize {
+        let animation = match self.animations.iter().find(|animation| animation.id == id) {
+            Some(animation) => animation,
+            None => return std::ptr::null_mut(),
+        };
+        let ptr = animation as *const MmdAnimation as *mut usize;
+        ptr
+    }
+
+    #[wasm_bindgen(js_name = "getPropertyTrackFrameNumbers")]
+    pub fn get_property_track_frame_numbers(&self, animation_ptr: *mut usize) -> Uint32Array {
+        let animation_ptr = animation_ptr as *mut MmdAnimation;
+        let animation = unsafe {
+            &mut *animation_ptr
+        };
+        unsafe {
+            animation.property_track.frame_numbers_typed_array()
+        }
+    }
+
+    #[wasm_bindgen(js_name = "getPropertyTrackVisibles")]
+    pub fn get_property_track_visibles(&self, animation_ptr: *mut usize) -> Uint8Array {
+        let animation_ptr = animation_ptr as *mut MmdAnimation;
+        let animation = unsafe {
+            &mut *animation_ptr
+        };
+        unsafe {
+            animation.property_track.visibles_typed_array()
+        }
+    }
+
+    #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
+    pub fn get_property_track_ik_states(&self, animation_ptr: *mut usize, index: usize) -> Uint8Array {
+        let animation_ptr = animation_ptr as *mut MmdAnimation;
+        let animation = unsafe {
+            &mut *animation_ptr
+        };
+        unsafe {
+            animation.property_track.ik_states_typed_array(index)
+        }
     }
 
     #[wasm_bindgen(js_name = "destroyAnimation")]

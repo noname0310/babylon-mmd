@@ -149,6 +149,7 @@ impl MmdMorphAnimationTrack {
 
 pub(crate) struct MmdPropertyAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
+    pub(crate) visibles: Box<[u8]>,
     pub(crate) ik_states: Box<[Box<[u8]>]>,
 }
 
@@ -156,6 +157,7 @@ impl MmdPropertyAnimationTrack {
     pub(crate) fn new(frame_count: usize, ik_count: usize) -> Self {
         Self {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
+            visibles: vec![1; frame_count].into_boxed_slice(),
             ik_states: vec![vec![1; frame_count].into_boxed_slice(); ik_count].into_boxed_slice(),
         }
     }
@@ -164,7 +166,11 @@ impl MmdPropertyAnimationTrack {
         Uint32Array::view(&self.frame_numbers)
     }
 
-    pub(crate) unsafe fn ik_state_typed_array(&self, index: usize) -> Uint8Array {
+    pub(crate) unsafe fn visibles_typed_array(&self) -> Uint8Array {
+        Uint8Array::view(&self.visibles)
+    }
+
+    pub(crate) unsafe fn ik_states_typed_array(&self, index: usize) -> Uint8Array {
         Uint8Array::view(&self.ik_states[index])
     }
 }

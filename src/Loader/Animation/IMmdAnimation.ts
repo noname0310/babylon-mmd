@@ -1,5 +1,5 @@
 /**
- * Interface for MMD animation
+ * Interface for Any MMD animation container
  */
 export interface IMmdAnimation {
     /**

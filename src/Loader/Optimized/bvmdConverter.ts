@@ -55,7 +55,7 @@
  * fovInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  */
 
-import type { MmdAnimation } from "../Animation/mmdAnimation";
+import type { MmdAnimationBase } from "../Animation/mmdAnimationBase";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 
 /**
@@ -69,7 +69,7 @@ export class BvmdConverter {
      * @param animation mmd animation from VMD/BVMD
      * @returns converted BVMD
      */
-    public static Convert(animation: MmdAnimation): ArrayBuffer {
+    public static Convert(animation: MmdAnimationBase): ArrayBuffer {
         const encoder = new TextEncoder();
 
         let dataLength =
@@ -215,7 +215,7 @@ export class BvmdConverter {
 
             serializer.setString(ikBoneName); // ikBoneName
 
-            serializer.setUint8Array(animation.propertyTrack.ikStates[i]); // ikStates
+            serializer.setUint8Array(animation.propertyTrack.getIkState(i)); // ikStates
         }
 
         serializer.setUint32(animation.cameraTrack.frameNumbers.length); // cameraFrameCount

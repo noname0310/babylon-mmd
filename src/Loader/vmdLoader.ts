@@ -598,22 +598,21 @@ export class VmdLoader {
                 propertyTrack.frameNumbers[i] = propertyKeyFrame.frameNumber;
                 propertyTrack.visibles[i] = propertyKeyFrame.visible ? 1 : 0;
 
-                const propertyTrackIkStates = propertyTrack.ikStates;
                 const propertyKeyFrameIkStates = propertyKeyFrame.ikStates;
 
                 keyExistsCheckArray.fill(0);
                 for (let j = 0; j < propertyKeyFrameIkStates.length; ++j) {
                     const ikState = propertyKeyFrameIkStates[j];
                     const boneIndex = ikboneIndexMap.get(ikState[0])!;
-                    propertyTrackIkStates[boneIndex][i] = ikState[1] ? 1 : 0;
+                    propertyTrack.getIkState(boneIndex)[i] = ikState[1] ? 1 : 0;
 
                     keyExistsCheckArray[boneIndex] = 1;
                 }
 
                 for (let j = 0; j < keyExistsCheckArray.length; ++j) {
                     if (keyExistsCheckArray[j] === 0) {
-                        const previousValue = propertyTrackIkStates[j][i - 1];
-                        propertyTrackIkStates[j][i] = previousValue === undefined ? 0 : previousValue;
+                        const previousValue = propertyTrack.getIkState(j)[i - 1];
+                        propertyTrack.getIkState(j)[i] = previousValue === undefined ? 0 : previousValue;
                     }
                 }
             }

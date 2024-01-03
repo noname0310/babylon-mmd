@@ -26,7 +26,9 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
-import { createMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
+import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
@@ -62,15 +64,37 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
 
         const [
-            mmdAnimation,
+            [mmdRuntime, mmdAnimation],
             modelMesh,
-            stageMesh,
-            mmdRuntime
+            stageMesh
         ] = await parallelLoadAsync(scene, [
-            ["motion", (updateProgress): Promise<MmdAnimation> => {
-                const bvmdLoader = new BvmdLoader(scene);
-                bvmdLoader.loggingEnabled = true;
-                return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
+            ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
+                const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
+                    ["runtime", async(): Promise<MmdWasmInstance> => {
+                        const mmdWasmInstance = await getMmdWasmInstance();
+                        return mmdWasmInstance;
+                    }],
+                    ["motion", (): Promise<MmdAnimation> => {
+                        const bvmdLoader = new BvmdLoader(scene);
+                        bvmdLoader.loggingEnabled = true;
+                        return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
+                    }]
+                ]);
+
+                const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
+
+                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
+                mmdRuntime.loggingEnabled = true;
+
+                mmdRuntime.setAudioPlayer(audioPlayer);
+
+                const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+                mmdPlayerControl.showPlayerControl();
+
+                mmdRuntime.register(scene);
+                mmdRuntime.playAnimation();
+
+                return [mmdRuntime, mmdWasmAnimation];
             }],
             ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
@@ -93,23 +117,6 @@ export class SceneBuilder implements ISceneBuilder {
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["runtime", async(updateProgress): Promise<MmdWasmRuntime> => {
-                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const mmdWasmInstance = await createMmdWasmInstance();
-                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
-
-                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
-                mmdRuntime.loggingEnabled = true;
-
-                mmdRuntime.setAudioPlayer(audioPlayer);
-
-                const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
-                mmdPlayerControl.showPlayerControl();
-
-                mmdRuntime.register(scene);
-                mmdRuntime.playAnimation();
-                return mmdRuntime;
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });

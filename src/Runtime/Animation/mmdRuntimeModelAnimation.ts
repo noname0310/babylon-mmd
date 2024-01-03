@@ -4,7 +4,7 @@ import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 
 import type { IMmdModel } from "../IMmdModel";
@@ -23,11 +23,11 @@ type MorphIndices = readonly number[];
  *
  * An object with mmd animation and model binding information
  */
-export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> implements IMmdRuntimeModelAnimationWithBindingInfo {
+export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBase> implements IMmdRuntimeModelAnimationWithBindingInfo {
     /**
      * The animation data
      */
-    public readonly animation: MmdAnimation;
+    public readonly animation: MmdAnimationBase;
 
     /**
      * Bone bind index map
@@ -58,7 +58,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
     private _materialRecompileInduceInfo: Material[] | null;
 
     private constructor(
-        animation: MmdAnimation,
+        animation: MmdAnimationBase,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphControllerBase,
@@ -356,12 +356,11 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
 
             const ikSolverStates = this._ikSolverStates;
             const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
-            const propertyTrackIkStates = propertyTrack.ikStates;
             for (let i = 0; i < ikSolverBindIndexMap.length; ++i) {
                 const ikSolverIndex = ikSolverBindIndexMap[i];
                 if (ikSolverIndex === -1) continue;
 
-                const ikState = propertyTrackIkStates[i];
+                const ikState = propertyTrack.getIkState(i);
                 ikSolverStates[ikSolverIndex] = ikState[stepIndex];
             }
         }
@@ -395,7 +394,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
      * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
-    public static Create(animation: MmdAnimation, model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
+    public static Create(animation: MmdAnimationBase, model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.skeleton;
         const bones = skeleton.bones;
 
@@ -510,8 +509,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
     ) => void;
 }
 
-declare module "../../Loader/Animation/mmdAnimation" {
-    export interface MmdAnimation extends IMmdBindableModelAnimation<MmdRuntimeModelAnimation> { }
+declare module "../../Loader/Animation/mmdAnimationBase" {
+    export interface MmdAnimationBase extends IMmdBindableModelAnimation<MmdRuntimeModelAnimation> { }
 }
 
 /**
@@ -521,7 +520,7 @@ declare module "../../Loader/Animation/mmdAnimation" {
  * @param logger Logger
  * @returns MmdRuntimeModelAnimation instance
  */
-MmdAnimation.prototype.createRuntimeModelAnimation = function(
+MmdAnimationBase.prototype.createRuntimeModelAnimation = function(
     model: IMmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger

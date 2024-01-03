@@ -12,6 +12,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 // Loader/Animation
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+export { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 export { IMmdCameraAnimationGroupBuilder, MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder, MmdCameraAnimationGroupHermiteBuilder, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
 export { IMmdModelAnimationGroupBuilder, MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder, MmdModelAnimationGroupHermiteBuilder, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
@@ -71,7 +72,7 @@ export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
 export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Optimized
-export { createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+export { getMmdWasmInstance as createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
 export { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";

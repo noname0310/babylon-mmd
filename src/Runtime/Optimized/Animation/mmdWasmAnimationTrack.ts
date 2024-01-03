@@ -1,7 +1,7 @@
 /**
  * MMD animation track base class
  */
-export abstract class MmdAnimationTrack {
+export abstract class MmdWasmAnimationTrack {
     /**
      * Track type
      */
@@ -48,18 +48,6 @@ export abstract class MmdAnimationTrack {
     }
 
     /**
-     * Check if all frame numbers are valid(sorted)
-     * @returns true if all frame numbers are valid
-     */
-    public validate(): boolean {
-        for (let i = 1; i < this.frameNumbers.length; ++i) {
-            if (this.frameNumbers[i - 1] >= this.frameNumbers[i]) return false;
-        }
-
-        return true;
-    }
-
-    /**
      * The start frame of this animation
      */
     public get startFrame(): number {
@@ -83,7 +71,7 @@ export abstract class MmdAnimationTrack {
  *
  * Contains bone rotation and rotation cubic interpolation data
  */
-export class MmdBoneAnimationTrack extends MmdAnimationTrack {
+export class MmdBoneAnimationTrack extends MmdWasmAnimationTrack {
     /**
      * Bone rotation data in quaternion
      *
@@ -136,7 +124,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack {
  *
  * Contains bone position, rotation and position/rotation cubic interpolation data
  */
-export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
+export class MmdMovableBoneAnimationTrack extends MmdWasmAnimationTrack {
     /**
      * Bone position data in vector3
      *
@@ -218,7 +206,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
  *
  * Weight data will be linear interpolated so there is no interpolation data
  */
-export class MmdMorphAnimationTrack extends MmdAnimationTrack {
+export class MmdMorphAnimationTrack extends MmdWasmAnimationTrack {
     /**
      * Morph weight data
      *
@@ -258,7 +246,7 @@ export class MmdMorphAnimationTrack extends MmdAnimationTrack {
  *
  * Contains camera position, rotation, distance, fov and their cubic interpolation data
  */
-export class MmdCameraAnimationTrack extends MmdAnimationTrack {
+export class MmdCameraAnimationTrack extends MmdWasmAnimationTrack {
     /**
      * Camera position data in vector3
      *
@@ -411,7 +399,7 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
  *
  * Visibility and ik state will be step interpolated
  */
-export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
+export class MmdPropertyAnimationTrack extends MmdWasmAnimationTrack {
     /**
      * Visibility data
      *
@@ -427,8 +415,14 @@ export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
      * Repr: [..., ikBoneName, ...]
      */
     public readonly ikBoneNames: readonly string[];
-
-    private readonly _ikStates: Uint8Array[];
+    /**
+     * IK state data
+     *
+     * The IK state data must be sorted by frame number in ascending order
+     *
+     * Repr: [..., ikState, ...]
+     */
+    public readonly ikStates: Uint8Array[];
 
     /**
      * Create a new `MmdPropertyAnimationTrack` instance
@@ -453,30 +447,19 @@ export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
             this.visibles = new Uint8Array(frameCount);
 
             this.ikBoneNames = ikBoneNames;
-            this._ikStates = new Array(ikBoneNames.length);
+            this.ikStates = new Array(ikBoneNames.length);
             for (let i = 0; i < ikBoneNames.length; ++i) {
-                this._ikStates[i] = new Uint8Array(frameCount);
+                this.ikStates[i] = new Uint8Array(frameCount);
             }
         } else {
             this.visibles = new Uint8Array(arrayBuffer, visibleByteOffset, frameCount);
 
             this.ikBoneNames = ikBoneNames;
-            this._ikStates = new Array(ikBoneNames.length);
+            this.ikStates = new Array(ikBoneNames.length);
             if (ikStateByteOffsets === undefined) ikStateByteOffsets = new Array(ikBoneNames.length);
             for (let i = 0; i < ikBoneNames.length; ++i) {
-                this._ikStates[i] = new Uint8Array(arrayBuffer, ikStateByteOffsets[i], frameCount);
+                this.ikStates[i] = new Uint8Array(arrayBuffer, ikStateByteOffsets[i], frameCount);
             }
         }
-    }
-
-    /**
-     * Get nth bone IK state data
-     *
-     * The IK state data must be sorted by frame number in ascending order
-     *
-     * Repr: [..., ikState, ...]
-     */
-    public getIkState(n: number): Uint8Array {
-        return this._ikStates[n];
     }
 }

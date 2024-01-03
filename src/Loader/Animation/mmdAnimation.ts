@@ -1,4 +1,5 @@
 import type { IMmdAnimation } from "./IMmdAnimation";
+import { MmdAnimationBase } from "./mmdAnimationBase";
 import type { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "./mmdAnimationTrack";
 
 /**
@@ -10,7 +11,7 @@ import type { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationT
  *
  * You can save one mesh animation and one camera animation in one `MmdAnimation` instance
  */
-export class MmdAnimation implements IMmdAnimation {
+export class MmdAnimation extends MmdAnimationBase implements IMmdAnimation {
     /**
      * Animation name for identification
      */
@@ -78,6 +79,8 @@ export class MmdAnimation implements IMmdAnimation {
         propertyTrack: MmdPropertyAnimationTrack,
         cameraTrack: MmdCameraAnimationTrack
     ) {
+        super();
+
         this.name = name;
 
         this.boneTracks = boneTracks;

@@ -10,7 +10,7 @@ import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
-import type { MmdAnimation } from "./mmdAnimation";
+import type { MmdAnimationBase } from "./mmdAnimationBase";
 import type { MmdCameraAnimationTrack } from "./mmdAnimationTrack";
 
 /**
@@ -60,7 +60,7 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
      * @param builder The builder for constructing mmd camera animation group
      */
     public constructor(
-        mmdAnimation: MmdAnimation,
+        mmdAnimation: MmdAnimationBase,
         builder: IMmdCameraAnimationGroupBuilder
     ) {
         const name = this.name = mmdAnimation.name;

@@ -1,4 +1,4 @@
-import type { MmdAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+import type { IMmdAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
 
 /**
  * Mmd runtime animation base class
@@ -9,7 +9,7 @@ export abstract class MmdRuntimeAnimation<T> {
      */
     public abstract readonly animation: T;
 
-    private readonly _lastResults = new Map<MmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
+    private readonly _lastResults = new Map<IMmdAnimationTrack, [number, number]>(); // [frameTime, frameIndex]
 
     /**
      * Find frame index B to interpolate between frame A and frame B
@@ -20,7 +20,7 @@ export abstract class MmdRuntimeAnimation<T> {
      * @param track animation track
      * @returns
      */
-    protected _upperBoundFrameIndex(frameTime: number, track: MmdAnimationTrack): number {
+    protected _upperBoundFrameIndex(frameTime: number, track: IMmdAnimationTrack): number {
         const frameNumbers = track.frameNumbers;
 
         let lastResult = this._lastResults.get(track);
