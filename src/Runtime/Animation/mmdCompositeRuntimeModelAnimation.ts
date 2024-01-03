@@ -66,7 +66,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     }
 
     private readonly _boneResultMap = new Map<IMmdRuntimeLinkedBone, [Quaternion, number, number]>(); // [result, accWeight, accCount]
-    private readonly _moveableBoneResultMap = new Map<IMmdRuntimeLinkedBone, [Vector3, Quaternion, number, number]>(); // [positionResult, rotationResult, accWeight, accCount]
+    private readonly _movableBoneResultMap = new Map<IMmdRuntimeLinkedBone, [Vector3, Quaternion, number, number]>(); // [positionResult, rotationResult, accWeight, accCount]
     private readonly _morphResultMap = new Map<number, number>();
     private readonly _ikSolverResultMap = new Map<number, boolean>();
 
@@ -124,7 +124,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         const ikSolverStates = this._ikSolverStates;
 
         const boneResultMap = this._boneResultMap;
-        const moveableBoneResultMap = this._moveableBoneResultMap;
+        const movableBoneResultMap = this._movableBoneResultMap;
         const morphResultMap = this._morphResultMap;
         const ikSolverResultMap = this._ikSolverResultMap;
 
@@ -155,7 +155,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     result[1] = 0;
                     result[2] = 0;
                 }
-                for (const [bone, result] of moveableBoneResultMap) {
+                for (const [bone, result] of movableBoneResultMap) {
                     bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
                     bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
                     result[0].copyFromFloats(0, 0, 0);
@@ -180,7 +180,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     result[1] = 0;
                     result[2] = 0;
                 }
-                for (const [_bone, result] of moveableBoneResultMap) {
+                for (const [_bone, result] of movableBoneResultMap) {
                     result[0].copyFromFloats(0, 0, 0);
                     result[2] = 0;
                     result[3] = 0;
@@ -196,7 +196,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             for (const [bone, _result] of boneResultMap) {
                 bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
             }
-            for (const [bone, _result] of moveableBoneResultMap) {
+            for (const [bone, _result] of movableBoneResultMap) {
                 bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
                 bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
             }
@@ -212,7 +212,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 ikSolverStates[ikSolver] = 1;
             }
             boneResultMap.clear();
-            moveableBoneResultMap.clear();
+            movableBoneResultMap.clear();
             morphResultMap.clear();
             ikSolverResultMap.clear();
         }
@@ -238,13 +238,13 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     if (result === undefined) boneResultMap.set(bone, [new Quaternion(), 0, 0]);
                 }
             }
-            const moveableBoneBindIndexMap = runtimeAnimation.moveableBoneBindIndexMap;
-            for (let i = 0; i < moveableBoneBindIndexMap.length; ++i) {
-                const bone = moveableBoneBindIndexMap[i];
+            const movableBoneBindIndexMap = runtimeAnimation.movableBoneBindIndexMap;
+            for (let i = 0; i < movableBoneBindIndexMap.length; ++i) {
+                const bone = movableBoneBindIndexMap[i];
                 if (bone !== null) {
-                    const result = moveableBoneResultMap.get(bone);
+                    const result = movableBoneResultMap.get(bone);
                     if (result === undefined) {
-                        moveableBoneResultMap.set(bone, [new Vector3(), new Quaternion(), 0, 0]);
+                        movableBoneResultMap.set(bone, [new Vector3(), new Quaternion(), 0, 0]);
                     }
                 }
             }
@@ -317,15 +317,15 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 }
             }
 
-            const moveableBoneBindIndexMap = runtimeAnimation.moveableBoneBindIndexMap;
-            for (let i = 0; i < moveableBoneBindIndexMap.length; ++i) {
-                const bone = moveableBoneBindIndexMap[i];
+            const movableBoneBindIndexMap = runtimeAnimation.movableBoneBindIndexMap;
+            for (let i = 0; i < movableBoneBindIndexMap.length; ++i) {
+                const bone = movableBoneBindIndexMap[i];
                 if (bone !== null) {
                     const boneRestPosition = bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
 
-                    const result = moveableBoneResultMap.get(bone);
+                    const result = movableBoneResultMap.get(bone);
                     if (result === undefined) {
-                        moveableBoneResultMap.set(bone, [
+                        movableBoneResultMap.set(bone, [
                             bone.position.clone().subtractInPlace(boneRestPosition).scaleInPlace(weight),
                             bone.rotationQuaternion.clone(),
                             weight,
@@ -387,7 +387,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             }
         }
 
-        for (const [bone, result] of moveableBoneResultMap) {
+        for (const [bone, result] of movableBoneResultMap) {
             bone.getRestMatrix().getTranslationToRef(bone.position).addInPlace(result[0]);
             if (totalWeight < 1) {
                 Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[1], result[2], bone.rotationQuaternion);

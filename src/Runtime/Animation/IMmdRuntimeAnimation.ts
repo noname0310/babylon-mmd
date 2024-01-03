@@ -66,9 +66,9 @@ export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeMod
     readonly boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     /**
-     * Moveable bone bind index map
+     * Movable bone bind index map
      */
-    readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+    readonly movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     /**
      * Morph bind index map

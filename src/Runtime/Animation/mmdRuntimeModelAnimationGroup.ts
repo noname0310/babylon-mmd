@@ -35,9 +35,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     public readonly boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     /**
-     * Moveable bone bind index map
+     * Movable bone bind index map
      */
-    public readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+    public readonly movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     private readonly _morphController: MmdMorphControllerBase;
 
@@ -66,7 +66,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     private constructor(
         animation: MmdModelAnimationGroup,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
-        moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
+        movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphControllerBase,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
@@ -77,7 +77,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         this.animation = animation;
 
         this.boneBindIndexMap = boneBindIndexMap;
-        this.moveableBoneBindIndexMap = moveableBoneBindIndexMap;
+        this.movableBoneBindIndexMap = movableBoneBindIndexMap;
         this._morphController = morphController;
         this.morphBindIndexMap = morphBindIndexMap;
         this._meshes = meshes;
@@ -139,14 +139,14 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             );
         }
 
-        const moveableBoneTracks = animation.bonePositionAnimations;
-        const moveableBoneBindIndexMap = this.moveableBoneBindIndexMap;
-        for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            const moveableBoneTrack = moveableBoneTracks[i];
-            const bone = moveableBoneBindIndexMap[i];
+        const movableBoneTracks = animation.bonePositionAnimations;
+        const movableBoneBindIndexMap = this.movableBoneBindIndexMap;
+        for (let i = 0; i < movableBoneTracks.length; ++i) {
+            const movableBoneTrack = movableBoneTracks[i];
+            const bone = movableBoneBindIndexMap[i];
             if (bone === null) continue;
             bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BonePosition);
-            bone.position = MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(moveableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
+            bone.position = MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(movableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
         }
 
         const morphTracks = animation.morphAnimations;
@@ -241,15 +241,15 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.bonePositionAnimations.length);
-        const moveableBoneNameMap = animationGroup.bonePositionAnimationBindMap;
-        for (let i = 0; i < moveableBoneNameMap.length; ++i) {
-            const boneIndex = boneIndexMap.get(moveableBoneNameMap[i]);
+        const movableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.bonePositionAnimations.length);
+        const movableBoneNameMap = animationGroup.bonePositionAnimationBindMap;
+        for (let i = 0; i < movableBoneNameMap.length; ++i) {
+            const boneIndex = boneIndexMap.get(movableBoneNameMap[i]);
             if (boneIndex === undefined) {
-                logger?.warn(`Binding failed: bone ${moveableBoneNameMap[i]} not found`);
-                moveableBoneBindIndexMap[i] = null;
+                logger?.warn(`Binding failed: bone ${movableBoneNameMap[i]} not found`);
+                movableBoneBindIndexMap[i] = null;
             } else {
-                moveableBoneBindIndexMap[i] = bones[boneIndex];
+                movableBoneBindIndexMap[i] = bones[boneIndex];
             }
         }
 
@@ -291,7 +291,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         return new MmdRuntimeModelAnimationGroup(
             animationGroup,
             boneBindIndexMap,
-            moveableBoneBindIndexMap,
+            movableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
             model.mesh.metadata.meshes,

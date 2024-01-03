@@ -86,9 +86,9 @@ export class BvmdLoader {
             }
         }
 
-        const moveableBoneTrackCount = deserializer.getUint32();
-        const moveableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(moveableBoneTrackCount);
-        for (let i = 0; i < moveableBoneTrackCount; ++i) {
+        const movableBoneTrackCount = deserializer.getUint32();
+        const movableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(movableBoneTrackCount);
+        for (let i = 0; i < movableBoneTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
             const frameCount = deserializer.getUint32();
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
@@ -97,7 +97,7 @@ export class BvmdLoader {
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
 
-            const moveableBoneTrack = moveableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
+            const movableBoneTrack = movableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
                 trackName,
                 frameCount,
                 buffer,
@@ -108,9 +108,9 @@ export class BvmdLoader {
                 rotationInterpolationByteOffset
             );
             if (!deserializer.isDeviceLittleEndian) {
-                deserializer.swap32Array(moveableBoneTrack.frameNumbers);
-                deserializer.swap32Array(moveableBoneTrack.positions);
-                deserializer.swap32Array(moveableBoneTrack.rotations);
+                deserializer.swap32Array(movableBoneTrack.frameNumbers);
+                deserializer.swap32Array(movableBoneTrack.positions);
+                deserializer.swap32Array(movableBoneTrack.rotations);
             }
         }
 
@@ -191,7 +191,7 @@ export class BvmdLoader {
             deserializer.swap32Array(cameraTrack.fovs);
         }
 
-        return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, propertyTrack, cameraTrack);
+        return new MmdAnimation(name, boneTracks, movableBoneTracks, morphTracks, propertyTrack, cameraTrack);
     }
 
     /**

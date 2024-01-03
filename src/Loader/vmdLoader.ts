@@ -216,7 +216,7 @@ export class VmdLoader {
             }
         }
         const filteredBoneTracks: MmdBoneAnimationTrack[] = [];
-        const filteredMoveableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
+        const filteredMovableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
 
@@ -236,15 +236,15 @@ export class VmdLoader {
             }
             if (isEmptyTrack) continue;
 
-            let isMoveableBone = false;
+            let isMovableBone = false;
             for (let j = 0; j < boneTrack.positions.length; ++j) {
                 if (boneTrack.positions[j] !== 0) {
-                    isMoveableBone = true;
+                    isMovableBone = true;
                     break;
                 }
             }
-            if (isMoveableBone) {
-                filteredMoveableBoneTracks.push(boneTrack);
+            if (isMovableBone) {
+                filteredMovableBoneTracks.push(boneTrack);
             } else {
                 const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
                 boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
@@ -314,9 +314,9 @@ export class VmdLoader {
                 filteredBoneTracks[i] = newTrack;
             }
 
-            const moveableBoneTrackDuplicateResolvedLengths = new Int32Array(filteredMoveableBoneTracks.length).fill(-1);
-            for (let i = 0; i < filteredMoveableBoneTracks.length; ++i) {
-                const frameNumbers = filteredMoveableBoneTracks[i].frameNumbers;
+            const movableBoneTrackDuplicateResolvedLengths = new Int32Array(filteredMovableBoneTracks.length).fill(-1);
+            for (let i = 0; i < filteredMovableBoneTracks.length; ++i) {
+                const frameNumbers = filteredMovableBoneTracks[i].frameNumbers;
 
                 let duplicateResolvedLength = 0;
                 let currentFrameNumber = frameNumbers[0];
@@ -329,15 +329,15 @@ export class VmdLoader {
                 }
 
                 if (frameNumbers.length !== duplicateResolvedLength) {
-                    moveableBoneTrackDuplicateResolvedLengths[i] = duplicateResolvedLength;
+                    movableBoneTrackDuplicateResolvedLengths[i] = duplicateResolvedLength;
                 }
             }
 
-            for (let i = 0; i < filteredMoveableBoneTracks.length; ++i) {
-                const duplicateResolvedLength = moveableBoneTrackDuplicateResolvedLengths[i];
+            for (let i = 0; i < filteredMovableBoneTracks.length; ++i) {
+                const duplicateResolvedLength = movableBoneTrackDuplicateResolvedLengths[i];
                 if (duplicateResolvedLength === -1) continue;
 
-                const boneTrack = filteredMoveableBoneTracks[i];
+                const boneTrack = filteredMovableBoneTracks[i];
                 const frameNumbers = boneTrack.frameNumbers;
                 const positions = boneTrack.positions;
                 const positionInterpolations = boneTrack.positionInterpolations;
@@ -393,7 +393,7 @@ export class VmdLoader {
                     }
                 }
 
-                filteredMoveableBoneTracks[i] = newTrack;
+                filteredMovableBoneTracks[i] = newTrack;
             }
         }
 
@@ -726,7 +726,7 @@ export class VmdLoader {
         onProgress?.({ ...progressEvent });
         lastStageLoaded += cameraLoadCost;
 
-        return new MmdAnimation(name, filteredBoneTracks, filteredMoveableBoneTracks, filteredMorphTracks, propertyTrack, cameraTrack);
+        return new MmdAnimation(name, filteredBoneTracks, filteredMovableBoneTracks, filteredMorphTracks, propertyTrack, cameraTrack);
     }
 
     /**

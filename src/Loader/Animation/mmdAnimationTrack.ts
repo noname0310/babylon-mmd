@@ -193,7 +193,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
         rotationByteOffset?: number,
         rotationInterpolationByteOffset?: number
     ) {
-        super("moveableBone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
+        super("movableBone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
         if (arrayBuffer === undefined) {
             this.positions = new Float32Array(frameCount * 3);

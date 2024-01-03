@@ -24,11 +24,11 @@ export class MmdAnimation implements IMmdAnimation {
     public readonly boneTracks: readonly MmdBoneAnimationTrack[];
 
     /**
-     * Moveable bone animation tracks for one `mesh.skeleton`
+     * Movable bone animation tracks for one `mesh.skeleton`
      *
      * it contains position, rotation and their cubic interpolation data
      */
-    public readonly moveableBoneTracks: readonly MmdMovableBoneAnimationTrack[];
+    public readonly movableBoneTracks: readonly MmdMovableBoneAnimationTrack[];
 
     /**
      * Morph animation tracks for one `mesh.morphTargetManager`
@@ -65,7 +65,7 @@ export class MmdAnimation implements IMmdAnimation {
      * Create a new `MmdAnimation` instance
      * @param name animation name for identification
      * @param boneTracks bone animation tracks
-     * @param moveableBoneTracks moveable bone animation tracks
+     * @param movableBoneTracks movable bone animation tracks
      * @param morphTracks morph animation tracks
      * @param propertyTrack property animation track
      * @param cameraTrack camera animation track
@@ -73,7 +73,7 @@ export class MmdAnimation implements IMmdAnimation {
     public constructor(
         name: string,
         boneTracks: readonly MmdBoneAnimationTrack[],
-        moveableBoneTracks: readonly MmdMovableBoneAnimationTrack[],
+        movableBoneTracks: readonly MmdMovableBoneAnimationTrack[],
         morphTracks: readonly MmdMorphAnimationTrack[],
         propertyTrack: MmdPropertyAnimationTrack,
         cameraTrack: MmdCameraAnimationTrack
@@ -81,7 +81,7 @@ export class MmdAnimation implements IMmdAnimation {
         this.name = name;
 
         this.boneTracks = boneTracks;
-        this.moveableBoneTracks = moveableBoneTracks;
+        this.movableBoneTracks = movableBoneTracks;
         this.morphTracks = morphTracks;
         this.propertyTrack = propertyTrack;
         this.cameraTrack = cameraTrack;
@@ -93,10 +93,10 @@ export class MmdAnimation implements IMmdAnimation {
             minStartFrame = Math.min(minStartFrame, boneTrack.startFrame);
             maxEndFrame = Math.max(maxEndFrame, boneTrack.endFrame);
         }
-        for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            const moveableBoneTrack = moveableBoneTracks[i];
-            minStartFrame = Math.min(minStartFrame, moveableBoneTrack.startFrame);
-            maxEndFrame = Math.max(maxEndFrame, moveableBoneTrack.endFrame);
+        for (let i = 0; i < movableBoneTracks.length; ++i) {
+            const movableBoneTrack = movableBoneTracks[i];
+            minStartFrame = Math.min(minStartFrame, movableBoneTrack.startFrame);
+            maxEndFrame = Math.max(maxEndFrame, movableBoneTrack.endFrame);
         }
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -122,9 +122,9 @@ export class MmdAnimation implements IMmdAnimation {
             if (!boneTracks[i].validate()) return false;
         }
 
-        const moveableBoneTracks = this.moveableBoneTracks;
-        for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            if (!moveableBoneTracks[i].validate()) return false;
+        const movableBoneTracks = this.movableBoneTracks;
+        for (let i = 0; i < movableBoneTracks.length; ++i) {
+            if (!movableBoneTracks[i].validate()) return false;
         }
 
         const morphTracks = this.morphTracks;

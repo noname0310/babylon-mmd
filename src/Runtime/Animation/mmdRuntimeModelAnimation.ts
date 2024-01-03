@@ -35,9 +35,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
     public readonly boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     /**
-     * Moveable bone bind index map
+     * Movable bone bind index map
      */
-    public readonly moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
+    public readonly movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[];
 
     private readonly _morphController: MmdMorphControllerBase;
 
@@ -60,7 +60,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
     private constructor(
         animation: MmdAnimation,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
-        moveableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
+        movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphControllerBase,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
@@ -73,7 +73,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         this.animation = animation;
 
         this.boneBindIndexMap = boneBindIndexMap;
-        this.moveableBoneBindIndexMap = moveableBoneBindIndexMap;
+        this.movableBoneBindIndexMap = movableBoneBindIndexMap;
         this._morphController = morphController;
         this.morphBindIndexMap = morphBindIndexMap;
         this._meshes = meshes;
@@ -176,14 +176,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             }
         }
 
-        const moveableBoneTracks = animation.moveableBoneTracks;
-        if (0 < moveableBoneTracks.length) {
-            const boneBindIndexMap = this.moveableBoneBindIndexMap;
-            for (let i = 0; i < moveableBoneTracks.length; ++i) {
+        const movableBoneTracks = animation.movableBoneTracks;
+        if (0 < movableBoneTracks.length) {
+            const boneBindIndexMap = this.movableBoneBindIndexMap;
+            for (let i = 0; i < movableBoneTracks.length; ++i) {
                 const bone = boneBindIndexMap[i];
                 if (bone === null) continue;
 
-                const boneTrack = moveableBoneTracks[i];
+                const boneTrack = movableBoneTracks[i];
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
                 const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, boneTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
@@ -423,16 +423,16 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
             }
         }
 
-        const moveableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animation.moveableBoneTracks.length);
-        const moveableBoneTracks = animation.moveableBoneTracks;
-        for (let i = 0; i < moveableBoneTracks.length; ++i) {
-            const moveableBoneTrack = moveableBoneTracks[i];
-            const boneIndex = boneIndexMap.get(moveableBoneTrack.name);
+        const movableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animation.movableBoneTracks.length);
+        const movableBoneTracks = animation.movableBoneTracks;
+        for (let i = 0; i < movableBoneTracks.length; ++i) {
+            const movableBoneTrack = movableBoneTracks[i];
+            const boneIndex = boneIndexMap.get(movableBoneTrack.name);
             if (boneIndex === undefined) {
-                logger?.warn(`Binding failed: bone ${moveableBoneTrack.name} not found`);
-                moveableBoneBindIndexMap[i] = null;
+                logger?.warn(`Binding failed: bone ${movableBoneTrack.name} not found`);
+                movableBoneBindIndexMap[i] = null;
             } else {
-                moveableBoneBindIndexMap[i] = bones[boneIndex];
+                movableBoneBindIndexMap[i] = bones[boneIndex];
             }
         }
 
@@ -474,7 +474,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimation> 
         return new MmdRuntimeModelAnimation(
             animation,
             boneBindIndexMap,
-            moveableBoneBindIndexMap,
+            movableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
             model.mesh.metadata.meshes,

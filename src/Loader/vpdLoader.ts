@@ -52,16 +52,16 @@ export class VpdLoader {
     ): MmdAnimation {
         const bones = vpdObject.bones;
         const boneNames = Object.keys(bones);
-        let moveableBoneCount = 0;
+        let movableBoneCount = 0;
         for (let i = 0; i < boneNames.length; i++) {
             if (bones[boneNames[i]].position !== undefined) {
-                moveableBoneCount += 1;
+                movableBoneCount += 1;
             }
         }
-        const boneTracks: MmdBoneAnimationTrack[] = new Array(boneNames.length - moveableBoneCount);
-        const moveableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(moveableBoneCount);
+        const boneTracks: MmdBoneAnimationTrack[] = new Array(boneNames.length - movableBoneCount);
+        const movableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(movableBoneCount);
         let boneTrackIndex = 0;
-        let moveableBoneTrackIndex = 0;
+        let movableBoneTrackIndex = 0;
         for (let i = 0; i < boneNames.length; i++) {
             const boneName = boneNames[i];
             const bone = bones[boneName];
@@ -73,17 +73,17 @@ export class VpdLoader {
                 boneTrack.rotations[3] = bone.rotation[3];
                 boneTrackIndex += 1;
             } else {
-                const moveableBoneTrack = moveableBoneTracks[moveableBoneTrackIndex] = new MmdMovableBoneAnimationTrack(boneName, 1);
+                const movableBoneTrack = movableBoneTracks[movableBoneTrackIndex] = new MmdMovableBoneAnimationTrack(boneName, 1);
 
-                moveableBoneTrack.positions[0] = bone.position[0];
-                moveableBoneTrack.positions[1] = bone.position[1];
-                moveableBoneTrack.positions[2] = bone.position[2];
+                movableBoneTrack.positions[0] = bone.position[0];
+                movableBoneTrack.positions[1] = bone.position[1];
+                movableBoneTrack.positions[2] = bone.position[2];
 
-                moveableBoneTrack.rotations[0] = bone.rotation[0];
-                moveableBoneTrack.rotations[1] = bone.rotation[1];
-                moveableBoneTrack.rotations[2] = bone.rotation[2];
-                moveableBoneTrack.rotations[3] = bone.rotation[3];
-                moveableBoneTrackIndex += 1;
+                movableBoneTrack.rotations[0] = bone.rotation[0];
+                movableBoneTrack.rotations[1] = bone.rotation[1];
+                movableBoneTrack.rotations[2] = bone.rotation[2];
+                movableBoneTrack.rotations[3] = bone.rotation[3];
+                movableBoneTrackIndex += 1;
             }
         }
 
@@ -96,7 +96,7 @@ export class VpdLoader {
             morphTrack.weights[0] = morphs[morphName];
         }
 
-        return new MmdAnimation(name, boneTracks, moveableBoneTracks, morphTracks, new MmdPropertyAnimationTrack(0, []), new MmdCameraAnimationTrack(0));
+        return new MmdAnimation(name, boneTracks, movableBoneTracks, morphTracks, new MmdPropertyAnimationTrack(0, []), new MmdCameraAnimationTrack(0));
     }
 
     /**
