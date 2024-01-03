@@ -9,11 +9,11 @@ struct AnimationState {
     bone_track_states: Box<[AnimationTrackState]>,
     movable_bone_track_states: Box<[AnimationTrackState]>,
     morph_track_states: Box<[AnimationTrackState]>,
-    property_track_states: Box<[AnimationTrackState]>,
+    property_track_state: AnimationTrackState,
 }
 
 pub(crate) struct MmdRuntimeAnimation {
-    animation_id: u32,
+    pub(crate) animation_id: u32,
     state: AnimationState,
     bone_bind_index_map: Box<[usize]>,
     movable_bone_bind_index_map: Box<[usize]>,
@@ -54,19 +54,16 @@ impl MmdRuntimeAnimation {
             });
         }
 
-        let mut property_track_states = Vec::with_capacity(animation.property_tracks.len());
-        for _ in 0..animation.property_tracks.len() {
-            property_track_states.push(AnimationTrackState {
-                frame_time: f32::NEG_INFINITY,
-                frame_index: 0,
-            });
-        }
+        let property_track_state = AnimationTrackState {
+            frame_time: f32::NEG_INFINITY,
+            frame_index: 0,
+        };
 
         let state = AnimationState {
             bone_track_states: bone_track_states.into_boxed_slice(),
             movable_bone_track_states: movable_bone_track_states.into_boxed_slice(),
             morph_track_states: morph_track_states.into_boxed_slice(),
-            property_track_states: property_track_states.into_boxed_slice(),
+            property_track_state,
         };
 
         Self {

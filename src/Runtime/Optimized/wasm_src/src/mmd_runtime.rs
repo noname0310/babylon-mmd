@@ -11,7 +11,7 @@ pub struct MmdRuntime {
 
 #[wasm_bindgen]
 impl MmdRuntime {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         MmdRuntime {
             mmd_models: Vec::new(),
         }

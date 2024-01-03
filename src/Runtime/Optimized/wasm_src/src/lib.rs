@@ -24,3 +24,8 @@ pub fn init() {
 pub fn create_mmd_runtime() -> mmd_runtime::MmdRuntime {
     mmd_runtime::MmdRuntime::new()
 }
+
+#[wasm_bindgen(js_name = createAnimationPool)]
+pub fn create_animation_pool() -> animation::animation_pool::AnimationPool {
+    animation::animation_pool::AnimationPool::new()
+}
