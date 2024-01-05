@@ -138,7 +138,7 @@ then you can load the converted files like below.
 
 ```typescript
 const bvmdLoader = new BvmdLoader(scene);
-const motion = async bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
+const motion = await bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
 ```
 
 ## Documentation
