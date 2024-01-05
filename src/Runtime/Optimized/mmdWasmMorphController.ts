@@ -7,9 +7,10 @@ import type { ILogger } from "../ILogger";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { RuntimeMorph } from "../mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "../mmdMorphControllerBase";
+import type { WasmTypedArray } from "./wasmTypedArray";
 
 export class MmdWasmMorphController extends MmdMorphControllerBase {
-    private readonly _wasmMorphWeights: Float32Array;
+    private readonly _wasmMorphWeights: WasmTypedArray<Float32Array>;
     private readonly _wasmMorphIndexMap: Int32Array;
 
     /**
@@ -22,7 +23,7 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
      * @param logger Logger
      */
     public constructor(
-        wasmMorphWeights: Float32Array,
+        wasmMorphWeights: WasmTypedArray<Float32Array>,
         wasmMorphIndexMap: Int32Array,
         materials: Material[],
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
@@ -49,7 +50,7 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
 
         const morphWeights = this._morphWeights;
 
-        const wasmMorphWeights = this._wasmMorphWeights;
+        const wasmMorphWeights = this._wasmMorphWeights.array;
         const wasmMorphIndexMap = this._wasmMorphIndexMap;
 
         for (let i = 0; i < morphIndices.length; ++i) {
@@ -71,7 +72,7 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
      */
     public override setMorphWeightFromIndex(morphIndex: number, weight: number): void {
         this._morphWeights[morphIndex] = weight;
-        this._wasmMorphWeights[this._wasmMorphIndexMap[morphIndex]] = weight;
+        this._wasmMorphWeights.array[this._wasmMorphIndexMap[morphIndex]] = weight;
 
         if (weight !== 0) {
             this._activeMorphs.add(this._morphs[morphIndex].name);
@@ -83,7 +84,7 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
      */
     public override resetMorphWeights(): void {
         super.resetMorphWeights();
-        this._wasmMorphWeights.fill(0);
+        this._wasmMorphWeights.array.fill(0);
     }
 
     protected override _resetBoneMorph(_morph: RuntimeMorph): void { }

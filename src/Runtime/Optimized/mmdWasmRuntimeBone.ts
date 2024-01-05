@@ -6,7 +6,9 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import type { MmdWasmInstance } from "./mmdWasmInstance";
 import type { MmdRuntime } from "./wasm";
+import type { WasmTypedArray } from "./wasmTypedArray";
 
 /**
  * Bone for MMD WASM runtime
@@ -53,12 +55,18 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      */
     public readonly transformAfterPhysics: boolean;
 
+    private readonly _worldMatrix: WasmTypedArray<Float32Array>;
+
     /**
      * World matrix of this bone
      *
      * Slice of `MmdModel.worldTransformMatrices` that corresponds to this bone
+     *
+     * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
-    public readonly worldMatrix: Float32Array;
+    public get worldMatrix(): Float32Array {
+        return this._worldMatrix.array;
+    }
 
     /**
      * Get ik solver index
@@ -78,15 +86,17 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @param worldTransformMatrices World transform matrices
      * @param boneIndex Bone index
      * @param ikSolverIndex IK solver index
+     * @param wasmInstance MMD WASM instance
      * @param wasmRuntime MMD WASM runtime
      * @param mmdModelPtr MMD WASM side model pointer
      */
     public constructor(
         linkedBone: IMmdRuntimeLinkedBone,
         boneMetadata: MmdModelMetadata.Bone,
-        worldTransformMatrices: Float32Array,
+        worldTransformMatricesPtr: number,
         boneIndex: number,
         ikSolverIndex: number,
+        wasmInstance: MmdWasmInstance,
         wasmRuntime: MmdRuntime,
         mmdModelPtr: number
     ) {
@@ -100,7 +110,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         this.flag = boneMetadata.flag;
         this.transformAfterPhysics = (boneMetadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
-        this.worldMatrix = new Float32Array(worldTransformMatrices.buffer, worldTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
+        this._worldMatrix = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr + boneIndex * 16 * 4, 16);
 
         this.ikSolverIndex = ikSolverIndex;
 
@@ -126,7 +136,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @returns target matrix
      */
     public getWorldMatrixToRef(target: Matrix): Matrix {
-        return Matrix.FromArrayToRef(this.worldMatrix, 0, target);
+        return Matrix.FromArrayToRef(this._worldMatrix.array, 0, target);
     }
 
     /**
@@ -135,7 +145,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @returns target vector
      */
     public getWorldTranslationToRef(target: Vector3): Vector3 {
-        return Vector3.FromArrayToRef(this.worldMatrix, 12, target);
+        return Vector3.FromArrayToRef(this._worldMatrix.array, 12, target);
     }
 
     /**
@@ -143,8 +153,9 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @param source source vector
      */
     public setWorldTranslationFromRef(source: Vector3): void {
-        this.worldMatrix[12] = source.x;
-        this.worldMatrix[13] = source.y;
-        this.worldMatrix[14] = source.z;
+        const worldMatrix = this._worldMatrix.array;
+        worldMatrix[12] = source.x;
+        worldMatrix[13] = source.y;
+        worldMatrix[14] = source.z;
     }
 }

@@ -1,19 +1,30 @@
 import type { Nullable } from "@babylonjs/core/types";
 
-import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import type { IDisposeObservable } from "@/Runtime/IDisposeObserable";
 
 import type { MmdWasmInstance } from "../mmdWasmInstance";
 import type { AnimationPool as WasmAnimationPool } from "../wasm";
 import { AnimationPool } from "./animationPool";
+import { MmdWasmBoneAnimationTrack, MmdWasmMorphAnimationTrack, MmdWasmMovableBoneAnimationTrack, MmdWasmPropertyAnimationTrack } from "./mmdWasmAnimationTrack";
 
 /**
  * MmdWasmAnimation is a Mmd animation data container that allocates data in WASM memory
  *
  * It is used to pass animation data to WASM
+ *
+ * IMPORTANT: The typed arrays in the track are pointers to wasm memory.
+ * It is important to note that when wasm memory is resized, the typed arrays will no longer be valid.
+ * It is designed to always return a valid typed array at the time of a get,
+ * so as long as you don't copy the typed array references inside this container elsewhere, you are safe.
  */
-export class MmdWasmAnimation extends MmdAnimation {
+export class MmdWasmAnimation extends MmdAnimationBase<
+    MmdWasmBoneAnimationTrack,
+    MmdWasmMovableBoneAnimationTrack,
+    MmdWasmMorphAnimationTrack,
+    MmdWasmPropertyAnimationTrack
+> {
     private readonly _id: number;
     private readonly _pool: WasmAnimationPool;
 
@@ -37,31 +48,30 @@ export class MmdWasmAnimation extends MmdAnimation {
         const mmdAnimationBoneTracks = mmdAnimation.boneTracks;
 
         const boneTrackLengthsBufferPtr = animationPool.allocateTrackLengthsBuffer(mmdAnimationBoneTracks.length);
-        const boneTrackLengthsBuffer = animationPool.trackLengthsBufferToUint32Array(boneTrackLengthsBufferPtr, mmdAnimationBoneTracks.length);
+        const boneTrackLengthsBuffer = wasmInstance.createTypedArray(Uint32Array, boneTrackLengthsBufferPtr, mmdAnimationBoneTracks.length).array;
         for (let i = 0; i < mmdAnimationBoneTracks.length; ++i) boneTrackLengthsBuffer[i] = mmdAnimationBoneTracks[i].frameNumbers.length;
         const boneTracksPtr = animationPool.createBoneTracks(boneTrackLengthsBufferPtr, boneTrackLengthsBuffer.length);
         animationPool.deallocateTrackLengthsBuffer(boneTrackLengthsBufferPtr, boneTrackLengthsBuffer.length);
 
-        const newBoneTracks = new Array<MmdBoneAnimationTrack>(mmdAnimationBoneTracks.length);
+        const newBoneTracks = new Array<MmdWasmBoneAnimationTrack>(mmdAnimationBoneTracks.length);
         for (let i = 0; i < mmdAnimationBoneTracks.length; ++i) {
             const mmdAnimationBoneTrack = mmdAnimationBoneTracks[i];
 
-            const frameNumbers = animationPool.getBoneTrackFrameNumbers(boneTracksPtr, i);
-            const rotations = animationPool.getBoneTrackRotations(boneTracksPtr, i);
-            const rotationInterpolations = animationPool.getBoneTrackRotationInterpolations(boneTracksPtr, i);
+            const frameNumbersPtr = animationPool.getBoneTrackFrameNumbers(boneTracksPtr, i);
+            const rotationsPtr = animationPool.getBoneTrackRotations(boneTracksPtr, i);
+            const rotationInterpolationsPtr = animationPool.getBoneTrackRotationInterpolations(boneTracksPtr, i);
 
-            frameNumbers.set(mmdAnimationBoneTrack.frameNumbers);
-            rotations.set(mmdAnimationBoneTrack.rotations);
-            rotationInterpolations.set(mmdAnimationBoneTrack.rotationInterpolations);
-
-            const newBoneTrack = new MmdBoneAnimationTrack(
+            const newBoneTrack = new MmdWasmBoneAnimationTrack(
                 mmdAnimationBoneTrack.name,
-                frameNumbers.length,
-                frameNumbers.buffer,
-                frameNumbers.byteOffset,
-                rotations.byteOffset,
-                rotationInterpolations.byteOffset
+                mmdAnimationBoneTrack.frameNumbers.length,
+                wasmInstance,
+                frameNumbersPtr,
+                rotationsPtr,
+                rotationInterpolationsPtr
             );
+            newBoneTrack.frameNumbers.set(mmdAnimationBoneTrack.frameNumbers);
+            newBoneTrack.rotations.set(mmdAnimationBoneTrack.rotations);
+            newBoneTrack.rotationInterpolations.set(mmdAnimationBoneTrack.rotationInterpolations);
             newBoneTracks[i] = newBoneTrack;
         }
 
@@ -69,37 +79,36 @@ export class MmdWasmAnimation extends MmdAnimation {
         const mmdAnimationMovableBoneTracks = mmdAnimation.movableBoneTracks;
 
         const movableBoneTrackLengthsBufferPtr = animationPool.allocateTrackLengthsBuffer(mmdAnimationMovableBoneTracks.length);
-        const movableBoneTrackLengthsBuffer = animationPool.trackLengthsBufferToUint32Array(movableBoneTrackLengthsBufferPtr, mmdAnimationMovableBoneTracks.length);
+        const movableBoneTrackLengthsBuffer = wasmInstance.createTypedArray(Uint32Array, movableBoneTrackLengthsBufferPtr, mmdAnimationMovableBoneTracks.length).array;
         for (let i = 0; i < mmdAnimationMovableBoneTracks.length; ++i) movableBoneTrackLengthsBuffer[i] = mmdAnimationMovableBoneTracks[i].frameNumbers.length;
         const movableBoneTracksPtr = animationPool.createMovableBoneTracks(movableBoneTrackLengthsBufferPtr, movableBoneTrackLengthsBuffer.length);
         animationPool.deallocateTrackLengthsBuffer(movableBoneTrackLengthsBufferPtr, movableBoneTrackLengthsBuffer.length);
 
-        const newMovableBoneTracks = new Array<MmdMovableBoneAnimationTrack>(mmdAnimationMovableBoneTracks.length);
+        const newMovableBoneTracks = new Array<MmdWasmMovableBoneAnimationTrack>(mmdAnimationMovableBoneTracks.length);
         for (let i = 0; i < mmdAnimationMovableBoneTracks.length; ++i) {
             const mmdAnimationMovableBoneTrack = mmdAnimationMovableBoneTracks[i];
 
-            const frameNumbers = animationPool.getMovableBoneTrackFrameNumbers(movableBoneTracksPtr, i);
-            const positions = animationPool.getMovableBoneTrackPositions(movableBoneTracksPtr, i);
-            const positionInterpolations = animationPool.getMovableBoneTrackPositionInterpolations(movableBoneTracksPtr, i);
-            const rotations = animationPool.getMovableBoneTrackRotations(movableBoneTracksPtr, i);
-            const rotationInterpolations = animationPool.getMovableBoneTrackRotationInterpolations(movableBoneTracksPtr, i);
+            const frameNumbersPtr = animationPool.getMovableBoneTrackFrameNumbers(movableBoneTracksPtr, i);
+            const positionsPtr = animationPool.getMovableBoneTrackPositions(movableBoneTracksPtr, i);
+            const positionInterpolationsPtr = animationPool.getMovableBoneTrackPositionInterpolations(movableBoneTracksPtr, i);
+            const rotationsPtr = animationPool.getMovableBoneTrackRotations(movableBoneTracksPtr, i);
+            const rotationInterpolationsPtr = animationPool.getMovableBoneTrackRotationInterpolations(movableBoneTracksPtr, i);
 
-            frameNumbers.set(mmdAnimationMovableBoneTrack.frameNumbers);
-            positions.set(mmdAnimationMovableBoneTrack.positions);
-            positionInterpolations.set(mmdAnimationMovableBoneTrack.positionInterpolations);
-            rotations.set(mmdAnimationMovableBoneTrack.rotations);
-            rotationInterpolations.set(mmdAnimationMovableBoneTrack.rotationInterpolations);
-
-            const newMovableBoneTrack = new MmdMovableBoneAnimationTrack(
+            const newMovableBoneTrack = new MmdWasmMovableBoneAnimationTrack(
                 mmdAnimationMovableBoneTrack.name,
-                frameNumbers.length,
-                frameNumbers.buffer,
-                frameNumbers.byteOffset,
-                positions.byteOffset,
-                positionInterpolations.byteOffset,
-                rotations.byteOffset,
-                rotationInterpolations.byteOffset
+                mmdAnimationMovableBoneTrack.frameNumbers.length,
+                wasmInstance,
+                frameNumbersPtr,
+                positionsPtr,
+                positionInterpolationsPtr,
+                rotationsPtr,
+                rotationInterpolationsPtr
             );
+            newMovableBoneTrack.frameNumbers.set(mmdAnimationMovableBoneTrack.frameNumbers);
+            newMovableBoneTrack.positions.set(mmdAnimationMovableBoneTrack.positions);
+            newMovableBoneTrack.positionInterpolations.set(mmdAnimationMovableBoneTrack.positionInterpolations);
+            newMovableBoneTrack.rotations.set(mmdAnimationMovableBoneTrack.rotations);
+            newMovableBoneTrack.rotationInterpolations.set(mmdAnimationMovableBoneTrack.rotationInterpolations);
             newMovableBoneTracks[i] = newMovableBoneTrack;
         }
 
@@ -107,28 +116,27 @@ export class MmdWasmAnimation extends MmdAnimation {
         const mmdAnimationMorphTracks = mmdAnimation.morphTracks;
 
         const morphTrackLengthsBufferPtr = animationPool.allocateTrackLengthsBuffer(mmdAnimationMorphTracks.length);
-        const morphTrackLengthsBuffer = animationPool.trackLengthsBufferToUint32Array(morphTrackLengthsBufferPtr, mmdAnimationMorphTracks.length);
+        const morphTrackLengthsBuffer = wasmInstance.createTypedArray(Uint32Array, morphTrackLengthsBufferPtr, mmdAnimationMorphTracks.length).array;
         for (let i = 0; i < mmdAnimationMorphTracks.length; ++i) morphTrackLengthsBuffer[i] = mmdAnimationMorphTracks[i].frameNumbers.length;
         const morphTracksPtr = animationPool.createMorphTracks(morphTrackLengthsBufferPtr, morphTrackLengthsBuffer.length);
         animationPool.deallocateTrackLengthsBuffer(morphTrackLengthsBufferPtr, morphTrackLengthsBuffer.length);
 
-        const newMorphTracks = new Array<MmdMorphAnimationTrack>(mmdAnimationMorphTracks.length);
+        const newMorphTracks = new Array<MmdWasmMorphAnimationTrack>(mmdAnimationMorphTracks.length);
         for (let i = 0; i < mmdAnimationMorphTracks.length; ++i) {
             const mmdAnimationMorphTrack = mmdAnimationMorphTracks[i];
 
-            const frameNumbers = animationPool.getMorphTrackFrameNumbers(morphTracksPtr, i);
-            const weights = animationPool.getMorphTrackWeights(morphTracksPtr, i);
+            const frameNumbersPtr = animationPool.getMorphTrackFrameNumbers(morphTracksPtr, i);
+            const weightsPtr = animationPool.getMorphTrackWeights(morphTracksPtr, i);
 
-            frameNumbers.set(mmdAnimationMorphTrack.frameNumbers);
-            weights.set(mmdAnimationMorphTrack.weights);
-
-            const newMorphTrack = new MmdMorphAnimationTrack(
+            const newMorphTrack = new MmdWasmMorphAnimationTrack(
                 mmdAnimationMorphTrack.name,
-                frameNumbers.length,
-                frameNumbers.buffer,
-                frameNumbers.byteOffset,
-                weights.byteOffset
+                mmdAnimationMorphTrack.frameNumbers.length,
+                wasmInstance,
+                frameNumbersPtr,
+                weightsPtr
             );
+            newMorphTrack.frameNumbers.set(mmdAnimationMorphTrack.frameNumbers);
+            newMorphTrack.weights.set(mmdAnimationMorphTrack.weights);
             newMorphTracks[i] = newMorphTrack;
         }
 
@@ -145,27 +153,26 @@ export class MmdWasmAnimation extends MmdAnimation {
         );
         const animationPtr = animationPool.getAnimationPtr(animationId);
 
-        const propertyTrackFrameNumbers = animationPool.getPropertyTrackFrameNumbers(animationPtr);
-        const propertyTrackVisibles = animationPool.getPropertyTrackVisibles(animationPtr);
-        propertyTrackFrameNumbers.set(mmdAnimationPropertyTrack.frameNumbers);
-        propertyTrackVisibles.set(mmdAnimationPropertyTrack.visibles);
-
+        const propertyTrackFrameNumbersPtr = animationPool.getPropertyTrackFrameNumbers(animationPtr);
         const ikStateByteOffsets: number[] = [];
         for (let i = 0; i < mmdAnimationPropertyTrack.ikBoneNames.length; ++i) {
-            const mmdAnimationPropertyTrackIkStates = mmdAnimationPropertyTrack.getIkState(i);
-            const ikStates = animationPool.getPropertyTrackIkStates(animationPtr, i);
-            ikStates.set(mmdAnimationPropertyTrackIkStates);
-            ikStateByteOffsets.push(ikStates.byteOffset);
+            const ikStatesPtr = animationPool.getPropertyTrackIkStates(animationPtr, i);
+            ikStateByteOffsets.push(ikStatesPtr);
         }
 
-        const newPropertyTrack = new MmdPropertyAnimationTrack(
-            propertyTrackFrameNumbers.length,
+        const newPropertyTrack = new MmdWasmPropertyAnimationTrack(
+            mmdAnimationPropertyTrack.frameNumbers.length,
             mmdAnimationPropertyTrack.ikBoneNames,
-            propertyTrackFrameNumbers.buffer,
-            propertyTrackFrameNumbers.byteOffset,
-            propertyTrackVisibles.byteOffset,
+            wasmInstance,
+            propertyTrackFrameNumbersPtr,
+            mmdAnimationPropertyTrack.visibles,
             ikStateByteOffsets
         );
+        newPropertyTrack.frameNumbers.set(mmdAnimationPropertyTrack.frameNumbers);
+        for (let i = 0; i < mmdAnimationPropertyTrack.ikBoneNames.length; ++i) {
+            const mmdAnimationPropertyTrackIkStates = mmdAnimationPropertyTrack.getIkState(i);
+            newPropertyTrack.getIkState(i).set(mmdAnimationPropertyTrackIkStates);
+        }
 
         super(
             mmdAnimation.name,

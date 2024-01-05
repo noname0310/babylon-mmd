@@ -1,5 +1,4 @@
 use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
-use web_sys::js_sys::Float32Array;
 
 use crate::{animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
 
@@ -19,11 +18,8 @@ impl MmdRuntimeBoneArena {
         }
     }
 
-    pub unsafe fn world_matrix_arena_typed_array(&mut self) -> Float32Array {
-        Float32Array::view_mut_raw(
-            self.world_matrix_arena.as_mut_ptr() as *mut f32,
-            self.world_matrix_arena.len() * 16,
-        )
+    pub fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
+        self.world_matrix_arena.as_mut_ptr() as *mut f32
     }
 
     pub fn world_matrix(&self, index: usize) -> &Matrix4<f32> {

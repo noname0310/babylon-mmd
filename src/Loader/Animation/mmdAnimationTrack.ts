@@ -1,7 +1,9 @@
+import type { IMmdAnimationTrack, IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "./IMmdAnimationTrack";
+
 /**
  * MMD animation track base class
  */
-export abstract class MmdAnimationTrack {
+export abstract class MmdAnimationTrack implements IMmdAnimationTrack {
     /**
      * Track type
      */
@@ -83,7 +85,7 @@ export abstract class MmdAnimationTrack {
  *
  * Contains bone rotation and rotation cubic interpolation data
  */
-export class MmdBoneAnimationTrack extends MmdAnimationTrack {
+export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBoneAnimationTrack {
     /**
      * Bone rotation data in quaternion
      *
@@ -136,7 +138,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack {
  *
  * Contains bone position, rotation and position/rotation cubic interpolation data
  */
-export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
+export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements IMmdMovableBoneAnimationTrack {
     /**
      * Bone position data in vector3
      *
@@ -218,7 +220,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack {
  *
  * Weight data will be linear interpolated so there is no interpolation data
  */
-export class MmdMorphAnimationTrack extends MmdAnimationTrack {
+export class MmdMorphAnimationTrack extends MmdAnimationTrack implements IMmdMorphAnimationTrack {
     /**
      * Morph weight data
      *
@@ -411,7 +413,7 @@ export class MmdCameraAnimationTrack extends MmdAnimationTrack {
  *
  * Visibility and ik state will be step interpolated
  */
-export class MmdPropertyAnimationTrack extends MmdAnimationTrack {
+export class MmdPropertyAnimationTrack extends MmdAnimationTrack implements IMmdPropertyAnimationTrack {
     /**
      * Visibility data
      *

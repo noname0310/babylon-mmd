@@ -23,6 +23,7 @@ import { MmdWasmModel } from "./mmdWasmModel";
 import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
 
 export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
+    private readonly _wasmInstance: MmdWasmInstance;
     private readonly _wasmRuntime: MmdWasmRuntimeInternal;
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
     private readonly _physics: Nullable<MmdPhysics>;
@@ -90,6 +91,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param physics MMD physics
      */
     public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
+        this._wasmInstance = wasmInstance;
         this._wasmRuntime = wasmInstance.createMmdRuntime();
         this._mmdMetadataEncoder = new MmdMetadataEncoder();
         this._physics = physics;
@@ -191,12 +193,13 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const wasmRuntime = this._wasmRuntime;
         const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
 
-        const metadataBuffer = wasmRuntime.bufferToUint8Array(metadataBufferPtr, metadataSize);
-        const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer);
+        const metadataBuffer = this._wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
+        const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer.array);
 
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
 
         const model = new MmdWasmModel(
+            this._wasmInstance,
             wasmRuntime,
             mmdModelPtr,
             mmdMesh,

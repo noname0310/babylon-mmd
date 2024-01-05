@@ -1,5 +1,4 @@
 use wasm_bindgen::prelude::*;
-use web_sys::js_sys::{Uint8Array, Float32Array};
 
 use crate::{mmd_model::MmdModel, mmd_model_metadata::MetadataBuffer};
 
@@ -32,16 +31,6 @@ impl MmdRuntime {
         }
     }
 
-    #[wasm_bindgen(js_name = "bufferToUint8Array")]
-    pub fn buffer_to_uint8_array(&self, ptr: *mut u8, size: usize) -> Uint8Array {
-        let slice = unsafe {
-            std::slice::from_raw_parts_mut(ptr, size)
-        };
-        unsafe {
-            Uint8Array::view(slice)
-        }
-    }
-
     #[wasm_bindgen(js_name = "createMmdModel")]
     pub fn create_mmd_model(&mut self, serialized_metadata_ptr: *const u8, serialized_metadata_size: usize) -> *mut usize {
         let serialized_metadata = unsafe {
@@ -66,47 +55,39 @@ impl MmdRuntime {
     }
 
     #[wasm_bindgen(js_name = "getAnimationArena")]
-    pub fn get_animation_bone_arena(&mut self, ptr: *mut usize) -> Float32Array {
+    pub fn get_animation_bone_arena(&mut self, ptr: *mut usize) -> *mut f32 {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        unsafe {
-            animation_arena.bone_arena_typed_array()
-        }
+        animation_arena.bone_arena_ptr()
     }
 
     #[wasm_bindgen(js_name = "getAnimationIkSolverStateArena")]
-    pub fn get_animation_iksolver_state_arena(&mut self, ptr: *mut usize) -> Uint8Array {
+    pub fn get_animation_iksolver_state_arena_ptr(&mut self, ptr: *mut usize) -> *mut u8 {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        unsafe {
-            animation_arena.iksolver_state_arena_typed_array()
-        }
+        animation_arena.iksolver_state_arena_ptr()
     }
 
     #[wasm_bindgen(js_name = "getAnimationMorphArena")]
-    pub fn get_animation_morph_arena(&mut self, ptr: *mut usize) -> Float32Array {
+    pub fn get_animation_morph_arena(&mut self, ptr: *mut usize) -> *mut f32 {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        unsafe {
-            animation_arena.morph_arena_typed_array()
-        }
+        animation_arena.morph_arena_ptr()
     }
     
     #[wasm_bindgen(js_name = "getBoneWorldMatrixArena")]
-    pub fn get_bone_world_matrix_arena(&mut self, ptr: *mut usize) -> Float32Array {
+    pub fn get_bone_world_matrix_arena(&mut self, ptr: *mut usize) -> *mut f32 {
         let ptr = ptr as *mut MmdModel;
         let bone_arena = unsafe {
             &mut *ptr
         }.bone_arena();
-        unsafe {
-            bone_arena.world_matrix_arena_typed_array()
-        }
+        bone_arena.world_matrix_arena_ptr()
     }
 
     #[wasm_bindgen(js_name = "beforePhysics")]

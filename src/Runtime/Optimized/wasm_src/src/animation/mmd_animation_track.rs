@@ -53,24 +53,6 @@ impl MmdBoneAnimationTrack {
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
     }
-
-    pub(crate) unsafe fn frame_numbers_typed_array(&self) -> Uint32Array {
-        Uint32Array::view(&self.frame_numbers)
-    }
-
-    pub(crate) unsafe fn rotations_typed_array(&self) -> Float32Array {
-        Float32Array::view_mut_raw(
-            self.rotations.as_ptr() as *mut f32,
-            self.rotations.len() * 4,
-        )
-    }
-
-    pub(crate) unsafe fn rotation_interpolations_typed_array(&self) -> Uint8Array {
-        Uint8Array::view_mut_raw(
-            self.rotation_interpolations.as_ptr() as *mut u8,
-            self.rotation_interpolations.len() * 4,
-        )
-    }
 }
 
 pub(crate) struct MmdMovableBoneAnimationTrack {
@@ -91,38 +73,6 @@ impl MmdMovableBoneAnimationTrack {
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
     }
-
-    pub(crate) unsafe fn frame_numbers_typed_array(&self) -> Uint32Array {
-        Uint32Array::view(&self.frame_numbers)
-    }
-
-    pub(crate) unsafe fn positions_typed_array(&self) -> Float32Array {
-        Float32Array::view_mut_raw(
-            self.positions.as_ptr() as *mut f32,
-            self.positions.len() * 3,
-        )
-    }
-
-    pub(crate) unsafe fn position_interpolations_typed_array(&self) -> Uint8Array {
-        Uint8Array::view_mut_raw(
-            self.position_interpolations.as_ptr() as *mut u8,
-            self.position_interpolations.len() * 12,
-        )
-    }
-
-    pub(crate) unsafe fn rotations_typed_array(&self) -> Float32Array {
-        Float32Array::view_mut_raw(
-            self.rotations.as_ptr() as *mut f32,
-            self.rotations.len() * 4,
-        )
-    }
-
-    pub(crate) unsafe fn rotation_interpolations_typed_array(&self) -> Uint8Array {
-        Uint8Array::view_mut_raw(
-            self.rotation_interpolations.as_ptr() as *mut u8,
-            self.rotation_interpolations.len() * 4,
-        )
-    }
 }
 
 pub(crate) struct MmdMorphAnimationTrack {
@@ -137,19 +87,10 @@ impl MmdMorphAnimationTrack {
             weights: vec![0.0; frame_count].into_boxed_slice(),
         }
     }
-
-    pub(crate) unsafe fn frame_numbers_typed_array(&self) -> Uint32Array {
-        Uint32Array::view(&self.frame_numbers)
-    }
-
-    pub(crate) unsafe fn weights_typed_array(&self) -> Float32Array {
-        Float32Array::view(&self.weights)
-    }
 }
 
 pub(crate) struct MmdPropertyAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
-    pub(crate) visibles: Box<[u8]>,
     pub(crate) ik_states: Box<[Box<[u8]>]>,
 }
 
@@ -157,20 +98,7 @@ impl MmdPropertyAnimationTrack {
     pub(crate) fn new(frame_count: usize, ik_count: usize) -> Self {
         Self {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
-            visibles: vec![1; frame_count].into_boxed_slice(),
             ik_states: vec![vec![1; frame_count].into_boxed_slice(); ik_count].into_boxed_slice(),
         }
-    }
-
-    pub(crate) unsafe fn frame_numbers_typed_array(&self) -> Uint32Array {
-        Uint32Array::view(&self.frame_numbers)
-    }
-
-    pub(crate) unsafe fn visibles_typed_array(&self) -> Uint8Array {
-        Uint8Array::view(&self.visibles)
-    }
-
-    pub(crate) unsafe fn ik_states_typed_array(&self, index: usize) -> Uint8Array {
-        Uint8Array::view(&self.ik_states[index])
     }
 }

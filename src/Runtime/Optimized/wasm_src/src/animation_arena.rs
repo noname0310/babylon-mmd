@@ -1,5 +1,4 @@
 use nalgebra::{Vector3, UnitQuaternion};
-use web_sys::js_sys::{Float32Array, Uint8Array};
 
 #[repr(C)]
 #[derive(Clone)]
@@ -28,19 +27,16 @@ impl AnimationArena {
         }
     }
     
-    pub unsafe fn bone_arena_typed_array(&mut self) -> Float32Array {
-        Float32Array::view_mut_raw(
-            self.bone_arena.as_mut_ptr() as *mut f32,
-            self.bone_arena.len() * 10,
-        )
+    pub fn bone_arena_ptr(&mut self) -> *mut f32 {
+        self.bone_arena.as_mut_ptr() as *mut f32
     }
 
-    pub unsafe fn iksolver_state_arena_typed_array(&mut self) -> Uint8Array {
-        Uint8Array::view(&self.iksolver_state_arena)
+    pub fn iksolver_state_arena_ptr(&mut self) -> *mut u8 {
+        self.iksolver_state_arena.as_mut_ptr()
     }
 
-    pub unsafe fn morph_arena_typed_array(&mut self) -> Float32Array {
-        Float32Array::view(&self.morph_arena)
+    pub fn morph_arena_ptr(&mut self) -> *mut f32 {
+        self.morph_arena.as_mut_ptr()
     }
 
     pub fn bone_position(&self, index: usize) -> &Vector3<f32> {

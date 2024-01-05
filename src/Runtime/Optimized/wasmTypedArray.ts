@@ -1,6 +1,12 @@
-type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
+/**
+ * Typed array
+ */
+export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 
-type TypedArrayConstructor<T extends TypedArray> = {
+/**
+ * Typed array constructor
+ */
+export type TypedArrayConstructor<T extends TypedArray> = {
     new(buffer: ArrayBuffer, byteOffset?: number, length?: number): T;
 };
 
