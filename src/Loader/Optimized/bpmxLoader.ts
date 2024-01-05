@@ -440,7 +440,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                         const element = elements[i];
                         const geometryInfo = geometriesInfo[element.meshIndex];
 
-                        const positions = new Float32Array(geometryInfo.positions);
+                        const positions = new Float32Array(geometryInfo.positions.length);
+                        positions.set(geometryInfo.positions);
 
                         const morphIndices = element.indices;
                         const positionOffsets = element.offsets;
@@ -458,7 +459,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                         const element = elements[i];
                         const geometryInfo = geometriesInfo[element.meshIndex];
 
-                        const uvs = new Float32Array(geometryInfo.uvs);
+                        const uvs = new Float32Array(geometryInfo.uvs.length);
+                        uvs.set(geometryInfo.uvs);
 
                         const morphIndices = element.indices;
                         const uvOffsets = element.offsets;

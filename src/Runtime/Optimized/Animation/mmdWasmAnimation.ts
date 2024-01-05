@@ -2,6 +2,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
+import { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 import type { IDisposeObservable } from "@/Runtime/IDisposeObserable";
 
 import type { MmdWasmInstance } from "../mmdWasmInstance";
@@ -154,6 +155,15 @@ export class MmdWasmAnimation extends MmdAnimationBase<
         const animationPtr = animationPool.getAnimationPtr(animationId);
 
         const propertyTrackFrameNumbersPtr = animationPool.getPropertyTrackFrameNumbers(animationPtr);
+
+        let visibles: Uint8Array;
+        if (mmdAnimationPropertyTrack.visibles.buffer.byteLength - mmdAnimationPropertyTrack.visibles.byteLength < mmdAnimationPropertyTrack.visibles.byteLength) {
+            visibles = mmdAnimationPropertyTrack.visibles;
+        } else {
+            visibles = new Uint8Array(mmdAnimationPropertyTrack.visibles.length);
+            visibles.set(mmdAnimationPropertyTrack.visibles);
+        }
+
         const ikStateByteOffsets: number[] = [];
         for (let i = 0; i < mmdAnimationPropertyTrack.ikBoneNames.length; ++i) {
             const ikStatesPtr = animationPool.getPropertyTrackIkStates(animationPtr, i);
@@ -165,7 +175,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             mmdAnimationPropertyTrack.ikBoneNames,
             wasmInstance,
             propertyTrackFrameNumbersPtr,
-            mmdAnimationPropertyTrack.visibles,
+            visibles,
             ikStateByteOffsets
         );
         newPropertyTrack.frameNumbers.set(mmdAnimationPropertyTrack.frameNumbers);
@@ -174,13 +184,39 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             newPropertyTrack.getIkState(i).set(mmdAnimationPropertyTrackIkStates);
         }
 
+        const mmdAnimationCameraTrack = mmdAnimation.cameraTrack;
+        const cameraTrackByteLength = mmdAnimationCameraTrack.frameNumbers.byteLength +
+            mmdAnimationCameraTrack.positions.byteLength +
+            mmdAnimationCameraTrack.positionInterpolations.byteLength +
+            mmdAnimationCameraTrack.rotations.byteLength +
+            mmdAnimationCameraTrack.rotationInterpolations.byteLength +
+            mmdAnimationCameraTrack.distances.byteLength +
+            mmdAnimationCameraTrack.distanceInterpolations.byteLength +
+            mmdAnimationCameraTrack.fovs.byteLength +
+            mmdAnimationCameraTrack.fovInterpolations.byteLength;
+        let cameraTrack: MmdCameraAnimationTrack;
+        if (mmdAnimationCameraTrack.frameNumbers.buffer.byteLength - cameraTrackByteLength < cameraTrackByteLength) {
+            cameraTrack = mmdAnimationCameraTrack;
+        } else {
+            cameraTrack = new MmdCameraAnimationTrack(mmdAnimationCameraTrack.frameNumbers.length);
+            cameraTrack.frameNumbers.set(mmdAnimationCameraTrack.frameNumbers);
+            cameraTrack.positions.set(mmdAnimationCameraTrack.positions);
+            cameraTrack.positionInterpolations.set(mmdAnimationCameraTrack.positionInterpolations);
+            cameraTrack.rotations.set(mmdAnimationCameraTrack.rotations);
+            cameraTrack.rotationInterpolations.set(mmdAnimationCameraTrack.rotationInterpolations);
+            cameraTrack.distances.set(mmdAnimationCameraTrack.distances);
+            cameraTrack.distanceInterpolations.set(mmdAnimationCameraTrack.distanceInterpolations);
+            cameraTrack.fovs.set(mmdAnimationCameraTrack.fovs);
+            cameraTrack.fovInterpolations.set(mmdAnimationCameraTrack.fovInterpolations);
+        }
+
         super(
             mmdAnimation.name,
             newBoneTracks,
             newMovableBoneTracks,
             newMorphTracks,
             newPropertyTrack,
-            mmdAnimation.cameraTrack
+            cameraTrack
         );
 
         this._id = animationId;
