@@ -27,11 +27,11 @@
     "homepage": "https://github.com/noname0310/babylon-mmd#readme",
     "devDependencies": {
         "@babylonjs/havok": "^1.3.0",
-        "@babylonjs/inspector": "^6.36.0",
-        "@babylonjs/loaders": "^6.36.0",
-        "@babylonjs/materials": "^6.36.0",
-        "@typescript-eslint/eslint-plugin": "^6.16.0",
-        "@typescript-eslint/parser": "^6.16.0",
+        "@babylonjs/inspector": "^6.37.1",
+        "@babylonjs/loaders": "^6.37.1",
+        "@babylonjs/materials": "^6.37.1",
+        "@typescript-eslint/eslint-plugin": "^6.18.0",
+        "@typescript-eslint/parser": "^6.18.0",
         "@wasm-tool/wasm-pack-plugin": "^1.7.0",
         "compression-webpack-plugin": "^10.0.0",
         "copy-webpack-plugin": "^11.0.0",
@@ -74,9 +74,10 @@
         "**/mmdRuntimeCameraAnimationGroup.*",
         "**/mmdRuntimeModelAnimation.*",
         "**/mmdRuntimeModelAnimationGroup.*",
+        "**/mmdWasmRuntimeModelAnimation.*",
         "**/index.*"
     ],
     "peerDependencies": {
-        "@babylonjs/core": "^6.36.0"
+        "@babylonjs/core": "^6.37.1"
     }
 }
