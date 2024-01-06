@@ -1,3 +1,4 @@
+import type { IIkStateContainer } from "./IIkStateContainer";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { RuntimeMmdMesh } from "./mmdMesh";
@@ -6,7 +7,7 @@ import type { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 /**
  * IMmdModel is a model that can bind animation.
  */
-export interface IMmdModel {
+export interface IMmdModel extends IIkStateContainer {
     /**
      * The root mesh of this model
      */

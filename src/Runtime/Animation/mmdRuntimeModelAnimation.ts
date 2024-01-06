@@ -7,6 +7,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 
+import type { IIkStateContainer } from "../IIkStateContainer";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
@@ -53,7 +54,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      */
     public readonly ikSolverBindIndexMap: Int32Array;
 
-    private readonly _ikSolverStates: Uint8Array;
+    private readonly _ikSolverStates: IIkStateContainer;
 
     private _materialRecompileInduceInfo: Material[] | null;
 
@@ -65,7 +66,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
-        ikSolverStates: Uint8Array,
+        ikSolverStates: IIkStateContainer,
         materialRecompileInduceInfo: Material[]
     ) {
         super();
@@ -354,7 +355,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 meshes[i].visibility = visibility;
             }
 
-            const ikSolverStates = this._ikSolverStates;
+            const ikSolverStates = this._ikSolverStates.ikSolverStates;
             const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
             for (let i = 0; i < ikSolverBindIndexMap.length; ++i) {
                 const ikSolverIndex = ikSolverBindIndexMap[i];
@@ -478,7 +479,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             morphBindIndexMap,
             model.mesh.metadata.meshes,
             ikSolverBindIndexMap,
-            model.ikSolverStates,
+            model,
             model.mesh.metadata.materials
         );
     }

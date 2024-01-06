@@ -7,6 +7,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
 
+import type { IIkStateContainer } from "../IIkStateContainer";
 import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
@@ -53,7 +54,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      */
     public readonly ikSolverBindIndexMap: Int32Array;
 
-    private readonly _ikSolverStates: Uint8Array;
+    private readonly _ikSolverStates: IIkStateContainer;
 
     private _materialRecompileInduceInfo: Material[] | null;
 
@@ -71,7 +72,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
-        ikSolverStates: Uint8Array,
+        ikSolverStates: IIkStateContainer,
         materialRecompileInduceInfo: Material[]
     ) {
         this.animation = animation;
@@ -172,7 +173,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
         const propertyTracks = animation.propertyAnimations;
         const ikSolverBindIndexMap = this.ikSolverBindIndexMap;
-        const ikSolverStates = this._ikSolverStates;
+        const ikSolverStates = this._ikSolverStates.ikSolverStates;
         for (let i = 0; i < propertyTracks.length; ++i) {
             const propertyTrack = propertyTracks[i];
             const ikSolverIndex = ikSolverBindIndexMap[i];
@@ -296,7 +297,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             morphBindIndexMap,
             model.mesh.metadata.meshes,
             ikSolverBindIndexMap,
-            model.ikSolverStates,
+            model,
             model.mesh.metadata.materials
         );
     }

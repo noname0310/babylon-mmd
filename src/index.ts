@@ -75,7 +75,7 @@ export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 export { getMmdWasmInstance as createMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
-export { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
 // Runtime/Util
@@ -84,6 +84,7 @@ export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerCon
 
 // Runtime
 export { IDisposeObservable } from "@/Runtime/IDisposeObserable";
+export { IIkStateContainer } from "@/Runtime/IIkStateContainer";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { IMmdModel } from "@/Runtime/IMmdModel";
 export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
