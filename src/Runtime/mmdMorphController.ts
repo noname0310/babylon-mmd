@@ -3,6 +3,11 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import type { RuntimeMorph } from "./mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 
+/**
+ * The MmdMorphController uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound
+ *
+ * As a result, it reproduces the behavior of the MMD morph system
+ */
 export class MmdMorphController extends MmdMorphControllerBase {
     /**
      * Sets the weight of the morph

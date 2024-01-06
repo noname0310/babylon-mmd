@@ -95,6 +95,9 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  * }[jointCount]
  */
 
+/**
+ * @internal
+ */
 export class MmdMetadataEncoder {
     public encodePhysics: boolean;
 

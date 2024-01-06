@@ -22,6 +22,13 @@ import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
 import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
 
+/**
+ * MMD WASM runtime orchestrates several MMD components (models, camera, audio)
+ *
+ * MMD WASM runtime handles updates and synchronization of MMD components
+ *
+ * It can also create and remove runtime components
+ */
 export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private readonly _wasmInstance: MmdWasmInstance;
     private readonly _wasmRuntime: MmdWasmRuntimeInternal;

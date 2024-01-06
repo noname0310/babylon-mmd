@@ -5,7 +5,9 @@ import { WasmTypedArray } from "./wasmTypedArray";
 type MmdWasmType = typeof import("./wasm");
 
 /**
- * @internal
+ * MMD WASM instance
+ *
+ * entry point of the MMD WASM
  */
 export interface MmdWasmInstance extends MmdWasmType {
     memory: WebAssembly.Memory;

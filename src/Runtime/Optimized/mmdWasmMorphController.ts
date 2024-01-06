@@ -9,6 +9,13 @@ import type { RuntimeMorph } from "../mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import type { WasmTypedArray } from "./wasmTypedArray";
 
+/**
+ * The MmdWasmMorphController uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound
+ *
+ * bone morphs are handled by WASM
+ *
+ * As a result, it reproduces the behavior of the MMD morph system
+ */
 export class MmdWasmMorphController extends MmdMorphControllerBase {
     private readonly _wasmMorphWeights: WasmTypedArray<Float32Array>;
     private readonly _wasmMorphIndexMap: Int32Array;

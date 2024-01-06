@@ -58,7 +58,7 @@ export interface ReadonlyRuntimeMorph {
 }
 
 /**
- * The MmdMorphController uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound
+ * The MmdMorphControllerBase uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound
  *
  * As a result, it reproduces the behavior of the MMD morph system
  */
