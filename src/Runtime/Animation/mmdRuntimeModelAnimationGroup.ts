@@ -115,7 +115,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
     /**
      * Update animation
-     * @param frameTime frame time in 30fps
+     * @param frameTime Frame time in 30fps
      */
     public animate(frameTime: number): void {
         const animation = this.animation;

@@ -14,10 +14,10 @@ export abstract class MmdRuntimeAnimation<T> {
     /**
      * Find frame index B to interpolate between frame A and frame B
      *
-     * frame time must be clamped to [startFrame, endFrame]
+     * Frame time must be clamped to [startFrame, endFrame]
      *
-     * @param frameTime frame time in 30fps
-     * @param track animation track
+     * @param frameTime Frame time in 30fps
+     * @param track Animation track
      * @returns
      */
     protected _upperBoundFrameIndex(frameTime: number, track: IMmdAnimationTrack): number {

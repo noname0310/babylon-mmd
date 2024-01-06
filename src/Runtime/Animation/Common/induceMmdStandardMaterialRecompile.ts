@@ -15,7 +15,7 @@ type MorphIndices = readonly number[];
  * @param materials Materials
  * @param morphController Morph controller
  * @param morphIndices Morph indices to induce recompile
- * @param logger logger
+ * @param logger Logger
  */
 export function induceMmdStandardMaterialRecompile(
     materials: MmdStandardMaterial[],

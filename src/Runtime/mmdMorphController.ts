@@ -36,6 +36,8 @@ export class MmdMorphController extends MmdMorphControllerBase {
      * Sets the weight of the morph from the index
      *
      * This method is faster than `setMorphWeight` because it does not need to search the morphs with the given name
+     * @param morphIndex Index of the morph
+     * @param weight Weight of the morph
      */
     public override setMorphWeightFromIndex(morphIndex: number, weight: number): void {
         this._morphWeights[morphIndex] = weight;

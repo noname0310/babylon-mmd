@@ -41,7 +41,7 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
 
     /**
      * Update animation
-     * @param frameTime frame time in 30fps
+     * @param frameTime Frame time in 30fps
      */
     public animate(frameTime: number): void {
         const animation = this.animation;
@@ -53,9 +53,9 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
     }
 
     /**
-     * bind animation to camera
-     * @param animation animation to bind
-     * @param camera bind target
+     * Bind animation to camera
+     * @param animation Animation to bind
+     * @param camera Bind target
      * @returns MmdRuntimeCameraAnimationGroup instance
      */
     public static Create(animation: MmdCameraAnimationGroup, camera: MmdCamera): MmdRuntimeCameraAnimationGroup {
@@ -69,7 +69,7 @@ declare module "../../Loader/Animation/mmdCameraAnimationGroup" {
 
 /**
  * Create runtime camera animation
- * @param camera bind target
+ * @param camera Bind target
  * @returns MmdRuntimeCameraAnimationGroup instance
  */
 MmdCameraAnimationGroup.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimationGroup {

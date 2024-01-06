@@ -49,7 +49,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
 
     /**
      * Update animation
-     * @param frameTime frame time in 30fps
+     * @param frameTime Frame time in 30fps
      */
     public animate(frameTime: number): void {
         frameTime = Math.max(this.animation.startFrame, Math.min(this.animation.endFrame, frameTime));
@@ -141,9 +141,9 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
     }
 
     /**
-     * bind animation to camera
-     * @param animation animation to bind
-     * @param camera bind target
+     * Bind animation to camera
+     * @param animation Animation to bind
+     * @param camera Bind target
      * @returns MmdCompositeRuntimeCameraAnimation instance
      */
     public static Create(animation: MmdCompositeAnimation, camera: MmdCamera): MmdCompositeRuntimeCameraAnimation {
@@ -185,7 +185,7 @@ declare module "./mmdCompositeAnimation" {
 
 /**
  * Create runtime camera animation
- * @param camera bind target
+ * @param camera Bind target
  * @returns MmdRuntimeCameraAnimation instance
  */
 MmdCompositeAnimation.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdCompositeRuntimeCameraAnimation {

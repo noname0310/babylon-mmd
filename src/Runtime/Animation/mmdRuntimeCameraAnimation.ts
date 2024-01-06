@@ -41,7 +41,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
 
     /**
      * Update animation
-     * @param frameTime frame time in 30fps
+     * @param frameTime Frame time in 30fps
      */
     public animate(frameTime: number): void {
         const cameraTrack = this.animation;
@@ -192,7 +192,7 @@ declare module "../../Loader/Animation/mmdAnimationBase" {
 
 /**
  * Create runtime camera animation
- * @param camera bind target
+ * @param camera Bind target
  * @returns MmdRuntimeCameraAnimation instance
  */
 MmdAnimationBase.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimation {

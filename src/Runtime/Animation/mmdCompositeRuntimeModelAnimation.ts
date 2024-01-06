@@ -424,7 +424,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
-     * @param logger logger
+     * @param logger Logger
      */
     public induceMaterialRecompile(logger?: ILogger): void {
         const runtimeAnimations = this._runtimeAnimations;
@@ -493,7 +493,7 @@ declare module "./mmdCompositeAnimation" {
 
 /**
  * Create runtime camera animation
- * @param camera bind target
+ * @param camera Bind target
  * @returns MmdRuntimeCameraAnimation instance
  */
 MmdCompositeAnimation.prototype.createRuntimeModelAnimation = function(
