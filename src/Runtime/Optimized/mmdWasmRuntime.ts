@@ -23,6 +23,21 @@ import { MmdWasmModel } from "./mmdWasmModel";
 import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
 
 /**
+ * MMD WASM runtime animation evaluation type
+ */
+export enum MmdWasmRuntimeAnimationEvaluationType {
+    /**
+     * Buffered animation evaluation for the next frame
+     */
+    Buffered,
+
+    /**
+     * Immediate animation evaluation for the current frame
+     */
+    Immediate
+}
+
+/**
  * MMD WASM runtime orchestrates several MMD components (models, camera, audio)
  *
  * MMD WASM runtime handles updates and synchronization of MMD components

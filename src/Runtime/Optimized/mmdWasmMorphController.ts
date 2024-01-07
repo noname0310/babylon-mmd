@@ -76,10 +76,15 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
      * Sets the weight of the morph from the index
      *
      * This method is faster than `setMorphWeight` because it does not need to search the morphs with the given name
+     * @param morphIndex Index of the morph
+     * @param weight Weight of the morph
+     * @param updateWasm Whether to update the WASM side morph weight (default: true)
      */
-    public override setMorphWeightFromIndex(morphIndex: number, weight: number): void {
+    public override setMorphWeightFromIndex(morphIndex: number, weight: number, updateWasm = true): void {
         this._morphWeights[morphIndex] = weight;
-        this._wasmMorphWeights.array[this._wasmMorphIndexMap[morphIndex]] = weight;
+        if (updateWasm) {
+            this._wasmMorphWeights.array[this._wasmMorphIndexMap[morphIndex]] = weight;
+        }
 
         if (weight !== 0) {
             this._activeMorphs.add(this._morphs[morphIndex].name);
@@ -92,6 +97,19 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
     public override resetMorphWeights(): void {
         super.resetMorphWeights();
         this._wasmMorphWeights.array.fill(0);
+    }
+
+    /**
+     * Synchronize the morph weights to WASM side
+     */
+    public syncWasmMorphWeights(): void {
+        const morphWeights = this._morphWeights;
+        const wasmMorphWeights = this._wasmMorphWeights.array;
+        const wasmMorphIndexMap = this._wasmMorphIndexMap;
+
+        for (let i = 0; i < morphWeights.length; ++i) {
+            wasmMorphWeights[wasmMorphIndexMap[i]] = morphWeights[i];
+        }
     }
 
     protected override _resetBoneMorph(_morph: RuntimeMorph): void { }

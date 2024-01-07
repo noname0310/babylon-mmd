@@ -2,7 +2,7 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
+import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
@@ -26,6 +26,8 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
+import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
+import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -62,15 +64,24 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
 
         const [
-            mmdRuntime,
-            mmdAnimation,
+            [mmdRuntime, mmdAnimation],
             modelMesh,
             stageMesh
         ] = await parallelLoadAsync(scene, [
-            ["runtime", async(updateProgress): Promise<MmdWasmRuntime> => {
-                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const mmdWasmInstance = await getMmdWasmInstance();
-                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
+                const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
+                    ["runtime", async(): Promise<MmdWasmInstance> => {
+                        const mmdWasmInstance = await getMmdWasmInstance();
+                        return mmdWasmInstance;
+                    }],
+                    ["motion", (): Promise<MmdAnimation> => {
+                        const bvmdLoader = new BvmdLoader(scene);
+                        bvmdLoader.loggingEnabled = true;
+                        return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
+                    }]
+                ]);
+
+                const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
@@ -83,12 +94,7 @@ export class SceneBuilder implements ISceneBuilder {
                 mmdRuntime.register(scene);
                 mmdRuntime.playAnimation();
 
-                return mmdRuntime;
-            }],
-            ["motion", (updateProgress): Promise<MmdAnimation> => {
-                const bvmdLoader = new BvmdLoader(scene);
-                bvmdLoader.loggingEnabled = true;
-                return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
+                return [mmdRuntime, mmdWasmAnimation];
             }],
             ["model", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
