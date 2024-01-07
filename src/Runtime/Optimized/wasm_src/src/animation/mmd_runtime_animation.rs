@@ -1,8 +1,10 @@
+use crate::animation_arena::AnimationArena;
+
 use super::mmd_animation::MmdAnimation;
 
 struct AnimationTrackState {
     frame_time: f32,
-    frame_index: usize,
+    frame_index: u32,
 }
 
 struct AnimationState {
@@ -13,41 +15,42 @@ struct AnimationState {
 }
 
 pub(crate) struct MmdRuntimeAnimation {
-    pub(crate) animation_id: u32,
+    id: u32,
+    animation: &'static MmdAnimation,
     state: AnimationState,
-    bone_bind_index_map: Box<[usize]>,
-    movable_bone_bind_index_map: Box<[usize]>,
-    morph_bind_index_map: Box<[usize]>,
-    ik_solver_bind_index_map: Box<[usize]>,
+    bone_bind_index_map: Box<[i32]>,
+    movable_bone_bind_index_map: Box<[i32]>,
+    morph_bind_index_map: Box<[i32]>,
+    ik_solver_bind_index_map: Box<[i32]>,
 }
 
-impl MmdRuntimeAnimation {
+impl<'a> MmdRuntimeAnimation {
     pub(crate) fn new(
-        animation_id: u32,
-        animation: &MmdAnimation,
-        bone_bind_index_map: Box<[usize]>,
-        movable_bone_bind_index_map: Box<[usize]>,
-        morph_bind_index_map: Box<[usize]>,
-        ik_solver_bind_index_map: Box<[usize]>,
+        id: u32,
+        animation: &'static MmdAnimation,
+        bone_bind_index_map: Box<[i32]>,
+        movable_bone_bind_index_map: Box<[i32]>,
+        morph_bind_index_map: Box<[i32]>,
+        ik_solver_bind_index_map: Box<[i32]>,
     ) -> Self {
-        let mut bone_track_states = Vec::with_capacity(animation.bone_tracks.len());
-        for _ in 0..animation.bone_tracks.len() {
+        let mut bone_track_states = Vec::with_capacity(animation.bone_tracks().len());
+        for _ in 0..animation.bone_tracks().len() {
             bone_track_states.push(AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
             });
         }
 
-        let mut movable_bone_track_states = Vec::with_capacity(animation.movable_bone_tracks.len());
-        for _ in 0..animation.movable_bone_tracks.len() {
+        let mut movable_bone_track_states = Vec::with_capacity(animation.movable_bone_tracks().len());
+        for _ in 0..animation.movable_bone_tracks().len() {
             movable_bone_track_states.push(AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
             });
         }
 
-        let mut morph_track_states = Vec::with_capacity(animation.morph_tracks.len());
-        for _ in 0..animation.morph_tracks.len() {
+        let mut morph_track_states = Vec::with_capacity(animation.morph_tracks().len());
+        for _ in 0..animation.morph_tracks().len() {
             morph_track_states.push(AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
@@ -67,7 +70,8 @@ impl MmdRuntimeAnimation {
         };
 
         Self {
-            animation_id,
+            id,
+            animation,
             state,
             bone_bind_index_map,
             movable_bone_bind_index_map,
@@ -76,15 +80,19 @@ impl MmdRuntimeAnimation {
         }
     }
 
-    fn upper_bound_frame_index(frame_time: f32, frame_numbers: &[u32], track_state: &mut AnimationTrackState) -> usize {
+    pub(crate) fn id(&self) -> u32 {
+        self.id
+    }
+
+    fn upper_bound_frame_index(frame_time: f32, frame_numbers: &[u32], track_state: &mut AnimationTrackState) -> u32 {
         let AnimationTrackState {frame_time: last_frame_time, frame_index: last_frame_index} = track_state;
 
         if (frame_time - *last_frame_time).abs() < 6.0 { // if frame time is close to last frame time, use iterative search
             let mut frame_index = *last_frame_index;
-            while 0 < frame_index && frame_time < frame_numbers[frame_index - 1] as f32 {
+            while 0 < frame_index && frame_time < frame_numbers[(frame_index - 1) as usize] as f32 {
                 frame_index -= 1;
             }
-            while frame_index < frame_numbers.len() && frame_numbers[frame_index] as f32 <= frame_time {
+            while frame_index < frame_numbers.len() as u32 && frame_numbers[frame_index as usize] as f32 <= frame_time {
                 frame_index += 1;
             }
 
@@ -94,11 +102,11 @@ impl MmdRuntimeAnimation {
             frame_index
         } else { // if frame time is far from last frame time, use binary search
             let mut low = 0;
-            let mut high = frame_numbers.len();
+            let mut high = frame_numbers.len() as u32;
 
             while low < high {
                 let mid = low + ((high - low) >> 1);
-                if frame_time < frame_numbers[mid] as f32 {
+                if frame_time < frame_numbers[mid as usize] as f32 {
                     high = mid;
                 } else {
                     low = mid + 1;
@@ -112,7 +120,7 @@ impl MmdRuntimeAnimation {
         }
     }
 
-    pub(crate) fn animate(frame_time: f32, ) {
+    pub(crate) fn animate(frame_time: f32, animation_arena: &mut AnimationArena) {
 
     }
 }

@@ -5,11 +5,11 @@ use crate::{animation_arena::AnimationArena, append_transform_solver::AppendTran
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,
     world_matrix_arena: Box<[Matrix4<f32>]>,
-    bone_stack: Vec<usize>,
+    bone_stack: Vec<u32>,
 }
 
 impl MmdRuntimeBoneArena {
-    pub fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<usize>) -> Self {
+    pub fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<u32>) -> Self {
         let bone_count = arena.len();
         MmdRuntimeBoneArena {
             arena,
@@ -22,23 +22,23 @@ impl MmdRuntimeBoneArena {
         self.world_matrix_arena.as_mut_ptr() as *mut f32
     }
 
-    pub fn world_matrix(&self, index: usize) -> &Matrix4<f32> {
-        &self.world_matrix_arena[index]
+    pub fn world_matrix(&self, index: u32) -> &Matrix4<f32> {
+        &self.world_matrix_arena[index as usize]
     }
 
-    pub fn update_world_matrix(&mut self, root: usize) {
+    pub fn update_world_matrix(&mut self, root: u32) {
         let stack = &mut self.bone_stack;
         stack.push(root);
 
         while let Some(bone) = stack.pop() {
-            if let Some(parent_bone) = self.arena[bone].parent_bone {
-                let parent_world_matrix = self.world_matrix_arena[parent_bone];
-                self.world_matrix_arena[bone] = parent_world_matrix * self.arena[bone].local_matrix;
+            if let Some(parent_bone) = self.arena[bone as usize].parent_bone {
+                let parent_world_matrix = self.world_matrix_arena[parent_bone as usize];
+                self.world_matrix_arena[bone as usize] = parent_world_matrix * self.arena[bone as usize].local_matrix;
             } else {
-                self.world_matrix_arena[bone] = self.arena[bone].local_matrix;
+                self.world_matrix_arena[bone as usize] = self.arena[bone as usize].local_matrix;
             }
 
-            let bone = &self.arena[bone];
+            let bone = &self.arena[bone as usize];
             for child_bone in &bone.child_bones {
                 stack.push(*child_bone);
             }
@@ -62,15 +62,15 @@ impl std::ops::DerefMut for MmdRuntimeBoneArena {
 
 pub(crate) struct MmdRuntimeBone {
     pub rest_position: Vector3<f32>,
-    index: usize,
+    index: u32,
 
-    pub parent_bone: Option<usize>,
-    pub child_bones: Vec<usize>,
+    pub parent_bone: Option<u32>,
+    pub child_bones: Vec<u32>,
     pub transform_order: i32,
     pub transform_after_physics: bool,
 
-    pub append_transform_solver: Option<usize>,
-    pub ik_solver: Option<usize>,
+    pub append_transform_solver: Option<u32>,
+    pub ik_solver: Option<u32>,
 
     pub morph_position_offset: Option<Vector3<f32>>,
     pub morph_rotation_offset: Option<UnitQuaternion<f32>>,
@@ -81,7 +81,7 @@ pub(crate) struct MmdRuntimeBone {
 }
 
 impl MmdRuntimeBone {
-    pub fn new(index: usize) -> Self {
+    pub fn new(index: u32) -> Self {
         MmdRuntimeBone {
             rest_position: Vector3::zeros(),
             index,
@@ -132,7 +132,7 @@ impl MmdRuntimeBone {
         let mut position = self.animated_position(animation_arena);
         
         if let Some(append_transform_solver) = self.append_transform_solver {
-            let append_transform_solver = &append_transform_solver_arena[append_transform_solver];
+            let append_transform_solver = &append_transform_solver_arena[append_transform_solver as usize];
 
             if append_transform_solver.is_affect_rotation() {
                 rotation *= append_transform_solver.append_rotation_offset();

@@ -60,7 +60,7 @@ impl MmdRuntime {
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        animation_arena.bone_arena_ptr()
+        animation_arena.bone_arena_mut().as_mut_ptr() as *mut f32
     }
 
     #[wasm_bindgen(js_name = "getAnimationIkSolverStateArena")]
@@ -69,7 +69,7 @@ impl MmdRuntime {
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        animation_arena.iksolver_state_arena_ptr()
+        animation_arena.iksolver_state_arena_mut().as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "getAnimationMorphArena")]
@@ -78,7 +78,7 @@ impl MmdRuntime {
         let animation_arena = unsafe {
             &mut *ptr
         }.animation_arena();
-        animation_arena.morph_arena_ptr()
+        animation_arena.morph_arena_mut().as_mut_ptr()
     }
     
     #[wasm_bindgen(js_name = "getBoneWorldMatrixArena")]
@@ -105,7 +105,7 @@ impl MmdRuntime {
     }
 
     #[wasm_bindgen(js_name = "updateBoneWorldMatrix")]
-    pub fn update_bone_world_matrix(&mut self, ptr: *mut usize, root: usize) {
+    pub fn update_bone_world_matrix(&mut self, ptr: *mut usize, root: u32) {
         let ptr = ptr as *mut MmdModel;
         let bone_arena = unsafe {
             &mut *ptr

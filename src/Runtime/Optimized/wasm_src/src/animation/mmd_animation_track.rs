@@ -1,5 +1,4 @@
 use nalgebra::{Quaternion, Vector3};
-use web_sys::js_sys::{Uint32Array, Float32Array, Uint8Array};
 
 #[repr(C)]
 #[derive(Clone)]

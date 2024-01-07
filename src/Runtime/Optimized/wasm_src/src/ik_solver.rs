@@ -29,7 +29,7 @@ impl std::ops::DerefMut for IkSolverArena {
 }
 
 struct IkChain {
-    bone: usize,
+    bone: u32,
     angle_limits: Option<IkChainAngleLimits>,
     prev_angle: Vector3<f32>,
     saved_ik_rotation: UnitQuaternion<f32>,
@@ -38,7 +38,7 @@ struct IkChain {
 
 impl IkChain {
     fn new(
-        bone: usize,
+        bone: u32,
         angle_limits: Option<IkChainAngleLimits>,
     ) -> Self {
         IkChain {
@@ -61,8 +61,8 @@ pub(crate) struct IkSolver {
     iteration: i32,
     limit_angle: f32,
 
-    ik_bone: usize,
-    target_bone: usize,
+    ik_bone: u32,
+    target_bone: u32,
     ik_chains: Vec<IkChain>,
 }
 
@@ -70,29 +70,29 @@ impl IkSolver {
     pub fn new(
         iteration: i32,
         limit_angle: f32,
-        ik_bone: usize,
-        target_bone: usize,
-        chain_capacity: usize,
+        ik_bone: u32,
+        target_bone: u32,
+        chain_capacity: u32,
     ) -> IkSolver {
         IkSolver {
             iteration,
             limit_angle,
             ik_bone,
             target_bone,
-            ik_chains: Vec::with_capacity(chain_capacity),
+            ik_chains: Vec::with_capacity(chain_capacity as usize),
         }
     }
 
     pub fn add_ik_chain(
         &mut self,
         arena: &mut [MmdRuntimeBone],
-        bone: usize,
+        bone: u32,
         angle_limits: Option<IkChainAngleLimits>,
     ) {
         let ik_chain = IkChain::new(bone, angle_limits);
         self.ik_chains.push(ik_chain);
 
-        let bone = &mut arena[bone];
+        let bone = &mut arena[bone as usize];
         bone.ik_rotation = Some(UnitQuaternion::identity());
     }
 
@@ -101,7 +101,7 @@ impl IkSolver {
             chain.prev_angle = Vector3::zeros();
             chain.plane_mode_angle = 0.0;
 
-            let chain_bone = &mut bone_arena[chain.bone];
+            let chain_bone = &mut bone_arena[chain.bone as usize];
             chain_bone.ik_rotation = Some(UnitQuaternion::identity());
             chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
             bone_arena.update_world_matrix(chain.bone);
@@ -118,11 +118,11 @@ impl IkSolver {
             if distance < max_distance {
                 max_distance = distance;
                 for chain in &mut self.ik_chains {
-                    chain.saved_ik_rotation = bone_arena[chain.bone].ik_rotation.unwrap();
+                    chain.saved_ik_rotation = bone_arena[chain.bone as usize].ik_rotation.unwrap();
                 }
             } else {
                 for chain in &mut self.ik_chains {
-                    let chain_bone = &mut bone_arena[chain.bone];
+                    let chain_bone = &mut bone_arena[chain.bone as usize];
                     chain_bone.ik_rotation = Some(chain.saved_ik_rotation);
                     chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
                     bone_arena.update_world_matrix(chain.bone);
@@ -181,8 +181,8 @@ impl IkSolver {
             let cross = UnitVector3::new_normalize(chain_target_vector.cross(&chain_ik_vector));
             let rotation = UnitQuaternion::from_axis_angle(&cross, angle);
 
-            let animated_rotation = bone_arena[chain.bone].animated_rotation(animation_arena);
-            let chain_bone = &mut bone_arena[chain.bone];
+            let animated_rotation = bone_arena[chain.bone as usize].animated_rotation(animation_arena);
+            let chain_bone = &mut bone_arena[chain.bone as usize];
             let mut chain_rotation = chain_bone.ik_rotation.unwrap() * animated_rotation * rotation;
             if let Some(IkChainAngleLimits{minimum_angle, maximum_angle}) = &chain.angle_limits {
                 let mut chain_rotation_matrix = chain_rotation.to_homogeneous();
@@ -208,7 +208,7 @@ impl IkSolver {
                 chain_rotation = UnitQuaternion::from_matrix(&chain_rotation_matrix.fixed_view::<3, 3>(0, 0).into_owned());
             }
 
-            let chain_bone = &mut bone_arena[chain.bone];
+            let chain_bone = &mut bone_arena[chain.bone as usize];
             chain_bone.ik_rotation = Some(chain_rotation * animated_rotation.inverse());
 
             chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
@@ -276,8 +276,8 @@ impl IkSolver {
         let new_angle = new_angle.clamp(minimum_angle, maximum_angle);
         chain.plane_mode_angle = new_angle;
 
-        let animated_rotation = bone_arena[chain.bone].animated_rotation(animation_arena);
-        let chain_bone = &mut bone_arena[chain.bone];
+        let animated_rotation = bone_arena[chain.bone as usize].animated_rotation(animation_arena);
+        let chain_bone = &mut bone_arena[chain.bone as usize];
         chain_bone.ik_rotation = Some(UnitQuaternion::from_axis_angle(&rotate_axis, new_angle) * animated_rotation.inverse());
 
         chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);

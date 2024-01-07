@@ -5,7 +5,7 @@ use nalgebra::UnitQuaternion;
 use crate::{mmd_model_metadata::MorphMetadata, mmd_runtime_bone::MmdRuntimeBoneArena};
 
 pub(crate) struct MmdMorphController {
-    pub morphs: Box<[MorphMetadata]>,
+    morphs: Box<[MorphMetadata]>,
     active_morphs: Box<[bool]>,
     group_morph_stack: RefCell<Vec<(i32, f32)>>,
 }
@@ -55,8 +55,8 @@ impl MmdMorphController {
     }
 
     pub fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: &[f32]) {
-        for i in 0..self.active_morphs.len() {
-            if self.active_morphs[i] {
+        for i in 0..self.active_morphs.len() as u32 {
+            if self.active_morphs[i as usize] {
                 self.reset_morph(i, bone_arena);
             }
         }
@@ -68,12 +68,12 @@ impl MmdMorphController {
             }
 
             self.active_morphs[i] = true;
-            self.apply_morph(i, bone_arena, *weight);
+            self.apply_morph(i as u32, bone_arena, *weight);
         }
     }
 
-    fn reset_morph(&self, i: usize, arena: &mut MmdRuntimeBoneArena) {
-        match &self.morphs[i] {
+    fn reset_morph(&self, i: u32, arena: &mut MmdRuntimeBoneArena) {
+        match &self.morphs[i as usize] {
             MorphMetadata::Bone(bone_morph) => {
                 for index in bone_morph.indices.iter() {
                     if let Some(bone) = arena.get_mut(*index as usize) {
@@ -84,14 +84,14 @@ impl MmdMorphController {
             }
             MorphMetadata::Group(_) => {
                 self.group_morph_flat_foreach(i as i32, |index, _| {
-                    self.reset_morph(index as usize, arena);
+                    self.reset_morph(index as u32, arena);
                 });
             }
         }
     }
 
-    fn apply_morph(&self, i: usize, arena: &mut MmdRuntimeBoneArena, weight: f32) {
-        match &self.morphs[i] {
+    fn apply_morph(&self, i: u32, arena: &mut MmdRuntimeBoneArena, weight: f32) {
+        match &self.morphs[i as usize] {
             MorphMetadata::Bone(bone_morph) => {
                 for i in 0..bone_morph.indices.len() {
                     let index = bone_morph.indices[i];
@@ -120,7 +120,7 @@ impl MmdMorphController {
             }
             MorphMetadata::Group(_) => {
                 self.group_morph_flat_foreach(i as i32, |index, accumulated_ratio| {
-                    self.apply_morph(index as usize, arena, weight * accumulated_ratio);
+                    self.apply_morph(index as u32, arena, weight * accumulated_ratio);
                 });
             }
         }

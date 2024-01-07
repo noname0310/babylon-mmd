@@ -13,15 +13,15 @@ impl AppendTransformSolverArena {
         }
     }
 
-    pub fn update(&mut self, index: usize, animation_arena: &AnimationArena, bone_arena: &MmdRuntimeBoneArena) {
-        let solver = &self.arena[index];
-        let target_bone = &bone_arena[solver.target_bone];
+    pub fn update(&mut self, index: u32, animation_arena: &AnimationArena, bone_arena: &MmdRuntimeBoneArena) {
+        let solver = &self.arena[index as usize];
+        let target_bone = &bone_arena[solver.target_bone as usize];
 
         if solver.affect_rotation {
             let mut rotation = if solver.is_local {
                 target_bone.animated_rotation(animation_arena)
             } else if let Some(append_transform_solver) = target_bone.append_transform_solver {
-                self.arena[append_transform_solver].append_rotation_offset
+                self.arena[append_transform_solver as usize].append_rotation_offset
             } else {
                 target_bone.animated_rotation(animation_arena)
             };
@@ -30,21 +30,21 @@ impl AppendTransformSolverArena {
                 rotation = ik_rotation * rotation;
             }
 
-            let solver = &mut self.arena[index];
+            let solver = &mut self.arena[index as usize];
             solver.append_rotation_offset = UnitQuaternion::identity().slerp(&rotation, solver.ratio);
         }
 
-        let solver = &self.arena[index];
+        let solver = &self.arena[index as usize];
         if solver.affect_position {
             let position = if solver.is_local {
                 target_bone.animation_position_offset(animation_arena)
             } else if let Some(append_transform_solver) = target_bone.append_transform_solver {
-                self.arena[append_transform_solver].append_position_offset
+                self.arena[append_transform_solver as usize].append_position_offset
             } else {
                 target_bone.animation_position_offset(animation_arena)
             };
 
-            let solver = &mut self.arena[index];
+            let solver = &mut self.arena[index as usize];
             solver.append_position_offset = position * solver.ratio;
         }
     }
@@ -70,7 +70,7 @@ pub(crate) struct AppendTransformSolver {
     affect_position: bool,
     ratio: f32,
 
-    target_bone: usize,
+    target_bone: u32,
 
     append_position_offset: Vector3<f32>,
     append_rotation_offset: UnitQuaternion<f32>,
@@ -78,7 +78,7 @@ pub(crate) struct AppendTransformSolver {
 
 impl AppendTransformSolver {
     pub fn new(
-        target_bone: usize,
+        target_bone: u32,
         bone_flag: u16,
         ratio: f32,
     ) -> Self {

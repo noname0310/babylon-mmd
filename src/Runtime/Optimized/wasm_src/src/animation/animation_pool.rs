@@ -186,7 +186,7 @@ impl AnimationPool {
         morph_tracks_ptr: *mut usize,
         morph_track_count: usize,
         property_track_length: u8,
-        property_track_ik_count: u8
+        property_track_ik_count: u8,
     ) -> u32 {
         let bone_tracks_ptr = bone_tracks_ptr as *mut MmdBoneAnimationTrack;
         let movable_bone_tracks_ptr = movable_bone_tracks_ptr as *mut MmdMovableBoneAnimationTrack;
@@ -218,7 +218,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "getAnimationPtr")]
     pub fn get_animation_ptr(&self, id: u32) -> *mut usize {
-        let animation = match self.animations.iter().find(|animation| animation.id == id) {
+        let animation = match self.animations.iter().find(|animation| animation.id() == id) {
             Some(animation) => animation,
             None => return std::ptr::null_mut(),
         };
@@ -232,7 +232,7 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track.frame_numbers.as_mut_ptr()
+        animation.property_track().frame_numbers.as_ptr() as *mut u32
     }
 
     #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
@@ -241,19 +241,128 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track.ik_states[index].as_mut_ptr()
+        animation.property_track().ik_states[index].as_ptr() as *mut u8
     }
 
     #[wasm_bindgen(js_name = "destroyAnimation")]
     pub fn destroy_animation(&mut self, id: u32) {
-        let index = match self.animations.iter().position(|animation| animation.id == id) {
+        let index = match self.animations.iter().position(|animation| animation.id() == id) {
             Some(index) => index,
             None => return,
         };
         self.animations.remove(index);
 
-        if let Some(index) = self.runtime_animations.iter().position(|animation| animation.animation_id == id) {
+        if let Some(index) = self.runtime_animations.iter().position(|animation| animation.id() == id) {
             self.runtime_animations.remove(index);
         }
+    }
+
+    #[wasm_bindgen(js_name = "createBoneBindIndexMap")]
+    pub fn create_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let mut bone_bind_index_map = Vec::with_capacity(animation.bone_tracks().len());
+        for _ in 0..animation.bone_tracks().len() {
+            bone_bind_index_map.push(-1);
+        }
+        let bone_bind_index_map = bone_bind_index_map.into_boxed_slice();
+        let ptr = bone_bind_index_map.as_ptr();
+        std::mem::forget(bone_bind_index_map);
+        ptr as *mut i32
+    }
+
+    #[wasm_bindgen(js_name = "createMovableBoneBindIndexMap")]
+    pub fn create_movable_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let mut movable_bone_bind_index_map = Vec::with_capacity(animation.movable_bone_tracks().len());
+        for _ in 0..animation.movable_bone_tracks().len() {
+            movable_bone_bind_index_map.push(-1);
+        }
+        let movable_bone_bind_index_map = movable_bone_bind_index_map.into_boxed_slice();
+        let ptr = movable_bone_bind_index_map.as_ptr();
+        std::mem::forget(movable_bone_bind_index_map);
+        ptr as *mut i32
+    }
+
+    #[wasm_bindgen(js_name = "createMorphBindIndexMap")]
+    pub fn create_morph_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let mut morph_bind_index_map = Vec::with_capacity(animation.morph_tracks().len());
+        for _ in 0..animation.morph_tracks().len() {
+            morph_bind_index_map.push(-1);
+        }
+        let morph_bind_index_map = morph_bind_index_map.into_boxed_slice();
+        let ptr = morph_bind_index_map.as_ptr();
+        std::mem::forget(morph_bind_index_map);
+        ptr as *mut i32
+    }
+
+    #[wasm_bindgen(js_name = "createIkSolverBindIndexMap")]
+    pub fn create_ik_solver_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let mut ik_solver_bind_index_map = Vec::with_capacity(animation.property_track().ik_states.len());
+        for _ in 0..animation.property_track().ik_states.len() {
+            ik_solver_bind_index_map.push(-1);
+        }
+        let ik_solver_bind_index_map = ik_solver_bind_index_map.into_boxed_slice();
+        let ptr = ik_solver_bind_index_map.as_ptr();
+        std::mem::forget(ik_solver_bind_index_map);
+        ptr as *mut i32
+    }
+
+    #[wasm_bindgen(js_name = "createRuntimeAnimation")]
+    pub fn create_runtime_animation(
+        &mut self,
+        animation_ptr: *const usize,
+        bone_bind_index_map: *mut i32,
+        movable_bone_bind_index_map: *mut i32,
+        morph_bind_index_map: *mut i32,
+        ik_solver_bind_index_map: *mut i32,
+    ) -> u32 {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let bone_bind_index_map = unsafe {
+            Box::from_raw(std::slice::from_raw_parts_mut(bone_bind_index_map, animation.bone_tracks().len()))
+        };
+        let movable_bone_bind_index_map = unsafe {
+            Box::from_raw(std::slice::from_raw_parts_mut(movable_bone_bind_index_map, animation.movable_bone_tracks().len()))
+        };
+        let morph_bind_index_map = unsafe {
+            Box::from_raw(std::slice::from_raw_parts_mut(morph_bind_index_map, animation.morph_tracks().len()))
+        };
+        let ik_solver_bind_index_map = unsafe {
+            Box::from_raw(std::slice::from_raw_parts_mut(ik_solver_bind_index_map, animation.property_track().ik_states.len()))
+        };
+
+        let id = self.next_runtime_animation_id;
+        let runtime_animation = MmdRuntimeAnimation::new(
+            id,
+            animation,
+            bone_bind_index_map,
+            movable_bone_bind_index_map,
+            morph_bind_index_map,
+            ik_solver_bind_index_map,
+        );
+        self.runtime_animations.push(runtime_animation);
+        self.next_runtime_animation_id += 1;
+        id
     }
 }

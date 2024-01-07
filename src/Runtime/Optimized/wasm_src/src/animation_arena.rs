@@ -15,47 +15,47 @@ pub(crate) struct AnimationArena {
 }
 
 impl AnimationArena {
-    pub fn new(bone_count: usize, ik_count: usize, morph_count: usize) -> Self {
+    pub fn new(bone_count: u32, ik_count: u32, morph_count: u32) -> Self {
         AnimationArena {
             bone_arena: vec![AnimatedBoneData {
                 position: Vector3::new(0.0, 0.0, 0.0),
                 rotation: UnitQuaternion::identity(),
                 scale: Vector3::new(1.0, 1.0, 1.0),
-            }; bone_count].into_boxed_slice(),
-            iksolver_state_arena: vec![1; ik_count].into_boxed_slice(),
-            morph_arena: vec![0.0; morph_count].into_boxed_slice(),
+            }; bone_count as usize].into_boxed_slice(),
+            iksolver_state_arena: vec![1; ik_count as usize].into_boxed_slice(),
+            morph_arena: vec![0.0; morph_count as usize].into_boxed_slice(),
         }
     }
     
-    pub fn bone_arena_ptr(&mut self) -> *mut f32 {
-        self.bone_arena.as_mut_ptr() as *mut f32
+    pub fn bone_arena_mut(&mut self) -> &mut [AnimatedBoneData] {
+        &mut self.bone_arena
     }
 
-    pub fn iksolver_state_arena_ptr(&mut self) -> *mut u8 {
-        self.iksolver_state_arena.as_mut_ptr()
+    pub fn bone_position(&self, index: u32) -> &Vector3<f32> {
+        &self.bone_arena[index as usize].position
     }
 
-    pub fn morph_arena_ptr(&mut self) -> *mut f32 {
-        self.morph_arena.as_mut_ptr()
+    pub fn bone_rotation(&self, index: u32) -> &UnitQuaternion<f32> {
+        &self.bone_arena[index as usize].rotation
     }
 
-    pub fn bone_position(&self, index: usize) -> &Vector3<f32> {
-        &self.bone_arena[index].position
-    }
-
-    pub fn bone_rotation(&self, index: usize) -> &UnitQuaternion<f32> {
-        &self.bone_arena[index].rotation
-    }
-
-    pub fn bone_scale(&self, index: usize) -> &Vector3<f32> {
-        &self.bone_arena[index].scale
+    pub fn bone_scale(&self, index: u32) -> &Vector3<f32> {
+        &self.bone_arena[index as usize].scale
     }
 
     pub fn iksolver_state_arena(&self) -> &[u8] {
         &self.iksolver_state_arena
     }
 
+    pub fn iksolver_state_arena_mut(&mut self) -> &mut [u8] {
+        &mut self.iksolver_state_arena
+    }
+
     pub fn morph_arena(&self) -> &[f32] {
         &self.morph_arena
+    }
+
+    pub fn morph_arena_mut(&mut self) -> &mut [f32] {
+        &mut self.morph_arena
     }
 }
