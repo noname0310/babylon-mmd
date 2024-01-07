@@ -1,11 +1,11 @@
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { induceMmdStandardMaterialRecompile } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
-import type { IMmdRuntimeLinkedBone } from "@/Runtime/IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 import type { MmdWasmModel } from "../mmdWasmModel";
@@ -21,6 +21,15 @@ type MorphIndices = readonly number[];
  * An object with mmd animation and model binding information
  */
 export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAnimation> {
+    private _disposed: boolean;
+
+    /**
+     * On dispose observable
+     *
+     * This observable is notified when the object is disposed
+     */
+    public readonly onDisposeObservable: Observable<void>;
+
     /**
      * The animation data
      */
@@ -72,6 +81,8 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
     ) {
         super();
 
+        this._disposed = false;
+        this.onDisposeObservable = new Observable<void>();
         this.animation = animation;
 
         this._boneBindIndexMap = boneBindIndexMap;
@@ -82,6 +93,18 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         this.ikSolverBindIndexMap = ikSolverBindIndexMap;
 
         this._materialRecompileInduceInfo = materialRecompileInduceInfo;
+    }
+
+    /**
+     * Dispose this instance
+     */
+    public dispose(): void {
+        if (this._disposed) return;
+        this._disposed = true;
+
+        // todo: dispose
+
+        this.onDisposeObservable.notifyObservers();
     }
 
     /**
@@ -167,6 +190,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
     }
 
     /**
+     * @internal
      * Bind animation to model and prepare material for morph animation
      * @param animation Animation to bind
      * @param model Bind target
@@ -252,8 +276,8 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 
         return new MmdWasmRuntimeModelAnimation(
             animation,
-            boneBindIndexMap,
-            movableBoneBindIndexMap,
+            boneBindIndexMap as any,
+            movableBoneBindIndexMap as any,
             morphController,
             morphBindIndexMap,
             model.mesh.metadata.meshes,
@@ -291,6 +315,11 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 declare module "./mmdWasmAnimation" {
     export interface MmdWasmAnimation {
         /**
+         * @internal
+         */
+        _runtimeModelAnimations: MmdWasmRuntimeModelAnimation[];
+
+        /**
          * Create wasm runtime model animation
          * @param model Bind target
          * @param retargetingMap Model bone name to animation bone name map
@@ -317,5 +346,25 @@ MmdWasmAnimation.prototype.createWasmRuntimeModelAnimation = function(
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
 ): MmdWasmRuntimeModelAnimation {
-    return MmdWasmRuntimeModelAnimation.Create(this, model, retargetingMap, logger);
+    if (this._runtimeModelAnimations === undefined) this._runtimeModelAnimations = [];
+
+    const runtimeAnimation = MmdWasmRuntimeModelAnimation.Create(this, model, retargetingMap, logger);
+    this._runtimeModelAnimations.push(runtimeAnimation);
+    return runtimeAnimation;
+};
+
+const mmdWasmAnimationDispose = MmdWasmAnimation.prototype.dispose;
+
+MmdWasmAnimation.prototype.dispose = function(): void {
+    if (this.isDisposed) return;
+
+    const runtimeModelAnimations = this._runtimeModelAnimations;
+    if (runtimeModelAnimations !== undefined) {
+        for (let i = 0; i < runtimeModelAnimations.length; ++i) {
+            runtimeModelAnimations[i].dispose();
+        }
+        this._runtimeModelAnimations = undefined!;
+    }
+
+    mmdWasmAnimationDispose.call(this);
 };

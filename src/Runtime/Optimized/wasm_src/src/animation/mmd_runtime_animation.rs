@@ -15,7 +15,6 @@ struct AnimationState {
 }
 
 pub(crate) struct MmdRuntimeAnimation {
-    id: u32,
     animation: &'static MmdAnimation,
     state: AnimationState,
     bone_bind_index_map: Box<[i32]>,
@@ -26,7 +25,6 @@ pub(crate) struct MmdRuntimeAnimation {
 
 impl<'a> MmdRuntimeAnimation {
     pub(crate) fn new(
-        id: u32,
         animation: &'static MmdAnimation,
         bone_bind_index_map: Box<[i32]>,
         movable_bone_bind_index_map: Box<[i32]>,
@@ -70,7 +68,6 @@ impl<'a> MmdRuntimeAnimation {
         };
 
         Self {
-            id,
             animation,
             state,
             bone_bind_index_map,
@@ -80,8 +77,8 @@ impl<'a> MmdRuntimeAnimation {
         }
     }
 
-    pub(crate) fn id(&self) -> u32 {
-        self.id
+    pub(crate) fn animation(&self) -> &'static MmdAnimation {
+        self.animation
     }
 
     fn upper_bound_frame_index(frame_time: f32, frame_numbers: &[u32], track_state: &mut AnimationTrackState) -> u32 {

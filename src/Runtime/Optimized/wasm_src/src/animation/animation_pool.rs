@@ -6,10 +6,8 @@ use super::{mmd_animation::MmdAnimation, mmd_runtime_animation::MmdRuntimeAnimat
 
 #[wasm_bindgen]
 pub struct AnimationPool {
-    animations: Vec<MmdAnimation>,
-    runtime_animations: Vec<MmdRuntimeAnimation>,
-    next_animation_id: u32,
-    next_runtime_animation_id: u32,
+    animations: Vec<Box<MmdAnimation>>,
+    runtime_animations: Vec<Box<MmdRuntimeAnimation>>,
 }
 
 #[wasm_bindgen]
@@ -18,8 +16,6 @@ impl AnimationPool {
         Self {
             animations: Vec::new(),
             runtime_animations: Vec::new(),
-            next_animation_id: 0,
-            next_runtime_animation_id: 0,
         }
     }
 
@@ -187,7 +183,7 @@ impl AnimationPool {
         morph_track_count: usize,
         property_track_length: u8,
         property_track_ik_count: u8,
-    ) -> u32 {
+    ) -> *mut usize {
         let bone_tracks_ptr = bone_tracks_ptr as *mut MmdBoneAnimationTrack;
         let movable_bone_tracks_ptr = movable_bone_tracks_ptr as *mut MmdMovableBoneAnimationTrack;
         let morph_tracks_ptr = morph_tracks_ptr as *mut MmdMorphAnimationTrack;
@@ -203,26 +199,14 @@ impl AnimationPool {
         };
         let property_track = MmdPropertyAnimationTrack::new(property_track_length as usize, property_track_ik_count as usize);
 
-        let id = self.next_animation_id;
-        let animation = MmdAnimation::new(
-            self.next_animation_id,
+        let animation = Box::new(MmdAnimation::new(
             bone_tracks,
             movable_bone_tracks,
             morph_tracks,
             property_track,
-        );
+        ));
+        let ptr = &*animation as *const MmdAnimation as *mut usize;
         self.animations.push(animation);
-        self.next_animation_id += 1;
-        id
-    }
-
-    #[wasm_bindgen(js_name = "getAnimationPtr")]
-    pub fn get_animation_ptr(&self, id: u32) -> *mut usize {
-        let animation = match self.animations.iter().find(|animation| animation.id() == id) {
-            Some(animation) => animation,
-            None => return std::ptr::null_mut(),
-        };
-        let ptr = animation as *const MmdAnimation as *mut usize;
         ptr
     }
 
@@ -245,14 +229,16 @@ impl AnimationPool {
     }
 
     #[wasm_bindgen(js_name = "destroyAnimation")]
-    pub fn destroy_animation(&mut self, id: u32) {
-        let index = match self.animations.iter().position(|animation| animation.id() == id) {
+    pub fn destroy_animation(&mut self, animation_ptr: *const usize) {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+
+        let index = match self.animations.iter().position(|animation| &**animation as *const MmdAnimation == animation_ptr) {
             Some(index) => index,
             None => return,
         };
         self.animations.remove(index);
 
-        if let Some(index) = self.runtime_animations.iter().position(|animation| animation.id() == id) {
+        if let Some(index) = self.runtime_animations.iter().position(|animation| animation.animation() as *const MmdAnimation == animation_ptr) {
             self.runtime_animations.remove(index);
         }
     }
@@ -333,7 +319,7 @@ impl AnimationPool {
         movable_bone_bind_index_map: *mut i32,
         morph_bind_index_map: *mut i32,
         ik_solver_bind_index_map: *mut i32,
-    ) -> u32 {
+    ) -> *mut usize {
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -352,17 +338,15 @@ impl AnimationPool {
             Box::from_raw(std::slice::from_raw_parts_mut(ik_solver_bind_index_map, animation.property_track().ik_states.len()))
         };
 
-        let id = self.next_runtime_animation_id;
-        let runtime_animation = MmdRuntimeAnimation::new(
-            id,
+        let runtime_animation = Box::new(MmdRuntimeAnimation::new(
             animation,
             bone_bind_index_map,
             movable_bone_bind_index_map,
             morph_bind_index_map,
             ik_solver_bind_index_map,
-        );
+        ));
+        let ptr = &*runtime_animation as *const MmdRuntimeAnimation as *mut usize;
         self.runtime_animations.push(runtime_animation);
-        self.next_runtime_animation_id += 1;
-        id
+        ptr
     }
 }

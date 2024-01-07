@@ -1,8 +1,9 @@
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
-import { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+import { MmdCameraAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 import type { IDisposeObservable } from "@/Runtime/IDisposeObserable";
 
 import type { MmdWasmInstance } from "../mmdWasmInstance";
@@ -24,11 +25,12 @@ export class MmdWasmAnimation extends MmdAnimationBase<
     MmdWasmBoneAnimationTrack,
     MmdWasmMovableBoneAnimationTrack,
     MmdWasmMorphAnimationTrack,
-    MmdWasmPropertyAnimationTrack
+    IMmdPropertyAnimationTrack
 > {
-    private readonly _id: number;
+    private readonly _ptr: number;
     private readonly _pool: WasmAnimationPool;
 
+    private _disposed: boolean;
     private readonly _bindedDispose: () => void;
     private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
 
@@ -142,7 +144,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
         }
 
         const mmdAnimationPropertyTrack = mmdAnimation.propertyTrack;
-        const animationId = animationPool.createAnimation(
+        const animationPtr = animationPool.createAnimation(
             boneTracksPtr,
             newBoneTracks.length,
             movableBoneTracksPtr,
@@ -152,7 +154,6 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             mmdAnimationPropertyTrack.frameNumbers.length,
             mmdAnimationPropertyTrack.ikBoneNames.length
         );
-        const animationPtr = animationPool.getAnimationPtr(animationId);
 
         const propertyTrackFrameNumbersPtr = animationPool.getPropertyTrackFrameNumbers(animationPtr);
 
@@ -219,9 +220,10 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             cameraTrack
         );
 
-        this._id = animationId;
+        this._ptr = animationPtr;
         this._pool = animationPool;
 
+        this._disposed = false;
         this._bindedDispose = this.dispose.bind(this);
         this._disposeObservableObject = disposeObservable;
         if (this._disposeObservableObject !== null) {
@@ -229,11 +231,32 @@ export class MmdWasmAnimation extends MmdAnimationBase<
         }
     }
 
+    /**
+     * Dispose this instance
+     *
+     * all typed arrays in this instance will be invalid after this method is called
+     */
     public dispose(): void {
-        this._pool.destroyAnimation(this._id);
+        if (this._disposed) return;
+        this._disposed = true;
+
+        this._pool.destroyAnimation(this._ptr);
+
+        (this.boneTracks as MmdWasmBoneAnimationTrack[]).length = 0;
+        (this.movableBoneTracks as MmdWasmMovableBoneAnimationTrack[]).length = 0;
+        (this.morphTracks as MmdWasmMorphAnimationTrack[]).length = 0;
+        (this.propertyTrack as IMmdPropertyAnimationTrack) = new MmdPropertyAnimationTrack(0, []);
+        (this.cameraTrack as MmdCameraAnimationTrack) = new MmdCameraAnimationTrack(0);
 
         if (this._disposeObservableObject !== null) {
             this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
         }
+    }
+
+    /**
+     * Whether this instance is disposed
+     */
+    public get isDisposed(): boolean {
+        return this._disposed;
     }
 }
