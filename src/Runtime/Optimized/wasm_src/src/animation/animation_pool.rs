@@ -6,7 +6,9 @@ use super::{mmd_animation::MmdAnimation, mmd_runtime_animation::MmdRuntimeAnimat
 
 #[wasm_bindgen]
 pub struct AnimationPool {
+    #[allow(clippy::vec_box)]
     animations: Vec<Box<MmdAnimation>>,
+    #[allow(clippy::vec_box)]
     runtime_animations: Vec<Box<MmdRuntimeAnimation>>,
 }
 
@@ -173,6 +175,7 @@ impl AnimationPool {
     }
 
     #[wasm_bindgen(js_name = "createAnimation")]
+    #[allow(clippy::too_many_arguments)]
     pub fn create_animation(
         &mut self,
         bone_tracks_ptr: *mut usize,
