@@ -215,6 +215,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "getPropertyTrackFrameNumbers")]
     pub fn get_property_track_frame_numbers(&self, animation_ptr: *mut usize) -> *mut u32 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *mut MmdAnimation;
         let animation = unsafe {
             &mut *animation_ptr
@@ -224,6 +225,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
     pub fn get_property_track_ik_states(&self, animation_ptr: *mut usize, index: usize) -> *mut u8 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *mut MmdAnimation;
         let animation = unsafe {
             &mut *animation_ptr
@@ -233,6 +235,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "destroyAnimation")]
     pub fn destroy_animation(&mut self, animation_ptr: *const usize) {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
 
         let index = match self.animations.iter().position(|animation| &**animation as *const MmdAnimation == animation_ptr) {
@@ -248,6 +251,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createBoneBindIndexMap")]
     pub fn create_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -265,6 +269,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createMovableBoneBindIndexMap")]
     pub fn create_movable_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -282,6 +287,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createMorphBindIndexMap")]
     pub fn create_morph_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -299,6 +305,7 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createIkSolverBindIndexMap")]
     pub fn create_ik_solver_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -323,6 +330,7 @@ impl AnimationPool {
         morph_bind_index_map: *mut i32,
         ik_solver_bind_index_map: *mut i32,
     ) -> *mut usize {
+        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
         let animation = unsafe {
             &*animation_ptr
@@ -352,4 +360,24 @@ impl AnimationPool {
         self.runtime_animations.push(runtime_animation);
         ptr
     }
+
+    #[cfg(debug_assertions)]
+    fn check_animation_ptr(&self, animation_ptr: *const usize) {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        assert!(self.animations.iter().any(|animation| &**animation as *const MmdAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[inline(always)]
+    fn check_animation_ptr(&self, _animation_ptr: *const usize) {}
+
+    #[cfg(debug_assertions)]
+    fn check_runtime_animation_ptr(&self, animation_ptr: *const usize) {
+        let animation_ptr = animation_ptr as *const MmdRuntimeAnimation;
+        assert!(self.runtime_animations.iter().any(|animation| &**animation as *const MmdRuntimeAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[inline(always)]
+    fn check_runtime_animation_ptr(&self, _animation_ptr: *const usize) {}
 }
