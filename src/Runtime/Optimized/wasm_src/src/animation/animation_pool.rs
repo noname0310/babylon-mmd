@@ -2,7 +2,9 @@ use wasm_bindgen::prelude::*;
 
 use crate::animation::mmd_animation_track::{MmdBoneAnimationTrack, MmdPropertyAnimationTrack, MmdMovableBoneAnimationTrack};
 
-use super::{mmd_animation::MmdAnimation, mmd_runtime_animation::MmdRuntimeAnimation, mmd_animation_track::MmdMorphAnimationTrack};
+use super::mmd_animation::MmdAnimation;
+use super::mmd_runtime_animation::MmdRuntimeAnimation;
+use super::mmd_animation_track::MmdMorphAnimationTrack;
 
 #[wasm_bindgen]
 pub struct AnimationPool {

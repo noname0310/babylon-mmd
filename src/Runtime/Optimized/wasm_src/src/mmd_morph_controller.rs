@@ -2,7 +2,8 @@ use std::cell::RefCell;
 
 use nalgebra::UnitQuaternion;
 
-use crate::{mmd_model_metadata::MorphMetadata, mmd_runtime_bone::MmdRuntimeBoneArena};
+use crate::mmd_model_metadata::MorphMetadata;
+use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 
 pub(crate) struct MmdMorphController {
     morphs: Box<[MorphMetadata]>,

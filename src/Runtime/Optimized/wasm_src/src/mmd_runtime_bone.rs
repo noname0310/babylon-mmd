@@ -1,6 +1,7 @@
 use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
 
-use crate::{animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
+use crate::animation_arena::AnimationArena;
+use crate::append_transform_solver::AppendTransformSolverArena;
 
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,

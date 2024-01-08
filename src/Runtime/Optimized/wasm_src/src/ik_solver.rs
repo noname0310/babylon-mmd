@@ -1,6 +1,9 @@
 use nalgebra::{UnitQuaternion, Vector3, distance_squared, UnitVector3, Matrix4};
 
-use crate::{mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena}, mmd_model_metadata::IkChainAngleLimits, animation_arena::AnimationArena, append_transform_solver::AppendTransformSolverArena};
+use crate::mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
+use crate::mmd_model_metadata::IkChainAngleLimits;
+use crate::animation_arena::AnimationArena;
+use crate::append_transform_solver::AppendTransformSolverArena;
 
 pub(crate) struct IkSolverArena {
     arena: Box<[IkSolver]>,    

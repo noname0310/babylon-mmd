@@ -1,8 +1,11 @@
 use nalgebra::Vector3;
 
-use crate::{animation_arena::AnimationArena, mmd_runtime_bone::MmdRuntimeBoneArena};
+use crate::animation_arena::AnimationArena;
+use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 
-use super::{mmd_animation::MmdAnimation, bezier_interpolation::bezier_interpolation, mmd_animation_track::{InterpolationVector3, InterpolationScalar}};
+use super::mmd_animation::MmdAnimation;
+use super::bezier_interpolation::bezier_interpolation;
+use super::mmd_animation_track::{InterpolationVector3, InterpolationScalar};
 
 struct AnimationTrackState {
     frame_time: f32,

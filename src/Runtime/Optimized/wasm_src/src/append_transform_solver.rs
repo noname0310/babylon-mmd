@@ -1,6 +1,8 @@
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::{mmd_runtime_bone::MmdRuntimeBoneArena, mmd_model_metadata::BoneFlag, animation_arena::AnimationArena};
+use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
+use crate::mmd_model_metadata::BoneFlag;
+use crate::animation_arena::AnimationArena;
 
 pub(crate) struct AppendTransformSolverArena {
     arena: Box<[AppendTransformSolver]>,

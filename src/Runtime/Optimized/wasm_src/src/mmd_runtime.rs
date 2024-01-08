@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
-use crate::{mmd_model::MmdModel, mmd_model_metadata::MetadataBuffer};
+use crate::mmd_model::MmdModel;
+use crate::mmd_model_metadata::MetadataBuffer;
 
 #[wasm_bindgen]
 pub struct MmdRuntime {
