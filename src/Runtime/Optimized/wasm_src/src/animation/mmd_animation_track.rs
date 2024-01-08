@@ -1,12 +1,12 @@
-use nalgebra::{Quaternion, Vector3};
+use nalgebra::{Vector3, UnitQuaternion};
 
 #[repr(C)]
 #[derive(Clone)]
 pub(crate) struct InterpolationScalar {
-    x1: u8,
-    x2: u8,
-    y1: u8,
-    y2: u8,
+    pub(crate) x1: u8,
+    pub(crate) x2: u8,
+    pub(crate) y1: u8,
+    pub(crate) y2: u8,
 }
 
 impl InterpolationScalar {
@@ -23,9 +23,9 @@ impl InterpolationScalar {
 #[repr(C)]
 #[derive(Clone)]
 pub(crate) struct InterpolationVector3 {
-    x: InterpolationScalar,
-    y: InterpolationScalar,
-    z: InterpolationScalar,
+    pub(crate) x: InterpolationScalar,
+    pub(crate) y: InterpolationScalar,
+    pub(crate) z: InterpolationScalar,
 }
 
 impl InterpolationVector3 {
@@ -40,7 +40,7 @@ impl InterpolationVector3 {
 
 pub(crate) struct MmdBoneAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
-    pub(crate) rotations: Box<[Quaternion<f32>]>,
+    pub(crate) rotations: Box<[UnitQuaternion<f32>]>,
     pub(crate) rotation_interpolations: Box<[InterpolationScalar]>,
 }
 
@@ -48,9 +48,17 @@ impl MmdBoneAnimationTrack {
     pub(crate) fn new(frame_count: usize) -> Self {
         Self {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
-            rotations: vec![Quaternion::identity(); frame_count].into_boxed_slice(),
+            rotations: vec![UnitQuaternion::identity(); frame_count].into_boxed_slice(),
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
+    }
+
+    pub(crate) fn start_frame(&self) -> u32 {
+        self.frame_numbers.first().copied().unwrap_or(0)
+    }
+
+    pub(crate) fn end_frame(&self) -> u32 {
+        self.frame_numbers.last().copied().unwrap_or(0)
     }
 }
 
@@ -58,7 +66,7 @@ pub(crate) struct MmdMovableBoneAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
     pub(crate) positions: Box<[Vector3<f32>]>,
     pub(crate) position_interpolations: Box<[InterpolationVector3]>,
-    pub(crate) rotations: Box<[Quaternion<f32>]>,
+    pub(crate) rotations: Box<[UnitQuaternion<f32>]>,
     pub(crate) rotation_interpolations: Box<[InterpolationScalar]>,
 }
 
@@ -68,9 +76,17 @@ impl MmdMovableBoneAnimationTrack {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
             positions: vec![Vector3::zeros(); frame_count].into_boxed_slice(),
             position_interpolations: vec![InterpolationVector3::new(); frame_count].into_boxed_slice(),
-            rotations: vec![Quaternion::identity(); frame_count].into_boxed_slice(),
+            rotations: vec![UnitQuaternion::identity(); frame_count].into_boxed_slice(),
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
+    }
+
+    pub(crate) fn start_frame(&self) -> u32 {
+        self.frame_numbers.first().copied().unwrap_or(0)
+    }
+
+    pub(crate) fn end_frame(&self) -> u32 {
+        self.frame_numbers.last().copied().unwrap_or(0)
     }
 }
 
@@ -86,6 +102,14 @@ impl MmdMorphAnimationTrack {
             weights: vec![0.0; frame_count].into_boxed_slice(),
         }
     }
+
+    pub(crate) fn start_frame(&self) -> u32 {
+        self.frame_numbers.first().copied().unwrap_or(0)
+    }
+
+    pub(crate) fn end_frame(&self) -> u32 {
+        self.frame_numbers.last().copied().unwrap_or(0)
+    }
 }
 
 pub(crate) struct MmdPropertyAnimationTrack {
@@ -99,5 +123,13 @@ impl MmdPropertyAnimationTrack {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
             ik_states: vec![vec![1; frame_count].into_boxed_slice(); ik_count].into_boxed_slice(),
         }
+    }
+
+    pub(crate) fn start_frame(&self) -> u32 {
+        self.frame_numbers.first().copied().unwrap_or(0)
+    }
+
+    pub(crate) fn end_frame(&self) -> u32 {
+        self.frame_numbers.last().copied().unwrap_or(0)
     }
 }

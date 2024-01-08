@@ -3,9 +3,9 @@ use nalgebra::{Vector3, UnitQuaternion};
 #[repr(C)]
 #[derive(Clone)]
 pub struct AnimatedBoneData {
-    position: Vector3<f32>,
-    rotation: UnitQuaternion<f32>,
-    scale: Vector3<f32>,
+    pub(crate) position: Vector3<f32>,
+    pub(crate) rotation: UnitQuaternion<f32>,
+    pub(crate) scale: Vector3<f32>,
 }
 
 pub(crate) struct AnimationArena {

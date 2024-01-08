@@ -1,6 +1,8 @@
-use crate::animation_arena::AnimationArena;
+use nalgebra::Vector3;
 
-use super::mmd_animation::MmdAnimation;
+use crate::{animation_arena::AnimationArena, mmd_runtime_bone::MmdRuntimeBoneArena};
+
+use super::{mmd_animation::MmdAnimation, bezier_interpolation::bezier_interpolation, mmd_animation_track::{InterpolationVector3, InterpolationScalar}};
 
 struct AnimationTrackState {
     frame_time: f32,
@@ -117,7 +119,171 @@ impl<'a> MmdRuntimeAnimation {
         }
     }
 
-    pub(crate) fn animate(frame_time: f32, animation_arena: &mut AnimationArena) {
+    pub(crate) fn animate(&mut self, frame_time: f32, animation_arena: &mut AnimationArena, bone_arena: &MmdRuntimeBoneArena) {
+        if 0 < self.animation.bone_tracks().len() {
+            for i in 0..self.animation.bone_tracks().len() {
+                let bone = self.bone_bind_index_map[i];
+                let bone = match animation_arena.bone_arena_mut().get_mut(bone as usize) {
+                    Some(bone) => bone,
+                    None => continue,
+                };
 
+                let track = &self.animation.bone_tracks()[i];
+
+                let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
+                let frame_index_b = Self::upper_bound_frame_index(
+                    clamped_frame_time,
+                    &track.frame_numbers,
+                    &mut self.state.bone_track_states[i],
+                );
+                let frame_index_a = frame_index_b - 1;
+
+                if let Some(frame_number_b) = track.frame_numbers.get(frame_index_b as usize) {
+                    let frame_number_a = track.frame_numbers[frame_index_a as usize] as f32;
+                    let frame_number_b = *frame_number_b as f32;
+                    let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
+
+                    let weight = match &track.rotation_interpolations[frame_index_b as usize] {
+                        InterpolationScalar {x1, x2, y1, y2} => bezier_interpolation(
+                            *x1 as f32 / 127.0,
+                            *x2 as f32 / 127.0,
+                            *y1 as f32 / 127.0,
+                            *y2 as f32 / 127.0,
+                            gradient,
+                        ),
+                    };
+                    bone.rotation = track.rotations[frame_index_a as usize].slerp(&track.rotations[frame_index_b as usize], weight);
+                } else {
+                    bone.rotation = track.rotations[frame_index_a as usize];
+                }
+            }
+        }
+
+        if 0 < self.animation.movable_bone_tracks().len() {
+            for i in 0..self.animation.movable_bone_tracks().len() {
+                let bone_index = self.movable_bone_bind_index_map[i];
+                let bone = match animation_arena.bone_arena_mut().get_mut(bone_index as usize) {
+                    Some(bone) => bone,
+                    None => continue,
+                };
+
+                let track = &self.animation.movable_bone_tracks()[i];
+
+                let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
+                let frame_index_b = Self::upper_bound_frame_index(
+                    clamped_frame_time,
+                    &track.frame_numbers,
+                    &mut self.state.movable_bone_track_states[i],
+                );
+                let frame_index_a = frame_index_b - 1;
+
+                if let Some(frame_number_b) = track.frame_numbers.get(frame_index_b as usize) {
+                    let frame_number_a = track.frame_numbers[frame_index_a as usize] as f32;
+                    let frame_number_b = *frame_number_b as f32;
+                    let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
+
+                    let (x_weight, y_weight, z_weight) = match &track.position_interpolations[frame_index_b as usize] {
+                        InterpolationVector3 {x, y, z} => (
+                            bezier_interpolation(
+                                x.x1 as f32 / 127.0,
+                                x.x2 as f32 / 127.0,
+                                x.y1 as f32 / 127.0,
+                                x.y2 as f32 / 127.0,
+                                gradient,
+                            ),
+                            bezier_interpolation(
+                                y.x1 as f32 / 127.0,
+                                y.x2 as f32 / 127.0,
+                                y.y1 as f32 / 127.0,
+                                y.y2 as f32 / 127.0,
+                                gradient,
+                            ),
+                            bezier_interpolation(
+                                z.x1 as f32 / 127.0,
+                                z.x2 as f32 / 127.0,
+                                z.y1 as f32 / 127.0,
+                                z.y2 as f32 / 127.0,
+                                gradient,
+                            ),
+                        ),
+                    };
+                    let position_a = track.positions[frame_index_a as usize];
+                    let position_b = track.positions[frame_index_b as usize];
+                    bone.position = bone_arena[bone_index as usize].rest_position + Vector3::new(
+                        position_a.x + (position_b.x - position_a.x) * x_weight,
+                        position_a.y + (position_b.y - position_a.y) * y_weight,
+                        position_a.z + (position_b.z - position_a.z) * z_weight,
+                    );
+
+                    let rotation_weight = match &track.rotation_interpolations[frame_index_b as usize] {
+                        InterpolationScalar {x1, x2, y1, y2} => bezier_interpolation(
+                            *x1 as f32 / 127.0,
+                            *x2 as f32 / 127.0,
+                            *y1 as f32 / 127.0,
+                            *y2 as f32 / 127.0,
+                            gradient,
+                        ),
+                    };
+                    bone.rotation = track.rotations[frame_index_a as usize].slerp(&track.rotations[frame_index_b as usize], rotation_weight);
+                } else {
+                    bone.position = bone_arena[bone_index as usize].rest_position + track.positions[frame_index_a as usize];
+                    bone.rotation = track.rotations[frame_index_a as usize];
+                }
+            }
+        }
+
+        if 0 < self.animation.morph_tracks().len() {
+            for i in 0..self.animation.morph_tracks().len() {
+                let morph_index = self.morph_bind_index_map[i];
+                let morph = match animation_arena.morph_arena_mut().get_mut(morph_index as usize) {
+                    Some(morph) => morph,
+                    None => continue,
+                };
+
+                let track = &self.animation.morph_tracks()[i];
+
+                let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
+                let frame_index_b = Self::upper_bound_frame_index(
+                    clamped_frame_time,
+                    &track.frame_numbers,
+                    &mut self.state.morph_track_states[i],
+                );
+                let frame_index_a = frame_index_b - 1;
+
+                if let Some(frame_number_b) = track.frame_numbers.get(frame_index_b as usize) {
+                    let frame_number_a = track.frame_numbers[frame_index_a as usize] as f32;
+                    let frame_number_b = *frame_number_b as f32;
+                    let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
+
+                    *morph = track.weights[frame_index_a as usize] + (track.weights[frame_index_b as usize] - track.weights[frame_index_a as usize]) * gradient;
+                } else {
+                    *morph = track.weights[frame_index_a as usize];
+                }
+            }
+        }
+
+        let property_track = self.animation.property_track();
+        if 0 < property_track.frame_numbers.len() {
+            let clamp_frame_time = frame_time.clamp(
+                property_track.start_frame() as f32,
+                property_track.end_frame() as f32,
+            );
+            let step_index = Self::upper_bound_frame_index(
+                clamp_frame_time,
+                &property_track.frame_numbers,
+                &mut self.state.property_track_state,
+            ) as usize - 1;
+            
+            for i in 0..property_track.ik_states.len() {
+                let ik_solver_index = self.ik_solver_bind_index_map[i];
+
+                let ik_state = match animation_arena.iksolver_state_arena_mut().get_mut(ik_solver_index as usize) {
+                    Some(ik_state) => ik_state,
+                    None => continue,
+                };
+                
+                *ik_state = property_track.ik_states[i][step_index];
+            }
+        }
     }
 }
