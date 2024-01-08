@@ -198,6 +198,16 @@ Please refer to the documentation for more detailed instructions on how to use i
 - PMX 2.1 support (because 2.1 spec not implemented in MMD)
 - Self shadow, Ground shadow spec support
 
+## [Support](https://github.com/sponsors/noname0310) this project
+
+Advanced technical support is available for those supporting the project
+
+Contact me via email or discord
+
+email: hjnam2014@gmail.com
+
+discord: noname0310
+
 ## References
 
 [PMX (Polygon Model eXtended) 2.0, 2.1 File Format Specifications](https://gist.github.com/felixjones/f8a06bd48f9da9a4539f)
