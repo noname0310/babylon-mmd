@@ -375,14 +375,12 @@ export class MmdWasmModel implements IMmdModel {
      * @param frameTime The time elapsed since the last frame in 30fps
      */
     public beforePhysicsAndWasm(frameTime: Nullable<number>): void {
-        let needToSyncState = true;
         if (frameTime !== null) {
             const currentAnimation = this._currentAnimation;
             if (currentAnimation !== null) {
                 if ((currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
                     (currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate(frameTime);
                     (currentAnimation as MmdWasmRuntimeModelAnimation).lateAnimate(frameTime);
-                    needToSyncState = false;
                 } else {
                     (currentAnimation as IMmdRuntimeModelAnimation).animate(frameTime);
                 }
@@ -391,7 +389,7 @@ export class MmdWasmModel implements IMmdModel {
 
         this.morph.update();
 
-        if (needToSyncState) {
+        if ((this._currentAnimation as MmdWasmRuntimeModelAnimation)?.wasmAnimate === undefined) {
             const bones = this.skeleton.bones;
             const boneAnimationStates = this.boneAnimationStates;
             for (let i = 0; i < bones.length; ++i) {
