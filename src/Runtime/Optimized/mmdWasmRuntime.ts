@@ -17,6 +17,7 @@ import { MmdMesh } from "../mmdMesh";
 import type { MmdPhysics } from "../mmdPhysics";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
+import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
@@ -27,14 +28,16 @@ import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
  */
 export enum MmdWasmRuntimeAnimationEvaluationType {
     /**
-     * Buffered animation evaluation for the next frame
-     */
-    Buffered,
-
-    /**
      * Immediate animation evaluation for the current frame
      */
-    Immediate
+    Immediate,
+
+    /**
+     * Buffered animation evaluation for the next frame
+     *
+     * Multi-thread optimization applies when possible
+     */
+    Buffered
 }
 
 /**
@@ -90,6 +93,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public readonly onAnimationTickObservable: Observable<void>;
 
+    private _evaluationType: MmdWasmRuntimeAnimationEvaluationType;
     private _currentFrameTime: number;
     private _animationTimeScale: number;
     private _animationPaused: boolean;
@@ -135,6 +139,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.onSeekAnimationObservable = new Observable<void>();
         this.onAnimationTickObservable = new Observable<void>();
 
+        this._evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
         this._animationPaused = true;
@@ -221,6 +226,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
 
         const model = new MmdWasmModel(
+            this,
             this._wasmInstance,
             wasmRuntime,
             mmdModelPtr,
@@ -228,8 +234,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             skeleton,
             options.materialProxyConstructor,
             wasmMorphIndexMap,
-            options.buildPhysics ? this._physics : null,
-            this
+            options.buildPhysics ? this._physics : null
         );
         this._models.push(model);
         this._needToInitializePhysicsModels.add(model);
@@ -441,7 +446,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         for (let i = 0; i < models.length; ++i) models[i].afterPhysics();
     }
 
-    private readonly _onAnimationChanged = (newAnimation: Nullable<IMmdRuntimeCameraAnimation | IMmdRuntimeModelAnimation>): void => {
+    private readonly _onAnimationChanged = (newAnimation: Nullable<IMmdRuntimeCameraAnimation | IMmdRuntimeModelAnimation | MmdWasmRuntimeModelAnimation>): void => {
         if (this._useManualAnimationDuration) return;
 
         const newAnimationDuration = newAnimation?.animation.endFrame ?? 0;
@@ -606,9 +611,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (forceEvaluate) {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) {
-                const model = models[i];
-                if (model.currentAnimation !== null) {
-                    model.currentAnimation.animate(frameTime);
+                const currentAnimation = models[i].currentAnimation;
+                if (currentAnimation !== null) {
+                    if ((currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                        (currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate(frameTime);
+                        (currentAnimation as MmdWasmRuntimeModelAnimation).lateAnimate(frameTime);
+                    } else {
+                        (currentAnimation as IMmdRuntimeModelAnimation).animate(frameTime);
+                    }
                 }
             }
 
@@ -749,6 +759,23 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
 
         this.onAnimationDurationChangedObservable.notifyObservers();
+    }
+
+    /**
+     * Animation evaluation type
+     */
+    public get evaluationType(): MmdWasmRuntimeAnimationEvaluationType {
+        return this._evaluationType;
+    }
+
+    public set evaluationType(value: MmdWasmRuntimeAnimationEvaluationType) {
+        if (this._evaluationType === value) return;
+
+        if (value === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+            this._evaluationType = value;
+        } else {
+            this._evaluationType = value;
+        }
     }
 
     /**

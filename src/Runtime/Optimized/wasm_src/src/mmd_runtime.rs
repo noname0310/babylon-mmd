@@ -60,7 +60,7 @@ impl MmdRuntime {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
-        }.animation_arena();
+        }.animation_arena_mut();
         animation_arena.bone_arena_mut().as_mut_ptr() as *mut f32
     }
 
@@ -69,7 +69,7 @@ impl MmdRuntime {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
-        }.animation_arena();
+        }.animation_arena_mut();
         animation_arena.iksolver_state_arena_mut().as_mut_ptr()
     }
 
@@ -78,7 +78,7 @@ impl MmdRuntime {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
-        }.animation_arena();
+        }.animation_arena_mut();
         animation_arena.morph_arena_mut().as_mut_ptr()
     }
     
@@ -87,7 +87,7 @@ impl MmdRuntime {
         let ptr = ptr as *mut MmdModel;
         let bone_arena = unsafe {
             &mut *ptr
-        }.bone_arena();
+        }.bone_arena_mut();
         bone_arena.world_matrix_arena_ptr()
     }
 
@@ -110,7 +110,7 @@ impl MmdRuntime {
         let ptr = ptr as *mut MmdModel;
         let bone_arena = unsafe {
             &mut *ptr
-        }.bone_arena();
+        }.bone_arena_mut();
         bone_arena.update_world_matrix(root);
     }
 

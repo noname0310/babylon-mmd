@@ -115,4 +115,12 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
     protected override _resetBoneMorph(_morph: RuntimeMorph): void { }
 
     protected override _applyBoneMorph(_morph: RuntimeMorph, _weight: number): void { }
+
+    /**
+     * @internal
+     * Morph index map from js morph index to wasm morph index
+     */
+    public get wasmMorphIndexMap(): ArrayLike<number> {
+        return this._wasmMorphIndexMap;
+    }
 }

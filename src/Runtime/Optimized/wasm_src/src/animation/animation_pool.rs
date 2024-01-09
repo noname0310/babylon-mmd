@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::animation::mmd_animation_track::{MmdBoneAnimationTrack, MmdPropertyAnimationTrack, MmdMovableBoneAnimationTrack};
+use crate::mmd_model::MmdModel;
 
 use super::mmd_animation::MmdAnimation;
 use super::mmd_runtime_animation::MmdRuntimeAnimation;
@@ -23,18 +24,18 @@ impl AnimationPool {
         }
     }
 
-    #[wasm_bindgen(js_name = "allocateTrackLengthsBuffer")]
-    pub fn allocate_track_lengths_buffer(&self, track_count: usize) -> *mut u32 {
-        let mut vec = vec![0; track_count].into_boxed_slice();
+    #[wasm_bindgen(js_name = "allocateLengthsBuffer")]
+    pub fn allocate_lengths_buffer(&self, count: usize) -> *mut u32 {
+        let mut vec = vec![0; count].into_boxed_slice();
         let ptr = vec.as_mut_ptr();
         std::mem::forget(vec);
         ptr
     }
 
-    #[wasm_bindgen(js_name = "deallocateTrackLengthsBuffer")]
-    pub fn deallocate_track_lengths_buffer(&self, ptr: *mut u32, track_count: usize) {
+    #[wasm_bindgen(js_name = "deallocateLengthsBuffer")]
+    pub fn deallocate_lengths_buffer(&self, ptr: *mut u32, count: usize) {
         unsafe {
-            let _ = Box::from_raw(std::slice::from_raw_parts_mut(ptr, track_count));
+            let _ = Box::from_raw(std::slice::from_raw_parts_mut(ptr, count));
         }
     }
 
@@ -217,8 +218,8 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "getPropertyTrackFrameNumbers")]
     pub fn get_property_track_frame_numbers(&self, animation_ptr: *mut usize) -> *mut u32 {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *mut MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &mut *animation_ptr
         };
@@ -227,8 +228,8 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
     pub fn get_property_track_ik_states(&self, animation_ptr: *mut usize, index: usize) -> *mut u8 {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *mut MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &mut *animation_ptr
         };
@@ -237,8 +238,8 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "destroyAnimation")]
     pub fn destroy_animation(&mut self, animation_ptr: *const usize) {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
 
         let index = match self.animations.iter().position(|animation| &**animation as *const MmdAnimation == animation_ptr) {
             Some(index) => index,
@@ -253,8 +254,8 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createBoneBindIndexMap")]
     pub fn create_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &*animation_ptr
         };
@@ -271,8 +272,8 @@ impl AnimationPool {
 
     #[wasm_bindgen(js_name = "createMovableBoneBindIndexMap")]
     pub fn create_movable_bone_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &*animation_ptr
         };
@@ -288,27 +289,39 @@ impl AnimationPool {
     }
 
     #[wasm_bindgen(js_name = "createMorphBindIndexMap")]
-    pub fn create_morph_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
-        self.check_animation_ptr(animation_ptr);
+    pub fn create_morph_bind_index_map(&mut self, animation_ptr: *const usize, morph_lengths: *const u32) -> *mut Box<[i32]> {
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &*animation_ptr
         };
 
         let mut morph_bind_index_map = Vec::with_capacity(animation.morph_tracks().len());
-        for _ in 0..animation.morph_tracks().len() {
-            morph_bind_index_map.push(-1);
+        for i in 0..animation.morph_tracks().len() {
+            morph_bind_index_map.push(
+                vec![-1; unsafe {
+                    *morph_lengths.add(i)
+                } as usize].into_boxed_slice()
+            );
         }
         let morph_bind_index_map = morph_bind_index_map.into_boxed_slice();
         let ptr = morph_bind_index_map.as_ptr();
         std::mem::forget(morph_bind_index_map);
-        ptr as *mut i32
+        ptr as *mut Box<[i32]>
+    }
+
+    #[wasm_bindgen(js_name = "getNthMorphBindIndexMap")]
+    pub fn get_nth_morph_bind_index_map(&mut self, morph_bind_index_map: *mut Box<[i32]>, index: usize) -> *mut i32 {
+        let nth_morph_bind_index_map = unsafe {
+            &mut *morph_bind_index_map.add(index)
+        };
+        nth_morph_bind_index_map.as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "createIkSolverBindIndexMap")]
     pub fn create_ik_solver_bind_index_map(&mut self, animation_ptr: *const usize) -> *mut i32 {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &*animation_ptr
         };
@@ -329,11 +342,11 @@ impl AnimationPool {
         animation_ptr: *const usize,
         bone_bind_index_map: *mut i32,
         movable_bone_bind_index_map: *mut i32,
-        morph_bind_index_map: *mut i32,
+        morph_bind_index_map: *mut Box<[i32]>,
         ik_solver_bind_index_map: *mut i32,
     ) -> *mut usize {
-        self.check_animation_ptr(animation_ptr);
         let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
         let animation = unsafe {
             &*animation_ptr
         };
@@ -363,23 +376,31 @@ impl AnimationPool {
         ptr
     }
 
-    #[cfg(debug_assertions)]
-    fn check_animation_ptr(&self, animation_ptr: *const usize) {
-        let animation_ptr = animation_ptr as *const MmdAnimation;
+    #[wasm_bindgen(js_name = "animateMmdModel")]
+    pub fn animate_mmd_model(&mut self, animation_ptr: *mut usize, mmd_model_ptr: *mut usize, frame_time: f32) {
+        let animation_ptr = animation_ptr as *mut MmdRuntimeAnimation;
+        self.check_runtime_animation_ptr(animation_ptr);
+        let animation = unsafe {
+            &mut *animation_ptr
+        };
+
+        let mmd_model_ptr = mmd_model_ptr as *mut MmdModel;
+        let mmd_model = unsafe {
+            &mut *mmd_model_ptr
+        };
+
+        animation.animate(frame_time, mmd_model);
+    }
+
+    #[inline(always)]
+    fn check_animation_ptr(&self, animation_ptr: *const MmdAnimation) {
+        #[cfg(debug_assertions)]
         assert!(self.animations.iter().any(|animation| &**animation as *const MmdAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
     }
 
-    #[cfg(not(debug_assertions))]
     #[inline(always)]
-    fn check_animation_ptr(&self, _animation_ptr: *const usize) {}
-
-    #[cfg(debug_assertions)]
-    fn check_runtime_animation_ptr(&self, animation_ptr: *const usize) {
-        let animation_ptr = animation_ptr as *const MmdRuntimeAnimation;
+    fn check_runtime_animation_ptr(&self, animation_ptr: *const MmdRuntimeAnimation) {
+        #[cfg(debug_assertions)]
         assert!(self.runtime_animations.iter().any(|animation| &**animation as *const MmdRuntimeAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
     }
-
-    #[cfg(not(debug_assertions))]
-    #[inline(always)]
-    fn check_runtime_animation_ptr(&self, _animation_ptr: *const usize) {}
 }

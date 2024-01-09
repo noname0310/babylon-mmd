@@ -1,6 +1,7 @@
 use nalgebra::Vector3;
 
-use crate::animation_arena::AnimationArena;
+use crate::animation_arena::{AnimationArena, self};
+use crate::mmd_model::MmdModel;
 use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 
 use super::mmd_animation::MmdAnimation;
@@ -24,7 +25,7 @@ pub(crate) struct MmdRuntimeAnimation {
     state: AnimationState,
     bone_bind_index_map: Box<[i32]>,
     movable_bone_bind_index_map: Box<[i32]>,
-    morph_bind_index_map: Box<[i32]>,
+    morph_bind_index_map: Box<[Box<[i32]>]>,
     ik_solver_bind_index_map: Box<[i32]>,
 }
 
@@ -33,7 +34,7 @@ impl MmdRuntimeAnimation {
         animation: &'static MmdAnimation,
         bone_bind_index_map: Box<[i32]>,
         movable_bone_bind_index_map: Box<[i32]>,
-        morph_bind_index_map: Box<[i32]>,
+        morph_bind_index_map: Box<[Box<[i32]>]>,
         ik_solver_bind_index_map: Box<[i32]>,
     ) -> Self {
         let mut bone_track_states = Vec::with_capacity(animation.bone_tracks().len());
@@ -122,8 +123,10 @@ impl MmdRuntimeAnimation {
         }
     }
 
-    pub(crate) fn animate(&mut self, frame_time: f32, animation_arena: &mut AnimationArena, bone_arena: &MmdRuntimeBoneArena) {
+    pub(crate) fn animate(&mut self, frame_time: f32, mmd_model: &mut MmdModel) {
         if !self.animation.bone_tracks().is_empty() {
+            let animation_arena = mmd_model.animation_arena_mut();
+
             for i in 0..self.animation.bone_tracks().len() {
                 let bone = self.bone_bind_index_map[i];
                 let bone = match animation_arena.bone_arena_mut().get_mut(bone as usize) {
@@ -166,10 +169,11 @@ impl MmdRuntimeAnimation {
         if !self.animation.movable_bone_tracks().is_empty() {
             for i in 0..self.animation.movable_bone_tracks().len() {
                 let bone_index = self.movable_bone_bind_index_map[i];
-                let bone = match animation_arena.bone_arena_mut().get_mut(bone_index as usize) {
-                    Some(bone) => bone,
+                let bone_rest_position = match mmd_model.bone_arena_mut().get(bone_index as usize) {
+                    Some(bone) => bone.rest_position,
                     None => continue,
                 };
+                let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as usize];
 
                 let track = &self.animation.movable_bone_tracks()[i];
 
@@ -214,7 +218,7 @@ impl MmdRuntimeAnimation {
                     };
                     let position_a = track.positions[frame_index_a as usize];
                     let position_b = track.positions[frame_index_b as usize];
-                    bone.position = bone_arena[bone_index as usize].rest_position + Vector3::new(
+                    bone.position = bone_rest_position + Vector3::new(
                         position_a.x + (position_b.x - position_a.x) * x_weight,
                         position_a.y + (position_b.y - position_a.y) * y_weight,
                         position_a.z + (position_b.z - position_a.z) * z_weight,
@@ -232,19 +236,17 @@ impl MmdRuntimeAnimation {
                     };
                     bone.rotation = track.rotations[frame_index_a as usize].slerp(&track.rotations[frame_index_b as usize], rotation_weight);
                 } else {
-                    bone.position = bone_arena[bone_index as usize].rest_position + track.positions[frame_index_a as usize];
+                    bone.position = bone_rest_position + track.positions[frame_index_a as usize];
                     bone.rotation = track.rotations[frame_index_a as usize];
                 }
             }
         }
 
         if !self.animation.morph_tracks().is_empty() {
+            let animation_arena = mmd_model.animation_arena_mut();
+
             for i in 0..self.animation.morph_tracks().len() {
-                let morph_index = self.morph_bind_index_map[i];
-                let morph = match animation_arena.morph_arena_mut().get_mut(morph_index as usize) {
-                    Some(morph) => morph,
-                    None => continue,
-                };
+                let morph_indices = &self.morph_bind_index_map[i];
 
                 let track = &self.animation.morph_tracks()[i];
 
@@ -261,15 +263,31 @@ impl MmdRuntimeAnimation {
                     let frame_number_b = *frame_number_b as f32;
                     let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
 
-                    *morph = track.weights[frame_index_a as usize] + (track.weights[frame_index_b as usize] - track.weights[frame_index_a as usize]) * gradient;
+                    let weight = track.weights[frame_index_a as usize] + (track.weights[frame_index_b as usize] - track.weights[frame_index_a as usize]) * gradient;
+
+                    for morph_index in morph_indices.iter() {
+                        let morph = match animation_arena.morph_arena_mut().get_mut(*morph_index as usize) {
+                            Some(morph) => morph,
+                            None => continue,
+                        };
+                        *morph = weight;
+                    }
                 } else {
-                    *morph = track.weights[frame_index_a as usize];
+                    for morph_index in morph_indices.iter() {
+                        let morph = match animation_arena.morph_arena_mut().get_mut(*morph_index as usize) {
+                            Some(morph) => morph,
+                            None => continue,
+                        };
+                        *morph = track.weights[frame_index_a as usize];
+                    }
                 }
             }
         }
 
         let property_track = self.animation.property_track();
         if !property_track.frame_numbers.is_empty() {
+            let animation_arena = mmd_model.animation_arena_mut();
+            
             let clamp_frame_time = frame_time.clamp(
                 property_track.start_frame() as f32,
                 property_track.end_frame() as f32,

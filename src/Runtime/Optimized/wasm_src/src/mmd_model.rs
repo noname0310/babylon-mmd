@@ -4,8 +4,10 @@ use crate::append_transform_solver::{AppendTransformSolver, AppendTransformSolve
 use crate::ik_solver::{IkSolver, IkSolverArena};
 use crate::animation_arena::AnimationArena;
 use crate::mmd_morph_controller::MmdMorphController;
+use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 
 pub(crate) struct MmdModel {
+    animation: Option<&'static MmdRuntimeAnimation>,
     animation_arena: AnimationArena,
     bone_arena: MmdRuntimeBoneArena,
     append_transform_solver_arena: AppendTransformSolverArena,
@@ -135,6 +137,7 @@ impl MmdModel {
         }
 
         MmdModel {
+            animation: None,
             animation_arena,
             bone_arena: MmdRuntimeBoneArena::new(bone_arena, Vec::with_capacity(bone_max_depth as usize)),
             append_transform_solver_arena: AppendTransformSolverArena::new(append_transform_solver_arena.into_boxed_slice()),
@@ -145,11 +148,11 @@ impl MmdModel {
         }
     }
 
-    pub fn animation_arena(&mut self) -> &mut AnimationArena {
+    pub fn animation_arena_mut(&mut self) -> &mut AnimationArena {
         &mut self.animation_arena
     }
 
-    pub fn bone_arena(&mut self) -> &mut MmdRuntimeBoneArena {
+    pub fn bone_arena_mut(&mut self) -> &mut MmdRuntimeBoneArena {
         &mut self.bone_arena
     }
 

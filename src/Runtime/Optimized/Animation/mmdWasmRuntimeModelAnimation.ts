@@ -21,6 +21,13 @@ type MorphIndices = readonly number[];
  * An object with mmd animation and model binding information
  */
 export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAnimation> {
+    /**
+     * Pointer to the animation data in wasm memory
+     */
+    public readonly ptr: number;
+
+    private readonly _modelPtr: number;
+
     private _disposed: boolean;
 
     /**
@@ -62,25 +69,33 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 
     private readonly _meshes: readonly Mesh[];
 
+    private readonly _ikSolverBindIndexMap: WasmTypedArray<Int32Array>;
+
     /**
      * IK solver bind index map
      */
-    public readonly ikSolverBindIndexMap: Int32Array;
+    public get ikSolverBindIndexMap(): Int32Array {
+        return this._ikSolverBindIndexMap.array;
+    }
 
     private _materialRecompileInduceInfo: Material[] | null;
 
     private constructor(
+        ptr: number,
+        modelPtr: number,
         animation: MmdWasmAnimation,
         boneBindIndexMap: WasmTypedArray<Int32Array>,
         movableBoneBindIndexMap: WasmTypedArray<Int32Array>,
         morphController: MmdWasmMorphController,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
-        ikSolverBindIndexMap: Int32Array,
+        ikSolverBindIndexMap: WasmTypedArray<Int32Array>,
         materialRecompileInduceInfo: Material[]
     ) {
         super();
 
+        this.ptr = ptr;
+        this._modelPtr = modelPtr;
         this._disposed = false;
         this.onDisposeObservable = new Observable<void>();
         this.animation = animation;
@@ -90,7 +105,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         this._morphController = morphController;
         this.morphBindIndexMap = morphBindIndexMap;
         this._meshes = meshes;
-        this.ikSolverBindIndexMap = ikSolverBindIndexMap;
+        this._ikSolverBindIndexMap = ikSolverBindIndexMap;
 
         this._materialRecompileInduceInfo = materialRecompileInduceInfo;
     }
@@ -105,6 +120,16 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         // todo: dispose
 
         this.onDisposeObservable.notifyObservers();
+    }
+
+    /**
+     * Run wasm side animation evaluation
+     *
+     * Update bone / bone morphs / ik solver state
+     * @param frameTime Frame time in 30fps
+     */
+    public wasmAnimate(frameTime: number): void {
+        this.animation._poolWrapper.pool.animateMmdModel(this.ptr, this._modelPtr, frameTime);
     }
 
     /**
@@ -199,6 +224,9 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      * @return MmdRuntimeModelAnimation instance
      */
     public static Create(animation: MmdWasmAnimation, model: MmdWasmModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdWasmRuntimeModelAnimation {
+        const wasmInstance = animation._poolWrapper.instance;
+        const animationPool = animation._poolWrapper.pool;
+
         const skeleton = model.skeleton;
         const bones = skeleton.bones;
 
@@ -213,34 +241,42 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
-        const boneBindIndexMap = new Int32Array(animation.boneTracks.length);
-        const boneTracks = animation.boneTracks;
-        for (let i = 0; i < boneTracks.length; ++i) {
-            const boneTrack = boneTracks[i];
-            const boneIndex = boneIndexMap.get(boneTrack.name);
-            if (boneIndex === undefined) {
-                logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
-                boneBindIndexMap[i] = -1;
-            } else {
-                boneBindIndexMap[i] = boneIndex;
+        const boneBindIndexMapPtr = animationPool.createBoneBindIndexMap(animation.ptr);
+        const boneBindIndexMap = wasmInstance.createTypedArray(Int32Array, boneBindIndexMapPtr, animation.boneTracks.length);
+        {
+            const boneTracks = animation.boneTracks;
+            const boneBindIndexMapArray = boneBindIndexMap.array;
+            for (let i = 0; i < boneTracks.length; ++i) {
+                const boneTrack = boneTracks[i];
+                const boneIndex = boneIndexMap.get(boneTrack.name);
+                if (boneIndex === undefined) {
+                    logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
+                    boneBindIndexMapArray[i] = -1;
+                } else {
+                    boneBindIndexMapArray[i] = boneIndex;
+                }
             }
         }
 
-        const movableBoneBindIndexMap = new Int32Array(animation.movableBoneTracks.length);
-        const movableBoneTracks = animation.movableBoneTracks;
-        for (let i = 0; i < movableBoneTracks.length; ++i) {
-            const movableBoneTrack = movableBoneTracks[i];
-            const boneIndex = boneIndexMap.get(movableBoneTrack.name);
-            if (boneIndex === undefined) {
-                logger?.warn(`Binding failed: bone ${movableBoneTrack.name} not found`);
-                movableBoneBindIndexMap[i] = -1;
-            } else {
-                movableBoneBindIndexMap[i] = boneIndex;
+        const movableBoneBindIndexMapPtr = animationPool.createMovableBoneBindIndexMap(animation.ptr);
+        const movableBoneBindIndexMap = wasmInstance.createTypedArray(Int32Array, movableBoneBindIndexMapPtr, animation.movableBoneTracks.length);
+        {
+            const movableBoneBindIndexMapArray = movableBoneBindIndexMap.array;
+            const movableBoneTracks = animation.movableBoneTracks;
+            for (let i = 0; i < movableBoneTracks.length; ++i) {
+                const movableBoneTrack = movableBoneTracks[i];
+                const boneIndex = boneIndexMap.get(movableBoneTrack.name);
+                if (boneIndex === undefined) {
+                    logger?.warn(`Binding failed: bone ${movableBoneTrack.name} not found`);
+                    movableBoneBindIndexMapArray[i] = -1;
+                } else {
+                    movableBoneBindIndexMapArray[i] = boneIndex;
+                }
             }
         }
 
-        const morphController = model.morph;
         const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animation.morphTracks.length);
+        const morphController = model.morph;
         const morphTracks = animation.morphTracks;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -254,30 +290,83 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
-        const runtimeBones = model.runtimeBones;
-        const ikSolverBindIndexMap = new Int32Array(animation.propertyTrack.ikBoneNames.length);
-        const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
-        for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
-            const ikBoneName = propertyTrackIkBoneNames[i];
-            const ikBoneIndex = boneIndexMap.get(ikBoneName);
-            if (ikBoneIndex === undefined) {
-                logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
-                ikSolverBindIndexMap[i] = -1;
-            } else {
-                const ikSolverIndex = runtimeBones[ikBoneIndex].ikSolverIndex;
-                if (ikSolverIndex === -1) {
-                    logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
-                    ikSolverBindIndexMap[i] = -1;
+        const morphLengthBufferPtr = animationPool.allocateLengthsBuffer(morphTracks.length);
+        const morphLengthBuffer = wasmInstance.createTypedArray(Uint32Array, morphLengthBufferPtr, morphTracks.length);
+        {
+            const morphLengthBufferArray = morphLengthBuffer.array;
+            const wasmMorphIndexMap = morphController.wasmMorphIndexMap;
+            for (let i = 0; i < morphTracks.length; ++i) {
+                let indicesCount = 0;
+                const morphIndices = morphBindIndexMap[i];
+                if (morphIndices !== null) {
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const remappedIndex = wasmMorphIndexMap[morphIndices[j]];
+                        if (remappedIndex !== undefined && remappedIndex !== -1) indicesCount += 1;
+                    }
+                }
+                morphLengthBufferArray[i] = indicesCount;
+            }
+        }
+        const morphBindIndexMapPtr = animationPool.createMorphBindIndexMap(animation.ptr, morphLengthBufferPtr);
+        {
+            const wasmMorphIndexMap = morphController.wasmMorphIndexMap;
+            for (let i = 0; i < morphTracks.length; ++i) {
+                const nthMorphIndicesPtr = animationPool.getNthMorphBindIndexMap(morphBindIndexMapPtr, i);
+                const nthMorphIndices = wasmInstance.createTypedArray(Int32Array, nthMorphIndicesPtr, morphLengthBuffer.array[i]).array;
+
+                let indicesCount = 0;
+                const morphIndices = morphBindIndexMap[i];
+                if (morphIndices !== null) {
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        const remappedIndex = wasmMorphIndexMap[morphIndices[j]];
+                        if (remappedIndex !== undefined && remappedIndex !== -1) {
+                            nthMorphIndices[indicesCount] = remappedIndex;
+                            indicesCount += 1;
+                        }
+                    }
+                }
+            }
+        }
+        animationPool.deallocateLengthsBuffer(morphLengthBufferPtr, morphTracks.length);
+
+        const ikSolverBindIndexMapPtr = animationPool.createIkSolverBindIndexMap(animation.ptr);
+        const ikSolverBindIndexMap = wasmInstance.createTypedArray(Int32Array, ikSolverBindIndexMapPtr, animation.propertyTrack.ikBoneNames.length);
+        {
+            const ikSolverBindIndexMapArray = ikSolverBindIndexMap.array;
+            const runtimeBones = model.runtimeBones;
+            const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
+            for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
+                const ikBoneName = propertyTrackIkBoneNames[i];
+                const ikBoneIndex = boneIndexMap.get(ikBoneName);
+                if (ikBoneIndex === undefined) {
+                    logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
+                    ikSolverBindIndexMapArray[i] = -1;
                 } else {
-                    ikSolverBindIndexMap[i] = ikSolverIndex;
+                    const ikSolverIndex = runtimeBones[ikBoneIndex].ikSolverIndex;
+                    if (ikSolverIndex === -1) {
+                        logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
+                        ikSolverBindIndexMapArray[i] = -1;
+                    } else {
+                        ikSolverBindIndexMapArray[i] = ikSolverIndex;
+                    }
                 }
             }
         }
 
+        const runtimeAnimationPtr = animationPool.createRuntimeAnimation(
+            animation.ptr,
+            boneBindIndexMapPtr,
+            movableBoneBindIndexMapPtr,
+            morphBindIndexMapPtr,
+            ikSolverBindIndexMapPtr
+        );
+
         return new MmdWasmRuntimeModelAnimation(
+            runtimeAnimationPtr,
+            model.ptr,
             animation,
-            boneBindIndexMap as any,
-            movableBoneBindIndexMap as any,
+            boneBindIndexMap,
+            movableBoneBindIndexMap,
             morphController,
             morphBindIndexMap,
             model.mesh.metadata.meshes,
