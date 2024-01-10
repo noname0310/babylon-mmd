@@ -159,6 +159,13 @@ impl MmdModel {
     }
 
     pub fn before_physics(&mut self) {
+        #[cfg(debug_assertions)]
+        {
+            for bone_animation in self.animation_arena_mut().bone_arena_mut() {
+                bone_animation.rotation = bone_animation.rotation.normalize();
+            }
+        }
+
         self.morph_controller.update(&mut self.bone_arena, self.animation_arena.morph_arena());
         self.update(false);
     }
