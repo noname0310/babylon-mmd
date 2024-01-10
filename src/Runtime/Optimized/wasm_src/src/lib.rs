@@ -10,10 +10,6 @@ mod animation;
 
 use wasm_bindgen::prelude::*;
 
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 #[wasm_bindgen(js_name = init)]
 pub fn init() {
     #[cfg(debug_assertions)]
