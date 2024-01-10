@@ -281,7 +281,9 @@ export class MmdWasmModel implements IMmdModel {
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as MmdWasmAnimation).createWasmRuntimeModelAnimation !== undefined) {
-            runtimeAnimation = (animation as MmdWasmAnimation).createWasmRuntimeModelAnimation(this, retargetingMap, this._runtime);
+            runtimeAnimation = (animation as MmdWasmAnimation).createWasmRuntimeModelAnimation(this, () => {
+                this._removeAnimationByReference(runtimeAnimation);
+            }, retargetingMap, this._runtime);
         } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
             runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._runtime);
         } else {
@@ -289,6 +291,12 @@ export class MmdWasmModel implements IMmdModel {
         }
         this._animationIndexMap.set(animation.name, this._animations.length);
         this._animations.push(runtimeAnimation);
+    }
+
+    private _removeAnimationByReference(animation: RuntimeModelAnimation): void {
+        const index = this._animations.indexOf(animation);
+        if (index === -1) return;
+        this.removeAnimation(index);
     }
 
     /**

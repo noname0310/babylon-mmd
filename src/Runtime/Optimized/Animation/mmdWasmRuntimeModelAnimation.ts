@@ -1,6 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { induceMmdStandardMaterialRecompile } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
@@ -28,14 +27,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 
     private readonly _modelPtr: number;
 
-    private _disposed: boolean;
-
-    /**
-     * On dispose observable
-     *
-     * This observable is notified when the object is disposed
-     */
-    public readonly onDisposeObservable: Observable<void>;
+    private _onDispose: Nullable<() => void>;
 
     /**
      * The animation data
@@ -90,14 +82,14 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: WasmTypedArray<Int32Array>,
-        materialRecompileInduceInfo: Material[]
+        materialRecompileInduceInfo: Material[],
+        onDispose: () => void
     ) {
         super();
 
         this.ptr = ptr;
         this._modelPtr = modelPtr;
-        this._disposed = false;
-        this.onDisposeObservable = new Observable<void>();
+        this._onDispose = onDispose;
         this.animation = animation;
 
         this._boneBindIndexMap = boneBindIndexMap;
@@ -112,14 +104,24 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 
     /**
      * Dispose this instance
+     * @param fromAnimation Dispose from animation (default: false) (internal use only)
      */
-    public dispose(): void {
-        if (this._disposed) return;
-        this._disposed = true;
+    public dispose(fromAnimation = false): void {
+        if (this._onDispose === null) return;
 
-        // todo: dispose
+        if (!fromAnimation) {
+            const runtimeModelAnimations = this.animation._runtimeModelAnimations;
+            if (runtimeModelAnimations !== undefined) {
+                const index = runtimeModelAnimations.indexOf(this);
+                if (index !== -1) runtimeModelAnimations.splice(index, 1);
+            }
+        }
 
-        this.onDisposeObservable.notifyObservers();
+        const animationPool = this.animation._poolWrapper.pool;
+        animationPool.destroyRuntimeAnimation(this.ptr);
+
+        this._onDispose();
+        this._onDispose = null;
     }
 
     /**
@@ -219,11 +221,12 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      * Bind animation to model and prepare material for morph animation
      * @param animation Animation to bind
      * @param model Bind target
+     * @param onDispose Callback when this instance is disposed
      * @param retargetingMap Model bone name to animation bone name map
      * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
-    public static Create(animation: MmdWasmAnimation, model: MmdWasmModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdWasmRuntimeModelAnimation {
+    public static Create(animation: MmdWasmAnimation, model: MmdWasmModel, onDispose: () => void, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdWasmRuntimeModelAnimation {
         const wasmInstance = animation._poolWrapper.instance;
         const animationPool = animation._poolWrapper.pool;
 
@@ -371,7 +374,8 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             morphBindIndexMap,
             model.mesh.metadata.meshes,
             ikSolverBindIndexMap,
-            model.mesh.metadata.materials
+            model.mesh.metadata.materials,
+            onDispose
         );
     }
 
@@ -411,12 +415,14 @@ declare module "./mmdWasmAnimation" {
         /**
          * Create wasm runtime model animation
          * @param model Bind target
+         * @param onDispose Callback when this instance is disposed
          * @param retargetingMap Model bone name to animation bone name map
          * @param logger Logger
          * @returns MmdRuntimeModelAnimation instance
          */
         createWasmRuntimeModelAnimation(
             model: MmdWasmModel,
+            onDispose: () => void,
             retargetingMap?: { [key: string]: string },
             logger?: ILogger
         ): MmdWasmRuntimeModelAnimation;
@@ -426,18 +432,20 @@ declare module "./mmdWasmAnimation" {
 /**
  * Create runtime model animation
  * @param model Bind target
+ * @param onDispose Callback when this instance is disposed
  * @param retargetingMap Model bone name to animation bone name map
  * @param logger Logger
  * @returns MmdRuntimeModelAnimation instance
  */
 MmdWasmAnimation.prototype.createWasmRuntimeModelAnimation = function(
     model: MmdWasmModel,
+    onDispose: () => void,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
 ): MmdWasmRuntimeModelAnimation {
     if (this._runtimeModelAnimations === undefined) this._runtimeModelAnimations = [];
 
-    const runtimeAnimation = MmdWasmRuntimeModelAnimation.Create(this, model, retargetingMap, logger);
+    const runtimeAnimation = MmdWasmRuntimeModelAnimation.Create(this, model, onDispose, retargetingMap, logger);
     this._runtimeModelAnimations.push(runtimeAnimation);
     return runtimeAnimation;
 };
@@ -450,7 +458,7 @@ MmdWasmAnimation.prototype.dispose = function(): void {
     const runtimeModelAnimations = this._runtimeModelAnimations;
     if (runtimeModelAnimations !== undefined) {
         for (let i = 0; i < runtimeModelAnimations.length; ++i) {
-            runtimeModelAnimations[i].dispose();
+            runtimeModelAnimations[i].dispose(true);
         }
         this._runtimeModelAnimations = undefined!;
     }

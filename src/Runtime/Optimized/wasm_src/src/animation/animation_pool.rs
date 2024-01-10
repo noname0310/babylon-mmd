@@ -407,6 +407,18 @@ impl AnimationPool {
         ptr
     }
 
+    #[wasm_bindgen(js_name = "destroyRuntimeAnimation")]
+    pub fn destroy_runtime_animation(&mut self, runtime_animation_ptr: *const usize) {
+        let runtime_animation_ptr = runtime_animation_ptr as *const MmdRuntimeAnimation;
+        self.check_runtime_animation_ptr(runtime_animation_ptr);
+
+        let index = match self.runtime_animations.iter().position(|animation| &**animation as *const MmdRuntimeAnimation == runtime_animation_ptr) {
+            Some(index) => index,
+            None => return,
+        };
+        self.runtime_animations.remove(index);
+    }
+
     #[wasm_bindgen(js_name = "animateMmdModel")]
     pub fn animate_mmd_model(&mut self, animation_ptr: *mut usize, mmd_model_ptr: *mut usize, frame_time: f32) {
         let animation_ptr = animation_ptr as *mut MmdRuntimeAnimation;
