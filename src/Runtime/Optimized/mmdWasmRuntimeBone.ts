@@ -8,7 +8,7 @@ import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import type { MmdRuntime } from "./wasm";
-import type { WasmTypedArray } from "./wasmTypedArray";
+import { type WasmBufferedArray, WasmBufferedArraySpan } from "./wasmBufferedArray";
 
 /**
  * Bone for MMD WASM runtime
@@ -55,7 +55,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      */
     public readonly transformAfterPhysics: boolean;
 
-    private readonly _worldMatrix: WasmTypedArray<Float32Array>;
+    private readonly _worldMatrix: WasmBufferedArraySpan<Float32Array>;
 
     /**
      * World matrix of this bone
@@ -83,7 +83,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * Create MMD WASM runtime bone
      * @param linkedBone Linked Babylon.js bone
      * @param boneMetadata Bone metadata
-     * @param worldTransformMatrices World transform matrices
+     * @param worldTransformMatrices WASM buffered array of world transform matrices
      * @param boneIndex Bone index
      * @param ikSolverIndex IK solver index
      * @param wasmInstance MMD WASM instance
@@ -93,7 +93,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
     public constructor(
         linkedBone: IMmdRuntimeLinkedBone,
         boneMetadata: MmdModelMetadata.Bone,
-        worldTransformMatricesPtr: number,
+        worldTransformMatrices: WasmBufferedArray<Float32Array>,
         boneIndex: number,
         ikSolverIndex: number,
         wasmInstance: MmdWasmInstance,
@@ -110,13 +110,21 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         this.flag = boneMetadata.flag;
         this.transformAfterPhysics = (boneMetadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
-        this._worldMatrix = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr + boneIndex * 16 * 4, 16);
+        this._worldMatrix = new WasmBufferedArraySpan(wasmInstance, worldTransformMatrices, boneIndex * 16 * 4, 16);
 
         this.ikSolverIndex = ikSolverIndex;
 
         this._boneIndex = boneIndex;
         this._wasmRuntime = wasmRuntime;
         this._mmdModelPtr = mmdModelPtr;
+    }
+
+    /**
+     * @internal
+     * @param wasmInstance MMD WASM instance
+     */
+    public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
+        this._worldMatrix.updateBackBufferReference(wasmInstance);
     }
 
     /**

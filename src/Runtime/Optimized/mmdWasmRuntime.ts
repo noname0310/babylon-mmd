@@ -48,8 +48,16 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
  * It can also create and remove runtime components
  */
 export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
-    private readonly _wasmInstance: MmdWasmInstance;
-    private readonly _wasmRuntime: MmdWasmRuntimeInternal;
+    /**
+     * @internal
+     */
+    public readonly wasmInstance: MmdWasmInstance;
+
+    /**
+     * @internal
+     */
+    public readonly wasmInternal: MmdWasmRuntimeInternal;
+
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
     private readonly _physics: Nullable<MmdPhysics>;
 
@@ -117,8 +125,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param physics MMD physics
      */
     public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
-        this._wasmInstance = wasmInstance;
-        this._wasmRuntime = wasmInstance.createMmdRuntime();
+        this.wasmInstance = wasmInstance;
+        this.wasmInternal = wasmInstance.createMmdRuntime();
         this._mmdMetadataEncoder = new MmdMetadataEncoder();
         this._physics = physics;
 
@@ -168,7 +176,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public dispose(scene: Scene): void {
         this.unregister(scene);
-        this._wasmRuntime.free();
+        this.wasmInternal.free();
 
         if (this._disposeObservableObject !== null && this._bindedDispose !== null) {
             this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
@@ -217,18 +225,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
 
-        const wasmRuntime = this._wasmRuntime;
+        const wasmRuntime = this.wasmInternal;
         const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
 
-        const metadataBuffer = this._wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
+        const metadataBuffer = this.wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
         const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer.array);
 
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
 
         const model = new MmdWasmModel(
             this,
-            this._wasmInstance,
-            wasmRuntime,
             mmdModelPtr,
             mmdMesh,
             skeleton,
@@ -263,7 +269,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (index < 0) throw new Error("Model not found.");
 
         models.splice(index, 1);
-        this._wasmRuntime.destroyMmdModel(mmdModel.ptr);
+        this.wasmInternal.destroyMmdModel(mmdModel.ptr);
     }
 
     /**
@@ -413,7 +419,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             const models = this._models;
             for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(elapsedFrameTime);
-            this._wasmRuntime.beforePhysics();
+            this.wasmInternal.beforePhysics();
             for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
 
             if (this._camera !== null) {
@@ -424,7 +430,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         } else {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(null);
-            this._wasmRuntime.beforePhysics();
+            this.wasmInternal.beforePhysics();
             for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
         }
 
@@ -442,7 +448,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const models = this._models;
 
         for (let i = 0; i < models.length; ++i) models[i].afterPhysicsAndWasm();
-        this._wasmRuntime.afterPhysics();
+        this.wasmInternal.afterPhysics();
         for (let i = 0; i < models.length; ++i) models[i].afterPhysics();
     }
 
@@ -775,6 +781,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             this._evaluationType = value;
         } else {
             this._evaluationType = value;
+        }
+
+        const models = this._models;
+        for (let i = 0; i < models.length; ++i) {
+            models[i].onEvaluationTypeChanged(value);
         }
     }
 

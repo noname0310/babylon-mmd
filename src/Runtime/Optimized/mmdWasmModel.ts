@@ -25,8 +25,10 @@ import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeMod
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
+import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
 import type { MmdRuntime as MmdWasmRuntimeInternal } from "./wasm";
+import { WasmBufferedArray } from "./wasmBufferedArray";
 import type { WasmTypedArray } from "./wasmTypedArray";
 
 type RuntimeModelAnimation = MmdWasmRuntimeModelAnimation | MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
@@ -65,7 +67,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public readonly skeleton: IMmdLinkedBoneContainer;
 
-    private readonly _worldTransformMatrices: WasmTypedArray<Float32Array>;
+    private readonly _worldTransformMatrices: WasmBufferedArray<Float32Array>;
 
     /**
      * The array of final transform matrices of bones (ie. the matrix sent to shaders)
@@ -73,7 +75,7 @@ export class MmdWasmModel implements IMmdModel {
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
     public get worldTransformMatrices(): Float32Array {
-        return this._worldTransformMatrices.array;
+        return this._worldTransformMatrices.frontBuffer;
     }
 
     private readonly _boneAnimationStates: WasmTypedArray<Float32Array>;
@@ -119,7 +121,6 @@ export class MmdWasmModel implements IMmdModel {
     private readonly _physicsModel: Nullable<MmdPhysicsModel>;
 
     private readonly _runtime: MmdWasmRuntime;
-    private readonly _runtimeInternal: MmdWasmRuntimeInternal;
 
     private readonly _sortedRuntimeBones: readonly MmdWasmRuntimeBone[];
 
@@ -132,8 +133,6 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * Create a MmdWasmModel
      * @param wasmRuntime MMD WASM runtime
-     * @param wasmInstance MMD WASM instance
-     * @param wasmRuntimeInternal MMD WASM internal runtime
      * @param ptr Pointer to wasm side MmdModel
      * @param mmdSkinnedMesh Mesh that able to instantiate `MmdWasmModel`
      * @param skeleton The virtualized bone container of the mesh
@@ -143,8 +142,6 @@ export class MmdWasmModel implements IMmdModel {
      */
     public constructor(
         wasmRuntime: MmdWasmRuntime,
-        wasmInstance: MmdWasmInstance,
-        wasmRuntimeInternal: MmdWasmRuntimeInternal,
         ptr: number,
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
@@ -152,9 +149,10 @@ export class MmdWasmModel implements IMmdModel {
         wasmMorphIndexMap: Int32Array,
         externalPhysics: Nullable<MmdPhysics>
     ) {
+        const wasmInstance = wasmRuntime.wasmInstance;
+        const wasmRuntimeInternal = wasmRuntime.wasmInternal;
+
         this._runtime = wasmRuntime;
-        this._runtimeInternal = wasmRuntimeInternal;
-        this._runtimeInternal;
 
         const mmdMetadata = mmdSkinnedMesh.metadata;
 
@@ -175,7 +173,8 @@ export class MmdWasmModel implements IMmdModel {
         const ikSolverStatesPtr = wasmRuntimeInternal.getAnimationIkSolverStateArena(ptr);
         const morphWeightsPtr = wasmRuntimeInternal.getAnimationMorphArena(ptr);
 
-        this._worldTransformMatrices = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
+        const worldTransformMatricesFrontBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
+        const worldTransformMatrices = this._worldTransformMatrices = new WasmBufferedArray(worldTransformMatricesFrontBuffer);
         this._boneAnimationStates = wasmInstance.createTypedArray(Float32Array, boneAnimationStatesPtr, mmdMetadata.bones.length * 10);
 
         let ikCount = 0;
@@ -190,7 +189,7 @@ export class MmdWasmModel implements IMmdModel {
         const runtimeBones = this.runtimeBones = this._buildRuntimeSkeleton(
             skeleton.bones,
             mmdMetadata.bones,
-            worldTransformMatricesPtr,
+            worldTransformMatrices,
             wasmInstance,
             wasmRuntimeInternal,
             ptr
@@ -449,7 +448,7 @@ export class MmdWasmModel implements IMmdModel {
     private _buildRuntimeSkeleton(
         bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[],
-        worldTransformMatricesPtr: number,
+        worldTransformMatrices: WasmBufferedArray<Float32Array>,
         wasmInstance: MmdWasmInstance,
         wasmRuntimeInternal: MmdWasmRuntimeInternal,
         mmdModelPtr: number
@@ -470,7 +469,7 @@ export class MmdWasmModel implements IMmdModel {
                 new MmdWasmRuntimeBone(
                     bones[i],
                     boneMetadata,
-                    worldTransformMatricesPtr,
+                    worldTransformMatrices,
                     i,
                     ikSolverIndex,
                     wasmInstance,
@@ -501,10 +500,12 @@ export class MmdWasmModel implements IMmdModel {
         if (this._originalComputeTransformMatrices !== null) return;
         this._originalComputeTransformMatrices = (skeleton as any)._computeTransformMatrices;
 
-        const worldTransformMatrices = this.worldTransformMatrices;
+        const worldTransformMatrices = this._worldTransformMatrices;
 
         (skeleton as any)._computeTransformMatrices = function(targetMatrix: Float32Array, _initialSkinMatrix: Nullable<Matrix>): void {
             this.onBeforeComputeObservable.notifyObservers(this);
+
+            const worldTransformMatricesFrontBuffer = worldTransformMatrices.frontBuffer;
 
             for (let index = 0; index < this.bones.length; index++) {
                 const bone = this.bones[index] as Bone;
@@ -513,7 +514,7 @@ export class MmdWasmModel implements IMmdModel {
                 if (bone._index !== -1) {
                     const mappedIndex = bone._index === null ? index : bone._index;
                     bone.getAbsoluteInverseBindMatrix().multiplyToArray(
-                        Matrix.FromArrayToRef(worldTransformMatrices, index * 16, bone.getFinalMatrix()),
+                        Matrix.FromArrayToRef(worldTransformMatricesFrontBuffer, index * 16, bone.getFinalMatrix()),
                         targetMatrix,
                         mappedIndex * 16
                     );
@@ -544,5 +545,28 @@ export class MmdWasmModel implements IMmdModel {
             bone.setRotationQuaternion(identityRotation, Space.LOCAL);
         }
         this.mesh.metadata.skeleton._markAsDirty();
+    }
+
+    /**
+     * @internal
+     * @param evaluationType New evaluation type
+     */
+    public onEvaluationTypeChanged(evaluationType: MmdWasmRuntimeAnimationEvaluationType): void {
+        if (evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+            const worldTransformMatrices = this._worldTransformMatrices;
+            if (worldTransformMatrices.frontBuffer === worldTransformMatrices.backBuffer) {
+                const wasmInstance = this._runtime.wasmInstance;
+                const wasmRuntimeInternal = this._runtime.wasmInternal;
+
+                const worldTransformMatricesBackBufferPtr = wasmRuntimeInternal.createBoneWorldMatrixBackBuffer(this.ptr);
+                const worldTransformMatricesBackBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesBackBufferPtr, worldTransformMatrices.frontBuffer.length);
+                worldTransformMatrices.setBackBuffer(worldTransformMatricesBackBuffer);
+
+                const bones = this._sortedRuntimeBones;
+                for (let i = 0; i < bones.length; ++i) {
+                    bones[i].updateBackBufferReference(wasmInstance);
+                }
+            }
+        }
     }
 }

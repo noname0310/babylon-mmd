@@ -91,6 +91,15 @@ impl MmdRuntime {
         bone_arena.world_matrix_arena_ptr()
     }
 
+    #[wasm_bindgen(js_name = "createBoneWorldMatrixBackBuffer")]
+    pub fn create_bone_world_matrix_back_buffer(&mut self, ptr: *mut usize) -> *mut f32 {
+        let ptr = ptr as *mut MmdModel;
+        let bone_arena = unsafe {
+            &mut *ptr
+        }.bone_arena_mut();
+        bone_arena.create_world_matrix_back_buffer().as_mut_ptr() as *mut f32
+    }
+
     #[wasm_bindgen(js_name = "beforePhysics")]
     pub fn before_physics(&mut self) {
         for mmd_model in &mut self.mmd_models {
@@ -102,6 +111,13 @@ impl MmdRuntime {
     pub fn after_physics(&mut self) {
         for mmd_model in &mut self.mmd_models {
             mmd_model.after_physics();
+        }
+    }
+
+    #[wasm_bindgen(js_name = "bufferedUpdate")]
+    pub fn buffered_update(&mut self, frame_time: f32) {
+        for mmd_model in &mut self.mmd_models {
+            // mmd_model.buffered_update(frame_time);
         }
     }
 

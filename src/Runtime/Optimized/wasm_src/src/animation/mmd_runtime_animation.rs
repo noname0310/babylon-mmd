@@ -1,8 +1,6 @@
 use nalgebra::Vector3;
 
-use crate::animation_arena::{AnimationArena, self};
 use crate::mmd_model::MmdModel;
-use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 
 use super::mmd_animation::MmdAnimation;
 use super::bezier_interpolation::bezier_interpolation;

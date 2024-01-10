@@ -6,6 +6,7 @@ use crate::append_transform_solver::AppendTransformSolverArena;
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,
     world_matrix_arena: Box<[Matrix4<f32>]>,
+    world_matrix_back_buffer: Option<Box<[Matrix4<f32>]>>,
     bone_stack: Vec<u32>,
 }
 
@@ -15,12 +16,24 @@ impl MmdRuntimeBoneArena {
         MmdRuntimeBoneArena {
             arena,
             world_matrix_arena: vec![Matrix4::identity(); bone_count].into_boxed_slice(),
+            world_matrix_back_buffer: None,
             bone_stack,
         }
     }
 
     pub fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
         self.world_matrix_arena.as_mut_ptr() as *mut f32
+    }
+
+    pub(crate) fn create_world_matrix_back_buffer(&mut self) -> &mut [Matrix4<f32>] {
+        self.world_matrix_back_buffer = Some(vec![Matrix4::identity(); self.world_matrix_arena.len()].into_boxed_slice());
+        self.world_matrix_back_buffer.as_mut().unwrap()
+    }
+
+    pub(crate) fn swap_buffer(&mut self) {
+        let mut back_buffer = self.world_matrix_back_buffer.take().unwrap();
+        std::mem::swap(&mut self.world_matrix_arena, &mut back_buffer);
+        self.world_matrix_back_buffer = Some(back_buffer);
     }
 
     pub fn world_matrix(&self, index: u32) -> &Matrix4<f32> {
