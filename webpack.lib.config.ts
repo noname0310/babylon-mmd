@@ -53,7 +53,7 @@ export default (env: any): webpack.Configuration => ({
                     root: "BABYLON"
                 });
             }
-            if (request === "./wasm") {
+            if (request === "./wasm" || request === "./wasm/index_bg.wasm") {
                 return callback(null, {
                     amd: request,
                     commonjs: request,
