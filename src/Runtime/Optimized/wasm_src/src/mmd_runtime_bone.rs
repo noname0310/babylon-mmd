@@ -1,12 +1,12 @@
-use nalgebra::{Vector3, UnitQuaternion, Matrix4 };
+use glam::{Vec3A, Mat4, Quat};
 
 use crate::animation_arena::AnimationArena;
 use crate::append_transform_solver::AppendTransformSolverArena;
 
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,
-    world_matrix_arena: Box<[Matrix4<f32>]>,
-    world_matrix_back_buffer: Option<Box<[Matrix4<f32>]>>,
+    world_matrix_arena: Box<[Mat4]>,
+    world_matrix_back_buffer: Option<Box<[Mat4]>>,
     bone_stack: Vec<u32>,
 }
 
@@ -15,18 +15,19 @@ impl MmdRuntimeBoneArena {
         let bone_count = arena.len();
         MmdRuntimeBoneArena {
             arena,
-            world_matrix_arena: vec![Matrix4::identity(); bone_count].into_boxed_slice(),
+            world_matrix_arena: vec![Mat4::IDENTITY; bone_count].into_boxed_slice(),
             world_matrix_back_buffer: None,
             bone_stack,
         }
     }
 
+    #[inline]
     pub fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
         self.world_matrix_arena.as_mut_ptr() as *mut f32
     }
 
-    pub(crate) fn create_world_matrix_back_buffer(&mut self) -> &mut [Matrix4<f32>] {
-        self.world_matrix_back_buffer = Some(vec![Matrix4::identity(); self.world_matrix_arena.len()].into_boxed_slice());
+    pub(crate) fn create_world_matrix_back_buffer(&mut self) -> &mut [Mat4] {
+        self.world_matrix_back_buffer = Some(vec![Mat4::IDENTITY; self.world_matrix_arena.len()].into_boxed_slice());
         self.world_matrix_back_buffer.as_mut().unwrap()
     }
 
@@ -36,7 +37,8 @@ impl MmdRuntimeBoneArena {
         self.world_matrix_back_buffer = Some(back_buffer);
     }
 
-    pub fn world_matrix(&self, index: u32) -> &Matrix4<f32> {
+    #[inline]
+    pub fn world_matrix(&self, index: u32) -> &Mat4 {
         &self.world_matrix_arena[index as usize]
     }
 
@@ -75,7 +77,7 @@ impl std::ops::DerefMut for MmdRuntimeBoneArena {
 }
 
 pub(crate) struct MmdRuntimeBone {
-    pub rest_position: Vector3<f32>,
+    pub rest_position: Vec3A,
     index: u32,
 
     pub parent_bone: Option<u32>,
@@ -86,18 +88,18 @@ pub(crate) struct MmdRuntimeBone {
     pub append_transform_solver: Option<u32>,
     pub ik_solver: Option<u32>,
 
-    pub morph_position_offset: Option<Vector3<f32>>,
-    pub morph_rotation_offset: Option<UnitQuaternion<f32>>,
+    pub morph_position_offset: Option<Vec3A>,
+    pub morph_rotation_offset: Option<Quat>,
 
-    pub ik_rotation: Option<UnitQuaternion<f32>>,
+    pub ik_rotation: Option<Quat>,
 
-    pub local_matrix: Matrix4<f32>,
+    pub local_matrix: Mat4,
 }
 
 impl MmdRuntimeBone {
     pub fn new(index: u32) -> Self {
         MmdRuntimeBone {
-            rest_position: Vector3::zeros(),
+            rest_position: Vec3A::ZERO,
             index,
             
             parent_bone: None,
@@ -113,27 +115,28 @@ impl MmdRuntimeBone {
 
             ik_rotation: None,
 
-            local_matrix: Matrix4::identity(),
+            local_matrix: Mat4::IDENTITY,
         }
     }
 
-    pub fn animated_position(&self, animation_arena: &AnimationArena) -> Vector3<f32> {
-        let mut position = *animation_arena.bone_position(self.index);
+    pub fn animated_position(&self, animation_arena: &AnimationArena) -> Vec3A {
+        let mut position = animation_arena.bone_position(self.index);
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
         }
         position
     }
 
-    pub fn animated_rotation(&self, animation_arena: &AnimationArena) -> UnitQuaternion<f32> {
-        let mut rotation = *animation_arena.bone_rotation(self.index);
+    pub fn animated_rotation(&self, animation_arena: &AnimationArena) -> Quat {
+        let mut rotation = animation_arena.bone_rotation(self.index);
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation *= morph_rotation_offset;
         }
         rotation
     }
 
-    pub fn animation_position_offset(&self, animation_arena: &AnimationArena) -> Vector3<f32> {
+    #[inline]
+    pub fn animation_position_offset(&self, animation_arena: &AnimationArena) -> Vec3A {
         self.animated_position(animation_arena) - self.rest_position
     }
 
@@ -156,9 +159,10 @@ impl MmdRuntimeBone {
             }
         }
 
-        self.local_matrix = 
-            Matrix4::new_translation(&position) *
-            rotation.to_homogeneous() *
-            Matrix4::new_nonuniform_scaling(animation_arena.bone_scale(self.index));
+        self.local_matrix = Mat4::from_scale_rotation_translation(
+            animation_arena.bone_scale(self.index).into(),
+            rotation,
+            position.into(),
+        );
     }
 }

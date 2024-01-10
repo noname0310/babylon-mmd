@@ -1,5 +1,5 @@
 use byte_slice_cast::{AsSliceOf, FromByteSlice};
-use nalgebra::{Vector3, UnitQuaternion, Quaternion, Vector4};
+use glam::{Quat, Vec3A};
 use num_traits::FromBytes;
 
 pub(crate) struct MetadataBuffer<'a> {
@@ -48,14 +48,14 @@ impl<'a> MetadataBuffer<'a> {
         vec
     }
 
-    fn read_vector(&mut self) -> Vector3<f32> {
+    fn read_vector(&mut self) -> Vec3A {
         let value = match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3].as_ref().as_slice_of() {
             Ok(slice) => {
                 self.offset += std::mem::size_of::<f32>() * 3;
-                Vector3::from_column_slice(slice)
+                Vec3A::from_slice(slice)
             },
             Err(_) => {
-                Vector3::new(
+                Vec3A::new(
                     self.read::<f32>(),
                     self.read::<f32>(),
                     self.read::<f32>(),
@@ -65,12 +65,12 @@ impl<'a> MetadataBuffer<'a> {
         value
     }
 
-    fn read_vector_array(&mut self, n: usize) -> Vec<Vector3<f32>> {
+    fn read_vector_array(&mut self, n: usize) -> Vec<Vec3A> {
         let mut values = Vec::with_capacity(n);
         match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 3 * n].as_ref().as_slice_of() {
             Ok(slice) => {
                 for i in 0..n {
-                    values.push(Vector3::from_column_slice(&slice[i * 3..i * 3 + 3]));
+                    values.push(Vec3A::from_slice(&slice[i * 3..i * 3 + 3]));
                 }
                 self.offset += std::mem::size_of::<f32>() * 3 * n;
             },
@@ -83,33 +83,23 @@ impl<'a> MetadataBuffer<'a> {
         values
     }
 
-    fn read_quaternion_array(&mut self, n: usize) -> Vec<UnitQuaternion<f32>> {
+    fn read_quaternion_array(&mut self, n: usize) -> Vec<Quat> {
         let mut values = Vec::with_capacity(n);
         match self.bytes[self.offset..self.offset + std::mem::size_of::<f32>() * 4 * n].as_ref().as_slice_of() {
             Ok(slice) => {
                 for i in 0..n {
-                    values.push(
-                        UnitQuaternion::new_unchecked(
-                            Quaternion::from_vector(
-                                Vector4::from_column_slice(&slice[i * 4..i * 4 + 4])
-                            )
-                        )
-                    );
+                    values.push(Quat::from_slice(&slice[i * 4..i * 4 + 4]));
                 }
                 self.offset += std::mem::size_of::<f32>() * 4 * n;
             },
             Err(_) => {
                 for _ in 0..n {
                     values.push(
-                        UnitQuaternion::new_unchecked(
-                            Quaternion::from_vector(
-                                Vector4::new(
-                                    self.read::<f32>(),
-                                    self.read::<f32>(),
-                                    self.read::<f32>(),
-                                    self.read::<f32>(),
-                                )
-                            )
+                        Quat::from_xyzw(
+                            self.read::<f32>(),
+                            self.read::<f32>(),
+                            self.read::<f32>(),
+                            self.read::<f32>(),
                         )
                     );
                 }
@@ -120,7 +110,7 @@ impl<'a> MetadataBuffer<'a> {
 }
 
 pub(crate) struct BoneMetadata {
-    pub rest_position: Vector3<f32>,
+    pub rest_position: Vec3A,
     pub parent_bone_index: i32,
     pub transform_order: i32,
     pub flag: u16,
@@ -146,8 +136,8 @@ pub(crate) struct IkLinkMetadata {
 }
 
 pub(crate) struct IkChainAngleLimits {
-    pub minimum_angle: Vector3<f32>,
-    pub maximum_angle: Vector3<f32>,
+    pub minimum_angle: Vec3A,
+    pub maximum_angle: Vec3A,
 }
 
 pub(crate) enum BoneFlag {
@@ -270,8 +260,8 @@ pub(crate) enum MorphMetadata {
 
 pub(crate) struct BoneMorphMetadata {
     pub indices: Vec<i32>,
-    pub positions: Vec<Vector3<f32>>,
-    pub rotations: Vec<UnitQuaternion<f32>>,
+    pub positions: Vec<Vec3A>,
+    pub rotations: Vec<Quat>,
 }
 
 pub(crate) struct GroupMorphMetadata {
@@ -342,9 +332,9 @@ pub(crate) struct RigidbodyMetadata {
     collision_group: u8,
     collision_mask: u16,
     shape_type: u8,
-    shape_size: Vector3<f32>,
-    shape_position: Vector3<f32>,
-    shape_rotation: Vector3<f32>,
+    shape_size: Vec3A,
+    shape_position: Vec3A,
+    shape_rotation: Vec3A,
     mass: f32,
     linear_damping: f32,
     angular_damping: f32,
@@ -425,14 +415,14 @@ pub(crate) struct JointMetadata {
     kind: u8,
     rigidbody_index_a: i32,
     rigidbody_index_b: i32,
-    position: Vector3<f32>,
-    rotation: Vector3<f32>,
-    position_min: Vector3<f32>,
-    position_max: Vector3<f32>,
-    rotation_min: Vector3<f32>,
-    rotation_max: Vector3<f32>,
-    spring_position: Vector3<f32>,
-    spring_rotation: Vector3<f32>,
+    position: Vec3A,
+    rotation: Vec3A,
+    position_min: Vec3A,
+    position_max: Vec3A,
+    rotation_min: Vec3A,
+    rotation_max: Vec3A,
+    spring_position: Vec3A,
+    spring_rotation: Vec3A,
 }
 
 pub(crate) enum JointKind {
@@ -459,6 +449,7 @@ impl<'a> JointMetadataReader<'a> {
         }
     }
 
+    #[inline]
     pub fn count(&self) -> u32 {
         self.count
     }

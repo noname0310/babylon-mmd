@@ -83,7 +83,7 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * Wasm side bone animation states. this value is automatically synchronized with `MmdWasmModel.skeleton` on `MmdWasmModel.beforePhysics()` stage
      *
-     * repr: [..., positionX, positionY, positionZ, rotationX, rotationY, rotationZ, rotationW, scaleX, scaleY, scaleZ, ...]
+     * repr: [..., positionX, positionY, positionZ, padding, rotationX, rotationY, rotationZ, rotationW, scaleX, scaleY, scaleZ, padding, ...]
      *
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
@@ -175,7 +175,7 @@ export class MmdWasmModel implements IMmdModel {
 
         const worldTransformMatricesFrontBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
         const worldTransformMatrices = this._worldTransformMatrices = new WasmBufferedArray(worldTransformMatricesFrontBuffer);
-        this._boneAnimationStates = wasmInstance.createTypedArray(Float32Array, boneAnimationStatesPtr, mmdMetadata.bones.length * 10);
+        this._boneAnimationStates = wasmInstance.createTypedArray(Float32Array, boneAnimationStatesPtr, mmdMetadata.bones.length * 12);
 
         let ikCount = 0;
         for (let i = 0; i < mmdMetadata.bones.length; ++i) if (mmdMetadata.bones[i].ik) ikCount += 1;
@@ -393,7 +393,7 @@ export class MmdWasmModel implements IMmdModel {
             const boneAnimationStates = this.boneAnimationStates;
             for (let i = 0; i < bones.length; ++i) {
                 const bone = bones[i];
-                const boneAnimationStateIndex = i * 10;
+                const boneAnimationStateIndex = i * 12;
                 {
                     const { x, y, z } = bone.position;
                     boneAnimationStates[boneAnimationStateIndex + 0] = x;
@@ -402,16 +402,16 @@ export class MmdWasmModel implements IMmdModel {
                 }
                 {
                     const { x, y, z, w } = bone.rotationQuaternion;
-                    boneAnimationStates[boneAnimationStateIndex + 3] = x;
-                    boneAnimationStates[boneAnimationStateIndex + 4] = y;
-                    boneAnimationStates[boneAnimationStateIndex + 5] = z;
-                    boneAnimationStates[boneAnimationStateIndex + 6] = w;
+                    boneAnimationStates[boneAnimationStateIndex + 4] = x;
+                    boneAnimationStates[boneAnimationStateIndex + 5] = y;
+                    boneAnimationStates[boneAnimationStateIndex + 6] = z;
+                    boneAnimationStates[boneAnimationStateIndex + 7] = w;
                 }
                 {
                     const { x, y, z } = bone.scaling;
-                    boneAnimationStates[boneAnimationStateIndex + 7] = x;
-                    boneAnimationStates[boneAnimationStateIndex + 8] = y;
-                    boneAnimationStates[boneAnimationStateIndex + 9] = z;
+                    boneAnimationStates[boneAnimationStateIndex + 8] = x;
+                    boneAnimationStates[boneAnimationStateIndex + 9] = y;
+                    boneAnimationStates[boneAnimationStateIndex + 10] = z;
                 }
             }
         }

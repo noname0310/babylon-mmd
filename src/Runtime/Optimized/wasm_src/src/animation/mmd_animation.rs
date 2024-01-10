@@ -22,18 +22,22 @@ impl MmdAnimation {
         }
     }
 
+    #[inline]
     pub(crate) fn bone_tracks(&self) -> &[MmdBoneAnimationTrack] {
         &self.bone_tracks
     }
 
+    #[inline]
     pub(crate) fn movable_bone_tracks(&self) -> &[MmdMovableBoneAnimationTrack] {
         &self.movable_bone_tracks
     }
 
+    #[inline]
     pub(crate) fn morph_tracks(&self) -> &[MmdMorphAnimationTrack] {
         &self.morph_tracks
     }
 
+    #[inline]
     pub(crate) fn property_track(&self) -> &MmdPropertyAnimationTrack {
         &self.property_track
     }

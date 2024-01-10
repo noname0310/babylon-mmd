@@ -33,7 +33,7 @@ impl MmdModel {
         let reader = reader.enumerate(|i, metadata| {
             {
                 let bone = &mut bone_arena[i as usize];
-                bone.rest_position = metadata.rest_position;
+                bone.rest_position = metadata.rest_position.into();
                 bone.transform_order = metadata.transform_order;
                 bone.transform_after_physics = metadata.flag & BoneFlag::TransformAfterPhysics as u16 != 0;
             }
@@ -148,10 +148,12 @@ impl MmdModel {
         }
     }
 
+    #[inline]
     pub fn animation_arena_mut(&mut self) -> &mut AnimationArena {
         &mut self.animation_arena
     }
 
+    #[inline]
     pub fn bone_arena_mut(&mut self) -> &mut MmdRuntimeBoneArena {
         &mut self.bone_arena
     }

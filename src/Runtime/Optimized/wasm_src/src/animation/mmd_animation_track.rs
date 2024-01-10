@@ -1,4 +1,4 @@
-use nalgebra::{Vector3, UnitQuaternion};
+use glam::{Quat, Vec3};
 
 #[repr(C)]
 #[derive(Clone)]
@@ -40,7 +40,7 @@ impl InterpolationVector3 {
 
 pub(crate) struct MmdBoneAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
-    pub(crate) rotations: Box<[UnitQuaternion<f32>]>,
+    pub(crate) rotations: Box<[Quat]>,
     pub(crate) rotation_interpolations: Box<[InterpolationScalar]>,
 }
 
@@ -48,15 +48,17 @@ impl MmdBoneAnimationTrack {
     pub(crate) fn new(frame_count: usize) -> Self {
         Self {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
-            rotations: vec![UnitQuaternion::identity(); frame_count].into_boxed_slice(),
+            rotations: vec![Quat::IDENTITY; frame_count].into_boxed_slice(),
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
     }
 
+    #[inline]
     pub(crate) fn start_frame(&self) -> u32 {
         self.frame_numbers.first().copied().unwrap_or(0)
     }
 
+    #[inline]
     pub(crate) fn end_frame(&self) -> u32 {
         self.frame_numbers.last().copied().unwrap_or(0)
     }
@@ -64,9 +66,9 @@ impl MmdBoneAnimationTrack {
 
 pub(crate) struct MmdMovableBoneAnimationTrack {
     pub(crate) frame_numbers: Box<[u32]>,
-    pub(crate) positions: Box<[Vector3<f32>]>,
+    pub(crate) positions: Box<[Vec3]>,
     pub(crate) position_interpolations: Box<[InterpolationVector3]>,
-    pub(crate) rotations: Box<[UnitQuaternion<f32>]>,
+    pub(crate) rotations: Box<[Quat]>,
     pub(crate) rotation_interpolations: Box<[InterpolationScalar]>,
 }
 
@@ -74,17 +76,19 @@ impl MmdMovableBoneAnimationTrack {
     pub(crate) fn new(frame_count: usize) -> Self {
         Self {
             frame_numbers: vec![0; frame_count].into_boxed_slice(),
-            positions: vec![Vector3::zeros(); frame_count].into_boxed_slice(),
+            positions: vec![Vec3::ZERO; frame_count].into_boxed_slice(),
             position_interpolations: vec![InterpolationVector3::new(); frame_count].into_boxed_slice(),
-            rotations: vec![UnitQuaternion::identity(); frame_count].into_boxed_slice(),
+            rotations: vec![Quat::IDENTITY; frame_count].into_boxed_slice(),
             rotation_interpolations: vec![InterpolationScalar::new(); frame_count].into_boxed_slice(),
         }
     }
 
+    #[inline]
     pub(crate) fn start_frame(&self) -> u32 {
         self.frame_numbers.first().copied().unwrap_or(0)
     }
 
+    #[inline]
     pub(crate) fn end_frame(&self) -> u32 {
         self.frame_numbers.last().copied().unwrap_or(0)
     }
@@ -103,10 +107,12 @@ impl MmdMorphAnimationTrack {
         }
     }
 
+    #[inline]
     pub(crate) fn start_frame(&self) -> u32 {
         self.frame_numbers.first().copied().unwrap_or(0)
     }
 
+    #[inline]
     pub(crate) fn end_frame(&self) -> u32 {
         self.frame_numbers.last().copied().unwrap_or(0)
     }
@@ -125,10 +131,12 @@ impl MmdPropertyAnimationTrack {
         }
     }
 
+    #[inline]
     pub(crate) fn start_frame(&self) -> u32 {
         self.frame_numbers.first().copied().unwrap_or(0)
     }
 
+    #[inline]
     pub(crate) fn end_frame(&self) -> u32 {
         self.frame_numbers.last().copied().unwrap_or(0)
     }

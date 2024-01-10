@@ -1,4 +1,4 @@
-use nalgebra::Vector3;
+use glam::Vec3A;
 
 use crate::mmd_model::MmdModel;
 
@@ -81,6 +81,7 @@ impl MmdRuntimeAnimation {
         }
     }
 
+    #[inline]
     pub(crate) fn animation(&self) -> &'static MmdAnimation {
         self.animation
     }
@@ -157,7 +158,7 @@ impl MmdRuntimeAnimation {
                             gradient,
                         )
                     };
-                    bone.rotation = track.rotations[frame_index_a as usize].slerp(&track.rotations[frame_index_b as usize], weight);
+                    bone.rotation = track.rotations[frame_index_a as usize].slerp(track.rotations[frame_index_b as usize], weight);
                 } else {
                     bone.rotation = track.rotations[frame_index_a as usize];
                 }
@@ -216,7 +217,7 @@ impl MmdRuntimeAnimation {
                     };
                     let position_a = track.positions[frame_index_a as usize];
                     let position_b = track.positions[frame_index_b as usize];
-                    bone.position = bone_rest_position + Vector3::new(
+                    bone.position = bone_rest_position + Vec3A::new(
                         position_a.x + (position_b.x - position_a.x) * x_weight,
                         position_a.y + (position_b.y - position_a.y) * y_weight,
                         position_a.z + (position_b.z - position_a.z) * z_weight,
@@ -232,9 +233,9 @@ impl MmdRuntimeAnimation {
                             gradient,
                         )
                     };
-                    bone.rotation = track.rotations[frame_index_a as usize].slerp(&track.rotations[frame_index_b as usize], rotation_weight);
+                    bone.rotation = track.rotations[frame_index_a as usize].slerp(track.rotations[frame_index_b as usize], rotation_weight);
                 } else {
-                    bone.position = bone_rest_position + track.positions[frame_index_a as usize];
+                    bone.position = bone_rest_position + Vec3A::from(track.positions[frame_index_a as usize]);
                     bone.rotation = track.rotations[frame_index_a as usize];
                 }
             }

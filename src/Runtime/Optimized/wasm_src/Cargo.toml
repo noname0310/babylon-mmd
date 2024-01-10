@@ -16,12 +16,12 @@ default = ["wee_alloc", "console_error_panic_hook"]
 opt-level = 3
 
 [dependencies]
-nalgebra = "0.32.3"
 wasm-bindgen = "0.2.89"
 wee_alloc = { version = "0.4.5", optional = true }
 console_error_panic_hook = { version = "0.1.7", optional = true }
 byte-slice-cast = "1.2.2"
 num-traits = "0.2.17"
+glam = { version = "0.25.0", features = ["debug-glam-assert", "fast-math"] }
 
 [dependencies.web-sys]
 version = "0.3.65"

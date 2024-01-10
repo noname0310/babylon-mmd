@@ -1,4 +1,4 @@
-use nalgebra::{UnitQuaternion, Vector3};
+use glam::{Quat, Vec3A};
 
 use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 use crate::mmd_model_metadata::BoneFlag;
@@ -28,12 +28,12 @@ impl AppendTransformSolverArena {
                 target_bone.animated_rotation(animation_arena)
             };
 
-            if let Some(ik_rotation) = &target_bone.ik_rotation {
+            if let Some(ik_rotation) = target_bone.ik_rotation {
                 rotation = ik_rotation * rotation;
             }
 
             let solver = &mut self.arena[index as usize];
-            solver.append_rotation_offset = UnitQuaternion::identity().slerp(&rotation, solver.ratio);
+            solver.append_rotation_offset = Quat::IDENTITY.slerp(rotation, solver.ratio);
         }
 
         let solver = &self.arena[index as usize];
@@ -74,8 +74,8 @@ pub(crate) struct AppendTransformSolver {
 
     target_bone: u32,
 
-    append_position_offset: Vector3<f32>,
-    append_rotation_offset: UnitQuaternion<f32>,
+    append_position_offset: Vec3A,
+    append_rotation_offset: Quat,
 }
 
 impl AppendTransformSolver {
@@ -90,24 +90,28 @@ impl AppendTransformSolver {
             affect_position: bone_flag & BoneFlag::HasAppendMove as u16 != 0,
             ratio,
             target_bone,
-            append_position_offset: Vector3::zeros(),
-            append_rotation_offset: UnitQuaternion::identity(),
+            append_position_offset: Vec3A::ZERO,
+            append_rotation_offset: Quat::IDENTITY,
         }
     }
 
+    #[inline]
     pub fn is_affect_rotation(&self) -> bool {
         self.affect_rotation
     }
 
+    #[inline]
     pub fn is_affect_position(&self) -> bool {
         self.affect_position
     }
 
-    pub fn append_position_offset(&self) -> &Vector3<f32> {
-        &self.append_position_offset
+    #[inline]
+    pub fn append_position_offset(&self) -> Vec3A {
+        self.append_position_offset
     }
 
-    pub fn append_rotation_offset(&self) -> &UnitQuaternion<f32> {
-        &self.append_rotation_offset
+    #[inline]
+    pub fn append_rotation_offset(&self) -> Quat {
+        self.append_rotation_offset
     }
 }

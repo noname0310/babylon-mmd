@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use nalgebra::UnitQuaternion;
+use glam::Quat;
 
 use crate::mmd_model_metadata::MorphMetadata;
 use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
@@ -113,9 +113,9 @@ impl MmdMorphController {
                     };
 
                     bone.morph_rotation_offset = if let Some(morph_rotation_offset) = bone.morph_rotation_offset {
-                        Some(morph_rotation_offset.slerp(&rotation, weight))
+                        Some(morph_rotation_offset.slerp(rotation, weight))
                     } else {
-                        Some(UnitQuaternion::identity().slerp(&rotation, weight))
+                        Some(Quat::IDENTITY.slerp(rotation, weight))
                     };
                 }
             }
