@@ -195,10 +195,41 @@ impl AnimationPool {
         let morph_tracks_ptr = morph_tracks_ptr as *mut MmdMorphAnimationTrack;
 
         let bone_tracks = unsafe {
-            Box::from_raw(std::slice::from_raw_parts_mut(bone_tracks_ptr, bone_track_count))
+            #[cfg(not(debug_assertions))]
+            {
+                Box::from_raw(std::slice::from_raw_parts_mut(bone_tracks_ptr, bone_track_count))
+            }
+
+            #[cfg(debug_assertions)]
+            {
+                let mut bone_tracks = Box::from_raw(std::slice::from_raw_parts_mut(bone_tracks_ptr, bone_track_count));
+                for i in 0..bone_tracks.len() {
+                    let track = &mut bone_tracks[i];
+                    for j in 0..track.rotations.len() {
+                        track.rotations[j] = track.rotations[j].normalize();
+                    }
+                }
+                bone_tracks
+            }
         };
+
         let movable_bone_tracks = unsafe {
-            Box::from_raw(std::slice::from_raw_parts_mut(movable_bone_tracks_ptr, movable_bone_track_count))
+            #[cfg(not(debug_assertions))]
+            {
+                Box::from_raw(std::slice::from_raw_parts_mut(movable_bone_tracks_ptr, movable_bone_track_count))
+            }
+
+            #[cfg(debug_assertions)]
+            {
+                let mut movable_bone_tracks = Box::from_raw(std::slice::from_raw_parts_mut(movable_bone_tracks_ptr, movable_bone_track_count));
+                for i in 0..movable_bone_tracks.len() {
+                    let track = &mut movable_bone_tracks[i];
+                    for j in 0..track.rotations.len() {
+                        track.rotations[j] = track.rotations[j].normalize();
+                    }
+                }
+                movable_bone_tracks
+            }
         };
         let morph_tracks = unsafe {
             Box::from_raw(std::slice::from_raw_parts_mut(morph_tracks_ptr, morph_track_count))

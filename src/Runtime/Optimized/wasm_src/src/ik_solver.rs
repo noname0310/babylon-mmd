@@ -181,8 +181,15 @@ impl IkSolver {
                 continue;
             }
             let angle = angle.clamp(-self.limit_angle, self.limit_angle);
-            let cross = chain_target_vector.cross(chain_ik_vector).normalize();
-            let rotation = Quat::from_axis_angle(cross.into(), angle);
+            let rotation = {
+                let cross = chain_target_vector.cross(chain_ik_vector);
+                if cross == Vec3A::ZERO {
+                    Quat::IDENTITY
+                } else {
+                    let cross = cross.normalize();
+                    Quat::from_axis_angle(cross.into(), angle)
+                }
+            };
 
             let animated_rotation = bone_arena[chain.bone as usize].animated_rotation(animation_arena);
             let chain_bone = &mut bone_arena[chain.bone as usize];
