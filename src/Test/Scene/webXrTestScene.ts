@@ -70,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 

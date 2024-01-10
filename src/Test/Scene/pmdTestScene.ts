@@ -67,7 +67,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdPhysics = new MmdPhysics(scene);
         mmdPhysics.angularLimitClampThreshold = 10 * Math.PI / 180;
-        const mmdRuntime = new MmdRuntime(mmdPhysics);
+        const mmdRuntime = new MmdRuntime(scene, mmdPhysics);
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);

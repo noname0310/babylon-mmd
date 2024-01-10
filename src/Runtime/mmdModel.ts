@@ -197,6 +197,13 @@ export class MmdModel implements IMmdModel {
         this._physicsModel?.dispose();
         this.onCurrentAnimationChangedObservable.clear();
         (this.mesh as any).metadata = null;
+
+        const animations = this._animations;
+        for (let i = 0; i < animations.length; ++i) {
+            (animations[i] as IMmdRuntimeModelAnimation).dispose?.();
+        }
+        this._animations.length = 0;
+        this._animationIndexMap.clear();
     }
 
     /**

@@ -45,6 +45,13 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     readonly onAnimationTickObservable: Observable<void>;
 
     /**
+     * Dispose MMD runtime
+     *
+     * Destroy all MMD models and unregister this runtime from scene
+     */
+    dispose(scene: Scene): void;
+
+    /**
      * Create MMD model from mesh that has MMD metadata
      *
      * The skeletons in the mesh where the MmdModel was created no longer follow the usual matrix update policy

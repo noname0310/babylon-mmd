@@ -52,7 +52,7 @@ export class SceneBuilder implements ISceneBuilder {
         const havokPlugin = new HavokPlugin(true, havokInstance);
         scene.enablePhysics(new Vector3(0, -98, 0), havokPlugin);
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.register(scene);
         mmdRuntime.createMmdModel(mmdMesh);
 

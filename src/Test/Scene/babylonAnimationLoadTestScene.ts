@@ -49,7 +49,7 @@ export class SceneBuilder implements ISceneBuilder {
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 

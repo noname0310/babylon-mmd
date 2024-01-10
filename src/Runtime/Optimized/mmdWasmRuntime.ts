@@ -173,8 +173,24 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
     /**
      * Dispose MMD WASM runtime
+     *
+     * Destroy all MMD models and unregister this runtime from scene
+     * @param scene Scene
      */
     public dispose(scene: Scene): void {
+        for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
+        this._models.length = 0;
+        this.setCamera(null);
+        this.setAudioPlayer(null);
+
+        this.onAnimationDurationChangedObservable.clear();
+        this.onPlayAnimationObservable.clear();
+        this.onPauseAnimationObservable.clear();
+        this.onSeekAnimationObservable.clear();
+        this.onAnimationTickObservable.clear();
+
+        this._needToInitializePhysicsModels.clear();
+
         this.unregister(scene);
         this.wasmInternal.free();
 

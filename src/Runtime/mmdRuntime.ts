@@ -7,6 +7,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "./Audio/IAudioPlayer";
+import type { IDisposeObservable } from "./IDisposeObserable";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdRuntime } from "./IMmdRuntime";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
@@ -93,11 +94,15 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
+    private readonly _bindedDispose: Nullable<(scene: Scene) => void>;
+    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+
     /**
      * Creates a new MMD runtime
+     * @param scene Objects that limit the lifetime of this instance
      * @param physics Physics builder
      */
-    public constructor(physics: Nullable<MmdPhysics> = null) {
+    public constructor(scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
         this._physics = physics;
 
         this._models = [];
@@ -127,6 +132,44 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
 
         this._beforePhysicsBinded = null;
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
+
+        if (scene !== null) {
+            this._bindedDispose = (): void => this.dispose(scene);
+            this._disposeObservableObject = scene;
+            if (this._disposeObservableObject !== null) {
+                this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
+            }
+        } else {
+            this._bindedDispose = null;
+            this._disposeObservableObject = null;
+        }
+    }
+
+    /**
+     * Dispose MMD runtime
+     *
+     * Destroy all MMD models and unregister this runtime from scene
+     * @param scene Scene
+     */
+    public dispose(scene: Scene): void {
+        for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
+        this._models.length = 0;
+        this.setCamera(null);
+        this.setAudioPlayer(null);
+
+        this.onAnimationDurationChangedObservable.clear();
+        this.onPlayAnimationObservable.clear();
+        this.onPauseAnimationObservable.clear();
+        this.onSeekAnimationObservable.clear();
+        this.onAnimationTickObservable.clear();
+
+        this._needToInitializePhysicsModels.clear();
+
+        this.unregister(scene);
+
+        if (this._disposeObservableObject !== null && this._bindedDispose !== null) {
+            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
+        }
     }
 
     /**
