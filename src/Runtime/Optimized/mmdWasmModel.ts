@@ -293,6 +293,9 @@ export class MmdWasmModel implements IMmdModel {
             }, retargetingMap, this._runtime);
         } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
             runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._runtime);
+            if ((animation as MmdWasmAnimation).ptr !== undefined) {
+                this._runtime.warn("MmdWasmAnimation has better performance in the wasm animation runtime. consider importing \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" instead of \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\"");
+            }
         } else {
             throw new Error("animation is not MmdWasmAnimation or MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
