@@ -269,7 +269,6 @@ export class MmdWasmModel implements IMmdModel {
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this.onCurrentAnimationChangedObservable.clear();
-        (this.mesh as any).metadata = null;
 
         const animations = this._animations;
         for (let i = 0; i < animations.length; ++i) {
@@ -277,6 +276,8 @@ export class MmdWasmModel implements IMmdModel {
         }
         this._animations.length = 0;
         this._animationIndexMap.clear();
+
+        (this.mesh as any).metadata = null;
     }
 
     /**
