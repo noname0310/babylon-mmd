@@ -225,7 +225,7 @@ export class MmdWasmModel implements IMmdModel {
         );
 
         if (externalPhysics !== null) {
-            this.beforePhysicsAndWasm(null);
+            this.beforePhysicsAndWasm(null); // for apply bone morph
             wasmRuntimeInternal.updataBoneLocalMatrices(ptr);
             for (let i = 0; i < sortedBones.length; ++i) {
                 if (sortedBones[i].parentBone === null) sortedBones[i].updateWorldMatrix();

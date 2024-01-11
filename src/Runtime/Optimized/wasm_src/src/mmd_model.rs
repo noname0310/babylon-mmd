@@ -94,7 +94,7 @@ impl MmdModel {
         });
     
         let (morphs, reader) = reader.read();
-        let animation_arena = AnimationArena::new(bone_arena.len() as u32, ik_solver_arena.len() as u32, morphs.len() as u32);
+        let animation_arena = AnimationArena::new(&bone_arena, ik_solver_arena.len() as u32, morphs.len() as u32);
         let morph_controller = MmdMorphController::new(morphs.into_boxed_slice());
 
         let reader = reader.for_each(|_metadata| {

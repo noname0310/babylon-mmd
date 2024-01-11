@@ -1,5 +1,7 @@
 use glam::{Vec3A, Quat};
 
+use crate::mmd_runtime_bone::MmdRuntimeBone;
+
 #[repr(C)]
 #[derive(Clone)]
 pub struct AnimatedBoneData {
@@ -15,13 +17,19 @@ pub(crate) struct AnimationArena {
 }
 
 impl AnimationArena {
-    pub(crate) fn new(bone_count: u32, ik_count: u32, morph_count: u32) -> Self {
-        AnimationArena {
-            bone_arena: vec![AnimatedBoneData {
-                position: Vec3A::new(0.0, 0.0, 0.0),
+    pub(crate) fn new(runtime_bones: &[MmdRuntimeBone], ik_count: u32, morph_count: u32) -> Self {
+        let mut bone_arena = Vec::with_capacity(runtime_bones.len() as usize);
+        for i in 0..runtime_bones.len() {
+            let rest_position = runtime_bones[i].rest_position;
+            bone_arena.push(AnimatedBoneData {
+                position: rest_position,
                 rotation: Quat::IDENTITY,
-                scale: Vec3A::new(1.0, 1.0, 1.0),
-            }; bone_count as usize].into_boxed_slice(),
+                scale: Vec3A::ONE,
+            });
+        }
+
+        AnimationArena {
+            bone_arena: bone_arena.into_boxed_slice(),
             iksolver_state_arena: vec![1; ik_count as usize].into_boxed_slice(),
             morph_arena: vec![0.0; morph_count as usize].into_boxed_slice(),
         }
