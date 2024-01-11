@@ -67,7 +67,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
     
     // MMD runtime for solving morph, append transform, IK, animation, physics
-    const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+    const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
     mmdRuntime.register(scene);
     
     // For synced audio playback

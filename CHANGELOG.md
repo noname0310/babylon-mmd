@@ -4,6 +4,8 @@
 
 - introduce `MmdWasmRuntime` for WASM driven MMD animation runtime (experimental)
 
+- **breaking change** `MmdRuntime` now requires `Scene` instance to be passed to constructor
+
 ## 0.35.0
 
 - apply typed array on ik solver state for better performance

@@ -141,7 +141,7 @@ export class SceneBuilder implements ISceneBuilder {
         scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), new HavokPlugin(true, await HavokPhysics()));
 
         // create mmd runtime
-        const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.register(scene);
 
         mmdRuntime.setCamera(camera);

@@ -27,7 +27,7 @@ Your file structure should look like this.
 MMD has its proprietary animation system, so we provides a runtime to reproduce it. We will create an MMD Runtime and make the camera and mesh controlled by the runtime.
 
 ```typescript title="src/sceneBuilder.ts"
-const mmdRuntime = new MmdRuntime();
+const mmdRuntime = new MmdRuntime(scene);
 mmdRuntime.register(scene);
 
 mmdRuntime.setCamera(camera);

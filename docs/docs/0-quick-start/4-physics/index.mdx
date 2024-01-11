@@ -17,7 +17,7 @@ scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), new HavokPlugin(true, await Ha
 Create new `MmdPhysics` and pass it to `MmdRuntime`.
 
 ```typescript title="src/sceneBuilder.ts"
-const mmdRuntime = new MmdRuntime(new MmdPhysics(scene));
+const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
 ```
 
 :::info

@@ -191,7 +191,7 @@ export class SceneBuilder implements ISceneBuilder {
         ground.receiveShadows = true;
 
         // create mmd runtime
-        const mmdRuntime = new MmdRuntime();
+        const mmdRuntime = new MmdRuntime(scene);
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
 
