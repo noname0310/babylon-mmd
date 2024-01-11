@@ -4,6 +4,7 @@ import { Space } from "@babylonjs/core/Maths/math.axis";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
+import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
@@ -156,11 +157,21 @@ export class MmdModel implements IMmdModel {
         }
         this._sortedRuntimeRootBones = sortedRootBones;
 
+        const morphTargetManagers: MorphTargetManager[] = [];
+        {
+            const meshes = mmdMetadata.meshes;
+            for (let i = 0; i < meshes.length; ++i) {
+                const morphTargetManager = meshes[i].morphTargetManager;
+                if (morphTargetManager !== null) morphTargetManagers.push(morphTargetManager);
+            }
+        }
+
         this.morph = new MmdMorphController(
             runtimeBones,
             mmdMetadata.materials,
             materialProxyConstructor,
             mmdMetadata.morphs,
+            morphTargetManagers,
             logger
         );
 
