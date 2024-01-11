@@ -437,7 +437,9 @@ export abstract class MmdMorphControllerBase {
         case PmxObject.Morph.Type.AdditionalUvMorph4:
             {
                 const morphTargets = morph.elements as MorphTarget[];
-                for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence = 0;
+                // this will be zero when morph target recompilation problem is solved
+                // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
+                for (let i = 0; i < morphTargets.length; ++i) morphTargets[i].influence = 1e-16;
             }
             break;
         }
