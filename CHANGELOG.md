@@ -2,7 +2,7 @@
 
 ## 0.36.0
 
-- introduce `MmdWasmRuntime` for WASM driven MMD animation runtime
+- introduce `MmdWasmRuntime` for WASM driven MMD animation runtime (experimental)
 
 ## 0.35.0
 
