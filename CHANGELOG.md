@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.36.4
+
+- export missing new types
+
+- fix wrong shared toon texture loading
+
+- fix `BpmxConverter` does not serialize shared toon texture index
+
 ## 0.36.0
 
 - introduce `MmdWasmRuntime` for WASM driven MMD animation runtime (experimental)
