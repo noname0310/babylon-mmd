@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.36.5
+
+- add missing PMD toon texture remapping
+
 ## 0.36.4
 
 - export missing new types
