@@ -509,7 +509,7 @@ export class PmdReader {
     }
 
     private static _ConvertMaterials(materials: PartialMaterial[], textures: string[]): PmxObject.Material[] {
-        const normalizedTextures = new Array(textures.length);
+        const normalizedTextures = new Array<string>(textures.length);
         for (let i = 0; i < textures.length; ++i) {
             normalizedTextures[i] = this._PathNormalize(textures[i]);
         }
@@ -525,7 +525,7 @@ export class PmdReader {
                     if (toonTextureIndex[0] === "n") {
                         toonTextureIndex = toonTextureIndex[1];
                     }
-                    material.toonTextureIndex = parseInt(toonTextureIndex, 10);
+                    material.toonTextureIndex = parseInt(toonTextureIndex, 10) - 1; // remap 0..10 to -1..9
                 }
             }
         }
