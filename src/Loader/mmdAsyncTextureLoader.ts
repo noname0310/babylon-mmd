@@ -332,12 +332,6 @@ export class MmdAsyncTextureLoader {
 
         let textureData = this.textureCache.get(urlOrTextureName);
         if (textureData === undefined && !textureLoadInfo.hasLoadError) {
-            if (sharedTextureIndex !== null) {
-                if (sharedTextureIndex < -1 || 9 < sharedTextureIndex) { // max shared toon texture index is 9. -1 is for error texture
-                    sharedTextureIndex = -1;
-                }
-                sharedTextureIndex += 1; // remap to 0-10
-            }
             const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
                 : urlOrTextureName;
 
@@ -413,11 +407,21 @@ export class MmdAsyncTextureLoader {
         assetContainer: Nullable<AssetContainer>,
         options: IMmdTextureLoadOptions
     ): Promise<Nullable<Texture>> {
-        const isSharedToonTexture = typeof relativeTexturePathOrIndex === "number";
+        let isSharedToonTexture: boolean;
+        if (typeof relativeTexturePathOrIndex === "number") {
+            if (relativeTexturePathOrIndex < -1 || 9 < relativeTexturePathOrIndex) { // max shared toon texture index is 9. -1 is for error texture
+                relativeTexturePathOrIndex = -1;
+            }
+            relativeTexturePathOrIndex += 1; // remap to 0-10
+
+            isSharedToonTexture = true;
+        } else {
+            isSharedToonTexture = false;
+        }
 
         const finalRelativeTexturePath = isSharedToonTexture
             ? "file:shared_toon_texture_" + relativeTexturePathOrIndex
-            : relativeTexturePathOrIndex;
+            : (relativeTexturePathOrIndex as string);
 
         const requestString = isSharedToonTexture
             ? finalRelativeTexturePath
@@ -427,7 +431,7 @@ export class MmdAsyncTextureLoader {
             uniqueId,
             requestString,
             null,
-            isSharedToonTexture ? relativeTexturePathOrIndex : null,
+            isSharedToonTexture ? (relativeTexturePathOrIndex as number) : null,
             scene,
             assetContainer,
             options

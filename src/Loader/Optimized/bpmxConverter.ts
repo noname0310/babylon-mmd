@@ -832,7 +832,12 @@ export class BpmxConverter implements ILogger {
                         toonTexture.name.startsWith("file:shared_toon_texture_") &&
                         toonTexture.name.length <= 27 &&
                         !isNaN(Number(toonTexture.name.substring(25)));
-                    const toonTextureIndex = toonTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === toonTexture) : -1;
+                    let toonTextureIndex: number;
+                    if (isSharedToonTexture) {
+                        toonTextureIndex = Number(toonTexture.name.substring(25)) - 1; // remap toon texture index
+                    } else {
+                        toonTextureIndex = toonTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === toonTexture) : -1;
+                    }
 
                     const comment = materialMetadata?.comment ?? "";
 
