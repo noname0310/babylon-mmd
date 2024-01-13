@@ -332,6 +332,12 @@ export class MmdAsyncTextureLoader {
 
         let textureData = this.textureCache.get(urlOrTextureName);
         if (textureData === undefined && !textureLoadInfo.hasLoadError) {
+            if (sharedTextureIndex !== null) {
+                if (sharedTextureIndex < -1 || 9 < sharedTextureIndex) { // max shared toon texture index is 9. -1 is for error texture
+                    sharedTextureIndex = -1;
+                }
+                sharedTextureIndex += 1; // remap to 0-10
+            }
             const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
                 : urlOrTextureName;
 

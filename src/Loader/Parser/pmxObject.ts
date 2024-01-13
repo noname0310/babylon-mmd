@@ -335,6 +335,9 @@ export namespace PmxObject {
          * Toon texture index
          *
          * If isSharedToonTexture is true, this value is the index of the shared toon texture
+         *
+         * for shared toon texture, this value is -1 to 9 and should be mapped to SharedToonTextures.Data index by adding 1
+         * for non-shared toon texture, -1 means no toon texture
          */
         toonTextureIndex: number;
 

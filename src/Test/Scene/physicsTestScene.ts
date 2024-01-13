@@ -18,7 +18,6 @@ import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -140,11 +139,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         for (const mesh of stageMesh.metadata.meshes) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
-        for (const mesh of stageMesh.metadata.meshes) {
-            const material = mesh.material as MmdStandardMaterial;
-            material.ignoreDiffuseWhenToonTextureIsNull = false;
-            material.toonTexture = null;
-        }
 
         {
             // const physicsViewer = new PhysicsViewer(scene);

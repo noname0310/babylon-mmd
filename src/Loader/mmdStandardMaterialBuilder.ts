@@ -569,9 +569,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         ): Promise<void> => {
             let toonTexturePath;
             if (materialInfo.isSharedToonTexture) {
-                toonTexturePath = materialInfo.toonTextureIndex === -1
-                    ? undefined
-                    : materialInfo.toonTextureIndex;
+                toonTexturePath = materialInfo.toonTextureIndex;
             } else {
                 toonTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
             }
