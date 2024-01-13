@@ -16,14 +16,14 @@ default = ["console_error_panic_hook"]
 opt-level = 3
 
 [dependencies]
-wasm-bindgen = "0.2.89"
+wasm-bindgen = "0.2.90"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 byte-slice-cast = "1.2.2"
 num-traits = "0.2.17"
 glam = { version = "0.25.0", features = ["debug-glam-assert", "fast-math"] }
 
 [dependencies.web-sys]
-version = "0.3.65"
+version = "0.3.67"
 features = ["console"]
 
 [dev-dependencies]
