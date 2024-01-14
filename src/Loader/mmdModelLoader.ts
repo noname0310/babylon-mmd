@@ -410,7 +410,7 @@ export abstract class MmdModelLoader<
                 const boneWorldPosition = boneInfo.position;
 
                 const bonePosition = new Vector3(boneWorldPosition[0], boneWorldPosition[1], boneWorldPosition[2]);
-                if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bones.length) && !isLooped) {
+                if ((0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bonesInfo.length) && !isLooped) {
                     const parentBoneInfo = bonesInfo[boneInfo.parentBoneIndex];
                     bonePosition.x -= parentBoneInfo.position[0];
                     bonePosition.y -= parentBoneInfo.position[1];
