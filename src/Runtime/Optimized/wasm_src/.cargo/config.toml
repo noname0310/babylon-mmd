@@ -1,2 +1,5 @@
+[unstable]
+build-std = ["std", "panic_abort"]
+
 [build]
-rustflags = ["-Ctarget-feature=+simd128"]
+rustflags = ["-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals"]
