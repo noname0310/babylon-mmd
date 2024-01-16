@@ -6,7 +6,7 @@ if (fs.existsSync("./dist")) {
 }
 
 try {
-    execSync("npm run build:lib");
+    execSync("npm run build-lib");
 } catch (error: any) {
     console.log(error.output.toString());
     process.exit(1);
