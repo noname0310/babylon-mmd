@@ -97,7 +97,7 @@ impl MmdRuntime {
         let bone_arena = unsafe {
             &mut *ptr
         }.bone_arena_mut();
-        bone_arena.create_world_matrix_back_buffer().as_mut_ptr() as *mut f32
+        bone_arena.create_world_matrix_back_buffer()
     }
 
     #[wasm_bindgen(js_name = "beforePhysics")]

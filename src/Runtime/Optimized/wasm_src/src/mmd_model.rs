@@ -5,6 +5,7 @@ use crate::ik_solver::{IkSolver, IkSolverArena};
 use crate::animation_arena::AnimationArena;
 use crate::mmd_morph_controller::MmdMorphController;
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
+use crate::unchecked_slice::UncheckedSliceMut;
 
 pub(crate) struct MmdModel {
     animation: Option<&'static MmdRuntimeAnimation>,
@@ -18,7 +19,7 @@ pub(crate) struct MmdModel {
 }
 
 impl MmdModel {
-    pub fn new(buffer: MetadataBuffer) -> Self {
+    pub(crate) fn new(buffer: MetadataBuffer) -> Self {
         let reader = BoneMetadataReader::new(buffer);
 
         let mut bone_arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.bone_count() as usize);
@@ -75,7 +76,7 @@ impl MmdModel {
                     for link in ik.links {
                         if 0 <= link.target && link.target < bone_arena.len() as i32 {
                             ik_solver.add_ik_chain(
-                                &mut bone_arena,
+                                UncheckedSliceMut::new(&mut bone_arena),
                                 link.target as u32,
                                 link.limits,
                             );
@@ -149,19 +150,21 @@ impl MmdModel {
     }
 
     #[inline]
-    pub fn animation_arena_mut(&mut self) -> &mut AnimationArena {
+    pub(crate) fn animation_arena_mut(&mut self) -> &mut AnimationArena {
         &mut self.animation_arena
     }
 
     #[inline]
-    pub fn bone_arena_mut(&mut self) -> &mut MmdRuntimeBoneArena {
+    pub(crate) fn bone_arena_mut(&mut self) -> &mut MmdRuntimeBoneArena {
         &mut self.bone_arena
     }
 
-    pub fn before_physics(&mut self) {
+    pub(crate) fn before_physics(&mut self) {
         #[cfg(debug_assertions)]
         {
-            for bone_animation in self.animation_arena_mut().bone_arena_mut() {
+            let animation_bone_arena = &mut self.animation_arena_mut().bone_arena_mut();
+            for i in 0..animation_bone_arena.len() as u32 {
+                let bone_animation = &mut animation_bone_arena[i];
                 bone_animation.rotation = bone_animation.rotation.normalize();
             }
         }
@@ -170,20 +173,20 @@ impl MmdModel {
         self.update(false);
     }
 
-    pub fn after_physics(&mut self) {
+    pub(crate) fn after_physics(&mut self) {
         self.update(true);
     }
 
-    pub fn update_local_matrices(&mut self) {
+    pub(crate) fn update_local_matrices(&mut self) {
         for bone in self.sorted_runtime_bones.iter() {
-            let bone = &mut self.bone_arena[(*bone) as usize];
+            let bone = &mut self.bone_arena.arena_mut()[*bone];
             bone.update_local_matrix(&self.animation_arena, &self.append_transform_solver_arena);
         }
     }
 
     fn update(&mut self, after_physics_stage: bool) {
         for bone in self.sorted_runtime_bones.iter() {
-            let bone = &mut self.bone_arena[(*bone) as usize];
+            let bone = &mut self.bone_arena.arena_mut()[*bone];
             if bone.transform_after_physics != after_physics_stage {
                 continue;
             }
@@ -193,7 +196,7 @@ impl MmdModel {
 
         for i in 0..self.sorted_runtime_root_bones.len() {
             let bone_index = self.sorted_runtime_root_bones[i];
-            let bone = &mut self.bone_arena[bone_index as usize];
+            let bone = &self.bone_arena.arena()[bone_index];
             if bone.transform_after_physics != after_physics_stage {
                 continue;
             }
@@ -203,22 +206,22 @@ impl MmdModel {
 
         for i in 0..self.sorted_runtime_bones.len() {
             let bone_index = self.sorted_runtime_bones[i];
-            let bone = &self.bone_arena[bone_index as usize];
+            let bone = &self.bone_arena.arena()[bone_index];
             if bone.transform_after_physics != after_physics_stage {
                 continue;
             }
 
             if let Some(append_transform_solver) = bone.append_transform_solver {
                 self.append_transform_solver_arena.update(append_transform_solver, &self.animation_arena, &self.bone_arena);
-                let bone = &mut self.bone_arena[bone_index as usize];
+                let bone = &mut self.bone_arena.arena_mut()[bone_index];
                 bone.update_local_matrix(&self.animation_arena, &self.append_transform_solver_arena);
                 self.bone_arena.update_world_matrix(bone_index);
             }
 
-            let bone = &self.bone_arena[bone_index as usize];
+            let bone = &self.bone_arena.arena()[bone_index];
             if let Some(ik_solver) = bone.ik_solver {
-                if self.animation_arena.iksolver_state_arena()[ik_solver as usize] != 0 {
-                    let ik_solver = &mut self.ik_solver_arena[ik_solver as usize];
+                if self.animation_arena.iksolver_state_arena()[ik_solver] != 0 {
+                    let ik_solver = &mut self.ik_solver_arena.arena_mut()[ik_solver];
                     ik_solver.solve(&self.animation_arena, &mut self.bone_arena, &self.append_transform_solver_arena);
                     self.bone_arena.update_world_matrix(bone_index);
                 }
@@ -227,7 +230,7 @@ impl MmdModel {
 
         for i in 0..self.sorted_runtime_root_bones.len() {
             let bone_index = self.sorted_runtime_root_bones[i];
-            let bone = &mut self.bone_arena[bone_index as usize];
+            let bone = &self.bone_arena.arena()[bone_index];
             if bone.transform_after_physics != after_physics_stage {
                 continue;
             }

@@ -1,6 +1,7 @@
 use glam::Vec3A;
 
 use crate::mmd_model::MmdModel;
+use crate::unchecked_slice::UncheckedSlice;
 
 use super::mmd_animation::MmdAnimation;
 use super::bezier_interpolation::bezier_interpolation;
@@ -87,14 +88,16 @@ impl MmdRuntimeAnimation {
     }
 
     fn upper_bound_frame_index(frame_time: f32, frame_numbers: &[u32], track_state: &mut AnimationTrackState) -> u32 {
+        let frame_numbers = UncheckedSlice::new(frame_numbers);
+
         let AnimationTrackState {frame_time: last_frame_time, frame_index: last_frame_index} = track_state;
 
         if (frame_time - *last_frame_time).abs() < 6.0 { // if frame time is close to last frame time, use iterative search
             let mut frame_index = *last_frame_index;
-            while 0 < frame_index && frame_time < frame_numbers[(frame_index - 1) as usize] as f32 {
+            while 0 < frame_index && frame_time < frame_numbers[frame_index - 1] as f32 {
                 frame_index -= 1;
             }
-            while frame_index < frame_numbers.len() as u32 && frame_numbers[frame_index as usize] as f32 <= frame_time {
+            while frame_index < frame_numbers.len() as u32 && frame_numbers[frame_index] as f32 <= frame_time {
                 frame_index += 1;
             }
 
@@ -108,7 +111,7 @@ impl MmdRuntimeAnimation {
 
             while low < high {
                 let mid = low + ((high - low) >> 1);
-                if frame_time < frame_numbers[mid as usize] as f32 {
+                if frame_time < frame_numbers[mid] as f32 {
                     high = mid;
                 } else {
                     low = mid + 1;
@@ -126,9 +129,12 @@ impl MmdRuntimeAnimation {
         if !self.animation.bone_tracks().is_empty() {
             let animation_arena = mmd_model.animation_arena_mut();
 
+            assert!(self.animation.bone_tracks().len() == self.bone_bind_index_map.len()
+                && self.animation.bone_tracks().len() == self.state.bone_track_states.len());
             for i in 0..self.animation.bone_tracks().len() {
                 let bone = self.bone_bind_index_map[i];
-                let bone = match animation_arena.bone_arena_mut().get_mut(bone as usize) {
+                let mut animation_bone_arena = animation_arena.bone_arena_mut();
+                let bone = match animation_bone_arena.get_mut(bone as u32) {
                     Some(bone) => bone,
                     None => continue,
                 };
@@ -149,7 +155,7 @@ impl MmdRuntimeAnimation {
                     let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
 
                     let weight = {
-                        let InterpolationScalar {x1, x2, y1, y2} = &track.rotation_interpolations[frame_index_b as usize];
+                        let InterpolationScalar {x1, x2, y1, y2} = &track.rotation_interpolations()[frame_index_b];
                         bezier_interpolation(
                             *x1 as f32 / 127.0,
                             *x2 as f32 / 127.0,
@@ -158,21 +164,23 @@ impl MmdRuntimeAnimation {
                             gradient,
                         )
                     };
-                    bone.rotation = track.rotations[frame_index_a as usize].slerp(track.rotations[frame_index_b as usize], weight);
+                    bone.rotation = track.rotations()[frame_index_a].slerp(track.rotations()[frame_index_b], weight);
                 } else {
-                    bone.rotation = track.rotations[frame_index_a as usize];
+                    bone.rotation = track.rotations()[frame_index_a];
                 }
             }
         }
 
         if !self.animation.movable_bone_tracks().is_empty() {
+            assert!(self.animation.movable_bone_tracks().len() == self.movable_bone_bind_index_map.len()
+                && self.animation.movable_bone_tracks().len() == self.state.movable_bone_track_states.len());
             for i in 0..self.animation.movable_bone_tracks().len() {
                 let bone_index = self.movable_bone_bind_index_map[i];
-                let bone_rest_position = match mmd_model.bone_arena_mut().get(bone_index as usize) {
+                let bone_rest_position = match mmd_model.bone_arena_mut().arena_mut().get(bone_index as u32) {
                     Some(bone) => bone.rest_position,
                     None => continue,
                 };
-                let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as usize];
+                let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as u32];
 
                 let track = &self.animation.movable_bone_tracks()[i];
 
@@ -190,7 +198,7 @@ impl MmdRuntimeAnimation {
                     let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
 
                     let (x_weight, y_weight, z_weight) = {
-                        let InterpolationVector3 {x, y, z} = &track.position_interpolations[frame_index_b as usize];
+                        let InterpolationVector3 {x, y, z} = &track.position_interpolations()[frame_index_b];
                         (
                             bezier_interpolation(
                                 x.x1 as f32 / 127.0,
@@ -215,8 +223,8 @@ impl MmdRuntimeAnimation {
                             ),
                         )
                     };
-                    let position_a = track.positions[frame_index_a as usize];
-                    let position_b = track.positions[frame_index_b as usize];
+                    let position_a = track.positions()[frame_index_a];
+                    let position_b = track.positions()[frame_index_b];
                     bone.position = bone_rest_position + Vec3A::new(
                         position_a.x + (position_b.x - position_a.x) * x_weight,
                         position_a.y + (position_b.y - position_a.y) * y_weight,
@@ -224,7 +232,7 @@ impl MmdRuntimeAnimation {
                     );
 
                     let rotation_weight = {
-                        let InterpolationScalar {x1, x2, y1, y2} = &track.rotation_interpolations[frame_index_b as usize];
+                        let InterpolationScalar {x1, x2, y1, y2} = &track.rotation_interpolations()[frame_index_b];
                         bezier_interpolation(
                             *x1 as f32 / 127.0,
                             *x2 as f32 / 127.0,
@@ -233,10 +241,10 @@ impl MmdRuntimeAnimation {
                             gradient,
                         )
                     };
-                    bone.rotation = track.rotations[frame_index_a as usize].slerp(track.rotations[frame_index_b as usize], rotation_weight);
+                    bone.rotation = track.rotations()[frame_index_a].slerp(track.rotations()[frame_index_b], rotation_weight);
                 } else {
-                    bone.position = bone_rest_position + Vec3A::from(track.positions[frame_index_a as usize]);
-                    bone.rotation = track.rotations[frame_index_a as usize];
+                    bone.position = bone_rest_position + Vec3A::from(track.positions()[frame_index_a]);
+                    bone.rotation = track.rotations()[frame_index_a];
                 }
             }
         }
@@ -244,6 +252,8 @@ impl MmdRuntimeAnimation {
         if !self.animation.morph_tracks().is_empty() {
             let animation_arena = mmd_model.animation_arena_mut();
 
+            assert!(self.animation.morph_tracks().len() == self.morph_bind_index_map.len()
+                && self.animation.morph_tracks().len() == self.state.morph_track_states.len());
             for i in 0..self.animation.morph_tracks().len() {
                 let morph_indices = &self.morph_bind_index_map[i];
 
@@ -262,10 +272,11 @@ impl MmdRuntimeAnimation {
                     let frame_number_b = *frame_number_b as f32;
                     let gradient = (clamped_frame_time - frame_number_a) / (frame_number_b - frame_number_a);
 
-                    let weight = track.weights[frame_index_a as usize] + (track.weights[frame_index_b as usize] - track.weights[frame_index_a as usize]) * gradient;
+                    let weight = track.weights()[frame_index_a] + (track.weights()[frame_index_b] - track.weights()[frame_index_a]) * gradient;
 
                     for morph_index in morph_indices.iter() {
-                        let morph = match animation_arena.morph_arena_mut().get_mut(*morph_index as usize) {
+                        let mut animation_morph_arena = animation_arena.morph_arena_mut();
+                        let morph = match animation_morph_arena.get_mut(*morph_index as u32) {
                             Some(morph) => morph,
                             None => continue,
                         };
@@ -273,11 +284,12 @@ impl MmdRuntimeAnimation {
                     }
                 } else {
                     for morph_index in morph_indices.iter() {
-                        let morph = match animation_arena.morph_arena_mut().get_mut(*morph_index as usize) {
+                        let mut animation_morph_arena = animation_arena.morph_arena_mut();
+                        let morph = match animation_morph_arena.get_mut(*morph_index as u32) {
                             Some(morph) => morph,
                             None => continue,
                         };
-                        *morph = track.weights[frame_index_a as usize];
+                        *morph = track.weights()[frame_index_a];
                     }
                 }
             }
@@ -295,17 +307,19 @@ impl MmdRuntimeAnimation {
                 clamp_frame_time,
                 &property_track.frame_numbers,
                 &mut self.state.property_track_state,
-            ) as usize - 1;
+            ) - 1;
             
-            for i in 0..property_track.ik_states.len() {
+            assert!(property_track.ik_count() == self.ik_solver_bind_index_map.len());
+            for i in 0..property_track.ik_count() {
                 let ik_solver_index = self.ik_solver_bind_index_map[i];
 
-                let ik_state = match animation_arena.iksolver_state_arena_mut().get_mut(ik_solver_index as usize) {
+                let mut animation_iksolver_state_arena = animation_arena.iksolver_state_arena_mut();
+                let ik_state = match animation_iksolver_state_arena.get_mut(ik_solver_index as u32) {
                     Some(ik_state) => ik_state,
                     None => continue,
                 };
                 
-                *ik_state = property_track.ik_states[i][step_index];
+                *ik_state = property_track.ik_states(i)[step_index];
             }
         }
     }

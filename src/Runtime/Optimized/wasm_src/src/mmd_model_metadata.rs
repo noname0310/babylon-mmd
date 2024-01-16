@@ -8,7 +8,7 @@ pub(crate) struct MetadataBuffer<'a> {
 }
 
 impl<'a> MetadataBuffer<'a> {
-    pub fn new(bytes: &'a [u8]) -> Self {
+    pub(crate) fn new(bytes: &'a [u8]) -> Self {
         Self {
             bytes,
             offset: 0,
@@ -110,34 +110,34 @@ impl<'a> MetadataBuffer<'a> {
 }
 
 pub(crate) struct BoneMetadata {
-    pub rest_position: Vec3A,
-    pub parent_bone_index: i32,
-    pub transform_order: i32,
-    pub flag: u16,
-    pub append_transform: Option<AppendTransformMetadata>,
-    pub ik: Option<Box<IkMetadata>>,
+    pub(crate) rest_position: Vec3A,
+    pub(crate) parent_bone_index: i32,
+    pub(crate) transform_order: i32,
+    pub(crate) flag: u16,
+    pub(crate) append_transform: Option<AppendTransformMetadata>,
+    pub(crate) ik: Option<Box<IkMetadata>>,
 }
 
 pub(crate) struct AppendTransformMetadata {
-    pub parent_index: i32,
-    pub ratio: f32,
+    pub(crate) parent_index: i32,
+    pub(crate) ratio: f32,
 }
 
 pub(crate) struct IkMetadata {
-    pub target: i32,
-    pub iteration: i32,
-    pub rotation_constraint: f32,
-    pub links: Vec<IkLinkMetadata>,
+    pub(crate) target: i32,
+    pub(crate) iteration: i32,
+    pub(crate) rotation_constraint: f32,
+    pub(crate) links: Vec<IkLinkMetadata>,
 }
 
 pub(crate) struct IkLinkMetadata {
-    pub target: i32,
-    pub limits: Option<IkChainAngleLimits>,
+    pub(crate) target: i32,
+    pub(crate) limits: Option<IkChainAngleLimits>,
 }
 
 pub(crate) struct IkChainAngleLimits {
-    pub minimum_angle: Vec3A,
-    pub maximum_angle: Vec3A,
+    pub(crate) minimum_angle: Vec3A,
+    pub(crate) maximum_angle: Vec3A,
 }
 
 pub(crate) enum BoneFlag {
@@ -166,7 +166,7 @@ pub(crate) struct BoneMetadataReader<'a> {
 }
 
 impl<'a> BoneMetadataReader<'a> {
-    pub fn new(mut buffer: MetadataBuffer<'a>) -> Self {
+    pub(crate) fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let bone_count = buffer.read::<u32>();
         let append_transform_count = buffer.read::<u32>();
         let ik_count = buffer.read::<u32>();
@@ -179,19 +179,19 @@ impl<'a> BoneMetadataReader<'a> {
         }
     }
 
-    pub fn bone_count(&self) -> u32 {
+    pub(crate) fn bone_count(&self) -> u32 {
         self.bone_count
     }
 
-    pub fn append_transform_count(&self) -> u32 {
+    pub(crate) fn append_transform_count(&self) -> u32 {
         self.append_transform_count
     }
 
-    pub fn ik_count(&self) -> u32 {
+    pub(crate) fn ik_count(&self) -> u32 {
         self.ik_count
     }
 
-    pub fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader<'a> {
+    pub(crate) fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader<'a> {
         for i in 0..self.bone_count {
             let rest_position = self.buffer.read_vector();
             let parent_bone_index = self.buffer.read::<i32>();
@@ -259,14 +259,14 @@ pub(crate) enum MorphMetadata {
 }
 
 pub(crate) struct BoneMorphMetadata {
-    pub indices: Vec<i32>,
-    pub positions: Vec<Vec3A>,
-    pub rotations: Vec<Quat>,
+    pub(crate) indices: Vec<i32>,
+    pub(crate) positions: Vec<Vec3A>,
+    pub(crate) rotations: Vec<Quat>,
 }
 
 pub(crate) struct GroupMorphMetadata {
-    pub indices: Vec<i32>,
-    pub ratios: Vec<f32>,
+    pub(crate) indices: Vec<i32>,
+    pub(crate) ratios: Vec<f32>,
 }
 
 enum MorphKind {
@@ -289,11 +289,11 @@ impl<'a> MorphMetadataReader<'a> {
         }
     }
 
-    pub fn count(&self) -> u32 {
+    pub(crate) fn count(&self) -> u32 {
         self.count
     }
 
-    pub fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader<'a>) {
+    pub(crate) fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader<'a>) {
         let mut morphs = Vec::with_capacity(self.count as usize);
 
         for _ in 0..self.count {
@@ -370,11 +370,11 @@ impl<'a> RigidbodyMetadataReader<'a> {
         }
     }
 
-    pub fn count(&self) -> u32 {
+    pub(crate) fn count(&self) -> u32 {
         self.count
     }
 
-    pub fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader<'a> {
+    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader<'a> {
         for _ in 0..self.count {
             let bone_index = self.buffer.read::<i32>();
             let collision_group = self.buffer.read::<u8>();
@@ -450,11 +450,11 @@ impl<'a> JointMetadataReader<'a> {
     }
 
     #[inline]
-    pub fn count(&self) -> u32 {
+    pub(crate) fn count(&self) -> u32 {
         self.count
     }
 
-    pub fn for_each(mut self, mut f: impl FnMut(JointMetadata)) {
+    pub(crate) fn for_each(mut self, mut f: impl FnMut(JointMetadata)) {
         for _ in 0..self.count {
             let kind = self.buffer.read::<u8>();
             self.buffer.offset += 3; // padding

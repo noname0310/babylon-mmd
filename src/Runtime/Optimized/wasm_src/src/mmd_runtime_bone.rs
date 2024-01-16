@@ -2,6 +2,7 @@ use glam::{Vec3A, Mat4, Quat};
 
 use crate::animation_arena::AnimationArena;
 use crate::append_transform_solver::AppendTransformSolverArena;
+use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
 pub(crate) struct MmdRuntimeBoneArena {
     arena: Box<[MmdRuntimeBone]>,
@@ -11,7 +12,7 @@ pub(crate) struct MmdRuntimeBoneArena {
 }
 
 impl MmdRuntimeBoneArena {
-    pub fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<u32>) -> Self {
+    pub(crate) fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<u32>) -> Self {
         let bone_count = arena.len();
         MmdRuntimeBoneArena {
             arena,
@@ -20,15 +21,25 @@ impl MmdRuntimeBoneArena {
             bone_stack,
         }
     }
+    
+    #[inline]
+    pub(crate) fn arena(&self) -> UncheckedSlice<MmdRuntimeBone> {
+        UncheckedSlice::new(&self.arena)
+    }
 
     #[inline]
-    pub fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
+    pub(crate) fn arena_mut(&mut self) -> UncheckedSliceMut<MmdRuntimeBone> {
+        UncheckedSliceMut::new(&mut self.arena)
+    }
+
+    #[inline]
+    pub(crate) fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
         self.world_matrix_arena.as_mut_ptr() as *mut f32
     }
 
-    pub(crate) fn create_world_matrix_back_buffer(&mut self) -> &mut [Mat4] {
+    pub(crate) fn create_world_matrix_back_buffer(&mut self) -> *mut f32 {
         self.world_matrix_back_buffer = Some(vec![Mat4::IDENTITY; self.world_matrix_arena.len()].into_boxed_slice());
-        self.world_matrix_back_buffer.as_mut().unwrap()
+        self.world_matrix_back_buffer.as_mut().unwrap().as_mut_ptr() as *mut f32
     }
 
     pub(crate) fn swap_buffer(&mut self) {
@@ -38,41 +49,31 @@ impl MmdRuntimeBoneArena {
     }
 
     #[inline]
-    pub fn world_matrix(&self, index: u32) -> &Mat4 {
-        &self.world_matrix_arena[index as usize]
+    pub(crate) fn world_matrices(&self) -> UncheckedSlice<Mat4> {
+        UncheckedSlice::new(&self.world_matrix_arena)
+    }
+
+    #[inline]
+    fn world_matrices_mut(&mut self) -> UncheckedSliceMut<Mat4> {
+        UncheckedSliceMut::new(&mut self.world_matrix_arena)
     }
 
     pub fn update_world_matrix(&mut self, root: u32) {
-        let stack = &mut self.bone_stack;
-        stack.push(root);
+        self.bone_stack.push(root);
 
-        while let Some(bone) = stack.pop() {
-            if let Some(parent_bone) = self.arena[bone as usize].parent_bone {
-                let parent_world_matrix = self.world_matrix_arena[parent_bone as usize];
-                self.world_matrix_arena[bone as usize] = parent_world_matrix * self.arena[bone as usize].local_matrix;
+        while let Some(bone) = self.bone_stack.pop() {
+            if let Some(parent_bone) = self.arena()[bone].parent_bone {
+                let parent_world_matrix = self.world_matrices()[parent_bone];
+                self.world_matrices_mut()[bone] = parent_world_matrix * self.arena()[bone].local_matrix;
             } else {
-                self.world_matrix_arena[bone as usize] = self.arena[bone as usize].local_matrix;
+                self.world_matrices_mut()[bone] = self.arena()[bone].local_matrix;
             }
 
             let bone = &self.arena[bone as usize];
-            for child_bone in &bone.child_bones {
-                stack.push(*child_bone);
+            for child_bone in bone.child_bones.iter().copied() {
+                self.bone_stack.push(child_bone);
             }
         }
-    }
-}
-
-impl std::ops::Deref for MmdRuntimeBoneArena {
-    type Target = [MmdRuntimeBone];
-
-    fn deref(&self) -> &Self::Target {
-        &self.arena
-    }
-}
-
-impl std::ops::DerefMut for MmdRuntimeBoneArena {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.arena
     }
 }
 
@@ -120,7 +121,7 @@ impl MmdRuntimeBone {
     }
 
     pub fn animated_position(&self, animation_arena: &AnimationArena) -> Vec3A {
-        let mut position = animation_arena.bone_position(self.index);
+        let mut position = animation_arena.bone_arena()[self.index].position;
         if let Some(morph_position_offset) = self.morph_position_offset {
             position += morph_position_offset;
         }
@@ -128,7 +129,7 @@ impl MmdRuntimeBone {
     }
 
     pub fn animated_rotation(&self, animation_arena: &AnimationArena) -> Quat {
-        let mut rotation = animation_arena.bone_rotation(self.index);
+        let mut rotation = animation_arena.bone_arena()[self.index].rotation;
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation *= morph_rotation_offset;
         }
@@ -149,7 +150,7 @@ impl MmdRuntimeBone {
         let mut position = self.animated_position(animation_arena);
         
         if let Some(append_transform_solver) = self.append_transform_solver {
-            let append_transform_solver = &append_transform_solver_arena[append_transform_solver as usize];
+            let append_transform_solver = &append_transform_solver_arena.arena()[append_transform_solver];
 
             if append_transform_solver.is_affect_rotation() {
                 rotation *= append_transform_solver.append_rotation_offset();
@@ -160,7 +161,7 @@ impl MmdRuntimeBone {
         }
 
         self.local_matrix = Mat4::from_scale_rotation_translation(
-            animation_arena.bone_scale(self.index).into(),
+            animation_arena.bone_arena()[self.index].scale.into(),
             rotation,
             position.into(),
         );

@@ -41,4 +41,9 @@ impl MmdAnimation {
     pub(crate) fn property_track(&self) -> &MmdPropertyAnimationTrack {
         &self.property_track
     }
+
+    #[inline]
+    pub(crate) fn property_track_mut(&mut self) -> &mut MmdPropertyAnimationTrack {
+        &mut self.property_track
+    }
 }

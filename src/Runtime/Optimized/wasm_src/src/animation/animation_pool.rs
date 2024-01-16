@@ -70,7 +70,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.rotations.as_mut_ptr() as *mut f32
+        track.rotations_mut().as_mut_ptr() as *mut f32
     }
 
     #[wasm_bindgen(js_name = "getBoneTrackRotationInterpolations")]
@@ -79,7 +79,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.rotation_interpolations.as_mut_ptr() as *mut u8
+        track.rotation_interpolations_mut().as_mut_ptr() as *mut u8
     }
 
     #[wasm_bindgen(js_name = "createMovableBoneTracks")]
@@ -113,7 +113,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.positions.as_mut_ptr() as *mut f32
+        track.positions_mut().as_mut_ptr() as *mut f32
     }
 
     #[wasm_bindgen(js_name = "getMovableBoneTrackPositionInterpolations")]
@@ -122,7 +122,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.position_interpolations.as_mut_ptr() as *mut u8
+        track.position_interpolations_mut().as_mut_ptr() as *mut u8
     }
 
     #[wasm_bindgen(js_name = "getMovableBoneTrackRotations")]
@@ -131,7 +131,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.rotations.as_mut_ptr() as *mut f32
+        track.rotations_mut().as_mut_ptr() as *mut f32
     }
 
     #[wasm_bindgen(js_name = "getMovableBoneTrackRotationInterpolations")]
@@ -140,7 +140,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.rotation_interpolations.as_mut_ptr() as *mut u8
+        track.rotation_interpolations_mut().as_mut_ptr() as *mut u8
     }
 
     #[wasm_bindgen(js_name = "createMorphTracks")]
@@ -174,7 +174,7 @@ impl AnimationPool {
         let track = unsafe {
             &mut *tracks.add(index)
         };
-        track.weights.as_mut_ptr()
+        track.weights_mut().as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "createAnimation")]
@@ -223,7 +223,7 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track().frame_numbers.as_ptr() as *mut u32
+        animation.property_track_mut().frame_numbers.as_mut_ptr() as *mut u32
     }
 
     #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
@@ -233,7 +233,7 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track().ik_states[index].as_ptr() as *mut u8
+        animation.property_track_mut().ik_states_mut(index).as_mut_ptr() as *mut u8
     }
 
     #[wasm_bindgen(js_name = "destroyAnimation")]
@@ -264,10 +264,10 @@ impl AnimationPool {
         for _ in 0..animation.bone_tracks().len() {
             bone_bind_index_map.push(-1);
         }
-        let bone_bind_index_map = bone_bind_index_map.into_boxed_slice();
-        let ptr = bone_bind_index_map.as_ptr();
+        let mut bone_bind_index_map = bone_bind_index_map.into_boxed_slice();
+        let ptr = bone_bind_index_map.as_mut_ptr();
         std::mem::forget(bone_bind_index_map);
-        ptr as *mut i32
+        ptr
     }
 
     #[wasm_bindgen(js_name = "createMovableBoneBindIndexMap")]
@@ -282,10 +282,10 @@ impl AnimationPool {
         for _ in 0..animation.movable_bone_tracks().len() {
             movable_bone_bind_index_map.push(-1);
         }
-        let movable_bone_bind_index_map = movable_bone_bind_index_map.into_boxed_slice();
-        let ptr = movable_bone_bind_index_map.as_ptr();
+        let mut movable_bone_bind_index_map = movable_bone_bind_index_map.into_boxed_slice();
+        let ptr = movable_bone_bind_index_map.as_mut_ptr();
         std::mem::forget(movable_bone_bind_index_map);
-        ptr as *mut i32
+        ptr
     }
 
     #[wasm_bindgen(js_name = "createMorphBindIndexMap")]
@@ -304,10 +304,10 @@ impl AnimationPool {
                 } as usize].into_boxed_slice()
             );
         }
-        let morph_bind_index_map = morph_bind_index_map.into_boxed_slice();
-        let ptr = morph_bind_index_map.as_ptr();
+        let mut morph_bind_index_map = morph_bind_index_map.into_boxed_slice();
+        let ptr = morph_bind_index_map.as_mut_ptr();
         std::mem::forget(morph_bind_index_map);
-        ptr as *mut Box<[i32]>
+        ptr
     }
 
     #[wasm_bindgen(js_name = "getNthMorphBindIndexMap")]
@@ -326,14 +326,14 @@ impl AnimationPool {
             &*animation_ptr
         };
 
-        let mut ik_solver_bind_index_map = Vec::with_capacity(animation.property_track().ik_states.len());
-        for _ in 0..animation.property_track().ik_states.len() {
+        let mut ik_solver_bind_index_map = Vec::with_capacity(animation.property_track().ik_count());
+        for _ in 0..animation.property_track().ik_count() {
             ik_solver_bind_index_map.push(-1);
         }
-        let ik_solver_bind_index_map = ik_solver_bind_index_map.into_boxed_slice();
-        let ptr = ik_solver_bind_index_map.as_ptr();
+        let mut ik_solver_bind_index_map = ik_solver_bind_index_map.into_boxed_slice();
+        let ptr = ik_solver_bind_index_map.as_mut_ptr();
         std::mem::forget(ik_solver_bind_index_map);
-        ptr as *mut i32
+        ptr
     }
 
     #[wasm_bindgen(js_name = "createRuntimeAnimation")]
@@ -361,7 +361,7 @@ impl AnimationPool {
             Box::from_raw(std::slice::from_raw_parts_mut(morph_bind_index_map, animation.morph_tracks().len()))
         };
         let ik_solver_bind_index_map = unsafe {
-            Box::from_raw(std::slice::from_raw_parts_mut(ik_solver_bind_index_map, animation.property_track().ik_states.len()))
+            Box::from_raw(std::slice::from_raw_parts_mut(ik_solver_bind_index_map, animation.property_track().ik_count()))
         };
 
         let runtime_animation = Box::new(MmdRuntimeAnimation::new(

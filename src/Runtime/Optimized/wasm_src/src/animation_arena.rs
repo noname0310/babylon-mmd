@@ -1,6 +1,6 @@
 use glam::{Vec3A, Quat};
 
-use crate::mmd_runtime_bone::MmdRuntimeBone;
+use crate::{mmd_runtime_bone::MmdRuntimeBone, unchecked_slice::{UncheckedSliceMut, UncheckedSlice}};
 
 #[repr(C)]
 #[derive(Clone)]
@@ -34,44 +34,34 @@ impl AnimationArena {
             morph_arena: vec![0.0; morph_count as usize].into_boxed_slice(),
         }
     }
+
+    #[inline]
+    pub(crate) fn bone_arena(&self) -> UncheckedSlice<AnimatedBoneData> {
+        UncheckedSlice::new(&self.bone_arena)
+    }
     
     #[inline]
-    pub(crate) fn bone_arena_mut(&mut self) -> &mut [AnimatedBoneData] {
-        &mut self.bone_arena
+    pub(crate) fn bone_arena_mut(&mut self) -> UncheckedSliceMut<AnimatedBoneData> {
+        UncheckedSliceMut::new(&mut self.bone_arena)
     }
 
     #[inline]
-    pub(crate) fn bone_position(&self, index: u32) -> Vec3A {
-        self.bone_arena[index as usize].position
+    pub(crate) fn iksolver_state_arena(&self) -> UncheckedSlice<u8> {
+        UncheckedSlice::new(&self.iksolver_state_arena)
     }
 
     #[inline]
-    pub(crate) fn bone_rotation(&self, index: u32) -> Quat {
-        self.bone_arena[index as usize].rotation
+    pub(crate) fn iksolver_state_arena_mut(&mut self) -> UncheckedSliceMut<u8> {
+        UncheckedSliceMut::new(&mut self.iksolver_state_arena)
     }
 
     #[inline]
-    pub(crate) fn bone_scale(&self, index: u32) -> Vec3A {
-        self.bone_arena[index as usize].scale
+    pub(crate) fn morph_arena(&self) -> UncheckedSlice<f32> {
+        UncheckedSlice::new(&self.morph_arena)
     }
 
     #[inline]
-    pub(crate) fn iksolver_state_arena(&self) -> &[u8] {
-        &self.iksolver_state_arena
-    }
-
-    #[inline]
-    pub(crate) fn iksolver_state_arena_mut(&mut self) -> &mut [u8] {
-        &mut self.iksolver_state_arena
-    }
-
-    #[inline]
-    pub(crate) fn morph_arena(&self) -> &[f32] {
-        &self.morph_arena
-    }
-
-    #[inline]
-    pub(crate) fn morph_arena_mut(&mut self) -> &mut [f32] {
-        &mut self.morph_arena
+    pub(crate) fn morph_arena_mut(&mut self) -> UncheckedSliceMut<f32> {
+        UncheckedSliceMut::new(&mut self.morph_arena)
     }
 }

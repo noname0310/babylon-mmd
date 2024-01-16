@@ -4,6 +4,7 @@ use glam::Quat;
 
 use crate::mmd_model_metadata::MorphMetadata;
 use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
+use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
 pub(crate) struct MmdMorphController {
     morphs: Box<[MorphMetadata]>,
@@ -12,9 +13,10 @@ pub(crate) struct MmdMorphController {
 }
 
 impl MmdMorphController {
-    pub fn new(mut morphs: Box<[MorphMetadata]>) -> Self {
+    pub(crate) fn new(mut morphs: Box<[MorphMetadata]>) -> Self {
         let mut group_morph_stack = Vec::new();
         {
+            let mut morphs = UncheckedSliceMut::new(&mut morphs);
             fn fix_looping_group_morphs(morphs: &mut [MorphMetadata], group_morph_stack: &mut Vec<(i32, f32)>, morph_index: i32) {
                 let morph_indices = if let MorphMetadata::Group(morph) = &mut morphs[morph_index as usize] {
                     &mut morph.indices
@@ -55,29 +57,41 @@ impl MmdMorphController {
         }
     }
 
-    pub fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: &[f32]) {
-        for i in 0..self.active_morphs.len() as u32 {
-            if self.active_morphs[i as usize] {
+    fn morphs(&self) -> UncheckedSlice<MorphMetadata> {
+        UncheckedSlice::new(&self.morphs)
+    }
+
+    fn active_morphs(&self) -> UncheckedSlice<bool> {
+        UncheckedSlice::new(&self.active_morphs)
+    }
+
+    fn active_morphs_mut(&mut self) -> UncheckedSliceMut<bool> {
+        UncheckedSliceMut::new(&mut self.active_morphs)
+    }
+
+    pub(crate) fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: UncheckedSlice<f32>) {
+        for i in 0..self.active_morphs().len() as u32 {
+            if self.active_morphs()[i] {
                 self.reset_morph(i, bone_arena);
             }
         }
 
         for (i, weight) in morph_weights.iter().enumerate() {
             if *weight == 0.0 {
-                self.active_morphs[i] = false;
+                self.active_morphs_mut()[i as u32] = false;
                 continue;
             }
 
-            self.active_morphs[i] = true;
+            self.active_morphs_mut()[i as u32] = true;
             self.apply_morph(i as u32, bone_arena, *weight);
         }
     }
 
     fn reset_morph(&self, i: u32, arena: &mut MmdRuntimeBoneArena) {
-        match &self.morphs[i as usize] {
+        match &self.morphs()[i] {
             MorphMetadata::Bone(bone_morph) => {
                 for index in bone_morph.indices.iter() {
-                    if let Some(bone) = arena.get_mut(*index as usize) {
+                    if let Some(bone) = arena.arena_mut().get_mut(*index as u32) {
                         bone.morph_position_offset = None;
                         bone.morph_rotation_offset = None;
                     }
@@ -92,12 +106,13 @@ impl MmdMorphController {
     }
 
     fn apply_morph(&self, i: u32, arena: &mut MmdRuntimeBoneArena, weight: f32) {
-        match &self.morphs[i as usize] {
+        match &self.morphs()[i] {
             MorphMetadata::Bone(bone_morph) => {
                 for i in 0..bone_morph.indices.len() {
                     let index = bone_morph.indices[i];
 
-                    let bone = if let Some(bone) = arena.get_mut(index as usize) {
+                    let mut bone_arena = arena.arena_mut();
+                    let bone = if let Some(bone) = bone_arena.get_mut(index as u32) {
                         bone
                     } else {
                         continue;
@@ -136,7 +151,8 @@ impl MmdMorphController {
         stack.push((group_morph_index, 1.0));
 
         while let Some((group_morph_index, accumulated_ratio)) = stack.pop() {
-            let morph = &self.morphs.get(group_morph_index as usize);
+            let morphs = self.morphs();
+            let morph = morphs.get(group_morph_index as u32);
             let morph = if let Some(morph) = morph {
                 morph
             } else {
