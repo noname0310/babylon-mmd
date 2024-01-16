@@ -7,7 +7,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
-import type { MmdRuntime } from "./wasm";
+import type { wasm_bindgen } from "./wasm";
 import { type WasmBufferedArray, WasmBufferedArraySpan } from "./wasmBufferedArray";
 
 /**
@@ -76,7 +76,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
     public readonly ikSolverIndex: number;
 
     private readonly _boneIndex: number;
-    private readonly _wasmRuntime: MmdRuntime;
+    private readonly _wasmRuntime: wasm_bindgen.MmdRuntime;
     private readonly _mmdModelPtr: number;
 
     /**
@@ -97,7 +97,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         boneIndex: number,
         ikSolverIndex: number,
         wasmInstance: MmdWasmInstance,
-        wasmRuntime: MmdRuntime,
+        wasmRuntime: wasm_bindgen.MmdRuntime,
         mmdModelPtr: number
     ) {
         this.linkedBone = linkedBone;

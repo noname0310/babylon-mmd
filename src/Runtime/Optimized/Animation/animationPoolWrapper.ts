@@ -1,5 +1,5 @@
 import type { MmdWasmInstance } from "../mmdWasmInstance";
-import type { AnimationPool } from "../wasm";
+import type { wasm_bindgen } from "../wasm";
 
 /**
  * Animation pool singleton
@@ -8,10 +8,10 @@ export class AnimationPoolWrapper {
     private static readonly _Map = new Map<MmdWasmInstance, AnimationPoolWrapper>();
 
     public readonly instance: MmdWasmInstance;
-    public readonly pool: AnimationPool;
+    public readonly pool: wasm_bindgen.AnimationPool;
     private _referenceCount: number;
 
-    private constructor(instance: MmdWasmInstance, pool: AnimationPool) {
+    private constructor(instance: MmdWasmInstance, pool: wasm_bindgen.AnimationPool) {
         this.instance = instance;
         this.pool = pool;
         this._referenceCount = 0;

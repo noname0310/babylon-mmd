@@ -1,8 +1,9 @@
+import { wasm_bindgen } from "./wasm";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 import { WasmTypedArray } from "./wasmTypedArray";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-type MmdWasmType = typeof import("./wasm");
+type MmdWasmType = typeof import("./wasm").wasm_bindgen;
 
 /**
  * MMD WASM instance
@@ -15,24 +16,23 @@ export interface MmdWasmInstance extends MmdWasmType {
     createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T>;
 }
 
+
 /**
  * Load MMD WASM instance
  * @returns MMD WASM instance
  */
 export async function getMmdWasmInstance(): Promise<MmdWasmInstance> {
-    const wasm = await import("./wasm");
-    const wasmBg = await import("./wasm/index_bg.wasm");
-    wasm.init();
+    const initOutput = await wasm_bindgen(new URL("./wasm/index_bg.wasm", import.meta.url));
+    wasm_bindgen.init();
 
-    const memory = wasmBg.memory;
+    const memory = initOutput.memory;
 
     function createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T> {
         return new WasmTypedArray(typedArrayConstructor, memory, byteOffset, length);
     }
 
-    return {
-        ...wasm,
-        memory,
-        createTypedArray
-    };
+    (wasm_bindgen as MmdWasmInstance).memory = memory;
+    (wasm_bindgen as MmdWasmInstance).createTypedArray = createTypedArray;
+
+    return wasm_bindgen as MmdWasmInstance;
 }
