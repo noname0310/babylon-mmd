@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.36.6
+
+- remove rust bound check in `MmdWasmRuntime` for better performance
+
 ## 0.36.5
 
 - add missing PMD toon texture remapping
