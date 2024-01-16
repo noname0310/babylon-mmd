@@ -16,13 +16,16 @@ export interface MmdWasmInstance extends MmdWasmType {
     createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T>;
 }
 
+export interface MmdWasmInstanceType {
+    getWasmInstanceUrl(): URL;
+}
 
 /**
  * Load MMD WASM instance
  * @returns MMD WASM instance
  */
-export async function getMmdWasmInstance(): Promise<MmdWasmInstance> {
-    const initOutput = await wasm_bindgen(new URL("./wasm/index_bg.wasm", import.meta.url));
+export async function getMmdWasmInstance(instanceType: MmdWasmInstanceType): Promise<MmdWasmInstance> {
+    const initOutput = await wasm_bindgen(instanceType.getWasmInstanceUrl());
     wasm_bindgen.init();
 
     const memory = initOutput.memory;

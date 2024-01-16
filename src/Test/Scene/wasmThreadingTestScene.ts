@@ -26,6 +26,7 @@ import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
+import { MmdWasmDebugInstanceType } from "@/Runtime/Optimized/InstanceType/debug";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -70,7 +71,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
                 const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
                     ["runtime", async(): Promise<MmdWasmInstance> => {
-                        const mmdWasmInstance = await getMmdWasmInstance();
+                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmDebugInstanceType());
                         return mmdWasmInstance;
                     }],
                     ["motion", (): Promise<MmdAnimation> => {

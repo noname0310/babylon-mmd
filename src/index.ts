@@ -77,8 +77,12 @@ export { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation
 export { MmdWasmAnimationTrack, MmdWasmBoneAnimationTrack, MmdWasmMorphAnimationTrack, MmdWasmMovableBoneAnimationTrack, MmdWasmPropertyAnimationTrack } from "@/Runtime/Optimized/Animation/mmdWasmAnimationTrack";
 export { MmdWasmRuntimeModelAnimation } from "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
+// Runtime/Optimized/InstanceType
+export { MmdWasmDebugInstanceType } from "@/Runtime/Optimized/InstanceType/debug";
+export { MmdWasmReleaseInstanceType } from "@/Runtime/Optimized/InstanceType/release";
+
 // Runtime/Optimized
-export { getMmdWasmInstance, MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+export { getMmdWasmInstance, MmdWasmInstance, MmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
 export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";

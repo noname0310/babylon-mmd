@@ -1,3 +1,3 @@
 import { WasmModuleExport } from "./webpack.config";
 
-new WasmModuleExport().updateCode();
+new WasmModuleExport(process.argv[2]).updateCode();

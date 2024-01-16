@@ -25,6 +25,7 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
+import { MmdWasmDebugInstanceType } from "@/Runtime/Optimized/InstanceType/debug";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -68,7 +69,7 @@ export class SceneBuilder implements ISceneBuilder {
         ] = await parallelLoadAsync(scene, [
             ["runtime", async(updateProgress): Promise<MmdWasmRuntime> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const mmdWasmInstance = await getMmdWasmInstance();
+                const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmDebugInstanceType());
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));

@@ -15,9 +15,9 @@ export class WasmModuleExport extends webpack.WatchIgnorePlugin implements webpa
     private readonly _jsFilePath: string;
     private readonly _tsFilePath: string;
 
-    public constructor() {
-        const jsFilePath = path.resolve(__dirname, "src/Runtime/Optimized/wasm/index.js");
-        const tsFilePath = path.resolve(__dirname, "src/Runtime/Optimized/wasm/index.d.ts");
+    public constructor(folderName: string) {
+        const jsFilePath = path.resolve(__dirname, `src/Runtime/Optimized/${folderName}/index.js`);
+        const tsFilePath = path.resolve(__dirname, `src/Runtime/Optimized/${folderName}/index.d.ts`);
         super({
             paths: [jsFilePath, tsFilePath]
         });
@@ -107,7 +107,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             outName: "index",
             extraArgs: "--target no-modules"
         }),
-        new WasmModuleExport()
+        new WasmModuleExport("wasm")
     ].concat(env.production ? [
         new compressionWebpackPlugin({
             test: /\.(js|bvmd|bpmx)$/i

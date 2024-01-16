@@ -4,6 +4,8 @@
 
 - remove rust bound check in `MmdWasmRuntime` for better performance
 
+- introduce `MmdWasmInstanceType` to specify WASM binary type. for now, debug and release are available
+
 ## 0.36.5
 
 - add missing PMD toon texture remapping
