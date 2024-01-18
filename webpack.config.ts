@@ -121,7 +121,14 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             logging: "none"
         },
         hot: true,
-        watchFiles: ["src/**/*"]
+        watchFiles: ["src/**/*"],
+        https: true,
+        headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            "Cross-Origin-Opener-Policy": "same-origin",
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            "Cross-Origin-Embedder-Policy": "require-corp"
+        }
     },
     mode: env.production ? "production" : "development"
 });
