@@ -35,11 +35,6 @@ export class WorkerPool {
 
         const workerPoolBuilder = wasmInstance.createWorkerPoolBuilder(threadCount);
 
-        const workerUrl = new URL("./worker.ts", import.meta.url);
-        const workerOptions: WorkerOptions = {
-            type: "module"
-        };
-
         const workerInit: WorkerInitInput = {
             module,
             memory: wasmInstance.memory,
@@ -48,7 +43,12 @@ export class WorkerPool {
 
         const workerPromises = new Array<Promise<Worker>>(threadCount);
         for (let i = 0; i < threadCount; i++) {
-            const worker = new Worker(workerUrl, workerOptions);
+            const worker = new Worker(
+                new URL("./worker", import.meta.url),
+                {
+                    type: "module"
+                }
+            );
             worker.postMessage(workerInit);
             workerPromises[i] = new Promise<Worker>(resolve =>
                 worker.addEventListener("message", () => resolve(worker), { once: true })
