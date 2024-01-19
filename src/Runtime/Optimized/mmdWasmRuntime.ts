@@ -21,7 +21,6 @@ import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeMod
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
-import type { wasm_bindgen } from "./wasm";
 
 /**
  * MMD WASM runtime animation evaluation type
@@ -56,7 +55,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     /**
      * @internal
      */
-    public readonly wasmInternal: wasm_bindgen.MmdRuntime;
+    public readonly wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
 
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
     private readonly _physics: Nullable<MmdPhysics>;

@@ -28,7 +28,6 @@ import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
-import type { wasm_bindgen } from "./wasm";
 import { WasmBufferedArray } from "./wasmBufferedArray";
 import type { WasmTypedArray } from "./wasmTypedArray";
 
@@ -480,7 +479,7 @@ export class MmdWasmModel implements IMmdModel {
         bonesMetadata: readonly MmdModelMetadata.Bone[],
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
         wasmInstance: MmdWasmInstance,
-        wasmRuntimeInternal: wasm_bindgen.MmdRuntime,
+        wasmRuntimeInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>,
         mmdModelPtr: number
     ): readonly MmdWasmRuntimeBone[] {
         const runtimeBones: MmdWasmRuntimeBone[] = [];

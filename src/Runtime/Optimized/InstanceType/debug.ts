@@ -1,7 +1,8 @@
-import type { MmdWasmInstanceType } from "../mmdWasmInstance";
+import type { MmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
+import * as wasmBindgen from "../wasm_debug";
 
 export class MmdWasmDebugInstanceType implements MmdWasmInstanceType {
-    public getWasmInstanceUrl(): URL {
-        return new URL("../wasm_debug/index_bg.wasm", import.meta.url);
+    public getWasmInstanceInner(): MmdWasmType {
+        return wasmBindgen as MmdWasmType;
     }
 }

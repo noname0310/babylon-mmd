@@ -1,10 +1,8 @@
-import { wasm_bindgen } from "./wasm";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 import { WasmTypedArray } from "./wasmTypedArray";
-import { WorkerPool } from "./Worker/workerPool";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-type MmdWasmType = typeof import("./wasm").wasm_bindgen;
+export type MmdWasmType = typeof import("./wasm") | typeof import("./wasm_debug");
 
 /**
  * MMD WASM instance
@@ -18,7 +16,7 @@ export interface MmdWasmInstance extends MmdWasmType {
 }
 
 export interface MmdWasmInstanceType {
-    getWasmInstanceUrl(): URL;
+    getWasmInstanceInner(): MmdWasmType;
 }
 
 /**
@@ -35,19 +33,20 @@ export async function getMmdWasmInstance(
     instanceType: MmdWasmInstanceType,
     threadCount = navigator.hardwareConcurrency
 ): Promise<MmdWasmInstance> {
-    const initOutput = await wasm_bindgen(instanceType.getWasmInstanceUrl());
+    const wasmBindgen = instanceType.getWasmInstanceInner();
+    const initOutput = await wasmBindgen.default();
 
-    const module = wasm_bindgen.init();
+    wasmBindgen.init();
     const memory = initOutput.memory;
 
     function createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T> {
         return new WasmTypedArray(typedArrayConstructor, memory, byteOffset, length);
     }
 
-    (wasm_bindgen as MmdWasmInstance).memory = memory;
-    (wasm_bindgen as MmdWasmInstance).createTypedArray = createTypedArray;
+    (wasmBindgen as MmdWasmInstance).memory = memory;
+    (wasmBindgen as MmdWasmInstance).createTypedArray = createTypedArray;
 
-    WorkerPool.Initialize(module, wasm_bindgen as MmdWasmInstance, threadCount);
+    await wasmBindgen.initThreadPool(threadCount);
 
-    return wasm_bindgen as MmdWasmInstance;
+    return wasmBindgen as MmdWasmInstance;
 }

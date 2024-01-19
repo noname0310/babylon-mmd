@@ -24,9 +24,9 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 byte-slice-cast = "1.2.2"
 num-traits = "0.2.17"
 glam = { version = "0.25.0", features = ["debug-glam-assert", "fast-math"] }
-rayon = "1.8.0"
 parking_lot = { version = "0.12.1", features = ["nightly"] }
-crossbeam-channel = "0.5.11"
+rayon = "1.8.0"
+wasm-bindgen-rayon = "1.2.1"
 
 [dependencies.web-sys]
 version = "0.3.67"
