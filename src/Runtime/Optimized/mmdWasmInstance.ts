@@ -24,9 +24,9 @@ export interface MmdWasmInstanceType {
  *
  * Wasm instance type is determined by the argument instanceType
  *
- * For example, if you want to use most stable MMD WASM instance, pass MmdWasmDebugInstanceType to instanceType.
+ * For example, if you want to use most stable MMD WASM instance, pass MmdWasmDebugInstanceType to instanceType
  * @param instanceType MMD WASM instance type
- * @param threadCount Thread count for WASM threading (default: navigator.hardwareConcurrency)
+ * @param threadCount Thread count for WASM threading (default: navigator.hardwareConcurrency). threadCount must be greater than 0
  * @returns MMD WASM instance
  */
 export async function getMmdWasmInstance(
