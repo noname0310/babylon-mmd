@@ -10,7 +10,8 @@ license = "MIT"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook"]
+default = ["console_error_panic_hook", "parallel"]
+parallel = []
 
 [profile.release]
 opt-level = 3

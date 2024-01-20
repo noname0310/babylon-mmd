@@ -57,7 +57,13 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.parent = mmdRoot;
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const { directionalLight, shadowGenerator } = createLightComponents(scene, {
+            orthoLeftOffset: -20,
+            orthoRightOffset: 20,
+            orthoBottomOffset: -5,
+            orthoTopOffset: 5,
+            shadowMinZOffset: -5
+        });
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
@@ -65,7 +71,11 @@ export class SceneBuilder implements ISceneBuilder {
 
         const [
             [mmdRuntime, mmdAnimation],
-            modelMesh,
+            modelMesh1,
+            modelMesh2,
+            modelMesh3,
+            modelMesh4,
+            modelMesh5,
             stageMesh
         ] = await parallelLoadAsync(scene, [
             ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
@@ -96,12 +106,52 @@ export class SceneBuilder implements ISceneBuilder {
 
                 return [mmdRuntime, mmdWasmAnimation];
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => {
+            ["model1", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/model/",
                     "yyb_deep_canyons_miku.bpmx",
+                    scene,
+                    updateProgress
+                ).then(result => result.meshes[0] as MmdMesh);
+            }],
+            ["model2", (updateProgress): Promise<MmdMesh> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Hatsune Miku_10th.bpmx",
+                    scene,
+                    updateProgress
+                ).then(result => result.meshes[0] as MmdMesh);
+            }],
+            ["model3", (updateProgress): Promise<MmdMesh> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB miku Crown Knight.bpmx",
+                    scene,
+                    updateProgress
+                ).then(result => result.meshes[0] as MmdMesh);
+            }],
+            ["model4", (updateProgress): Promise<MmdMesh> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "YYB Piano dress Miku Collision fix FF BF.bpmx",
+                    scene,
+                    updateProgress
+                ).then(result => result.meshes[0] as MmdMesh);
+            }],
+            ["model5", (updateProgress): Promise<MmdMesh> => {
+                pmxLoader.boundingBoxMargin = 60;
+                return SceneLoader.ImportMeshAsync(
+                    undefined,
+                    "res/private_test/model/",
+                    "yyb Symphony Miku by HB-Squiddy.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
@@ -133,15 +183,61 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMesh);
-        modelMesh.parent = mmdRoot;
+        for (const mesh of modelMesh1.metadata.meshes) mesh.receiveShadows = true;
+        shadowGenerator.addShadowCaster(modelMesh1);
+        modelMesh1.parent = mmdRoot;
 
-        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+        const mmdModel = mmdRuntime.createMmdModel(modelMesh1, {
             buildPhysics: true
         });
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
+
+        {
+            for (const mesh of modelMesh2.metadata.meshes) mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(modelMesh2);
+            modelMesh2.parent = mmdRoot;
+            modelMesh2.position.x = 10;
+
+            const mmdModel2 = mmdRuntime.createMmdModel(modelMesh2, {
+                buildPhysics: true
+            });
+            mmdModel2.addAnimation(mmdAnimation);
+            mmdModel2.setAnimation("motion");
+
+            for (const mesh of modelMesh3.metadata.meshes) mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(modelMesh3);
+            modelMesh3.parent = mmdRoot;
+            modelMesh3.position.x = -10;
+
+            const mmdModel3 = mmdRuntime.createMmdModel(modelMesh3, {
+                buildPhysics: true
+            });
+            mmdModel3.addAnimation(mmdAnimation);
+            mmdModel3.setAnimation("motion");
+
+            for (const mesh of modelMesh4.metadata.meshes) mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(modelMesh4);
+            modelMesh4.parent = mmdRoot;
+            modelMesh4.position.x = 20;
+
+            const mmdModel4 = mmdRuntime.createMmdModel(modelMesh4, {
+                buildPhysics: true
+            });
+            mmdModel4.addAnimation(mmdAnimation);
+            mmdModel4.setAnimation("motion");
+
+            for (const mesh of modelMesh5.metadata.meshes) mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(modelMesh5);
+            modelMesh5.parent = mmdRoot;
+            modelMesh5.position.x = -20;
+
+            const mmdModel5 = mmdRuntime.createMmdModel(modelMesh5, {
+                buildPhysics: true
+            });
+            mmdModel5.addAnimation(mmdAnimation);
+            mmdModel5.setAnimation("motion");
+        }
 
         attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,

@@ -3,6 +3,9 @@ use wasm_bindgen::prelude::*;
 use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::MetadataBuffer;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 #[wasm_bindgen]
 pub struct MmdRuntime {
     #[allow(clippy::vec_box)]
@@ -102,6 +105,18 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "beforePhysics")]
     pub fn before_physics(&mut self) {
+        #[cfg(feature = "parallel")]
+        {
+            if 1 < self.mmd_models.len() {
+                self.mmd_models.par_iter_mut().for_each(|mmd_model| {
+                    mmd_model.before_physics();
+                });
+            } else if 0 < self.mmd_models.len() {
+                self.mmd_models[0].before_physics();
+            }
+        }
+
+        #[cfg(not(feature = "parallel"))]
         for mmd_model in &mut self.mmd_models {
             mmd_model.before_physics();
         }
@@ -109,6 +124,18 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "afterPhysics")]
     pub fn after_physics(&mut self) {
+        #[cfg(feature = "parallel")]
+        {
+            if 1 < self.mmd_models.len() {
+                self.mmd_models.par_iter_mut().for_each(|mmd_model| {
+                    mmd_model.after_physics();
+                });
+            } else if 0 < self.mmd_models.len() {
+                self.mmd_models[0].after_physics();
+            }
+        }
+
+        #[cfg(not(feature = "parallel"))]
         for mmd_model in &mut self.mmd_models {
             mmd_model.after_physics();
         }
