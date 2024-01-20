@@ -98,5 +98,10 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             "Cross-Origin-Embedder-Policy": "require-corp"
         }
     },
+    stats: {
+        warningsFilter: [
+            "Circular dependency between chunks with runtime"
+        ]
+    },
     mode: env.production ? "production" : "development"
 });
