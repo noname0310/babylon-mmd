@@ -29,7 +29,7 @@ import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation
 import { MmdWasmDebugInstanceType } from "@/Runtime/Optimized/InstanceType/debug";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -95,6 +95,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
+                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
                 mmdRuntime.setAudioPlayer(audioPlayer);
 
@@ -151,7 +152,7 @@ export class SceneBuilder implements ISceneBuilder {
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/model/",
-                    "yyb Symphony Miku by HB-Squiddy.bpmx",
+                    "yyb Symphony Miku by HB-Squiddy FF.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);

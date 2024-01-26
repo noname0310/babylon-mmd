@@ -434,7 +434,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             const models = this._models;
             for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(elapsedFrameTime);
-            this.wasmInternal.beforePhysics();
+            this.wasmInternal.beforePhysics(elapsedFrameTime);
             for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
 
             if (this._camera !== null) {
@@ -445,7 +445,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         } else {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(null);
-            this.wasmInternal.beforePhysics();
+            this.wasmInternal.beforePhysics(undefined);
             for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
         }
 

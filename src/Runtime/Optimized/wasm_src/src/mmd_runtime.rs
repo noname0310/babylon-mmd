@@ -1,5 +1,8 @@
+use std::ptr::NonNull;
+
 use wasm_bindgen::prelude::*;
 
+use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::MetadataBuffer;
 
@@ -91,7 +94,7 @@ impl MmdRuntime {
         let bone_arena = unsafe {
             &mut *ptr
         }.bone_arena_mut();
-        bone_arena.world_matrix_arena_ptr()
+        bone_arena.world_matrix_arena_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "createBoneWorldMatrixBackBuffer")]
@@ -103,22 +106,37 @@ impl MmdRuntime {
         bone_arena.create_world_matrix_back_buffer()
     }
 
+    #[wasm_bindgen(js_name = "setRuntimeAnimation")]
+    pub fn set_runtime_animation(&mut self, ptr: *mut usize, runtime_animation: *mut usize) {
+        let ptr = ptr as *mut MmdModel;
+
+        let runtime_animation = match NonNull::new(runtime_animation as *mut MmdRuntimeAnimation) {
+            Some(runtime_animation) => Some(runtime_animation),
+            None => None,
+        };
+
+        let animation = unsafe {
+            &mut *ptr
+        }.runtime_animation_mut();
+        *animation = runtime_animation;
+    }
+
     #[wasm_bindgen(js_name = "beforePhysics")]
-    pub fn before_physics(&mut self) {
+    pub fn before_physics(&mut self, frame_time: Option<f32>){
         #[cfg(feature = "parallel")]
         {
             if 1 < self.mmd_models.len() {
                 self.mmd_models.par_iter_mut().for_each(|mmd_model| {
-                    mmd_model.before_physics();
+                    mmd_model.before_physics(frame_time);
                 });
             } else if 0 < self.mmd_models.len() {
-                self.mmd_models[0].before_physics();
+                self.mmd_models[0].before_physics(frame_time);
             }
         }
 
         #[cfg(not(feature = "parallel"))]
         for mmd_model in &mut self.mmd_models {
-            mmd_model.before_physics();
+            mmd_model.before_physics(frame_time);
         }
     }
 
@@ -141,11 +159,27 @@ impl MmdRuntime {
         }
     }
 
+    #[cfg(feature = "parallel")]
+    #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
+    pub fn buffered_before_physics(mmd_runtime: *mut usize, frame_time: Option<f32>) {
+        let mmd_runtime = unsafe {
+            &mut *(mmd_runtime as *mut MmdRuntime)
+        };
+        rayon::spawn(move || {
+            mmd_runtime.before_physics(frame_time);
+        });
+    }
+
+    #[cfg(feature = "parallel")]
     #[wasm_bindgen(js_name = "bufferedUpdate")]
-    pub fn buffered_update(&mut self, frame_time: f32) {
-        for mmd_model in &mut self.mmd_models {
-            // mmd_model.buffered_update(frame_time);
-        }
+    pub fn buffered_update(mmd_runtime: *mut usize, frame_time: Option<f32>) {
+        let mmd_runtime = unsafe {
+            &mut *(mmd_runtime as *mut MmdRuntime)
+        };
+        rayon::spawn(move || {
+            mmd_runtime.before_physics(frame_time);
+            mmd_runtime.after_physics();
+        });
     }
 
     #[wasm_bindgen(js_name = "updateBoneWorldMatrix")]

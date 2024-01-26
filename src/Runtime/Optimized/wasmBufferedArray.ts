@@ -101,14 +101,14 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
     /**
      * Update back buffer reference
      *
-     * This method should be called once before starting multi-threading
+     * This method should be called once before starting multi-threading when the back buffer is not initialized
      * @param wasmInstance MMD WASM instance
      */
     public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
-        const oldFrontBufferSpan = this._frontBufferSpan.array;
+        const frontBufferSpan = this._frontBufferSpan.array;
 
-        const byteOffset = oldFrontBufferSpan.byteOffset - this._frontBufferPtr;
-        const length = oldFrontBufferSpan.length;
+        const byteOffset = frontBufferSpan.byteOffset - this._frontBufferPtr;
+        const length = frontBufferSpan.length;
 
         const backBufferPtr = this._data.backBuffer.byteOffset;
         this._backBufferSpan = wasmInstance.createTypedArray(

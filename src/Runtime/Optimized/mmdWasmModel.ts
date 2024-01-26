@@ -174,7 +174,12 @@ export class MmdWasmModel implements IMmdModel {
         const morphWeightsPtr = wasmRuntimeInternal.getAnimationMorphArena(ptr);
 
         const worldTransformMatricesFrontBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
-        const worldTransformMatrices = this._worldTransformMatrices = new WasmBufferedArray(worldTransformMatricesFrontBuffer);
+        let worldTransformMatricesBackBuffer = worldTransformMatricesFrontBuffer;
+        if (wasmRuntime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+            const worldTransformMatricesBackBufferPtr = wasmRuntimeInternal.createBoneWorldMatrixBackBuffer(this.ptr);
+            worldTransformMatricesBackBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesBackBufferPtr, mmdMetadata.bones.length * 16);
+        }
+        const worldTransformMatrices = this._worldTransformMatrices = new WasmBufferedArray(worldTransformMatricesFrontBuffer, worldTransformMatricesBackBuffer);
         this._boneAnimationStates = wasmInstance.createTypedArray(Float32Array, boneAnimationStatesPtr, mmdMetadata.bones.length * 12);
 
         let ikCount = 0;

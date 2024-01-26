@@ -1,3 +1,6 @@
+use std::num::NonZeroUsize;
+use std::ptr::NonNull;
+
 use crate::mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 use crate::mmd_model_metadata::{MetadataBuffer, BoneMetadataReader, BoneFlag};
 use crate::append_transform_solver::{AppendTransformSolver, AppendTransformSolverArena};
@@ -8,7 +11,7 @@ use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::unchecked_slice::UncheckedSliceMut;
 
 pub(crate) struct MmdModel {
-    animation: Option<&'static MmdRuntimeAnimation>,
+    runtime_animation: Option<NonZeroUsize>,
     animation_arena: AnimationArena,
     bone_arena: MmdRuntimeBoneArena,
     append_transform_solver_arena: AppendTransformSolverArena,
@@ -138,7 +141,7 @@ impl MmdModel {
         }
 
         MmdModel {
-            animation: None,
+            runtime_animation: None,
             animation_arena,
             bone_arena: MmdRuntimeBoneArena::new(bone_arena, Vec::with_capacity(bone_max_depth as usize)),
             append_transform_solver_arena: AppendTransformSolverArena::new(append_transform_solver_arena.into_boxed_slice()),
@@ -146,6 +149,13 @@ impl MmdModel {
             morph_controller,
             sorted_runtime_bones: sorted_runtime_bones.into_boxed_slice(),
             sorted_runtime_root_bones: sorted_runtime_root_bones.into_boxed_slice(),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn runtime_animation_mut(&mut self) -> &mut Option<NonNull<MmdRuntimeAnimation>> {
+        unsafe {
+            std::mem::transmute(&mut self.runtime_animation)
         }
     }
 
@@ -159,7 +169,16 @@ impl MmdModel {
         &mut self.bone_arena
     }
 
-    pub(crate) fn before_physics(&mut self) {
+    pub(crate) fn before_physics(&mut self, frame_time: Option<f32>) {
+        if let Some(frame_time) = frame_time {
+            if let Some(runtime_animation) = self.runtime_animation {
+                let runtime_animation: &mut MmdRuntimeAnimation = unsafe {
+                    std::mem::transmute(runtime_animation)
+                };
+                runtime_animation.animate(frame_time, self);
+            }
+        }
+
         #[cfg(debug_assertions)]
         {
             let animation_bone_arena = &mut self.animation_arena_mut().bone_arena_mut();

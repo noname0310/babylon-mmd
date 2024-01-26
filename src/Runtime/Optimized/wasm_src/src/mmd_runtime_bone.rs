@@ -33,7 +33,7 @@ impl MmdRuntimeBoneArena {
     }
 
     #[inline]
-    pub(crate) fn world_matrix_arena_ptr(&mut self) -> *mut f32 {
+    pub(crate) fn world_matrix_arena_mut_ptr(&mut self) -> *mut f32 {
         self.world_matrix_arena.as_mut_ptr() as *mut f32
     }
 
