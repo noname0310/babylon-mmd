@@ -334,6 +334,9 @@ export class MmdWasmModel implements IMmdModel {
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) {
+            if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
+            }
             this._currentAnimation = null;
             this._resetPose();
             this.onCurrentAnimationChangedObservable.notifyObservers(null);
@@ -352,6 +355,9 @@ export class MmdWasmModel implements IMmdModel {
     public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
+                if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                    this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
+                }
                 this._currentAnimation = null;
                 this._resetPose();
                 this.onCurrentAnimationChangedObservable.notifyObservers(null);
@@ -366,6 +372,9 @@ export class MmdWasmModel implements IMmdModel {
 
         if (this._currentAnimation !== null) this._resetPose();
         const animation = this._currentAnimation = this._animations[index];
+        if ((animation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+            this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, (animation as MmdWasmRuntimeModelAnimation).ptr);
+        }
         animation.induceMaterialRecompile(this._runtime);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
     }
@@ -411,12 +420,7 @@ export class MmdWasmModel implements IMmdModel {
         if (frameTime !== null) {
             const currentAnimation = this._currentAnimation;
             if (currentAnimation !== null) {
-                if ((currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
-                    (currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate(frameTime);
-                    (currentAnimation as MmdWasmRuntimeModelAnimation).lateAnimate(frameTime);
-                } else {
-                    (currentAnimation as IMmdRuntimeModelAnimation).animate(frameTime);
-                }
+                currentAnimation.animate(frameTime);
             }
         }
 

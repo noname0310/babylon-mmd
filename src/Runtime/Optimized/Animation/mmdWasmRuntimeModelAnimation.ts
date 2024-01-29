@@ -135,12 +135,10 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
     }
 
     /**
-     * Late update animation
-     *
      * Update vertex / uv morphs and visibility
      * @param frameTime Frame time in 30fps
      */
-    public lateAnimate(frameTime: number): void {
+    public animate(frameTime: number): void {
         const animation = this.animation;
 
         const morphTracks = animation.morphTracks;

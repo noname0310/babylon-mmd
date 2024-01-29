@@ -636,7 +636,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 if (currentAnimation !== null) {
                     if ((currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
                         (currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate(frameTime);
-                        (currentAnimation as MmdWasmRuntimeModelAnimation).lateAnimate(frameTime);
+                        (currentAnimation as MmdWasmRuntimeModelAnimation).animate(frameTime);
                     } else {
                         (currentAnimation as IMmdRuntimeModelAnimation).animate(frameTime);
                     }
