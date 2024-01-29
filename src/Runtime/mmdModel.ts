@@ -93,6 +93,7 @@ export class MmdModel implements IMmdModel {
     private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
+    private _needStateReset: boolean;
 
     /**
      * Create a MmdModel
@@ -194,6 +195,7 @@ export class MmdModel implements IMmdModel {
         this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
+        this._needStateReset = false;
     }
 
     /**
@@ -285,7 +287,10 @@ export class MmdModel implements IMmdModel {
             throw new Error(`Animation '${name}' is not found.`);
         }
 
-        if (this._currentAnimation !== null) this._resetPose();
+        if (this._currentAnimation !== null) {
+            this._resetPose();
+            this._needStateReset = true;
+        }
         const animation = this._currentAnimation = this._animations[index];
         animation.induceMaterialRecompile(this._logger);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
@@ -306,14 +311,6 @@ export class MmdModel implements IMmdModel {
     }
 
     /**
-     * Reset the morph weights and IK enabled state of this model
-     */
-    public resetState(): void {
-        this.morph.resetMorphWeights();
-        this.ikSolverStates.fill(1);
-    }
-
-    /**
      * Reset the rigid body positions and velocities of this model
      */
     public initializePhysics(): void {
@@ -330,6 +327,13 @@ export class MmdModel implements IMmdModel {
      */
     public beforePhysics(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
+            if (this._needStateReset) {
+                this._needStateReset = false;
+
+                this.morph.resetMorphWeights();
+                this.ikSolverStates.fill(1);
+            }
+
             if (this._currentAnimation !== null) {
                 this._currentAnimation.animate(frameTime);
             }

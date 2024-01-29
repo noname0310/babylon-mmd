@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.37.0
+
+- improve mmd model state reset method
+    - now, mmd models morph and ik solver state are reset when animation is change and start playing
+
 ## 0.36.6
 
 - remove rust bound check in `MmdWasmRuntime` for better performance

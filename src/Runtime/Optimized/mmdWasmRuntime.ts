@@ -561,10 +561,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         if (!this._useManualAnimationDuration && this._currentFrameTime === 0) {
             const models = this._models;
-            for (let i = 0; i < this._models.length; ++i) {
-                const model = models[i];
-                model.resetState();
-                this._needToInitializePhysicsModels.add(model);
+            for (let i = 0; i < models.length; ++i) {
+                this._needToInitializePhysicsModels.add(models[i]);
             }
 
             this._animationFrameTimeDuration = this._computeAnimationDuration();

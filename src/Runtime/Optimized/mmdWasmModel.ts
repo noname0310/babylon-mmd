@@ -129,6 +129,7 @@ export class MmdWasmModel implements IMmdModel {
     private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
+    private _needStateReset: boolean;
 
     /**
      * Create a MmdWasmModel
@@ -261,6 +262,7 @@ export class MmdWasmModel implements IMmdModel {
         this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
+        this._needStateReset = false;
     }
 
     /**
@@ -370,7 +372,10 @@ export class MmdWasmModel implements IMmdModel {
             throw new Error(`Animation '${name}' is not found.`);
         }
 
-        if (this._currentAnimation !== null) this._resetPose();
+        if (this._currentAnimation !== null) {
+            this._resetPose();
+            this._needStateReset = true;
+        }
         const animation = this._currentAnimation = this._animations[index];
         if ((animation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
             this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, (animation as MmdWasmRuntimeModelAnimation).ptr);
@@ -394,14 +399,6 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     /**
-     * Reset the morph weights and IK enabled state of this model
-     */
-    public resetState(): void {
-        this.morph.resetMorphWeights();
-        this.ikSolverStates.fill(1);
-    }
-
-    /**
      * Reset the rigid body positions and velocities of this model
      */
     public initializePhysics(): void {
@@ -418,9 +415,15 @@ export class MmdWasmModel implements IMmdModel {
      */
     public beforePhysicsAndWasm(frameTime: Nullable<number>): void {
         if (frameTime !== null) {
-            const currentAnimation = this._currentAnimation;
-            if (currentAnimation !== null) {
-                currentAnimation.animate(frameTime);
+            if (this._needStateReset) {
+                this._needStateReset = false;
+
+                this.morph.resetMorphWeights();
+                this.ikSolverStates.fill(1);
+            }
+
+            if (this._currentAnimation !== null) {
+                this._currentAnimation.animate(frameTime);
             }
         }
 
