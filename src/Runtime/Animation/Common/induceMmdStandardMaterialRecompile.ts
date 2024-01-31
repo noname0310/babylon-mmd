@@ -1,9 +1,10 @@
+import type { MorphTarget } from "@babylonjs/core";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "@/Runtime/ILogger";
-import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
+import type { MmdMorphControllerBase, ReadonlyRuntimeMorph } from "@/Runtime/mmdMorphControllerBase";
 
 type MorphIndices = readonly number[];
 
@@ -28,55 +29,140 @@ export function induceMmdStandardMaterialRecompile(
     let allToonTextureColorPropertiesAreRecompiled = false;
     const recompiledMaterials = new Set<string>();
 
-    for (let i = 0; i < morphIndices.length; ++i) {
-        const morphIndex = morphIndices[i];
-        if (morphIndex === null) continue;
-
-        for (let j = 0; j < morphIndex.length; ++j) {
-            const morph = morphController.morphs[morphIndex[j]];
-            if (morph.type === PmxObject.Morph.Type.MaterialMorph) {
-                const elements = morph.materialElements!;
-                for (let k = 0; k < elements.length; ++k) {
-                    const element = elements[k];
-                    if (element.textureColor !== null && !allTextureColorPropertiesAreRecompiled) {
-                        const materialIndex = element.index;
-                        if (element.index === -1) {
-                            for (let l = 0; l < materials.length; ++l) {
-                                materials[l].textureColor;
-                            }
-                            allTextureColorPropertiesAreRecompiled = true;
-                        } else {
-                            materials[materialIndex].textureColor;
-                            recompiledMaterials.add(materialIndex.toString());
-                        }
+    const recompileMaterialMorph = (morph: ReadonlyRuntimeMorph): void => {
+        const elements = morph.materialElements!;
+        for (let k = 0; k < elements.length; ++k) {
+            const element = elements[k];
+            if (element.textureColor !== null && !allTextureColorPropertiesAreRecompiled) {
+                const materialIndex = element.index;
+                if (element.index === -1) {
+                    for (let l = 0; l < materials.length; ++l) {
+                        materials[l].textureColor;
                     }
+                    allTextureColorPropertiesAreRecompiled = true;
+                } else {
+                    materials[materialIndex].textureColor;
+                    recompiledMaterials.add(materialIndex.toString());
+                }
+            }
 
-                    if (element.sphereTextureColor !== null && !allSphereTextureColorPropertiesAreRecompiled) {
-                        const materialIndex = element.index;
-                        if (element.index === -1) {
-                            for (let l = 0; l < materials.length; ++l) {
-                                materials[l].sphereTextureColor;
-                            }
-                            allSphereTextureColorPropertiesAreRecompiled = true;
-                        } else {
-                            materials[materialIndex].sphereTextureColor;
-                            recompiledMaterials.add(materialIndex.toString());
-                        }
+            if (element.sphereTextureColor !== null && !allSphereTextureColorPropertiesAreRecompiled) {
+                const materialIndex = element.index;
+                if (element.index === -1) {
+                    for (let l = 0; l < materials.length; ++l) {
+                        materials[l].sphereTextureColor;
                     }
+                    allSphereTextureColorPropertiesAreRecompiled = true;
+                } else {
+                    materials[materialIndex].sphereTextureColor;
+                    recompiledMaterials.add(materialIndex.toString());
+                }
+            }
 
-                    if (element.toonTextureColor !== null && !allToonTextureColorPropertiesAreRecompiled) {
-                        const materialIndex = element.index;
-                        if (element.index === -1) {
-                            for (let l = 0; l < materials.length; ++l) {
-                                materials[l].toonTextureColor;
-                            }
-                            allToonTextureColorPropertiesAreRecompiled = true;
-                        } else {
-                            materials[materialIndex].toonTextureColor;
-                            recompiledMaterials.add(materialIndex.toString());
+            if (element.toonTextureColor !== null && !allToonTextureColorPropertiesAreRecompiled) {
+                const materialIndex = element.index;
+                if (element.index === -1) {
+                    for (let l = 0; l < materials.length; ++l) {
+                        materials[l].toonTextureColor;
+                    }
+                    allToonTextureColorPropertiesAreRecompiled = true;
+                } else {
+                    materials[materialIndex].toonTextureColor;
+                    recompiledMaterials.add(materialIndex.toString());
+                }
+            }
+        }
+    };
+
+    const morphTargetManagers = morphController.morphTargetManagers;
+    const morphTargetManagersTargets: Set<MorphTarget>[] = new Array(morphTargetManagers.length);
+    const activeTargetsForAnimation: Set<MorphTarget>[] = new Array(morphTargetManagers.length);
+    for (let i = 0; i < morphTargetManagers.length; ++i) {
+        const targets = morphTargetManagersTargets[i] = new Set<MorphTarget>();
+        const activeTargets = activeTargetsForAnimation[i] = new Set<MorphTarget>();
+
+        const morphTargetManager = morphTargetManagers[i];
+
+        const numTargets = morphTargetManager.numTargets;
+        for (let j = 0; j < numTargets; ++j) {
+            const morphTarget = morphTargetManager.getTarget(j);
+
+            targets.add(morphTarget);
+            if (morphTarget.influence !== 0) activeTargets.add(morphTarget);
+        }
+    }
+
+    {
+        const morphs = morphController.morphs;
+        for (let i = 0; i < morphs.length; ++i) {
+            const morph = morphs[i];
+            switch (morph.type) {
+            case PmxObject.Morph.Type.VertexMorph:
+            case PmxObject.Morph.Type.UvMorph:
+                {
+                    const elements = morph.elements as readonly MorphTarget[];
+                    for (let k = 0; k < elements.length; ++k) {
+                        const morphTarget = elements[k];
+
+                        for (let i = 0; i < activeTargetsForAnimation.length; ++i) {
+                            activeTargetsForAnimation[i].delete(morphTarget);
                         }
                     }
                 }
+                break;
+            }
+        }
+    }
+
+    const recompileVertexUvMorph = (morph: ReadonlyRuntimeMorph): void => {
+        const elements = morph.elements as readonly MorphTarget[];
+        for (let k = 0; k < elements.length; ++k) {
+            const morphTarget = elements[k];
+
+            for (let i = 0; i < morphTargetManagers.length; ++i) {
+                if (morphTargetManagersTargets[i].has(morphTarget)) {
+                    activeTargetsForAnimation[i].add(morphTarget);
+                }
+            }
+        }
+    };
+
+    const isProcessedMorph = new Uint8Array(morphController.morphs.length);
+    for (let i = 0; i < morphIndices.length; ++i) {
+        const subMorphIndices = morphIndices[i];
+        if (subMorphIndices === null) continue;
+
+        for (let j = 0; j < subMorphIndices.length; ++j) {
+            const subMorphIndex = subMorphIndices[j];
+            if (isProcessedMorph[subMorphIndex] === 1) continue;
+            isProcessedMorph[subMorphIndex] = 1;
+
+            const morph = morphController.morphs[subMorphIndex];
+            switch (morph.type) {
+            case PmxObject.Morph.Type.GroupMorph:
+                morphController.groupMorphFlatForeach(morph, (subMorphIndex) => {
+                    if (isProcessedMorph[subMorphIndex] === 1) return;
+                    isProcessedMorph[subMorphIndex] = 1;
+
+                    const subMorph = morphController.morphs[subMorphIndex];
+                    switch (subMorph.type) {
+                    case PmxObject.Morph.Type.VertexMorph:
+                    case PmxObject.Morph.Type.UvMorph:
+                        recompileVertexUvMorph(subMorph);
+                        break;
+                    case PmxObject.Morph.Type.MaterialMorph:
+                        recompileMaterialMorph(subMorph);
+                        break;
+                    }
+                });
+                break;
+            case PmxObject.Morph.Type.VertexMorph:
+            case PmxObject.Morph.Type.UvMorph:
+                recompileVertexUvMorph(morph);
+                break;
+            case PmxObject.Morph.Type.MaterialMorph:
+                recompileMaterialMorph(morph);
+                break;
             }
         }
 
@@ -93,5 +179,9 @@ export function induceMmdStandardMaterialRecompile(
         logger?.log("All materials could be recompiled for morph animation");
     } else if (0 < recompiledMaterials.size) {
         logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
+    }
+
+    for (let i = 0; i < morphTargetManagers.length; ++i) {
+        morphTargetManagers[i].numMaxInfluencers = activeTargetsForAnimation[i].size;
     }
 }

@@ -99,19 +99,6 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             if (runtimeAnimation !== null && 0 < span.weight && span.isInSpan(frameTime)) {
                 activeAnimationSpans.push(span);
                 activeRuntimeAnimations.push(runtimeAnimation);
-            } else if (runtimeAnimation !== null) {
-                // this branch will be removed when morph target recompilation problem is solved
-                // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
-                const morphBindIndexMap = runtimeAnimation.morphBindIndexMap;
-                for (let i = 0; i < morphBindIndexMap.length; ++i) {
-                    const morphIndices = morphBindIndexMap[i];
-                    if (morphIndices !== null) {
-                        for (let j = 0; j < morphIndices.length; ++j) {
-                            const morphIndex = morphIndices[j];
-                            morphController.setMorphWeightFromIndex(morphIndex, 1e-16);
-                        }
-                    }
-                }
             }
         }
 
@@ -163,9 +150,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     result[3] = 0;
                 }
                 for (const [morphIndex, _result] of morphResultMap) {
-                    // this will be zero when morph target recompilation problem is solved
-                    // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
-                    morphController.setMorphWeightFromIndex(morphIndex, 1e-16);
+                    morphController.setMorphWeightFromIndex(morphIndex, 0);
                     morphResultMap.set(morphIndex, 0);
                 }
                 for (let i = 0; i < meshes.length; ++i) {
@@ -201,9 +186,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
             }
             for (const [morphIndex, _result] of morphResultMap) {
-                // this will be zero when morph target recompilation problem is solved
-                // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
-                morphController.setMorphWeightFromIndex(morphIndex, 1e-16);
+                morphController.setMorphWeightFromIndex(morphIndex, 0);
             }
             for (let i = 0; i < meshes.length; ++i) {
                 meshes[i].visibility = 1;

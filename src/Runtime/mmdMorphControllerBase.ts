@@ -53,9 +53,28 @@ export interface RuntimeMorph {
  * Only material morphs data are exposed
  */
 export interface ReadonlyRuntimeMorph {
+    /**
+     * Name of the morph
+     */
     readonly name: string;
+
+    /**
+     * Type of the morph
+     */
     readonly type: PmxObject.Morph.Type;
+
+    /**
+     * Material morph elements
+     */
     readonly materialElements: Nullable<readonly DeepImmutable<RuntimeMaterialMorphElement>[]>;
+
+    /**
+     * Group morph / bone morph / uv morph / vertex morph bindings
+     */
+    readonly elements: Nullable<
+        ArrayLike<number> // group morph / bone morph indices
+        | readonly MorphTarget[] // MorphTargetManager morph targets
+    >;
 }
 
 /**
@@ -73,7 +92,11 @@ export abstract class MmdMorphControllerBase {
     protected readonly _morphIndexMap: Map<string, number[]>;
     protected readonly _morphWeights: Float32Array;
     protected readonly _activeMorphs: Set<string>;
-    private readonly _morphTargetManagers: readonly MorphTargetManager[];
+
+    /**
+     * MorphTargetManagers used to handle position uv morphs
+     */
+    public readonly morphTargetManagers: readonly MorphTargetManager[];
 
     /**
      * Creates a new MmdMorphController
@@ -125,7 +148,7 @@ export abstract class MmdMorphControllerBase {
         this._morphWeights = new Float32Array(morphs.length);
         this._activeMorphs = new Set<string>();
 
-        this._morphTargetManagers = morphTargetManagers;
+        this.morphTargetManagers = morphTargetManagers;
     }
 
     /**
@@ -211,7 +234,7 @@ export abstract class MmdMorphControllerBase {
         const morphWeights = this._morphWeights;
         const activeMorphs = this._activeMorphs;
 
-        const morphTargetManagers = this._morphTargetManagers;
+        const morphTargetManagers = this.morphTargetManagers;
         for (let i = 0; i < morphTargetManagers.length; ++i) morphTargetManagers[i].areUpdatesFrozen = true;
 
         for (const morphName of activeMorphs) {
@@ -383,6 +406,19 @@ export abstract class MmdMorphControllerBase {
         }
 
         return morphs;
+    }
+
+    /**
+     * Iterates all sub morphs of the group morph
+     *
+     * @param groupMorph Group morph
+     * @param callback Callback
+     */
+    public groupMorphFlatForeach(
+        groupMorph: ReadonlyRuntimeMorph,
+        callback: (index: number, ratio: number) => void
+    ): void {
+        this._groupMorphFlatForeach(groupMorph as RuntimeMorph, callback);
     }
 
     private _groupMorphFlatForeach(

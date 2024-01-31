@@ -157,9 +157,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             const morphTrack = morphTracks[i];
             const morphIndices = morphBindIndexMap[i];
             if (morphIndices === null) continue;
-            // this clamp will be removed when morph target recompilation problem is solved
-            // ref: https://github.com/BabylonJS/Babylon.js/issues/14008
-            const morphWeight = Math.max(morphTrack._interpolate(frameTime, this._morphAnimationStates[i]), 1e-16);
+            const morphWeight = morphTrack._interpolate(frameTime, this._morphAnimationStates[i]);
             for (let j = 0; j < morphIndices.length; ++j) {
                 morphController.setMorphWeightFromIndex(morphIndices[j], morphWeight);
             }
