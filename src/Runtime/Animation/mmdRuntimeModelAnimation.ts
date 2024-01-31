@@ -12,7 +12,7 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { BezierInterpolator } from "./bezierInterpolator";
-import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
+import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
@@ -369,9 +369,10 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers
      * @param logger logger
      */
-    public induceMaterialRecompile(logger?: ILogger): void {
+    public induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger): void {
         if (this._materialRecompileInduceInfo === null) return;
 
         MmdRuntimeModelAnimation.InduceMaterialRecompile(
@@ -380,6 +381,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             this.morphBindIndexMap,
             logger
         );
+        if (updateMorphTarget) {
+            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+        }
         this._materialRecompileInduceInfo = null;
     }
 

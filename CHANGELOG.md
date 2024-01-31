@@ -5,6 +5,9 @@
 - improve mmd model state reset method
     - now, mmd models morph and ik solver state are reset when animation is change and start playing
 
+- morph target recompliation problem fixed
+    - see https://github.com/BabylonJS/Babylon.js/issues/14008
+
 ## 0.36.6
 
 - remove rust bound check in `MmdWasmRuntime` for better performance

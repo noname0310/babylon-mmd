@@ -74,6 +74,63 @@ export function induceMmdStandardMaterialRecompile(
         }
     };
 
+    const isProcessedMorph = new Uint8Array(morphController.morphs.length);
+    for (let i = 0; i < morphIndices.length; ++i) {
+        const subMorphIndices = morphIndices[i];
+        if (subMorphIndices === null) continue;
+
+        for (let j = 0; j < subMorphIndices.length; ++j) {
+            const subMorphIndex = subMorphIndices[j];
+            if (isProcessedMorph[subMorphIndex] === 1) continue;
+            isProcessedMorph[subMorphIndex] = 1;
+
+            const morph = morphController.morphs[subMorphIndex];
+            switch (morph.type) {
+            case PmxObject.Morph.Type.GroupMorph:
+                morphController.groupMorphFlatForeach(morph, (subMorphIndex) => {
+                    if (isProcessedMorph[subMorphIndex] === 1) return;
+                    isProcessedMorph[subMorphIndex] = 1;
+
+                    const subMorph = morphController.morphs[subMorphIndex];
+                    switch (subMorph.type) {
+                    case PmxObject.Morph.Type.MaterialMorph:
+                        recompileMaterialMorph(subMorph);
+                        break;
+                    }
+                });
+                break;
+            case PmxObject.Morph.Type.MaterialMorph:
+                recompileMaterialMorph(morph);
+                break;
+            }
+        }
+
+        if (allTextureColorPropertiesAreRecompiled
+            && allSphereTextureColorPropertiesAreRecompiled
+            && allToonTextureColorPropertiesAreRecompiled) {
+            break;
+        }
+    }
+
+    if (allTextureColorPropertiesAreRecompiled
+        || allSphereTextureColorPropertiesAreRecompiled
+        || allToonTextureColorPropertiesAreRecompiled) {
+        logger?.log("All materials could be recompiled for morph animation");
+    } else if (0 < recompiledMaterials.size) {
+        logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
+    }
+}
+
+/**
+ * Sets the `numMaxInfluencers` of the `MorphTargetManager` to the number of active morph targets in the morph animation
+ *
+ * @param morphController Morph controller
+ * @param morphIndices Morph indices to induce recompile
+ */
+export function setMorphTargetManagersNumMaxInfluencers(
+    morphController: MmdMorphControllerBase,
+    morphIndices: readonly Nullable<MorphIndices>[]
+): void {
     const morphTargetManagers = morphController.morphTargetManagers;
     const morphTargetManagersTargets: Set<MorphTarget>[] = new Array(morphTargetManagers.length);
     const activeTargetsForAnimation: Set<MorphTarget>[] = new Array(morphTargetManagers.length);
@@ -114,7 +171,7 @@ export function induceMmdStandardMaterialRecompile(
         }
     }
 
-    const recompileVertexUvMorph = (morph: ReadonlyRuntimeMorph): void => {
+    const f = (morph: ReadonlyRuntimeMorph): void => {
         const elements = morph.elements as readonly MorphTarget[];
         for (let k = 0; k < elements.length; ++k) {
             const morphTarget = elements[k];
@@ -148,37 +205,17 @@ export function induceMmdStandardMaterialRecompile(
                     switch (subMorph.type) {
                     case PmxObject.Morph.Type.VertexMorph:
                     case PmxObject.Morph.Type.UvMorph:
-                        recompileVertexUvMorph(subMorph);
-                        break;
-                    case PmxObject.Morph.Type.MaterialMorph:
-                        recompileMaterialMorph(subMorph);
+                        f(subMorph);
                         break;
                     }
                 });
                 break;
             case PmxObject.Morph.Type.VertexMorph:
             case PmxObject.Morph.Type.UvMorph:
-                recompileVertexUvMorph(morph);
-                break;
-            case PmxObject.Morph.Type.MaterialMorph:
-                recompileMaterialMorph(morph);
+                f(morph);
                 break;
             }
         }
-
-        if (allTextureColorPropertiesAreRecompiled
-            && allSphereTextureColorPropertiesAreRecompiled
-            && allToonTextureColorPropertiesAreRecompiled) {
-            break;
-        }
-    }
-
-    if (allTextureColorPropertiesAreRecompiled
-        || allSphereTextureColorPropertiesAreRecompiled
-        || allToonTextureColorPropertiesAreRecompiled) {
-        logger?.log("All materials could be recompiled for morph animation");
-    } else if (0 < recompiledMaterials.size) {
-        logger?.log(`Materials ${Array.from(recompiledMaterials).join(", ")} could be recompiled for morph animation`);
     }
 
     for (let i = 0; i < morphTargetManagers.length; ++i) {

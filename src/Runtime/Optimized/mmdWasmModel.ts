@@ -352,9 +352,10 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * Set the current animation of this model
      * @param name The name of the animation to set
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
      * @throws {Error} if the animation is not found
      */
-    public setAnimation(name: Nullable<string>): void {
+    public setAnimation(name: Nullable<string>, updateMorphTarget = true): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
@@ -380,7 +381,7 @@ export class MmdWasmModel implements IMmdModel {
         if ((animation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
             this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, (animation as MmdWasmRuntimeModelAnimation).ptr);
         }
-        animation.induceMaterialRecompile(this._runtime);
+        animation.induceMaterialRecompile(updateMorphTarget, this._runtime);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
     }
 

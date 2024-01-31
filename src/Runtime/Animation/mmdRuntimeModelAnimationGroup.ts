@@ -13,7 +13,7 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { createAnimationState } from "./Common/createAnimationState";
-import { induceMmdStandardMaterialRecompile } from "./Common/induceMmdStandardMaterialRecompile";
+import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 
@@ -186,9 +186,10 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers
      * @param logger logger
      */
-    public induceMaterialRecompile(logger?: ILogger | undefined): void {
+    public induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger | undefined): void {
         if (this._materialRecompileInduceInfo === null) return;
 
         MmdRuntimeModelAnimationGroup.InduceMaterialRecompile(
@@ -197,6 +198,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             this.morphBindIndexMap,
             logger
         );
+        if (updateMorphTarget) {
+            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+        }
         this._materialRecompileInduceInfo = null;
     }
 

@@ -7,6 +7,7 @@ import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
+import { setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
@@ -407,12 +408,24 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers
      * @param logger Logger
      */
-    public induceMaterialRecompile(logger?: ILogger): void {
+    public induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger): void {
         const runtimeAnimations = this._runtimeAnimations;
         for (let i = 0; i < runtimeAnimations.length; ++i) {
-            runtimeAnimations[i]?.induceMaterialRecompile(logger);
+            runtimeAnimations[i]?.induceMaterialRecompile(false, logger);
+        }
+        if (updateMorphTarget) {
+            const mergedMorphIndices: Nullable<readonly number[]>[] = [];
+            for (let i = 0; i < runtimeAnimations.length; ++i) {
+                const runtimeAnimation = runtimeAnimations[i];
+                if (runtimeAnimation !== null) {
+                    const morphBindIndexMap = runtimeAnimation.morphBindIndexMap;
+                    mergedMorphIndices.push(...morphBindIndexMap);
+                }
+            }
+            setMorphTargetManagersNumMaxInfluencers(this._morphController, mergedMorphIndices);
         }
     }
 

@@ -44,9 +44,10 @@ export interface IMmdRuntimeModelAnimation {
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers
      * @param logger logger
      */
-    induceMaterialRecompile(logger?: ILogger): void;
+    induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger): void;
 
     /**
      * Dispose

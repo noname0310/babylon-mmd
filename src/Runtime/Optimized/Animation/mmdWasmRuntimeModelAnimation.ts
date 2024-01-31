@@ -2,7 +2,7 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { induceMmdStandardMaterialRecompile } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
+import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
@@ -196,9 +196,10 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      * This method must run once before the animation runs
      *
      * This method prevents frame drop during animation by inducing properties to be recompiled that are used in morph animation
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers
      * @param logger logger
      */
-    public induceMaterialRecompile(logger?: ILogger): void {
+    public induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger): void {
         if (this._materialRecompileInduceInfo === null) return;
 
         MmdWasmRuntimeModelAnimation.InduceMaterialRecompile(
@@ -207,6 +208,9 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             this.morphBindIndexMap,
             logger
         );
+        if (updateMorphTarget) {
+            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+        }
         this._materialRecompileInduceInfo = null;
     }
 

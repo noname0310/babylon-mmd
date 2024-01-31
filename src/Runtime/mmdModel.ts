@@ -270,9 +270,10 @@ export class MmdModel implements IMmdModel {
     /**
      * Set the current animation of this model
      * @param name The name of the animation to set
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
      * @throws {Error} if the animation is not found
      */
-    public setAnimation(name: Nullable<string>): void {
+    public setAnimation(name: Nullable<string>, updateMorphTarget = true): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 this._currentAnimation = null;
@@ -292,7 +293,7 @@ export class MmdModel implements IMmdModel {
             this._needStateReset = true;
         }
         const animation = this._currentAnimation = this._animations[index];
-        animation.induceMaterialRecompile(this._logger);
+        animation.induceMaterialRecompile(updateMorphTarget, this._logger);
         this.onCurrentAnimationChangedObservable.notifyObservers(animation);
     }
 
