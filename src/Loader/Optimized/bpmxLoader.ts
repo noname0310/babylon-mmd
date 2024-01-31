@@ -498,9 +498,15 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             morphTargetManager._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
 
+            morphTargetManager.enableNormalMorphing = false;
+            morphTargetManager.enableTangentMorphing = false;
+            morphTargetManager.enableUVMorphing = false;
+
             morphTargetManager.areUpdatesFrozen = true;
             for (let i = 0; i < subMeshMorphTargets.length; ++i) {
-                morphTargetManager.addTarget(subMeshMorphTargets[i]);
+                const subMeshMorphTarget = subMeshMorphTargets[i];
+                morphTargetManager.addTarget(subMeshMorphTarget);
+                if (subMeshMorphTarget.hasUVs) morphTargetManager.enableUVMorphing = true;
             }
             morphTargetManager.areUpdatesFrozen = false;
 
