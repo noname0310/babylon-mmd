@@ -1,6 +1,12 @@
 import type { Scene } from "@babylonjs/core/scene";
 
-export function optimizeScene(scene: Scene): void {
+export interface OptimizeSceneOptions {
+    clearCachedVertexData?: boolean;
+}
+
+export function optimizeScene(scene: Scene, options: OptimizeSceneOptions = {}): void {
+    const { clearCachedVertexData = true } = options;
+
     scene.freezeMaterials();
 
     const meshes = scene.meshes;
@@ -9,7 +15,6 @@ export function optimizeScene(scene: Scene): void {
         mesh.freezeWorldMatrix();
         mesh.doNotSyncBoundingInfo = true;
         mesh.isPickable = false;
-        mesh.doNotSyncBoundingInfo = true;
         mesh.alwaysSelectAsActiveMesh = true;
     }
 
@@ -18,7 +23,7 @@ export function optimizeScene(scene: Scene): void {
     scene.skipPointerUpPicking = true;
     scene.skipFrustumClipping = true;
     scene.blockMaterialDirtyMechanism = true;
-    scene.clearCachedVertexData();
+    if (clearCachedVertexData) scene.clearCachedVertexData();
     scene.cleanCachedTextureBuffer();
 
     // very unstable memory optimization

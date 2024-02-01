@@ -57,9 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        const worldScale = 0.09;
         const mmdRoot = new TransformNode("mmdRoot", scene);
-        mmdRoot.scaling.scaleInPlace(worldScale);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.minZ = 4;
         mmdCamera.maxZ = 400;
@@ -68,7 +66,7 @@ export class SceneBuilder implements ISceneBuilder {
         camera.maxZ = 1000;
         camera.parent = mmdRoot;
         createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
+        const { directionalLight, shadowGenerator } = createLightComponents(scene);
 
         const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
@@ -120,7 +118,7 @@ export class SceneBuilder implements ISceneBuilder {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const havokInstance = await havokPhysics();
                 const havokPlugin = new HavokPlugin(true, havokInstance);
-                scene.enablePhysics(new Vector3(0, -9.8 * 10 * worldScale, 0), havokPlugin);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);
@@ -144,10 +142,9 @@ export class SceneBuilder implements ISceneBuilder {
 
             attachToBone(scene, mmdModel, {
                 directionalLightPosition: directionalLight.position,
-                cameraTargetPosition: camera.target,
-                worldScale: worldScale
+                cameraTargetPosition: camera.target
             });
-            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene, { clearCachedVertexData: false }));
         }
 
         for (const mesh of stageMesh.metadata.meshes) {
@@ -169,7 +166,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
         defaultPipeline.fxaaEnabled = false;
         defaultPipeline.imageProcessingEnabled = true;
-        defaultPipeline.imageProcessing.toneMappingEnabled = false;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
         defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
         defaultPipeline.imageProcessing.vignetteWeight = 0.5;
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
@@ -198,14 +195,18 @@ export class SceneBuilder implements ISceneBuilder {
             featuresManager.enableFeature(WebXRFeatureName.MOVEMENT, "latest", {
                 movementThreshold: 0.7,
                 rotationThreshold: 0.7,
-                movementSpeed: 0.1,
-                rotationSpeed: 0.3,
+                movementSpeed: 1,
+                rotationSpeed: 0.2,
                 xrInput: xr.input
             });
 
             xr.baseExperience.sessionManager.onXRFrameObservable.addOnce(() => {
                 defaultPipeline.addCamera(xr.baseExperience.camera);
             });
+            xr.baseExperience.sessionManager.worldScalingFactor = 9;
+
+            xr.baseExperience.camera.minZ = 1;
+            xr.baseExperience.camera.maxZ = 70;
         }
 
         return scene;
