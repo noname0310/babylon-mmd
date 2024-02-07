@@ -1,15 +1,24 @@
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
+import { PhysicsMotionType, PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
-import { PhysicsShapeBox } from "@babylonjs/core/Physics/v2/physicsShape";
+import { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
 import type { Scene } from "@babylonjs/core/scene";
 
 export function createGroundCollider(scene: Scene): void {
     const transformNode = new TransformNode("ground", scene);
     const groundRigidBody = new PhysicsBody(transformNode, PhysicsMotionType.STATIC, true, scene);
-    groundRigidBody.shape = new PhysicsShapeBox(
-        new Vector3(0, -1, 0),
-        new Quaternion(),
-        new Vector3(100, 2, 100), scene);
+    const height = 0;
+    groundRigidBody.shape = new PhysicsShape(
+        {
+            type: PhysicsShapeType.HEIGHTFIELD,
+            parameters: {
+                heightFieldSizeX: 100,
+                heightFieldSizeZ: 100,
+                numHeightFieldSamplesX: 2,
+                numHeightFieldSamplesZ: 2,
+                heightFieldData: new Float32Array([height, height, height, height])
+            }
+        },
+        scene
+    );
 }
