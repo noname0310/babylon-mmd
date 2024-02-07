@@ -9,16 +9,19 @@ pub(crate) struct MmdRuntimeBoneArena {
     world_matrix_arena: Box<[Mat4]>,
     world_matrix_back_buffer: Option<Box<[Mat4]>>,
     bone_stack: Vec<u32>,
+    back_buffer_bone_stack: Vec<u32>,
 }
 
 impl MmdRuntimeBoneArena {
     pub(crate) fn new(arena: Box<[MmdRuntimeBone]>, bone_stack: Vec<u32>) -> Self {
         let bone_count = arena.len();
+        let bone_stack_capacity = bone_stack.capacity();
         MmdRuntimeBoneArena {
             arena,
             world_matrix_arena: vec![Mat4::IDENTITY; bone_count].into_boxed_slice(),
             world_matrix_back_buffer: None,
             bone_stack,
+            back_buffer_bone_stack: Vec::with_capacity(bone_stack_capacity),
         }
     }
     
@@ -72,6 +75,34 @@ impl MmdRuntimeBoneArena {
             let bone = &self.arena[bone as usize];
             for child_bone in bone.child_bones.iter().copied() {
                 self.bone_stack.push(child_bone);
+            }
+        }
+    }
+
+    #[inline]
+    fn world_matrices_back_buffer(&self) -> UncheckedSlice<Mat4> {
+        UncheckedSlice::new(self.world_matrix_back_buffer.as_ref().unwrap())
+    }
+
+    #[inline]
+    fn world_matrices_back_buffer_mut(&mut self) -> UncheckedSliceMut<Mat4> {
+        UncheckedSliceMut::new(self.world_matrix_back_buffer.as_mut().unwrap())
+    }
+
+    pub fn update_back_buffer_world_matrix(&mut self, root: u32) {
+        self.back_buffer_bone_stack.push(root);
+
+        while let Some(bone) = self.back_buffer_bone_stack.pop() {
+            if let Some(parent_bone) = self.arena()[bone].parent_bone {
+                let parent_world_matrix = self.world_matrices_back_buffer()[parent_bone];
+                self.world_matrices_back_buffer_mut()[bone] = parent_world_matrix * self.arena()[bone].local_matrix;
+            } else {
+                self.world_matrices_back_buffer_mut()[bone] = self.arena()[bone].local_matrix;
+            }
+
+            let bone = &self.arena[bone as usize];
+            for child_bone in bone.child_bones.iter().copied() {
+                self.back_buffer_bone_stack.push(child_bone);
             }
         }
     }

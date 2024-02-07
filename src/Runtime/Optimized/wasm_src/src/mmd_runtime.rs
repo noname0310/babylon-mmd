@@ -13,6 +13,7 @@ use rayon::prelude::*;
 pub struct MmdRuntime {
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
+    locked: u8
 }
 
 #[wasm_bindgen]
@@ -20,6 +21,7 @@ impl MmdRuntime {
     pub(crate) fn new() -> Self {
         MmdRuntime {
             mmd_models: Vec::new(),
+            locked: 0
         }
     }
 
@@ -159,14 +161,30 @@ impl MmdRuntime {
         }
     }
 
+    #[wasm_bindgen(js_name = "getLockStatePtr")]
+    pub fn get_lock_state_ptr(&self) -> *const u8 {
+        &self.locked as *const u8
+    }
+
+    #[wasm_bindgen(js_name = "swapWorldMatrixBuffer")]
+    pub fn swap_world_matrix_buffer(&mut self, ptr: *mut usize) {
+        let ptr = ptr as *mut MmdModel;
+        let bone_arena = unsafe {
+            &mut *ptr
+        }.bone_arena_mut();
+        bone_arena.swap_buffer();
+    }
+
     #[cfg(feature = "parallel")]
     #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
     pub fn buffered_before_physics(mmd_runtime: *mut usize, frame_time: Option<f32>) {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
+        mmd_runtime.locked = 1;
         rayon::spawn(move || {
             mmd_runtime.before_physics(frame_time);
+            mmd_runtime.locked = 0;
         });
     }
 
@@ -176,9 +194,11 @@ impl MmdRuntime {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
+        mmd_runtime.locked = 1;
         rayon::spawn(move || {
             mmd_runtime.before_physics(frame_time);
             mmd_runtime.after_physics();
+            mmd_runtime.locked = 0;
         });
     }
 
@@ -189,6 +209,15 @@ impl MmdRuntime {
             &mut *ptr
         }.bone_arena_mut();
         bone_arena.update_world_matrix(root);
+    }
+
+    #[wasm_bindgen(js_name = "updateBackBufferBoneWorldMatrix")]
+    pub fn update_back_buffer_bone_world_matrix(&mut self, ptr: *mut usize, root: u32) {
+        let ptr = ptr as *mut MmdModel;
+        let bone_arena = unsafe {
+            &mut *ptr
+        }.bone_arena_mut();
+        bone_arena.update_back_buffer_world_matrix(root);
     }
 
     #[wasm_bindgen(js_name = "updataBoneLocalMatrices")]

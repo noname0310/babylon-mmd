@@ -127,6 +127,9 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
     /**
      * Run wasm side animation evaluation
      *
+     * IMPORTANT: when wasm runtime using buffered evaluation, this method must be called before waiting for the WasmMmdRuntime.lock
+     * otherwise, it can cause a datarace
+     *
      * Update bone / bone morphs / ik solver state
      * @param frameTime Frame time in 30fps
      */

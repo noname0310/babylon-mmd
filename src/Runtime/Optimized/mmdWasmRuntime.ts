@@ -21,6 +21,7 @@ import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeMod
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
+import { WasmSpinlock } from "./wasmSpinlock";
 
 /**
  * MMD WASM runtime animation evaluation type
@@ -56,6 +57,17 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @internal
      */
     public readonly wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
+
+    /**
+     * Spinlock for MMD WASM runtime to synchronize animation evaluation
+     * @internal
+     */
+    public readonly lock: WasmSpinlock;
+
+    /**
+     * Indicates whether the MMD WASM runtime is reading the back buffer of the WASM
+     */
+    public readonly usingWasmBackBuffer: boolean;
 
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
     private readonly _physics: Nullable<MmdPhysics>;
@@ -126,6 +138,10 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
         this.wasmInstance = wasmInstance;
         this.wasmInternal = wasmInstance.createMmdRuntime();
+
+        this.lock = new WasmSpinlock(wasmInstance.createTypedArray(Uint8Array, this.wasmInternal.getLockStatePtr(), 1));
+        this.usingWasmBackBuffer = false;
+
         this._mmdMetadataEncoder = new MmdMetadataEncoder();
         this._physics = physics;
 
@@ -177,6 +193,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param scene Scene
      */
     public dispose(scene: Scene): void {
+        this.lock.wait(); // ensure that the runtime is not evaluating animations
+
         for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
         this._models.length = 0;
         this.setCamera(null);
@@ -235,6 +253,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             options.buildPhysics = true;
         }
 
+        this.lock.wait(); // ensure that the runtime is not evaluating animations
+
         const metadataEncoder = this._mmdMetadataEncoder;
         metadataEncoder.encodePhysics = options.buildPhysics;
 
@@ -284,6 +304,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (index < 0) throw new Error("Model not found.");
 
         models.splice(index, 1);
+        this.lock.wait(); // ensure that the runtime is not evaluating animations
         this.wasmInternal.destroyMmdModel(mmdModel.ptr);
     }
 
@@ -632,6 +653,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             for (let i = 0; i < models.length; ++i) {
                 const currentAnimation = models[i].currentAnimation;
                 if (currentAnimation !== null) {
+                    this.lock.wait(); // ensure that the runtime is not evaluating animations
                     if ((currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
                         (currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate(frameTime);
                         (currentAnimation as MmdWasmRuntimeModelAnimation).animate(frameTime);

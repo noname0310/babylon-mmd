@@ -23,7 +23,6 @@ import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdPhysics, MmdPhysicsModel } from "../mmdPhysics";
 import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
-import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
@@ -75,6 +74,7 @@ export class MmdWasmModel implements IMmdModel {
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
     public get worldTransformMatrices(): Float32Array {
+        // we don't need to wait for the lock here because double buffering is used
         return this._worldTransformMatrices.frontBuffer;
     }
 
@@ -88,6 +88,7 @@ export class MmdWasmModel implements IMmdModel {
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
     public get boneAnimationStates(): Float32Array {
+        this._runtime.lock.wait();
         return this._boneAnimationStates.array;
     }
 
@@ -101,6 +102,7 @@ export class MmdWasmModel implements IMmdModel {
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
     public get ikSolverStates(): Uint8Array {
+        this._runtime.lock.wait();
         return this._ikSolverStates.array;
     }
 
@@ -133,6 +135,9 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Create a MmdWasmModel
+     *
+     * IMPORTANT: when wasm runtime using buffered evaluation, this constructor must be called before waiting for the WasmMmdRuntime.lock
+     * otherwise, it will cause a datarace
      * @param wasmRuntime MMD WASM runtime
      * @param ptr Pointer to wasm side MmdModel
      * @param mmdSkinnedMesh Mesh that able to instantiate `MmdWasmModel`
@@ -196,8 +201,7 @@ export class MmdWasmModel implements IMmdModel {
             skeleton.bones,
             mmdMetadata.bones,
             worldTransformMatrices,
-            wasmInstance,
-            wasmRuntimeInternal,
+            wasmRuntime,
             ptr
         );
 
@@ -306,6 +310,7 @@ export class MmdWasmModel implements IMmdModel {
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as MmdWasmAnimation).createWasmRuntimeModelAnimation !== undefined) {
+            this._runtime.lock.wait();
             runtimeAnimation = (animation as MmdWasmAnimation).createWasmRuntimeModelAnimation(this, () => {
                 this._removeAnimationByReference(runtimeAnimation);
             }, retargetingMap, this._runtime);
@@ -337,6 +342,7 @@ export class MmdWasmModel implements IMmdModel {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) {
             if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
             }
             this._currentAnimation = null;
@@ -359,6 +365,7 @@ export class MmdWasmModel implements IMmdModel {
         if (name === null) {
             if (this._currentAnimation !== null) {
                 if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                    this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
                     this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
                 }
                 this._currentAnimation = null;
@@ -379,6 +386,7 @@ export class MmdWasmModel implements IMmdModel {
         }
         const animation = this._currentAnimation = this._animations[index];
         if ((animation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+            this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
             this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, (animation as MmdWasmRuntimeModelAnimation).ptr);
         }
         animation.induceMaterialRecompile(updateMorphTarget, this._runtime);
@@ -491,8 +499,7 @@ export class MmdWasmModel implements IMmdModel {
         bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[],
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
-        wasmInstance: MmdWasmInstance,
-        wasmRuntimeInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>,
+        runtime: MmdWasmRuntime,
         mmdModelPtr: number
     ): readonly MmdWasmRuntimeBone[] {
         const runtimeBones: MmdWasmRuntimeBone[] = [];
@@ -514,8 +521,7 @@ export class MmdWasmModel implements IMmdModel {
                     worldTransformMatrices,
                     i,
                     ikSolverIndex,
-                    wasmInstance,
-                    wasmRuntimeInternal,
+                    runtime,
                     mmdModelPtr
                 )
             );
