@@ -155,7 +155,7 @@ impl MmdModel {
     #[inline]
     pub(crate) fn runtime_animation_mut(&mut self) -> &mut Option<NonNull<MmdRuntimeAnimation>> {
         unsafe {
-            std::mem::transmute(&mut self.runtime_animation)
+            &mut *(&mut self.runtime_animation as *mut Option<NonZeroUsize> as *mut Option<NonNull<MmdRuntimeAnimation>>)
         }
     }
 
@@ -173,7 +173,7 @@ impl MmdModel {
         if let Some(frame_time) = frame_time {
             if let Some(runtime_animation) = self.runtime_animation {
                 let runtime_animation: &mut MmdRuntimeAnimation = unsafe {
-                    std::mem::transmute(runtime_animation)
+                    &mut *(runtime_animation.get() as *mut MmdRuntimeAnimation)
                 };
                 runtime_animation.animate(frame_time, self);
             }
