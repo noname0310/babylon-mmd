@@ -1,3 +1,5 @@
+import type { IWasmTypedArray } from "./IWasmTypedArray";
+import { WasmSharedTypedArray } from "./wasmSharedTypedArray";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 import { WasmTypedArray } from "./wasmTypedArray";
 
@@ -12,7 +14,7 @@ export type MmdWasmType = typeof import("./wasm") | typeof import("./wasm_debug"
 export interface MmdWasmInstance extends MmdWasmType {
     memory: WebAssembly.Memory;
 
-    createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T>;
+    createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T>;
 }
 
 export interface MmdWasmInstanceType {
@@ -39,12 +41,20 @@ export async function getMmdWasmInstance(
     wasmBindgen.init();
     const memory = initOutput.memory;
 
-    function createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): WasmTypedArray<T> {
+    function createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T> {
         return new WasmTypedArray(typedArrayConstructor, memory, byteOffset, length);
     }
 
+    function createSharedTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T> {
+        return new WasmSharedTypedArray(typedArrayConstructor, memory, byteOffset, length);
+    }
+
     (wasmBindgen as MmdWasmInstance).memory = memory;
-    (wasmBindgen as MmdWasmInstance).createTypedArray = createTypedArray;
+    if (memory.buffer instanceof ArrayBuffer) {
+        (wasmBindgen as MmdWasmInstance).createTypedArray = createTypedArray;
+    } else {
+        (wasmBindgen as MmdWasmInstance).createTypedArray = createSharedTypedArray;
+    }
 
     await wasmBindgen.initThreadPool(threadCount);
 

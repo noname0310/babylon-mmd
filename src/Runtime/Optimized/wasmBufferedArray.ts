@@ -1,12 +1,13 @@
+import type { IWasmTypedArray } from "./IWasmTypedArray";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
-import type { TypedArray, TypedArrayConstructor, WasmTypedArray } from "./wasmTypedArray";
+import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 
 /**
  * Wasm two-buffered array for multi-threading
  */
 export class WasmBufferedArray<T extends TypedArray> {
-    private _frontBuffer: WasmTypedArray<T>;
-    private _backBuffer: WasmTypedArray<T>;
+    private _frontBuffer: T;
+    private _backBuffer: T;
 
     /**
      * Create a new wasm buffered array
@@ -14,11 +15,11 @@ export class WasmBufferedArray<T extends TypedArray> {
      * @param backBuffer Back buffer
      */
     public constructor(
-        frontBuffer: WasmTypedArray<T>,
-        backBuffer?: WasmTypedArray<T>
+        frontBuffer: IWasmTypedArray<T>,
+        backBuffer?: IWasmTypedArray<T>
     ) {
-        this._frontBuffer = frontBuffer;
-        this._backBuffer = backBuffer ?? frontBuffer;
+        this._frontBuffer = frontBuffer.array;
+        this._backBuffer = backBuffer?.array ?? frontBuffer.array;
     }
 
     /**
@@ -27,8 +28,8 @@ export class WasmBufferedArray<T extends TypedArray> {
      * This method should be called once before starting multi-threading
      * @param backBuffer Back buffer
      */
-    public setBackBuffer(backBuffer: WasmTypedArray<T>): void {
-        this._backBuffer = backBuffer;
+    public setBackBuffer(backBuffer: IWasmTypedArray<T>): void {
+        this._backBuffer = backBuffer.array;
     }
 
     /**
@@ -46,14 +47,14 @@ export class WasmBufferedArray<T extends TypedArray> {
      * Get front buffer
      */
     public get frontBuffer(): T {
-        return this._frontBuffer.array;
+        return this._frontBuffer;
     }
 
     /**
      * Get back buffer
      */
     public get backBuffer(): T {
-        return this._backBuffer.array;
+        return this._backBuffer;
     }
 }
 
@@ -64,9 +65,9 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
     private readonly _data: WasmBufferedArray<T>;
 
     private _frontBufferPtr: number;
-    private _frontBufferSpan: WasmTypedArray<T>;
+    private _frontBufferSpan: T;
 
-    private _backBufferSpan: WasmTypedArray<T>;
+    private _backBufferSpan: T;
 
     /**
      * Create a new wasm buffered array span
@@ -88,14 +89,14 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
             data.frontBuffer.constructor as TypedArrayConstructor<T>,
             frontBufferPtr + byteOffset,
             length
-        );
+        ).array;
 
         const backBufferPtr = data.backBuffer.byteOffset;
         this._backBufferSpan = wasmInstance.createTypedArray(
             data.backBuffer.constructor as TypedArrayConstructor<T>,
             backBufferPtr + byteOffset,
             length
-        );
+        ).array;
     }
 
     /**
@@ -105,7 +106,7 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
      * @param wasmInstance MMD WASM instance
      */
     public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
-        const frontBufferSpan = this._frontBufferSpan.array;
+        const frontBufferSpan = this._frontBufferSpan;
 
         const byteOffset = frontBufferSpan.byteOffset - this._frontBufferPtr;
         const length = frontBufferSpan.length;
@@ -115,7 +116,7 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
             this._data.backBuffer.constructor as TypedArrayConstructor<T>,
             backBufferPtr + byteOffset,
             length
-        );
+        ).array;
     }
 
     /**
@@ -129,6 +130,6 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
             this._backBufferSpan = this._frontBufferSpan;
             this._frontBufferSpan = temp;
         }
-        return this._frontBufferSpan.array;
+        return this._frontBufferSpan;
     }
 }

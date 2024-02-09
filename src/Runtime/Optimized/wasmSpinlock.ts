@@ -1,17 +1,17 @@
-import type { WasmTypedArray } from "./wasmTypedArray";
+import type { IWasmTypedArray } from "./IWasmTypedArray";
 
 /**
  * Spinlock for WASM runtime synchronization
  */
 export class WasmSpinlock {
-    private readonly _lock: WasmTypedArray<Uint8Array>;
+    private readonly _lock: Uint8Array;
 
     /**
      * Creates a new WasmSpinlock with the 1 byte length lock array
      * @param lock Lock array
      */
-    public constructor(lock: WasmTypedArray<Uint8Array>) {
-        this._lock = lock;
+    public constructor(lock: IWasmTypedArray<Uint8Array>) {
+        this._lock = lock.array;
     }
 
     /**
@@ -21,7 +21,7 @@ export class WasmSpinlock {
         const lock = this._lock;
         let locked = false;
         const lockStartTime = performance.now();
-        while (lock.array[0] !== 0) {
+        while (lock[0] !== 0) {
             locked = true;
             // spin
         }

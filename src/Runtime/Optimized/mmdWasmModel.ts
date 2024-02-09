@@ -23,12 +23,12 @@ import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
 import type { MmdPhysics, MmdPhysicsModel } from "../mmdPhysics";
 import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
+import type { IWasmTypedArray } from "./IWasmTypedArray";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
 import { WasmBufferedArray } from "./wasmBufferedArray";
-import type { WasmTypedArray } from "./wasmTypedArray";
 
 type RuntimeModelAnimation = MmdWasmRuntimeModelAnimation | MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
@@ -78,7 +78,7 @@ export class MmdWasmModel implements IMmdModel {
         return this._worldTransformMatrices.frontBuffer;
     }
 
-    private readonly _boneAnimationStates: WasmTypedArray<Float32Array>;
+    private readonly _boneAnimationStates: IWasmTypedArray<Float32Array>;
 
     /**
      * Wasm side bone animation states. this value is automatically synchronized with `MmdWasmModel.skeleton` on `MmdWasmModel.beforePhysics()` stage
@@ -92,7 +92,7 @@ export class MmdWasmModel implements IMmdModel {
         return this._boneAnimationStates.array;
     }
 
-    private readonly _ikSolverStates: WasmTypedArray<Uint8Array>;
+    private readonly _ikSolverStates: IWasmTypedArray<Uint8Array>;
 
     /**
      * Uint8Array that stores the state of IK solvers

@@ -1,3 +1,5 @@
+import type { IWasmTypedArray } from "./IWasmTypedArray";
+
 /**
  * Typed array
  */
@@ -13,7 +15,7 @@ export type TypedArrayConstructor<T extends TypedArray> = {
 /**
  * Safe typed array pointer for WASM
  */
-export class WasmTypedArray<T extends TypedArray> {
+export class WasmTypedArray<T extends TypedArray> implements IWasmTypedArray<T> {
     private readonly _memory: WebAssembly.Memory;
     private readonly _byteOffset: number;
     private readonly _length: number;

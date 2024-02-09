@@ -1,7 +1,7 @@
 import type { IMmdAnimationTrack, IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
 
+import type { IWasmTypedArray } from "../IWasmTypedArray";
 import type { MmdWasmInstance } from "../mmdWasmInstance";
-import type { WasmTypedArray } from "../wasmTypedArray";
 
 /**
  * MMD WASM animation track base class
@@ -17,7 +17,7 @@ export abstract class MmdWasmAnimationTrack implements IMmdAnimationTrack {
      */
     public readonly name: string;
 
-    private readonly _frameNumbers: WasmTypedArray<Uint32Array>;
+    private readonly _frameNumbers: IWasmTypedArray<Uint32Array>;
 
     /**
      * Frame numbers of this track
@@ -81,7 +81,7 @@ export abstract class MmdWasmAnimationTrack implements IMmdAnimationTrack {
  * Contains bone rotation and rotation cubic interpolation data
  */
 export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements IMmdBoneAnimationTrack {
-    private readonly _rotations: WasmTypedArray<Float32Array>;
+    private readonly _rotations: IWasmTypedArray<Float32Array>;
 
     /**
      * Bone rotation data in quaternion
@@ -96,7 +96,7 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
         return this._rotations.array;
     }
 
-    private readonly _rotationInterpolations: WasmTypedArray<Uint8Array>;
+    private readonly _rotationInterpolations: IWasmTypedArray<Uint8Array>;
 
     /**
      * Rotation cubic interpolation data
@@ -141,7 +141,7 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
  * Contains bone position, rotation and position/rotation cubic interpolation data
  */
 export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack implements IMmdMovableBoneAnimationTrack {
-    private readonly _positions: WasmTypedArray<Float32Array>;
+    private readonly _positions: IWasmTypedArray<Float32Array>;
 
     /**
      * Bone position data in vector3
@@ -156,7 +156,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
         return this._positions.array;
     }
 
-    private readonly _positionInterpolations: WasmTypedArray<Uint8Array>;
+    private readonly _positionInterpolations: IWasmTypedArray<Uint8Array>;
 
     /**
      * Position cubic interpolation data
@@ -171,7 +171,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
         return this._positionInterpolations.array;
     }
 
-    private readonly _rotations: WasmTypedArray<Float32Array>;
+    private readonly _rotations: IWasmTypedArray<Float32Array>;
 
     /**
      * Bone rotation data in quaternion
@@ -186,7 +186,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
         return this._rotations.array;
     }
 
-    private readonly _rotationInterpolations: WasmTypedArray<Uint8Array>;
+    private readonly _rotationInterpolations: IWasmTypedArray<Uint8Array>;
 
     /**
      * Rotation cubic interpolation data
@@ -240,7 +240,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
  * Weight data will be linear interpolated so there is no interpolation data
  */
 export class MmdWasmMorphAnimationTrack extends MmdWasmAnimationTrack implements IMmdMorphAnimationTrack {
-    private readonly _weights: WasmTypedArray<Float32Array>;
+    private readonly _weights: IWasmTypedArray<Float32Array>;
 
     /**
      * Morph weight data
@@ -302,7 +302,7 @@ export class MmdWasmPropertyAnimationTrack extends MmdWasmAnimationTrack impleme
      */
     public readonly ikBoneNames: readonly string[];
 
-    private readonly _ikStates: WasmTypedArray<Uint8Array>[];
+    private readonly _ikStates: IWasmTypedArray<Uint8Array>[];
 
     /**
      * Create a new `MmdPropertyAnimationTrack` instance

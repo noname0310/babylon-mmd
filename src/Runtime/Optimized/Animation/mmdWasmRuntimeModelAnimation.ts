@@ -7,9 +7,9 @@ import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
+import type { IWasmTypedArray } from "../IWasmTypedArray";
 import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmMorphController } from "../mmdWasmMorphController";
-import type { WasmTypedArray } from "../wasmTypedArray";
 import { MmdWasmAnimation } from "./mmdWasmAnimation";
 
 type MorphIndices = readonly number[];
@@ -34,7 +34,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      */
     public readonly animation: MmdWasmAnimation;
 
-    private readonly _boneBindIndexMap: WasmTypedArray<Int32Array>;
+    private readonly _boneBindIndexMap: IWasmTypedArray<Int32Array>;
 
     /**
      * Bone bind index map
@@ -43,7 +43,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         return this._boneBindIndexMap.array;
     }
 
-    private readonly _movableBoneBindIndexMap: WasmTypedArray<Int32Array>;
+    private readonly _movableBoneBindIndexMap: IWasmTypedArray<Int32Array>;
 
     /**
      * Movable bone bind index map
@@ -61,7 +61,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 
     private readonly _meshes: readonly Mesh[];
 
-    private readonly _ikSolverBindIndexMap: WasmTypedArray<Int32Array>;
+    private readonly _ikSolverBindIndexMap: IWasmTypedArray<Int32Array>;
 
     /**
      * IK solver bind index map
@@ -76,12 +76,12 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         ptr: number,
         modelPtr: number,
         animation: MmdWasmAnimation,
-        boneBindIndexMap: WasmTypedArray<Int32Array>,
-        movableBoneBindIndexMap: WasmTypedArray<Int32Array>,
+        boneBindIndexMap: IWasmTypedArray<Int32Array>,
+        movableBoneBindIndexMap: IWasmTypedArray<Int32Array>,
         morphController: MmdWasmMorphController,
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
-        ikSolverBindIndexMap: WasmTypedArray<Int32Array>,
+        ikSolverBindIndexMap: IWasmTypedArray<Int32Array>,
         materialRecompileInduceInfo: Material[],
         onDispose: () => void
     ) {
@@ -127,10 +127,10 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
     /**
      * Run wasm side animation evaluation
      *
+     * Update bone / bone morphs / ik solver state
+     *
      * IMPORTANT: when wasm runtime using buffered evaluation, this method must be called before waiting for the WasmMmdRuntime.lock
      * otherwise, it can cause a datarace
-     *
-     * Update bone / bone morphs / ik solver state
      * @param frameTime Frame time in 30fps
      */
     public wasmAnimate(frameTime: number): void {
