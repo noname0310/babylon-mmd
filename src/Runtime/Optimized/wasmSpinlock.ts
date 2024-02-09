@@ -4,21 +4,21 @@ import type { IWasmTypedArray } from "./IWasmTypedArray";
  * Spinlock for WASM runtime synchronization
  */
 export class WasmSpinlock {
-    private readonly _lock: Uint8Array;
+    private readonly _lock: IWasmTypedArray<Uint8Array>;
 
     /**
      * Creates a new WasmSpinlock with the 1 byte length lock array
      * @param lock Lock array
      */
     public constructor(lock: IWasmTypedArray<Uint8Array>) {
-        this._lock = lock.array;
+        this._lock = lock;
     }
 
     /**
      * waits for the lock to be released
      */
     public wait(): void {
-        const lock = this._lock;
+        const lock = this._lock.array;
         let locked = false;
         const lockStartTime = performance.now();
         while (lock[0] !== 0) {
