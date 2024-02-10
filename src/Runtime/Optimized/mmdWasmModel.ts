@@ -580,18 +580,44 @@ export class MmdWasmModel implements IMmdModel {
     }
 
     private _resetPose(): void {
-        const sortedBones = this._sortedRuntimeBones;
-
         const position = new Vector3();
-        const identityRotation = Quaternion.Identity();
+        if ((this._currentAnimation as MmdWasmRuntimeModelAnimation)?.wasmAnimate === undefined) {
+            const sortedBones = this._sortedRuntimeBones;
+            const identityRotation = Quaternion.Identity();
 
-        for (let i = 0; i < sortedBones.length; ++i) {
-            const bone = sortedBones[i].linkedBone;
-            bone.getRestMatrix().getTranslationToRef(position);
+            for (let i = 0; i < sortedBones.length; ++i) {
+                const bone = sortedBones[i].linkedBone;
+                bone.getRestMatrix().getTranslationToRef(position);
 
-            bone.position = position;
-            bone.setRotationQuaternion(identityRotation, Space.LOCAL);
+                bone.position = position;
+                bone.setRotationQuaternion(identityRotation, Space.LOCAL);
+            }
+        } else {
+            this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
+
+            const bones = this.skeleton.bones;
+            const boneAnimationStates = this.boneAnimationStates;
+            for (let i = 0; i < bones.length; ++i) {
+                const bone = bones[i];
+                const boneAnimationStateIndex = i * 12;
+                const { x, y, z } = bone.getRestMatrix().getTranslationToRef(position);
+                boneAnimationStates[boneAnimationStateIndex + 0] = x;
+                boneAnimationStates[boneAnimationStateIndex + 1] = y;
+                boneAnimationStates[boneAnimationStateIndex + 2] = z;
+
+                // rotation
+                boneAnimationStates[boneAnimationStateIndex + 4] = 0;
+                boneAnimationStates[boneAnimationStateIndex + 5] = 0;
+                boneAnimationStates[boneAnimationStateIndex + 6] = 0;
+                boneAnimationStates[boneAnimationStateIndex + 7] = 1;
+
+                // scale
+                boneAnimationStates[boneAnimationStateIndex + 8] = 1;
+                boneAnimationStates[boneAnimationStateIndex + 9] = 1;
+                boneAnimationStates[boneAnimationStateIndex + 10] = 1;
+            }
         }
+
         this.mesh.metadata.skeleton._markAsDirty();
     }
 
