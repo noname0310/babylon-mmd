@@ -341,12 +341,12 @@ export class MmdWasmModel implements IMmdModel {
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) {
+            this._resetPose();
             if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
                 this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
             }
             this._currentAnimation = null;
-            this._resetPose();
             this.onCurrentAnimationChangedObservable.notifyObservers(null);
         }
 
@@ -364,12 +364,12 @@ export class MmdWasmModel implements IMmdModel {
     public setAnimation(name: Nullable<string>, updateMorphTarget = true): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
+                this._resetPose();
                 if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
                     this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
                     this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, 0);
                 }
                 this._currentAnimation = null;
-                this._resetPose();
                 this.onCurrentAnimationChangedObservable.notifyObservers(null);
             }
             return;
