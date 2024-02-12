@@ -81,7 +81,7 @@ export class SceneBuilder implements ISceneBuilder {
             ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
                 const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
                     ["runtime", async(): Promise<MmdWasmInstance> => {
-                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmDebugInstanceType());
+                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmDebugInstanceType(), 1);
                         return mmdWasmInstance;
                     }],
                     ["motion", (): Promise<MmdAnimation> => {

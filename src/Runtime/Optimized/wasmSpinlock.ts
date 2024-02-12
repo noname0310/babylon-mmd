@@ -27,9 +27,7 @@ export class WasmSpinlock {
         }
         if (locked) {
             const lockTime = performance.now() - lockStartTime;
-            if (lockTime > 1) {
-                console.log(`Spinlock wait time: ${lockTime}ms`);
-            }
+            console.trace(`Spinlock wait time: ${lockTime}ms`);
         }
     }
 }

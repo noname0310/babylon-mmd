@@ -167,17 +167,15 @@ impl MmdRuntime {
     }
 
     #[wasm_bindgen(js_name = "swapWorldMatrixBuffer")]
-    pub fn swap_world_matrix_buffer(&mut self, ptr: *mut usize) {
-        let ptr = ptr as *mut MmdModel;
-        let bone_arena = unsafe {
-            &mut *ptr
-        }.bone_arena_mut();
-        bone_arena.swap_buffer();
+    pub fn swap_world_matrix_buffer(&mut self) {
+        for mmd_model in &mut self.mmd_models {
+            mmd_model.bone_arena_mut().swap_buffer();
+        }
     }
 
     #[cfg(feature = "parallel")]
     #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
-    pub fn buffered_before_physics(mmd_runtime: *mut usize, frame_time: Option<f32>) {
+    pub fn buffered_before_physics(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
@@ -190,7 +188,7 @@ impl MmdRuntime {
 
     #[cfg(feature = "parallel")]
     #[wasm_bindgen(js_name = "bufferedUpdate")]
-    pub fn buffered_update(mmd_runtime: *mut usize, frame_time: Option<f32>) {
+    pub fn buffered_update(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };

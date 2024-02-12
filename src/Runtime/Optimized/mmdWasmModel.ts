@@ -643,4 +643,12 @@ export class MmdWasmModel implements IMmdModel {
             }
         }
     }
+
+    /**
+     * @internal
+     * swap the front and back buffer of the world transform matrices
+     */
+    public swapWorldTransformMatricesBuffer(): void {
+        this._worldTransformMatrices.swap();
+    }
 }
