@@ -67,7 +67,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public readonly lock: WasmSpinlock;
 
     private _usingWasmBackBuffer: boolean;
-    private _lastRequestAnimationFrameTime: number;
+    private _lastRequestAnimationFrameTime: Nullable<number>;
 
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
     private readonly _physics: Nullable<MmdPhysics>;
@@ -142,7 +142,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         this.lock = new WasmSpinlock(wasmInstance.createTypedArray(Uint8Array, this.wasmInternal.getLockStatePtr(), 1));
         this._usingWasmBackBuffer = false;
-        this._lastRequestAnimationFrameTime = NaN;
+        this._lastRequestAnimationFrameTime = null;
 
         this._mmdMetadataEncoder = new MmdMetadataEncoder();
         this._physics = physics;
@@ -463,17 +463,28 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             const models = this._models;
             // evaluate vertex / uv animations on javascript side
             // they can't be buffered
-            for (let i = 0; i < models.length; ++i) {
-                const model = models[i];
-                if ((model.currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
-                    models[i].beforePhysicsAndWasm(elapsedFrameTime);
+            {
+                const lastRequestAnimationFrameTime = this._lastRequestAnimationFrameTime ?? elapsedFrameTime;
+
+                for (let i = 0; i < models.length; ++i) {
+                    const model = models[i];
+                    if ((model.currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                        models[i].beforePhysicsAndWasm(lastRequestAnimationFrameTime);
+                    }
+                }
+
+                if (lastRequestAnimationFrameTime !== null) {
+                    if (this._camera !== null) {
+                        this._camera.animate(lastRequestAnimationFrameTime);
+                    }
                 }
             }
 
             if (this.wasmInstance.MmdRuntime.bufferedUpdate === undefined) { // single thread environment fallback
-                this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
+                this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime ?? undefined);
                 this.wasmInternal.afterPhysics();
             }
+
             this.lock.wait(); // ensure that the runtime is not evaluating animations
 
             // desync buffer
@@ -483,7 +494,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             // if there is no previous evaluated frame time, evaluate animation synchronously
-            if (isNaN(this._lastRequestAnimationFrameTime) && elapsedFrameTime !== null) {
+            if (this._lastRequestAnimationFrameTime == null && elapsedFrameTime !== null) {
                 // evaluate animations on javascript side
                 for (let i = 0; i < models.length; ++i) {
                     const model = models[i];
@@ -515,7 +526,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             // compute world matrix on wasm side asynchronously
             this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
-            this._lastRequestAnimationFrameTime = elapsedFrameTime ?? NaN;
+            this._lastRequestAnimationFrameTime = elapsedFrameTime;
 
             // physics initialization must be buffered 1 frame
             const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
@@ -540,7 +551,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
                 this.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._usingWasmBackBuffer = false;
-                this._lastRequestAnimationFrameTime = NaN;
+                this._lastRequestAnimationFrameTime = null;
                 this.wasmInternal.swapWorldMatrixBuffer();
             }
 
@@ -554,12 +565,15 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 model.initializePhysics();
             }
             needToInitializePhysicsModels.clear();
+
+            if (elapsedFrameTime !== null) {
+                if (this._camera !== null) {
+                    this._camera.animate(elapsedFrameTime);
+                }
+            }
         }
 
         if (elapsedFrameTime !== null) {
-            if (this._camera !== null) {
-                this._camera.animate(elapsedFrameTime);
-            }
             this.onAnimationTickObservable.notifyObservers();
         }
     }
