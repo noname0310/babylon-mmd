@@ -3,6 +3,7 @@ import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
@@ -10,12 +11,12 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import havokPhysics from "@babylonjs/havok";
 
+// import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
@@ -24,9 +25,9 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
-import { MmdPhysics } from "@/Runtime/mmdPhysics";
+// import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
-import { MmdWasmDebugInstanceType } from "@/Runtime/Optimized/InstanceType/debug";
+import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -70,7 +71,7 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
 
         const [
-            [mmdRuntime, mmdAnimation],
+            [mmdRuntime, mmdAnimation, mmdWasmAnimation],
             modelMesh1,
             modelMesh2,
             modelMesh3,
@@ -78,10 +79,10 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh5,
             stageMesh
         ] = await parallelLoadAsync(scene, [
-            ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdWasmAnimation]> => {
+            ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdAnimation, MmdWasmAnimation]> => {
                 const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
                     ["runtime", async(): Promise<MmdWasmInstance> => {
-                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmDebugInstanceType(), 1);
+                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMD());
                         return mmdWasmInstance;
                     }],
                     ["motion", (): Promise<MmdAnimation> => {
@@ -93,7 +94,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
 
-                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
+                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene);//, new MmdPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
                 mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
@@ -105,7 +106,7 @@ export class SceneBuilder implements ISceneBuilder {
                 mmdRuntime.register(scene);
                 await mmdRuntime.playAnimation();
 
-                return [mmdRuntime, mmdWasmAnimation];
+                return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
             ["model1", (updateProgress): Promise<MmdMesh> => {
                 pmxLoader.boundingBoxMargin = 60;
@@ -168,14 +169,14 @@ export class SceneBuilder implements ISceneBuilder {
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["physics", async(updateProgress): Promise<void> => {
-                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const havokInstance = await havokPhysics();
-                const havokPlugin = new HavokPlugin(true, havokInstance);
-                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
+            // ["physics", async(updateProgress): Promise<void> => {
+            //     updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+            //     const havokInstance = await havokPhysics();
+            //     const havokPlugin = new HavokPlugin(true, havokInstance);
+            //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+            //     updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            // }]
         ]);
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
@@ -191,7 +192,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh1, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(mmdAnimation);
+        mmdModel.addAnimation(mmdWasmAnimation);
         mmdModel.setAnimation("motion");
 
         {
@@ -203,7 +204,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel2 = mmdRuntime.createMmdModel(modelMesh2, {
                 buildPhysics: true
             });
-            mmdModel2.addAnimation(mmdAnimation);
+            mmdModel2.addAnimation(mmdWasmAnimation);
             mmdModel2.setAnimation("motion");
 
             for (const mesh of modelMesh3.metadata.meshes) mesh.receiveShadows = true;
@@ -214,7 +215,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel3 = mmdRuntime.createMmdModel(modelMesh3, {
                 buildPhysics: true
             });
-            mmdModel3.addAnimation(mmdAnimation);
+            mmdModel3.addAnimation(mmdWasmAnimation);
             mmdModel3.setAnimation("motion");
 
             for (const mesh of modelMesh4.metadata.meshes) mesh.receiveShadows = true;
@@ -225,7 +226,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel4 = mmdRuntime.createMmdModel(modelMesh4, {
                 buildPhysics: true
             });
-            mmdModel4.addAnimation(mmdAnimation);
+            mmdModel4.addAnimation(mmdWasmAnimation);
             mmdModel4.setAnimation("motion");
 
             for (const mesh of modelMesh5.metadata.meshes) mesh.receiveShadows = true;

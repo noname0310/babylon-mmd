@@ -11,13 +11,13 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["console_error_panic_hook", "parallel"]
-parallel = ["dep:rayon", "dep:wasm-bindgen-rayon"]
+parallel = ["rayon", "wasm-bindgen-rayon"]
 
 [profile.release]
 opt-level = 3
 
 [profile.dev]
-opt-level = 0
+opt-level = 3
 
 [dependencies]
 wasm-bindgen = "0.2.91"

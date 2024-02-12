@@ -71,7 +71,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         // }),
         new wasmPackPlugin({
             crateDirectory: path.resolve(__dirname, "src/Runtime/Optimized/wasm_src"),
-            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm_debug"),
+            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm/md"),
             outName: "index",
             extraArgs: "--target web",
             forceMode: "development"

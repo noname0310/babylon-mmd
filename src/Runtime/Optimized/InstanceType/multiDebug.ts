@@ -1,7 +1,7 @@
 import type { MmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
-import * as wasmBindgen from "../wasm_debug";
+import * as wasmBindgen from "../wasm/md";
 
-export class MmdWasmDebugInstanceType implements MmdWasmInstanceType {
+export class MmdWasmInstanceTypeMD implements MmdWasmInstanceType {
     public getWasmInstanceInner(): MmdWasmType {
         return wasmBindgen as MmdWasmType;
     }

@@ -35,7 +35,9 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
     /**
      * Buffered animation evaluation for the next frame
      *
-     * Multi-thread optimization applies when possible
+     * Asynchronous Multi-thread optimization applies when possible
+     *
+     * If you are using havok physics, all matrix computations are computed before the physics stage (the transformAfterPhysics property is ignored)
      */
     Buffered
 }
@@ -468,6 +470,10 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 }
             }
 
+            if (this.wasmInstance.MmdRuntime.bufferedUpdate === undefined) { // single thread environment fallback
+                this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
+                this.wasmInternal.afterPhysics();
+            }
             this.lock.wait(); // ensure that the runtime is not evaluating animations
 
             // desync buffer
@@ -499,7 +505,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 model.beforePhysics(); // sync body to bone
             }
 
-            // evaluate animations on javascript side
+            // update bone animation state on javascript side
             for (let i = 0; i < models.length; ++i) {
                 const model = models[i];
                 if ((model.currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate === undefined) {
@@ -508,7 +514,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             // compute world matrix on wasm side asynchronously
-            this.wasmInstance.MmdRuntime.bufferedUpdate(this.wasmInternal, elapsedFrameTime ?? undefined);
+            this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
             this._lastRequestAnimationFrameTime = elapsedFrameTime ?? NaN;
 
             // physics initialization must be buffered 1 frame
@@ -526,8 +532,15 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         } else {
             // sync buffer
             if (this._usingWasmBackBuffer === true) {
+                const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
+                const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                for (let i = 0; i < needToInitializePhysicsModelsBuffer.length; ++i) {
+                    needToInitializePhysicsModels.add(needToInitializePhysicsModelsBuffer[i]);
+                }
+
                 this.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._usingWasmBackBuffer = false;
+                this._lastRequestAnimationFrameTime = NaN;
                 this.wasmInternal.swapWorldMatrixBuffer();
             }
 
@@ -556,7 +569,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public afterPhysics(): void {
         const models = this._models;
-        if (this._evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+        if (this._usingWasmBackBuffer) {
             for (let i = 0; i < models.length; ++i) {
                 const model = models[i];
                 model.afterPhysicsAndWasm();

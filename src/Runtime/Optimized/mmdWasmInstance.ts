@@ -4,7 +4,7 @@ import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 import { WasmTypedArray } from "./wasmTypedArray";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-export type MmdWasmType = typeof import("./wasm") | typeof import("./wasm_debug");
+export type MmdWasmType = typeof import("./wasm/mr") | typeof import("./wasm/md") | typeof import("./wasm/sr") | typeof import("./wasm/sd");
 
 /**
  * MMD WASM instance
@@ -56,7 +56,7 @@ export async function getMmdWasmInstance(
         (wasmBindgen as MmdWasmInstance).createTypedArray = createSharedTypedArray;
     }
 
-    await wasmBindgen.initThreadPool(threadCount);
+    await wasmBindgen.initThreadPool?.(threadCount);
 
     return wasmBindgen as MmdWasmInstance;
 }
