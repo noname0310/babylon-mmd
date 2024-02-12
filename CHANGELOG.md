@@ -8,6 +8,8 @@
 - morph target recompliation problem fixed
     - see https://github.com/BabylonJS/Babylon.js/issues/14008
 
+- introduce WASM threaded runtime `MmdWasmInstanceTypeMD` / `MmdWasmInstanceTypeMR`
+
 ## 0.36.6
 
 - remove rust bound check in `MmdWasmRuntime` for better performance
