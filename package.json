@@ -5,8 +5,8 @@
     "main": "esm/index.js",
     "scripts": {
         "start": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack serve --mode development",
-        "watch": "webpack --watch",
-        "build": "webpack --env production",
+        "watch": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --watch",
+        "build": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --env production",
         "build-wasm-sr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/sr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128\"                                        wasm-pack build --target web --release --out-dir ../wasm/sr --out-name index -- --no-default-features && cd ../../../..",
         "build-wasm-sd": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/sd && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128\"                                        wasm-pack build --target web --debug   --out-dir ../wasm/sd --out-name index -- --no-default-features --features \"console_error_panic_hook\" && cd ../../../..",
         "build-wasm-mr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/mr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --release --out-dir ../wasm/mr --out-name index -- --no-default-features --features \"parallel\" && cd ../../../..",
