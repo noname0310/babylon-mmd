@@ -78,7 +78,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         })
     ].concat(env.production ? [
         new compressionWebpackPlugin({
-            test: /\.(js|bvmd|bpmx)$/i
+            test: /\.(js|wasm|bvmd|bpmx)$/i,
         }) as any
     ] : []),
     devServer: {
