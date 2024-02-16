@@ -132,6 +132,8 @@ export interface IMmdPropertyAnimationTrack extends IMmdAnimationTrack {
      * The IK state data must be sorted by frame number in ascending order
      *
      * Repr: [..., ikState, ...]
+     * @param n Ik bone index
+     * @returns IK state key frame values
      */
     getIkState(index: number): Uint8Array;
 }

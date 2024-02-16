@@ -240,6 +240,12 @@ export class TextureAlphaChecker {
         return scene._textureAlphaCheckerShader;
     }
 
+    /**
+     * Dispose the texture alpha checker shader from the scene
+     *
+     * If you are no longer loading the mmd model, it will be helpful for your memory to call this method and dispose the shader
+     * @param scene Scene
+     */
     public static DisposeShader(scene: Scene): void {
         scene._textureAlphaCheckerShader?.dispose();
         scene._textureAlphaCheckerShader = null;

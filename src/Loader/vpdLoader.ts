@@ -45,6 +45,7 @@ export class VpdLoader {
      * Load MMD animation data from VPD object
      * @param name Animation name
      * @param vpdObject VPD object
+     * @returns MMD animation data
      */
     public loadFromVpdObject(
         name: string,

@@ -342,6 +342,8 @@ export class MmdWasmPropertyAnimationTrack extends MmdWasmAnimationTrack impleme
      * Repr: [..., ikState, ...]
      *
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
+     * @param n Ik bone index
+     * @returns IK state key frame values
      */
     public getIkState(n: number): Uint8Array {
         return this._ikStates[n].array;

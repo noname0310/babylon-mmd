@@ -4,6 +4,7 @@
  * @param y normalized tangent y [0..=1]
  * @param frameDelta x distance between the frame, must be >= 0
  * @param valueDelta y distance between the value
+ * @returns hermite tangent value
  */
 export function computeHermiteTangent(x: number, y: number, frameDelta: number, valueDelta: number): number {
     let tangent;

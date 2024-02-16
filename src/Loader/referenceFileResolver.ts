@@ -73,6 +73,11 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
         }
     }
 
+    /**
+     * Create full path from relative path for resolve the file
+     * @param relativePath Relative path
+     * @returns Full path
+     */
     public createFullPath(relativePath: string): string {
         return this._fileRootId + pathNormalize(relativePath);
     }

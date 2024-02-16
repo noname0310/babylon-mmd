@@ -477,6 +477,8 @@ export class MmdPropertyAnimationTrack extends MmdAnimationTrack implements IMmd
      * The IK state data must be sorted by frame number in ascending order
      *
      * Repr: [..., ikState, ...]
+     * @param n Ik bone index
+     * @returns IK state key frame values
      */
     public getIkState(n: number): Uint8Array {
         return this._ikStates[n];

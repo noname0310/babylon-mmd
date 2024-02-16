@@ -47,6 +47,7 @@ export interface IMmdMaterialBuilder {
      * @param logger Logger
      * @param onTextureLoadProgress Texture load progress callback
      * @param onTextureLoadComplete Texture load complete callback
+     * @returns Created materials or promise of created materials
      */
     buildMaterials(
         uniqueId: number,

@@ -20,6 +20,7 @@ export interface MmdWasmInstance extends MmdWasmType {
 export interface MmdWasmInstanceType {
     /**
      * Get MMD wasm-bindgen instance
+     * @returns MMD wasm-bindgen instance
      */
     getWasmInstanceInner(): MmdWasmType;
 }

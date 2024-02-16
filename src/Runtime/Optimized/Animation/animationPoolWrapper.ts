@@ -16,10 +16,16 @@ export class AnimationPoolWrapper {
         this._referenceCount = 0;
     }
 
+    /**
+     * @internal
+     */
     public addReference(): void {
         this._referenceCount += 1;
     }
 
+    /**
+     * @internal
+     */
     public removeReference(): void {
         this._referenceCount -= 1;
         if (this._referenceCount == 0) {

@@ -102,6 +102,7 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * If you set up audio Player while playing an animation, it try to play the audio from the current animation time
      * And returns Promise because this operation is asynchronous. In most cases, you don't have to await this Promise
      * @param audioPlayer Audio player
+     * @returns Promise
      */
     setAudioPlayer(audioPlayer: Nullable<IPlayer>): Promise<void>;
 
@@ -139,6 +140,7 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * If audio player is set, it try to play the audio from the current animation time
      *
      * It returns Promise because playing audio is asynchronous
+     * @returns Promise
      */
     playAnimation(): Promise<void>;
 
@@ -150,9 +152,12 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     /**
      * Seek animation to the specified frame time
      *
-     * If you set forceEvaluate true, the animation is evaluated even if the animation is not playing.
+     * If you set forceEvaluate true, the animation is evaluated even if the animation is not playing
+     *
+     * If audio player is set and not paused, it try to play the audio from the seek time so it returns Promise
      * @param frameTime Time in 30fps frame
      * @param forceEvaluate Whether to force evaluate animation
+     * @returns Promise
      */
     seekAnimation(frameTime: number, forceEvaluate: boolean): Promise<void>;
 

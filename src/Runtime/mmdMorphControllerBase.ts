@@ -180,13 +180,11 @@ export abstract class MmdMorphControllerBase {
      *
      * The index array is returned because multiple morphs can have the same name
      * @param morphName Name of the morph
-     * @returns
+     * @returns Indices of the morph
      */
     public getMorphIndices(morphName: string): readonly number[] | undefined {
         const morphIndexMap = this._morphIndexMap;
         const morphIndices = morphIndexMap.get(morphName);
-        if (morphIndices === undefined) return undefined;
-
         return morphIndices;
     }
 

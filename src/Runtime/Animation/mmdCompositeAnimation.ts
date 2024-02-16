@@ -108,6 +108,7 @@ export class MmdAnimationSpan {
     /**
      * Get the eased weight of this span
      * @param frameTime frame time in this span
+     * @returns Returns the eased weight of this span
      */
     public getEasedWeight(frameTime: number): number {
         const startFrame = this.startFrame;
