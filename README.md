@@ -20,7 +20,7 @@ Camera: https://www.nicovideo.jp/watch/sm36273873
 
 ### https://playground.babylonjs.com/#028YR6#6 - JavaScript Runtime (stable)
 
-### https://playground.babylonjs.com/#ZAKYTJ - Web-Assembly Runtime (experimental)
+### https://playground.babylonjs.com/#MY96ZK - Web-Assembly Runtime (experimental)
 
 Music: [メランコリ・ナイト](https://youtu.be/y__uZETTuL8)
 
