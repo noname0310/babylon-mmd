@@ -329,7 +329,7 @@ export class MmdWasmModel implements IMmdModel {
     private _removeAnimationByReference(animation: RuntimeModelAnimation): void {
         const index = this._animations.indexOf(animation);
         if (index === -1) return;
-        this.removeAnimation(index);
+        this._removeAnimation(index, true);
     }
 
     /**
@@ -339,7 +339,13 @@ export class MmdWasmModel implements IMmdModel {
      * @param index The index of the animation to remove
      */
     public removeAnimation(index: number): void {
+        this._removeAnimation(index, false);
+    }
+
+    private _removeAnimation(index: number, fromDisposeEvent: boolean): void {
         const animation = this._animations[index];
+        if (animation === undefined) return;
+
         if (this._currentAnimation === animation) {
             this._resetPose();
             if ((this._currentAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
@@ -352,7 +358,9 @@ export class MmdWasmModel implements IMmdModel {
 
         this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
-        (animation as IMmdRuntimeModelAnimation).dispose?.();
+        if (!fromDisposeEvent) {
+            (animation as IMmdRuntimeModelAnimation).dispose?.();
+        }
     }
 
     /**

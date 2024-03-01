@@ -117,11 +117,12 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
+        this._onDispose();
+        this._onDispose = null;
+
         const animationPool = this.animation._poolWrapper.pool;
         animationPool.destroyRuntimeAnimation(this.ptr);
 
-        this._onDispose();
-        this._onDispose = null;
     }
 
     /**

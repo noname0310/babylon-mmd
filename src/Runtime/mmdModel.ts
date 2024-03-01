@@ -256,6 +256,8 @@ export class MmdModel implements IMmdModel {
      */
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
+        if (animation === undefined) return;
+
         if (this._currentAnimation === animation) {
             this._currentAnimation = null;
             this._resetPose();
