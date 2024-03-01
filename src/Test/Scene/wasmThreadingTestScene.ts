@@ -11,12 +11,12 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import havokPhysics from "@babylonjs/havok";
 
-// import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
@@ -25,7 +25,7 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
-// import { MmdPhysics } from "@/Runtime/mmdPhysics";
+import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
@@ -94,7 +94,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
 
-                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene);//, new MmdPhysics(scene));
+                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
                 mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
@@ -169,14 +169,14 @@ export class SceneBuilder implements ISceneBuilder {
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
+            }],
+            ["physics", async(updateProgress): Promise<void> => {
+                updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+                const havokInstance = await havokPhysics();
+                const havokPlugin = new HavokPlugin(true, havokInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
-            // ["physics", async(updateProgress): Promise<void> => {
-            //     updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-            //     const havokInstance = await havokPhysics();
-            //     const havokPlugin = new HavokPlugin(true, havokInstance);
-            //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
-            //     updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
-            // }]
         ]);
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
@@ -226,7 +226,7 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel4 = mmdRuntime.createMmdModel(modelMesh4, {
                 buildPhysics: true
             });
-            mmdModel4.addAnimation(mmdWasmAnimation);
+            mmdModel4.addAnimation(mmdAnimation);
             mmdModel4.setAnimation("motion");
 
             for (const mesh of modelMesh5.metadata.meshes) mesh.receiveShadows = true;
@@ -234,18 +234,20 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh5.parent = mmdRoot;
             modelMesh5.position.x = -20;
 
-            const mmdModel5 = mmdRuntime.createMmdModel(modelMesh5, {
-                buildPhysics: true
+            setTimeout(() => {
+                const mmdModel5 = mmdRuntime.createMmdModel(modelMesh5, {
+                    buildPhysics: true
+                });
+                mmdModel5.addAnimation(mmdWasmAnimation);
+                mmdModel5.setAnimation("motion");
+                scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
             });
-            mmdModel5.addAnimation(mmdAnimation);
-            mmdModel5.setAnimation("motion");
         }
 
         attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
 
         for (const mesh of stageMesh.metadata.meshes) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;

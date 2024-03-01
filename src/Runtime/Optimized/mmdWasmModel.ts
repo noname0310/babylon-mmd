@@ -427,8 +427,8 @@ export class MmdWasmModel implements IMmdModel {
             if (this._needStateReset) {
                 this._needStateReset = false;
 
-                this.morph.resetMorphWeights();
                 this.ikSolverStates.fill(1);
+                this.morph.resetMorphWeights();
             }
 
             if (this._currentAnimation !== null) {

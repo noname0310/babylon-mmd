@@ -27,7 +27,7 @@ import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -74,6 +74,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
+                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
 
                 mmdRuntime.setAudioPlayer(audioPlayer);
 
