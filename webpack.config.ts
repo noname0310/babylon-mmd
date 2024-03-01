@@ -90,7 +90,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         },
         hot: true,
         watchFiles: ["src/**/*"],
-        https: true,
+        server: "https",
         headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             "Cross-Origin-Opener-Policy": "same-origin",
