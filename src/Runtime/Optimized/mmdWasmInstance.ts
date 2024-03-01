@@ -25,6 +25,8 @@ export interface MmdWasmInstanceType {
     getWasmInstanceInner(): MmdWasmType;
 }
 
+const wasmInstanceMap = new Map<MmdWasmType, Promise<MmdWasmInstance>>();
+
 /**
  * Load MMD WASM instance
  *
@@ -40,6 +42,15 @@ export async function getMmdWasmInstance(
     threadCount = navigator.hardwareConcurrency
 ): Promise<MmdWasmInstance> {
     const wasmBindgen = instanceType.getWasmInstanceInner();
+
+    {
+        const instance = wasmInstanceMap.get(wasmBindgen);
+        if (instance !== undefined) return instance;
+    }
+
+    let resolvePromise: (instance: MmdWasmInstance | PromiseLike<MmdWasmInstance>) => void = null!;
+    wasmInstanceMap.set(wasmBindgen, new Promise<MmdWasmInstance>(resolve => resolvePromise = resolve));
+
     const initOutput = await wasmBindgen.default();
 
     wasmBindgen.init();
@@ -61,6 +72,8 @@ export async function getMmdWasmInstance(
     }
 
     await wasmBindgen.initThreadPool?.(threadCount);
+
+    resolvePromise(wasmBindgen as MmdWasmInstance);
 
     return wasmBindgen as MmdWasmInstance;
 }
