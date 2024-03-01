@@ -12,7 +12,7 @@
         "build-wasm-mr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/mr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --release --out-dir ../wasm/mr --out-name index -- --no-default-features --features \"parallel\" && cd ../../../..",
         "build-wasm-md": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/md && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --debug   --out-dir ../wasm/md --out-name index -- --no-default-features --features \"console_error_panic_hook parallel\" && cd ../../../..",
         "build-wasm-all": "npm run build-wasm-sr && npm run build-wasm-sd && npm run build-wasm-mr && npm run build-wasm-md",
-        "build-esm": "tspc --project tsconfig.lib.json && copyfiles -f src/Runtime/Optimized/wasm/**/* dist/esm/Runtime/Optimized/wasm",
+        "build-esm": "tspc --project tsconfig.lib.json && copyfiles -u 3 src/Runtime/Optimized/wasm/** dist/esm/Runtime/Optimized/",
         "build-umd": "webpack --env production --config webpack.lib.config.ts && webpack --env development --config webpack.lib.config.ts",
         "build-lib": "rimraf dist && npm run build-wasm-all && npm run build-esm && npm run build-umd",
         "publish-lib": "ts-node publishScript.ts && npm publish ./dist",
