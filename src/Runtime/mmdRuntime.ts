@@ -256,6 +256,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
             camera.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
         }
         this._camera = camera;
+        this._onAnimationChanged(camera?.currentAnimation ?? null);
     }
 
     private _setAudioPlayerLastValue: Nullable<IPlayer> = null;
@@ -438,13 +439,6 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     };
 
     private _computeAnimationDuration(): number {
-        if (this._models.length === 0 &&
-            this._camera === null &&
-            (this._audioPlayer === null || !this._audioPlayer.metadataLoaded)
-        ) {
-            return Infinity;
-        }
-
         let duration = 0;
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
@@ -515,15 +509,12 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         if (!this._animationPaused) return;
         this._animationPaused = false;
 
-        if (!this._useManualAnimationDuration && this._currentFrameTime === 0) {
+        if (this._currentFrameTime === 0) {
             const models = this._models;
+            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
             for (let i = 0; i < models.length; ++i) {
-                this._needToInitializePhysicsModels.add(models[i]);
+                needToInitializePhysicsModels.add(models[i]);
             }
-
-            this._animationFrameTimeDuration = this._computeAnimationDuration();
-
-            this.onAnimationDurationChangedObservable.notifyObservers();
         }
 
         this.onPlayAnimationObservable.notifyObservers();
