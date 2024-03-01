@@ -10,6 +10,8 @@
 
 - introduce WASM threaded runtime `MmdWasmInstanceTypeMD` / `MmdWasmInstanceTypeMR`
 
+- fix issues with `PhysicsBody` sleeping. now, `PhysicsBody` is always active (which is the same as MMD)
+
 ## 0.36.6
 
 - remove rust bound check in `MmdWasmRuntime` for better performance

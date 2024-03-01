@@ -3,12 +3,13 @@ import "@babylonjs/core/Physics/v2/physicsEngineComponent";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
+import { PhysicsActivationControl, PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
 import type { Physics6DoFLimit, PhysicsConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
 import { Physics6DoFConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
 import type { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
 import { PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere } from "@babylonjs/core/Physics/v2/physicsShape";
+import type { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import type { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
@@ -305,6 +306,7 @@ export class MmdPhysics {
      * @param joints joints information
      * @param logger Logger
      * @returns MMD physics model
+     * @throws If the havok physics engine is not enabled
      */
     public buildPhysics(
         rootMesh: Mesh,
@@ -314,6 +316,13 @@ export class MmdPhysics {
         logger: ILogger
     ): MmdPhysicsModel {
         const scene = this._scene;
+        const physicsPlugin = scene.getPhysicsEngine()?.getPhysicsPlugin() as HavokPlugin | null | undefined;
+        if (!physicsPlugin) {
+            throw new Error("Physics engine is not enabled");
+        }
+        if (physicsPlugin.name !== "HavokPlugin") {
+            throw new Error("Physics plugin is not HavokPlugin");
+        }
 
         let scalingFactor: number;
         {
@@ -417,6 +426,7 @@ export class MmdPhysics {
                 : PhysicsMotionType.DYNAMIC;
 
             const body = new PhysicsBody(node, motionType, false, scene);
+            physicsPlugin.setActivationControl(body, PhysicsActivationControl.ALWAYS_ACTIVE);
             body.shape = shape;
             body.setMassProperties({ mass: rigidBody.mass });
 
