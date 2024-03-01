@@ -25,7 +25,7 @@ export interface MmdWasmInstanceType {
     getWasmInstanceInner(): MmdWasmType;
 }
 
-const wasmInstanceMap = new Map<MmdWasmType, Promise<MmdWasmInstance>>();
+const wasmInstanceMap = new WeakMap<MmdWasmType, Promise<MmdWasmInstance>>();
 
 /**
  * Load MMD WASM instance
