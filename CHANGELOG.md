@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.37.1
+
+- wasm buffered evaluate stabilization
+
+- fix animation duration update when camera animation is changed
+
 ## 0.37.0
 
 - improve mmd model state reset method
