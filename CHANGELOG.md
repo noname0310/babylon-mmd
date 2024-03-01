@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.2
+
+- wasm runtime stabilization
+
 ## 0.37.1
 
 - wasm buffered evaluate stabilization
