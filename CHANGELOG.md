@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.38.0
+
+- support Babylon.js 6.46.0
+
 ## 0.37.2
 
 - wasm runtime stabilization

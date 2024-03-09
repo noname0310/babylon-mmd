@@ -813,7 +813,7 @@ export class BpmxConverter implements ILogger {
                     const flag = ((materialMetadata?.isDoubleSided ?? material.backFaceCulling === false) ? PmxObject.Material.Flag.IsDoubleSided : 0) |
                         ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
 
-                    const edgeColor = (material.outlineColor?.asArray() ?? [0, 0, 0]) as Vec4;
+                    const edgeColor = (material.outlineColor?.asArray() ?? [0, 0, 0]) as number[] as Vec4;
                     edgeColor.length = 4; // ensure length
                     edgeColor[3] = material.outlineAlpha ?? 0;
 

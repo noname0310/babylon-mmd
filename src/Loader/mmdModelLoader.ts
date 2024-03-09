@@ -327,7 +327,8 @@ export abstract class MmdModelLoader<
             animationGroups: [],
             transformNodes: [],
             geometries: buildGeometryResult.geometries,
-            lights: []
+            lights: [],
+            spriteManagers: []
         };
     }
 
