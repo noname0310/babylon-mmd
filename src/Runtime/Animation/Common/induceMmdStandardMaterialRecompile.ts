@@ -1,4 +1,4 @@
-import type { MorphTarget } from "@babylonjs/core";
+import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
