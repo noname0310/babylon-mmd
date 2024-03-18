@@ -32,8 +32,8 @@ export class SceneBuilder implements ISceneBuilder {
         createDefaultGround(scene);
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/Sour式初音ミクVer.1.02/",
-            "Black.pmx",
+            "res/private_test/model/YYB Delta_M Miku_2.1/",
+            "delta_M2.0.pmx",
             scene
         ).then(result => result.meshes[0]) as Mesh;
         shadowGenerator.addShadowCaster(mmdMesh);

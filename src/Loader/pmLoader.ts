@@ -707,7 +707,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
                             const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                             uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
-                            uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
+                            uvs[elementIndex * 2 + 1] -= uvOffsets[j * 4 + 1]; // flip y axis
                             indexCount += 1;
                         }
 
@@ -719,7 +719,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                             const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                             indices[k] = elementIndex;
                             offsets[k * 4 + 0] = uvOffsets[j * 4 + 0];
-                            offsets[k * 4 + 1] = uvOffsets[j * 4 + 1];
+                            offsets[k * 4 + 1] = -uvOffsets[j * 4 + 1]; // flip y axis
                             offsets[k * 4 + 2] = uvOffsets[j * 4 + 2];
                             offsets[k * 4 + 3] = uvOffsets[j * 4 + 3];
                             k += 1;
@@ -735,7 +735,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
 
                             const elementIndex = indexToSubMeshIndexMap[morphIndices[j]];
                             uvs[elementIndex * 2 + 0] += uvOffsets[j * 4 + 0];
-                            uvs[elementIndex * 2 + 1] += uvOffsets[j * 4 + 1];
+                            uvs[elementIndex * 2 + 1] -= uvOffsets[j * 4 + 1]; // flip y axis
                         }
                     }
 

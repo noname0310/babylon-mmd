@@ -4,6 +4,8 @@
 
 - support Babylon.js 6.46.0
 
+- add missing uv morph y axis inversion
+
 ## 0.37.2
 
 - wasm runtime stabilization
