@@ -148,6 +148,32 @@ export class TextureAlphaChecker {
         );
         this._blockRendering = false;
 
+        // // for debug
+        // {
+        //     const debugCanvas = document.createElement("canvas");
+        //     debugCanvas.style.width = "256px";
+        //     debugCanvas.style.height = "256px";
+        //     debugCanvas.width = debugCanvas.height = renderTargetTexture.getSize().width;
+        //     const debugContext = debugCanvas.getContext("2d")!;
+        //     const imageData = debugContext.createImageData(debugCanvas.width, debugCanvas.height);
+        //     const data = imageData.data;
+        //     for (let i = 0, len = resultPixelsBuffer.length; i < len; ++i) {
+        //         data[i] = resultPixelsBuffer[i];
+        //     }
+        //     debugContext.putImageData(imageData, 0, 0);
+
+        //     const div = document.createElement("div");
+        //     document.body.appendChild(div);
+
+        //     const text = document.createElement("p");
+        //     text.textContent = "mesh: " + mesh.name;
+        //     div.appendChild(text);
+
+        //     const img = document.createElement("img");
+        //     img.src = debugCanvas.toDataURL();
+        //     div.appendChild(img);
+        // }
+
         const nextTask = this._taskQueue.shift();
         if (nextTask !== undefined) nextTask();
 
@@ -204,7 +230,7 @@ export class TextureAlphaChecker {
 
                         void main() {
                             vUv = uv;
-                            gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
+                            gl_Position = vec4(mod(uv, 1.0) * 2.0 - 1.0, 0.0, 1.0);
                         }
                     `,
                     fragmentSource: /* glsl */`

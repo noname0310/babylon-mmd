@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.0
+
+- fix alpha texture evaluation for uv coordinate out of range (0, 1)
+
 ## 0.38.0
 
 - support Babylon.js 6.46.0
