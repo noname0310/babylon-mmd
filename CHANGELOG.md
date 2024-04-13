@@ -4,6 +4,8 @@
 
 - fix alpha texture evaluation for uv coordinate out of range (0, 1)
 
+- fix group morph not working on wasm runtime
+
 ## 0.38.0
 
 - support Babylon.js 6.46.0

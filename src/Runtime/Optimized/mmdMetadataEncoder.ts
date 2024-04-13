@@ -321,12 +321,13 @@ export class MmdMetadataEncoder {
                     serializer.setUint8(morph.type); // kind
                     serializer.offset += 3; // padding
                     serializer.setUint32(morph.indices.length); // indexCount
-                    const remappedIndices = new Int32Array(morph.indices.length);
-                    remappedIndices.set(morph.indices);
+
+                    const indices = morph.indices;
+                    const remappedIndices = new Int32Array(indices.length);
                     for (let j = 0; j < remappedIndices.length; ++j) {
-                        remappedIndices[j] = wasmMorphMap[remappedIndices[j]];
+                        remappedIndices[j] = wasmMorphMap[indices[j]];
                     }
-                    serializer.setInt32Array(morph.indices); // indices
+                    serializer.setInt32Array(remappedIndices); // indices
                     serializer.setFloat32Array(morph.ratios); // ratios
                 }
                 break;
