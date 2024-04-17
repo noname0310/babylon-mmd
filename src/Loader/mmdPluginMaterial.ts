@@ -360,7 +360,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.TEXTURE_COLOR = this._useTextureColor;
             defines.SPHERE_TEXTURE_COLOR = this._useSphereTextureColor;
             defines.TOON_TEXTURE_COLOR = this._useToonTextureColor;
-            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton ? true : false && mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind);
+            defines.SDEF = mesh.useBones && mesh.computeBonesUsingShaders && (mesh.skeleton ? true : false) && mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind);
         } else {
             defines.SPHERE_TEXTURE = false;
             defines.SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;

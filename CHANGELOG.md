@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.40.0
+
+- fix shader compilation error when using WebGPU with non SDEF model
+
 ## 0.39.0
 
 - fix alpha texture evaluation for uv coordinate out of range (0, 1)
