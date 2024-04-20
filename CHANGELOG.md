@@ -4,6 +4,8 @@
 
 - fix shader compilation error when using WebGPU with non SDEF model
 
+- give unique name to `MmdOutlineRenderer` to prevent name collision with `OutlineRenderer`
+
 ## 0.39.0
 
 - fix alpha texture evaluation for uv coordinate out of range (0, 1)

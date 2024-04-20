@@ -67,7 +67,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     /**
      * The name of the component. Each component must have a unique name.
      */
-    public name = SceneComponentConstants.NAME_OUTLINERENDERER;
+    public name = "MmdOutline"; // SceneComponentConstants.NAME_OUTLINERENDERER;
 
     /**
      * The scene the component belongs to.
