@@ -3,7 +3,7 @@ import "@/Loader/pmxLoader";
 
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
-import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -25,7 +25,7 @@ import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;

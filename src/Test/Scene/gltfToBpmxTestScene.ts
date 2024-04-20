@@ -5,7 +5,7 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { Material } from "@babylonjs/core/Materials/material";
@@ -31,7 +31,7 @@ import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
 

@@ -1,6 +1,6 @@
 import type { IAnimatable } from "@babylonjs/core/Animations/animatable.interface";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import type { Engine } from "@babylonjs/core/Engines/engine";
 import { MaterialDefines } from "@babylonjs/core/Materials/materialDefines";
 import { MaterialPluginBase } from "@babylonjs/core/Materials/materialPluginBase";
 import type { StandardMaterial, StandardMaterialDefines } from "@babylonjs/core/Materials/standardMaterial";
@@ -195,7 +195,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return true;
     }
 
-    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: Engine, subMesh: SubMesh): void {
+    public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: AbstractEngine, subMesh: SubMesh): void {
         if (!this._isEnabled) return;
 
         const defines = subMesh!.materialDefines as StandardMaterialDefines & MmdPluginMererialDefines;

@@ -1,4 +1,4 @@
-import type { ThinEngine } from "@babylonjs/core/Engines/thinEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { Effect, IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import type { IEffectFallbacks } from "@babylonjs/core/Materials/iEffectFallbacks";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
@@ -22,12 +22,12 @@ export class SdefInjector {
      * If you want shadow map or postprocessing shaders to support SDEF call this method before creating the shadow map or postprocess render pipeline
      * @param engine Engine
      */
-    public static OverrideEngineCreateEffect(engine: ThinEngine): void {
+    public static OverrideEngineCreateEffect(engine: AbstractEngine): void {
         const originalCreateEffect = engine.createEffect.bind(engine);
         engine.createEffect = function(
             baseName: any,
             attributesNamesOrOptions: string[] | IEffectCreationOptions,
-            uniformsNamesOrEngine: string[] | ThinEngine,
+            uniformsNamesOrEngine: string[] | AbstractEngine,
             samplers?: string[],
             defines?: string,
             fallbacks?: IEffectFallbacks,

@@ -1,5 +1,5 @@
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
-import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 
@@ -9,7 +9,7 @@ import { VmdLoader } from "@/Loader/vmdLoader";
 import type { ISceneBuilder } from "../baseRuntime";
 
 export class VmdConverterScene implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);

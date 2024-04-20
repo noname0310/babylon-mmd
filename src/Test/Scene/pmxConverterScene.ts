@@ -6,7 +6,7 @@ import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
-import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
@@ -69,7 +69,7 @@ async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
 }
 
 export class PmxConverterScene implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
+    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;

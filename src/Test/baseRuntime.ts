@@ -1,19 +1,19 @@
-import type { Engine } from "@babylonjs/core/Engines/engine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { Scene } from "@babylonjs/core/scene";
 
 export interface ISceneBuilder {
-    build(canvas: HTMLCanvasElement, engine: Engine): Scene | Promise<Scene>;
+    build(canvas: HTMLCanvasElement, engine: AbstractEngine): Scene | Promise<Scene>;
 }
 
 export interface BaseRuntimeInitParams {
     canvas: HTMLCanvasElement;
-    engine: Engine;
+    engine: AbstractEngine;
     sceneBuilder: ISceneBuilder;
 }
 
 export class BaseRuntime {
     private readonly _canvas: HTMLCanvasElement;
-    private readonly _engine: Engine;
+    private readonly _engine: AbstractEngine;
     private _scene: Scene;
     private _onTick: () => void;
 
