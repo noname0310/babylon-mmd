@@ -2,8 +2,8 @@ import "@babylonjs/core/Shaders/outline.fragment";
 import "@babylonjs/core/Shaders/outline.vertex";
 
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import type { Engine } from "@babylonjs/core/Engines/engine";
 import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
 import type { IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
@@ -84,7 +84,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
      */
     public zOffsetUnits = 4; // 4 to account for projection a bit by default
 
-    private readonly _engine: Engine;
+    private readonly _engine: AbstractEngine;
     private _savedDepthWrite: boolean;
     private readonly _passIdForDrawWrapper: number[];
 

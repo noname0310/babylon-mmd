@@ -64,7 +64,7 @@ export class TextureAlphaChecker {
                 generateStencilBuffer: false,
                 generateMipMaps: false,
                 type: Constants.TEXTURETYPE_UNSIGNED_BYTE,
-                format: engine.isWebGPU || engine.webGLVersion > 1 ? Constants.TEXTUREFORMAT_RED : Constants.TEXTUREFORMAT_RGBA,
+                format: engine.isWebGPU || engine.version > 1 ? Constants.TEXTUREFORMAT_RED : Constants.TEXTUREFORMAT_RGBA,
                 doNotChangeAspectRatio: true
             }
         );
