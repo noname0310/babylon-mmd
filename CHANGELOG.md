@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.0
+
+- replace animation when the same name animation is added to `MmdModel` or `MmdWasmModel`
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model

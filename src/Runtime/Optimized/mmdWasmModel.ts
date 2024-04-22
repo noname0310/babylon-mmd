@@ -301,6 +301,8 @@ export class MmdWasmModel implements IMmdModel {
 
     /**
      * Add an animation to this model
+     *
+     * If the animation is already added, it will be replaced
      * @param animation MMD animation or MMD model animation group to add
      * @param retargetingMap Model bone name to animation bone name map
      */
@@ -322,8 +324,14 @@ export class MmdWasmModel implements IMmdModel {
         } else {
             throw new Error("animation is not MmdWasmAnimation or MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
-        this._animationIndexMap.set(animation.name, this._animations.length);
-        this._animations.push(runtimeAnimation);
+
+        const index = this._animationIndexMap.get(animation.name);
+        if (index !== undefined) {
+            this._animations[index] = runtimeAnimation;
+        } else {
+            this._animationIndexMap.set(animation.name, this._animations.length);
+            this._animations.push(runtimeAnimation);
+        }
     }
 
     private _removeAnimationByReference(animation: RuntimeModelAnimation): void {
