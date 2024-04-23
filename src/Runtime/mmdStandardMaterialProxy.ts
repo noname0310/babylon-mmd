@@ -70,7 +70,6 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     private readonly _initialToonTextureColor: Vec4;
 
     private readonly _initialTransparencyMode: Nullable<number>;
-    private readonly _initialBackFaceCulling: boolean;
 
     /**
      * Create MMD standard material proxy
@@ -110,7 +109,6 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         this._initialToonTextureColor = [...this.toonTextureColor];
 
         this._initialTransparencyMode = material.transparencyMode;
-        this._initialBackFaceCulling = material.backFaceCulling;
     }
 
     /**
@@ -145,10 +143,8 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         material.alpha = this.diffuse[3];
         if (this.diffuse[3] === 1) {
             material.transparencyMode = this._initialTransparencyMode;
-            material.backFaceCulling = this._initialBackFaceCulling;
         } else {
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
-            material.backFaceCulling = false;
         }
 
         material.specularColor.set(this.specular[0], this.specular[1], this.specular[2]);

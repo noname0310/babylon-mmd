@@ -6,6 +6,8 @@
 
 - fix wrong alpha accumulation in `MmdStandardMaterial` when using sphere texture
 
+- backface culling is no longer affected by a material's transparency (same as MMD's behavior)
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model
