@@ -20,10 +20,7 @@ import { MmdPluginMaterial } from "./mmdPluginMaterial";
 export class MmdStandardMaterial extends StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;
 
-    /**
-     * Whether to use the outline rendering (default: false)
-     */
-    public renderOutline = false;
+    private _renderOutline = false;
 
     /**
      * Outline width (default: 0.01)
@@ -157,5 +154,20 @@ export class MmdStandardMaterial extends StandardMaterial {
     public set toonTextureColor(value: Color4) {
         this._pluginMaterial.useToonTextureColor = true;
         this._pluginMaterial.toonTextureColor = value;
+    }
+
+    /**
+     * Whether to use the outline rendering (default: false)
+     */
+    public get renderOutline(): boolean {
+        return this._renderOutline;
+    }
+
+    public set renderOutline(value: boolean) {
+        // Lazy Load the component
+        if (value) {
+            this.getScene().getMmdOutlineRenderer?.();
+        }
+        this._renderOutline = value;
     }
 }
