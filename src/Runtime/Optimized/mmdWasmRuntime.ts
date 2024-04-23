@@ -518,7 +518,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             // if there is no previous evaluated frame time, evaluate animation synchronously
-            if (this._lastRequestAnimationFrameTime == null) {
+            if (this._lastRequestAnimationFrameTime === null) {
                 if (elapsedFrameTime !== null) {
                     // evaluate animations on javascript side
                     for (let i = 0; i < models.length; ++i) {

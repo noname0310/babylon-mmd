@@ -28,7 +28,7 @@ export class AnimationPoolWrapper {
      */
     public removeReference(): void {
         this._referenceCount -= 1;
-        if (this._referenceCount == 0) {
+        if (this._referenceCount === 0) {
             this.pool.free();
             AnimationPoolWrapper._Map.delete(this.instance);
         }
