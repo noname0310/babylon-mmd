@@ -4,6 +4,8 @@
 
 - replace animation when the same name animation is added to `MmdModel` or `MmdWasmModel`
 
+- fix wrong alpha accumulation in `MmdStandardMaterial` when using sphere texture
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model
