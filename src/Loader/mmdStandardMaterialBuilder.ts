@@ -75,7 +75,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         texturesInfo: readonly TextureInfo[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        meshes: Mesh[],
+        meshes: Nullable<Mesh>[],
         textureNameMap: Nullable<Map<BaseTexture, string>>,
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
@@ -340,7 +340,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         referenceFileResolver: ReferenceFileResolver,
-        mesh: Mesh,
+        mesh: Nullable<Mesh>,
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
@@ -404,7 +404,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     const evauatedTransparency = (materialInfo as BpmxObject.Material).evauatedTransparency;
                     if (evauatedTransparency !== undefined && evauatedTransparency !== -1) {
                         transparencyMode = evauatedTransparency;
-                    } else {
+                    } else if (mesh !== null) {
                         const textureAlphaChecker = getTextureAlphaChecker();
                         if (textureAlphaChecker !== null) {
                             transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(

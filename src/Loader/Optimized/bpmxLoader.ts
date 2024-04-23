@@ -296,6 +296,17 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             };
         }
 
+        const alphaEvaluateMeshList: Nullable<Mesh>[] = new Array(modelObject.materials.length).fill(null);
+        const geometriesInfo = modelObject.geometries;
+        for (let i = 0; i < meshes.length; ++i) {
+            const materialIndex = geometriesInfo[i].materialIndex;
+            if (materialIndex === -1) continue;
+
+            if (alphaEvaluateMeshList[materialIndex] === null) {
+                alphaEvaluateMeshList[materialIndex] = meshes[i];
+            }
+        }
+
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
@@ -307,7 +318,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 texturesInfo, // texturesInfo
                 scene, // scene
                 assetContainer, // assetContainer
-                meshes, // meshes
+                alphaEvaluateMeshList, // meshes
                 textureNameMap, // textureNameMap
                 this, // logger
                 (event) => {
@@ -322,7 +333,6 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
 
-        const geometriesInfo = modelObject.geometries;
         for (let i = 0; i < meshes.length; ++i) {
             const mesh = meshes[i];
             const materialIndex = geometriesInfo[i].materialIndex;

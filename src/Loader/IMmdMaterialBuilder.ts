@@ -59,7 +59,7 @@ export interface IMmdMaterialBuilder {
         texturesInfo: readonly TextureInfo[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        meshes: Mesh[],
+        meshes: Nullable<Mesh>[],
         textureNameMap: Nullable<Map<BaseTexture, string>>,
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,

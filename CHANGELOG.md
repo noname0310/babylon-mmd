@@ -8,6 +8,8 @@
 
 - backface culling is no longer affected by a material's transparency (same as MMD's behavior)
 
+- fix `BpmxLoader` alpha evaluation not working with asset which created from non-PMX model
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model
