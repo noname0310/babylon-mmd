@@ -8,7 +8,7 @@ import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes 
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
 import type { IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
-import { MaterialHelper } from "@babylonjs/core/Materials/materialHelper";
+import { BindBonesParameters, BindMorphTargetParameters, PrepareAttributesForMorphTargetsInfluencers, PushAttributesForInstances } from "@babylonjs/core/Materials/materialHelper.functions";
 import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { Scene } from "@babylonjs/core/scene";
@@ -176,14 +176,14 @@ export class MmdOutlineRenderer implements ISceneComponent {
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
         // Bones
-        MaterialHelper.BindBonesParameters(effectiveMesh, effect);
+        BindBonesParameters(effectiveMesh, effect);
 
         if (renderingMesh.morphTargetManager && renderingMesh.morphTargetManager.isUsingTextureForTargets) {
             renderingMesh.morphTargetManager._bind(effect);
         }
 
         // Morph targets
-        MaterialHelper.BindMorphTargetParameters(renderingMesh, effect);
+        BindMorphTargetParameters(renderingMesh, effect);
 
         if (!hardwareInstancedRendering) {
             renderingMesh._bind(subMesh, effect, material.fillMode);
@@ -288,9 +288,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
         const morphTargetManager = (mesh as Mesh).morphTargetManager;
         let numMorphInfluencers = 0;
         if (morphTargetManager) {
-            if (morphTargetManager.numInfluencers > 0) {
-                numMorphInfluencers = morphTargetManager.numInfluencers;
-
+            numMorphInfluencers = morphTargetManager.numMaxInfluencers || morphTargetManager.numInfluencers;
+            if (numMorphInfluencers > 0) {
                 defines.push("#define MORPHTARGETS");
                 defines.push("#define NUM_MORPH_INFLUENCERS " + numMorphInfluencers);
 
@@ -298,14 +297,14 @@ export class MmdOutlineRenderer implements ISceneComponent {
                     defines.push("#define MORPHTARGETS_TEXTURE");
                 }
 
-                MaterialHelper.PrepareAttributesForMorphTargetsInfluencers(attribs, mesh, numMorphInfluencers);
+                PrepareAttributesForMorphTargetsInfluencers(attribs, mesh, numMorphInfluencers);
             }
         }
 
         // Instances
         if (useInstances) {
             defines.push("#define INSTANCES");
-            MaterialHelper.PushAttributesForInstances(attribs);
+            PushAttributesForInstances(attribs);
             if (subMesh.getRenderingMesh().hasThinInstances) {
                 defines.push("#define THIN_INSTANCES");
             }
@@ -327,6 +326,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 "logarithmicDepthConstant",
                 "morphTargetInfluences",
                 "boneTextureWidth",
+                "morphTargetCount",
                 "morphTargetTextureInfo",
                 "morphTargetTextureIndices"
             ];
