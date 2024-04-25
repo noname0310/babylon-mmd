@@ -296,31 +296,42 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             };
         }
 
-        const alphaEvaluateMeshList: Nullable<Mesh>[] = new Array(modelObject.materials.length).fill(null);
+        const referencedMeshList: Mesh[][] = new Array(modelObject.materials.length);
+        for (let i = 0; i < referencedMeshList.length; ++i) {
+            referencedMeshList[i] = [];
+        }
         const geometriesInfo = modelObject.geometries;
         for (let i = 0; i < meshes.length; ++i) {
             const materialIndex = geometriesInfo[i].materialIndex;
             if (materialIndex === -1) continue;
 
-            if (alphaEvaluateMeshList[materialIndex] === null) {
-                alphaEvaluateMeshList[materialIndex] = meshes[i];
-            }
+            referencedMeshList[materialIndex].push(meshes[i]);
         }
 
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
+
                 modelObject.materials, // materialsInfo
+
+                texturesInfo, // texturesInfo
                 imagePathTable, // imagePathTable
+
                 rootUrl, // rootUrl
                 "file:" + state.pmFileId + "_", // fileRootId
                 modelObject.images, // referenceFiles
-                texturesInfo, // texturesInfo
+
+                referencedMeshList, // referencedMeshes
+
+                meshes, // meshes
+
                 scene, // scene
                 assetContainer, // assetContainer
-                alphaEvaluateMeshList, // meshes
+
                 textureNameMap, // textureNameMap
+
                 this, // logger
+
                 (event) => {
                     if (!event.lengthComputable) return;
                     progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);

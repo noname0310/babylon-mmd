@@ -466,20 +466,35 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             };
         }
 
+        const referencedMeshList: (readonly Mesh[])[] = [];
+        for (let i = 0; i < meshes.length; ++i) {
+            referencedMeshList.push([meshes[i]]);
+        }
+
         const textureLoadPromise = new Promise<void>((resolve) => {
             buildMaterialsPromise = state.materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
+
                 modelObject.materials, // materialsInfo
+
+                texturesInfo, // texturesInfo
                 modelObject.textures, // imagePathTable
+
                 rootUrl, // rootUrl
                 "file:" + state.pmFileId + "_", // fileRootId
                 state.referenceFiles, // referenceFiles
-                texturesInfo, // texturesInfo
+
+                referencedMeshList, // referencedMeshes
+
+                meshes, // meshes
+
                 scene, // scene
                 assetContainer, // assetContainer
-                meshes, // meshes
+
                 textureNameMap, // textureNameMap
+
                 this, // logger
+
                 (event) => {
                     if (!event.lengthComputable) return;
                     progress.setTaskProgressRatio("Texture Load", event.loaded / event.total, true);

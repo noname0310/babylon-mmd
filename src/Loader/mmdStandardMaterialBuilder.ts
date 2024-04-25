@@ -68,14 +68,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public buildMaterials(
         uniqueId: number,
         materialsInfo: readonly MaterialInfo[],
+        texturesInfo: readonly TextureInfo[],
         imagePathTable: readonly string[],
         rootUrl: string,
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
-        texturesInfo: readonly TextureInfo[],
+        referencedMeshes: (readonly Mesh[])[],
+        _meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        meshes: Nullable<Mesh>[],
         textureNameMap: Nullable<Map<BaseTexture, string>>,
         logger: ILogger,
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
@@ -122,7 +123,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 const loadScalarPropertiesPromise = this.loadGeneralScalarProperties(
                     material,
-                    materialInfo
+                    materialInfo,
+                    referencedMeshes[i]
                 );
                 if (loadScalarPropertiesPromise !== undefined) {
                     singleMaterialPromises.push(loadScalarPropertiesPromise);
@@ -138,7 +140,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     assetContainer,
                     rootUrl,
                     referenceFileResolver,
-                    meshes[i],
+                    referencedMeshes[i],
                     logger,
                     getTextureAlpphaChecker,
                     incrementProgress
@@ -276,13 +278,16 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * This method can be overridden for customizing the material loading process
      * @param material Material
      * @param materialInfo Material information
+     * @param meshes Meshes that use the material
      */
     public loadGeneralScalarProperties: (
         material: MmdStandardMaterial,
-        materialInfo: MaterialInfo
+        materialInfo: MaterialInfo,
+        meshes: readonly Mesh[]
     ) => Promise<void> | void = (
             material,
-            materialInfo
+            materialInfo,
+            meshes
         ): void => {
             const diffuse = materialInfo.diffuse;
             material.diffuseColor = new Color3(
@@ -307,6 +312,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
             const alpha = materialInfo.diffuse[3];
             material.alpha = alpha;
+            if (alpha === 0) {
+                for (let i = 0; i < meshes.length; ++i) {
+                    meshes[i].isVisible = false;
+                }
+            }
 
             material.specularPower = materialInfo.shininess;
         };
@@ -323,9 +333,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
      * @param scene Scene
      * @param assetContainer Asset container
      * @param rootUrl Root url
-     * @param fileRootId File root id
      * @param referenceFileResolver Reference file resolver
-     * @param materialIndex Material index (same as the index of the submesh)
+     * @param meshes Meshes that use the material
      * @param logger Logger
      * @param getTextureAlphaChecker Get texture alpha checker
      * @param onTextureLoadComplete Texture load complete callback
@@ -340,7 +349,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         referenceFileResolver: ReferenceFileResolver,
-        mesh: Nullable<Mesh>,
+        meshes: readonly Mesh[],
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
@@ -354,7 +363,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             assetContainer,
             rootUrl,
             referenceFileResolver,
-            mesh,
+            meshes,
             logger,
             getTextureAlphaChecker,
             onTextureLoadComplete
@@ -399,24 +408,30 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
 
-                    let transparencyMode = Number.MAX_SAFE_INTEGER;
+                    let transparencyMode = Number.MIN_SAFE_INTEGER;
 
                     const evauatedTransparency = (materialInfo as BpmxObject.Material).evauatedTransparency;
                     if (evauatedTransparency !== undefined && evauatedTransparency !== -1) {
                         transparencyMode = evauatedTransparency;
-                    } else if (mesh !== null) {
-                        const textureAlphaChecker = getTextureAlphaChecker();
-                        if (textureAlphaChecker !== null) {
-                            transparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                                diffuseTexture,
-                                mesh,
-                                this.alphaThreshold,
-                                this.alphaBlendThreshold
-                            );
+                    } else {
+                        for (let i = 0; i < meshes.length; ++i) {
+                            const textureAlphaChecker = getTextureAlphaChecker();
+                            if (textureAlphaChecker !== null) {
+                                const newTransparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
+                                    diffuseTexture,
+                                    meshes[i],
+                                    this.alphaThreshold,
+                                    this.alphaBlendThreshold
+                                );
+
+                                if (transparencyMode < newTransparencyMode) {
+                                    transparencyMode = newTransparencyMode;
+                                }
+                            }
                         }
                     }
 
-                    if (transparencyMode !== Number.MAX_SAFE_INTEGER) {
+                    if (transparencyMode !== Number.MIN_SAFE_INTEGER) {
                         const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
 
                         if (hasAlpha) diffuseTexture.hasAlpha = true;

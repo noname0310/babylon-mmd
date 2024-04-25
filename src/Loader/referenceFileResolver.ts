@@ -44,9 +44,8 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      *
      * File root id can be root url, and becomes id for formats where texture is included in binary files, such as BPMX
      * @param files File list
-     * @param rootUrl Root url
-     * @param fileRootId File root id
-     * @returns
+     * @param rootUrl Root url for trim the path of the files
+     * @param fileRootId File root id for give the unique id for the files
      */
     public constructor(files: readonly T[], rootUrl: string, fileRootId: string) {
         rootUrl = pathNormalize(rootUrl);

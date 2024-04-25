@@ -33,16 +33,17 @@ export type TextureInfo = Omit<IMmdTextureLoadOptions, "deleteBuffer" | "mimeTyp
 export interface IMmdMaterialBuilder {
     /**
      * Build materials
-     * @param uniqueId Model unique id
+     * @param uniqueId Model unique id for load texture with cache
      * @param materialsInfo Materials information
+     * @param texturesInfo Texture information
      * @param imagePathTable Image path table
      * @param rootUrl Root url
      * @param fileRootId File root id
      * @param referenceFiles Reference files for load from files (textures)
-     * @param texturesInfo Texture information
+     * @param referencedMeshes mesh information for alpha evaluation and set visibility
+     * @param meshes Meshes for set render order
      * @param scene Scene
      * @param assetContainer Asset container
-     * @param meshes mesh information for alpha evaluation
      * @param textureNameMap Texture name map for preserve texture name
      * @param logger Logger
      * @param onTextureLoadProgress Texture load progress callback
@@ -51,17 +52,36 @@ export interface IMmdMaterialBuilder {
      */
     buildMaterials(
         uniqueId: number,
+
+        // for create materials
         materialsInfo: readonly MaterialInfo[],
+
+        // for load texture from network
+        texturesInfo: readonly TextureInfo[],
         imagePathTable: readonly string[],
+
+        // for load texture from files
         rootUrl: string,
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
-        texturesInfo: readonly TextureInfo[],
+
+        // for alpha evaluation and set visibility
+        referencedMeshes: (readonly Mesh[])[],
+
+        // for set render order
+        meshes: Mesh[],
+
+        // for create babylonjs objects
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        meshes: Nullable<Mesh>[],
+
+        // for preserve texture name
         textureNameMap: Nullable<Map<BaseTexture, string>>,
+
+        // for logging
         logger: ILogger,
+
+        // callbacks
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
     ): Promise<Material[]> | Material[];
