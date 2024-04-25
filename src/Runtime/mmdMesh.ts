@@ -52,7 +52,7 @@ export interface RuntimeMmdModelMetadata {
     /**
      * Mmd model materials
      */
-    readonly materials: Material[];
+    readonly materials: readonly Material[];
 
     /**
      * Mmd model skeleton

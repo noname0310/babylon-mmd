@@ -70,7 +70,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         return this._ikSolverBindIndexMap.array;
     }
 
-    private _materialRecompileInduceInfo: Material[] | null;
+    private _materialRecompileInduceInfo: readonly Material[] | null;
 
     private constructor(
         ptr: number,
@@ -82,7 +82,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         morphBindIndexMap: readonly Nullable<MorphIndices>[],
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: IWasmTypedArray<Int32Array>,
-        materialRecompileInduceInfo: Material[],
+        materialRecompileInduceInfo: readonly Material[],
         onDispose: () => void
     ) {
         super();
@@ -395,12 +395,12 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      * @param logger logger
      */
     public static InduceMaterialRecompile: (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void = induceMmdStandardMaterialRecompile as (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger

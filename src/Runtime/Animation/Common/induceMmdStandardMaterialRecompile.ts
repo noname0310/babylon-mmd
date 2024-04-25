@@ -19,7 +19,7 @@ type MorphIndices = readonly number[];
  * @param logger Logger
  */
 export function induceMmdStandardMaterialRecompile(
-    materials: MmdStandardMaterial[],
+    materials: readonly MmdStandardMaterial[],
     morphController: MmdMorphControllerBase,
     morphIndices: readonly Nullable<MorphIndices>[],
     logger?: ILogger

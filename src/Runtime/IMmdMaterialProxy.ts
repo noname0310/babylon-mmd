@@ -1,4 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 
 import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 
@@ -68,5 +69,5 @@ export interface IMmdMaterialProxy {
  * MMD material proxy constructor
  */
 export interface IMmdMaterialProxyConstructor<T extends Material> {
-    new(material: T): IMmdMaterialProxy;
+    new(material: T, referencedMeshes: readonly Mesh[]): IMmdMaterialProxy;
 }

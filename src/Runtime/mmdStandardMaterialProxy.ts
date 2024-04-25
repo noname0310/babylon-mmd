@@ -1,10 +1,11 @@
 import { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 
-import type { IMmdMaterialProxy } from "./IMmdMaterialProxy";
+import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 
 /**
  * MMD standard material proxy
@@ -58,6 +59,7 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     public readonly toonTextureColor: Vec4;
 
     private readonly _material: MmdStandardMaterial;
+    private readonly _referencedMeshes: readonly Mesh[];
 
     private readonly _initialDiffuse: Vec4;
     private readonly _initialSpecular: Vec3;
@@ -75,8 +77,9 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
      * Create MMD standard material proxy
      * @param material MMD standard material
      */
-    public constructor(material: MmdStandardMaterial) {
+    public constructor(material: MmdStandardMaterial, referencedMeshes: readonly Mesh[]) {
         this._material = material;
+        this._referencedMeshes = referencedMeshes;
 
         const materialDiffuseColor = material.diffuseColor;
         this.diffuse = [materialDiffuseColor.r, materialDiffuseColor.g, materialDiffuseColor.b, material.alpha];
@@ -147,6 +150,17 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
         }
 
+        const referencedMeshes = this._referencedMeshes;
+        if (this.diffuse[3] <= 0) {
+            for (let i = 0; i < referencedMeshes.length; ++i) {
+                referencedMeshes[i].isVisible = false;
+            }
+        } else {
+            for (let i = 0; i < referencedMeshes.length; ++i) {
+                referencedMeshes[i].isVisible = true;
+            }
+        }
+
         material.specularColor.set(this.specular[0], this.specular[1], this.specular[2]);
         material.specularPower = this.shininess;
 
@@ -164,3 +178,5 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         material.toonTextureColor.set(this.toonTextureColor[0], this.toonTextureColor[1], this.toonTextureColor[2], this.toonTextureColor[3]);
     }
 }
+
+MmdStandardMaterialProxy satisfies IMmdMaterialProxyConstructor<MmdStandardMaterial>;

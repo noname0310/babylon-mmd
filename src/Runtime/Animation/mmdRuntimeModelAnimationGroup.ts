@@ -56,7 +56,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
     private readonly _ikSolverStates: IIkStateContainer;
 
-    private _materialRecompileInduceInfo: Material[] | null;
+    private _materialRecompileInduceInfo: readonly Material[] | null;
 
     private readonly _bonePositionAnimationStates: _IAnimationState[];
     private readonly _boneRotationAnimationStates: _IAnimationState[];
@@ -73,7 +73,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
         ikSolverStates: IIkStateContainer,
-        materialRecompileInduceInfo: Material[]
+        materialRecompileInduceInfo: readonly Material[]
     ) {
         this.animation = animation;
 
@@ -318,12 +318,12 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
      * @param logger logger
      */
     public static InduceMaterialRecompile: (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void = induceMmdStandardMaterialRecompile as (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger

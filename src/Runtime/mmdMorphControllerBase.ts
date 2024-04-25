@@ -1,4 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
@@ -102,6 +103,7 @@ export abstract class MmdMorphControllerBase {
      * Creates a new MmdMorphController
      * @param runtimeBones MMD runtime bones which are original order
      * @param materials MMD materials which are order of mmd metadata
+     * @param meshes MMD meshes which are order of mmd metadata
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param morphsMetadata Morphs metadata
      * @param morphTargetManagers MorphTargetManagers
@@ -109,7 +111,8 @@ export abstract class MmdMorphControllerBase {
      */
     public constructor(
         runtimeBones: Nullable<readonly MmdRuntimeBone[]>,
-        materials: Material[],
+        materials: readonly Material[],
+        meshes: readonly Mesh[],
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         morphTargetManagers: MorphTargetManager[],
@@ -122,7 +125,14 @@ export abstract class MmdMorphControllerBase {
         if (materialProxyConstructor !== null) {
             const materialProxies = this._materials = new Array<IMmdMaterialProxy | undefined>(materials.length);
             for (let i = 0; i < materials.length; ++i) {
-                materialProxies[i] = new materialProxyConstructor(materials[i]);
+                const material = materials[i];
+
+                const referencedMeshes: Mesh[] = [];
+                for (let j = 0; j < meshes.length; ++j) {
+                    if (meshes[j].material === material) referencedMeshes.push(meshes[j]);
+                }
+
+                materialProxies[i] = new materialProxyConstructor(material, referencedMeshes);
             }
         } else {
             this._materials = [];

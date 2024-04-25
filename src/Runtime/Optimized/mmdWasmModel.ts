@@ -238,6 +238,7 @@ export class MmdWasmModel implements IMmdModel {
             morphWeights,
             wasmMorphIndexMap,
             mmdMetadata.materials,
+            mmdMetadata.meshes,
             materialProxyConstructor,
             mmdMetadata.morphs,
             morphTargetManagers,

@@ -170,6 +170,7 @@ export class MmdModel implements IMmdModel {
         this.morph = new MmdMorphController(
             runtimeBones,
             mmdMetadata.materials,
+            mmdMetadata.meshes,
             materialProxyConstructor,
             mmdMetadata.morphs,
             morphTargetManagers,

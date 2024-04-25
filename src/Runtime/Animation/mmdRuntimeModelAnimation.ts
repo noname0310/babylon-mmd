@@ -56,7 +56,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
 
     private readonly _ikSolverStates: IIkStateContainer;
 
-    private _materialRecompileInduceInfo: Material[] | null;
+    private _materialRecompileInduceInfo: readonly Material[] | null;
 
     private constructor(
         animation: MmdAnimationBase,
@@ -67,7 +67,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
         ikSolverStates: IIkStateContainer,
-        materialRecompileInduceInfo: Material[]
+        materialRecompileInduceInfo: readonly Material[]
     ) {
         super();
 
@@ -498,12 +498,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      * @param logger logger
      */
     public static InduceMaterialRecompile: (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
     ) => void = induceMmdStandardMaterialRecompile as (
-        materials: Material[],
+        materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger

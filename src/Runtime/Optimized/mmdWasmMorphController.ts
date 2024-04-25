@@ -1,4 +1,5 @@
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -26,6 +27,7 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
      * @param wasmMorphWeights WASM side morph weights
      * @param wasmMorphIndexMap Mmd morph to WASM morph index map
      * @param materials MMD materials which are order of mmd metadata
+     * @param meshes MMD meshes which are order of mmd metadata
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param morphsMetadata Morphs metadata
      * @param morphTargetManagers MorphTargetManagers
@@ -34,13 +36,14 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
     public constructor(
         wasmMorphWeights: IWasmTypedArray<Float32Array>,
         wasmMorphIndexMap: Int32Array,
-        materials: Material[],
+        materials: readonly Material[],
+        meshes: readonly Mesh[],
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         morphTargetManagers: MorphTargetManager[],
         logger: ILogger
     ) {
-        super(null, materials, materialProxyConstructor, morphsMetadata, morphTargetManagers, logger);
+        super(null, materials, meshes, materialProxyConstructor, morphsMetadata, morphTargetManagers, logger);
 
         this._wasmMorphWeights = wasmMorphWeights;
         this._wasmMorphIndexMap = wasmMorphIndexMap;
