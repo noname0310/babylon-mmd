@@ -1,18 +1,20 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
+import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+// import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -28,7 +30,7 @@ export class SceneBuilder implements ISceneBuilder {
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.useAlphaEvaluation = false;
         // materialBuilder.alphaEvaluationResolution = 2048;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };
 
         materialBuilder.afterBuildSingleMaterial = (material): void => {
@@ -42,7 +44,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        createDefaultArcRotateCamera(scene);
+        const arcRotateCamera = createDefaultArcRotateCamera(scene);
+        arcRotateCamera.setPosition(new Vector3(2, 19, -10));
+        arcRotateCamera.setTarget(new Vector3(0, 17, 0));
+        arcRotateCamera.fov = 0.4;
         const { shadowGenerator } = createLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
@@ -66,9 +71,11 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.addShadowCaster(mmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) shadowGenerator.addShadowCaster(mesh);
 
-        TextureAlphaChecker.DisposeShader(scene);
-
         Inspector.Show(scene, { });
+
+        // const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
+        // defaultPipeline.samples = 4;
+        // defaultPipeline.fxaaEnabled = true;
 
         return scene;
     }

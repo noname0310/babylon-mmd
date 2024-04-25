@@ -18,7 +18,7 @@ document.body.appendChild(canvas);
 
 const engine = new Engine(canvas, false, {
     preserveDrawingBuffer: false,
-    stencil: false,
+    stencil: true,
     antialias: false,
     alpha: false,
     premultipliedAlpha: false,

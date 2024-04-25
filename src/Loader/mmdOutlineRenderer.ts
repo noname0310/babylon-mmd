@@ -58,7 +58,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
      *
      * final outline width = outlineWidth * OutlineWidthScaleFactor
      */
-    public static OutlineWidthScaleFactor = 0.01;
+    public static OutlineWidthScaleFactor = 0.15;
 
     /**
      * Stencil value used to avoid outline being seen within the mesh when the mesh is transparent
@@ -77,7 +77,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     /**
      * Defines a zOffset default Factor to prevent zFighting between the overlay and the mesh.
      */
-    public zOffset = -8;
+    public zOffset = 1;
 
     /**
      * Defines a zOffset default Unit to prevent zFighting between the overlay and the mesh.
@@ -379,13 +379,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             // Draw the outline using the above stencil if needed to avoid drawing within the mesh
             this._engine.setDepthWrite(false);
-            const currentMode = this._engine.getAlphaMode();
-            const alphaBlendState = this._engine.alphaState.alphaBlend;
-            this._engine.setAlphaMode(Constants.ALPHA_COMBINE);
             this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[0]);
-            this._engine.setAlphaMode(currentMode);
             this._engine.setDepthWrite(this._savedDepthWrite);
-            this._engine.alphaState.alphaBlend = alphaBlendState;
 
             if (material.needAlphaBlendingForMesh(mesh)) {
                 this._engine.stencilStateComposer.useStencilGlobalOnly = false;
@@ -398,23 +393,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
         const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material === null) return;
 
-        // // Overlay
-        // if (material.renderOverlay) {
-        //     const currentMode = this._engine.getAlphaMode();
-        //     const alphaBlendState = this._engine.alphaState.alphaBlend;
-        //     this._engine.setAlphaMode(BABYLON.Constants.ALPHA_COMBINE);
-        //     this.render(subMesh, batch, true, this._passIdForDrawWrapper[3]);
-        //     this._engine.setAlphaMode(currentMode);
-        //     this._engine.setDepthWrite(this._savedDepthWrite);
-        //     this._engine.alphaState.alphaBlend = alphaBlendState;
-        // }
-
         // Outline - step 2 (draw only depth for the outline)
         if (material.renderOutline && this._savedDepthWrite) {
-            this._engine.setDepthWrite(true);
-            this._engine.setColorWrite(false);
-            this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[2]);
-            this._engine.setColorWrite(true);
+            batch;
+            // this._engine.setDepthWrite(true);
+            // this._engine.setColorWrite(false);
+            // this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[2]);
+            // this._engine.setColorWrite(true);
         }
     }
 }
