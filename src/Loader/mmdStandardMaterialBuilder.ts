@@ -1,4 +1,5 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { Constants } from "@babylonjs/core/Engines/constants";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -386,6 +387,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            format: Constants.TEXTUREFORMAT_RGBA,
                             mimeType: file instanceof File ? file.type : file.mimeType
                         }
                     );
@@ -507,6 +509,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
+                                format: Constants.TEXTUREFORMAT_RGB,
                                 mimeType: file instanceof File ? file.type : file.mimeType
                             }
                         ));
@@ -602,6 +605,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            format: Constants.TEXTUREFORMAT_RGB,
                             mimeType: file instanceof File ? file.type : file.mimeType
                         }
                     ));

@@ -1,4 +1,5 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { Constants } from "@babylonjs/core/Engines/constants";
 import type { ITextureCreationOptions } from "@babylonjs/core/Materials/Textures/texture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Observable } from "@babylonjs/core/Misc/observable";
@@ -32,6 +33,11 @@ export interface IMmdTextureLoadOptions {
      * Defines if the buffer we are loading the texture from should be deleted after load (default: false)
      */
     deleteBuffer?: boolean;
+
+    /**
+     * Defines the format of the texture we are trying to load (Engine.TEXTUREFORMAT_RGBA...) (default: )
+     */
+    format?: number;
 
     /**
      * Defines an optional mime type information (default: undefined)
@@ -175,6 +181,7 @@ class MmdTextureData {
             onError,
             buffer,
             deleteBuffer: options.deleteBuffer,
+            format: options.format,
             mimeType: options.mimeType
         };
         const texture = this._texture = new Texture(
@@ -313,6 +320,14 @@ export class MmdAsyncTextureLoader {
         });
     }
 
+    private _createTextureCacheKey(urlOrTextureName: string, options: IMmdTextureLoadOptions): string {
+        return urlOrTextureName +
+            +(options.noMipmap ?? false) +
+            +(options.invertY ?? true) +
+            (options.samplingMode ?? Texture.TRILINEAR_SAMPLINGMODE) +
+            (options.format ?? Constants.TEXTUREFORMAT_RGBA);
+    }
+
     private async _loadTextureAsyncInternal(
         uniqueId: number,
         urlOrTextureName: string,
@@ -324,19 +339,21 @@ export class MmdAsyncTextureLoader {
     ): Promise<Nullable<Texture>> {
         const model = this._incrementLeftLoadCount(uniqueId);
 
-        let textureLoadInfo = this._textureLoadInfoMap.get(urlOrTextureName);
+        const cacheKey = this._createTextureCacheKey(urlOrTextureName, options);
+
+        let textureLoadInfo = this._textureLoadInfoMap.get(cacheKey);
         if (textureLoadInfo === undefined) {
             textureLoadInfo = new TextureLoadInfo();
-            this._textureLoadInfoMap.set(urlOrTextureName, textureLoadInfo);
+            this._textureLoadInfoMap.set(cacheKey, textureLoadInfo);
         }
 
-        let textureData = this.textureCache.get(urlOrTextureName);
+        let textureData = this.textureCache.get(cacheKey);
         if (textureData === undefined && !textureLoadInfo.hasLoadError) {
             const blobOrUrl = sharedTextureIndex !== null ? SharedToonTextures.Data[sharedTextureIndex]
                 : urlOrTextureName;
 
             textureData = new MmdTextureData(
-                urlOrTextureName,
+                cacheKey,
                 scene,
                 assetContainer,
                 blobOrUrl,
@@ -359,7 +376,7 @@ export class MmdAsyncTextureLoader {
                 }
             );
 
-            this.textureCache.set(urlOrTextureName, textureData);
+            this.textureCache.set(cacheKey, textureData);
 
             const arrayBuffer = arrayBufferOrBlob instanceof Blob
                 ? await arrayBufferOrBlob.arrayBuffer()
