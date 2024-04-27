@@ -77,6 +77,10 @@ export class SceneBuilder implements ISceneBuilder {
         // defaultPipeline.samples = 4;
         // defaultPipeline.fxaaEnabled = true;
 
+        // logrithmic depth
+        // instancing
+        // post process
+
         return scene;
     }
 }

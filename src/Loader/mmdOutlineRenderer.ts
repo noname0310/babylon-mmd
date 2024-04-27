@@ -3,10 +3,9 @@ import "@babylonjs/core/Shaders/outline.vertex";
 
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
-import type { IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
+import { Effect, type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
 import { BindBonesParameters, BindMorphTargetParameters, PrepareAttributesForMorphTargetsInfluencers, PushAttributesForInstances } from "@babylonjs/core/Materials/materialHelper.functions";
 import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -19,6 +18,10 @@ import type { Nullable } from "@babylonjs/core/types";
 import { MmdBufferKind } from "./mmdBufferKind";
 import type { MmdStandardMaterial } from "./mmdStandardMaterial";
 import { SdefInjector } from "./sdefInjector";
+import { mmdOutlinePixelShader } from "./Shader/mmdOutlineFragment";
+import { mmdOutlineVertexShader } from "./Shader/mmdOutlineVertex";
+
+Effect.RegisterShader("mmdOutline", mmdOutlinePixelShader, mmdOutlineVertexShader);
 
 declare module "@babylonjs/core/scene" {
     export interface Scene {
@@ -52,19 +55,6 @@ Scene.prototype.getMmdOutlineRenderer = function(): MmdOutlineRenderer {
  */
 export class MmdOutlineRenderer implements ISceneComponent {
     /**
-     * The scale factor of the outline width (default: 0.01)
-     *
-     * The mmd outline parameter needs to be scaled to fit the outline shader of the Babylon.js
-     *
-     * final outline width = outlineWidth * OutlineWidthScaleFactor
-     */
-    public static OutlineWidthScaleFactor = 0.15;
-
-    /**
-     * Stencil value used to avoid outline being seen within the mesh when the mesh is transparent
-     */
-    private static readonly _StencilReference = 0x04;
-    /**
      * The name of the component. Each component must have a unique name.
      */
     public name = "MmdOutline"; // SceneComponentConstants.NAME_OUTLINERENDERER;
@@ -74,19 +64,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
      */
     public scene: Scene;
 
-    /**
-     * Defines a zOffset default Factor to prevent zFighting between the overlay and the mesh.
-     */
-    public zOffset = 1;
-
-    /**
-     * Defines a zOffset default Unit to prevent zFighting between the overlay and the mesh.
-     */
-    public zOffsetUnits = 4; // 4 to account for projection a bit by default
-
     private readonly _engine: AbstractEngine;
-    private _savedDepthWrite: boolean;
-    private readonly _passIdForDrawWrapper: number[];
+    private readonly _passIdForDrawWrapper: number;
 
     /**
      * Instantiates a new outline renderer. (There could be only one per scene).
@@ -96,19 +75,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
         this.scene = scene;
         this._engine = scene.getEngine();
         this.scene._addComponent(this);
-        this._passIdForDrawWrapper = [];
-        for (let i = 0; i < 3; ++i) {
-            this._passIdForDrawWrapper[i] = this._engine.createRenderPassId(`Mmd Outline Renderer (${i})`);
-        }
-
-        this._savedDepthWrite = false;
+        this._passIdForDrawWrapper = this._engine.createRenderPassId("Mmd Outline Renderer");
     }
 
     /**
      * Register the component to one instance of a scene.
      */
     public register(): void {
-        this.scene._beforeRenderingMeshStage.registerStep(SceneComponentConstants.STEP_BEFORERENDERINGMESH_OUTLINE, this, this._beforeRenderingMesh);
         this.scene._afterRenderingMeshStage.registerStep(SceneComponentConstants.STEP_AFTERRENDERINGMESH_OUTLINE, this, this._afterRenderingMesh);
     }
 
@@ -124,20 +97,17 @@ export class MmdOutlineRenderer implements ISceneComponent {
      * Disposes the component and the associated resources.
      */
     public dispose(): void {
-        for (let i = 0; i < this._passIdForDrawWrapper.length; ++i) {
-            this._engine.releaseRenderPassId(this._passIdForDrawWrapper[i]);
-        }
+        this._engine.releaseRenderPassId(this._passIdForDrawWrapper);
     }
 
     /**
      * Renders the outline in the canvas.
      * @param subMesh Defines the sumesh to render
      * @param batch Defines the batch of meshes in case of instances
-     * @param vertexOffset Forcing the vertex offset value
      * @param renderPassId Render pass id to use to render the mesh
      */
-    public render(subMesh: SubMesh, batch: _InstancesBatch, vertexOffset?: number, renderPassId?: number): void {
-        renderPassId = renderPassId ?? this._passIdForDrawWrapper[0];
+    public render(subMesh: SubMesh, batch: _InstancesBatch, renderPassId?: number): void {
+        renderPassId = renderPassId ?? this._passIdForDrawWrapper;
 
         const scene = this.scene;
         const engine = scene.getEngine();
@@ -170,7 +140,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             effect.setFloat("logarithmicDepthConstant", 2.0 / (Math.log(scene.activeCamera.maxZ + 1.0) / Math.LN2));
         }
 
-        effect.setFloat("offset", vertexOffset ?? (material.outlineWidth * MmdOutlineRenderer.OutlineWidthScaleFactor));
+        effect.setFloat("offset", material.outlineWidth);
         effect.setColor4("color", material.outlineColor, material.outlineAlpha);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
@@ -201,15 +171,9 @@ export class MmdOutlineRenderer implements ISceneComponent {
         // Clip plane
         bindClipPlane(effect, material, scene);
 
-        engine.setZOffset(-this.zOffset);
-        engine.setZOffsetUnits(-this.zOffsetUnits);
-
         renderingMesh._processRendering(effectiveMesh, subMesh, effect, material.fillMode, batch, hardwareInstancedRendering, (_isInstance, world) => {
             effect.setMatrix("world", world);
         });
-
-        engine.setZOffset(0);
-        engine.setZOffsetUnits(0);
     }
 
     /**
@@ -221,7 +185,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
      * @returns true if ready otherwise false
      */
     public isReady(subMesh: SubMesh, useInstances: boolean, renderPassId?: number): boolean {
-        renderPassId = renderPassId ?? this._passIdForDrawWrapper[0];
+        renderPassId = renderPassId ?? this._passIdForDrawWrapper;
 
         const defines = [];
         const attribs = [VertexBuffer.PositionKind, VertexBuffer.NormalKind];
@@ -319,6 +283,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             const uniforms = [
                 "world",
                 "mBones",
+                "view",
                 "viewProjection",
                 "diffuseMatrix",
                 "offset",
@@ -336,7 +301,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             drawWrapper.setEffect(
                 this.scene.getEngine().createEffect(
-                    "outline",
+                    "mmdOutline",
                     <IEffectCreationOptions>{
                         attributes: attribs,
                         uniformsNames: uniforms,
@@ -354,52 +319,19 @@ export class MmdOutlineRenderer implements ISceneComponent {
         return drawWrapper.effect!.isReady();
     }
 
-    private _beforeRenderingMesh(mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
-        // Outline - step 1
-        this._savedDepthWrite = this._engine.getDepthWrite();
-        const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
-        if (material && material.renderOutline) {
-            if (material.needAlphaBlendingForMesh(mesh)) {
-                this._engine.cacheStencilState();
-                // Draw only to stencil buffer for the original mesh
-                // The resulting stencil buffer will be used so the outline is not visible inside the mesh when the mesh is transparent
-                this._engine.setDepthWrite(false);
-                this._engine.setColorWrite(false);
-                this._engine.setStencilBuffer(true);
-                this._engine.setStencilOperationPass(Constants.REPLACE);
-                this._engine.setStencilFunction(Constants.ALWAYS);
-                this._engine.setStencilMask(MmdOutlineRenderer._StencilReference);
-                this._engine.setStencilFunctionReference(MmdOutlineRenderer._StencilReference);
-                this._engine.stencilStateComposer.useStencilGlobalOnly = true;
-                this.render(subMesh, batch, 0, this._passIdForDrawWrapper[1]);
-
-                this._engine.setColorWrite(true);
-                this._engine.setStencilFunction(Constants.NOTEQUAL);
-            }
-
-            // Draw the outline using the above stencil if needed to avoid drawing within the mesh
-            this._engine.setDepthWrite(false);
-            this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[0]);
-            this._engine.setDepthWrite(this._savedDepthWrite);
-
-            if (material.needAlphaBlendingForMesh(mesh)) {
-                this._engine.stencilStateComposer.useStencilGlobalOnly = false;
-                this._engine.restoreStencilState();
-            }
-        }
-    }
-
     private _afterRenderingMesh(_mesh: Mesh, subMesh: SubMesh, batch: _InstancesBatch): void {
         const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material === null) return;
 
-        // Outline - step 2 (draw only depth for the outline)
-        if (material.renderOutline && this._savedDepthWrite) {
+        if (material.renderOutline) {
             batch;
-            // this._engine.setDepthWrite(true);
-            // this._engine.setColorWrite(false);
-            // this.render(subMesh, batch, undefined, this._passIdForDrawWrapper[2]);
-            // this._engine.setColorWrite(true);
+            const savedDepthWrite = this._engine.getDepthWrite();
+            this._engine.setDepthWrite(false);
+            const depthFunction = this._engine.getDepthFunction();
+            this._engine.setDepthFunctionToLessOrEqual();
+            this.render(subMesh, batch, this._passIdForDrawWrapper);
+            if (depthFunction) this._engine.setDepthFunction(depthFunction);
+            this._engine.setDepthWrite(savedDepthWrite);
         }
     }
 }
