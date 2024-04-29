@@ -3,6 +3,7 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
+import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
@@ -10,6 +11,7 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
+import { Material } from "@babylonjs/core/Materials/material";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
@@ -44,7 +46,17 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            if (material.diffuseTexture) {
+                material.diffuseTexture.hasAlpha = true;
+            }
+            material.useAlphaFromDiffuseTexture = true;
+            material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+            material.forceDepthWrite = true;
+        };
+
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -55,7 +67,8 @@ export class SceneBuilder implements ISceneBuilder {
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
-        createDefaultGround(scene);
+        shadowGenerator.transparencyShadow = true;
+        const ground = createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene);
         mmdRuntime.loggingEnabled = true;
@@ -73,7 +86,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const [
             mmdAnimation,
-            modelMesh
+            modelMesh,
+            stageMesh
         ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
@@ -97,12 +111,32 @@ export class SceneBuilder implements ISceneBuilder {
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/stage/",
-                    "Stage35_02.bpmx",
+                    "Stage35_02_toonfix.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
             }]
         ]);
+
+        {
+            let alphaIndex = 0;
+
+            ground.alphaIndex = alphaIndex;
+            alphaIndex += 1;
+
+            const stageMeshes = stageMesh.metadata.meshes;
+            for (let i = 0; i < stageMeshes.length; i++) {
+                const mesh = stageMeshes[i];
+                mesh.alphaIndex = alphaIndex;
+                alphaIndex += 1;
+            }
+            const modelMeshes = modelMesh.metadata.meshes;
+            for (let i = 0; i < modelMeshes.length; i++) {
+                const mesh = modelMeshes[i];
+                mesh.alphaIndex = alphaIndex;
+                alphaIndex += 1;
+            }
+        }
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
@@ -123,7 +157,7 @@ export class SceneBuilder implements ISceneBuilder {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene, { clearCachedVertexData: false }));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",
@@ -176,7 +210,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.chromaticAberrationEnabled = false;
-        defaultPipeline.depthOfFieldEnabled = true;
+        defaultPipeline.depthOfFieldEnabled = false;
         defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.imageProcessingEnabled = true;
@@ -188,7 +222,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(mmdModel);
-        mmdCameraAutoFocus.register(scene);
+        // mmdCameraAutoFocus.register(scene);
 
         return scene;
     }
