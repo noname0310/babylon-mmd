@@ -400,7 +400,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         assetContainer,
                         {
                             ...textureInfo,
-                            deleteBuffer: this.deleteTextureBufferAfterLoad
+                            deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            format: Constants.TEXTUREFORMAT_RGBA
                         }
                     );
                 }
@@ -522,7 +523,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             assetContainer,
                             {
                                 ...textureInfo,
-                                deleteBuffer: this.deleteTextureBufferAfterLoad
+                                deleteBuffer: this.deleteTextureBufferAfterLoad,
+                                format: Constants.TEXTUREFORMAT_RGB
                             }
                         ));
                     }
@@ -618,7 +620,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         assetContainer,
                         {
                             ...textureInfo,
-                            deleteBuffer: this.deleteTextureBufferAfterLoad
+                            deleteBuffer: this.deleteTextureBufferAfterLoad,
+                            format: Constants.TEXTUREFORMAT_RGB
                         }
                     ));
                 }
