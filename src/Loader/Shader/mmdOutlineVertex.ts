@@ -52,7 +52,7 @@ void main(void)
     vec3 viewNormal = view * (mat3(finalWorld) * normalUpdated);
     vec4 projectedPosition = viewProjection * finalWorld * vec4(positionUpdated, 1.0);
     vec2 screenNormal = normalize(vec2(viewNormal));
-    projectedPosition.xy += screenNormal / (viewport * 0.5) * offset * projectedPosition.w;
+    projectedPosition.xy += screenNormal / (viewport * 0.25 /* 0.5 */) * offset * projectedPosition.w;
 
 	gl_Position = projectedPosition;
 

@@ -144,7 +144,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
         effect.setFloat("offset", material.outlineWidth);
         effect.setColor4("color", material.outlineColor, material.outlineAlpha);
-        effect.setFloat2("viewport", engine.getRenderWidth(), engine.getRenderHeight());
+
+        // const renderHeight = 1080;
+        // const renderWidth = engine.getRenderWidth() * (renderHeight / engine.getRenderHeight());
+        const renderHeight = engine.getRenderHeight();
+        const renderWidth = engine.getRenderWidth();
+
+        effect.setFloat2("viewport", renderWidth, renderHeight);
         const viewMatrixArray = MmdOutlineRenderer._ViewMatrix;
         {
             const m = scene.getViewMatrix().m;
