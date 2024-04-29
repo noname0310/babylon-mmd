@@ -24,6 +24,7 @@ import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBui
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { transferAmbientToDiffuse } from "@/Loader/Util/transferAmbientToDiffuse";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -49,6 +50,8 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         materialBuilder.afterBuildSingleMaterial = (material): void => {
+            transferAmbientToDiffuse(material);
+
             if (material.diffuseTexture) {
                 material.diffuseTexture.hasAlpha = true;
             }

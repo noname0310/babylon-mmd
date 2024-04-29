@@ -18,6 +18,9 @@
 
 - refactor `MmdOutlineRenderer` to have the same behavior as MMD's outline
 
+- introduce `transferAmbientToDiffuse` utility function to transfer ambient color to diffuse color in `MmdStandardMaterial` for get same result as MMD
+    - this method makes loss of material information, so do not use it when you need serlialize material
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model
