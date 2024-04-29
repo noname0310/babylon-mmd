@@ -16,6 +16,8 @@ uniform float offset;
 
 #include<instancesDeclaration>
 
+uniform vec2 viewport;
+uniform mat3 view;
 uniform mat4 viewProjection;
 
 #ifdef ALPHATEST
@@ -43,15 +45,16 @@ void main(void)
     #include<morphTargetsVertexGlobal>
     #include<morphTargetsVertex>[0..maxSimultaneousMorphTargets]
 
-	vec3 offsetPosition = positionUpdated + (normalUpdated * offset);
-
 #include<instancesVertex>
 #include<bonesVertex>
 #include<bakedVertexAnimation>
 
-    vec4 worldPos = finalWorld * vec4(offsetPosition, 1.0);
+    vec3 viewNormal = view * (mat3(finalWorld) * normalUpdated);
+    vec4 projectedPosition = viewProjection * finalWorld * vec4(positionUpdated, 1.0);
+    vec2 screenNormal = normalize(vec2(viewNormal));
+    projectedPosition.xy += screenNormal / (viewport * 0.25 /* 0.5 */) * offset * projectedPosition.w;
 
-	gl_Position = viewProjection * worldPos;
+	gl_Position = projectedPosition;
 
 #ifdef ALPHATEST
 #ifdef UV1

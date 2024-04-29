@@ -10,6 +10,14 @@
 
 - fix `BpmxLoader` alpha evaluation not working with asset which created from non-PMX model
 
+- use RGB texture format instead of RGBA for sphere and toon texture
+
+- fix material morph color accumulation method as same as MMD
+
+- mesh with 0 alpha value is now automatically hidden by `MmdRuntime`
+
+- refactor `MmdOutlineRenderer` to have the same behavior as MMD's outline
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model

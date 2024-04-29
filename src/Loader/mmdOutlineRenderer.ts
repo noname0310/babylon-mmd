@@ -100,6 +100,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
         this._engine.releaseRenderPassId(this._passIdForDrawWrapper);
     }
 
+    private static readonly _ViewMatrix = new Float32Array(9);
+
     /**
      * Renders the outline in the canvas.
      * @param subMesh Defines the sumesh to render
@@ -142,6 +144,21 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
         effect.setFloat("offset", material.outlineWidth);
         effect.setColor4("color", material.outlineColor, material.outlineAlpha);
+        effect.setFloat2("viewport", engine.getRenderWidth(), engine.getRenderHeight());
+        const viewMatrixArray = MmdOutlineRenderer._ViewMatrix;
+        {
+            const m = scene.getViewMatrix().m;
+            viewMatrixArray[0] = m[0];
+            viewMatrixArray[1] = m[1];
+            viewMatrixArray[2] = m[2];
+            viewMatrixArray[3] = m[4];
+            viewMatrixArray[4] = m[5];
+            viewMatrixArray[5] = m[6];
+            viewMatrixArray[6] = m[8];
+            viewMatrixArray[7] = m[9];
+            viewMatrixArray[8] = m[10];
+        }
+        effect.setMatrix3x3("view", viewMatrixArray);
         effect.setMatrix("viewProjection", scene.getTransformMatrix());
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
@@ -283,6 +300,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             const uniforms = [
                 "world",
                 "mBones",
+                "viewport",
                 "view",
                 "viewProjection",
                 "diffuseMatrix",
@@ -324,13 +342,9 @@ export class MmdOutlineRenderer implements ISceneComponent {
         if (material === null) return;
 
         if (material.renderOutline) {
-            batch;
             const savedDepthWrite = this._engine.getDepthWrite();
-            this._engine.setDepthWrite(false);
-            const depthFunction = this._engine.getDepthFunction();
-            this._engine.setDepthFunctionToLessOrEqual();
+            this._engine.setState(true, undefined, undefined, undefined, false);
             this.render(subMesh, batch, this._passIdForDrawWrapper);
-            if (depthFunction) this._engine.setDepthFunction(depthFunction);
             this._engine.setDepthWrite(savedDepthWrite);
         }
     }

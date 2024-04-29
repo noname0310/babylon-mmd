@@ -5,10 +5,11 @@ import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-// import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
@@ -40,6 +41,8 @@ export class SceneBuilder implements ISceneBuilder {
             material.useAlphaFromDiffuseTexture = true;
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
             material.forceDepthWrite = true;
+
+            material.useLogarithmicDepth = true;
         };
 
         const scene = new Scene(engine);
@@ -52,8 +55,8 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
 
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
+        pmxLoader.buildSkeleton = true;
+        pmxLoader.buildMorph = true;
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
             "res/private_test/model/YYB Hatsune Miku_10th/",
@@ -61,6 +64,14 @@ export class SceneBuilder implements ISceneBuilder {
             scene
         ).then(result => result.meshes[0] as MmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
+
+        {
+            const meshes = mmdMesh.metadata.meshes;
+            for (let i = 0; i < meshes.length; i++) {
+                const instanced = meshes[i].createInstance(`instanced_${i}`);
+                instanced.position.x += 10;
+            }
+        }
 
         const meshes = mmdMesh.metadata.meshes;
         for (let i = 0; i < meshes.length; i++) {
@@ -73,13 +84,13 @@ export class SceneBuilder implements ISceneBuilder {
 
         Inspector.Show(scene, { });
 
-        // const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
-        // defaultPipeline.samples = 4;
-        // defaultPipeline.fxaaEnabled = true;
+        const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
+        defaultPipeline.samples = 4;
+        defaultPipeline.fxaaEnabled = true;
 
-        // logrithmic depth
-        // instancing
-        // post process
+        defaultPipeline.imageProcessingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
 
         return scene;
     }
