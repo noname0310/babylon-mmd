@@ -210,7 +210,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.samples = 4;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.chromaticAberrationEnabled = false;
-        defaultPipeline.depthOfFieldEnabled = false;
+        defaultPipeline.depthOfFieldEnabled = true;
         defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.imageProcessingEnabled = true;
@@ -222,7 +222,11 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteEnabled = true;
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(mmdModel);
-        // mmdCameraAutoFocus.register(scene);
+        mmdCameraAutoFocus.register(scene);
+
+        for (const depthRenderer of Object.values(scene._depthRenderer)) {
+            depthRenderer.forceDepthWriteTransparentMeshes = true;
+        }
 
         return scene;
     }
