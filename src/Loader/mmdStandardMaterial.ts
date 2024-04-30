@@ -100,6 +100,21 @@ export class MmdStandardMaterial extends StandardMaterial {
     }
 
     /**
+     * Get or set whether to apply ambient color to diffuse color (default: true)
+     *
+     * In babylon.js, the ambient color is not affected by the light source, but in mmd, it is
+     *
+     * Therefore, if you want to get a more mmd-like rendering, it is better to do true
+     */
+    public get applyAmbientColorToDiffuse(): boolean {
+        return this._pluginMaterial.applyAmbientColorToDiffuse;
+    }
+
+    public set applyAmbientColorToDiffuse(value: boolean) {
+        this._pluginMaterial.applyAmbientColorToDiffuse = value;
+    }
+
+    /**
      * Get or set whether to use the texture color (default: (1, 1, 1, 1))
      *
      * If this property is first accessed as set, the shader is recompiled to support texture color properties

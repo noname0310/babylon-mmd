@@ -18,6 +18,8 @@
 
 - refactor `MmdOutlineRenderer` to have the same behavior as MMD's outline
 
+- apply ambient color to diffuse color when using `MmdStandardMaterial` for make it same as MMD
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model

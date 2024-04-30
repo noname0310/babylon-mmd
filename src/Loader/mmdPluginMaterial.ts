@@ -59,6 +59,7 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
     public TOON_TEXTURE = false;
     public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+    public APPLY_AMBIENT_COLOR_TO_DIFFUSE = false;
     public TEXTURE_COLOR = false;
     public SPHERE_TEXTURE_COLOR = false;
     public TOON_TEXTURE_COLOR = false;
@@ -82,6 +83,8 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public textureColor = new Color4(1, 1, 1, 1);
     public sphereTextureColor = new Color4(1, 1, 1, 1);
     public toonTextureColor = new Color4(1, 1, 1, 1);
+
+    private _applyAmbientColorToDiffuse = true;
 
     private _useTextureColor = false;
     private _useSphereTextureColor = false;
@@ -137,6 +140,16 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set ignoreDiffuseWhenToonTextureIsNull(value: boolean) {
         if (this._ignoreDiffuseWhenToonTextureIsNull === value) return;
         this._ignoreDiffuseWhenToonTextureIsNull = value;
+        this.markAllDefinesAsDirty();
+    }
+
+    public get applyAmbientColorToDiffuse(): boolean {
+        return this._applyAmbientColorToDiffuse;
+    }
+
+    public set applyAmbientColorToDiffuse(value: boolean) {
+        if (this._applyAmbientColorToDiffuse === value) return;
+        this._applyAmbientColorToDiffuse = value;
         this.markAllDefinesAsDirty();
     }
 
@@ -273,6 +286,14 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            codes[`!${this._escapeRegExp("vec3 diffuseColor=vDiffuseColor.rgb;")}`] = /* glsl */`
+                #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
+                    vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
+                #else
+                    vec3 diffuseColor = (vDiffuseColor.rgb);
+                #endif
+            `;
+
             codes[`!${this._escapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
                     baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset) * textureColor;
@@ -323,6 +344,34 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            const finalDiffuse = /* glsl */`
+                #ifdef EMISSIVEASILLUMINATION
+                    vec3 finalDiffuse=clamp(diffuseBase*diffuseColor+vAmbientColor,0.0,1.0)*baseColor.rgb;
+                #else
+                #ifdef LINKEMISSIVEWITHDIFFUSE
+                    vec3 finalDiffuse=clamp((diffuseBase+emissiveColor)*diffuseColor+vAmbientColor,0.0,1.0)*baseColor.rgb;
+                #else
+                    vec3 finalDiffuse=clamp(diffuseBase*diffuseColor+emissiveColor+vAmbientColor,0.0,1.0)*baseColor.rgb;
+                #endif
+                #endif
+            `;
+
+            codes[`!${this._escapeRegExp(finalDiffuse)}`] = /* glsl */`
+                #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
+                    #ifdef EMISSIVEASILLUMINATION
+                        vec3 finalDiffuse = clamp(diffuseBase * diffuseColor, 0.0, 1.0) * baseColor.rgb;
+                    #else
+                        #ifdef LINKEMISSIVEWITHDIFFUSE
+                            vec3 finalDiffuse = clamp((diffuseBase + emissiveColor) * diffuseColor, 0.0, 1.0) * baseColor.rgb;
+                        #else
+                            vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor, 0.0, 1.0) * baseColor.rgb;
+                        #endif
+                    #endif
+                #else
+                    ${finalDiffuse.replace("diffuseBase", "(diffuseBase)")} // prevent regex match bug
+                #endif
+            `;
+
             codes["CUSTOM_FRAGMENT_BEFORE_FOG"] = /* glsl */`
                 #if defined(NORMAL) && defined(SPHERE_TEXTURE)
                     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
@@ -357,6 +406,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             // todo: support sub texture mode
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
+            defines.APPLY_AMBIENT_COLOR_TO_DIFFUSE = this._applyAmbientColorToDiffuse;
             defines.TEXTURE_COLOR = this._useTextureColor;
             defines.SPHERE_TEXTURE_COLOR = this._useSphereTextureColor;
             defines.TOON_TEXTURE_COLOR = this._useToonTextureColor;
@@ -367,6 +417,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.SPHERE_TEXTURE_BLEND_MODE_ADD = false;
             defines.TOON_TEXTURE = false;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
+            defines.APPLY_AMBIENT_COLOR_TO_DIFFUSE = false;
             defines.TEXTURE_COLOR = false;
             defines.SPHERE_TEXTURE_COLOR = false;
             defines.TOON_TEXTURE_COLOR = false;
