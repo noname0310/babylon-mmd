@@ -598,21 +598,21 @@ export abstract class MmdMorphControllerBase {
             }
 
             if (materialMorph.textureColor !== null) {
-                const textureColor = material.textureColor;
+                const textureColor = material.textureMultiplicativeColor;
                 for (let i = 0; i < 4; ++i) {
                     textureColor[i] = textureColor[i] + (textureColor[i] * materialMorph.textureColor[i] - textureColor[i]) * weight;
                 }
             }
 
             if (materialMorph.sphereTextureColor !== null) {
-                const sphereTextureColor = material.sphereTextureColor;
+                const sphereTextureColor = material.sphereTextureMultiplicativeColor;
                 for (let i = 0; i < 4; ++i) {
                     sphereTextureColor[i] = sphereTextureColor[i] + (sphereTextureColor[i] * materialMorph.sphereTextureColor[i] - sphereTextureColor[i]) * weight;
                 }
             }
 
             if (materialMorph.toonTextureColor !== null) {
-                const toonTextureColor = material.toonTextureColor;
+                const toonTextureColor = material.toonTextureMultiplicativeColor;
                 for (let i = 0; i < 4; ++i) {
                     toonTextureColor[i] = toonTextureColor[i] + (toonTextureColor[i] * materialMorph.toonTextureColor[i] - toonTextureColor[i]) * weight;
                 }
@@ -655,21 +655,21 @@ export abstract class MmdMorphControllerBase {
             }
 
             if (materialMorph.textureColor !== null) {
-                const textureColor = material.textureColor;
+                const textureColor = material.textureAdditiveColor;
                 for (let i = 0; i < 4; ++i) {
                     textureColor[i] += materialMorph.textureColor[i] * weight;
                 }
             }
 
             if (materialMorph.sphereTextureColor !== null) {
-                const sphereTextureColor = material.sphereTextureColor;
+                const sphereTextureColor = material.sphereTextureAdditiveColor;
                 for (let i = 0; i < 4; ++i) {
                     sphereTextureColor[i] += materialMorph.sphereTextureColor[i] * weight;
                 }
             }
 
             if (materialMorph.toonTextureColor !== null) {
-                const toonTextureColor = material.toonTextureColor;
+                const toonTextureColor = material.toonTextureAdditiveColor;
                 for (let i = 0; i < 4; ++i) {
                     toonTextureColor[i] += materialMorph.toonTextureColor[i] * weight;
                 }

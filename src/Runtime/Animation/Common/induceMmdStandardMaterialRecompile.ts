@@ -37,11 +37,11 @@ export function induceMmdStandardMaterialRecompile(
                 const materialIndex = element.index;
                 if (element.index === -1) {
                     for (let l = 0; l < materials.length; ++l) {
-                        materials[l].textureColor;
+                        materials[l].textureMultiplicativeColor;
                     }
                     allTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].textureColor;
+                    materials[materialIndex].textureMultiplicativeColor;
                     recompiledMaterials.add(materialIndex.toString());
                 }
             }
@@ -50,11 +50,11 @@ export function induceMmdStandardMaterialRecompile(
                 const materialIndex = element.index;
                 if (element.index === -1) {
                     for (let l = 0; l < materials.length; ++l) {
-                        materials[l].sphereTextureColor;
+                        materials[l].sphereTextureMultiplicativeColor;
                     }
                     allSphereTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].sphereTextureColor;
+                    materials[materialIndex].sphereTextureMultiplicativeColor;
                     recompiledMaterials.add(materialIndex.toString());
                 }
             }
@@ -63,11 +63,11 @@ export function induceMmdStandardMaterialRecompile(
                 const materialIndex = element.index;
                 if (element.index === -1) {
                     for (let l = 0; l < materials.length; ++l) {
-                        materials[l].toonTextureColor;
+                        materials[l].toonTextureMultiplicativeColor;
                     }
                     allToonTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].toonTextureColor;
+                    materials[materialIndex].toonTextureMultiplicativeColor;
                     recompiledMaterials.add(materialIndex.toString());
                 }
             }

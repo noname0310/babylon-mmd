@@ -80,9 +80,12 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     private _toonTexture: Nullable<Texture> = null;
     private _ignoreDiffuseWhenToonTextureIsNull = false;
 
-    public textureColor = new Color4(1, 1, 1, 1);
-    public sphereTextureColor = new Color4(1, 1, 1, 1);
-    public toonTextureColor = new Color4(1, 1, 1, 1);
+    public textureMultiplicativeColor = new Color4(1, 1, 1, 1);
+    public textureAdditiveColor = new Color4(0, 0, 0, 0);
+    public sphereTextureMultiplicativeColor = new Color4(1, 1, 1, 1);
+    public sphereTextureAdditiveColor = new Color4(0, 0, 0, 0);
+    public toonTextureMultiplicativeColor = new Color4(1, 1, 1, 1);
+    public toonTextureAdditiveColor = new Color4(0, 0, 0, 0);
 
     private _applyAmbientColorToDiffuse = true;
 
@@ -216,15 +219,18 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
         if (!uniformBuffer.useUbo || !isFrozen || !uniformBuffer.isSync) {
             if (defines.DIFFUSE && defines.TEXTURE_COLOR) {
-                uniformBuffer.updateDirectColor4("textureColor", this.textureColor);
+                uniformBuffer.updateDirectColor4("textureMultiplicativeColor", this.textureMultiplicativeColor);
+                uniformBuffer.updateDirectColor4("textureAdditiveColor", this.textureAdditiveColor);
             }
 
             if (defines.NORMAL && defines.SPHERE_TEXTURE && defines.SPHERE_TEXTURE_COLOR) {
-                uniformBuffer.updateDirectColor4("sphereTextureColor", this.sphereTextureColor);
+                uniformBuffer.updateDirectColor4("sphereTextureMultiplicativeColor", this.sphereTextureMultiplicativeColor);
+                uniformBuffer.updateDirectColor4("sphereTextureAdditiveColor", this.sphereTextureAdditiveColor);
             }
 
             if (defines.TOON_TEXTURE && defines.TOON_TEXTURE_COLOR) {
-                uniformBuffer.updateDirectColor4("toonTextureColor", this.toonTextureColor);
+                uniformBuffer.updateDirectColor4("toonTextureMultiplicativeColor", this.toonTextureMultiplicativeColor);
+                uniformBuffer.updateDirectColor4("toonTextureAdditiveColor", this.toonTextureAdditiveColor);
             }
 
             if (defines.SPHERE_TEXTURE && subMesh.effect !== null) {
@@ -296,7 +302,17 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
             codes[`!${this._escapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
-                    baseColor = texture2D(diffuseSampler, vDiffuseUV + uvOffset) * textureColor;
+                    baseColor = texture2D(diffuseSampler, (vDiffuseUV + uvOffset));
+                    baseColor.rgb = mix(
+                        vec3(1.0),
+                        baseColor.rgb * textureMultiplicativeColor.rgb,
+                        textureMultiplicativeColor.a
+                    );
+                    baseColor.rgb = clamp(
+                        baseColor.rgb + (baseColor.rgb - vec3(1.0)) * textureAdditiveColor.a,
+                        0.0,
+                        1.0
+                    ) + textureAdditiveColor.rgb;
                 #else
                     baseColor = texture2D(diffuseSampler, (vDiffuseUV + uvOffset));
                 #endif
@@ -333,7 +349,16 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     toonNdl.b = texture2D(toonSampler, vec2(0.5, toonNdl.b)).b;
 
                     #ifdef TOON_TEXTURE_COLOR
-                        toonNdl *= toonTextureColor.rgb * toonTextureColor.a;
+                        toonNdl = mix(
+                            vec3(1.0),
+                            toonNdl * toonTextureMultiplicativeColor.rgb,
+                            toonTextureMultiplicativeColor.a
+                        );
+                        toonNdl = clamp(
+                            toonNdl + (toonNdl - vec3(1.0)) * toonTextureAdditiveColor.a,
+                            0.0,
+                            1.0
+                        ) + toonTextureAdditiveColor.rgb;
                     #endif
 
                     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
@@ -380,7 +405,16 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
                     vec4 sphereReflectionColor = texture2D(sphereSampler, sphereUV);
                     #ifdef SPHERE_TEXTURE_COLOR
-                        sphereReflectionColor *= sphereTextureColor;
+                        sphereReflectionColor.rgb = mix(
+                            vec3(1.0),
+                            sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
+                            sphereTextureMultiplicativeColor.a
+                        );
+                        sphereReflectionColor.rgb = clamp(
+                            sphereReflectionColor.rgb + (sphereReflectionColor.rgb - vec3(1.0)) * sphereTextureAdditiveColor.a,
+                            0.0,
+                            1.0
+                        ) + sphereTextureAdditiveColor.rgb;
                     #endif
                     sphereReflectionColor.rgb *= diffuseBase;
 
@@ -465,19 +499,25 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         } {
         return {
             "ubo": [
-                { name: "textureColor", size: 4, type: "vec4" },
-                { name: "sphereTextureColor", size: 4, type: "vec4" },
-                { name: "toonTextureColor", size: 4, type: "vec4" }
+                { name: "textureMultiplicativeColor", size: 4, type: "vec4" },
+                { name: "textureAdditiveColor", size: 4, type: "vec4" },
+                { name: "sphereTextureMultiplicativeColor", size: 4, type: "vec4" },
+                { name: "sphereTextureAdditiveColor", size: 4, type: "vec4" },
+                { name: "toonTextureMultiplicativeColor", size: 4, type: "vec4" },
+                { name: "toonTextureAdditiveColor", size: 4, type: "vec4" }
             ],
             "fragment": /* glsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
-                    uniform vec4 textureColor;
+                    uniform vec4 textureMultiplicativeColor;
+                    uniform vec4 textureAdditiveColor;
                 #endif
                 #if defined(SPHERE_TEXTURE) && defined(SPHERE_TEXTURE_COLOR)
-                    uniform vec4 sphereTextureColor;
+                    uniform vec4 sphereTextureMultiplicativeColor;
+                    uniform vec4 sphereTextureAdditiveColor;
                 #endif
                 #if defined(TOON_TEXTURE) && defined(TOON_TEXTURE_COLOR)
-                    uniform vec4 toonTextureColor;
+                    uniform vec4 toonTextureMultiplicativeColor;
+                    uniform vec4 toonTextureAdditiveColor;
                 #endif
             `
         };

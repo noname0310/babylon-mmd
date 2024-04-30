@@ -50,19 +50,35 @@ export interface IMmdMaterialProxy {
     edgeSize: number;
 
     /**
-     * Texture color
+     * Texture multiplicative color
      */
-    readonly textureColor: Vec4;
+    readonly textureMultiplicativeColor: Vec4;
 
     /**
-     * Sphere texture color
+     * Texture additive color
      */
-    readonly sphereTextureColor: Vec4;
+    readonly textureAdditiveColor: Vec4;
 
     /**
-     * Toon texture color
+     * Sphere texture multiplicative color
      */
-    readonly toonTextureColor: Vec4;
+    readonly sphereTextureMultiplicativeColor: Vec4;
+
+    /**
+     * Sphere texture additive color
+     */
+    readonly sphereTextureAdditiveColor: Vec4;
+
+    /**
+     * Toon texture multiplicative color
+     */
+    readonly toonTextureMultiplicativeColor: Vec4;
+
+    /**
+     * Toon texture additive color
+     */
+    readonly toonTextureAdditiveColor: Vec4;
+
 }
 
 /**

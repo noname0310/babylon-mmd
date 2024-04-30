@@ -44,19 +44,34 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     public edgeSize: number;
 
     /**
-     * Texture color
+     * Texture multiplicative color
      */
-    public readonly textureColor: Vec4;
+    public readonly textureMultiplicativeColor: Vec4;
 
     /**
-     * Sphere texture color
+     * Texture additive color
      */
-    public readonly sphereTextureColor: Vec4;
+    public readonly textureAdditiveColor: Vec4;
 
     /**
-     * Toon texture color
+     * Sphere texture multiplicative color
      */
-    public readonly toonTextureColor: Vec4;
+    public readonly sphereTextureMultiplicativeColor: Vec4;
+
+    /**
+     * Sphere texture additive color
+     */
+    public readonly sphereTextureAdditiveColor: Vec4;
+
+    /**
+     * Toon texture multiplicative color
+     */
+    public readonly toonTextureMultiplicativeColor: Vec4;
+
+    /**
+     * Toon texture additive color
+     */
+    public readonly toonTextureAdditiveColor: Vec4;
 
     private readonly _material: MmdStandardMaterial;
     private readonly _referencedMeshes: readonly Mesh[];
@@ -67,9 +82,12 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
     private readonly _initialAmbient: Vec3;
     private readonly _initialEdgeColor: Vec4;
     private readonly _initialEdgeSize: number;
-    private readonly _initialTextureColor: Vec4;
-    private readonly _initialSphereTextureColor: Vec4;
-    private readonly _initialToonTextureColor: Vec4;
+    private readonly _initialTextureMultiplicativeColor: Vec4;
+    private readonly _initialTextureAdditiveColor: Vec4;
+    private readonly _initialSphereTextureMultiplicativeColor: Vec4;
+    private readonly _initialSphereTextureAdditiveColor: Vec4;
+    private readonly _initialToonTextureMultiplicativeColor: Vec4;
+    private readonly _initialToonTextureAdditiveColor: Vec4;
 
     private readonly _initialTransparencyMode: Nullable<number>;
 
@@ -97,9 +115,12 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
 
         this.edgeSize = material.outlineWidth;
 
-        this.textureColor = [1, 1, 1, 1];
-        this.sphereTextureColor = [1, 1, 1, 1];
-        this.toonTextureColor = [1, 1, 1, 1];
+        this.textureMultiplicativeColor = [1, 1, 1, 1];
+        this.textureAdditiveColor = [0, 0, 0, 0];
+        this.sphereTextureMultiplicativeColor = [1, 1, 1, 1];
+        this.sphereTextureAdditiveColor = [0, 0, 0, 0];
+        this.toonTextureMultiplicativeColor = [1, 1, 1, 1];
+        this.toonTextureAdditiveColor = [0, 0, 0, 0];
 
         this._initialDiffuse = [...this.diffuse];
         this._initialSpecular = [...this.specular];
@@ -107,9 +128,12 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
         this._initialAmbient = [...this.ambient];
         this._initialEdgeColor = [...this.edgeColor];
         this._initialEdgeSize = this.edgeSize;
-        this._initialTextureColor = [...this.textureColor];
-        this._initialSphereTextureColor = [...this.sphereTextureColor];
-        this._initialToonTextureColor = [...this.toonTextureColor];
+        this._initialTextureMultiplicativeColor = [...this.textureMultiplicativeColor];
+        this._initialTextureAdditiveColor = [...this.textureAdditiveColor];
+        this._initialSphereTextureMultiplicativeColor = [...this.sphereTextureMultiplicativeColor];
+        this._initialSphereTextureAdditiveColor = [...this.sphereTextureAdditiveColor];
+        this._initialToonTextureMultiplicativeColor = [...this.toonTextureMultiplicativeColor];
+        this._initialToonTextureAdditiveColor = [...this.toonTextureAdditiveColor];
 
         this._initialTransparencyMode = material.transparencyMode;
     }
@@ -122,9 +146,12 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
             this.diffuse[i] = this._initialDiffuse[i];
             this.edgeColor[i] = this._initialEdgeColor[i];
 
-            this.textureColor[i] = this._initialTextureColor[i];
-            this.sphereTextureColor[i] = this._initialSphereTextureColor[i];
-            this.toonTextureColor[i] = this._initialToonTextureColor[i];
+            this.textureMultiplicativeColor[i] = this._initialTextureMultiplicativeColor[i];
+            this.textureAdditiveColor[i] = this._initialTextureAdditiveColor[i];
+            this.sphereTextureMultiplicativeColor[i] = this._initialSphereTextureMultiplicativeColor[i];
+            this.sphereTextureAdditiveColor[i] = this._initialSphereTextureAdditiveColor[i];
+            this.toonTextureMultiplicativeColor[i] = this._initialToonTextureMultiplicativeColor[i];
+            this.toonTextureAdditiveColor[i] = this._initialToonTextureAdditiveColor[i];
         }
 
         for (let i = 0; i < 3; ++i) {
@@ -171,11 +198,32 @@ export class MmdStandardMaterialProxy implements IMmdMaterialProxy {
 
         material.outlineWidth = this.edgeSize;
 
-        material.textureColor.set(this.textureColor[0], this.textureColor[1], this.textureColor[2], this.textureColor[3]);
+        {
+            const multiplicative = this.textureMultiplicativeColor;
+            material.textureMultiplicativeColor.set(multiplicative[0], multiplicative[1], multiplicative[2], multiplicative[3]);
+        }
+        {
+            const additive = this.textureAdditiveColor;
+            material.textureAdditiveColor.set(additive[0], additive[1], additive[2], additive[3]);
+        }
 
-        material.sphereTextureColor.set(this.sphereTextureColor[0], this.sphereTextureColor[1], this.sphereTextureColor[2], this.sphereTextureColor[3]);
+        {
+            const multiplicative = this.sphereTextureMultiplicativeColor;
+            material.sphereTextureMultiplicativeColor.set(multiplicative[0], multiplicative[1], multiplicative[2], multiplicative[3]);
+        }
+        {
+            const additive = this.sphereTextureAdditiveColor;
+            material.sphereTextureAdditiveColor.set(additive[0], additive[1], additive[2], additive[3]);
+        }
 
-        material.toonTextureColor.set(this.toonTextureColor[0], this.toonTextureColor[1], this.toonTextureColor[2], this.toonTextureColor[3]);
+        {
+            const multiplicative = this.toonTextureMultiplicativeColor;
+            material.toonTextureMultiplicativeColor.set(multiplicative[0], multiplicative[1], multiplicative[2], multiplicative[3]);
+        }
+        {
+            const additive = this.toonTextureAdditiveColor;
+            material.toonTextureAdditiveColor.set(additive[0], additive[1], additive[2], additive[3]);
+        }
     }
 }
 

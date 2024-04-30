@@ -115,7 +115,7 @@ export class MmdStandardMaterial extends StandardMaterial {
     }
 
     /**
-     * Get or set whether to use the texture color (default: (1, 1, 1, 1))
+     * Get or set whether to use the texture multiplicative color (default: (1, 1, 1, 1))
      *
      * If this property is first accessed as set, the shader is recompiled to support texture color properties
      *
@@ -123,18 +123,18 @@ export class MmdStandardMaterial extends StandardMaterial {
      *
      * These features are subject to change at a later date
      */
-    public get textureColor(): Color4 {
+    public get textureMultiplicativeColor(): Color4 {
         this._pluginMaterial.useTextureColor = true;
-        return this._pluginMaterial.textureColor;
+        return this._pluginMaterial.textureMultiplicativeColor;
     }
 
-    public set textureColor(value: Color4) {
+    public set textureMultiplicativeColor(value: Color4) {
         this._pluginMaterial.useTextureColor = true;
-        this._pluginMaterial.textureColor = value;
+        this._pluginMaterial.textureMultiplicativeColor = value;
     }
 
     /**
-     * Get or set whether to use the sphere texture color (default: (1, 1, 1, 1))
+     * Get or set whether to use the texture additive color (default: (0, 0, 0, 0))
      *
      * If this property is first accessed as set, the shader is recompiled to support texture color properties
      *
@@ -142,18 +142,18 @@ export class MmdStandardMaterial extends StandardMaterial {
      *
      * These features are subject to change at a later date
      */
-    public get sphereTextureColor(): Color4 {
-        this._pluginMaterial.useSphereTextureColor = true;
-        return this._pluginMaterial.sphereTextureColor;
+    public get textureAdditiveColor(): Color4 {
+        this._pluginMaterial.useTextureColor = true;
+        return this._pluginMaterial.textureAdditiveColor;
     }
 
-    public set sphereTextureColor(value: Color4) {
-        this._pluginMaterial.useSphereTextureColor = true;
-        this._pluginMaterial.sphereTextureColor = value;
+    public set textureAdditiveColor(value: Color4) {
+        this._pluginMaterial.useTextureColor = true;
+        this._pluginMaterial.textureAdditiveColor = value;
     }
 
     /**
-     * Get or set whether to use the toon texture color (default: (1, 1, 1, 1))
+     * Get or set whether to use the sphere texture multiplicative color (default: (1, 1, 1, 1))
      *
      * If this property is first accessed as set, the shader is recompiled to support texture color properties
      *
@@ -161,14 +161,71 @@ export class MmdStandardMaterial extends StandardMaterial {
      *
      * These features are subject to change at a later date
      */
-    public get toonTextureColor(): Color4 {
-        this._pluginMaterial.useToonTextureColor = true;
-        return this._pluginMaterial.toonTextureColor;
+    public get sphereTextureMultiplicativeColor(): Color4 {
+        this._pluginMaterial.useSphereTextureColor = true;
+        return this._pluginMaterial.sphereTextureMultiplicativeColor;
     }
 
-    public set toonTextureColor(value: Color4) {
+    public set sphereTextureMultiplicativeColor(value: Color4) {
+        this._pluginMaterial.useSphereTextureColor = true;
+        this._pluginMaterial.sphereTextureMultiplicativeColor = value;
+    }
+
+    /**
+     * Get or set whether to use the sphere texture additive color (default: (0, 0, 0, 0))
+     *
+     * If this property is first accessed as set, the shader is recompiled to support texture color properties
+     *
+     * After that, the feature is no longer turned off to prevent shader recompilation
+     *
+     * These features are subject to change at a later date
+     */
+    public get sphereTextureAdditiveColor(): Color4 {
+        this._pluginMaterial.useSphereTextureColor = true;
+        return this._pluginMaterial.sphereTextureAdditiveColor;
+    }
+
+    public set sphereTextureAdditiveColor(value: Color4) {
+        this._pluginMaterial.useSphereTextureColor = true;
+        this._pluginMaterial.sphereTextureAdditiveColor = value;
+    }
+
+    /**
+     * Get or set whether to use the toon texture multiplicative color (default: (1, 1, 1, 1))
+     *
+     * If this property is first accessed as set, the shader is recompiled to support texture color properties
+     *
+     * After that, the feature is no longer turned off to prevent shader recompilation
+     *
+     * These features are subject to change at a later date
+     */
+    public get toonTextureMultiplicativeColor(): Color4 {
         this._pluginMaterial.useToonTextureColor = true;
-        this._pluginMaterial.toonTextureColor = value;
+        return this._pluginMaterial.toonTextureMultiplicativeColor;
+    }
+
+    public set toonTextureMultiplicativeColor(value: Color4) {
+        this._pluginMaterial.useToonTextureColor = true;
+        this._pluginMaterial.toonTextureMultiplicativeColor = value;
+    }
+
+    /**
+     * Get or set whether to use the toon texture additive color (default: (0, 0, 0, 0))
+     *
+     * If this property is first accessed as set, the shader is recompiled to support texture color properties
+     *
+     * After that, the feature is no longer turned off to prevent shader recompilation
+     *
+     * These features are subject to change at a later date
+     */
+    public get toonTextureAdditiveColor(): Color4 {
+        this._pluginMaterial.useToonTextureColor = true;
+        return this._pluginMaterial.toonTextureAdditiveColor;
+    }
+
+    public set toonTextureAdditiveColor(value: Color4) {
+        this._pluginMaterial.useToonTextureColor = true;
+        this._pluginMaterial.toonTextureAdditiveColor = value;
     }
 
     /**
