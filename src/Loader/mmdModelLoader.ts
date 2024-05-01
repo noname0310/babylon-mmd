@@ -130,6 +130,8 @@ export abstract class MmdModelLoader<
     /** @internal */
     public error: (message: string) => void;
 
+    private static readonly _SharedStandardMaterialBuilder = new MmdStandardMaterialBuilder();
+
     /**
      * Create a new MMD model loader
      */
@@ -137,7 +139,7 @@ export abstract class MmdModelLoader<
         this.name = name;
         this.extensions = extensions;
 
-        this.materialBuilder = new MmdStandardMaterialBuilder();
+        this.materialBuilder = MmdModelLoader._SharedStandardMaterialBuilder;
         this.useSdef = true;
         this.buildSkeleton = true;
         this.buildMorph = true;
