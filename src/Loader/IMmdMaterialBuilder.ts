@@ -17,9 +17,17 @@ import type { IArrayBufferFile } from "./referenceFileResolver";
  */
 export type MaterialInfo = PmxObject.Material | BpmxObject.Material;
 
+/**
+ * Texture information
+ */
 export type TextureInfo = Omit<IMmdTextureLoadOptions, "deleteBuffer" | "mimeType"> & {
     imagePathIndex: number;
 };
+
+/**
+ * Referenced mesh
+ */
+export type ReferencedMesh = Mesh | { mesh: Mesh, subMeshIndex: number };
 
 /**
  * Mmd material builder interface
@@ -66,7 +74,7 @@ export interface IMmdMaterialBuilder {
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
 
         // for alpha evaluation and set visibility
-        referencedMeshes: (readonly Mesh[])[],
+        referencedMeshes: (readonly ReferencedMesh[])[],
 
         // for set render order
         meshes: Mesh[],

@@ -23,7 +23,7 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.useAlphaEvaluation = true;
+        materialBuilder.forceDisableAlphaEvaluation = false;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(1, 1, 1);

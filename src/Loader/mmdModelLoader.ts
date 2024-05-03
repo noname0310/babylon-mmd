@@ -4,6 +4,7 @@ import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
@@ -43,6 +44,7 @@ export interface MmdModelBuildGeometryResult {
 /** @internal */
 export interface BuildMaterialResult {
     readonly materials: Material[];
+    readonly multiMaterials: MultiMaterial[];
     readonly textureLoadPromise: Promise<void>;
 }
 
@@ -219,7 +221,7 @@ export abstract class MmdModelLoader<
 
         const textureNameMap = state.preserveSerializationData ? new Map<BaseTexture, string>() : null;
 
-        const { materials, textureLoadPromise } = await this._buildMaterialAsync(
+        const { materials, multiMaterials, textureLoadPromise } = await this._buildMaterialAsync(
             state,
             modelObject,
             rootMesh,
@@ -318,6 +320,7 @@ export abstract class MmdModelLoader<
             assetContainer.meshes.push(rootMesh, ...buildGeometryResult.meshes);
             assetContainer.geometries.push(...buildGeometryResult.geometries);
             assetContainer.materials.push(...materials);
+            assetContainer.multiMaterials.push(...multiMaterials);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
             if (morphTargetManagers !== null) assetContainer.morphTargetManagers.push(...morphTargetManagers);
         }

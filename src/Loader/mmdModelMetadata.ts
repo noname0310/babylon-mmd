@@ -51,7 +51,9 @@ export interface MmdModelMetadata {
     readonly meshes: readonly Mesh[];
 
     /**
-     * Mmd model materials
+     * Mmd model materials that used in submeshes
+     *
+     * it should not contain multi-materials
      */
     readonly materials: readonly Material[];
 

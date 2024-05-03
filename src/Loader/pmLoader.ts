@@ -512,7 +512,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
 
-        return { materials, textureLoadPromise };
+        return { materials, multiMaterials: [], textureLoadPromise };
     }
 
     protected override async _buildMorphAsync(

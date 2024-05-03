@@ -75,7 +75,7 @@ export class BpmxReader {
             dataDeserializer.getInt8(),
             dataDeserializer.getInt8()
         ] as const;
-        if (version[0] !== 2 || version[1] !== 0 || version[2] !== 0) {
+        if (version[0] !== 2 || (version[1] !== 0 && version[1] !== 1) || version[2] !== 0) {
             throw new LoadFileError(`BPMX version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
 
@@ -103,7 +103,28 @@ export class BpmxReader {
         const meshCount = dataDeserializer.getUint32();
         for (let i = 0; i < meshCount; ++i) {
             const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
-            const materialIndex = dataDeserializer.getInt32();
+            let materialIndex: number | BpmxObject.Geometry.SubGeometry[] = dataDeserializer.getInt32();
+            if (materialIndex === -2) { // since bpmx 2.1.0
+                const subMeshCount = dataDeserializer.getUint32();
+                const subGeometries: BpmxObject.Geometry.SubGeometry[] = [];
+                for (let i = 0; i < subMeshCount; ++i) {
+                    const materialIndex = dataDeserializer.getInt32();
+                    const verticesStart = dataDeserializer.getUint32();
+                    const verticesCount = dataDeserializer.getUint32();
+                    const indexStart = dataDeserializer.getUint32();
+                    const indexCount = dataDeserializer.getUint32();
+
+                    subGeometries.push({
+                        materialIndex,
+                        verticesStart,
+                        verticesCount,
+                        indexStart,
+                        indexCount
+                    });
+                }
+                materialIndex = subGeometries;
+            }
+
             const vertexCount = dataDeserializer.getUint32();
 
             const positions = new Float32Array(vertexCount * 3);
@@ -286,7 +307,7 @@ export class BpmxReader {
             const specular = dataDeserializer.getFloat32Tuple(3);
             const shininess = dataDeserializer.getFloat32();
             const ambient = dataDeserializer.getFloat32Tuple(3);
-            const evauatedTransparency = dataDeserializer.getInt8();
+            const evaluatedTransparency = dataDeserializer.getUint8();
 
             const flag = dataDeserializer.getUint8();
 
@@ -310,7 +331,7 @@ export class BpmxReader {
                 specular,
                 shininess,
                 ambient,
-                evauatedTransparency,
+                evaluatedTransparency,
 
                 flag,
 

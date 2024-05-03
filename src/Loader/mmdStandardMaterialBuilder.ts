@@ -9,7 +9,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "./IMmdMaterialBuilder";
+import type { IMmdMaterialBuilder, MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdAsyncTextureLoader } from "./mmdAsyncTextureLoader";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
@@ -20,11 +20,59 @@ import { ReferenceFileResolver } from "./referenceFileResolver";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 /**
+ * Shading method of MMD standard material
+ *
+ * The drawing behavior of MMD is not conducive to modern renderers like Babylon.js
+ * That's why you need to decide which shading method is right for your use case
+ */
+export enum MmdStandardMaterialShadingMethod {
+    /**
+     * Force depth write alpha blending with alpha evaluation
+     *
+     * This approach first determines via alpha evaluation if the meshes to be rendered are opaque,
+     * and then only enables forceDepthWrite and performs alphaBlending on non-opaque meshes
+     *
+     * This approach is similar to mmd, but is more performance friendly and partially solves the draw order problem
+     */
+    ForceDepthWriteAlphaBlendingWithAlphaEvaluation = 0,
+
+    /**
+     * Force depth write alpha blending
+     *
+     * Materials loaded this way will all have forceDepthWrite true and will alphaBlend true
+     *
+     * Since it does depth writing and alpha blending, the draw order becomes very important
+     *
+     * This approach gives you exactly the same results as mmd,
+     * but it introduces a problem that mmd is known for: manually managing the draw order
+     */
+    ForceDepthWriteAlphaBlending = 1,
+
+    /**
+     * Alpha evaluation
+     *
+     * This method uses an alpha evaluation to determine whether the mesh is best rendered as opaque, alphatest, or alphablend
+     *
+     * Since this method does not use forceDepthWrite, it can give different results than mmd but has better compatibility for several shader effects
+     */
+    AlphaEvaluation = 2
+}
+
+/**
  * MMD standard material builder
  *
  * Use `MmdStandardMaterial` to create a mesh material
  */
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
+    /**
+     * Whether to force disable alpha evaluation (default: false)
+     *
+     * If true, load time alpha evaluation will be disabled
+     *
+     * For load time optimization, it is recommended to disable alpha evaluation feature and set the blending mode for the material manually
+     */
+    public forceDisableAlphaEvaluation = false;
+
     /**
      * The threshold of material alpha to use transparency mode. (default: 195)
      *
@@ -35,20 +83,9 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
      * The threshold of transparency mode to use alpha blend. (default: 100)
      *
-     * lower value is more likely to use alpha test mode. otherwise use alpha blemd mode
+     * lower value is more likely to use alpha test mode. otherwise use alpha blend mode
      */
     public alphaBlendThreshold = 100;
-
-    /**
-     * Whether to use alpha evaluation (default: true)
-     *
-     * If true, evaluate the alpha of the texture to automatically determine the blending method of the material
-     *
-     * This automatic blend mode decision is not perfect and is quite costly
-     *
-     * For load time optimization, it is recommended to turn off this feature and set the blending mode for the material manually
-     */
-    public useAlphaEvaluation = true;
 
     /**
      * The canvas resolution to evaluate alpha (default: 512)
@@ -74,7 +111,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         rootUrl: string,
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
-        referencedMeshes: (readonly Mesh[])[],
+        referencedMeshes: (readonly ReferencedMesh[])[],
         _meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
@@ -88,11 +125,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         scene._forceBlockMaterialDirtyMechanism(true);
 
         let textureAlphaChecker: Nullable<TextureAlphaChecker> = null;
-        const getTextureAlpphaChecker = (): Nullable<TextureAlphaChecker> => {
+        const getTextureAlphaChecker = (): Nullable<TextureAlphaChecker> => {
             if (textureAlphaChecker !== null) return textureAlphaChecker;
-            return this.useAlphaEvaluation
-                ? textureAlphaChecker = new TextureAlphaChecker(scene, this.alphaEvaluationResolution)
-                : null;
+            return this.forceDisableAlphaEvaluation
+                ? null
+                : textureAlphaChecker = new TextureAlphaChecker(scene, this.alphaEvaluationResolution);
         };
 
         const referenceFileResolver = new ReferenceFileResolver(referenceFiles as readonly IArrayBufferFile[], rootUrl, fileRootId);
@@ -143,7 +180,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     referenceFileResolver,
                     referencedMeshes[i],
                     logger,
-                    getTextureAlpphaChecker,
+                    getTextureAlphaChecker,
                     incrementProgress
                 );
                 if (loadDiffuseTexturePromise !== undefined) {
@@ -284,7 +321,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     public loadGeneralScalarProperties: (
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
-        meshes: readonly Mesh[]
+        meshes: readonly ReferencedMesh[]
     ) => Promise<void> | void = (
             material,
             materialInfo,
@@ -315,7 +352,12 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             material.alpha = alpha;
             if (alpha === 0) {
                 for (let i = 0; i < meshes.length; ++i) {
-                    meshes[i].isVisible = false;
+                    const mesh = meshes[i];
+                    if ((mesh as Mesh).isVisible !== undefined) {
+                        (mesh as Mesh).isVisible = false;
+                    } else {
+                        // TODO: handle visibility of submeshes individually
+                    }
                 }
             }
 
@@ -350,7 +392,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         referenceFileResolver: ReferenceFileResolver,
-        meshes: readonly Mesh[],
+        meshes: readonly ReferencedMesh[],
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
@@ -413,16 +455,28 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                     let transparencyMode = Number.MIN_SAFE_INTEGER;
 
-                    const evauatedTransparency = (materialInfo as BpmxObject.Material).evauatedTransparency;
-                    if (evauatedTransparency !== undefined && evauatedTransparency !== -1) {
-                        transparencyMode = evauatedTransparency;
+                    const evaluatedTransparency = (materialInfo as BpmxObject.Material).evaluatedTransparency;
+                    let etAlphaEvaluateResult = evaluatedTransparency !== undefined
+                        ? (evaluatedTransparency & 0x0F)
+                        : -1; // undefined: not evaluated
+                    if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
+                        etAlphaEvaluateResult = -1;
+                    }
+
+                    if (etAlphaEvaluateResult !== -1) {
+                        transparencyMode = etAlphaEvaluateResult;
                     } else {
-                        for (let i = 0; i < meshes.length; ++i) {
-                            const textureAlphaChecker = getTextureAlphaChecker();
-                            if (textureAlphaChecker !== null) {
+                        const textureAlphaChecker = getTextureAlphaChecker();
+                        if (textureAlphaChecker !== null) {
+                            for (let i = 0; i < meshes.length; ++i) {
+                                const mesh = meshes[i];
+
                                 const newTransparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
                                     diffuseTexture,
-                                    meshes[i],
+                                    (mesh as { mesh: Mesh })?.mesh ?? mesh as Mesh,
+                                    (mesh as { subMeshIndex: number })?.subMeshIndex !== undefined
+                                        ? (mesh as { subMeshIndex: number }).subMeshIndex
+                                        : null,
                                     this.alphaThreshold,
                                     this.alphaBlendThreshold
                                 );

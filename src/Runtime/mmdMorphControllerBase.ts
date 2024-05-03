@@ -129,6 +129,7 @@ export abstract class MmdMorphControllerBase {
 
                 const referencedMeshes: Mesh[] = [];
                 for (let j = 0; j < meshes.length; ++j) {
+                    // TODO: handle multi-material meshes
                     if (meshes[j].material === material) referencedMeshes.push(meshes[j]);
                 }
 

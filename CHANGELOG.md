@@ -6,11 +6,9 @@
 
 - fix wrong alpha accumulation in `MmdStandardMaterial` when using sphere texture
 
-- backface culling is no longer affected by a material's transparency (same as MMD's behavior)
-
 - fix `BpmxLoader` alpha evaluation not working with asset which created from non-PMX model
 
-- use RGB texture format instead of RGBA for sphere and toon texture
+- backface culling is no longer affected by a material's transparency (same as MMD's behavior)
 
 - fix material morph color accumulation method as same as MMD
 
@@ -19,6 +17,16 @@
 - refactor `MmdOutlineRenderer` to have the same behavior as MMD's outline
 
 - apply ambient color to diffuse color when using `MmdStandardMaterial` for make it same as MMD
+
+- use RGB texture format instead of RGBA for sphere and toon texture
+
+- introduce `MmdStandardMaterialShadingMethod` to specify shading method for `MmdStandardMaterial`
+
+- now all mmd model loaders are share the static `MmdStandardMaterialBuilder` instance by default
+
+- BPMX format updated to 2.1.0. Files of version 2.0.0 are still compatible
+    - evaluatedTransparency is now store that weather the material is completely opaque or not
+    - multi-material support added
 
 ## 0.40.0
 

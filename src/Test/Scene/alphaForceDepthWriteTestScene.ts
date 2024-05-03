@@ -29,7 +29,7 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.useAlphaEvaluation = false;
+        materialBuilder.forceDisableAlphaEvaluation = true;
         // materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         // materialBuilder.loadSphereTexture = (): void => { /* do nothing */ };

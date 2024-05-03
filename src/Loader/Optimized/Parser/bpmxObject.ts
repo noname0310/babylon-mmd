@@ -104,8 +104,10 @@ export namespace BpmxObject {
 
         /**
          * Material index of the geometry
+         *
+         * If the material index is -1, the geometry has no material
          */
-        materialIndex: number;
+        materialIndex: number | readonly Geometry.SubGeometry[];
 
         /**
          * Vertex positions
@@ -207,6 +209,36 @@ export namespace BpmxObject {
              */
             Uint16 = 2
         }
+
+        /**
+         * Sub geometry for multi-material geometry
+         */
+        export type SubGeometry = Readonly<{
+            /**
+             * Material index of the geometry
+             */
+            materialIndex: number;
+
+            /**
+             * vertex index start
+             */
+            verticesStart: number;
+
+            /**
+             * vertices count
+             */
+            verticesCount: number;
+
+            /**
+             * Index start of the geometry
+             */
+            indexStart: number;
+
+            /**
+             * Index count of the geometry
+             */
+            indexCount: number;
+        }>;
 
         /**
          * Skinning data of the geometry
@@ -340,13 +372,19 @@ export namespace BpmxObject {
         /**
          * pre-evaluated transparency of the material
          *
-         * 0: opaque
+         * evaluatedTransparency representation:
          *
-         * 1: alpha-test
+         * reserved | is complete opaque | alpha evaluate result
          *
-         * 2: alpha-blend
+         * 00       | 00                 | 0000
+         *
+         * reserved: not used
+         *
+         * is complete opaque: 11: not evaluated, 00: complete opaque, 01: not complete opaque
+         *
+         * alpha evaluate result: 1111: not evaluated, 0000: opaque, 0001: alphatest, 0010: alphablend, 0011: alphatest and blend
          */
-        evauatedTransparency: number;
+        evaluatedTransparency: number;
     }>;
 
     /**

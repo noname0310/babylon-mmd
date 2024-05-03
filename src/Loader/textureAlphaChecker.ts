@@ -6,6 +6,7 @@ import { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTa
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -87,6 +88,7 @@ export class TextureAlphaChecker {
      * "Does the textures on the geometry have alpha" is simply to make sure that a portion of the textures (the part that is rendered) have alpha
      * @param texture Texture to check (must be ready)
      * @param mesh Mesh to check
+     * @param subMeshIndices Sub mesh index to check (if null, all sub meshes are checked)
      * @param alphaThreshold alpha threshold
      * @param alphaBlendThreshold alpha blend threshold
      * @returns Transparency mode
@@ -95,6 +97,7 @@ export class TextureAlphaChecker {
     public async textureHasAlphaOnGeometry(
         texture: Texture,
         mesh: Mesh,
+        subMeshIndex: number | null,
         alphaThreshold: number,
         alphaBlendThreshold: number
     ): Promise<TransparencyMode> {
@@ -108,6 +111,12 @@ export class TextureAlphaChecker {
 
         const shader = TextureAlphaChecker._GetShader(this._scene);
         shader.setTexture("textureSampler", texture);
+
+        let originalSubMeshes: Nullable<SubMesh[]> = null;
+        if (subMeshIndex !== null) {
+            originalSubMeshes = mesh.subMeshes;
+            mesh.subMeshes = [mesh.subMeshes[subMeshIndex]];
+        }
 
         const renderTargetTexture = this._renderTargetTexture;
         renderTargetTexture.renderList = [mesh];
@@ -137,6 +146,10 @@ export class TextureAlphaChecker {
         const subMeshes = mesh.subMeshes;
         for (let i = 0, len = subMeshes.length; i < len; ++i) {
             subMeshes[i]._removeDrawWrapper(renderTargetTexture.renderPassId, true);
+        }
+
+        if (originalSubMeshes !== null) {
+            mesh.subMeshes = originalSubMeshes;
         }
 
         const resultPixelsBuffer = this._resultPixelsBuffer;

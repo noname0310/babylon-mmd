@@ -2,10 +2,12 @@ import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
+import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Geometry } from "@babylonjs/core/Meshes/geometry";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { IFileRequest } from "@babylonjs/core/Misc/fileRequest";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 import { Tools } from "@babylonjs/core/Misc/tools";
@@ -15,7 +17,7 @@ import { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { TextureInfo } from "../IMmdMaterialBuilder";
+import type { ReferencedMesh, TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
 import type { BuildMaterialResult, MmdModelBuildGeometryResult } from "../mmdModelLoader";
 import { MmdModelLoader, type MmdModelLoadState } from "../mmdModelLoader";
@@ -296,7 +298,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             };
         }
 
-        const referencedMeshList: Mesh[][] = new Array(modelObject.materials.length);
+        const referencedMeshList: ReferencedMesh[][] = new Array(modelObject.materials.length);
         for (let i = 0; i < referencedMeshList.length; ++i) {
             referencedMeshList[i] = [];
         }
@@ -305,7 +307,17 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             const materialIndex = geometriesInfo[i].materialIndex;
             if (materialIndex === -1) continue;
 
-            referencedMeshList[materialIndex].push(meshes[i]);
+            if (typeof materialIndex === "object") {
+                const subGeometries = materialIndex;
+                for (let subGeometryIndex = 0; subGeometryIndex < subGeometries.length; ++subGeometryIndex) {
+                    referencedMeshList[subGeometries[subGeometryIndex].materialIndex].push({
+                        mesh: meshes[i],
+                        subMeshIndex: subGeometryIndex
+                    });
+                }
+            } else {
+                referencedMeshList[materialIndex].push(meshes[i]);
+            }
         }
 
         const textureLoadPromise = new Promise<void>((resolve) => {
@@ -344,19 +356,49 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             ? buildMaterialsPromise
             : await (buildMaterialsPromise as unknown as Promise<Material[]>);
 
+        const multiMaterials: MultiMaterial[] = [];
         for (let i = 0; i < meshes.length; ++i) {
             const mesh = meshes[i];
             const materialIndex = geometriesInfo[i].materialIndex;
             if (materialIndex === -1) continue;
 
-            const material = materials[materialIndex];
-            mesh.material = material;
+            if (typeof materialIndex === "object") {
+                const subGeometries = materialIndex;
+
+                mesh.subMeshes.length = 0;
+
+                if (subGeometries.length === 0) {
+                    mesh.material = null;
+                } else if (subGeometries.length === 1) {
+                    const subGeometry = subGeometries[0];
+                    new SubMesh(0, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                    mesh.material = materials[subGeometries[0].materialIndex];
+                } else {
+                    scene._blockEntityCollection = !!assetContainer;
+                    const multiMaterial = new MultiMaterial(mesh.name, scene);
+                    multiMaterial._parentContainer = assetContainer;
+                    scene._blockEntityCollection = false;
+                    const subMaterials = multiMaterial.subMaterials;
+                    multiMaterials.push(multiMaterial);
+
+                    for (let geometryIndex = 0; geometryIndex < subGeometries.length; ++geometryIndex) {
+                        const subGeometry = subGeometries[geometryIndex];
+                        new SubMesh(geometryIndex, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                        subMaterials.push(materials[subGeometry.materialIndex]);
+                    }
+
+                    mesh.material = multiMaterial;
+                }
+            } else {
+                const material = materials[materialIndex];
+                mesh.material = material;
+            }
         }
 
         progress.endTask("Build Material");
         progress.invokeProgressEvent();
 
-        return { materials, textureLoadPromise };
+        return { materials, multiMaterials, textureLoadPromise };
     }
 
     protected override _buildSkeletonAsync(

@@ -13,7 +13,17 @@
  * meshCount: uint32
  * {
  *  meshName: uint32, uint8[] - length, string
- *  materialIndex: int32
+ *  materialIndex: int32 - -1: no material -2: multi material(since BPMX 2.1.0)
+ *  { // if materialIndex is -2
+ *   subMeshCount: uint32
+ *   subMeshes: {
+ *    materialIndex: int32
+ *    verticesStart: uint32
+ *    verticesCount: uint32
+ *    indexStart: uint32
+ *    indexCount: uint32
+ *   }[subMeshCount]
+ *  }
  *  vertexCount: uint32
  *  positions: float32[vertexCount * 3]
  *  normals: float32[vertexCount * 3]
@@ -68,7 +78,11 @@
  *  specular: float32[3]
  *  shininess: float32
  *  ambient: float32[3]
- *  evauatedTransparency: int8 - -1: not evaluated, 0: opaque, 1: alphatest, 2: alphablend, 3: alphatest and blend
+ *  evaluatedTransparency: uint8 - reserved | is complete opaque | alpha evaluate result
+ *                                 00       | 00                 | 0000
+ *
+ *                                 is complete opaque(since BPMX 2.1.0): 11: not evaluated, 00: opaque, 01: translucent
+ *                                 alpha evaluate result: 1111: not evaluated, 0000: opaque, 0001: alphatest, 0010: alphablend, 0011: alphatest and blend
  *  flag: uint8 - 0x01: isDoubleSided, 0x10: EnabledToonEdge
  *  edgeColor: float32[4]
  *  edgeSize: float32
@@ -222,6 +236,7 @@
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
@@ -625,22 +640,29 @@ export class BpmxConverter implements ILogger {
                 const material = meshesToSerialize[i].material;
                 if (material === null) continue;
 
-                if ((material as MmdStandardMaterial).diffuseTexture) {
-                    textureSet.add((material as MmdStandardMaterial).diffuseTexture!);
-                } else if ((material as PBRMaterial).albedoTexture) {
-                    textureSet.add((material as PBRMaterial).albedoTexture!);
-                }
+                const subMeterials = (material as MultiMaterial).subMaterials ?? [material];
 
-                if ((material as MmdStandardMaterial).sphereTexture) {
-                    textureSet.add((material as MmdStandardMaterial).sphereTexture!);
-                }
-                if ((material as MmdStandardMaterial).toonTexture) {
-                    const toonTextureName = (material as MmdStandardMaterial).toonTexture!.name;
-                    if (!(toonTextureName.startsWith("file:shared_toon_texture_") &&
-                        toonTextureName.length <= 27 && // format: file:shared_toon_texture_0 or file:shared_toon_texture_00
-                        !isNaN(Number(toonTextureName.substring(25)))
-                    )) {
-                        textureSet.add((material as MmdStandardMaterial).toonTexture!);
+                for (let subMeterialIndex = 0; subMeterialIndex < subMeterials.length; ++subMeterialIndex) {
+                    const subMaterial = subMeterials[subMeterialIndex];
+                    if (subMaterial === null) continue;
+
+                    if ((subMaterial as MmdStandardMaterial).diffuseTexture) {
+                        textureSet.add((subMaterial as MmdStandardMaterial).diffuseTexture!);
+                    } else if ((subMaterial as PBRMaterial).albedoTexture) {
+                        textureSet.add((subMaterial as PBRMaterial).albedoTexture!);
+                    }
+
+                    if ((subMaterial as MmdStandardMaterial).sphereTexture) {
+                        textureSet.add((subMaterial as MmdStandardMaterial).sphereTexture!);
+                    }
+                    if ((subMaterial as MmdStandardMaterial).toonTexture) {
+                        const toonTextureName = (subMaterial as MmdStandardMaterial).toonTexture!.name;
+                        if (!(toonTextureName.startsWith("file:shared_toon_texture_") &&
+                            toonTextureName.length <= 27 && // format: file:shared_toon_texture_0 or file:shared_toon_texture_00
+                            !isNaN(Number(toonTextureName.substring(25)))
+                        )) {
+                            textureSet.add((subMaterial as MmdStandardMaterial).toonTexture!);
+                        }
                     }
                 }
             }
@@ -743,125 +765,138 @@ export class BpmxConverter implements ILogger {
 
             for (let i = 0; i < meshesToSerialize.length; ++i) {
                 const mesh = meshesToSerialize[i];
-                const material = mesh.material as Nullable<Partial<MmdStandardMaterial> & Partial<PBRMaterial>>;
-                if (material === null) {
-                    if (!defaultMaterialAdded) {
-                        defaultMaterialAdded = true;
 
-                        this.warn(`mesh ${mesh.name} has no material. adding default material metadata`);
-
-                        const materialMetadata: typeof materialsMetadataToSerialize[number] = {
-                            name: "default",
-                            englishName: "default",
-                            diffuse: [1, 1, 1, 1],
-                            specular: [0, 0, 0],
-                            shininess: 0,
-                            ambient: [0, 0, 0],
-                            evauatedTransparency: 0,
-                            flag: 0,
-                            edgeColor: [0, 0, 0, 1],
-                            edgeSize: 0,
-                            textureIndex: -1,
-                            sphereTextureIndex: -1,
-                            sphereTextureMode: PmxObject.Material.SphereTextureMode.Off,
-                            isSharedToonTexture: false,
-                            toonTextureIndex: -1,
-                            comment: "",
-
-                            linkedMaterial: null
-                        };
-                        materialsMetadataToSerialize.push(materialMetadata);
-                    } else {
-                        this.warn(`mesh ${mesh.name} has no material. using default material metadata`);
+                const subMaterials: Nullable<Partial<MmdStandardMaterial> & Partial<PBRMaterial>>[] = [];
+                {
+                    const multiMaterialSubMaterials = ((mesh.material as MultiMaterial)?.subMaterials ?? [mesh.material]) as Nullable<Material>[];
+                    const subMeshes = mesh.subMeshes;
+                    for (let subMeshIndex = 0; subMeshIndex < subMeshes.length; ++subMeshIndex) {
+                        const subMesh = subMeshes[subMeshIndex];
+                        const material = multiMaterialSubMaterials[subMesh.materialIndex];
+                        subMaterials.push(material as Nullable<Partial<MmdStandardMaterial> & Partial<PBRMaterial>>);
                     }
-                    continue;
                 }
+                for (let subMaterialIndex = 0; subMaterialIndex < subMaterials.length; ++subMaterialIndex) {
+                    const material = subMaterials[subMaterialIndex];
+                    if (material === null) {
+                        if (!defaultMaterialAdded) {
+                            defaultMaterialAdded = true;
 
-                const addedMaterialIndex = addedMaterialIndexMap.get(material as unknown as Material);
+                            this.warn(`mesh ${mesh.name} has no material. adding default material metadata`);
 
-                const materialIndex = materialIndexMap.get(material as unknown as Material);
-                if (materialIndex === undefined) {
-                    this.warn(`mesh ${mesh.name} has material which is not included in model metadata`);
-                } else if (addedMaterialIndex !== undefined) {
-                    materialIndexRemapper.set(materialIndex, addedMaterialIndex);
-                } else {
-                    materialIndexRemapper.set(materialIndex, materialsMetadataToSerialize.length);
-                    addedMaterialIndexMap.set(material as unknown as Material, materialsMetadataToSerialize.length);
+                            const materialMetadata: typeof materialsMetadataToSerialize[number] = {
+                                name: "default",
+                                englishName: "default",
+                                diffuse: [1, 1, 1, 1],
+                                specular: [0, 0, 0],
+                                shininess: 0,
+                                ambient: [0, 0, 0],
+                                evaluatedTransparency: 0,
+                                flag: 0,
+                                edgeColor: [0, 0, 0, 1],
+                                edgeSize: 0,
+                                textureIndex: -1,
+                                sphereTextureIndex: -1,
+                                sphereTextureMode: PmxObject.Material.SphereTextureMode.Off,
+                                isSharedToonTexture: false,
+                                toonTextureIndex: -1,
+                                comment: "",
 
-                    const materialMetadata = metadataMap.get(material as unknown as Material);
-                    if (materialMetadata === undefined) {
-                        this.log(`mesh ${mesh.name} has no additional material metadata`);
+                                linkedMaterial: null
+                            };
+                            materialsMetadataToSerialize.push(materialMetadata);
+                        } else {
+                            this.warn(`mesh ${mesh.name} has no material. using default material metadata`);
+                        }
+                        continue;
                     }
 
-                    const name = material.name ?? "";
-                    const englishName = materialMetadata?.englishName ?? "";
+                    const addedMaterialIndex = addedMaterialIndexMap.get(material as unknown as Material);
 
-                    const diffuse = (material.diffuseColor?.asArray() ?? [1, 1, 1, 1]) as Vec4;
-                    diffuse.length = 4; // ensure length
-                    diffuse[3] = material.alpha ?? 1;
-
-                    const specular = (material.specularColor?.asArray() ?? material.reflectivityColor?.asArray() ?? [0, 0, 0]) as Vec3;
-                    specular.length = 3; // ensure length
-
-                    const shininess = material.specularPower ?? 0;
-
-                    const ambient = (material.ambientColor?.asArray() ?? [0, 0, 0]) as Vec3;
-                    ambient.length = 3; // ensure length
-
-                    const evauatedTransparency = material.transparencyMode ?? Material.MATERIAL_OPAQUE;
-
-                    const flag = ((materialMetadata?.isDoubleSided ?? material.backFaceCulling === false) ? PmxObject.Material.Flag.IsDoubleSided : 0) |
-                        ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
-
-                    const edgeColor = (material.outlineColor?.asArray() ?? [0, 0, 0]) as number[] as Vec4;
-                    edgeColor.length = 4; // ensure length
-                    edgeColor[3] = material.outlineAlpha ?? 0;
-
-                    const edgeSize = material.outlineWidth ?? 0;
-
-                    const diffuseTexture = material.diffuseTexture ?? material.albedoTexture;
-                    const textureIndex = diffuseTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === diffuseTexture) : -1;
-
-                    const sphereTexture = material.sphereTexture;
-                    const sphereTextureIndex = sphereTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === sphereTexture) : -1;
-
-                    const sphereTextureMode = (material.sphereTextureBlendMode ?? PmxObject.Material.SphereTextureMode.Off) as PmxObject.Material.SphereTextureMode;
-
-                    const toonTexture = material.toonTexture;
-                    const isSharedToonTexture = !!toonTexture &&
-                        toonTexture.name.startsWith("file:shared_toon_texture_") &&
-                        toonTexture.name.length <= 27 &&
-                        !isNaN(Number(toonTexture.name.substring(25)));
-                    let toonTextureIndex: number;
-                    if (isSharedToonTexture) {
-                        toonTextureIndex = Number(toonTexture.name.substring(25)) - 1; // remap toon texture index
+                    const materialIndex = materialIndexMap.get(material as unknown as Material);
+                    if (materialIndex === undefined) {
+                        this.warn(`mesh ${mesh.name} has material which is not included in model metadata`);
+                    } else if (addedMaterialIndex !== undefined) {
+                        materialIndexRemapper.set(materialIndex, addedMaterialIndex);
                     } else {
-                        toonTextureIndex = toonTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === toonTexture) : -1;
+                        materialIndexRemapper.set(materialIndex, materialsMetadataToSerialize.length);
+                        addedMaterialIndexMap.set(material as unknown as Material, materialsMetadataToSerialize.length);
+
+                        const materialMetadata = metadataMap.get(material as unknown as Material);
+                        if (materialMetadata === undefined) {
+                            this.log(`mesh ${mesh.name} has no additional material metadata`);
+                        }
+
+                        const name = material.name ?? "";
+                        const englishName = materialMetadata?.englishName ?? "";
+
+                        const diffuse = (material.diffuseColor?.asArray() ?? [1, 1, 1, 1]) as Vec4;
+                        diffuse.length = 4; // ensure length
+                        diffuse[3] = material.alpha ?? 1;
+
+                        const specular = (material.specularColor?.asArray() ?? material.reflectivityColor?.asArray() ?? [0, 0, 0]) as Vec3;
+                        specular.length = 3; // ensure length
+
+                        const shininess = material.specularPower ?? 0;
+
+                        const ambient = (material.ambientColor?.asArray() ?? [0, 0, 0]) as Vec3;
+                        ambient.length = 3; // ensure length
+
+                        const evaluatedTransparency = material.transparencyMode ?? Material.MATERIAL_OPAQUE;
+
+                        const flag = ((materialMetadata?.isDoubleSided ?? material.backFaceCulling === false) ? PmxObject.Material.Flag.IsDoubleSided : 0) |
+                            ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
+
+                        const edgeColor = (material.outlineColor?.asArray() ?? [0, 0, 0]) as number[] as Vec4;
+                        edgeColor.length = 4; // ensure length
+                        edgeColor[3] = material.outlineAlpha ?? 0;
+
+                        const edgeSize = material.outlineWidth ?? 0;
+
+                        const diffuseTexture = material.diffuseTexture ?? material.albedoTexture;
+                        const textureIndex = diffuseTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === diffuseTexture) : -1;
+
+                        const sphereTexture = material.sphereTexture;
+                        const sphereTextureIndex = sphereTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === sphereTexture) : -1;
+
+                        const sphereTextureMode = (material.sphereTextureBlendMode ?? PmxObject.Material.SphereTextureMode.Off) as PmxObject.Material.SphereTextureMode;
+
+                        const toonTexture = material.toonTexture;
+                        const isSharedToonTexture = !!toonTexture &&
+                            toonTexture.name.startsWith("file:shared_toon_texture_") &&
+                            toonTexture.name.length <= 27 &&
+                            !isNaN(Number(toonTexture.name.substring(25)));
+                        let toonTextureIndex: number;
+                        if (isSharedToonTexture) {
+                            toonTextureIndex = Number(toonTexture.name.substring(25)) - 1; // remap toon texture index
+                        } else {
+                            toonTextureIndex = toonTexture ? texturesToSerialize.findIndex(textureInfo => textureInfo.texture === toonTexture) : -1;
+                        }
+
+                        const comment = materialMetadata?.comment ?? "";
+
+                        const materialMetadataToSerialize: typeof materialsMetadataToSerialize[number] = {
+                            name,
+                            englishName,
+                            diffuse,
+                            specular,
+                            shininess,
+                            ambient,
+                            evaluatedTransparency,
+                            flag,
+                            edgeColor,
+                            edgeSize,
+                            textureIndex,
+                            sphereTextureIndex,
+                            sphereTextureMode,
+                            isSharedToonTexture,
+                            toonTextureIndex,
+                            comment,
+
+                            linkedMaterial: material as unknown as Material
+                        };
+                        materialsMetadataToSerialize.push(materialMetadataToSerialize);
                     }
-
-                    const comment = materialMetadata?.comment ?? "";
-
-                    const materialMetadataToSerialize: typeof materialsMetadataToSerialize[number] = {
-                        name,
-                        englishName,
-                        diffuse,
-                        specular,
-                        shininess,
-                        ambient,
-                        evauatedTransparency,
-                        flag,
-                        edgeColor,
-                        edgeSize,
-                        textureIndex,
-                        sphereTextureIndex,
-                        sphereTextureMode,
-                        isSharedToonTexture,
-                        toonTextureIndex,
-                        comment,
-
-                        linkedMaterial: material as unknown as Material
-                    };
-                    materialsMetadataToSerialize.push(materialMetadataToSerialize);
                 }
             }
         }
@@ -1060,6 +1095,18 @@ export class BpmxConverter implements ILogger {
 
                 dataLength += 4 + encoder.encode(mesh.name).length; // meshName
                 dataLength += 4; // materialIndex
+                const meshMaterial = mesh.material as Nullable<MultiMaterial>;
+                if (meshMaterial?.subMaterials !== undefined) {
+                    const subMaterials = meshMaterial.subMaterials;
+                    dataLength += 4; // subMeshCount
+                    for (let i = 0; i < subMaterials.length; ++i) {
+                        dataLength += 4; // materialIndex
+                        dataLength += 4; // verticesStart
+                        dataLength += 4; // verticesCount
+                        dataLength += 4; // indexStart
+                        dataLength += 4; // indexCount
+                    }
+                }
                 dataLength += 4; // vertexCount
 
                 const positions = geometry.getVerticesData(VertexBuffer.PositionKind)!;
@@ -1146,7 +1193,7 @@ export class BpmxConverter implements ILogger {
                 dataLength += 3 * 4; // specular
                 dataLength += 4; // shininess
                 dataLength += 3 * 4; // ambient
-                dataLength += 1; // evauatedTransparency
+                dataLength += 1; // evaluatedTransparency
                 dataLength += 1; // flag
                 dataLength += 4 * 4; // edgeColor
                 dataLength += 4; // edgeSize
@@ -1363,7 +1410,7 @@ export class BpmxConverter implements ILogger {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setInt8Array([2, 0, 0]); // version
+        serializer.setInt8Array([2, 1, 0]); // version
 
         {
             const header = mmdModelMetadata.header;
@@ -1382,9 +1429,39 @@ export class BpmxConverter implements ILogger {
 
             serializer.setString(mesh.name); // meshName
 
-            const meshMaterial = mesh.material;
-            const materialIndex = materialsMetadataToSerialize.findIndex(material => material.linkedMaterial === meshMaterial);
-            serializer.setInt32(materialIndex); // materialIndex
+            let requiresSubMeshInfo = false;
+            if (1 < mesh.subMeshes.length || mesh.subMeshes.length === 0) requiresSubMeshInfo = true;
+            else {
+                const subMesh = mesh.subMeshes[0];
+                if (subMesh.materialIndex !== 0 ||
+                    subMesh.verticesStart !== 0 ||
+                    subMesh.verticesCount !== geometry.getTotalVertices() ||
+                    subMesh.indexStart !== 0 ||
+                    subMesh.indexCount !== geometry.getTotalIndices()) {
+                    requiresSubMeshInfo = true;
+                }
+            }
+            if (requiresSubMeshInfo) {
+                serializer.setInt32(-2); // materialIndex
+
+                const subMeshes = mesh.subMeshes;
+                serializer.setUint32(subMeshes.length); // subMeshCount
+                const subMaterials = ((mesh.material as MultiMaterial)?.subMaterials ?? [mesh.material]) as Nullable<Material>[];
+                for (let i = 0; i < subMeshes.length; ++i) {
+                    const subMesh = subMeshes[i];
+                    const subMaterial = subMaterials[subMesh.materialIndex] ?? null;
+                    const materialIndex = materialsMetadataToSerialize.findIndex(material => material.linkedMaterial === subMaterial);
+                    serializer.setInt32(materialIndex); // materialIndex
+                    serializer.setUint32(subMesh.verticesStart); // verticesStart
+                    serializer.setUint32(subMesh.verticesCount); // verticesCount
+                    serializer.setUint32(subMesh.indexStart); // indexStart
+                    serializer.setUint32(subMesh.indexCount); // indexCount
+                }
+            } else {
+                const meshMaterial = mesh.material;
+                const materialIndex = materialsMetadataToSerialize.findIndex(material => material.linkedMaterial === meshMaterial);
+                serializer.setInt32(materialIndex); // materialIndex
+            }
 
             const positions = geometry.getVerticesData(VertexBuffer.PositionKind)!;
             const vertexCount = positions.length / 3;
@@ -1558,7 +1635,7 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32Array(material.specular); // specular
             serializer.setFloat32(material.shininess); // shininess
             serializer.setFloat32Array(material.ambient); // ambient
-            serializer.setInt8(material.evauatedTransparency); // evauatedTransparency
+            serializer.setUint8(material.evaluatedTransparency); // evaluatedTransparency
             serializer.setUint8(material.flag); // flag
             serializer.setFloat32Array(material.edgeColor); // edgeColor
             serializer.setFloat32(material.edgeSize); // edgeSize
