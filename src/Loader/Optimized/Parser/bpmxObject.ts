@@ -378,7 +378,7 @@ export namespace BpmxObject {
          *
          * 00       | 00                 | 0000
          *
-         * reserved: not used
+         * reserved: 11: default value
          *
          * is complete opaque: 11: not evaluated, 00: complete opaque, 01: not complete opaque
          *

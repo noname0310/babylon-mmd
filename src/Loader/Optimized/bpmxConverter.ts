@@ -81,6 +81,7 @@
  *  evaluatedTransparency: uint8 - reserved | is complete opaque | alpha evaluate result
  *                                 00       | 00                 | 0000
  *
+ *                                 reserved: 11: default value
  *                                 is complete opaque(since BPMX 2.1.0): 11: not evaluated, 00: opaque, 01: translucent
  *                                 alpha evaluate result: 1111: not evaluated, 0000: opaque, 0001: alphatest, 0010: alphablend, 0011: alphatest and blend
  *  flag: uint8 - 0x01: isDoubleSided, 0x10: EnabledToonEdge

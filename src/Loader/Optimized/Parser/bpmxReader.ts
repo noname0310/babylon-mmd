@@ -31,7 +31,7 @@ export class BpmxReader {
         const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
         const images = await this._ParseImagesAsync(dataDeserializer);
         const textures = this._ParseTexturesAsync(dataDeserializer);
-        const materials = this._ParseMaterials(dataDeserializer);
+        const materials = this._ParseMaterials(dataDeserializer, header.version);
         const bones = isSkinnedMesh ? this._ParseBones(dataDeserializer) : [];
         const morphs = this._ParseMorphs(dataDeserializer);
         const displayFrames = this._ParseDisplayFrames(dataDeserializer);
@@ -295,7 +295,7 @@ export class BpmxReader {
         return textures;
     }
 
-    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer): BpmxObject.Material[] {
+    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer, version: readonly [number, number, number]): BpmxObject.Material[] {
         const materialCount = dataDeserializer.getUint32();
 
         const materials: BpmxObject.Material[] = [];
@@ -307,7 +307,9 @@ export class BpmxReader {
             const specular = dataDeserializer.getFloat32Tuple(3);
             const shininess = dataDeserializer.getFloat32();
             const ambient = dataDeserializer.getFloat32Tuple(3);
-            const evaluatedTransparency = dataDeserializer.getUint8();
+            const evaluatedTransparency = (version[0] === 2 && version[1] === 0)
+                ? (dataDeserializer.getUint8() | 0xF0) // mark bits as not-evaluated
+                : dataDeserializer.getUint8();
 
             const flag = dataDeserializer.getUint8();
 
