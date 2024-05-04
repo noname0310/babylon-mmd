@@ -290,8 +290,7 @@ export abstract class MmdModelLoader<
                 const material = materials[i];
                 materialsMetadata.push({
                     englishName: material.englishName,
-                    comment: material.comment,
-                    isDoubleSided: (material.flag & PmxObject.Material.Flag.IsDoubleSided) !== 0
+                    comment: material.comment
                 });
             }
 

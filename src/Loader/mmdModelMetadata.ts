@@ -401,11 +401,6 @@ export namespace MmdModelMetadata {
          * Material comment
          */
         readonly comment: PmxObject.Material["comment"];
-
-        /**
-         * Is double sided
-         */
-        readonly isDoubleSided: boolean;
     }
 
     /**
