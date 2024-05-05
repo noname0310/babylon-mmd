@@ -321,11 +321,20 @@ export class MmdAsyncTextureLoader {
     }
 
     private _createTextureCacheKey(urlOrTextureName: string, options: IMmdTextureLoadOptions): string {
+        const extensionIndex = urlOrTextureName.lastIndexOf(".");
+
+        let extension = "";
+        if (extensionIndex !== -1) {
+            extension = urlOrTextureName.substring(extensionIndex);
+            urlOrTextureName = urlOrTextureName.substring(0, extensionIndex);
+        }
+
         return urlOrTextureName +
             +(options.noMipmap ?? false) +
             +(options.invertY ?? true) +
             (options.samplingMode ?? Texture.TRILINEAR_SAMPLINGMODE) +
-            (options.format ?? Constants.TEXTUREFORMAT_RGBA);
+            (options.format ?? Constants.TEXTUREFORMAT_RGBA) +
+            extension;
     }
 
     private async _loadTextureAsyncInternal(
