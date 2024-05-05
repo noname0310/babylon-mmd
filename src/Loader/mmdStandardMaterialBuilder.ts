@@ -111,12 +111,12 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
      * Next starting alpha index for force depth write alpha blending rendering
      */
-    public nextStartingAlphaIndex = 100000;
+    public nextStartingAlphaIndex = 1 << 16;
 
     /**
      * Alpha index increments per model for force depth write alpha blending rendering
      */
-    public alphaIndexIncrementsPerModel = 1000;
+    public alphaIndexIncrementsPerModel = 1 << 10;
 
     protected _setMeshesAlphaIndex(meshes: Mesh[]): void {
         let alphaIndex = this.nextStartingAlphaIndex;
