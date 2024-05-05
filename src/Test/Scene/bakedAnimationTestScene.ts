@@ -85,7 +85,7 @@ export class SceneBuilder implements ISceneBuilder {
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/model/",
-                    "YYB Hatsune Miku_10th.bpmx",
+                    "YYB Hatsune Miku_10th_v1.02 210.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);
@@ -97,7 +97,7 @@ export class SceneBuilder implements ISceneBuilder {
                 return SceneLoader.ImportMeshAsync(
                     undefined,
                     "res/private_test/stage/",
-                    "Stage35_02_toonfix.bpmx",
+                    "Stage35_02_toonfix 210.bpmx",
                     scene,
                     updateProgress
                 ).then(result => result.meshes[0] as MmdMesh);

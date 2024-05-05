@@ -20,12 +20,12 @@ import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { PmdLoader } from "@/Loader/pmdLoader";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -71,25 +71,17 @@ async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
 export class PmxConverterScene implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.loggingEnabled = true;
-        pmxLoader.preserveSerializationData = true;
-        const pmxMaterialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        pmxMaterialBuilder.deleteTextureBufferAfterLoad = false;
-
-        const initalBackfaceCullingInfo = new Array<boolean>(1000).fill(true);
-        pmxMaterialBuilder.afterBuildSingleMaterial = (
-            _material,
-            materialIndex,
-            materialInfo
-        ): void => {
-            initalBackfaceCullingInfo[materialIndex] = (materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided) === 0;
-        };
 
         const pmdLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
         pmdLoader.loggingEnabled = true;
         pmdLoader.preserveSerializationData = true;
-        pmdLoader.materialBuilder = pmxLoader.materialBuilder;
+
+        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
+        pmxLoader.loggingEnabled = true;
+        pmxLoader.preserveSerializationData = true;
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.deleteTextureBufferAfterLoad = false;
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
 
         const scene = new Scene(engine);
 
@@ -118,6 +110,7 @@ export class PmxConverterScene implements ISceneBuilder {
         directionalLight.shadowOrthoScale = 0;
 
         const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
+        shadowGenerator.transparencyShadow = true;
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = false;
         shadowGenerator.bias = 0.01;
@@ -131,6 +124,8 @@ export class PmxConverterScene implements ISceneBuilder {
         defaultPipeline.samples = 4;
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.imageProcessingEnabled = false;
+
+        const textureAlphaChecker = new TextureAlphaChecker(scene);
 
         const loadModelAsync = async(file: File): Promise<void> => {
             if (isLoading) return;
@@ -154,7 +149,44 @@ export class PmxConverterScene implements ISceneBuilder {
                 scene,
                 (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
             ).then(result => result.meshes[0] as MmdMesh);
-            for (const subMesh of mesh!.metadata.meshes) subMesh.receiveShadows = true;
+            {
+                const meshes = mesh!.metadata.meshes;
+                for (let i = 0; i < meshes.length; ++i) {
+                    const mesh = meshes[i];
+                    mesh.receiveShadows = true;
+                    mesh.alphaIndex = i;
+                }
+
+                const materials = mesh!.metadata.materials;
+                translucentMaterials.length = materials.length;
+                alphaEvaluateResults.length = materials.length;
+                for (let i = 0; i < materials.length; ++i) {
+                    const material = materials[i] as MmdStandardMaterial;
+                    const diffuseTexture = material.diffuseTexture;
+                    if (diffuseTexture) {
+                        diffuseTexture.hasAlpha = true;
+                        material.useAlphaFromDiffuseTexture = true;
+                    }
+
+                    if (material.alpha < 1) {
+                        translucentMaterials[i] = true;
+                    } else if (!diffuseTexture) {
+                        translucentMaterials[i] = false;
+                    } else {
+                        translucentMaterials[i] = true;
+                        const referencedMeshes = meshes.filter(m => m.material === material);
+                        for (const referencedMesh of referencedMeshes) {
+                            const isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometry(diffuseTexture, referencedMesh, null);
+                            if (isOpaque) {
+                                translucentMaterials[i] = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    alphaEvaluateResults[i] = material.transparencyMode ?? -1;
+                }
+            }
             shadowGenerator.addShadowCaster(mesh!);
             renderMaterialsList();
             engine.hideLoadingUI();
@@ -163,7 +195,30 @@ export class PmxConverterScene implements ISceneBuilder {
 
         let selectedFile: Nullable<File> = null;
         let mesh: Nullable<MmdMesh> = null;
+        const translucentMaterials: boolean[] = [];
+        const alphaEvaluateResults: number[] = [];
+        let currentMode: "Alpha Mode" | "Force Depth Write Mode" = "Alpha Mode";
         let isLoading = false;
+
+        const switchMaterialTransparencyMode = (mode: "Alpha Mode" | "Force Depth Write Mode"): void => {
+            if (mesh === null) return;
+
+            const materials = mesh.metadata.materials;
+
+            if (mode === "Alpha Mode") {
+                for (let i = 0; i < materials.length; ++i) {
+                    const material = materials[i] as MmdStandardMaterial;
+                    material.transparencyMode = alphaEvaluateResults[i] ?? Material.MATERIAL_OPAQUE;
+                    material.forceDepthWrite = false;
+                }
+            } else {
+                for (let i = 0; i < materials.length; ++i) {
+                    const material = materials[i] as MmdStandardMaterial;
+                    material.transparencyMode = translucentMaterials[i] ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                    material.forceDepthWrite = true;
+                }
+            }
+        };
 
         const parentDiv = canvas.parentElement!;
         parentDiv.style.display = "flex";
@@ -240,6 +295,7 @@ export class PmxConverterScene implements ISceneBuilder {
             fileInput.style.display = "block";
             fileListTitle.style.display = "block";
             fileListContainer.style.display = "block";
+            modeSwitchContainer.style.display = "none";
             materialListTitle.style.display = "none";
             materialListContainer.style.display = "none";
         };
@@ -262,6 +318,7 @@ export class PmxConverterScene implements ISceneBuilder {
             fileInput.style.display = "none";
             fileListTitle.style.display = "none";
             fileListContainer.style.display = "none";
+            modeSwitchContainer.style.display = "flex";
             materialListTitle.style.display = "block";
             materialListContainer.style.display = "block";
         };
@@ -372,6 +429,52 @@ export class PmxConverterScene implements ISceneBuilder {
 
         // #region Fix Material Tab
 
+        const modeSwitchContainer = document.createElement("div");
+        modeSwitchContainer.style.width = "100%";
+        modeSwitchContainer.style.height = "auto";
+        modeSwitchContainer.style.display = "flex";
+        modeSwitchContainer.style.flexDirection = "row";
+        modeSwitchContainer.style.justifyContent = "space-between";
+        innerFormDiv.appendChild(modeSwitchContainer);
+
+        const alphaModeSwitch = document.createElement("button");
+        alphaModeSwitch.textContent = "Alpha Mode";
+        alphaModeSwitch.style.flexGrow = "1";
+        alphaModeSwitch.style.height = "auto";
+        alphaModeSwitch.style.border = "none";
+        alphaModeSwitch.style.fontSize = "16px";
+        alphaModeSwitch.style.backgroundColor = "#444444";
+        alphaModeSwitch.style.color = "white";
+        alphaModeSwitch.style.cursor = "pointer";
+        alphaModeSwitch.onclick = (): void => {
+            if (currentMode === "Alpha Mode") return;
+            alphaModeSwitch.style.backgroundColor = "#444444";
+            forceDapthWriteSwitch.style.backgroundColor = "#111111";
+            currentMode = "Alpha Mode";
+            switchMaterialTransparencyMode(currentMode);
+            renderMaterialsList();
+        };
+        modeSwitchContainer.appendChild(alphaModeSwitch);
+
+        const forceDapthWriteSwitch = document.createElement("button");
+        forceDapthWriteSwitch.textContent = "Force Depth Write Mode";
+        forceDapthWriteSwitch.style.flexGrow = "1";
+        forceDapthWriteSwitch.style.height = "auto";
+        forceDapthWriteSwitch.style.border = "none";
+        forceDapthWriteSwitch.style.fontSize = "16px";
+        forceDapthWriteSwitch.style.backgroundColor = "#111111";
+        forceDapthWriteSwitch.style.color = "white";
+        forceDapthWriteSwitch.style.cursor = "pointer";
+        forceDapthWriteSwitch.onclick = (): void => {
+            if (currentMode === "Force Depth Write Mode") return;
+            alphaModeSwitch.style.backgroundColor = "#111111";
+            forceDapthWriteSwitch.style.backgroundColor = "#444444";
+            currentMode = "Force Depth Write Mode";
+            switchMaterialTransparencyMode(currentMode);
+            renderMaterialsList();
+        };
+        modeSwitchContainer.appendChild(forceDapthWriteSwitch);
+
         const materialListTitle = document.createElement("div");
         materialListTitle.textContent = "Materials";
         materialListTitle.style.width = "100%";
@@ -413,29 +516,36 @@ export class PmxConverterScene implements ISceneBuilder {
 
                 item.textContent = material.name;
 
-                const transparencyModeButton = document.createElement("button");
-                transparencyModeButton.style.float = "right";
-                transparencyModeButton.style.width = "100px";
-                transparencyModeButton.style.height = "auto";
-                transparencyModeButton.style.fontSize = "14px";
-                transparencyModeButton.style.marginRight = "10px";
-                transparencyModeButton.style.border = "none";
-                transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
-                transparencyModeButton.onclick = (): void => {
-                    if (material.transparencyMode === null) material.transparencyMode = 0;
-                    material.transparencyMode = (material.transparencyMode + 1) % 3;
-
-                    if (material.diffuseTexture !== null) {
-                        const hasAlpha = material.transparencyMode !== Material.MATERIAL_OPAQUE;
-                        if (hasAlpha) material.diffuseTexture.hasAlpha = true;
-                        material.useAlphaFromDiffuseTexture = hasAlpha;
-                        material.backFaceCulling = initalBackfaceCullingInfo[i];
-                        if (hasAlpha) material.backFaceCulling = false;
-                    }
-
+                if (currentMode === "Alpha Mode") {
+                    const transparencyModeButton = document.createElement("button");
+                    transparencyModeButton.style.float = "right";
+                    transparencyModeButton.style.width = "100px";
+                    transparencyModeButton.style.height = "auto";
+                    transparencyModeButton.style.fontSize = "14px";
+                    transparencyModeButton.style.marginRight = "10px";
+                    transparencyModeButton.style.border = "none";
                     transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
-                };
-                item.appendChild(transparencyModeButton);
+                    transparencyModeButton.onclick = (): void => {
+                        if (material.transparencyMode === null) material.transparencyMode = 0;
+                        material.transparencyMode = (material.transparencyMode + 1) % 3;
+                        transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
+                    };
+                    item.appendChild(transparencyModeButton);
+                } else {
+                    const opaqueToggleButton = document.createElement("button");
+                    opaqueToggleButton.style.float = "right";
+                    opaqueToggleButton.style.width = "100px";
+                    opaqueToggleButton.style.height = "auto";
+                    opaqueToggleButton.style.fontSize = "14px";
+                    opaqueToggleButton.style.marginRight = "10px";
+                    opaqueToggleButton.style.border = "none";
+                    opaqueToggleButton.textContent = material.transparencyMode === Material.MATERIAL_OPAQUE ? "Opaque" : "Alpha Blend";
+                    opaqueToggleButton.onclick = (): void => {
+                        material.transparencyMode = material.transparencyMode === Material.MATERIAL_OPAQUE ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                        opaqueToggleButton.textContent = material.transparencyMode === Material.MATERIAL_OPAQUE ? "Opaque" : "Alpha Blend";
+                    };
+                    item.appendChild(opaqueToggleButton);
+                }
 
                 materialList.appendChild(item);
             }
@@ -485,8 +595,14 @@ export class PmxConverterScene implements ISceneBuilder {
         preserveSerializationDataLabel.style.textAlign = "left";
         preserveSerializationDataLabel.style.marginRight = "10px";
         preserveSerializationDataLabel.style.fontSize = "16px";
-        preserveSerializationDataLabel.style.flexGrow = "1";
         preserveSerializationDataDiv.appendChild(preserveSerializationDataLabel);
+
+        const preserveSerializationDataSmallLabel = document.createElement("label");
+        preserveSerializationDataSmallLabel.textContent = "(reload required)";
+        preserveSerializationDataSmallLabel.style.fontSize = "11px";
+        preserveSerializationDataSmallLabel.style.color = "gray";
+        preserveSerializationDataSmallLabel.style.flexGrow = "1";
+        preserveSerializationDataDiv.appendChild(preserveSerializationDataSmallLabel);
 
         const preserveSerializationDataInput = document.createElement("input");
         preserveSerializationDataInput.style.width = "16px";
@@ -494,9 +610,16 @@ export class PmxConverterScene implements ISceneBuilder {
         preserveSerializationDataInput.type = "checkbox";
         preserveSerializationDataInput.checked = pmxLoader.preserveSerializationData;
         preserveSerializationDataDiv.appendChild(preserveSerializationDataInput);
-        preserveSerializationDataInput.onchange = (): void => {
+        preserveSerializationDataInput.onclick = (event): void => {
+            if (isLoading) {
+                event.preventDefault();
+                return;
+            }
             pmxLoader.preserveSerializationData = preserveSerializationDataInput.checked;
             pmdLoader.preserveSerializationData = preserveSerializationDataInput.checked;
+
+            if (selectedFile === null) return;
+            loadModelAsync(selectedFile);
         };
 
         const buildSkeletonDiv = document.createElement("div");
@@ -524,10 +647,6 @@ export class PmxConverterScene implements ISceneBuilder {
         buildSkeletonInput.type = "checkbox";
         buildSkeletonInput.checked = pmxLoader.buildSkeleton;
         buildSkeletonDiv.appendChild(buildSkeletonInput);
-        buildSkeletonInput.onchange = (): void => {
-            pmxLoader.buildSkeleton = buildSkeletonInput.checked;
-            pmdLoader.buildSkeleton = buildSkeletonInput.checked;
-        };
 
         const buildMorphDiv = document.createElement("div");
         buildMorphDiv.style.width = "100%";
@@ -554,10 +673,6 @@ export class PmxConverterScene implements ISceneBuilder {
         buildMorphInput.type = "checkbox";
         buildMorphInput.checked = pmxLoader.buildMorph;
         buildMorphDiv.appendChild(buildMorphInput);
-        buildMorphInput.onchange = (): void => {
-            pmxLoader.buildMorph = buildMorphInput.checked;
-            pmdLoader.buildMorph = buildMorphInput.checked;
-        };
 
         const buttonContainer = document.createElement("div");
         buttonContainer.style.width = "100%";
@@ -567,20 +682,6 @@ export class PmxConverterScene implements ISceneBuilder {
         buttonContainer.style.justifyContent = "space-between";
         buttonContainer.style.alignItems = "center";
         innerFormDiv.appendChild(buttonContainer);
-
-        const reloadButton = document.createElement("button");
-        reloadButton.textContent = "Reload";
-        reloadButton.style.width = "100%";
-        reloadButton.style.height = "60px";
-        reloadButton.style.border = "none";
-        reloadButton.style.fontSize = "20px";
-        reloadButton.style.color = "gray";
-        reloadButton.style.marginRight = "10px";
-        buttonContainer.appendChild(reloadButton);
-        reloadButton.onclick = (): void => {
-            if (selectedFile === null) return;
-            loadModelAsync(selectedFile);
-        };
 
         const convertButton = document.createElement("button");
         convertButton.textContent = "Convert";
@@ -598,7 +699,12 @@ export class PmxConverterScene implements ISceneBuilder {
             engine.displayLoadingUI();
 
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = bpmxConverter.convert(mesh);
+            const arrayBuffer = bpmxConverter.convert(mesh, {
+                includeSkinningData: buildSkeletonInput.checked,
+                includeMorphData: buildMorphInput.checked,
+                translucentMaterials: translucentMaterials,
+                alphaEvaluateResults: alphaEvaluateResults
+            });
             const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

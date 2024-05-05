@@ -28,6 +28,8 @@
     - evaluatedTransparency is now store that weather the material is completely opaque or not
     - multi-material support added
 
+- [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter/) now converts pmx file into bpmx 2.1.0 format
+
 ## 0.40.0
 
 - fix shader compilation error when using WebGPU with non SDEF model

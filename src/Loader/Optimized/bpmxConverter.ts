@@ -272,9 +272,9 @@ export interface BpmxConvertOptions {
     includeMorphData?: boolean;
 
     /**
-     * Array that stores weather the material is rendered as opaque in order of mmd materials metadata (default: [])
+     * Array that stores weather the material is rendered as translucent in order of mmd materials metadata (default: [])
      */
-    opaqueMaterials?: boolean[];
+    translucentMaterials?: boolean[];
 
     /**
      * Array that stores material alpha evaluation result in order of mmd materials metadata (default: [])
@@ -326,7 +326,7 @@ export class BpmxConverter implements ILogger {
         const {
             includeSkinningData = true,
             includeMorphData = true,
-            opaqueMaterials = [],
+            translucentMaterials = [],
             alphaEvaluateResults = []
         } = options;
 
@@ -856,7 +856,7 @@ export class BpmxConverter implements ILogger {
                         ambient.length = 3; // ensure length
 
                         const evaluatedTransparency =
-                            (((+(opaqueMaterials[materialIndex] ?? -1)) & 0x3) << 4) | // 00: opaque 01: transparent 11: not evaluated
+                            (((+(translucentMaterials[materialIndex] ?? -1)) & 0x3) << 4) | // 00: opaque 01: transparent 11: not evaluated
                             (((alphaEvaluateResults[materialIndex] ?? -1) & 0xF) << 0); // 0000: opaque 0001: alphatest 0010: alphablend 0011: alphatest and blend 1111: not evaluated
 
                         const flag = (material.backFaceCulling === false ? PmxObject.Material.Flag.IsDoubleSided : 0) |
