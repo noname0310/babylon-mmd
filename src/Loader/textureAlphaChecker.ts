@@ -5,6 +5,7 @@ import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { VertexBuffer } from "@babylonjs/core/Meshes/buffer";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { Scene } from "@babylonjs/core/scene";
@@ -13,7 +14,9 @@ import type { Nullable } from "@babylonjs/core/types";
 declare module "@babylonjs/core/scene" {
     export interface Scene {
         /** @internal */
-        _textureAlphaCheckerShader: Nullable<ShaderMaterial>;
+        _textureAlphaCheckerTmeShader: Nullable<ShaderMaterial>;
+        /** @internal */
+        _textureAlphaCheckerOeShader: Nullable<ShaderMaterial>;
     }
 }
 
@@ -37,12 +40,18 @@ export enum TransparencyMode {
     AlphaBlend = Material.MATERIAL_ALPHABLEND
 }
 
+export enum TextureAlphaCheckerMode {
+    TransparentModeEvaluation = 0,
+    OpaqueEvaluation = 1
+}
+
 /**
  * Texture alpha checker
  *
  * This class is used to check if the texture has alpha on geometry
  */
 export class TextureAlphaChecker {
+    public readonly mode: TextureAlphaCheckerMode;
     private readonly _scene: Scene;
     private readonly _renderTargetTexture: RenderTargetTexture;
     private readonly _resultPixelsBuffer: Uint8Array;
@@ -50,9 +59,15 @@ export class TextureAlphaChecker {
     /**
      * Create a texture alpha checker
      * @param scene Scene
-     * @param resolution Resolution of the canvas used to check the texture
+     * @param mode Mode
+     * @param resolution Resolution of the canvas used to check the texture, if mode is OpaqueEvaluation, this value is ignored
      */
-    public constructor(scene: Scene, resolution = 512) {
+    public constructor(scene: Scene, mode: TextureAlphaCheckerMode, resolution = 512) {
+        if (mode === TextureAlphaCheckerMode.OpaqueEvaluation) {
+            resolution = 1000;
+        }
+
+        this.mode = mode;
         this._scene = scene;
 
         const engine = scene.getEngine();
@@ -65,7 +80,7 @@ export class TextureAlphaChecker {
                 generateStencilBuffer: false,
                 generateMipMaps: false,
                 type: Constants.TEXTURETYPE_UNSIGNED_BYTE,
-                format: engine.isWebGPU || engine.version > 1 ? Constants.TEXTUREFORMAT_RED : Constants.TEXTUREFORMAT_RGBA,
+                format: engine.isWebGPU || engine.version > 1 ? Constants.TEXTUREFORMAT_ALPHA : Constants.TEXTUREFORMAT_RGBA,
                 doNotChangeAspectRatio: true
             }
         );
@@ -74,7 +89,7 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderParticles = false;
         renderTargetTexture.optimizeUVAllocation = true;
         renderTargetTexture.ignoreCameraViewport = true;
-        renderTargetTexture.clearColor = new Color4(0, 0, 0, 1);
+        renderTargetTexture.clearColor = new Color4(0, 0, 0, 0);
 
         this._resultPixelsBuffer = new Uint8Array(resolution * resolution * 4);
     }
@@ -84,13 +99,33 @@ export class TextureAlphaChecker {
         mesh: Mesh,
         subMeshIndex: number | null
     ): Promise<Uint8Array> {
-        const shader = TextureAlphaChecker._GetShader(this._scene);
+        const shader = TextureAlphaChecker._GetShader(this._scene, this.mode);
         shader.setTexture("textureSampler", texture);
 
         let originalSubMeshes: Nullable<SubMesh[]> = null;
         if (subMeshIndex !== null) {
             originalSubMeshes = mesh.subMeshes;
             mesh.subMeshes = [mesh.subMeshes[subMeshIndex]];
+        }
+
+        if (this.mode === TextureAlphaCheckerMode.OpaqueEvaluation) {
+            const geometry = mesh.geometry!;
+            const oePosIndexBuffer = new Float32Array(geometry.getVerticesData(VertexBuffer.UVKind)!.length / 2);
+
+            const indices = geometry.getIndices();
+            if (indices === null) {
+                for (let i = 0, len = oePosIndexBuffer.length; i < len; ++i) {
+                    oePosIndexBuffer[i] = i;
+                }
+            } else {
+                for (let i = 0, len = indices.length; i < len; i += 3) {
+                    oePosIndexBuffer[indices[i]] = 0;
+                    oePosIndexBuffer[indices[i + 1]] = 1;
+                    oePosIndexBuffer[indices[i + 2]] = 2;
+                }
+            }
+
+            geometry.setVerticesData("oePosIndex", oePosIndexBuffer, false, 1);
         }
 
         const renderTargetTexture = this._renderTargetTexture;
@@ -123,6 +158,10 @@ export class TextureAlphaChecker {
             subMeshes[i]._removeDrawWrapper(renderTargetTexture.renderPassId, true);
         }
 
+        if (this.mode === TextureAlphaCheckerMode.OpaqueEvaluation) {
+            mesh.geometry!.removeVerticesData("oePosIndex");
+        }
+
         if (originalSubMeshes !== null) {
             mesh.subMeshes = originalSubMeshes;
         }
@@ -135,30 +174,33 @@ export class TextureAlphaChecker {
         );
 
         // // for debug
-        // {
-        //     const debugCanvas = document.createElement("canvas");
-        //     debugCanvas.style.width = "256px";
-        //     debugCanvas.style.height = "256px";
-        //     debugCanvas.width = debugCanvas.height = renderTargetTexture.getSize().width;
-        //     const debugContext = debugCanvas.getContext("2d")!;
-        //     const imageData = debugContext.createImageData(debugCanvas.width, debugCanvas.height);
-        //     const data = imageData.data;
-        //     for (let i = 0, len = resultPixelsBuffer.length; i < len; ++i) {
-        //         data[i] = resultPixelsBuffer[i];
-        //     }
-        //     debugContext.putImageData(imageData, 0, 0);
+        {
+            const debugCanvas = document.createElement("canvas");
+            debugCanvas.style.width = "256px";
+            debugCanvas.style.height = "256px";
+            debugCanvas.width = debugCanvas.height = renderTargetTexture.getSize().width;
+            const debugContext = debugCanvas.getContext("2d")!;
+            const imageData = debugContext.createImageData(debugCanvas.width, debugCanvas.height);
+            const data = imageData.data;
+            for (let i = 0, len = resultPixelsBuffer.length; i < len; ++i) {
+                data[i] = resultPixelsBuffer[i];
+            }
+            debugContext.putImageData(imageData, 0, 0);
 
-        //     const div = document.createElement("div");
-        //     document.body.appendChild(div);
+            const div = document.createElement("div");
+            document.body.appendChild(div);
 
-        //     const text = document.createElement("p");
-        //     text.textContent = "mesh: " + mesh.name;
-        //     div.appendChild(text);
+            const text = document.createElement("p");
+            text.textContent = "mesh: " + mesh.name;
+            div.appendChild(text);
 
-        //     const img = document.createElement("img");
-        //     img.src = debugCanvas.toDataURL();
-        //     div.appendChild(img);
-        // }
+            const img = document.createElement("img");
+            img.src = debugCanvas.toDataURL();
+            img.style.width = "256px";
+            img.style.height = "256px";
+            img.style.imageRendering = "pixelated";
+            div.appendChild(img);
+        }
 
         return resultPixelsBuffer;
     }
@@ -185,6 +227,9 @@ export class TextureAlphaChecker {
         alphaThreshold: number,
         alphaBlendThreshold: number
     ): Promise<TransparencyMode> {
+        if (this.mode !== TextureAlphaCheckerMode.TransparentModeEvaluation) {
+            throw new Error("This method can only be used in TransparentModeEvaluation mode");
+        }
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
         if (this._blockRendering) {
@@ -201,10 +246,10 @@ export class TextureAlphaChecker {
         let averageMidddleAlphaCount = 0;
 
         for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
-            const r = resultPixelsBuffer[index];
-            maxValue = Math.max(maxValue, r);
-            if (0 < r && r < 255) {
-                averageMidddleAlpha += r;
+            const a = resultPixelsBuffer[index + 3];
+            maxValue = Math.max(maxValue, a);
+            if (0 < a && a < 255) {
+                averageMidddleAlpha += a;
                 averageMidddleAlphaCount += 1;
             }
         }
@@ -240,6 +285,9 @@ export class TextureAlphaChecker {
         mesh: Mesh,
         subMeshIndex: number | null
     ): Promise<boolean> {
+        if (this.mode !== TextureAlphaCheckerMode.OpaqueEvaluation) {
+            throw new Error("This method can only be used in OpaqueEvaluation mode");
+        }
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
         if (this._blockRendering) {
@@ -252,12 +300,12 @@ export class TextureAlphaChecker {
         const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
 
         for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
-            if (resultPixelsBuffer[index] !== 0) {
+            if (resultPixelsBuffer[index + 3] !== 0) {
                 this._blockRendering = false;
                 const nextTask = this._taskQueue.shift();
                 if (nextTask !== undefined) nextTask();
 
-                return false; // if r is not 0, it is not opaque
+                return false; // if a is not 0, it is not opaque
             }
         }
 
@@ -275,20 +323,38 @@ export class TextureAlphaChecker {
         this._renderTargetTexture.dispose();
     }
 
-    private static _GetShader(scene: Scene): ShaderMaterial {
-        if (!scene._textureAlphaCheckerShader) {
-            const shader = new ShaderMaterial(
+    private static readonly _TmeDisposeEventRegistered = new WeakSet<Scene>();
+    private static readonly _OeDisposeEventRegistered = new WeakSet<Scene>();
+
+    private static _GetShader(scene: Scene, mode: TextureAlphaCheckerMode): ShaderMaterial {
+        let shader = mode === TextureAlphaCheckerMode.TransparentModeEvaluation
+            ? scene._textureAlphaCheckerTmeShader
+            : scene._textureAlphaCheckerOeShader;
+
+        if (!shader) {
+            const engine = scene.getEngine();
+            const positionAttributeNeeded = mode === TextureAlphaCheckerMode.OpaqueEvaluation && !engine.isWebGPU && engine.version < 2;
+
+            const glPositionExpression = /* glsl */`gl_Position = ${mode === TextureAlphaCheckerMode.OpaqueEvaluation
+                ? "vec4(mod(mod(oePosIndex, 3.0), 2.0) * 2.0 - 1.0, mod(oePosIndex, 3.0) * 2.0 - 1.0, 0.0, 1.0);"
+                : "vec4(mod(uv, 1.0) * 2.0 - 1.0, 0.0, 1.0);"
+            }`;
+
+            shader = new ShaderMaterial(
                 "textureAlphaCheckerShader",
                 scene,
                 {
                     vertexSource: /* glsl */`
                         precision highp float;
                         attribute vec2 uv;
+                        ${positionAttributeNeeded ? "attribute float oePosIndex;" : ""}
+
                         varying vec2 vUv;
 
                         void main() {
+                            int vPosition = 0;
                             vUv = uv;
-                            gl_Position = vec4(mod(uv, 1.0) * 2.0 - 1.0, 0.0, 1.0);
+                            ${glPositionExpression}
                         }
                     `,
                     fragmentSource: /* glsl */`
@@ -297,31 +363,48 @@ export class TextureAlphaChecker {
                         varying vec2 vUv;
 
                         void main() {
-                            gl_FragColor = vec4(vec3(1.0) - vec3(texture2D(textureSampler, vUv).a), 1.0);
+                            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0 - texture2D(textureSampler, vUv).a);
                         }
                     `
                 },
                 {
                     needAlphaBlending: false,
                     needAlphaTesting: false,
-                    attributes: ["uv"],
+                    attributes: positionAttributeNeeded ? ["uv", "oePosIndex"] : ["uv"],
                     uniforms: [],
                     samplers: ["textureSampler"],
                     shaderLanguage: ShaderLanguage.GLSL
                 }
             );
             shader.backFaceCulling = false;
-            shader.alphaMode = Constants.ALPHA_DISABLE;
+            shader.alphaMode = mode === TextureAlphaCheckerMode.TransparentModeEvaluation
+                ? Constants.ALPHA_DISABLE
+                : Constants.ALPHA_ADD;
 
-            scene.onDisposeObservable.add(() => {
-                scene._textureAlphaCheckerShader?.dispose();
-                scene._textureAlphaCheckerShader = null;
-            });
+            if (mode === TextureAlphaCheckerMode.TransparentModeEvaluation) {
+                if (!this._TmeDisposeEventRegistered.has(scene)) {
+                    this._TmeDisposeEventRegistered.add(scene);
+                    scene.onDisposeObservable.add(() => {
+                        scene._textureAlphaCheckerTmeShader?.dispose();
+                        scene._textureAlphaCheckerTmeShader = null;
+                    });
+                }
 
-            scene._textureAlphaCheckerShader = shader;
+                scene._textureAlphaCheckerTmeShader = shader;
+            } else {
+                if (!this._OeDisposeEventRegistered.has(scene)) {
+                    this._OeDisposeEventRegistered.add(scene);
+                    scene.onDisposeObservable.add(() => {
+                        scene._textureAlphaCheckerOeShader?.dispose();
+                        scene._textureAlphaCheckerOeShader = null;
+                    });
+                }
+
+                scene._textureAlphaCheckerOeShader = shader;
+            }
         }
 
-        return scene._textureAlphaCheckerShader;
+        return shader;
     }
 
     /**
@@ -329,9 +412,16 @@ export class TextureAlphaChecker {
      *
      * If you are no longer loading the mmd model, it will be helpful for your memory to call this method and dispose the shader
      * @param scene Scene
+     * @param mode Mode (if null, transparent mode evaluation shader and opaque evaluation shader are disposed)
      */
-    public static DisposeShader(scene: Scene): void {
-        scene._textureAlphaCheckerShader?.dispose();
-        scene._textureAlphaCheckerShader = null;
+    public static DisposeShader(scene: Scene, mode: Nullable<TextureAlphaCheckerMode> = null): void {
+        if (mode === null || mode === TextureAlphaCheckerMode.TransparentModeEvaluation) {
+            scene._textureAlphaCheckerTmeShader?.dispose();
+            scene._textureAlphaCheckerTmeShader = null;
+        }
+        if (mode === null || mode === TextureAlphaCheckerMode.OpaqueEvaluation) {
+            scene._textureAlphaCheckerOeShader?.dispose();
+            scene._textureAlphaCheckerOeShader = null;
+        }
     }
 }
