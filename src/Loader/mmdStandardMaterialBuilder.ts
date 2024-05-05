@@ -17,7 +17,7 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
-import { TextureAlphaChecker, TextureAlphaCheckerMode } from "./textureAlphaChecker";
+import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 /**
  * Render method of MMD standard material
@@ -160,9 +160,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 ? null
                 : textureAlphaChecker = new TextureAlphaChecker(
                     scene,
-                    this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation
-                        ? TextureAlphaCheckerMode.TransparentModeEvaluation
-                        : TextureAlphaCheckerMode.OpaqueEvaluation,
                     this.alphaEvaluationResolution
                 );
         };
