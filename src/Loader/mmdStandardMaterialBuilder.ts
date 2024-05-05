@@ -34,7 +34,7 @@ export enum MmdStandardMaterialShadingMethod {
      *
      * This approach is similar to mmd, but is more performance friendly and partially solves the draw order problem
      */
-    ForceDepthWriteAlphaBlendingWithAlphaEvaluation = 0,
+    DepthWriteAlphaBlendingWithEvaluation = 0,
 
     /**
      * Force depth write alpha blending
@@ -46,7 +46,7 @@ export enum MmdStandardMaterialShadingMethod {
      * This approach gives you exactly the same results as mmd,
      * but it introduces a problem that mmd is known for: manually managing the draw order
      */
-    ForceDepthWriteAlphaBlending = 1,
+    DepthWriteAlphaBlending = 1,
 
     /**
      * Alpha evaluation
@@ -64,6 +64,11 @@ export enum MmdStandardMaterialShadingMethod {
  * Use `MmdStandardMaterial` to create a mesh material
  */
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
+    /**
+     * Shading method of MMD standard material (default: ForceDepthWriteAlphaBlendingWithAlphaEvaluation)
+     */
+    public shadingMethod = MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation;
+
     /**
      * Whether to force disable alpha evaluation (default: false)
      *
@@ -103,6 +108,25 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
     private readonly _textureLoader = new MmdAsyncTextureLoader();
 
+    /**
+     * Next starting alpha index for force depth write alpha blending rendering
+     */
+    public nextStartingAlphaIndex = 100000;
+
+    /**
+     * Alpha index increments per model for force depth write alpha blending rendering
+     */
+    public alphaIndexIncrementsPerModel = 1000;
+
+    protected _setMeshesAlphaIndex(meshes: Mesh[]): void {
+        let alphaIndex = this.nextStartingAlphaIndex;
+        for (let i = 0; i < meshes.length; ++i) {
+            meshes[i].alphaIndex = alphaIndex;
+            alphaIndex += 1;
+        }
+        this.nextStartingAlphaIndex += this.alphaIndexIncrementsPerModel;
+    }
+
     public buildMaterials(
         uniqueId: number,
         materialsInfo: readonly MaterialInfo[],
@@ -112,7 +136,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         fileRootId: string,
         referenceFiles: readonly File[] | readonly IArrayBufferFile[],
         referencedMeshes: (readonly ReferencedMesh[])[],
-        _meshes: Mesh[],
+        meshes: Mesh[],
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         textureNameMap: Nullable<Map<BaseTexture, string>>,
@@ -120,6 +144,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
     ): Material[] {
+        if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation ||
+            this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlending) {
+            this._setMeshesAlphaIndex(meshes);
+        }
+
         // Block the marking of materials dirty until all materials are built.
         const oldBlockMaterialDirtyMechanism = scene.blockMaterialDirtyMechanism;
         scene._forceBlockMaterialDirtyMechanism(true);
@@ -178,13 +207,26 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     assetContainer,
                     rootUrl,
                     referenceFileResolver,
-                    referencedMeshes[i],
                     logger,
-                    getTextureAlphaChecker,
                     incrementProgress
                 );
+                const createSetAlphaBlendModePromise = (): Promise<void> | void => {
+                    return this.setAlphaBlendMode(
+                        material,
+                        materialInfo,
+                        referencedMeshes[i],
+                        logger,
+                        getTextureAlphaChecker
+                    );
+                };
                 if (loadDiffuseTexturePromise !== undefined) {
-                    singleMaterialPromises.push(loadDiffuseTexturePromise);
+                    const setAlphaBlendModePromise = loadDiffuseTexturePromise.then(createSetAlphaBlendModePromise);
+                    singleMaterialPromises.push(setAlphaBlendModePromise);
+                } else {
+                    const setAlphaBlendModePromise = createSetAlphaBlendModePromise();
+                    if (setAlphaBlendModePromise !== undefined) {
+                        singleMaterialPromises.push(setAlphaBlendModePromise);
+                    }
                 }
 
                 const loadSphereTexturePromise = this.loadSphereTexture(
@@ -392,9 +434,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         referenceFileResolver: ReferenceFileResolver,
-        meshes: readonly ReferencedMesh[],
         logger: ILogger,
-        getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>,
         onTextureLoadComplete?: () => void
     ) => Promise<void> | void = async(
             uniqueId,
@@ -406,12 +446,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             assetContainer,
             rootUrl,
             referenceFileResolver,
-            meshes,
             logger,
-            getTextureAlphaChecker,
             onTextureLoadComplete
         ): Promise<void> => {
-            material.backFaceCulling = materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided ? false : true;
+            material.backFaceCulling = (materialInfo.flag & PmxObject.Material.Flag.IsDoubleSided) ? false : true;
 
             const diffuseTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
             if (diffuseTexturePath !== undefined) {
@@ -452,57 +490,152 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
 
                 if (diffuseTexture !== null) {
                     material.diffuseTexture = diffuseTexture;
-
-                    let transparencyMode = Number.MIN_SAFE_INTEGER;
-
-                    const evaluatedTransparency = (materialInfo as BpmxObject.Material).evaluatedTransparency;
-                    let etAlphaEvaluateResult = evaluatedTransparency !== undefined
-                        ? (evaluatedTransparency & 0x0F)
-                        : -1; // undefined: not evaluated
-                    if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
-                        etAlphaEvaluateResult = -1;
-                    }
-
-                    if (etAlphaEvaluateResult !== -1) {
-                        transparencyMode = etAlphaEvaluateResult;
-                    } else {
-                        const textureAlphaChecker = getTextureAlphaChecker();
-                        if (textureAlphaChecker !== null) {
-                            for (let i = 0; i < meshes.length; ++i) {
-                                const mesh = meshes[i];
-
-                                const newTransparencyMode = await textureAlphaChecker.textureHasAlphaOnGeometry(
-                                    diffuseTexture,
-                                    (mesh as { mesh: Mesh })?.mesh ?? mesh as Mesh,
-                                    (mesh as { subMeshIndex: number })?.subMeshIndex !== undefined
-                                        ? (mesh as { subMeshIndex: number }).subMeshIndex
-                                        : null,
-                                    this.alphaThreshold,
-                                    this.alphaBlendThreshold
-                                );
-
-                                if (transparencyMode < newTransparencyMode) {
-                                    transparencyMode = newTransparencyMode;
-                                }
-                            }
-                        }
-                    }
-
-                    if (transparencyMode !== Number.MIN_SAFE_INTEGER) {
-                        const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
-
-                        if (hasAlpha) diffuseTexture.hasAlpha = true;
-                        material.useAlphaFromDiffuseTexture = hasAlpha;
-                        material.transparencyMode = transparencyMode;
-                    }
-
-                    onTextureLoadComplete?.();
                 } else {
                     logger.error(`Failed to load diffuse texture: ${diffuseTextureFileFullPath}`);
-                    onTextureLoadComplete?.();
                 }
+                onTextureLoadComplete?.();
             } else {
                 onTextureLoadComplete?.();
+            }
+        };
+
+    protected async _evaluateDiffuseTextureTransparencyMode(
+        diffuseTexture: BaseTexture,
+        evaluatedTransparency: number,
+        referencedMeshes: readonly ReferencedMesh[],
+        logger: ILogger,
+        getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>
+    ): Promise<Nullable<number>> {
+        let transparencyMode = Number.MIN_SAFE_INTEGER;
+
+        if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+            let etIsNotOpaque = (evaluatedTransparency >> 4) & 0x03;
+            if ((etIsNotOpaque ^ 0x03) === 0) { // 11: not evaluated
+                etIsNotOpaque = -1;
+            }
+
+            if (etIsNotOpaque === -1) {
+                transparencyMode = Material.MATERIAL_OPAQUE;
+
+                const textureAlphaChecker = getTextureAlphaChecker();
+                if (textureAlphaChecker !== null) {
+                    for (let i = 0; i < referencedMeshes.length; ++i) {
+                        const referencedMesh = referencedMeshes[i];
+
+                        const isMeshOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometry(
+                            diffuseTexture,
+                            (referencedMesh as { mesh: Mesh })?.mesh ?? referencedMesh as Mesh,
+                            (referencedMesh as { subMeshIndex: number })?.subMeshIndex !== undefined
+                                ? (referencedMesh as { subMeshIndex: number }).subMeshIndex
+                                : null
+                        );
+
+                        if (!isMeshOpaque) {
+                            transparencyMode = Material.MATERIAL_ALPHABLEND;
+                            break;
+                        }
+                    }
+                }
+            } else if (etIsNotOpaque === 0) { // 00: opaque
+                transparencyMode = Material.MATERIAL_OPAQUE;
+            } else {
+                transparencyMode = Material.MATERIAL_ALPHABLEND;
+            }
+        } else if (this.shadingMethod === MmdStandardMaterialShadingMethod.AlphaEvaluation) {
+            let etAlphaEvaluateResult = evaluatedTransparency & 0x0F;
+            if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
+                etAlphaEvaluateResult = -1;
+            }
+
+            if (etAlphaEvaluateResult !== -1) {
+                transparencyMode = etAlphaEvaluateResult;
+            } else {
+                const textureAlphaChecker = getTextureAlphaChecker();
+                if (textureAlphaChecker !== null) {
+                    for (let i = 0; i < referencedMeshes.length; ++i) {
+                        const referencedMesh = referencedMeshes[i];
+
+                        const newTransparencyMode = await textureAlphaChecker.hasTranslucentFragmentsOnGeometry(
+                            diffuseTexture,
+                            (referencedMesh as { mesh: Mesh })?.mesh ?? referencedMesh as Mesh,
+                            (referencedMesh as { subMeshIndex: number })?.subMeshIndex !== undefined
+                                ? (referencedMesh as { subMeshIndex: number }).subMeshIndex
+                                : null,
+                            this.alphaThreshold,
+                            this.alphaBlendThreshold
+                        );
+
+                        if (transparencyMode < newTransparencyMode) {
+                            transparencyMode = newTransparencyMode;
+                        }
+                    }
+                }
+            }
+        } else {
+            logger.warn(`Unknown shading method for evaluating transparency mode: ${this.shadingMethod}`);
+        }
+
+        return transparencyMode !== Number.MIN_SAFE_INTEGER ? transparencyMode : null;
+    }
+
+    public setAlphaBlendMode: (
+        material: MmdStandardMaterial,
+        materialInfo: MaterialInfo,
+        meshes: readonly ReferencedMesh[],
+        logger: ILogger,
+        getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>
+    ) => Promise<void> | void = async(
+            material,
+            materialInfo,
+            meshes,
+            logger,
+            getTextureAlphaChecker
+        ): Promise<void> => {
+            if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlending) {
+                if (material.diffuseTexture) {
+                    material.diffuseTexture.hasAlpha = true;
+                    material.useAlphaFromDiffuseTexture = true;
+                }
+                material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+                material.forceDepthWrite = true;
+
+                return;
+            }
+
+            if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+                if (material.alpha < 1) {
+                    if (material.diffuseTexture) {
+                        material.diffuseTexture.hasAlpha = true;
+                        material.useAlphaFromDiffuseTexture = true;
+                    }
+                    material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+                    material.forceDepthWrite = true;
+
+                    return;
+                }
+            }
+
+            const diffuseTexture = material.diffuseTexture;
+            if (diffuseTexture !== null) {
+                const transparencyMode = await this._evaluateDiffuseTextureTransparencyMode(
+                    diffuseTexture,
+                    (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1,
+                    meshes,
+                    logger,
+                    getTextureAlphaChecker
+                );
+                if (transparencyMode !== null) {
+                    const hasAlpha = transparencyMode !== Material.MATERIAL_OPAQUE;
+
+                    if (hasAlpha) diffuseTexture.hasAlpha = true;
+                    material.useAlphaFromDiffuseTexture = hasAlpha;
+                    material.transparencyMode = transparencyMode;
+                    if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+                        material.forceDepthWrite = hasAlpha;
+                    }
+                }
+            } else {
+                material.transparencyMode = Material.MATERIAL_OPAQUE;
             }
         };
 

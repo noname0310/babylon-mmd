@@ -2,8 +2,8 @@ import { Constants } from "@babylonjs/core/Engines/constants";
 import { Material } from "@babylonjs/core/Materials/material";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
@@ -82,25 +82,11 @@ export class TextureAlphaChecker {
     private _blockRendering = false;
     private readonly _taskQueue: (() => void)[] = [];
 
-    /**
-     * Check if the texture has alpha on geometry
-     *
-     * "Does the textures on the geometry have alpha" is simply to make sure that a portion of the textures (the part that is rendered) have alpha
-     * @param texture Texture to check (must be ready)
-     * @param mesh Mesh to check
-     * @param subMeshIndices Sub mesh index to check (if null, all sub meshes are checked)
-     * @param alphaThreshold alpha threshold
-     * @param alphaBlendThreshold alpha blend threshold
-     * @returns Transparency mode
-     * @throws If the texture is not ready
-     */
-    public async textureHasAlphaOnGeometry(
-        texture: Texture,
+    private async _renderTexture(
+        texture: BaseTexture,
         mesh: Mesh,
-        subMeshIndex: number | null,
-        alphaThreshold: number,
-        alphaBlendThreshold: number
-    ): Promise<TransparencyMode> {
+        subMeshIndex: number | null
+    ): Promise<Uint8Array> {
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
         if (this._blockRendering) {
@@ -190,21 +176,40 @@ export class TextureAlphaChecker {
         const nextTask = this._taskQueue.shift();
         if (nextTask !== undefined) nextTask();
 
+        return resultPixelsBuffer;
+    }
+
+    /**
+     * Check if the texture has translucent fragments on the geometry
+     *
+     * "Does the textures on the geometry have alpha" is simply to make sure that a portion of the textures (the part that is rendered) have alpha
+     * @param texture Texture to check (must be ready)
+     * @param mesh Mesh to check
+     * @param subMeshIndices Sub mesh index to check (if null, all sub meshes are checked)
+     * @param alphaThreshold alpha threshold
+     * @param alphaBlendThreshold alpha blend threshold
+     * @returns Transparency mode
+     * @throws If the texture is not ready
+     */
+    public async hasTranslucentFragmentsOnGeometry(
+        texture: BaseTexture,
+        mesh: Mesh,
+        subMeshIndex: number | null,
+        alphaThreshold: number,
+        alphaBlendThreshold: number
+    ): Promise<TransparencyMode> {
+        const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
+
         let maxValue = 0;
         let averageMidddleAlpha = 0;
         let averageMidddleAlphaCount = 0;
 
-        const width = renderTargetTexture.getRenderWidth();
-        const height = renderTargetTexture.getRenderHeight();
-        for (let i = 0; i < width; ++i) {
-            for (let j = 0; j < height; ++j) {
-                const index = (i * width + j) * 4;
-                const r = resultPixelsBuffer[index];
-                maxValue = Math.max(maxValue, r);
-                if (0 < r && r < 255) {
-                    averageMidddleAlpha += r;
-                    averageMidddleAlphaCount += 1;
-                }
+        for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
+            const r = resultPixelsBuffer[index];
+            maxValue = Math.max(maxValue, r);
+            if (0 < r && r < 255) {
+                averageMidddleAlpha += r;
+                averageMidddleAlphaCount += 1;
             }
         }
 
@@ -221,6 +226,27 @@ export class TextureAlphaChecker {
         } else {
             return TransparencyMode.AlphaBlend;
         }
+    }
+
+    /**
+     * Check if texture fragments are completely opaque on the geometry
+     * @param texture Texture to check (must be ready)
+     * @param mesh Mesh to check
+     * @param subMeshIndices Sub mesh index to check (if null, all sub meshes are checked)
+     * @returns If the texture fragments are completely opaque in geometry
+     */
+    public async hasFragmentsOnlyOpaqueOnGeometry(
+        texture: BaseTexture,
+        mesh: Mesh,
+        subMeshIndex: number | null
+    ): Promise<boolean> {
+        const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
+
+        for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
+            if (resultPixelsBuffer[index] !== 0) return false; // if r is not 0, it is not opaque
+        }
+
+        return true;
     }
 
     /**

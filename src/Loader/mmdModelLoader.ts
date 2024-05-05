@@ -19,7 +19,7 @@ import type { MmdModelMetadata, MmdModelSerializationMetadata } from "./mmdModel
 import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
-import { PmxObject } from "./Parser/pmxObject";
+import type { PmxObject } from "./Parser/pmxObject";
 import type { ProgressTask } from "./progress";
 import { Progress } from "./progress";
 

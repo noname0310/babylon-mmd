@@ -236,7 +236,7 @@
  */
 import type { Bone } from "@babylonjs/core/Bones/bone";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
-import { Material } from "@babylonjs/core/Materials/material";
+import type { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -270,6 +270,16 @@ export interface BpmxConvertOptions {
      * Include morph data into BPMX data (default: true)
      */
     includeMorphData?: boolean;
+
+    /**
+     * Array that stores weather the material is rendered as opaque in order of mmd materials metadata (default: [])
+     */
+    opaqueMaterials?: boolean[];
+
+    /**
+     * Array that stores material alpha evaluation result in order of mmd materials metadata (default: [])
+     */
+    alphaEvaluateResults?: number[];
 }
 
 type RemoveReadonly<T> = {
@@ -315,7 +325,9 @@ export class BpmxConverter implements ILogger {
 
         const {
             includeSkinningData = true,
-            includeMorphData = true
+            includeMorphData = true,
+            opaqueMaterials = [],
+            alphaEvaluateResults = []
         } = options;
 
         const mmdModelMetadata = mmdMesh.metadata;
@@ -843,7 +855,9 @@ export class BpmxConverter implements ILogger {
                         const ambient = (material.ambientColor?.asArray() ?? [0, 0, 0]) as Vec3;
                         ambient.length = 3; // ensure length
 
-                        const evaluatedTransparency = material.transparencyMode ?? Material.MATERIAL_OPAQUE;
+                        const evaluatedTransparency =
+                            (((+(opaqueMaterials[materialIndex] ?? -1)) & 0x3) << 4) | // 00: opaque 01: transparent 11: not evaluated
+                            (((alphaEvaluateResults[materialIndex] ?? -1) & 0xF) << 0); // 0000: opaque 0001: alphatest 0010: alphablend 0011: alphatest and blend 1111: not evaluated
 
                         const flag = (material.backFaceCulling === false ? PmxObject.Material.Flag.IsDoubleSided : 0) |
                             ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
