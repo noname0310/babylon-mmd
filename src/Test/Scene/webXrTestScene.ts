@@ -13,7 +13,6 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -173,13 +172,6 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
-
-        for (const mesh of modelMesh.metadata.meshes) {
-            const material = mesh.material as MmdStandardMaterial;
-            if (material.name === "Hairshadow") {
-                material.alphaMode = Constants.ALPHA_SUBTRACT;
-            }
-        }
 
         const xr = await scene.createDefaultXRExperienceAsync({
             outputCanvasOptions: {
