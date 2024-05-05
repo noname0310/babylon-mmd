@@ -375,7 +375,7 @@ export class MmdAsyncTextureLoader {
                     textureLoadInfo!.observable.notifyObservers(false);
                     textureLoadInfo!.observable.clear();
                 },
-                (_message, _exception) => {
+                (_message, _exception) => { // there's bug in Babylon.js. onError is called twice when fallback texture load failed
                     if (textureData!.texture !== null) this._handleTextureOnDispose(textureData!);
                     this._addErrorTextureReferenceCount(uniqueId, textureData!);
 

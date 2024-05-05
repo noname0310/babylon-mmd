@@ -17,7 +17,7 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
-import { TextureAlphaChecker } from "./textureAlphaChecker";
+import { TextureAlphaChecker, TextureAlphaCheckerMode } from "./textureAlphaChecker";
 
 /**
  * Render method of MMD standard material
@@ -158,7 +158,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (textureAlphaChecker !== null) return textureAlphaChecker;
             return this.forceDisableAlphaEvaluation
                 ? null
-                : textureAlphaChecker = new TextureAlphaChecker(scene, this.alphaEvaluationResolution);
+                : textureAlphaChecker = new TextureAlphaChecker(
+                    scene,
+                    this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation
+                        ? TextureAlphaCheckerMode.TransparentModeEvaluation
+                        : TextureAlphaCheckerMode.OpaqueEvaluation,
+                    this.alphaEvaluationResolution
+                );
         };
 
         const referenceFileResolver = new ReferenceFileResolver(referenceFiles as readonly IArrayBufferFile[], rootUrl, fileRootId);
@@ -697,7 +703,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
-                                format: Constants.TEXTUREFORMAT_RGB,
+                                format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB,
                                 mimeType: file instanceof File ? file.type : file.mimeType
                             }
                         ));
@@ -711,7 +717,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
-                                format: Constants.TEXTUREFORMAT_RGB
+                                format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB
                             }
                         ));
                     }
@@ -794,7 +800,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
-                            format: Constants.TEXTUREFORMAT_RGB,
+                            format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB,
                             mimeType: file instanceof File ? file.type : file.mimeType
                         }
                     ));
@@ -808,7 +814,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
-                            format: Constants.TEXTUREFORMAT_RGB
+                            format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB
                         }
                     ));
                 }
