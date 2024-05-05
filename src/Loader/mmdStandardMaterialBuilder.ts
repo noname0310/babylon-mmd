@@ -20,12 +20,12 @@ import { ReferenceFileResolver } from "./referenceFileResolver";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
 
 /**
- * Shading method of MMD standard material
+ * Render method of MMD standard material
  *
  * The drawing behavior of MMD is not conducive to modern renderers like Babylon.js
  * That's why you need to decide which shading method is right for your use case
  */
-export enum MmdStandardMaterialShadingMethod {
+export enum MmdStandardMaterialRenderMethod {
     /**
      * Force depth write alpha blending with alpha evaluation
      *
@@ -65,9 +65,9 @@ export enum MmdStandardMaterialShadingMethod {
  */
 export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     /**
-     * Shading method of MMD standard material (default: ForceDepthWriteAlphaBlendingWithAlphaEvaluation)
+     * Render method of MMD standard material (default: DepthWriteAlphaBlendingWithEvaluation)
      */
-    public shadingMethod = MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation;
+    public renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
 
     /**
      * Whether to force disable alpha evaluation (default: false)
@@ -144,8 +144,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
     ): Material[] {
-        if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation ||
-            this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlending) {
+        if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation ||
+            this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
             this._setMeshesAlphaIndex(meshes);
         }
 
@@ -508,7 +508,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     ): Promise<Nullable<number>> {
         let transparencyMode = Number.MIN_SAFE_INTEGER;
 
-        if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+        if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
             let etIsNotOpaque = (evaluatedTransparency >> 4) & 0x03;
             if ((etIsNotOpaque ^ 0x03) === 0) { // 11: not evaluated
                 etIsNotOpaque = -1;
@@ -541,7 +541,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             } else {
                 transparencyMode = Material.MATERIAL_ALPHABLEND;
             }
-        } else if (this.shadingMethod === MmdStandardMaterialShadingMethod.AlphaEvaluation) {
+        } else if (this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation) {
             let etAlphaEvaluateResult = evaluatedTransparency & 0x0F;
             if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
                 etAlphaEvaluateResult = -1;
@@ -572,7 +572,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
             }
         } else {
-            logger.warn(`Unknown shading method for evaluating transparency mode: ${this.shadingMethod}`);
+            logger.warn(`Unknown shading method for evaluating transparency mode: ${this.renderMethod}`);
         }
 
         return transparencyMode !== Number.MIN_SAFE_INTEGER ? transparencyMode : null;
@@ -591,7 +591,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             logger,
             getTextureAlphaChecker
         ): Promise<void> => {
-            if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlending) {
+            if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
                 if (material.diffuseTexture) {
                     material.diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = true;
@@ -602,7 +602,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 return;
             }
 
-            if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+            if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
                 if (material.alpha < 1) {
                     if (material.diffuseTexture) {
                         material.diffuseTexture.hasAlpha = true;
@@ -630,7 +630,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     if (hasAlpha) diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = hasAlpha;
                     material.transparencyMode = transparencyMode;
-                    if (this.shadingMethod === MmdStandardMaterialShadingMethod.DepthWriteAlphaBlendingWithEvaluation) {
+                    if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
                         material.forceDepthWrite = hasAlpha;
                     }
                 }

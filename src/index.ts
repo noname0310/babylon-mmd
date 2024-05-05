@@ -46,7 +46,7 @@ export { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "@/Loader/IMmdMat
 export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
 export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-export { MmdStandardMaterialBuilder, MmdStandardMaterialShadingMethod } from "@/Loader/mmdStandardMaterialBuilder";
+export { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
