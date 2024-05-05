@@ -79,22 +79,11 @@ export class TextureAlphaChecker {
         this._resultPixelsBuffer = new Uint8Array(resolution * resolution * 4);
     }
 
-    private _blockRendering = false;
-    private readonly _taskQueue: (() => void)[] = [];
-
     private async _renderTexture(
         texture: BaseTexture,
         mesh: Mesh,
         subMeshIndex: number | null
     ): Promise<Uint8Array> {
-        if (!texture.isReady()) throw new Error("Texture is not ready");
-
-        if (this._blockRendering) {
-            await new Promise<void>(resolve => {
-                this._taskQueue.push(resolve);
-            });
-        }
-
         const shader = TextureAlphaChecker._GetShader(this._scene);
         shader.setTexture("textureSampler", texture);
 
@@ -139,13 +128,11 @@ export class TextureAlphaChecker {
         }
 
         const resultPixelsBuffer = this._resultPixelsBuffer;
-        this._blockRendering = true;
         await renderTargetTexture.readPixels(
             undefined, // faceIndex
             undefined, // level
             resultPixelsBuffer // buffer
         );
-        this._blockRendering = false;
 
         // // for debug
         // {
@@ -173,11 +160,11 @@ export class TextureAlphaChecker {
         //     div.appendChild(img);
         // }
 
-        const nextTask = this._taskQueue.shift();
-        if (nextTask !== undefined) nextTask();
-
         return resultPixelsBuffer;
     }
+
+    private _blockRendering = false;
+    private readonly _taskQueue: (() => void)[] = [];
 
     /**
      * Check if the texture has translucent fragments on the geometry
@@ -198,6 +185,15 @@ export class TextureAlphaChecker {
         alphaThreshold: number,
         alphaBlendThreshold: number
     ): Promise<TransparencyMode> {
+        if (!texture.isReady()) throw new Error("Texture is not ready");
+
+        if (this._blockRendering) {
+            await new Promise<void>(resolve => {
+                this._taskQueue.push(resolve);
+            });
+        }
+
+        this._blockRendering = true;
         const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
 
         let maxValue = 0;
@@ -216,6 +212,10 @@ export class TextureAlphaChecker {
         if (averageMidddleAlphaCount !== 0) {
             averageMidddleAlpha /= averageMidddleAlphaCount;
         }
+
+        this._blockRendering = false;
+        const nextTask = this._taskQueue.shift();
+        if (nextTask !== undefined) nextTask();
 
         if (maxValue < alphaThreshold) {
             return TransparencyMode.Opaque;
@@ -240,11 +240,30 @@ export class TextureAlphaChecker {
         mesh: Mesh,
         subMeshIndex: number | null
     ): Promise<boolean> {
+        if (!texture.isReady()) throw new Error("Texture is not ready");
+
+        if (this._blockRendering) {
+            await new Promise<void>(resolve => {
+                this._taskQueue.push(resolve);
+            });
+        }
+
+        this._blockRendering = true;
         const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
 
         for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
-            if (resultPixelsBuffer[index] !== 0) return false; // if r is not 0, it is not opaque
+            if (resultPixelsBuffer[index] !== 0) {
+                this._blockRendering = false;
+                const nextTask = this._taskQueue.shift();
+                if (nextTask !== undefined) nextTask();
+
+                return false; // if r is not 0, it is not opaque
+            }
         }
+
+        this._blockRendering = false;
+        const nextTask = this._taskQueue.shift();
+        if (nextTask !== undefined) nextTask();
 
         return true;
     }
