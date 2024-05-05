@@ -61,6 +61,7 @@ directionalLight.shadowMaxZ = 20;
 directionalLight.shadowMinZ = -15;
 
 const shadowGenerator = new ShadowGenerator(2048, directionalLight, true, camera);
+shadowGenerator.transparencyShadow = true;
 shadowGenerator.bias = 0.01;
 
 const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);

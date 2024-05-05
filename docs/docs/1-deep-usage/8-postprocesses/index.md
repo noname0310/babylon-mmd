@@ -29,6 +29,10 @@ defaultPipeline.imageProcessing.vignetteEnabled = true;
 defaultPipeline.depthOfField.fStop = 0.05;
 defaultPipeline.depthOfField.focalLength = 20;
 
+for (const depthRenderer of Object.values(scene._depthRenderer)) {
+    depthRenderer.forceDepthWriteTransparentMeshes = true;
+}
+
 const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
 
 const rotationMatrix = new Matrix();

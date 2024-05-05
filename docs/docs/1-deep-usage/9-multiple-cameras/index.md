@@ -179,6 +179,7 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.shadowOrthoScale = 0;
 
         const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
+        shadowGenerator.transparencyShadow = true;
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.forceBackFacesOnly = false;
         shadowGenerator.bias = 0.01;
@@ -314,6 +315,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         defaultPipeline.depthOfField.fStop = 0.05;
         defaultPipeline.depthOfField.focalLength = 20;
+
+        for (const depthRenderer of Object.values(scene._depthRenderer)) {
+            depthRenderer.forceDepthWriteTransparentMeshes = true;
+        }
 
         const headBone = modelMesh.skeleton!.bones.find((bone) => bone.name === "頭");
 

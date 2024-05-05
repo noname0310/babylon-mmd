@@ -32,17 +32,48 @@ Result:
 
 ## Transparent Artifacts
 
-This is a problem that was not shown in this tutorial, but for models that use a lot of alpha textures, the high probability of shading will be weird.
+`MmdStandardMaterial` is rendered in alpha blending with `forceDepthWrite` enabled, so be careful when using post-processes or shaders that use depth information.
 
-Although an algorithm is implemented to determine whether to render materials as alpha blending, it is impossible to achieve perfect results because Babylon.js and MMD's alpha blending methods are different.
+for example, you should enable `transparencyShadow` in `ShadowGenerator` to render shadows correctly.
 
-So to solve this problem, you need to hardcode whether the material is alpha blended or not. Like this:
+```typescript
+const shadowGenerator = new ShadowGenerator(2048, directionalLight, true, camera);
+shadowGenerator.transparencyShadow = true;
+```
 
-```typescript title="src/sceneBuilder.ts"
+and for post-processes, you should enable `forceDepthWriteTransparentMeshes` in depthRenderer.
+
+```typescript
+for (const depthRenderer of Object.values(scene._depthRenderer)) {
+    depthRenderer.forceDepthWriteTransparentMeshes = true;
+}
+```
+
+The proper `transparencyMode` of the mesh is determined at load time by a specific algorithm to perform optimizations that determine opaque meshes. However, for a certain small number of models, optimization by these algorithms may result in the wrong `transparencyMode`.
+
+To fix this, you can disable the optimization settings. The code looks like this:
+
+```typescript
+const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
+const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending;
+```
+
+The other approach is to choose the most appropriate `transparencyMode` possible without using `forceDepthWrite`. This approach should be compatible with most post-processing and shaders.
+
+```typescript
+const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
+const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+```
+
+The `DepthWriteAlphaBlendingWithEvaluation` and `AlphaEvaluation` methods both add some delays to the execution of the algorithm. To improve this, you can force off the optimization that automatically determines the `transparencyMode` and set the `transparencyMode` manually.
+
+```typescript
 const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
 pmxLoader.useSdef = false;
 const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-materialBuilder.useAlphaEvaluation = false;
+materialBuilder.forceDisableAlphaEvaluation = true;
 const alphaBlendMaterials = ["face02", "Facial02", "HL", "Hairshadow", "q302"];
 const alphaTestMaterials = ["q301"];
 materialBuilder.afterBuildSingleMaterial = (material): void => {
@@ -55,12 +86,12 @@ materialBuilder.afterBuildSingleMaterial = (material): void => {
 };
 ```
 
-- `useAlphaEvaluation` - If false, all material loaded as opaque.
+- `forceDisableAlphaEvaluation` - If true, the optimization that automatically determines the `transparencyMode` is disabled.
 - `afterBuildSingleMaterial` - This callback is called after the material is created. You can use this to preprocess the material.
 
 ## Outline Artifacts
 
-Outline rendering often causes problems with materials that are alpha-blended.
+Outline rendering might looks weird with some post-processes or shaders.
 
 In this case, you should consider turning off outline rendering partially or disabling it in loaders.
 
@@ -125,6 +156,7 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.shadowMinZ = -15;
 
         const shadowGenerator = new ShadowGenerator(2048, directionalLight, true, camera);
+        shadowGenerator.transparencyShadow = true;
         shadowGenerator.bias = 0.01;
 
         const ground = MeshBuilder.CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);

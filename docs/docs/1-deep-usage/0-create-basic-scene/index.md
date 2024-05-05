@@ -79,6 +79,7 @@ directionalLight.orthoRight = 10;
 directionalLight.shadowOrthoScale = 0;
 
 const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
+shadowGenerator.transparencyShadow = true;
 shadowGenerator.usePercentageCloserFiltering = true;
 shadowGenerator.forceBackFacesOnly = false;
 shadowGenerator.bias = 0.01;
