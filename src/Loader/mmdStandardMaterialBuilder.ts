@@ -144,10 +144,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         onTextureLoadProgress?: (event: ISceneLoaderProgressEvent) => void,
         onTextureLoadComplete?: () => void
     ): Material[] {
-        const renderMethod = this.renderMethod;
-
-        if (renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation ||
-            renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
+        if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation ||
+            this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
             this._setMeshesAlphaIndex(meshes);
         }
 
@@ -162,7 +160,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 ? null
                 : textureAlphaChecker = new TextureAlphaChecker(
                     scene,
-                    renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation
+                    this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation
                         ? TextureAlphaCheckerMode.TransparentModeEvaluation
                         : TextureAlphaCheckerMode.OpaqueEvaluation,
                     this.alphaEvaluationResolution
@@ -220,7 +218,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 );
                 const createSetAlphaBlendModePromise = (): Promise<void> | void => {
                     return this.setAlphaBlendMode(
-                        renderMethod,
                         material,
                         materialInfo,
                         referencedMeshes[i],
@@ -509,7 +506,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         };
 
     protected async _evaluateDiffuseTextureTransparencyMode(
-        renderMethod: MmdStandardMaterialRenderMethod,
         diffuseTexture: BaseTexture,
         evaluatedTransparency: number,
         referencedMeshes: readonly ReferencedMesh[],
@@ -518,7 +514,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
     ): Promise<Nullable<number>> {
         let transparencyMode = Number.MIN_SAFE_INTEGER;
 
-        if (renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
+        if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
             let etIsNotOpaque = (evaluatedTransparency >> 4) & 0x03;
             if ((etIsNotOpaque ^ 0x03) === 0) { // 11: not evaluated
                 etIsNotOpaque = -1;
@@ -545,14 +541,13 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             break;
                         }
                     }
-                    console.log(transparencyMode, referencedMeshes.toString());
                 }
             } else if (etIsNotOpaque === 0) { // 00: opaque
                 transparencyMode = Material.MATERIAL_OPAQUE;
             } else {
                 transparencyMode = Material.MATERIAL_ALPHABLEND;
             }
-        } else if (renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation) {
+        } else if (this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation) {
             let etAlphaEvaluateResult = evaluatedTransparency & 0x0F;
             if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
                 etAlphaEvaluateResult = -1;
@@ -583,28 +578,26 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 }
             }
         } else {
-            logger.warn(`Unknown shading method for evaluating transparency mode: ${renderMethod}`);
+            logger.warn(`Unknown shading method for evaluating transparency mode: ${this.renderMethod}`);
         }
 
         return transparencyMode !== Number.MIN_SAFE_INTEGER ? transparencyMode : null;
     }
 
     public setAlphaBlendMode: (
-        renderMethod: MmdStandardMaterialRenderMethod,
         material: MmdStandardMaterial,
         materialInfo: MaterialInfo,
         meshes: readonly ReferencedMesh[],
         logger: ILogger,
         getTextureAlphaChecker: () => Nullable<TextureAlphaChecker>
     ) => Promise<void> | void = async(
-            renderMethod,
             material,
             materialInfo,
             meshes,
             logger,
             getTextureAlphaChecker
         ): Promise<void> => {
-            if (renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
+            if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending) {
                 if (material.diffuseTexture) {
                     material.diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = true;
@@ -615,7 +608,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 return;
             }
 
-            if (renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
+            if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
                 if (material.alpha < 1) {
                     if (material.diffuseTexture) {
                         material.diffuseTexture.hasAlpha = true;
@@ -631,7 +624,6 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             const diffuseTexture = material.diffuseTexture;
             if (diffuseTexture !== null) {
                 const transparencyMode = await this._evaluateDiffuseTextureTransparencyMode(
-                    renderMethod,
                     diffuseTexture,
                     (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1,
                     meshes,
@@ -644,7 +636,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     if (hasAlpha) diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = hasAlpha;
                     material.transparencyMode = transparencyMode;
-                    if (renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
+                    if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
                         material.forceDepthWrite = hasAlpha;
                     }
                 }
