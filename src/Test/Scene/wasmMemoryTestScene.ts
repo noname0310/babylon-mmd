@@ -41,6 +41,7 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRoot = new TransformNode("mmdRoot", scene);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
+        shadowGenerator.transparencyShadow = true;
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;

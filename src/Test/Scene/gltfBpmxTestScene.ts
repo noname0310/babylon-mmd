@@ -23,7 +23,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import type { ILogger } from "@/Loader/Parser/ILogger";
@@ -85,6 +85,7 @@ export class SceneBuilder implements ISceneBuilder {
                 onTextureLoadComplete
             );
         };
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);

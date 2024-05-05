@@ -29,6 +29,7 @@ export class SceneBuilder implements ISceneBuilder {
         scene.ambientColor = new Color3(1, 1, 1);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
+        shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,

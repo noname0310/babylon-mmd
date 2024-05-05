@@ -56,6 +56,7 @@ export class SceneBuilder implements ISceneBuilder {
         const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        shadowGenerator.transparencyShadow = true;
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
@@ -165,6 +166,10 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
         mmdCameraAutoFocus.setTarget(mmdModel);
         mmdCameraAutoFocus.register(scene);
+
+        for (const depthRenderer of Object.values(scene._depthRenderer)) {
+            depthRenderer.forceDepthWriteTransparentMeshes = true;
+        }
 
         return scene;
     }

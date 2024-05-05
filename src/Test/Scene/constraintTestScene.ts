@@ -1,5 +1,6 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
+import "@/Loader/mmdOutlineRenderer";
 
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
@@ -32,7 +33,6 @@ export class SceneBuilder implements ISceneBuilder {
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
         materialBuilder.forceDisableAlphaEvaluation = false;
         // materialBuilder.alphaEvaluationResolution = 2048;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);

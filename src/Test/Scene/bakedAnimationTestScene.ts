@@ -173,11 +173,11 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
-        defaultPipeline.samples = 4;
-        defaultPipeline.bloomEnabled = true;
+        defaultPipeline.samples = 16;
+        defaultPipeline.bloomEnabled = false;
         defaultPipeline.chromaticAberrationEnabled = false;
-        defaultPipeline.depthOfFieldEnabled = true;
-        defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
+        defaultPipeline.depthOfFieldEnabled = false;
+        // defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.imageProcessingEnabled = true;
         defaultPipeline.imageProcessing.toneMappingEnabled = true;
@@ -186,13 +186,15 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
-        const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(mmdModel);
-        mmdCameraAutoFocus.register(scene);
+        MmdCameraAutoFocus;
+        DepthOfFieldEffectBlurLevel;
+        // const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
+        // mmdCameraAutoFocus.setTarget(mmdModel);
+        // mmdCameraAutoFocus.register(scene);
 
-        for (const depthRenderer of Object.values(scene._depthRenderer)) {
-            depthRenderer.forceDepthWriteTransparentMeshes = true;
-        }
+        // for (const depthRenderer of Object.values(scene._depthRenderer)) {
+        //     depthRenderer.forceDepthWriteTransparentMeshes = true;
+        // }
 
         return scene;
     }

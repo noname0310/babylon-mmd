@@ -8,7 +8,7 @@ import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -25,7 +25,7 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.forceDisableAlphaEvaluation = false;
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
         // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 

@@ -49,6 +49,7 @@ export class SceneBuilder implements ISceneBuilder {
         const camera = createDefaultArcRotateCamera(scene);
         camera.parent = mmdRoot;
         const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
+        shadowGenerator.transparencyShadow = true;
         const ground = createDefaultGround(scene);
         ground.parent = mmdRoot;
 

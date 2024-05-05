@@ -47,6 +47,7 @@ export class SceneBuilder implements ISceneBuilder {
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const camera = createDefaultArcRotateCamera(scene);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));

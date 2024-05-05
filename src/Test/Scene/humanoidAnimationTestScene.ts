@@ -61,6 +61,7 @@ export class SceneBuilder implements ISceneBuilder {
             orthoTopOffset: 11,
             orthoRightOffset: 1
         });
+        shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
