@@ -8,6 +8,7 @@ import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
 import { Effect, type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
 import { BindBonesParameters, BindMorphTargetParameters, PrepareAttributesForMorphTargetsInfluencers, PushAttributesForInstances } from "@babylonjs/core/Materials/materialHelper.functions";
+import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { Scene } from "@babylonjs/core/scene";
@@ -101,6 +102,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
     }
 
     private static readonly _ViewMatrix = new Float32Array(9);
+    private static readonly _InverseViewProjectionMatrix = new Matrix();
 
     /**
      * Renders the outline in the canvas.
@@ -194,6 +196,11 @@ export class MmdOutlineRenderer implements ISceneComponent {
         // Clip plane
         bindClipPlane(effect, material, scene);
 
+        // Clip plane support
+        if (effect.defines.includes("WORLDPOS_REQUIRED")) {
+            effect.setMatrix("inverseViewProjection", scene.getTransformMatrix().invertToRef(MmdOutlineRenderer._InverseViewProjectionMatrix));
+        }
+
         renderingMesh._processRendering(effectiveMesh, subMesh, effect, material.fillMode, batch, hardwareInstancedRendering, (_isInstance, world) => {
             effect.setMatrix("world", world);
         });
@@ -240,6 +247,16 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
         // Clip planes
         prepareStringDefinesForClipPlanes(material, scene, defines);
+
+        // Clip planes support
+        let useClipPlane = false;
+        for (let i = 0; i < defines.length; ++i) {
+            if (defines[i].includes("CLIPPLANE")) {
+                useClipPlane = true;
+                break;
+            }
+        }
+        if (useClipPlane) defines.push("#define WORLDPOS_REQUIRED");
 
         // Bones
         const fallbacks = new EffectFallbacks();
@@ -322,6 +339,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             const samplers = ["diffuseSampler", "boneSampler", "morphTargets"];
 
             addClipPlaneUniforms(uniforms);
+            if (useClipPlane) uniforms.push("inverseViewProjection");
 
             drawWrapper.setEffect(
                 this.scene.getEngine().createEffect(

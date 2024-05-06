@@ -19,6 +19,9 @@ uniform float offset;
 uniform vec2 viewport;
 uniform mat3 view;
 uniform mat4 viewProjection;
+#ifdef WORLDPOS_REQUIRED
+uniform mat4 inverseViewProjection;
+#endif
 
 #ifdef ALPHATEST
 varying vec2 vUV;
@@ -55,6 +58,9 @@ void main(void)
     projectedPosition.xy += screenNormal / (viewport * 0.25 /* 0.5 */) * offset * projectedPosition.w;
 
 	gl_Position = projectedPosition;
+#ifdef WORLDPOS_REQUIRED
+    vec4 worldPos = inverseViewProjection * projectedPosition;
+#endif
 
 #ifdef ALPHATEST
 #ifdef UV1

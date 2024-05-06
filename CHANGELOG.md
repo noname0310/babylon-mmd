@@ -4,6 +4,8 @@
 
 - fix SDEF shader injection on `ShaderMaterial`
 
+- fix mmdOutline shader compilation error when use with clipping plane
+
 ## 0.41.0
 
 - replace animation when the same name animation is added to `MmdModel` or `MmdWasmModel`
