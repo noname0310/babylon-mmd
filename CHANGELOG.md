@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.1
+
+- fix SDEF shader injection on `ShaderMaterial`
+
 ## 0.41.0
 
 - replace animation when the same name animation is added to `MmdModel` or `MmdWasmModel`

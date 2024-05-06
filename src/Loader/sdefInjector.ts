@@ -96,7 +96,12 @@ export class SdefInjector {
         if (shaderType !== "vertex") return code;
 
         const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
-        code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${sdefDeclaration}`);
+        if (code.includes(vertexDefInjectionPoint)) {
+            code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${sdefDeclaration}`);
+        } else {
+            const fallbackVertexDefInjectionPoint = "void main() {";
+            code = code.replace(fallbackVertexDefInjectionPoint, `${sdefDeclaration}\nvoid main() {`);
+        }
 
         const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
         code = code.replace(sdefVertexInjectionPoint, `${sdefVertex}\nfinalWorld=finalWorld*influence;`);
