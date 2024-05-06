@@ -365,9 +365,11 @@ export class MmdOutlineRenderer implements ISceneComponent {
         const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material === null) return;
 
+        const mirroredCameraPosition = this.scene._mirroredCameraPosition;
+
         if (material.renderOutline) {
             const savedDepthWrite = this._engine.getDepthWrite();
-            this._engine.setState(true, undefined, undefined, undefined, false);
+            this._engine.setState(true, undefined, undefined, undefined, mirroredCameraPosition ? true : false);
             this.render(subMesh, batch, this._passIdForDrawWrapper);
             this._engine.setDepthWrite(savedDepthWrite);
         }

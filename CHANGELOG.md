@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.2
+
+- mmdOutline now supports `MirrorTexture` for rendering outline on mirror reflection
+
 ## 0.41.1
 
 - fix SDEF shader injection on `ShaderMaterial`
