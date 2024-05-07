@@ -20,7 +20,7 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
-import type { MmdPhysics, MmdPhysicsModel } from "../mmdPhysics";
+import type { IMmdPhysics, IMmdPhysicsModel } from "../Physics/IMmdPhysics";
 import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import type { IWasmTypedArray } from "./IWasmTypedArray";
@@ -120,7 +120,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public readonly morph: MmdWasmMorphController;
 
-    private readonly _physicsModel: Nullable<MmdPhysicsModel>;
+    private readonly _physicsModel: Nullable<IMmdPhysicsModel>;
 
     private readonly _runtime: MmdWasmRuntime;
 
@@ -153,7 +153,7 @@ export class MmdWasmModel implements IMmdModel {
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         wasmMorphIndexMap: Int32Array,
-        externalPhysics: Nullable<MmdPhysics>
+        externalPhysics: Nullable<IMmdPhysics>
     ) {
         const wasmInstance = wasmRuntime.wasmInstance;
         const wasmRuntimeInternal = wasmRuntime.wasmInternal;

@@ -90,6 +90,10 @@ export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphControll
 export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
+// Runtime/Physics
+export { IMmdPhysics, IMmdPhysicsModel } from "@/Runtime/Physics/IMmdPhysics";
+export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/Physics/mmdPhysics";
+
 // Runtime/Util
 export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -106,6 +110,5 @@ export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, Runtim
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController } from "@/Runtime/mmdMorphController";
 export { MmdMorphControllerBase, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphControllerBase";
-export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/mmdPhysics";
 export { CreateMmdModelOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";

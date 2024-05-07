@@ -8,14 +8,16 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { MirrorTexture } from "@babylonjs/core/Materials/Textures/mirrorTexture";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Plane } from "@babylonjs/core/Maths/math.plane";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
@@ -32,7 +34,6 @@ import type { ISceneBuilder } from "../baseRuntime";
 import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
@@ -55,7 +56,6 @@ export class SceneBuilder implements ISceneBuilder {
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene);
         mmdRuntime.loggingEnabled = true;
@@ -125,52 +125,16 @@ export class SceneBuilder implements ISceneBuilder {
         });
         scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene, { clearCachedVertexData: false }));
 
-        const ssr = new SSRRenderingPipeline(
-            "ssr",
-            scene,
-            undefined,
-            false,
-            Constants.TEXTURETYPE_UNSIGNED_BYTE
-        );
-        ssr.step = 32;
-        ssr.maxSteps = 128;
-        ssr.maxDistance = 500;
-        ssr.enableSmoothReflections = false;
-        ssr.enableAutomaticThicknessComputation = false;
-        ssr.blurDownsample = 0;
-        ssr.ssrDownsample = 0;
-        ssr.thickness = 0.1;
-        ssr.selfCollisionNumSkip = 2;
-        ssr.blurDispersionStrength = 0;
-        ssr.roughnessFactor = 0.1;
-        ssr.reflectivityThreshold = 0.9;
-        ssr.samples = 4;
 
-        setTimeout(() => {
-            let frameSum = 0;
-            const performanceTestStart = performance.now();
-            const performanceTest = (): void => {
-                frameSum += 1;
-                if (frameSum === 60) {
-                    const fps = frameSum / ((performance.now() - performanceTestStart) / 1000);
-
-                    if (fps < 30) {
-                        scene.onAfterRenderObservable.add(disableSsr);
-                    }
-                    scene.onAfterRenderObservable.removeCallback(performanceTest);
-                }
-            };
-            scene.onAfterRenderObservable.add(performanceTest);
-        }, 2000);
-
-        const disableSsr = (): void => {
-            ssr.strength -= 0.1;
-
-            if (ssr.strength <= 0) {
-                scene.onAfterRenderObservable.removeCallback(disableSsr);
-                ssr.dispose(true);
-            }
-        };
+        const ground = CreateGround("Ground", { width: 100, height: 100, subdivisions: 2, updatable: false }, scene);
+        ground.receiveShadows = true;
+        const groundMaterial = ground.material = new StandardMaterial("GroundMaterial", scene);
+        groundMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
+        groundMaterial.specularPower = 128;
+        const groundReflectionTexture = groundMaterial.reflectionTexture = new MirrorTexture("MirrorTexture", 1024, scene, true, undefined, undefined, true);
+        groundReflectionTexture.mirrorPlane = Plane.FromPositionAndNormal(ground.position, ground.getFacetNormal(0).scale(-1));
+        groundReflectionTexture.renderList = [...modelMesh.metadata.meshes];
+        groundReflectionTexture.level = 0.45;
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;

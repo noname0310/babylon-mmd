@@ -23,8 +23,8 @@ import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
-import type { MmdPhysics, MmdPhysicsModel } from "./mmdPhysics";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
+import type { IMmdPhysics, IMmdPhysicsModel } from "./Physics/IMmdPhysics";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
@@ -78,7 +78,7 @@ export class MmdModel implements IMmdModel {
      */
     public readonly morph: MmdMorphController;
 
-    private readonly _physicsModel: Nullable<MmdPhysicsModel>;
+    private readonly _physicsModel: Nullable<IMmdPhysicsModel>;
 
     private readonly _logger: ILogger;
 
@@ -107,7 +107,7 @@ export class MmdModel implements IMmdModel {
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        mmdPhysics: Nullable<MmdPhysics>,
+        mmdPhysics: Nullable<IMmdPhysics>,
         logger: ILogger
     ) {
         this._logger = logger;

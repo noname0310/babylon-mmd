@@ -27,10 +27,10 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { AnimationRetargeter } from "@/Loader/Util/animationRetargeter";
 import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
+import { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
 // import { MixamoMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
-import { MmdPhysics } from "@/Runtime/mmdPhysics";
-import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { attachToBone } from "../Util/attachToBone";

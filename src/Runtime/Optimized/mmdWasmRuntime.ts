@@ -14,9 +14,9 @@ import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
 import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
-import type { MmdPhysics } from "../mmdPhysics";
 import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
+import type { IMmdPhysics } from "../Physics/IMmdPhysics";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
@@ -37,7 +37,7 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
      *
      * Asynchronous Multi-thread optimization applies when possible
      *
-     * If you are using havok physics, all matrix computations are computed before the physics stage (the transformAfterPhysics property is ignored)
+     * If you are using havok or ammo.js physics, all matrix computations are computed before the physics stage (the transformAfterPhysics property is ignored)
      */
     Buffered
 }
@@ -71,7 +71,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private _needToSyncEvaluate: boolean;
 
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
-    private readonly _physics: Nullable<MmdPhysics>;
+    private readonly _physics: Nullable<IMmdPhysics>;
 
     private readonly _models: MmdWasmModel[];
     private _camera: Nullable<MmdCamera>;
@@ -132,12 +132,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     /**
      * Creates a new MMD web assembly runtime
      *
-     * For use havok physics, you need to set `physics` to `MmdPhysics` instance
+     * For use external physics engine like ammo.js or havok, you need to set `physics` to instance of `IMmdPhysics`
      * @param wasmInstance MMD WASM instance
      * @param scene Objects that limit the lifetime of this instance
      * @param physics MMD physics
      */
-    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
+    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics> = null) {
         this.wasmInstance = wasmInstance;
         this.wasmInternal = wasmInstance.createMmdRuntime();
 

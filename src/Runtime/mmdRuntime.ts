@@ -15,8 +15,8 @@ import type { MmdCamera } from "./mmdCamera";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
 import { MmdModel } from "./mmdModel";
-import type { MmdPhysics } from "./mmdPhysics";
 import { MmdStandardMaterialProxy } from "./mmdStandardMaterialProxy";
+import type { IMmdPhysics } from "./Physics/IMmdPhysics";
 
 /**
  * Options for creating MMD model
@@ -41,7 +41,7 @@ export interface CreateMmdModelOptions {
  * It can also create and remove runtime components
  */
 export class MmdRuntime implements IMmdRuntime<MmdModel> {
-    private readonly _physics: Nullable<MmdPhysics>;
+    private readonly _physics: Nullable<IMmdPhysics>;
 
     private readonly _models: MmdModel[];
     private _camera: Nullable<MmdCamera>;
@@ -102,7 +102,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @param scene Objects that limit the lifetime of this instance
      * @param physics Physics builder
      */
-    public constructor(scene: Nullable<Scene> = null, physics: Nullable<MmdPhysics> = null) {
+    public constructor(scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics> = null) {
         this._physics = physics;
 
         this._models = [];

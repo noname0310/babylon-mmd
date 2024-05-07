@@ -19,8 +19,8 @@ import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VpdLoader } from "@/Loader/vpdLoader";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
-import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { attachToBone } from "../Util/attachToBone";

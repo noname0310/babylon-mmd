@@ -15,8 +15,8 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
-import type { ILogger } from "./ILogger";
-import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
+import type { ILogger } from "../ILogger";
+import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 
 class MmdPhysicsTransformNode extends TransformNode {
     public readonly linkedBone: IMmdRuntimeBone;
