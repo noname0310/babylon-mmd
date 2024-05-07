@@ -4,6 +4,7 @@
     "description": "babylon mmd runtime",
     "main": "esm/index.js",
     "scripts": {
+        "postinstall": "download https://cdn.babylonjs.com/glslang/glslang.js > ./src/Test/External/glslang.js && download https://cdn.babylonjs.com/glslang/glslang.wasm > ./src/Test/External/glslang.wasm && download https://cdn.babylonjs.com/twgsl/twgsl.js > ./src/Test/External/twgsl.js && download https://cdn.babylonjs.com/twgsl/twgsl.wasm > ./src/Test/External/twgsl.wasm",
         "start": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack serve --mode development",
         "watch": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --watch",
         "build": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --env production",
@@ -40,6 +41,7 @@
         "copy-webpack-plugin": "^12.0.2",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
+        "download-cli": "^1.1.1",
         "eslint": "^8.57.0",
         "eslint-plugin-simple-import-sort": "^12.1.0",
         "eslint-webpack-plugin": "^4.1.0",
