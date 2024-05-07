@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.0
+
+- fix mmdOutline not rendered as alpha blended on opaque material
+
 ## 0.41.2
 
 - mmdOutline now supports `MirrorTexture` for rendering outline on mirror reflection

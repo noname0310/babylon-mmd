@@ -3,6 +3,7 @@ import "@babylonjs/core/Shaders/outline.vertex";
 
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { Constants } from "@babylonjs/core/Engines/constants";
 import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
 import { Effect, type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
@@ -365,13 +366,20 @@ export class MmdOutlineRenderer implements ISceneComponent {
         const material = subMesh.getMaterial() as Nullable<MmdStandardMaterial>;
         if (material === null) return;
 
-        const mirroredCameraPosition = this.scene._mirroredCameraPosition;
-
         if (material.renderOutline) {
-            const savedDepthWrite = this._engine.getDepthWrite();
-            this._engine.setState(true, undefined, undefined, undefined, mirroredCameraPosition ? true : false);
+            const engine = this._engine;
+
+            const savedDepthWrite = engine.getDepthWrite();
+            const savedAlphaMode = engine.getAlphaMode();
+
+            engine.setDepthWrite(true);
+            engine.setAlphaMode(Constants.ALPHA_COMBINE, true);
+
+            engine.setState(true, undefined, undefined, undefined, this.scene._mirroredCameraPosition ? true : false);
             this.render(subMesh, batch, this._passIdForDrawWrapper);
-            this._engine.setDepthWrite(savedDepthWrite);
+
+            engine.setAlphaMode(savedAlphaMode, true);
+            engine.setDepthWrite(savedDepthWrite);
         }
     }
 }
