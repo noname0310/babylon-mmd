@@ -11,11 +11,10 @@ import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import havokPhysics from "@babylonjs/havok";
+import ammo from "ammojs-typed";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -26,7 +25,8 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
-import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
+import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -57,7 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
 
-        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);
@@ -105,9 +105,9 @@ export class SceneBuilder implements ISceneBuilder {
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const havokInstance = await havokPhysics();
-                const havokPlugin = new HavokPlugin(true, havokInstance);
-                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+                const ammoInstance = await ammo();
+                const ammoPlugin = new MmdAmmoJSPlugin(true, ammoInstance);
+                scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), ammoPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);

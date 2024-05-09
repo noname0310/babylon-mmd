@@ -17,6 +17,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
+import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 
 class MmdPhysicsTransformNode extends TransformNode {
     public readonly linkedBone: IMmdRuntimeBone;
@@ -62,7 +63,7 @@ class MmdPhysicsTransformNode extends TransformNode {
 /**
  * MMD physics model is container of the physics resources of the MMD model
  */
-export class MmdPhysicsModel {
+export class MmdPhysicsModel implements IMmdPhysicsModel {
     private readonly _mmdPhysics: MmdPhysics;
 
     private readonly _nodes: readonly Nullable<MmdPhysicsTransformNode>[];
@@ -258,7 +259,7 @@ export class MmdPhysicsModel {
  *
  * If you do not want to use a physics engine, you can reduce the bundling size by not import this class
  */
-export class MmdPhysics {
+export class MmdPhysics implements IMmdPhysics {
     /**
      * Set a threshold in radian to clamp the constraint's angular limit to 0 (default: 5 * Math.PI / 180)
      *

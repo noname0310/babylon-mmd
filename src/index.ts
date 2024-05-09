@@ -92,6 +92,8 @@ export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
 // Runtime/Physics
 export { IMmdPhysics, IMmdPhysicsModel } from "@/Runtime/Physics/IMmdPhysics";
+export { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+export { MmdAmmoPhysics, MmdAmmoPhysicsModel } from "@/Runtime/Physics/mmdAmmoPhysics";
 export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/Physics/mmdPhysics";
 
 // Runtime/Util

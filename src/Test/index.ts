@@ -5,7 +5,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 // import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
+import { SceneBuilder } from "./Scene/physicsTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 
