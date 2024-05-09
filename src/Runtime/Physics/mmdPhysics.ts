@@ -140,7 +140,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
             body.setAngularVelocity(MmdPhysicsModel._ZeroVector);
             body.setLinearVelocity(MmdPhysicsModel._ZeroVector);
 
-            mmdPhysics._enablePreStepOnce(node.physicsBody!);
+            mmdPhysics._enablePreStepOnce(body);
         }
     }
 

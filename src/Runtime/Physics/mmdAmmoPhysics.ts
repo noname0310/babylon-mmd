@@ -3,7 +3,7 @@ import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor";
+import { PhysicsImpostor, type PhysicsImpostorParameters } from "@babylonjs/core/Physics/v1/physicsImpostor";
 import type { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
@@ -51,6 +51,46 @@ class MmdPhysicsMesh extends AbstractMesh {
 
         worldMatrix.multiplyToRef(parentWorldMatrixInverse, this.bodyOffsetMatrix);
         this.bodyOffsetMatrix.invertToRef(this.bodyOffsetInverseMatrix);
+    }
+}
+
+interface AmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
+    group: number;
+    mask: number;
+}
+
+class NonMeshPhysicsImpostor extends PhysicsImpostor {
+    private static _ObjectExtent: Vector3;
+    private readonly _objectExtent: Vector3;
+
+    private constructor(
+        object: MmdPhysicsMesh,
+        type: number,
+        options: AmmoPhysicsImpostorParameters,
+        objectExtent: Vector3,
+        scene: Scene
+    ) {
+        super(object, type, options, scene);
+        this._objectExtent = objectExtent;
+    }
+
+    public static Create(
+        object: MmdPhysicsMesh,
+        type: number,
+        options: AmmoPhysicsImpostorParameters,
+        objectExtent: Vector3,
+        scene: Scene
+    ): NonMeshPhysicsImpostor {
+        NonMeshPhysicsImpostor._ObjectExtent = objectExtent;
+        return new NonMeshPhysicsImpostor(object, type, options, objectExtent, scene);
+    }
+
+    public override getObjectExtents(): Vector3 {
+        return this._objectExtent ?? NonMeshPhysicsImpostor._ObjectExtent;
+    }
+
+    public override getObjectCenter(): Vector3 {
+        return this.object.position;
     }
 }
 
@@ -123,13 +163,9 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
             impostor.setAngularVelocity(MmdAmmoPhysicsModel._ZeroVector);
             impostor.setLinearVelocity(MmdAmmoPhysicsModel._ZeroVector);
 
-            mmdPhysics;
-            // mmdPhysics._enablePreStepOnce(node.physicsBody!);
+            mmdPhysics._enablePreStepOnce(impostor);
         }
     }
-
-    private static readonly _NodeWorldPosition = new Vector3();
-    private static readonly _NodeWorldRotation = new Quaternion();
 
     /**
      * Set the rigid bodies transform to the bones transform
@@ -149,18 +185,6 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
                         node.scaling,
                         node.rotationQuaternion!,
                         node.position
-                    );
-
-                    node.computeWorldMatrix(true);
-                    node.getWorldMatrix().decompose(
-                        undefined,
-                        MmdAmmoPhysicsModel._NodeWorldRotation,
-                        MmdAmmoPhysicsModel._NodeWorldPosition
-                    );
-
-                    node.physicsBody!.setTargetTransform(
-                        MmdAmmoPhysicsModel._NodeWorldPosition,
-                        MmdAmmoPhysicsModel._NodeWorldRotation
                     );
                 }
                 break;
@@ -246,6 +270,8 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 export class MmdAmmoPhysics implements IMmdPhysics {
     private readonly _scene: Scene;
 
+    private readonly _enablePreStepOnces: PhysicsImpostor[] = [];
+
     /**
      * Create a new MMD ammo.js physics engine
      *
@@ -316,12 +342,227 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             }
             const bone = bones[rigidBody.boneIndex];
 
-            bone;
+            let impostorType: number;
+            const extent = new Vector3();
+            switch (rigidBody.shapeType) {
+            case PmxObject.RigidBody.ShapeType.Sphere: {
+                impostorType = PhysicsImpostor.SphereImpostor;
+                const radius = rigidBody.shapeSize[0] * 2 * scalingFactor;
+                extent.set(radius, radius, radius);
+                break;
+            }
+            case PmxObject.RigidBody.ShapeType.Box: {
+                impostorType = PhysicsImpostor.BoxImpostor;
+                const shapeSize = rigidBody.shapeSize;
+                extent.set(
+                    shapeSize[0] * 2 * scalingFactor,
+                    shapeSize[1] * 2 * scalingFactor,
+                    shapeSize[2] * 2 * scalingFactor
+                );
+                break;
+            }
+            case PmxObject.RigidBody.ShapeType.Capsule: {
+                impostorType = PhysicsImpostor.CylinderImpostor;
+                const shapeSize = rigidBody.shapeSize;
+                extent.x = shapeSize[0] * 2 * scalingFactor;
+                extent.y = shapeSize[1] * scalingFactor + extent.x;
+                break;
+            }
+            default:
+                logger.warn(`Unknown rigid body shape type: ${rigidBody.shapeType}`);
+                nodes[i] = null;
+                impostors[i] = null;
+                continue;
+            }
+
+            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode);
+
+            const shapePosition = rigidBody.shapePosition;
+            node.position.copyFromFloats(
+                shapePosition[0],
+                shapePosition[1],
+                shapePosition[2]
+            );
+
+            const shapeRotation = rigidBody.shapeRotation;
+            node.rotationQuaternion = Quaternion.FromEulerAngles(
+                shapeRotation[0],
+                shapeRotation[1],
+                shapeRotation[2]
+            );
+
+            node.computeBodyOffsetMatrix();
+            node.setParent(rootMesh);
+
+            const mass = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
+                ? 0
+                : rigidBody.mass * scalingFactor;
+            // if mass is 0, the object will be constructed as a kinematic object by babylon.js physics plugin
+
+            const impostor = node.physicsImpostor = NonMeshPhysicsImpostor.Create(node, impostorType, {
+                mass: mass,
+                friction: rigidBody.friction,
+                restitution: rigidBody.repulsion,
+                ignoreParent: true,
+                disableBidirectionalTransformation: rigidBody.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone,
+                group: 1 << rigidBody.collisionGroup,
+                mask: rigidBody.collisionMask
+            }, extent, scene);
+
+            // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+            const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+            body.setDamping(rigidBody.linearDamping, rigidBody.angularDamping);
+            body.setSleepingThresholds(0.0, 0.0);
+
+            const bodyPtr = physicsPlugin.bjsAMMO.getPointer(body);
+            const heap32 = physicsPlugin.bjsAMMO.HEAP32 as Uint32Array;
+            // ptr + 113 = m_additionalDamping (bool but 4 bytes aligned)
+            heap32[bodyPtr / 4 + 113] = 0xFFFFFFFF; // enable additional damping
+
+            nodes[i] = node;
+            impostors[i] = impostor;
         }
 
-        joints;
-        scalingFactor;
+        const one: DeepImmutable<Vector3> = Vector3.One();
+        const jointRotation = new Quaternion();
+        const jointPosition = new Vector3();
+        const jointTransform = new Matrix();
+
+        const rigidBodyRotation = new Quaternion();
+        const rigidBodyPosition = new Vector3();
+        const rigidBodyAInverse = new Matrix();
+        const rigidBodyBInverse = new Matrix();
+
+        const jointFinalTransformA = new Matrix();
+        const jointFinalTransformB = new Matrix();
+
+        for (let i = 0; i < joints.length; ++i) {
+            const joint = joints[i];
+
+            if (joint.rigidbodyIndexA < 0 || rigidBodies.length <= joint.rigidbodyIndexA) {
+                logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
+                continue;
+            }
+
+            if (joint.rigidbodyIndexB < 0 || rigidBodies.length <= joint.rigidbodyIndexB) {
+                logger.warn(`Rigid body index out of range failed to create joint: ${joint.name}`);
+                continue;
+            }
+
+            const bodyA = impostors[joint.rigidbodyIndexA];
+            const bodyB = impostors[joint.rigidbodyIndexB];
+
+            if (bodyA === null || bodyB === null) {
+                logger.warn(`Rigid body not found failed to create joint: ${joint.name}`);
+                continue;
+            }
+
+            Matrix.ComposeToRef(
+                one,
+                Quaternion.FromEulerAnglesToRef(
+                    joint.rotation[0],
+                    joint.rotation[1],
+                    joint.rotation[2],
+                    jointRotation
+                ),
+                jointPosition.copyFromFloats(
+                    joint.position[0] * scalingFactor,
+                    joint.position[1] * scalingFactor,
+                    joint.position[2] * scalingFactor
+                ),
+                jointTransform
+            );
+
+            const bodyInfoA = rigidBodies[joint.rigidbodyIndexA];
+            const bodyInfoB = rigidBodies[joint.rigidbodyIndexB];
+
+            {
+                const shapeRotation = bodyInfoA.shapeRotation;
+                const shapePosition = bodyInfoA.shapePosition;
+
+                Matrix.ComposeToRef(
+                    one,
+                    Quaternion.FromEulerAnglesToRef(
+                        shapeRotation[0],
+                        shapeRotation[1],
+                        shapeRotation[2],
+                        rigidBodyRotation
+                    ),
+                    rigidBodyPosition.copyFromFloats(
+                        shapePosition[0] * scalingFactor,
+                        shapePosition[1] * scalingFactor,
+                        shapePosition[2] * scalingFactor
+                    ),
+                    rigidBodyAInverse
+                ).invert();
+            }
+
+            {
+                const shapeRotation = bodyInfoB.shapeRotation;
+                const shapePosition = bodyInfoB.shapePosition;
+
+                Matrix.ComposeToRef(
+                    one,
+                    Quaternion.FromEulerAnglesToRef(
+                        shapeRotation[0],
+                        shapeRotation[1],
+                        shapeRotation[2],
+                        rigidBodyRotation
+                    ),
+                    rigidBodyPosition.copyFromFloats(
+                        shapePosition[0] * scalingFactor,
+                        shapePosition[1] * scalingFactor,
+                        shapePosition[2] * scalingFactor
+                    ),
+                    rigidBodyBInverse
+                ).invert();
+            }
+
+            jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
+            jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
+
+            // build joint
+
+            // adjust the physics mode of the rigid bodies
+            // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135
+            const nodeA = nodes[joint.rigidbodyIndexA]!;
+            const nodeB = nodes[joint.rigidbodyIndexB]!;
+
+            if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
+                nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: A is parent of B
+                if (bones[bodyInfoB.boneIndex].parentBone === bones[bodyInfoA.boneIndex]) {
+                    nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                }
+            } else if (nodeB.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
+                nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: B is parent of A
+                if (bones[bodyInfoA.boneIndex].parentBone === bones[bodyInfoB.boneIndex]) {
+                    nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                }
+            }
+        }
 
         return new MmdAmmoPhysicsModel(this, nodes, impostors);
+    }
+
+    private readonly _onAfterPhysics = (): void => {
+        const enablePreStepOnces = this._enablePreStepOnces;
+        for (let i = 0; i < enablePreStepOnces.length; ++i) {
+            ((enablePreStepOnces[i] as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation = true;
+        }
+        enablePreStepOnces.length = 0;
+    };
+
+    /** @internal */
+    public _enablePreStepOnce(impostor: PhysicsImpostor): void {
+        if (!((impostor as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+            return;
+        }
+
+        if (this._enablePreStepOnces.length === 0) {
+            this._scene.onAfterPhysicsObservable.addOnce(this._onAfterPhysics);
+        }
+
+        this._enablePreStepOnces.push(impostor);
+        ((impostor as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation = false;
     }
 }
