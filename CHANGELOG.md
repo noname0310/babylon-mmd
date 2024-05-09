@@ -6,6 +6,8 @@
 
 - havok physics improve spring constraint initialization
 
+- introduce `MmdAmmoPhysics` for Ammo.js driven MMD physics simulation
+
 ## 0.41.2
 
 - mmdOutline now supports `MirrorTexture` for rendering outline on mirror reflection

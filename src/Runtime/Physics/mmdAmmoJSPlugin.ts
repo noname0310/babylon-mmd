@@ -5,6 +5,17 @@ import { AmmoJSPlugin } from "@babylonjs/core/Physics/v1/Plugins/ammoJSPlugin";
 
 export const generic6DofSpringJoint = 20;
 
+/**
+ * AmmoJS Physics plugin modified for MMD
+ *
+ * 120 steps per second is recommended for better reproduction of MMD physics. but performance reasons default is 60 steps per second.
+ *
+ * for better reproduction of MMD physics, you can set the following parameters:
+ * ```javascript
+ * plugin.setMaxSteps(120);
+ * plugin.setFixedTimeStep(1 / 120);
+ * ```
+ */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export class MmdAmmoJSPlugin extends AmmoJSPlugin {
@@ -34,8 +45,9 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
 
         this.name = "MmdAmmoJSPlugin";
 
-        this.setMaxSteps(120);
-        this.setFixedTimeStep(1 / 120);
+        // 120 steps per second is recommended for better reproduction of MMD physics
+        // this.setMaxSteps(120);
+        // this.setFixedTimeStep(1 / 120);
 
         this._mmdtmpAmmoVector = new this.bjsAMMO.btVector3();
         this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();

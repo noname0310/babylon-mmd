@@ -4,13 +4,16 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+// import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+// import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+// import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
@@ -141,16 +144,19 @@ export class SceneBuilder implements ISceneBuilder {
         for (const mesh of stageMesh.metadata.meshes) mesh.receiveShadows = true;
         stageMesh.position.y += 0.01;
 
-        {
-            // const physicsViewer = new PhysicsViewer(scene);
-            // const modelMesh = loadResults[1].meshes[0] as Mesh;
-            // for (const node of modelMesh.getChildren()) {
-            //     if ((node as TransformNode).physicsBody) {
-            //         physicsViewer.showBody((node as TransformNode).physicsBody);
-            //     }
-            // }
-            // physicsViewer.showBody(groundRigidBody);
-        }
+        // const plane = CreateBox("plane", { width: 100, height: 100 }, scene);
+        // plane.rotation.x = Math.PI / 2;
+        // plane.isVisible = false;
+        // const planeImpostor = plane.physicsImpostor = new PhysicsImpostor(plane, PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
+        // {
+        //     const physicsViewer = new PhysicsViewer(scene);
+        //     for (const node of modelMesh.getChildMeshes(true)) {
+        //         if (node.physicsImpostor) {
+        //             physicsViewer.showImpostor(node.physicsImpostor);
+        //         }
+        //     }
+        //     physicsViewer.showImpostor(planeImpostor);
+        // }
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;

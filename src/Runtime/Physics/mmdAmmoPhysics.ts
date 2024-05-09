@@ -284,11 +284,12 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         let scalingFactor: number;
+        rootMesh.computeWorldMatrix(true);
+        const worldMatrix = rootMesh.getWorldMatrix();
+        const worldRotation = new Quaternion();
         {
-            rootMesh.computeWorldMatrix(true);
-            const worldMatrix = rootMesh.getWorldMatrix();
             const worldScale = new Vector3();
-            worldMatrix.decompose(worldScale);
+            worldMatrix.decompose(worldScale, worldRotation);
             if (Math.abs(worldScale.x - worldScale.y) < 0.0001 && Math.abs(worldScale.y - worldScale.z) < 0.0001) {
                 if (Math.abs(worldScale.x - 1) < 0.0001 && Math.abs(worldScale.y - 1) < 0.0001 && Math.abs(worldScale.z - 1) < 0.0001) {
                     scalingFactor = 1;
@@ -377,8 +378,12 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 shapeRotation[2]
             );
 
+            // compute the body offset matrix in local space
             node.computeBodyOffsetMatrix();
-            node.setParent(rootMesh);
+
+            // then convert the body transform to world space
+            Vector3.TransformCoordinatesToRef(node.position, worldMatrix, node.position);
+            worldRotation.multiplyToRef(node.rotationQuaternion, node.rotationQuaternion);
 
             const mass = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
                 ? 0
@@ -395,6 +400,8 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 mask: rigidBody.collisionMask
             } as PhysicsImpostorParameters, scene);
             impostor.setDeltaPosition(new Vector3(0, 0, 0));
+
+            node.setParent(rootMesh);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
