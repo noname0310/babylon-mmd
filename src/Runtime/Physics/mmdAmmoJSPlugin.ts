@@ -1,4 +1,5 @@
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { PhysicsImpostorJoint } from "@babylonjs/core/Physics/v1/IPhysicsEnginePlugin";
 import { PhysicsJoint, type PhysicsJointData } from "@babylonjs/core/Physics/v1/physicsJoint";
 import { AmmoJSPlugin } from "@babylonjs/core/Physics/v1/Plugins/ammoJSPlugin";
 
@@ -7,6 +8,17 @@ export const generic6DofSpringJoint = 20;
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export class MmdAmmoJSPlugin extends AmmoJSPlugin {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _mmdtmpAmmoVector: import("ammojs-typed").default.btVector3;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _mmdtmpAmmoQuat: import("ammojs-typed").default.btQuaternion;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _mmdtmpAmmoTransformA: import("ammojs-typed").default.btTransform;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _mmdtmpAmmoTransformB: import("ammojs-typed").default.btTransform;
+
+    private static readonly _BjsQuaternion = new Quaternion();
+
     /**
      * Initializes the ammoJS plugin
      * @param _useDeltaForWorldStep if the time between frames should be used when calculating physics steps (Default: true)
@@ -24,12 +36,138 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
 
         this.setMaxSteps(120);
         this.setFixedTimeStep(1 / 120);
+
+        this._mmdtmpAmmoVector = new this.bjsAMMO.btVector3();
+        this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();
+        this._mmdtmpAmmoTransformA = new this.bjsAMMO.btTransform();
+        this._mmdtmpAmmoTransformB = new this.bjsAMMO.btTransform();
+    }
+
+    public override dispose(): void {
+        super.dispose();
+        this.bjsAMMO.destroy(this._mmdtmpAmmoVector);
+        this.bjsAMMO.destroy(this._mmdtmpAmmoQuat);
+        this.bjsAMMO.destroy(this._mmdtmpAmmoTransformA);
+        this.bjsAMMO.destroy(this._mmdtmpAmmoTransformB);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private override _stepSimulation(timeStep: number = 1 / 60, maxSteps: number = 10, fixedTimeStep: number = 1 / 60): void {
         this.world.stepSimulation(timeStep, maxSteps, fixedTimeStep);
+    }
+
+    /**
+     * Generates a joint
+     * @param impostorJoint the imposter joint to create the joint with
+     */
+    public override generateJoint(impostorJoint: PhysicsImpostorJoint): void {
+        const mainBody = impostorJoint.mainImpostor.physicsBody;
+        const connectedBody = impostorJoint.connectedImpostor.physicsBody;
+        if (!mainBody || !connectedBody) {
+            return;
+        }
+
+        // if the joint is already created, don't create it again for preventing memory leaks
+        if (impostorJoint.joint.physicsJoint) {
+            return;
+        }
+
+        if (impostorJoint.joint.type === generic6DofSpringJoint) {
+            const jointData = impostorJoint.joint.jointData as Generic6DofSpringJointData;
+            if (!jointData.mainFrame) {
+                jointData.mainFrame = Matrix.Identity();
+            }
+            if (!jointData.connectedAxis) {
+                jointData.connectedFrame = Matrix.Identity();
+            }
+            if (!jointData.useLinearReferenceFrameA) {
+                jointData.useLinearReferenceFrameA = true;
+            }
+            if (!jointData.linearLowerLimit) {
+                jointData.linearLowerLimit = new Vector3(0, 0, 0);
+            }
+            if (!jointData.linearUpperLimit) {
+                jointData.linearUpperLimit = new Vector3(0, 0, 0);
+            }
+            if (!jointData.angularLowerLimit) {
+                jointData.angularLowerLimit = new Vector3(0, 0, 0);
+            }
+            if (!jointData.angularUpperLimit) {
+                jointData.angularUpperLimit = new Vector3(0, 0, 0);
+            }
+            if (!jointData.linearStiffness) {
+                jointData.linearStiffness = new Vector3(0, 0, 0);
+            }
+            if (!jointData.angularStiffness) {
+                jointData.angularStiffness = new Vector3(0, 0, 0);
+            }
+
+            const origin = this._mmdtmpAmmoVector;
+            const rotation = this._mmdtmpAmmoQuat;
+
+            {
+                const mainMatrix = jointData.mainFrame;
+                origin.setValue(mainMatrix.m[12], mainMatrix.m[13], mainMatrix.m[14]);
+                const mainRotation = Quaternion.FromRotationMatrixToRef(mainMatrix, MmdAmmoJSPlugin._BjsQuaternion);
+                rotation.setValue(mainRotation.x, mainRotation.y, mainRotation.z, mainRotation.w);
+            }
+            const mainFrame = this._mmdtmpAmmoTransformA;
+            mainFrame.setOrigin(origin);
+            mainFrame.setRotation(rotation);
+
+            {
+                const connectedMatrix = jointData.connectedFrame;
+                origin.setValue(connectedMatrix.m[12], connectedMatrix.m[13], connectedMatrix.m[14]);
+                const connectedRotation = Quaternion.FromRotationMatrixToRef(connectedMatrix, MmdAmmoJSPlugin._BjsQuaternion);
+                rotation.setValue(connectedRotation.x, connectedRotation.y, connectedRotation.z, connectedRotation.w);
+            }
+            const connectedFrame = this._mmdtmpAmmoTransformB;
+            connectedFrame.setOrigin(origin);
+            connectedFrame.setRotation(rotation);
+
+            // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+            const joint: import("ammojs-typed").default.btGeneric6DofSpringConstraint =
+                new this.bjsAMMO.btGeneric6DofSpringConstraint(mainBody, connectedBody, mainFrame, connectedFrame, jointData.useLinearReferenceFrameA);
+
+            if (jointData.linearStiffness.x !== 0) {
+                joint.setStiffness(0, jointData.linearStiffness.x);
+                joint.enableSpring(0, true);
+            }
+            if (jointData.linearStiffness.y !== 0) {
+                joint.setStiffness(1, jointData.linearStiffness.y);
+                joint.enableSpring(1, true);
+            }
+            if (jointData.linearStiffness.z !== 0) {
+                joint.setStiffness(2, jointData.linearStiffness.z);
+                joint.enableSpring(2, true);
+            }
+            joint.setStiffness(3, jointData.angularStiffness.x);
+            joint.enableSpring(3, true);
+            joint.setStiffness(4, jointData.angularStiffness.y);
+            joint.enableSpring(4, true);
+            joint.setStiffness(5, jointData.angularStiffness.z);
+            joint.enableSpring(5, true);
+
+            const limitVector = this._mmdtmpAmmoVector;
+
+            limitVector.setValue(jointData.linearLowerLimit.x, jointData.linearLowerLimit.y, jointData.linearLowerLimit.z);
+            joint.setLinearLowerLimit(limitVector);
+
+            limitVector.setValue(jointData.linearUpperLimit.x, jointData.linearUpperLimit.y, jointData.linearUpperLimit.z);
+            joint.setLinearUpperLimit(limitVector);
+
+            limitVector.setValue(jointData.angularLowerLimit.x, jointData.angularLowerLimit.y, jointData.angularLowerLimit.z);
+            joint.setAngularLowerLimit(limitVector);
+
+            limitVector.setValue(jointData.angularUpperLimit.x, jointData.angularUpperLimit.y, jointData.angularUpperLimit.z);
+            joint.setAngularUpperLimit(limitVector);
+
+            this.world.addConstraint(joint, !impostorJoint.joint.jointData.collision);
+            impostorJoint.joint.physicsJoint = joint;
+        } else {
+            super.generateJoint(impostorJoint);
+        }
     }
 }
 
@@ -64,4 +202,34 @@ export interface Generic6DofSpringJointData extends PhysicsJointData {
      * if true, the linear reference frame is mainFrame, otherwise it is connectedFrame.
      */
     useLinearReferenceFrameA: boolean;
+
+    /**
+     * The linear lower limit of the joint.
+     */
+    linearLowerLimit?: Vector3;
+
+    /**
+     * The linear upper limit of the joint.
+     */
+    linearUpperLimit?: Vector3;
+
+    /**
+     * The angular lower limit of the joint.
+     */
+    angularLowerLimit?: Vector3;
+
+    /**
+     * The angular upper limit of the joint.
+     */
+    angularUpperLimit?: Vector3;
+
+    /**
+     * The linear stiffness of the joint.
+     */
+    linearStiffness?: Vector3;
+
+    /**
+     * The angular stiffness of the joint.
+     */
+    angularStiffness?: Vector3;
 }

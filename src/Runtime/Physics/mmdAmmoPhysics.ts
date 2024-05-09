@@ -1,5 +1,6 @@
 import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";
 
+import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -12,7 +13,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
-import type { MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
+import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
 
 class MmdPhysicsMesh extends AbstractMesh {
     public readonly linkedBone: IMmdRuntimeBone;
@@ -20,11 +21,14 @@ class MmdPhysicsMesh extends AbstractMesh {
     public readonly bodyOffsetMatrix: Matrix;
     public readonly bodyOffsetInverseMatrix: Matrix;
 
+    private readonly _customBoundingInfo: Nullable<BoundingInfo>;
+
     public constructor(
         name: string,
         scene: Scene,
         linkedBone: IMmdRuntimeBone,
-        physicsMode: PmxObject.RigidBody.PhysicsMode
+        physicsMode: PmxObject.RigidBody.PhysicsMode,
+        customBoundingInfo: Nullable<BoundingInfo>
     ) {
         super(name, scene);
 
@@ -32,6 +36,8 @@ class MmdPhysicsMesh extends AbstractMesh {
         this.physicsMode = physicsMode;
         this.bodyOffsetMatrix = Matrix.Identity();
         this.bodyOffsetInverseMatrix = Matrix.Identity();
+
+        this._customBoundingInfo = customBoundingInfo;
     }
 
     private static readonly _ParentWorldMatrixInverse = new Matrix();
@@ -51,6 +57,10 @@ class MmdPhysicsMesh extends AbstractMesh {
 
         worldMatrix.multiplyToRef(parentWorldMatrixInverse, this.bodyOffsetMatrix);
         this.bodyOffsetMatrix.invertToRef(this.bodyOffsetInverseMatrix);
+    }
+
+    public override getBoundingInfo(): BoundingInfo {
+        return this._customBoundingInfo ?? super.getBoundingInfo();
     }
 }
 
@@ -344,6 +354,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             let impostorType: number;
             const extent = new Vector3();
+            let boundingInfo: Nullable<BoundingInfo> = null;
             switch (rigidBody.shapeType) {
             case PmxObject.RigidBody.ShapeType.Sphere: {
                 impostorType = PhysicsImpostor.SphereImpostor;
@@ -362,10 +373,13 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 break;
             }
             case PmxObject.RigidBody.ShapeType.Capsule: {
-                impostorType = PhysicsImpostor.CylinderImpostor;
+                impostorType = PhysicsImpostor.CapsuleImpostor;
                 const shapeSize = rigidBody.shapeSize;
                 extent.x = shapeSize[0] * 2 * scalingFactor;
                 extent.y = shapeSize[1] * scalingFactor + extent.x;
+                extent.z = extent.x;
+
+                boundingInfo = new BoundingInfo(Vector3.Zero(), extent);
                 break;
             }
             default:
@@ -375,7 +389,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 continue;
             }
 
-            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode);
+            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode, boundingInfo);
 
             const shapePosition = rigidBody.shapePosition;
             node.position.copyFromFloats(
@@ -521,7 +535,20 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
-            // build joint
+            const physicsJoint = new Generic6DofSpringJoint({
+                mainFrame: jointFinalTransformA,
+                connectedFrame: jointFinalTransformB,
+                useLinearReferenceFrameA: true,
+                linearLowerLimit: new Vector3(joint.positionMin[0], joint.positionMin[1], joint.positionMin[2]),
+                linearUpperLimit: new Vector3(joint.positionMax[0], joint.positionMax[1], joint.positionMax[2]),
+                angularLowerLimit: new Vector3(joint.rotationMin[0], joint.rotationMin[1], joint.rotationMin[2]),
+                angularUpperLimit: new Vector3(joint.rotationMax[0], joint.rotationMax[1], joint.rotationMax[2]),
+                linearStiffness: new Vector3(joint.springPosition[0], joint.springPosition[1], joint.springPosition[2]),
+                angularStiffness: new Vector3(joint.springRotation[0], joint.springRotation[1], joint.springRotation[2])
+            });
+            physicsJoint;
+
+            // bodyA.addJoint(bodyB, physicsJoint);
 
             // adjust the physics mode of the rigid bodies
             // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135
