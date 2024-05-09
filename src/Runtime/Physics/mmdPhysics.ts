@@ -590,7 +590,7 @@ export class MmdPhysics implements IMmdPhysics {
                     damping: damping
                 }
             ];
-            for (let j = 0; j < limits.length; ++j) {
+            for (let j = 0; j < 3; ++j) {
                 const limit = limits[j];
                 if (limit.stiffness === 0) {
                     limit.stiffness = undefined;

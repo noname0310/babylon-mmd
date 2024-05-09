@@ -4,6 +4,8 @@
 
 - fix mmdOutline not rendered as alpha blended on opaque material
 
+- havok physics improve spring constraint initialization
+
 ## 0.41.2
 
 - mmdOutline now supports `MirrorTexture` for rendering outline on mirror reflection
