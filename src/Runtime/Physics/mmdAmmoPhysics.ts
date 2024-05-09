@@ -69,41 +69,6 @@ interface AmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
     mask: number;
 }
 
-class NonMeshPhysicsImpostor extends PhysicsImpostor {
-    private static _ObjectExtent: Vector3;
-    private readonly _objectExtent: Vector3;
-
-    private constructor(
-        object: MmdPhysicsMesh,
-        type: number,
-        options: AmmoPhysicsImpostorParameters,
-        objectExtent: Vector3,
-        scene: Scene
-    ) {
-        super(object, type, options, scene);
-        this._objectExtent = objectExtent;
-    }
-
-    public static Create(
-        object: MmdPhysicsMesh,
-        type: number,
-        options: AmmoPhysicsImpostorParameters,
-        objectExtent: Vector3,
-        scene: Scene
-    ): NonMeshPhysicsImpostor {
-        NonMeshPhysicsImpostor._ObjectExtent = objectExtent;
-        return new NonMeshPhysicsImpostor(object, type, options, objectExtent, scene);
-    }
-
-    public override getObjectExtents(): Vector3 {
-        return this._objectExtent ?? NonMeshPhysicsImpostor._ObjectExtent;
-    }
-
-    public override getObjectCenter(): Vector3 {
-        return this.object.position;
-    }
-}
-
 /**
  * MMD ammo physics model is container of the ammo.js physics resources of the MMD model
  */
@@ -353,33 +318,40 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             const bone = bones[rigidBody.boneIndex];
 
             let impostorType: number;
-            const extent = new Vector3();
-            let boundingInfo: Nullable<BoundingInfo> = null;
+            const boundMin = new Vector3();
+            const boundMax = new Vector3();
             switch (rigidBody.shapeType) {
             case PmxObject.RigidBody.ShapeType.Sphere: {
                 impostorType = PhysicsImpostor.SphereImpostor;
-                const radius = rigidBody.shapeSize[0] * 2 * scalingFactor;
-                extent.set(radius, radius, radius);
+                const radius = rigidBody.shapeSize[0] * scalingFactor;
+                boundMin.copyFromFloats(-radius, -radius, -radius);
+                boundMax.copyFromFloats(radius, radius, radius);
                 break;
             }
             case PmxObject.RigidBody.ShapeType.Box: {
                 impostorType = PhysicsImpostor.BoxImpostor;
                 const shapeSize = rigidBody.shapeSize;
-                extent.set(
-                    shapeSize[0] * 2 * scalingFactor,
-                    shapeSize[1] * 2 * scalingFactor,
-                    shapeSize[2] * 2 * scalingFactor
+                boundMin.copyFromFloats(
+                    -shapeSize[0] * scalingFactor,
+                    -shapeSize[1] * scalingFactor,
+                    -shapeSize[2] * scalingFactor
+                );
+                boundMax.copyFromFloats(
+                    shapeSize[0] * scalingFactor,
+                    shapeSize[1] * scalingFactor,
+                    shapeSize[2] * scalingFactor
                 );
                 break;
             }
             case PmxObject.RigidBody.ShapeType.Capsule: {
                 impostorType = PhysicsImpostor.CapsuleImpostor;
                 const shapeSize = rigidBody.shapeSize;
-                extent.x = shapeSize[0] * 2 * scalingFactor;
-                extent.y = shapeSize[1] * scalingFactor + extent.x;
-                extent.z = extent.x;
 
-                boundingInfo = new BoundingInfo(Vector3.Zero(), extent);
+                const x = shapeSize[0] * scalingFactor;
+                const y = shapeSize[1] / 2 * scalingFactor + x;
+
+                boundMin.copyFromFloats(-x, -y, -x);
+                boundMax.copyFromFloats(x, y, x);
                 break;
             }
             default:
@@ -389,7 +361,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 continue;
             }
 
-            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode, boundingInfo);
+            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode, new BoundingInfo(boundMin, boundMax));
 
             const shapePosition = rigidBody.shapePosition;
             node.position.copyFromFloats(
@@ -413,7 +385,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 : rigidBody.mass * scalingFactor;
             // if mass is 0, the object will be constructed as a kinematic object by babylon.js physics plugin
 
-            const impostor = node.physicsImpostor = NonMeshPhysicsImpostor.Create(node, impostorType, {
+            const impostor = node.physicsImpostor = new PhysicsImpostor(node, impostorType, {
                 mass: mass,
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion,
@@ -421,7 +393,8 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 disableBidirectionalTransformation: rigidBody.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone,
                 group: 1 << rigidBody.collisionGroup,
                 mask: rigidBody.collisionMask
-            }, extent, scene);
+            } as PhysicsImpostorParameters, scene);
+            impostor.setDeltaPosition(new Vector3(0, 0, 0));
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
@@ -548,7 +521,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             });
             physicsJoint;
 
-            // bodyA.addJoint(bodyB, physicsJoint);
+            bodyA.addJoint(bodyB, physicsJoint);
 
             // adjust the physics mode of the rigid bodies
             // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135

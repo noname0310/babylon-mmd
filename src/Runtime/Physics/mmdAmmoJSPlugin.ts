@@ -78,7 +78,7 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             if (!jointData.mainFrame) {
                 jointData.mainFrame = Matrix.Identity();
             }
-            if (!jointData.connectedAxis) {
+            if (!jointData.connectedFrame) {
                 jointData.connectedFrame = Matrix.Identity();
             }
             if (!jointData.useLinearReferenceFrameA) {
