@@ -3,6 +3,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.alpha";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
 // import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { BaseRuntime } from "./baseRuntime";
 import { SceneBuilder } from "./Scene/wasmRuntimeTestScene";
@@ -35,12 +36,12 @@ const engine = new Engine(canvas, false, {
 //     doNotHandleContextLost: true,
 //     audioEngine: false,
 //     glslangOptions: {
-//         jsPath: new URL("./External/glslang.js", import.meta.url).href,
-//         wasmPath: new URL("./External/glslang.wasm", import.meta.url).href
+//         jsPath: new URL("@babylonjs/core/assets/glslang/glslang.js", import.meta.url).href,
+//         wasmPath: new URL("@babylonjs/core/assets/glslang/glslang.wasm", import.meta.url).href
 //     },
 //     twgslOptions: {
-//         jsPath: new URL("./External/twgsl.js", import.meta.url).href,
-//         wasmPath: new URL("./External/twgsl.wasm", import.meta.url).href
+//         jsPath: new URL("@babylonjs/core/assets/twgsl/twgsl.js", import.meta.url).href,
+//         wasmPath: new URL("@babylonjs/core/assets/twgsl/twgsl.wasm", import.meta.url).href
 //     }
 // });
 // await engine.initAsync();
