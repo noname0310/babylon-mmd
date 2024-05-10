@@ -1,4 +1,5 @@
 import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";
+import "@babylonjs/core/Physics/v1/physicsEngineComponent";
 
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
