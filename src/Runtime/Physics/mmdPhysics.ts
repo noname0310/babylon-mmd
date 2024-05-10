@@ -60,6 +60,22 @@ class MmdPhysicsTransformNode extends TransformNode {
     }
 }
 
+class MmdPhysicsBody extends PhysicsBody {
+    public readonly linkedBone: IMmdRuntimeBone;
+
+    public constructor(
+        transformNode: MmdPhysicsTransformNode,
+        motionType: PhysicsMotionType,
+        startAsleep: boolean,
+        linkedBone: IMmdRuntimeBone,
+        scene: Scene
+    ) {
+        super(transformNode, motionType, startAsleep, scene);
+
+        this.linkedBone = linkedBone;
+    }
+}
+
 /**
  * MMD physics model is container of the physics resources of the MMD model
  */
@@ -345,7 +361,7 @@ export class MmdPhysics implements IMmdPhysics {
         }
 
         const nodes: Nullable<MmdPhysicsTransformNode>[] = new Array(rigidBodies.length);
-        const bodies: Nullable<PhysicsBody>[] = new Array(rigidBodies.length);
+        const bodies: Nullable<MmdPhysicsBody>[] = new Array(rigidBodies.length);
         const constraints: Nullable<PhysicsConstraint>[] = new Array(joints.length);
 
         for (let i = 0; i < rigidBodies.length; ++i) {
@@ -426,7 +442,7 @@ export class MmdPhysics implements IMmdPhysics {
                 ? PhysicsMotionType.ANIMATED
                 : PhysicsMotionType.DYNAMIC;
 
-            const body = new PhysicsBody(node, motionType, false, scene);
+            const body = new MmdPhysicsBody(node, motionType, false, bone, scene);
             physicsPlugin.setActivationControl(body, PhysicsActivationControl.ALWAYS_ACTIVE);
             body.shape = shape;
             body.setMassProperties({ mass: rigidBody.mass });
@@ -650,6 +666,35 @@ export class MmdPhysics implements IMmdPhysics {
                 }
             }
         }
+
+        // sort nodes and bodies by bone depth
+        const boneDepth = new Map<IMmdRuntimeBone, number>();
+        for (let i = 0; i < bones.length; ++i) {
+            const bone = bones[i];
+            if (bone.parentBone !== null) continue;
+
+            const stack: [IMmdRuntimeBone, number][] = [[bone, 0]];
+            while (stack.length > 0) {
+                const [current, depth] = stack.pop()!;
+                boneDepth.set(current, depth);
+
+                const children = current.childBones;
+                for (let j = 0; j < children.length; ++j) {
+                    stack.push([children[j], depth + 1]);
+                }
+            }
+        }
+        const boneDepthMap = boneDepth;
+        nodes.sort((a, b) => {
+            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
+            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
+            return depthA - depthB;
+        });
+        bodies.sort((a, b) => {
+            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
+            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
+            return depthA - depthB;
+        });
 
         return new MmdPhysicsModel(this, nodes, bodies, constraints);
     }

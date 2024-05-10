@@ -70,6 +70,22 @@ interface AmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
     mask: number;
 }
 
+class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
+    public readonly linkedBone: IMmdRuntimeBone;
+
+    public constructor(
+        mesh: MmdPhysicsMesh,
+        type: number,
+        options: AmmoPhysicsImpostorParameters,
+        linkedBone: IMmdRuntimeBone,
+        scene: Scene
+    ) {
+        super(mesh, type, options, scene);
+
+        this.linkedBone = linkedBone;
+    }
+}
+
 /**
  * MMD ammo physics model is container of the ammo.js physics resources of the MMD model
  */
@@ -305,7 +321,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         const nodes: Nullable<MmdPhysicsMesh>[] = new Array(rigidBodies.length);
-        const impostors: Nullable<PhysicsImpostor>[] = new Array(rigidBodies.length);
+        const impostors: Nullable<MmdAmmoPhysicsImpostor>[] = new Array(rigidBodies.length);
 
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];
@@ -391,7 +407,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 : rigidBody.mass * scalingFactor;
             // if mass is 0, the object will be constructed as a kinematic object by babylon.js physics plugin
 
-            const impostor = node.physicsImpostor = new PhysicsImpostor(node, impostorType, {
+            const impostor = node.physicsImpostor = new MmdAmmoPhysicsImpostor(node, impostorType, {
                 mass: mass,
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion,
@@ -399,7 +415,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 disableBidirectionalTransformation: rigidBody.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone,
                 group: 1 << rigidBody.collisionGroup,
                 mask: rigidBody.collisionMask
-            } as PhysicsImpostorParameters, scene);
+            }, bone, scene);
             impostor.setDeltaPosition(new Vector3(0, 0, 0));
 
             node.setParent(rootMesh);
@@ -549,6 +565,35 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 }
             }
         }
+
+        // sort nodes and impostors by bone depth
+        const boneDepth = new Map<IMmdRuntimeBone, number>();
+        for (let i = 0; i < bones.length; ++i) {
+            const bone = bones[i];
+            if (bone.parentBone !== null) continue;
+
+            const stack: [IMmdRuntimeBone, number][] = [[bone, 0]];
+            while (stack.length > 0) {
+                const [current, depth] = stack.pop()!;
+                boneDepth.set(current, depth);
+
+                const children = current.childBones;
+                for (let j = 0; j < children.length; ++j) {
+                    stack.push([children[j], depth + 1]);
+                }
+            }
+        }
+        const boneDepthMap = boneDepth;
+        nodes.sort((a, b) => {
+            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
+            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
+            return depthA - depthB;
+        });
+        impostors.sort((a, b) => {
+            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
+            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
+            return depthA - depthB;
+        });
 
         return new MmdAmmoPhysicsModel(this, nodes, impostors);
     }

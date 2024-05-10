@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.1
+
+- fix physics body transform not applied to bone when models bone are not sorted by index
+
 ## 0.42.0
 
 - fix mmdOutline not rendered as alpha blended on opaque material
