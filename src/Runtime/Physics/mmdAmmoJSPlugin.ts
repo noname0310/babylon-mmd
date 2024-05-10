@@ -69,6 +69,19 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
         this.world.stepSimulation(timeStep, maxSteps, fixedTimeStep);
     }
 
+    private _normalizeAngle(angle: number): number {
+        const pi = Math.PI;
+        const twoPi = 2 * pi;
+        angle = angle % twoPi;
+
+        if (angle < -pi) {
+            angle += twoPi;
+        } else if (angle > pi) {
+            angle -= twoPi;
+        }
+        return angle;
+    }
+
     /**
      * Generates a joint
      * @param impostorJoint the imposter joint to create the joint with
@@ -145,14 +158,20 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             if (jointData.linearStiffness.x !== 0) {
                 joint.setStiffness(0, jointData.linearStiffness.x);
                 joint.enableSpring(0, true);
+            } else {
+                joint.enableSpring(0, false);
             }
             if (jointData.linearStiffness.y !== 0) {
                 joint.setStiffness(1, jointData.linearStiffness.y);
                 joint.enableSpring(1, true);
+            } else {
+                joint.enableSpring(1, false);
             }
             if (jointData.linearStiffness.z !== 0) {
                 joint.setStiffness(2, jointData.linearStiffness.z);
                 joint.enableSpring(2, true);
+            } else {
+                joint.enableSpring(2, false);
             }
             joint.setStiffness(3, jointData.angularStiffness.x);
             joint.enableSpring(3, true);
@@ -169,10 +188,18 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             limitVector.setValue(jointData.linearUpperLimit.x, jointData.linearUpperLimit.y, jointData.linearUpperLimit.z);
             joint.setLinearUpperLimit(limitVector);
 
-            limitVector.setValue(jointData.angularLowerLimit.x, jointData.angularLowerLimit.y, jointData.angularLowerLimit.z);
+            limitVector.setValue(
+                this._normalizeAngle(jointData.angularLowerLimit.x),
+                this._normalizeAngle(jointData.angularLowerLimit.y),
+                this._normalizeAngle(jointData.angularLowerLimit.z)
+            );
             joint.setAngularLowerLimit(limitVector);
 
-            limitVector.setValue(jointData.angularUpperLimit.x, jointData.angularUpperLimit.y, jointData.angularUpperLimit.z);
+            limitVector.setValue(
+                this._normalizeAngle(jointData.angularUpperLimit.x),
+                this._normalizeAngle(jointData.angularUpperLimit.y),
+                this._normalizeAngle(jointData.angularUpperLimit.z)
+            );
             joint.setAngularUpperLimit(limitVector);
 
             this.world.addConstraint(joint, !impostorJoint.joint.jointData.collision);
