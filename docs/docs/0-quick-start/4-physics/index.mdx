@@ -21,7 +21,9 @@ const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
 ```
 
 :::info
-MMD Physics not work properly for most models yet. It will be improved in the future.
+`MmdPhysics` is powered by havok physics, which can lead to much different results than MMD.
+
+For slower, but more MMD-like results, you can use `MmdAmmoPhysics`, which is powered by ammo.js
 :::
 
 import ReactPlayer from "react-player";
