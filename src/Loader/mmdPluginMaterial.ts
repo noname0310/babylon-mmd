@@ -421,7 +421,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     #ifdef SPHERE_TEXTURE_BLEND_MODE_MULTIPLY
                         color *= sphereReflectionColor;
                     #elif defined(SPHERE_TEXTURE_BLEND_MODE_ADD)
-                        color = vec4(color.rgb + sphereReflectionColor.rgb, color.a * sphereReflectionColor.a);
+                        color = vec4(color.rgb + sphereReflectionColor.rgb, color.a);// * sphereReflectionColor.a);
                     #endif
                 #endif
             `;

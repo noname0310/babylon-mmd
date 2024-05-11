@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.3
+
+- fix multiply mode sphere texture with alpha not rendered correctly
+
 ## 0.42.2
 
 - fix `MmdAmmoPhysics` rigidbody initialization

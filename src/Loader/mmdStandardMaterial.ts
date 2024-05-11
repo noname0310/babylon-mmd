@@ -5,7 +5,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
+import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
 import { MmdPluginMaterial } from "./mmdPluginMaterial";
 
 /**
@@ -241,5 +241,19 @@ export class MmdStandardMaterial extends StandardMaterial {
             this.getScene().getMmdOutlineRenderer?.();
         }
         this._renderOutline = value;
+    }
+
+    /**
+     * Specifies if the material will require alpha blending
+     * @returns a boolean specifying if alpha blending is needed
+     */
+    public override needAlphaBlending(): boolean {
+        if (this._disableAlphaBlending) {
+            return false;
+        }
+
+        return super.needAlphaBlending() ||
+            (this._pluginMaterial.sphereTexture !== null &&
+            this._pluginMaterial.sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply);
     }
 }

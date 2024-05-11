@@ -686,6 +686,10 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             if (materialInfo.sphereTextureMode !== PmxObject.Material.SphereTextureMode.Off) {
                 const sphereTexturePath = imagePathTable[textureInfo?.imagePathIndex ?? -1];
                 if (sphereTexturePath !== undefined) {
+                    const format = scene.getEngine().isWebGPU || materialInfo.sphereTextureMode === PmxObject.Material.SphereTextureMode.Multiply
+                        ? Constants.TEXTUREFORMAT_RGBA
+                        : Constants.TEXTUREFORMAT_RGB;
+
                     const sphereTextureFileFullPath = referenceFileResolver.createFullPath(sphereTexturePath);
 
                     let sphereTexture: Nullable<Texture>;
@@ -700,7 +704,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
-                                format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB,
+                                format: format,
                                 mimeType: file instanceof File ? file.type : file.mimeType
                             }
                         ));
@@ -714,7 +718,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
-                                format: scene.getEngine().isWebGPU ? Constants.TEXTUREFORMAT_RGBA : Constants.TEXTUREFORMAT_RGB
+                                format: format
                             }
                         ));
                     }

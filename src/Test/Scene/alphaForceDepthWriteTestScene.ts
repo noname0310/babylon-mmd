@@ -37,8 +37,8 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.afterBuildSingleMaterial = (material): void => {
             if (material.diffuseTexture) {
                 material.diffuseTexture.hasAlpha = true;
+                material.useAlphaFromDiffuseTexture = true;
             }
-            material.useAlphaFromDiffuseTexture = true;
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
             material.forceDepthWrite = true;
 
@@ -59,8 +59,8 @@ export class SceneBuilder implements ISceneBuilder {
         pmxLoader.buildMorph = true;
         const mmdMesh = await SceneLoader.ImportMeshAsync(
             undefined,
-            "res/private_test/model/YYB Hatsune Miku_10th/",
-            "YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+            "res/private_test/model/YYB Hatsune Miku_NT/",
+            "YYB Hatsune Miku_NT_1.0ver.pmx",
             scene
         ).then(result => result.meshes[0] as MmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
