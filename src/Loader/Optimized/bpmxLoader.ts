@@ -1,5 +1,6 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
@@ -570,6 +571,17 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 const subMeshMorphTarget = subMeshMorphTargets[i];
                 morphTargetManager.addTarget(subMeshMorphTarget);
                 if (subMeshMorphTarget.hasUVs) morphTargetManager.enableUVMorphing = true;
+            }
+            if (morphTargetManager.enableUVMorphing) {
+                const geometries = buildGeometryResult.geometries;
+                const uvs = geometries[subMeshIndex].getVerticesData(VertexBuffer.UVKind)!;
+
+                for (let i = 0; i < subMeshMorphTargets.length; ++i) {
+                    const subMeshMorphTarget = subMeshMorphTargets[i];
+                    if (!subMeshMorphTarget.hasUVs) {
+                        subMeshMorphTarget.setUVs(uvs);
+                    }
+                }
             }
             morphTargetManager.areUpdatesFrozen = false;
 

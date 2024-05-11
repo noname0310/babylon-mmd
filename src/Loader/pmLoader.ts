@@ -827,6 +827,16 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 morphTargetManager.addTarget(subMeshMorphTarget);
                 if (subMeshMorphTarget.hasUVs) morphTargetManager.enableUVMorphing = true;
             }
+            if (morphTargetManager.enableUVMorphing) {
+                const uvs = geometries[subMeshIndex].getVerticesData(VertexBuffer.UVKind)!;
+
+                for (let i = 0; i < subMeshMorphTargets.length; ++i) {
+                    const subMeshMorphTarget = subMeshMorphTargets[i];
+                    if (!subMeshMorphTarget.hasUVs) {
+                        subMeshMorphTarget.setUVs(uvs);
+                    }
+                }
+            }
             morphTargetManager.areUpdatesFrozen = false;
 
             morphTargetManagers.push(morphTargetManager);
