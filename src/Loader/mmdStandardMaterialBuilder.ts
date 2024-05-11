@@ -619,10 +619,11 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
             }
 
             const diffuseTexture = material.diffuseTexture;
+            const evaluatedTransparency = (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1;
             if (diffuseTexture !== null) {
                 const transparencyMode = await this._evaluateDiffuseTextureTransparencyMode(
                     diffuseTexture,
-                    (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1,
+                    evaluatedTransparency,
                     meshes,
                     logger,
                     getTextureAlphaChecker
@@ -638,7 +639,21 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                     }
                 }
             } else {
-                material.transparencyMode = Material.MATERIAL_OPAQUE;
+                if (this.renderMethod === MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
+                    let etIsNotOpaque = (evaluatedTransparency >> 4) & 0x03;
+                    if ((etIsNotOpaque ^ 0x03) === 0) { // 11: not evaluated
+                        etIsNotOpaque = 0; // fallback to opaque
+                    }
+
+                    material.transparencyMode = etIsNotOpaque === 0 ? Material.MATERIAL_OPAQUE : Material.MATERIAL_ALPHABLEND;
+                } else /* if (this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation) */ {
+                    let etAlphaEvaluateResult = evaluatedTransparency & 0x0F;
+                    if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
+                        etAlphaEvaluateResult = 0; // fallback to opaque
+                    }
+
+                    material.transparencyMode = Material.MATERIAL_OPAQUE;
+                }
             }
         };
 

@@ -4,6 +4,8 @@
 
 - fix `MmdAmmoPhysics` rigidbody collision mask not applied when the mask value is zero
 
+- fix bpmx evaluated transparency not applied to the material when the material does not have a diffuse texture
+
 ## 0.42.3
 
 - fix multiply mode sphere texture with alpha not rendered correctly
