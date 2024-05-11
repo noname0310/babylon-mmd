@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.4
+
+- fix `MmdAmmoPhysics` rigidbody collision mask not applied when the mask value is zero
+
 ## 0.42.3
 
 - fix multiply mode sphere texture with alpha not rendered correctly

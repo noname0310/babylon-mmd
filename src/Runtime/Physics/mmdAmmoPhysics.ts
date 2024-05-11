@@ -476,6 +476,9 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+            if (rigidBody.collisionMask === 0) {
+                body.setCollisionFlags(body.getCollisionFlags() | 4); // CF_NO_CONTACT_RESPONSE
+            }
             body.setDamping(rigidBody.linearDamping, rigidBody.angularDamping);
             body.setSleepingThresholds(0.0, 0.0);
 
