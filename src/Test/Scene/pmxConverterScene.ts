@@ -525,9 +525,11 @@ export class PmxConverterScene implements ISceneBuilder {
                     transparencyModeButton.style.marginRight = "10px";
                     transparencyModeButton.style.border = "none";
                     transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
+                    const materialIndex = i;
                     transparencyModeButton.onclick = (): void => {
                         if (material.transparencyMode === null) material.transparencyMode = 0;
                         material.transparencyMode = (material.transparencyMode + 1) % 3;
+                        alphaEvaluateResults[materialIndex] = material.transparencyMode;
                         transparencyModeButton.textContent = fromTransparencyModeEnumToString(material.transparencyMode ?? 0);
                     };
                     item.appendChild(transparencyModeButton);
@@ -540,8 +542,10 @@ export class PmxConverterScene implements ISceneBuilder {
                     opaqueToggleButton.style.marginRight = "10px";
                     opaqueToggleButton.style.border = "none";
                     opaqueToggleButton.textContent = material.transparencyMode === Material.MATERIAL_OPAQUE ? "Opaque" : "Alpha Blend";
+                    const materialIndex = i;
                     opaqueToggleButton.onclick = (): void => {
                         material.transparencyMode = material.transparencyMode === Material.MATERIAL_OPAQUE ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
+                        translucentMaterials[materialIndex] = material.transparencyMode === Material.MATERIAL_ALPHABLEND;
                         opaqueToggleButton.textContent = material.transparencyMode === Material.MATERIAL_OPAQUE ? "Opaque" : "Alpha Blend";
                     };
                     item.appendChild(opaqueToggleButton);
