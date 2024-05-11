@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.2
+
+- fix `MmdAmmoPhysics` rigidbody initialization
+
 ## 0.42.1
 
 - fix physics body transform not applied to bone when models bone are not sorted by index

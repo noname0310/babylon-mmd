@@ -95,21 +95,43 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     private readonly _nodes: readonly Nullable<MmdPhysicsMesh>[];
     private readonly _impostors: readonly Nullable<PhysicsImpostor>[];
 
+    private readonly _rootMesh: Mesh;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _ammoInstance: typeof import("ammojs-typed").default;
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _tmpBtVector3: import("ammojs-typed").default.btVector3;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _tmpBtQuaternion: import("ammojs-typed").default.btQuaternion;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    private readonly _tmpBtTransform: import("ammojs-typed").default.btTransform;
+
     /**
      * Create a new MMD ammo.js physics model
      * @param mmdPhysics MMD ammo physics
      * @param nodes MMD physics transform nodes
      * @param impostors Physics impostors
+     * @param rootMesh Root mesh of the MMD model
+     * @param ammoInstance Ammo.js instance
      */
     public constructor(
         mmdPhysics: MmdAmmoPhysics,
         nodes: readonly Nullable<MmdPhysicsMesh>[],
-        impostors: readonly Nullable<PhysicsImpostor>[]
+        impostors: readonly Nullable<PhysicsImpostor>[],
+        rootMesh: Mesh,
+        ammoInstance: any
     ) {
         this._mmdPhysics = mmdPhysics;
 
         this._nodes = nodes;
         this._impostors = impostors;
+
+        this._rootMesh = rootMesh;
+        this._ammoInstance = ammoInstance;
+
+        this._tmpBtVector3 = new ammoInstance.btVector3();
+        this._tmpBtQuaternion = new ammoInstance.btQuaternion();
+        this._tmpBtTransform = new ammoInstance.btTransform();
     }
 
     /**
@@ -127,15 +149,32 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         for (let i = 0; i < nodes.length; ++i) {
             nodes[i]?.dispose(false, true);
         }
+
+        this._ammoInstance.destroy(this._tmpBtVector3);
+        this._ammoInstance.destroy(this._tmpBtQuaternion);
+        this._ammoInstance.destroy(this._tmpBtTransform);
     }
 
     private static readonly _NodeWorldMatrix = new Matrix();
     private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
 
+    private static readonly _Position = new Vector3();
+    private static readonly _Rotation = new Quaternion();
+
     /**
      * Reset the rigid body positions and velocities
      */
     public initialize(): void {
+        const modelWorldMatrix = this._rootMesh.computeWorldMatrix();
+
+        const position = MmdAmmoPhysicsModel._Position;
+        const rotation = MmdAmmoPhysicsModel._Rotation;
+
+        const btVector3 = this._tmpBtVector3;
+        const btQuaternion = this._tmpBtQuaternion;
+        const btTransform = this._tmpBtTransform;
+
+
         const mmdPhysics = this._mmdPhysics;
         const nodes = this._nodes;
 
@@ -145,17 +184,32 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
             const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
             node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
-            nodeWorldMatrix.decompose(
-                node.scaling,
-                node.rotationQuaternion!,
-                node.position
-            );
 
-            const impostor = node.physicsImpostor!;
-            impostor.setAngularVelocity(MmdAmmoPhysicsModel._ZeroVector);
-            impostor.setLinearVelocity(MmdAmmoPhysicsModel._ZeroVector);
+            if (node.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) {
+                nodeWorldMatrix.decompose(
+                    node.scaling,
+                    node.rotationQuaternion!,
+                    node.position
+                );
+            } else {
+                nodeWorldMatrix.multiplyToRef(modelWorldMatrix, nodeWorldMatrix);
+                nodeWorldMatrix.decompose(
+                    undefined,
+                    rotation,
+                    position
+                );
 
-            mmdPhysics._enablePreStepOnce(impostor);
+                const impostor = node.physicsImpostor!;
+                mmdPhysics._makeKinematicOnce(impostor);
+
+                btVector3.setValue(position.x, position.y, position.z);
+                btQuaternion.setValue(rotation.x, rotation.y, rotation.z, rotation.w);
+                btTransform.setOrigin(btVector3);
+                btTransform.setRotation(btQuaternion);
+                // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+                const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+                body.getMotionState().setWorldTransform(btTransform);
+            }
         }
     }
 
@@ -262,7 +316,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 export class MmdAmmoPhysics implements IMmdPhysics {
     private readonly _scene: Scene;
 
-    private readonly _enablePreStepOnces: PhysicsImpostor[] = [];
+    private readonly _kinematicOnces: PhysicsImpostor[] = [];
 
     /**
      * Create a new MMD ammo.js physics engine
@@ -595,28 +649,35 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             return depthA - depthB;
         });
 
-        return new MmdAmmoPhysicsModel(this, nodes, impostors);
+        return new MmdAmmoPhysicsModel(this, nodes, impostors, rootMesh, physicsPlugin.bjsAMMO);
     }
 
+    private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
+
     private readonly _onAfterPhysics = (): void => {
-        const enablePreStepOnces = this._enablePreStepOnces;
-        for (let i = 0; i < enablePreStepOnces.length; ++i) {
-            ((enablePreStepOnces[i] as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation = true;
+        const kinematicOnces = this._kinematicOnces;
+        for (let i = 0; i < kinematicOnces.length; ++i) {
+            const impostor = kinematicOnces[i];
+            impostor.setLinearVelocity(MmdAmmoPhysics._ZeroVector);
+            impostor.setAngularVelocity(MmdAmmoPhysics._ZeroVector);
+            // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+            const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+            body.setCollisionFlags(body.getCollisionFlags() & ~2); // CF_KINEMATIC_OBJECT
         }
-        enablePreStepOnces.length = 0;
+        kinematicOnces.length = 0;
     };
 
     /** @internal */
-    public _enablePreStepOnce(impostor: PhysicsImpostor): void {
+    public _makeKinematicOnce(impostor: PhysicsImpostor): void {
         if (!((impostor as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
             return;
         }
 
-        if (this._enablePreStepOnces.length === 0) {
+        if (this._kinematicOnces.length === 0) {
             this._scene.onAfterPhysicsObservable.addOnce(this._onAfterPhysics);
         }
 
-        this._enablePreStepOnces.push(impostor);
-        ((impostor as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation = false;
+        this._kinematicOnces.push(impostor);
+        impostor.physicsBody.setCollisionFlags(impostor.physicsBody.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
     }
 }
