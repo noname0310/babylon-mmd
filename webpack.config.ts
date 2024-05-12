@@ -49,6 +49,13 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             "path": false
         }
     },
+    node: {
+        global: false,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        __filename: false,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        __dirname: false
+    },
     plugins: [
         new htmlWebpackPlugin({
             template: "./src/Test/index.html"
