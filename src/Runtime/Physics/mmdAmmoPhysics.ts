@@ -377,17 +377,30 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         const nodes: Nullable<MmdPhysicsMesh>[] = new Array(rigidBodies.length);
         const impostors: Nullable<MmdAmmoPhysicsImpostor>[] = new Array(rigidBodies.length);
 
+        const boneNameMap = new Map<string, IMmdRuntimeBone>();
+        {
+            for (let i = 0; i < bones.length; ++i) {
+                const bone = bones[i];
+                boneNameMap.set(bone.name, bone);
+            }
+        }
+        const resolveRigidBodyBone = (rigidBody: PmxObject.RigidBody): IMmdRuntimeBone | undefined => {
+            if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
+                return boneNameMap.get(rigidBody.name);
+            }
+            return bones[rigidBody.boneIndex];
+        };
+
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];
 
-            if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
+            const bone = resolveRigidBodyBone(rigidBody);
+            if (bone === undefined) {
                 logger.warn(`Bone index out of range failed to create rigid body: ${rigidBody.name}`);
-
                 nodes[i] = null;
                 impostors[i] = null;
                 continue;
             }
-            const bone = bones[rigidBody.boneIndex];
 
             let impostorType: number;
             const boundMin = new Vector3();
@@ -612,12 +625,12 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
                 nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: A is parent of B
-                if (bones[bodyInfoB.boneIndex].parentBone === bones[bodyInfoA.boneIndex]) {
+                if (resolveRigidBodyBone(bodyInfoB)!.parentBone === resolveRigidBodyBone(bodyInfoA)!) {
                     nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
                 }
             } else if (nodeB.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
                 nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: B is parent of A
-                if (bones[bodyInfoA.boneIndex].parentBone === bones[bodyInfoB.boneIndex]) {
+                if (resolveRigidBodyBone(bodyInfoA)!.parentBone === resolveRigidBodyBone(bodyInfoB)!) {
                     nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
                 }
             }

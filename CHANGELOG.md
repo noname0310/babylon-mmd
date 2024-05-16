@@ -4,6 +4,8 @@
 
 - fix pmd model sphere texture loading
 
+- fix rigidbody bone index resolution when the bone index is out of range
+
 ## 0.42.4
 
 - fix `MmdAmmoPhysics` rigidbody collision mask not applied when the mask value is zero
