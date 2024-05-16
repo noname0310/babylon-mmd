@@ -114,8 +114,10 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMesh);
+        for (const mesh of modelMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
         modelMesh.parent = mmdRoot;
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {

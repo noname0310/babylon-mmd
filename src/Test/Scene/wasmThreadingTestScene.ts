@@ -186,8 +186,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh1.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMesh1);
+        for (const mesh of modelMesh1.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
         modelMesh1.parent = mmdRoot;
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh1, {
@@ -197,8 +199,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.setAnimation("motion");
 
         {
-            for (const mesh of modelMesh2.metadata.meshes) mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(modelMesh2);
+            for (const mesh of modelMesh2.metadata.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh, false);
+            }
             modelMesh2.parent = mmdRoot;
             modelMesh2.position.x = 10;
 
@@ -208,8 +212,10 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel2.addAnimation(mmdWasmAnimation);
             mmdModel2.setAnimation("motion");
 
-            for (const mesh of modelMesh3.metadata.meshes) mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(modelMesh3);
+            for (const mesh of modelMesh3.metadata.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh, false);
+            }
             modelMesh3.parent = mmdRoot;
             modelMesh3.position.x = -10;
 
@@ -219,8 +225,10 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel3.addAnimation(mmdWasmAnimation);
             mmdModel3.setAnimation("motion");
 
-            for (const mesh of modelMesh4.metadata.meshes) mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(modelMesh4);
+            for (const mesh of modelMesh4.metadata.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh, false);
+            }
             modelMesh4.parent = mmdRoot;
             modelMesh4.position.x = 20;
 
@@ -230,8 +238,10 @@ export class SceneBuilder implements ISceneBuilder {
             mmdModel4.addAnimation(mmdAnimation);
             mmdModel4.setAnimation("motion");
 
-            for (const mesh of modelMesh5.metadata.meshes) mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(modelMesh5);
+            for (const mesh of modelMesh5.metadata.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh, false);
+            }
             modelMesh5.parent = mmdRoot;
             modelMesh5.position.x = -20;
 

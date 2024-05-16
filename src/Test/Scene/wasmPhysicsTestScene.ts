@@ -140,8 +140,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(mmdWasmAnimation);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMesh);
+        for (const mesh of modelMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true

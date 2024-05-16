@@ -155,6 +155,7 @@ export class PmxConverterScene implements ISceneBuilder {
                 for (let i = 0; i < meshes.length; ++i) {
                     const mesh = meshes[i];
                     mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
                     mesh.alphaIndex = i;
                 }
 
@@ -188,7 +189,6 @@ export class PmxConverterScene implements ISceneBuilder {
                     alphaEvaluateResults[i] = material.transparencyMode ?? -1;
                 }
             }
-            shadowGenerator.addShadowCaster(mesh!);
             renderMaterialsList();
             engine.hideLoadingUI();
             setTimeout(() => isLoading = false, 1500);

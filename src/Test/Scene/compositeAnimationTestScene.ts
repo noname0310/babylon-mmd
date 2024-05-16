@@ -154,8 +154,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCamera.addAnimation(cameraAnimation);
         mmdCamera.setAnimation("camera");
 
-        for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMesh);
+        for (const mesh of modelMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
         modelMesh.parent = mmdRoot;
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
@@ -185,8 +187,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(compositeAnimation);
         mmdModel.setAnimation("composite");
 
-        for (const mesh of modelMeshA.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMeshA);
+        for (const mesh of modelMeshA.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
         modelMeshA.parent = mmdRoot;
         modelMeshA.position.z = 10;
         const mmdModelA = mmdRuntime.createMmdModel(modelMeshA, {
@@ -195,8 +199,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModelA.addAnimation(mmdAnimation1);
         mmdModelA.setAnimation("motion1");
 
-        for (const mesh of modelMeshB.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(modelMeshB);
+        for (const mesh of modelMeshB.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
         modelMeshB.parent = mmdRoot;
         modelMeshB.position.z = 10;
         const mmdModelB = mmdRuntime.createMmdModel(modelMeshB, {

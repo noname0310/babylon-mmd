@@ -43,8 +43,10 @@ export class SceneBuilder implements ISceneBuilder {
             "Miku.pmx",
             scene
         ).then(result => result.meshes[0] as MmdMesh);
-        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
-        shadowGenerator.addShadowCaster(mmdMesh);
+        for (const mesh of mmdMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
 
         TextureAlphaChecker.DisposeShader(scene);
 

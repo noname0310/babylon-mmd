@@ -67,8 +67,8 @@ export class SceneBuilder implements ISceneBuilder {
                     subMesh.setBoundingInfo(boundingInfo);
                 }
             }
-            shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh);
         }
 
         const materials = [...new Set(modelLoadResult.meshes.map(mesh => mesh.material).filter(material => material !== null))] as PBRMaterial[];

@@ -37,8 +37,10 @@ export class SceneBuilder implements ISceneBuilder {
             "delta_M2.0.pmx",
             scene
         ).then(result => result.meshes[0]) as Mesh;
-        shadowGenerator.addShadowCaster(mmdMesh);
-        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
+        for (const mesh of mmdMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
 
         Inspector.Show(scene, { enablePopup: false });
 

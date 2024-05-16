@@ -65,8 +65,6 @@ export class SceneBuilder implements ISceneBuilder {
             "YYB Hatsune Miku_NT_1.0ver.pmx",
             scene
         ).then(result => result.meshes[0] as MmdMesh);
-        for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
-
         {
             const meshes = mmdMesh.metadata.meshes;
             for (let i = 0; i < meshes.length; i++) {
@@ -81,8 +79,10 @@ export class SceneBuilder implements ISceneBuilder {
             mesh.alphaIndex = i;
         }
 
-        shadowGenerator.addShadowCaster(mmdMesh);
-        for (const mesh of mmdMesh.metadata.meshes) shadowGenerator.addShadowCaster(mesh);
+        for (const mesh of mmdMesh.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
 
         Inspector.Show(scene, { });
 

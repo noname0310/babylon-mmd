@@ -155,8 +155,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdMesh.scaling.z *= -1;
 
         for (const mesh of mmdMesh.metadata.meshes) {
-            shadowGenerator.addShadowCaster(mesh);
             mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
         }
 
         {
