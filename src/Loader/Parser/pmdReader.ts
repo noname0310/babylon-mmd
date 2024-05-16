@@ -232,16 +232,32 @@ export class PmdReader {
                 flag |= PmxObject.Material.Flag.IsDoubleSided;
             }
 
-            let diffuseTexturePath: string | undefined;
-            let sphereTexturePath: string | undefined;
+            let sphereTextureMode: PmxObject.Material.SphereTextureMode = PmxObject.Material.SphereTextureMode.Off;
+            let diffuseTexturePath = "";
+            let sphereTexturePath = "";
+            {
+                const paths = texturePath.split("*");
+                for (let i = 0; i < paths.length; ++i) {
+                    const path = paths[i];
 
-            const delimiterIndex = texturePath.indexOf("*");
-            if (delimiterIndex !== -1) {
-                diffuseTexturePath = texturePath.substring(0, delimiterIndex);
-                sphereTexturePath = texturePath.substring(delimiterIndex + 1);
-            } else {
-                diffuseTexturePath = texturePath;
-                sphereTexturePath = "";
+                    let mode = PmxObject.Material.SphereTextureMode.Off;
+                    if (path !== "") {
+                        const extensionIndex = path.lastIndexOf(".");
+                        const extension = extensionIndex !== -1 ? path.substring(extensionIndex).toLowerCase() : "";
+                        if (extension === ".sph") {
+                            mode = PmxObject.Material.SphereTextureMode.Multiply;
+                        } else if (extension === ".spa") {
+                            mode = PmxObject.Material.SphereTextureMode.Add;
+                        }
+                    }
+
+                    if (mode !== PmxObject.Material.SphereTextureMode.Off) {
+                        sphereTextureMode = mode;
+                        sphereTexturePath = path;
+                    } else {
+                        diffuseTexturePath = path;
+                    }
+                }
             }
 
             const material: PartialMaterial = {
@@ -260,11 +276,7 @@ export class PmdReader {
 
                 textureIndex: diffuseTexturePath, // mapped later
                 sphereTextureIndex: sphereTexturePath, // mapped later
-                sphereTextureMode: sphereTexturePath !== ""
-                    ? sphereTexturePath[sphereTexturePath.length - 1].toLowerCase() === "h"
-                        ? PmxObject.Material.SphereTextureMode.Multiply
-                        : PmxObject.Material.SphereTextureMode.Add
-                    : PmxObject.Material.SphereTextureMode.Off,
+                sphereTextureMode,
 
                 isSharedToonTexture: false,
                 toonTextureIndex,
@@ -547,6 +559,8 @@ export class PmdReader {
                     textures.push(material.textureIndex);
                 }
                 (material.textureIndex as unknown as number) = diffuseTextureIndex;
+            } else {
+                (material.textureIndex as unknown as number) = -1;
             }
 
             if (material.sphereTextureIndex !== "") {
@@ -558,6 +572,8 @@ export class PmdReader {
                     textures.push(material.sphereTextureIndex);
                 }
                 (material.sphereTextureIndex as unknown as number) = sphereTextureIndex;
+            } else {
+                (material.sphereTextureIndex as unknown as number) = -1;
             }
         }
 

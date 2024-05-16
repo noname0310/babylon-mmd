@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.43.0
+
+- fix pmd model sphere texture loading
+
 ## 0.42.4
 
 - fix `MmdAmmoPhysics` rigidbody collision mask not applied when the mask value is zero
