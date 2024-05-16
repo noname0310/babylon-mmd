@@ -1,13 +1,14 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
+import "@/Loader/pmdLoader";
 import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Material } from "@babylonjs/core/Materials/material";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
@@ -46,6 +47,7 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const arcRotateCamera = createDefaultArcRotateCamera(scene);
         arcRotateCamera.setPosition(new Vector3(2, 19, -10));
@@ -89,7 +91,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.fxaaEnabled = true;
 
         defaultPipeline.imageProcessingEnabled = true;
-        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        defaultPipeline.imageProcessing.toneMappingEnabled = false;
         defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
 
         return scene;
