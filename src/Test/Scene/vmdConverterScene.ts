@@ -8,7 +8,7 @@ import { VmdLoader } from "@/Loader/vmdLoader";
 
 import type { ISceneBuilder } from "../baseRuntime";
 
-export class VmdConverterScene implements ISceneBuilder {
+export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);

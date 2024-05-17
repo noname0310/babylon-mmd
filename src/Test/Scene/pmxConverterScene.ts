@@ -68,7 +68,7 @@ async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
     return files;
 }
 
-export class PmxConverterScene implements ISceneBuilder {
+export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
