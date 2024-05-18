@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.44.0
+
+- handle zero volume rigidbody in `MmdAmmoPhysics`
+
 ## 0.43.0
 
 - fix pmd model sphere texture loading

@@ -405,12 +405,14 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             let impostorType: number;
             const boundMin = new Vector3();
             const boundMax = new Vector3();
+            let isZeroVolume = false;
             switch (rigidBody.shapeType) {
             case PmxObject.RigidBody.ShapeType.Sphere: {
                 impostorType = PhysicsImpostor.SphereImpostor;
                 const radius = rigidBody.shapeSize[0] * scalingFactor;
                 boundMin.copyFromFloats(-radius, -radius, -radius);
                 boundMax.copyFromFloats(radius, radius, radius);
+                if (radius === 0) isZeroVolume = true;
                 break;
             }
             case PmxObject.RigidBody.ShapeType.Box: {
@@ -426,6 +428,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                     shapeSize[1] * scalingFactor,
                     shapeSize[2] * scalingFactor
                 );
+                if (shapeSize[0] === 0 || shapeSize[1] === 0 || shapeSize[2] === 0) isZeroVolume = true;
                 break;
             }
             case PmxObject.RigidBody.ShapeType.Capsule: {
@@ -437,6 +440,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
                 boundMin.copyFromFloats(-x, -y, -x);
                 boundMax.copyFromFloats(x, y, x);
+                if (shapeSize[0] === 0 || shapeSize[1] === 0) isZeroVolume = true;
                 break;
             }
             default:
@@ -489,7 +493,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
-            if (rigidBody.collisionMask === 0) {
+            if (rigidBody.collisionMask === 0 || isZeroVolume) {
                 body.setCollisionFlags(body.getCollisionFlags() | 4); // CF_NO_CONTACT_RESPONSE
             }
             body.setDamping(rigidBody.linearDamping, rigidBody.angularDamping);
