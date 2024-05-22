@@ -86,18 +86,23 @@ export function induceMmdStandardMaterialRecompile(
 
             const morph = morphController.morphs[subMorphIndex];
             switch (morph.type) {
-            case PmxObject.Morph.Type.GroupMorph:
-                morphController.groupMorphFlatForeach(morph, (subMorphIndex) => {
-                    if (isProcessedMorph[subMorphIndex] === 1) return;
+            case PmxObject.Morph.Type.GroupMorph: {
+                const indices = morph.elements as Int32Array;
+                for (let k = 0; k < indices.length; ++k) {
+                    const subMorphIndex = indices[k];
+                    if (isProcessedMorph[subMorphIndex] === 1) continue;
                     isProcessedMorph[subMorphIndex] = 1;
 
                     const subMorph = morphController.morphs[subMorphIndex];
-                    switch (subMorph.type) {
-                    case PmxObject.Morph.Type.MaterialMorph:
-                        recompileMaterialMorph(subMorph);
-                        break;
+                    if (subMorph !== undefined) {
+                        switch (subMorph.type) {
+                        case PmxObject.Morph.Type.MaterialMorph:
+                            recompileMaterialMorph(subMorph);
+                            break;
+                        }
                     }
-                });
+                }
+            }
                 break;
             case PmxObject.Morph.Type.MaterialMorph:
                 recompileMaterialMorph(morph);
@@ -196,19 +201,24 @@ export function setMorphTargetManagersNumMaxInfluencers(
 
             const morph = morphController.morphs[subMorphIndex];
             switch (morph.type) {
-            case PmxObject.Morph.Type.GroupMorph:
-                morphController.groupMorphFlatForeach(morph, (subMorphIndex) => {
-                    if (isProcessedMorph[subMorphIndex] === 1) return;
+            case PmxObject.Morph.Type.GroupMorph: {
+                const indices = morph.elements as Int32Array;
+                for (let k = 0; k < indices.length; ++k) {
+                    const subMorphIndex = indices[k];
+                    if (isProcessedMorph[subMorphIndex] === 1) continue;
                     isProcessedMorph[subMorphIndex] = 1;
 
                     const subMorph = morphController.morphs[subMorphIndex];
-                    switch (subMorph.type) {
-                    case PmxObject.Morph.Type.VertexMorph:
-                    case PmxObject.Morph.Type.UvMorph:
-                        f(subMorph);
-                        break;
+                    if (subMorph !== undefined) {
+                        switch (subMorph.type) {
+                        case PmxObject.Morph.Type.VertexMorph:
+                        case PmxObject.Morph.Type.UvMorph:
+                            f(subMorph);
+                            break;
+                        }
                     }
-                });
+                }
+            }
                 break;
             case PmxObject.Morph.Type.VertexMorph:
             case PmxObject.Morph.Type.UvMorph:

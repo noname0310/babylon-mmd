@@ -8,52 +8,15 @@ use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
 pub(crate) struct MmdMorphController {
     morphs: Box<[MorphMetadata]>,
-    active_morphs: Box<[bool]>,
-    group_morph_stack: RefCell<Vec<(i32, f32)>>,
+    active_morphs: Box<[bool]>
 }
 
 impl MmdMorphController {
-    pub(crate) fn new(mut morphs: Box<[MorphMetadata]>) -> Self {
-        let mut group_morph_stack = Vec::new();
-        {
-            let mut morphs = UncheckedSliceMut::new(&mut morphs);
-            fn fix_looping_group_morphs(morphs: &mut [MorphMetadata], group_morph_stack: &mut Vec<(i32, f32)>, morph_index: i32) {
-                let morph_indices = if let MorphMetadata::Group(morph) = &mut morphs[morph_index as usize] {
-                    &mut morph.indices
-                } else {
-                    return;
-                };
-
-                for i in 0..morph_indices.len() {
-                    let morph_indices = if let MorphMetadata::Group(morph) = &mut morphs[morph_index as usize] {
-                        &mut morph.indices
-                    } else {
-                        return;
-                    };
-                    let index = morph_indices[i];
-
-                    if group_morph_stack.iter().any(|(x, _)| *x == index) {
-                        // no need to diagnostic message because same error will be reported in the typescript side
-                        morph_indices[i] = -1;
-                    } else if 0 <= index && index < morphs.len() as i32 {
-                        group_morph_stack.push((morph_index, 0.0));
-                        fix_looping_group_morphs(morphs, group_morph_stack, index);
-                        group_morph_stack.pop();
-                    }
-                }
-            }
-            for i in 0..morphs.len() {
-                group_morph_stack.push((i as i32, 0.0));
-                fix_looping_group_morphs(&mut morphs, &mut group_morph_stack, i as i32);
-                group_morph_stack.clear();
-            }
-        }
-
+    pub(crate) fn new(morphs: Box<[MorphMetadata]>) -> Self {
         let active_morphs = vec![false; morphs.len()].into_boxed_slice();
         MmdMorphController {
             morphs,
-            active_morphs,
-            group_morph_stack: RefCell::new(group_morph_stack),
+            active_morphs
         }
     }
 
@@ -98,7 +61,7 @@ impl MmdMorphController {
                 }
             }
             MorphMetadata::Group(_) => {
-                self.group_morph_flat_foreach(i as i32, |index, _| {
+                self.group_morph_foreach(i as i32, |index, _| {
                     self.reset_morph(index as u32, arena);
                 });
             }
@@ -135,36 +98,34 @@ impl MmdMorphController {
                 }
             }
             MorphMetadata::Group(_) => {
-                self.group_morph_flat_foreach(i as i32, |index, accumulated_ratio| {
-                    self.apply_morph(index as u32, arena, weight * accumulated_ratio);
+                self.group_morph_foreach(i as i32, |index, ratio| {
+                    self.apply_morph(index as u32, arena, weight * ratio);
                 });
             }
         }
     }
 
-    fn group_morph_flat_foreach(
+    fn group_morph_foreach(
         &self,
         group_morph_index: i32,
         mut f: impl FnMut(i32, f32),
     ) {
-        let mut stack = self.group_morph_stack.borrow_mut();
-        stack.push((group_morph_index, 1.0));
+        let morphs = self.morphs();
+        let morph = &morphs[group_morph_index as u32];
+        if let MorphMetadata::Group(group_morph) = morph {
+            for (index, ratio) in group_morph.indices.iter().zip(group_morph.ratios.iter()) {
+                let child_morph = morphs.get(*index as u32);
+                let child_morph = if let Some(child_morph) = child_morph {
+                    child_morph
+                } else {
+                    continue;
+                };
 
-        while let Some((group_morph_index, accumulated_ratio)) = stack.pop() {
-            let morphs = self.morphs();
-            let morph = morphs.get(group_morph_index as u32);
-            let morph = if let Some(morph) = morph {
-                morph
-            } else {
-                continue;
-            };
-
-            if let MorphMetadata::Group(group_morph) = morph {
-                for (index, ratio) in group_morph.indices.iter().zip(group_morph.ratios.iter()) {
-                    stack.push((*index, accumulated_ratio * *ratio));
+                if let MorphMetadata::Group(_) = child_morph {
+                    continue;
                 }
-            } else {
-                f(group_morph_index, accumulated_ratio);
+
+                f(*index, *ratio);
             }
         }
     }

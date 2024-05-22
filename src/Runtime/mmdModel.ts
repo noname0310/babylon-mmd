@@ -173,8 +173,7 @@ export class MmdModel implements IMmdModel {
             mmdMetadata.meshes,
             materialProxyConstructor,
             mmdMetadata.morphs,
-            morphTargetManagers,
-            logger
+            morphTargetManagers
         );
 
         if (mmdPhysics !== null) {

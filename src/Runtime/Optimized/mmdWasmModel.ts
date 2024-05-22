@@ -241,8 +241,7 @@ export class MmdWasmModel implements IMmdModel {
             mmdMetadata.meshes,
             materialProxyConstructor,
             mmdMetadata.morphs,
-            morphTargetManagers,
-            wasmRuntime
+            morphTargetManagers
         );
 
         if (externalPhysics !== null) {

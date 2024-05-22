@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.45.0
+
+- refactor runtime behavior to be more similar to MMD
+    - sub group morph is now ignored when resolving morph target
+
 ## 0.44.0
 
 - handle zero volume rigidbody in `MmdAmmoPhysics`

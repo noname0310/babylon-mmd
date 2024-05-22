@@ -8,7 +8,6 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
-import type { ILogger } from "./ILogger";
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
@@ -84,8 +83,6 @@ export interface ReadonlyRuntimeMorph {
  * As a result, it reproduces the behavior of the MMD morph system
  */
 export abstract class MmdMorphControllerBase {
-    private readonly _logger: ILogger;
-
     protected readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _materials: readonly (IMmdMaterialProxy | undefined)[];
 
@@ -115,11 +112,8 @@ export abstract class MmdMorphControllerBase {
         meshes: readonly Mesh[],
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         morphsMetadata: readonly MmdModelMetadata.Morph[],
-        morphTargetManagers: MorphTargetManager[],
-        logger: ILogger
+        morphTargetManagers: MorphTargetManager[]
     ) {
-        this._logger = logger;
-
         this._runtimeBones = runtimeBones ?? [];
 
         if (materialProxyConstructor !== null) {
@@ -384,56 +378,12 @@ export abstract class MmdMorphControllerBase {
             morphs.push(morph);
         }
 
-        {
-            const groupMorphStack: number[] = [];
-            const fixLoopingGroupMorphs = (morphIndex: number): void => {
-                const morph = morphs[morphIndex];
-                if (morph.type !== PmxObject.Morph.Type.GroupMorph) return;
-
-                const indices = morph.elements as Int32Array;
-                for (let i = 0; i < indices.length; ++i) {
-                    const index = indices[i];
-
-                    if (groupMorphStack.includes(index)) {
-                        this._logger.warn(`Looping group morph detected resolves to -1: ${morph.name} -> ${morphs[index].name}`);
-                        indices[i] = -1;
-                    } else {
-                        if (0 <= index && index < morphs.length) {
-                            groupMorphStack.push(morphIndex);
-                            fixLoopingGroupMorphs(index);
-                            groupMorphStack.pop();
-                        }
-                    }
-                }
-            };
-
-            for (let i = 0; i < morphs.length; ++i) {
-                groupMorphStack.push(i);
-                fixLoopingGroupMorphs(i);
-                groupMorphStack.length = 0;
-            }
-        }
-
         return morphs;
     }
 
-    /**
-     * Iterates all sub morphs of the group morph
-     *
-     * @param groupMorph Group morph
-     * @param callback Callback
-     */
-    public groupMorphFlatForeach(
-        groupMorph: ReadonlyRuntimeMorph,
-        callback: (index: number, ratio: number) => void
-    ): void {
-        this._groupMorphFlatForeach(groupMorph as RuntimeMorph, callback);
-    }
-
-    private _groupMorphFlatForeach(
+    private _groupMorphForeach(
         groupMorph: RuntimeMorph,
-        callback: (index: number, ratio: number) => void,
-        accumulatedRatio = 1
+        callback: (childMorph: RuntimeMorph, ratio: number) => void
     ): void {
         const morphs = this._morphs;
 
@@ -444,10 +394,8 @@ export abstract class MmdMorphControllerBase {
             const ratio = ratios[i];
 
             const childMorph = morphs[index];
-            if (childMorph.type === PmxObject.Morph.Type.GroupMorph) {
-                this._groupMorphFlatForeach(childMorph, callback, ratio * accumulatedRatio);
-            } else {
-                callback(index, ratio * accumulatedRatio);
+            if (childMorph !== undefined && childMorph.type !== PmxObject.Morph.Type.GroupMorph) {
+                callback(childMorph, ratio);
             }
         }
     }
@@ -455,13 +403,7 @@ export abstract class MmdMorphControllerBase {
     private _resetMorph(morph: RuntimeMorph): void {
         switch (morph.type) {
         case PmxObject.Morph.Type.GroupMorph:
-            {
-                const morphs = this._morphs;
-                this._groupMorphFlatForeach(morph, (index, _ratio) => {
-                    const childMorph = morphs[index];
-                    if (childMorph !== undefined) this._resetMorph(childMorph);
-                });
-            }
+            this._groupMorphForeach(morph, (childMorph, _ratio) => this._resetMorph(childMorph));
             break;
 
         case PmxObject.Morph.Type.BoneMorph:
@@ -504,13 +446,7 @@ export abstract class MmdMorphControllerBase {
     private _applyMorph(morph: RuntimeMorph, weight: number): void {
         switch (morph.type) {
         case PmxObject.Morph.Type.GroupMorph:
-            {
-                const morphs = this._morphs;
-                this._groupMorphFlatForeach(morph, (index, ratio) => {
-                    const childMorph = morphs[index];
-                    if (childMorph !== undefined) this._applyMorph(childMorph, weight * ratio);
-                });
-            }
+            this._groupMorphForeach(morph, (childMorph, ratio) => this._applyMorph(childMorph, weight * ratio));
             break;
 
         case PmxObject.Morph.Type.BoneMorph:
