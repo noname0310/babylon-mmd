@@ -14,7 +14,7 @@ import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
-export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 export { IMmdCameraAnimationGroupBuilder, MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder, MmdCameraAnimationGroupHermiteBuilder, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
 export { IMmdModelAnimationGroupBuilder, MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder, MmdModelAnimationGroupHermiteBuilder, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 
