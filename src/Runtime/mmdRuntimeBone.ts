@@ -5,6 +5,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
+import type { IkLinkInfo } from "./ikLinkInfo";
 import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
@@ -83,16 +84,11 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public readonly morphRotationOffset: Quaternion;
 
     /**
-     * The rotation offset value to be moved by the IK solver
+     * IK chain bone states
      *
      * If this bone is an Ik chain, this value is non-null
      */
-    public ikRotation: Nullable<Quaternion>;
-
-    /**
-     * Local matrix of this bone
-     */
-    public readonly localMatrix: Matrix;
+    public ikLinkInfo: Nullable<IkLinkInfo>;
 
     /**
      * World matrix of this bone
@@ -101,10 +97,10 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      */
     public readonly worldMatrix: Float32Array;
 
-    /**
-     * Gets the position of a local transform with animations and bone morphs applied
-     */
-    public getAnimatedPositionToRef: (target: Vector3) => Vector3;
+    // /**
+    //  * Gets the position of a local transform with animations and bone morphs applied
+    //  */
+    // public getAnimatedPositionToRef: (target: Vector3) => Vector3;
 
     /**
      * Gets the rotation of a local transform with animations and bone morphs applied
@@ -148,26 +144,25 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.morphPositionOffset = Vector3.Zero();
         this.morphRotationOffset = Quaternion.Identity();
 
-        this.ikRotation = null;
+        this.ikLinkInfo = null;
 
-        this.localMatrix = Matrix.Identity();
         this.worldMatrix = new Float32Array(worldTransformMatrices.buffer, worldTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
 
-        this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
+        // this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetToRef;
         // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
     }
 
-    private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.linkedBone.position);
-        return target.addInPlace(this.morphPositionOffset);
-    }
+    // private _getAnimatedPositionWithMorphToRef(target: Vector3): Vector3 {
+    //     target.copyFrom(this.linkedBone.position);
+    //     return target.addInPlace(this.morphPositionOffset);
+    // }
 
-    private _getAnimatedPositionToRef(target: Vector3): Vector3 {
-        target.copyFrom(this.linkedBone.position);
-        return target;
-    }
+    // private _getAnimatedPositionToRef(target: Vector3): Vector3 {
+    //     target.copyFrom(this.linkedBone.position);
+    //     return target;
+    // }
 
     private _getAnimatedRotationToRef(target: Quaternion): Quaternion {
         return target.copyFrom(this.linkedBone.rotationQuaternion);
@@ -221,7 +216,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      * Allows the animation of this bone to be affected by the `morphPositionOffset` and `morphRotationOffset` fields
      */
     public enableMorph(): void {
-        this.getAnimatedPositionToRef = this._getAnimatedPositionWithMorphToRef;
+        // this.getAnimatedPositionToRef = this._getAnimatedPositionWithMorphToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationWithMorphToRef;
 
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetWithMorphToRef;
@@ -232,7 +227,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      * Disables the animation of this bone to be affected by the `morphPositionOffset` and `morphRotationOffset` fields
      */
     public disableMorph(): void {
-        this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
+        // this.getAnimatedPositionToRef = this._getAnimatedPositionToRef;
         this.getAnimatedRotationToRef = this._getAnimatedRotationToRef;
 
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetToRef;
@@ -241,65 +236,102 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
     private static readonly _TempRotation = Quaternion.Identity();
     private static readonly _TempPosition = Vector3.Zero();
+    private static readonly _TempPosition2 = Vector3.Zero();
+    private static readonly _TempMatrix = Matrix.Identity();
+    private static readonly _TempMatrix2 = Matrix.Identity();
 
     /**
-     * Update the local matrix of this bone
+     * Reset world matrix, append transform, and ik chain state
+     * @internal
      */
-    public updateLocalMatrix(): void {
-        const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
-        if (this.ikRotation !== null) {
-            this.ikRotation.multiplyToRef(rotation, rotation);
-        }
+    public resetTransformState(): void {
+        const worldMatrix = this.worldMatrix;
+        worldMatrix[0] = 1;
+        worldMatrix[1] = 0;
+        worldMatrix[2] = 0;
+        worldMatrix[3] = 0;
 
-        const position = this.getAnimatedPositionToRef(MmdRuntimeBone._TempPosition);
+        worldMatrix[4] = 0;
+        worldMatrix[5] = 1;
+        worldMatrix[6] = 0;
+        worldMatrix[7] = 0;
+
+        worldMatrix[8] = 0;
+        worldMatrix[9] = 0;
+        worldMatrix[10] = 1;
+        worldMatrix[11] = 0;
+
+        worldMatrix[12] = 0;
+        worldMatrix[13] = 0;
+        worldMatrix[14] = 0;
+        worldMatrix[15] = 1;
+
+        if (this.ikLinkInfo !== null) {
+            this.ikLinkInfo.localRotation.set(0, 0, 0, 1);
+            this.ikLinkInfo.localPosition.set(0, 0, 0);
+            this.ikLinkInfo.ikRotation.set(0, 0, 0, 1);
+        }
 
         if (this.appendTransformSolver !== null) {
+            this.appendTransformSolver.appendRotation.set(0, 0, 0, 1);
+            this.appendTransformSolver.appendPosition.set(0, 0, 0);
+        }
+    }
+
+    /**
+     * Update the world matrix of this bone to account for append transform and ik
+     * @param usePhysics Whether to use physics simulation
+     * @param computeIk Whether to compute ik
+     * @internal
+     */
+    public updateWorldMatrix(usePhysics: boolean, computeIk: boolean): void {
+        const rotation = this.getAnimatedRotationToRef(MmdRuntimeBone._TempRotation);
+        const position = this.getAnimationPositionOffsetToRef(MmdRuntimeBone._TempPosition);
+
+        if (this.appendTransformSolver !== null) {
+            this.appendTransformSolver.update(rotation, position);
+
             if (this.appendTransformSolver.affectRotation) {
-                rotation.multiplyInPlace(this.appendTransformSolver.appendRotationOffset);
+                rotation.copyFrom(this.appendTransformSolver.appendRotation);
             }
+
             if (this.appendTransformSolver.affectPosition) {
-                position.addInPlace(this.appendTransformSolver.appendPositionOffset);
+                position.copyFrom(this.appendTransformSolver.appendPosition);
             }
         }
 
-        Matrix.ComposeToRef(
-            this.linkedBone.scaling,
-            rotation,
-            position,
-            this.localMatrix
-        );
-    }
+        if (this.ikLinkInfo !== null) {
+            this.ikLinkInfo.localRotation.copyFrom(rotation);
+            this.ikLinkInfo.localPosition.copyFrom(position);
 
-    private static readonly _Stack: MmdRuntimeBone[] = [];
-    private static readonly _ParentWorldMatrix = Matrix.Identity();
+            rotation.multiplyInPlace(this.ikLinkInfo.ikRotation);
+        }
 
-    /**
-     * Update the world matrix of this bone and its children bones recursively
-     */
-    public updateWorldMatrix(): void {
-        const stack = MmdRuntimeBone._Stack;
-        stack.length = 0;
-        stack.push(this);
+        const worldMatrix = MmdRuntimeBone._TempMatrix;
 
-        const parentWorldMatrix = MmdRuntimeBone._ParentWorldMatrix;
+        const scaling = this.linkedBone.scaling;
+        if (scaling.x !== 1 || scaling.y !== 1 || scaling.z !== 1) {
+            Matrix.ScalingToRef(scaling.x, scaling.y, scaling.z, worldMatrix);
+            const rotationMatrix = Matrix.FromQuaternionToRef(rotation, MmdRuntimeBone._TempMatrix2);
+            worldMatrix.multiplyToRef(rotationMatrix, worldMatrix);
+        } else {
+            Matrix.FromQuaternionToRef(rotation, worldMatrix);
+        }
 
-        while (stack.length > 0) {
-            const bone = stack.pop()!;
+        const localPosition = this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempPosition2);
+        localPosition.addInPlace(position);
+        worldMatrix.setTranslation(localPosition);
 
-            const parentBone = bone.parentBone;
-            if (parentBone !== null) {
-                bone.localMatrix.multiplyToArray(
-                    Matrix.FromArrayToRef(parentBone.worldMatrix, 0, parentWorldMatrix),
-                    bone.worldMatrix,
-                    0
-                );
-            } else {
-                bone.localMatrix.copyToArray(bone.worldMatrix);
-            }
+        if (this.parentBone !== null) {
+            const parentWorldMatrix = this.parentBone.getWorldMatrixToRef(MmdRuntimeBone._TempMatrix2);
+            worldMatrix.multiplyToRef(parentWorldMatrix, worldMatrix);
+        }
 
-            const childrenBones = bone.childBones;
-            for (let i = 0, l = childrenBones.length; i < l; ++i) {
-                stack.push(childrenBones[i]);
+        worldMatrix.copyToArray(this.worldMatrix);
+
+        if (computeIk && this.ikSolver !== null) {
+            if (!(usePhysics && this.ikSolver.canSkipWhenPhysicsEnabled)) {
+                this.ikSolver.solve();
             }
         }
     }

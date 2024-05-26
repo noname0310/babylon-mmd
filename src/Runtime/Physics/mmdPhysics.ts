@@ -228,11 +228,6 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                         node.linkedBone.worldMatrix,
                         0
                     );
-
-                    const childBones = node.linkedBone.childBones;
-                    for (let j = 0; j < childBones.length; ++j) {
-                        childBones[j].updateWorldMatrix();
-                    }
                 }
                 break;
 
@@ -250,11 +245,6 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                         0
                     );
                     node.linkedBone.setWorldTranslationFromRef(MmdPhysicsModel._BoneWorldPosition);
-
-                    const childBones = node.linkedBone.childBones;
-                    for (let j = 0; j < childBones.length; ++j) {
-                        childBones[j].updateWorldMatrix();
-                    }
                 }
                 break;
 
@@ -675,35 +665,6 @@ export class MmdPhysics implements IMmdPhysics {
                 }
             }
         }
-
-        // sort nodes and bodies by bone depth
-        const boneDepth = new Map<IMmdRuntimeBone, number>();
-        for (let i = 0; i < bones.length; ++i) {
-            const bone = bones[i];
-            if (bone.parentBone !== null) continue;
-
-            const stack: [IMmdRuntimeBone, number][] = [[bone, 0]];
-            while (stack.length > 0) {
-                const [current, depth] = stack.pop()!;
-                boneDepth.set(current, depth);
-
-                const children = current.childBones;
-                for (let j = 0; j < children.length; ++j) {
-                    stack.push([children[j], depth + 1]);
-                }
-            }
-        }
-        const boneDepthMap = boneDepth;
-        nodes.sort((a, b) => {
-            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
-            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
-            return depthA - depthB;
-        });
-        bodies.sort((a, b) => {
-            const depthA = a === null ? -1 : boneDepthMap.get(a.linkedBone) ?? -1;
-            const depthB = b === null ? -1 : boneDepthMap.get(b.linkedBone) ?? -1;
-            return depthA - depthB;
-        });
 
         return new MmdPhysicsModel(this, nodes, bodies, constraints);
     }

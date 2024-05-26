@@ -1,4 +1,5 @@
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { DeepImmutable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
@@ -37,14 +38,14 @@ export class AppendTransformSolver {
     public readonly targetBone: MmdRuntimeBone;
 
     /**
-     * The offset of the position to be affected
+     * Append transformed position
      */
-    public readonly appendPositionOffset = Vector3.Zero();
+    public readonly appendPosition = Vector3.Zero();
 
     /**
-     * The offset of the rotation to be affected
+     * Append transformed rotation
      */
-    public readonly appendRotationOffset = Quaternion.Identity();
+    public readonly appendRotation = Quaternion.Identity();
 
     /**
      * Creates append transform solver
@@ -66,54 +67,67 @@ export class AppendTransformSolver {
     }
 
     private static readonly _IdentityQuaternion = Quaternion.Identity();
+    private static readonly _TargetBoneWorldMatrix = Matrix.Identity();
 
     /**
      * Updates the solver
+     * @param animatedRotation rotation animation evaluation result with bone morphing applied
+     * @param animatedPositionOffset position animation evaluation result with bone morphing applied
      */
-    public update(): void {
+    public update(
+        animatedRotation: DeepImmutable<Quaternion>,
+        animatedPositionOffset: DeepImmutable<Vector3>
+    ): void {
         const targetBone = this.targetBone;
 
         if (this.affectRotation) {
-            const appendRotationOffset = this.appendRotationOffset;
+            const appendRotation = this.appendRotation;
             if (this.isLocal) {
-                // Since mmd bones all have identity quaternions, we abandon the compatibility for skeletons that don't and improve performance
-
-                // targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
-                targetBone.getAnimatedRotationToRef(appendRotationOffset);
+                const targetBoneWorldMatrix = targetBone.getWorldMatrixToRef(AppendTransformSolver._TargetBoneWorldMatrix);
+                Quaternion.FromRotationMatrixToRef(targetBoneWorldMatrix, appendRotation);
             } else {
-                if (targetBone.appendTransformSolver !== null) {
-                    appendRotationOffset.copyFrom(targetBone.appendTransformSolver.appendRotationOffset);
+                if (targetBone.appendTransformSolver !== null && targetBone.appendTransformSolver.affectRotation) {
+                    appendRotation.copyFrom(targetBone.appendTransformSolver.appendRotation);
                 } else {
-                    // targetBone.getAnimationRotationOffsetToRef(appendRotationOffset);
-                    targetBone.getAnimatedRotationToRef(appendRotationOffset);
+                    targetBone.getAnimatedRotationToRef(appendRotation);
                 }
             }
 
-            if (targetBone.ikRotation !== null) {
-                targetBone.ikRotation.multiplyToRef(appendRotationOffset, appendRotationOffset);
+            if (targetBone.ikLinkInfo !== null && !this.isLocal) {
+                appendRotation.multiplyInPlace(targetBone.ikLinkInfo.ikRotation);
             }
 
-            Quaternion.SlerpToRef(
-                AppendTransformSolver._IdentityQuaternion,
-                appendRotationOffset,
-                this.ratio,
-                appendRotationOffset
-            );
+            if (this.ratio !== 1) {
+                Quaternion.SlerpToRef(
+                    AppendTransformSolver._IdentityQuaternion,
+                    appendRotation,
+                    this.ratio,
+                    appendRotation
+                );
+            }
+
+            appendRotation.multiplyInPlace(animatedRotation);
         }
 
         if (this.affectPosition) {
-            const appendPositionOffset = this.appendPositionOffset;
+            const appendPosition = this.appendPosition;
             if (this.isLocal) {
-                targetBone.getAnimationPositionOffsetToRef(appendPositionOffset);
+                const targetBoneWorldMatrix = targetBone.getWorldMatrixToRef(AppendTransformSolver._TargetBoneWorldMatrix);
+                targetBone.linkedBone.getAbsoluteInverseBindMatrix().multiplyToRef(targetBoneWorldMatrix, targetBoneWorldMatrix);
+                targetBoneWorldMatrix.getTranslationToRef(appendPosition);
             } else {
-                if (targetBone.appendTransformSolver !== null) {
-                    appendPositionOffset.copyFrom(targetBone.appendTransformSolver.appendPositionOffset);
+                if (targetBone.appendTransformSolver !== null && targetBone.appendTransformSolver.affectPosition) {
+                    appendPosition.copyFrom(targetBone.appendTransformSolver.appendPosition);
                 } else {
-                    targetBone.getAnimationPositionOffsetToRef(appendPositionOffset);
+                    targetBone.getAnimationPositionOffsetToRef(appendPosition);
                 }
             }
 
-            appendPositionOffset.scaleInPlace(this.ratio);
+            if (this.ratio !== 1) {
+                appendPosition.scaleInPlace(this.ratio);
+            }
+
+            appendPosition.addInPlace(animatedPositionOffset);
         }
     }
 }

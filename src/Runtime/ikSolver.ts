@@ -6,6 +6,7 @@
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
+import { IkLinkInfo } from "./ikLinkInfo";
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
 class IkChain {
@@ -68,6 +69,7 @@ export class IkSolver {
     public readonly targetBone: MmdRuntimeBone;
 
     private readonly _ikChains: IkChain[];
+    private _canSkipWhenPhysicsEnabled: boolean;
 
     /**
      * Create a new IK solver
@@ -84,6 +86,7 @@ export class IkSolver {
         this.ikBone = ikBone;
         this.targetBone = targetBone;
         this._ikChains = [];
+        this._canSkipWhenPhysicsEnabled = true;
     }
 
     /**
@@ -93,13 +96,31 @@ export class IkSolver {
      *
      * For better performance, we do not constrain this to a type
      * @param bone Bone to add
+     * @param isAffectedByPhysics Whether the bone is affected by physics
      * @param minimumAngle minimum angle
      * @param maximumAngle maximum angle
      */
-    public addIkChain(bone: MmdRuntimeBone, minimumAngle: Nullable<Vector3>, maximumAngle: Nullable<Vector3>): void {
-        bone.ikRotation = Quaternion.Identity();
+    public addIkChain(
+        bone: MmdRuntimeBone,
+        isAffectedByPhysics: boolean,
+        minimumAngle: Nullable<Vector3>,
+        maximumAngle: Nullable<Vector3>
+    ): void {
+        bone.ikLinkInfo = new IkLinkInfo();
+
+        if (!isAffectedByPhysics) {
+            this._canSkipWhenPhysicsEnabled = false;
+        }
+
         const ikChain = new IkChain(bone, minimumAngle, maximumAngle);
         this._ikChains.push(ikChain);
+    }
+
+    /**
+     * If all chains are affected by physics, ik solver can be skipped
+     */
+    public get canSkipWhenPhysicsEnabled(): boolean {
+        return this._canSkipWhenPhysicsEnabled;
     }
 
     private static readonly _TargetPosition = new Vector3();
@@ -116,11 +137,11 @@ export class IkSolver {
             const chain = chains[i];
             const chainbone = chain.bone;
             chain.prevAngle.setAll(0);
-            chainbone.ikRotation!.set(0, 0, 0, 1);
+            chainbone.ikLinkInfo!.ikRotation.set(0, 0, 0, 1);
             chain.planeModeAngle = 0;
 
-            chainbone.updateLocalMatrix();
-            chainbone.updateWorldMatrix();
+            // chainbone.updateLocalMatrix();
+            // chainbone.updateWorldMatrix();
         }
 
         let maxDistance = Number.MAX_VALUE;
@@ -134,14 +155,14 @@ export class IkSolver {
                 maxDistance = distance;
                 for (let j = 0; j < chains.length; ++j) {
                     const chain = chains[j];
-                    chain.savedIkRotation.copyFrom(chain.bone.ikRotation!);
+                    chain.savedIkRotation.copyFrom(chain.bone.ikLinkInfo!.ikRotation);
                 }
             } else {
                 for (let j = 0; j < chains.length; ++j) {
                     const chain = chains[j];
-                    chain.bone.ikRotation!.copyFrom(chain.savedIkRotation);
-                    chain.bone.updateLocalMatrix();
-                    chain.bone.updateWorldMatrix();
+                    chain.bone.ikLinkInfo!.ikRotation.copyFrom(chain.savedIkRotation);
+                    // chain.bone.updateLocalMatrix();
+                    // chain.bone.updateWorldMatrix();
                 }
                 break;
             }
@@ -218,7 +239,7 @@ export class IkSolver {
             const cross = Vector3.CrossToRef(chainTargetVector, chainIkVector, IkSolver._ChainCross).normalize();
             const rotation = Quaternion.RotationAxisToRef(cross, angle, IkSolver._Rotation);
 
-            const chainRotation = IkSolver._ChainRotation.copyFrom(chainBone.ikRotation!);
+            const chainRotation = IkSolver._ChainRotation.copyFrom(chainBone.ikLinkInfo!.ikRotation);
             const animatedRotation = chainBone.getAnimatedRotationToRef(IkSolver._AnimatedRotation);
             chainRotation.multiplyInPlace(animatedRotation).multiplyInPlace(rotation);
             if (chain.minimumAngle !== null /* && chain.minimumAngle !== null */) {
@@ -245,11 +266,11 @@ export class IkSolver {
 
             chainRotation.multiplyToRef(
                 Quaternion.InverseToRef(animatedRotation, IkSolver._InversedAnimatedRotation),
-                chainBone.ikRotation!
+                chainBone.ikLinkInfo!.ikRotation
             );
 
-            chainBone.updateLocalMatrix();
-            chainBone.updateWorldMatrix();
+            // chainBone.updateLocalMatrix();
+            // chainBone.updateWorldMatrix();
         }
     }
 
@@ -335,11 +356,11 @@ export class IkSolver {
             chain.bone.getAnimatedRotationToRef(IkSolver._InversedAnimatedRotation2),
             IkSolver._InversedAnimatedRotation2
         );
-        const ikRotation = Quaternion.RotationAxisToRef(rotateAxis, newAngle, chain.bone.ikRotation!);
+        const ikRotation = Quaternion.RotationAxisToRef(rotateAxis, newAngle, chain.bone.ikLinkInfo!.ikRotation);
         ikRotation.multiplyInPlace(inversedAnimatedRotation);
 
-        chain.bone.updateLocalMatrix();
-        chain.bone.updateWorldMatrix();
+        // chain.bone.updateLocalMatrix();
+        // chain.bone.updateWorldMatrix();
     }
 
     private static readonly _TwoPi = Math.PI * 2;
