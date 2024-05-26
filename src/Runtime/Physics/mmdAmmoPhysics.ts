@@ -41,14 +41,9 @@ class MmdPhysicsMesh extends AbstractMesh {
         this._customBoundingInfo = customBoundingInfo;
     }
 
-    private static readonly _ParentWorldMatrixInverse = new Matrix();
     private static readonly _WorldMatrix = new Matrix();
 
-    public computeBodyOffsetMatrix(): void {
-        const parentWorldMatrixInverse = this.linkedBone.getWorldMatrixToRef(
-            MmdPhysicsMesh._ParentWorldMatrixInverse
-        ).invert();
-
+    public computeBodyOffsetMatrix(parentWorldMatrixInverse: DeepImmutable<Matrix>): void {
         const worldMatrix = Matrix.ComposeToRef(
             this.scaling,
             this.rotationQuaternion!,
@@ -467,7 +462,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             );
 
             // compute the body offset matrix in local space
-            node.computeBodyOffsetMatrix();
+            node.computeBodyOffsetMatrix(bone.linkedBone.getAbsoluteInverseBindMatrix());
 
             // then convert the body transform to world space
             Vector3.TransformCoordinatesToRef(node.position, worldMatrix, node.position);

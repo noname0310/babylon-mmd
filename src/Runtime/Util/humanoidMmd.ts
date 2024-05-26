@@ -62,6 +62,7 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
     private _boneParent: Nullable<LinkedBoneProxy>;
 
     private readonly _restMatrix: Matrix;
+    private readonly _absoluteInverseBindMatrix: Matrix;
 
     private readonly _positionApplyScale: Vector3;
     private readonly _scalingMatrix: Matrix;
@@ -86,6 +87,7 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
         this._boneParent = null;
 
         this._restMatrix = Matrix.Identity();
+        this._absoluteInverseBindMatrix = Matrix.Identity();
 
         this._positionApplyScale = positionApplyScale;
         this._scalingMatrix = scalingMatrix;
@@ -95,6 +97,11 @@ class LinkedBoneProxy implements IMmdRuntimeLinkedBone {
 
     public getRestMatrix(): Matrix {
         return this._restMatrix;
+    }
+
+    // getAbsoluteInverseBindMatrix is just for physics, but for now it's not used
+    public getAbsoluteInverseBindMatrix(): Matrix {
+        return this._absoluteInverseBindMatrix;
     }
 
     public setRotationQuaternion(quat: Quaternion): void {
@@ -775,13 +782,21 @@ export class HumanoidMmd {
             }
         }
 
-        // world to local / initialize bone parent
+        // world to local / initialize bone parent / initialize inverse bind matrix
         const worldPositions = new Map<LinkedBoneProxy, Vector3>();
         for (let i = 0; i < boneProxies.length; ++i) {
             worldPositions.set(boneProxies[i], boneProxies[i]._position.clone());
         }
         for (let i = 0; i < boneProxies.length; ++i) {
             const boneProxy = boneProxies[i];
+
+            Matrix.TranslationToRef(
+                -boneProxy._position.x,
+                -boneProxy._position.y,
+                -boneProxy._position.z,
+                boneProxy.getAbsoluteInverseBindMatrix()
+            );
+
             const parent = boneProxy.parent;
             if (parent !== null) {
                 const parentPosition = worldPositions.get(parent)!;

@@ -43,6 +43,12 @@ export interface IMmdRuntimeLinkedBone {
     getRestMatrix(): Matrix;
 
     /**
+     * Gets the inverse of the bind matrix, in world space (relative to the skeleton root)
+     * @returns the inverse bind matrix, in world space
+     */
+    getAbsoluteInverseBindMatrix(): Matrix;
+
+    /**
      * Set the quaternion rotation of the bone in local or world space
      *
      * This method is faster than using the rotationQuaternion property

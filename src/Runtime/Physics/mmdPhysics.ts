@@ -40,14 +40,9 @@ class MmdPhysicsTransformNode extends TransformNode {
         this.bodyOffsetInverseMatrix = Matrix.Identity();
     }
 
-    private static readonly _ParentWorldMatrixInverse = new Matrix();
     private static readonly _WorldMatrix = new Matrix();
 
-    public computeBodyOffsetMatrix(): void {
-        const parentWorldMatrixInverse = this.linkedBone.getWorldMatrixToRef(
-            MmdPhysicsTransformNode._ParentWorldMatrixInverse
-        ).invert();
-
+    public computeBodyOffsetMatrix(parentWorldMatrixInverse: DeepImmutable<Matrix>): void {
         const worldMatrix = Matrix.ComposeToRef(
             this.scaling,
             this.rotationQuaternion!,
@@ -449,7 +444,7 @@ export class MmdPhysics implements IMmdPhysics {
                 shapeRotation[2]
             );
 
-            node.computeBodyOffsetMatrix();
+            node.computeBodyOffsetMatrix(bone.linkedBone.getAbsoluteInverseBindMatrix());
             node.setParent(rootMesh);
 
             const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone

@@ -177,8 +177,6 @@ export class MmdModel implements IMmdModel {
         );
 
         if (mmdPhysics !== null) {
-            for (let i = 0; i < sortedBones.length; ++i) sortedBones[i].updateLocalMatrix();
-            for (let i = 0; i < sortedRootBones.length; ++i) sortedRootBones[i].updateWorldMatrix();
             this._physicsModel = mmdPhysics.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
