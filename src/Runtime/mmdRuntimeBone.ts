@@ -170,7 +170,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
     private _getAnimatedRotationWithMorphToRef(target: Quaternion): Quaternion {
         target.copyFrom(this.linkedBone.rotationQuaternion);
-        return target.multiplyInPlace(this.morphRotationOffset);
+        return this.morphRotationOffset.multiplyToRef(target, target);
     }
 
     private static readonly _TempVector3 = new Vector3();
@@ -207,7 +207,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
     // private _getAnimationRotationOffsetWithMorphToRef(target: Quaternion): Quaternion {
     //     target.copyFrom(this.linkedBone.rotationQuaternion);
-    //     target.multiplyInPlace(this.morphRotationOffset);
+    //     this.morphRotationOffset.multiplyToRef(target, target);
     //     Quaternion.FromRotationMatrixToRef(this.linkedBone.getRestMatrix(), MmdRuntimeBone._TempQuaternion).invertInPlace();
     //     return MmdRuntimeBone._TempQuaternion.multiplyInPlace(target);
     // }
@@ -233,12 +233,6 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.getAnimationPositionOffsetToRef = this._getAnimationPositionOffsetToRef;
         // this.getAnimationRotationOffsetToRef = this._getAnimationRotationOffsetToRef;
     }
-
-    private static readonly _TempRotation = Quaternion.Identity();
-    private static readonly _TempPosition = Vector3.Zero();
-    private static readonly _TempPosition2 = Vector3.Zero();
-    private static readonly _TempMatrix = Matrix.Identity();
-    private static readonly _TempMatrix2 = Matrix.Identity();
 
     /**
      * Reset world matrix, append transform, and ik chain state
@@ -278,6 +272,12 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         }
     }
 
+    private static readonly _TempRotation = Quaternion.Identity();
+    private static readonly _TempPosition = Vector3.Zero();
+    private static readonly _TempPosition2 = Vector3.Zero();
+    private static readonly _TempMatrix = Matrix.Identity();
+    private static readonly _TempMatrix2 = Matrix.Identity();
+
     /**
      * Update the world matrix of this bone to account for append transform and ik
      * @param usePhysics Whether to use physics simulation
@@ -304,7 +304,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
             this.ikLinkInfo.localRotation.copyFrom(rotation);
             this.ikLinkInfo.localPosition.copyFrom(position);
 
-            rotation.multiplyInPlace(this.ikLinkInfo.ikRotation);
+            this.ikLinkInfo.ikRotation.multiplyToRef(rotation, rotation);
         }
 
         const worldMatrix = MmdRuntimeBone._TempMatrix;

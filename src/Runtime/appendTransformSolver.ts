@@ -94,7 +94,7 @@ export class AppendTransformSolver {
             }
 
             if (targetBone.ikLinkInfo !== null && !this.isLocal) {
-                appendRotation.multiplyInPlace(targetBone.ikLinkInfo.ikRotation);
+                targetBone.ikLinkInfo.ikRotation.multiplyToRef(appendRotation, appendRotation);
             }
 
             if (this.ratio !== 1) {
@@ -106,7 +106,7 @@ export class AppendTransformSolver {
                 );
             }
 
-            appendRotation.multiplyInPlace(animatedRotation);
+            animatedRotation.multiplyToRef(appendRotation, appendRotation);
         }
 
         if (this.affectPosition) {
