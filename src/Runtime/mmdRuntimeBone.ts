@@ -5,7 +5,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
-import type { IkLinkInfo } from "./ikLinkInfo";
+import type { IkChainInfo } from "./ikChainInfo";
 import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
@@ -88,7 +88,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      *
      * If this bone is an Ik chain, this value is non-null
      */
-    public ikLinkInfo: Nullable<IkLinkInfo>;
+    public ikChainInfo: Nullable<IkChainInfo>;
 
     /**
      * World matrix of this bone
@@ -144,7 +144,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.morphPositionOffset = Vector3.Zero();
         this.morphRotationOffset = Quaternion.Identity();
 
-        this.ikLinkInfo = null;
+        this.ikChainInfo = null;
 
         this.worldMatrix = new Float32Array(worldTransformMatrices.buffer, worldTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
 
@@ -260,10 +260,10 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         worldMatrix[14] = 0;
         worldMatrix[15] = 1;
 
-        if (this.ikLinkInfo !== null) {
-            this.ikLinkInfo.localRotation.set(0, 0, 0, 1);
-            this.ikLinkInfo.localPosition.set(0, 0, 0);
-            this.ikLinkInfo.ikRotation.set(0, 0, 0, 1);
+        if (this.ikChainInfo !== null) {
+            this.ikChainInfo.localRotation.set(0, 0, 0, 1);
+            this.ikChainInfo.localPosition.set(0, 0, 0);
+            this.ikChainInfo.ikRotation.set(0, 0, 0, 1);
         }
 
         if (this.appendTransformSolver !== null) {
@@ -300,11 +300,11 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
             }
         }
 
-        if (this.ikLinkInfo !== null) {
-            this.ikLinkInfo.localRotation.copyFrom(rotation);
-            this.ikLinkInfo.localPosition.copyFrom(position);
+        if (this.ikChainInfo !== null) {
+            this.ikChainInfo.localRotation.copyFrom(rotation);
+            this.ikChainInfo.localPosition.copyFrom(position);
 
-            this.ikLinkInfo.ikRotation.multiplyToRef(rotation, rotation);
+            this.ikChainInfo.ikRotation.multiplyToRef(rotation, rotation);
         }
 
         const worldMatrix = MmdRuntimeBone._TempMatrix;

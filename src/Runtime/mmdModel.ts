@@ -373,7 +373,10 @@ export class MmdModel implements IMmdModel {
             const bone = sortedBones[i];
             if (bone.transformAfterPhysics !== afterPhysicsStage) continue;
 
-            bone.updateWorldMatrix(usePhysics, true);
+            bone.updateWorldMatrix(
+                usePhysics,
+                this.ikSolverStates[bone.ikSolverIndex] !== 0 // if bone.ikSolverIndex is -1, evaluated as undefined !== 0 which is true
+            );
         }
     }
 

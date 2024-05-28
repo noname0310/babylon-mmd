@@ -93,8 +93,8 @@ export class AppendTransformSolver {
                 }
             }
 
-            if (targetBone.ikLinkInfo !== null && !this.isLocal) {
-                targetBone.ikLinkInfo.ikRotation.multiplyToRef(appendRotation, appendRotation);
+            if (targetBone.ikChainInfo !== null && !this.isLocal) {
+                targetBone.ikChainInfo.ikRotation.multiplyToRef(appendRotation, appendRotation);
             }
 
             if (this.ratio !== 1) {

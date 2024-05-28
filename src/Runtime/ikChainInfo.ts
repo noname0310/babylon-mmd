@@ -1,9 +1,9 @@
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 /**
- * Ik link information for solving IK
+ * Ik chain information for solving IK
  */
-export class IkLinkInfo {
+export class IkChainInfo {
     /**
      * Local rotation of the bone for solving IK
      */
@@ -20,7 +20,7 @@ export class IkLinkInfo {
     public readonly ikRotation: Quaternion;
 
     /**
-     * Creates IK link
+     * Creates IK chain information
      */
     public constructor() {
         this.localRotation = Quaternion.Identity();
