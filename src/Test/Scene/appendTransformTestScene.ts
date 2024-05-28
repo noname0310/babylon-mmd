@@ -1,5 +1,4 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/pmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
@@ -16,7 +15,6 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 // import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor";
-import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 
@@ -36,13 +34,14 @@ import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import ammo from "../External/ammo.wasm";
-import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
-import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+declare const FPSMeter: any;
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
@@ -55,14 +54,19 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const mmdRoot = new TransformNode("mmdRoot", scene);
-        const camera = createDefaultArcRotateCamera(scene);
-        camera.position.set(20, 15, 50);
-        camera.target.set(20, 10, -10);
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
         mmdCamera.parent = mmdRoot;
+        const camera = createDefaultArcRotateCamera(scene);
         createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const { shadowGenerator } = createLightComponents(scene, {
+            shadowMaxZOffset: 25,
+            shadowMinZOffset: -20,
+            orthoTopOffset: 20,
+            orthoBottomOffset: -20,
+            orthoLeftOffset: -20,
+            orthoRightOffset: 50
+        });
         shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
 
@@ -80,23 +84,36 @@ export class SceneBuilder implements ISceneBuilder {
         mmdPlayerControl.showPlayerControl();
 
         const [
-            mmdAnimation,
-            modelMesh
+            mmdAnimations,
+            modelMeshes
         ] = await parallelLoadAsync(scene, [
-            ["motion", (updateProgress): Promise<MmdAnimation> => {
+            ["motion", (updateProgress): Promise<MmdAnimation[]> => {
                 const vmdLoader = new VmdLoader(scene);
                 vmdLoader.loggingEnabled = true;
-                return vmdLoader.loadAsync("motion", "res/private_test/motion/new_jeans/Haerin part.vmd", updateProgress);
+                const filePaths = [
+                    "res/private_test/motion/new_jeans/Danielle part.vmd",
+                    "res/private_test/motion/new_jeans/Haerin part.vmd",
+                    "res/private_test/motion/new_jeans/Hanni part.vmd",
+                    "res/private_test/motion/new_jeans/Hyein part.vmd",
+                    "res/private_test/motion/new_jeans/Minji part.vmd",
+                    "res/private_test/motion/new_jeans/Camera.vmd"
+                ];
+                return Promise.all(filePaths.map((filePath) => vmdLoader.loadAsync("motion", filePath, updateProgress)));
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
+            ["model", (updateProgress): Promise<Mesh[]> => {
                 pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/YYB Hatsune Miku_10th - faceforward - newjeans/",
-                    "YYB Hatsune Miku_10th_v1.02 - faceforward - ng.pmx",
-                    scene,
-                    updateProgress
-                ).then((result) => result.meshes[0] as MmdMesh);
+
+                const modelMeshes: Promise<Mesh>[] = [];
+                for (let i = 0; i < 5; ++i) {
+                    modelMeshes.push(SceneLoader.ImportMeshAsync(
+                        undefined,
+                        "res/private_test/model/YYB Hatsune Miku_10th - faceforward - newjeans/",
+                        "YYB Hatsune Miku_10th_v1.02 - faceforward - ng.pmx",
+                        scene,
+                        updateProgress
+                    ).then((result) => result.meshes[0] as MmdMesh));
+                }
+                return Promise.all(modelMeshes);
             }],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
@@ -107,32 +124,27 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setManualAnimationDuration(670);
-
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimation);
+        mmdCamera.addAnimation(mmdAnimations[5]);
         mmdCamera.setAnimation("motion");
 
-        for (const mesh of modelMesh.metadata.meshes) {
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh, false);
+        for (let i = 0; i < modelMeshes.length; ++i) {
+            const modelMesh = modelMeshes[i];
+
+            for (const mesh of modelMesh.metadata.meshes) {
+                mesh.receiveShadows = true;
+                shadowGenerator.addShadowCaster(mesh, false);
+            }
+            modelMesh.parent = mmdRoot;
+
+            const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+                buildPhysics: true
+            });
+            mmdModel.addAnimation(mmdAnimations[i]);
+            mmdModel.setAnimation("motion");
+
+            mmdRuntime.playAnimation();
         }
-        modelMesh.parent = mmdRoot;
-
-        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-            buildPhysics: true
-        });
-        mmdModel.addAnimation(mmdAnimation);
-        mmdModel.setAnimation("motion");
-
-        mmdRuntime.seekAnimation(440, true);
-        // mmdRuntime.playAnimation();
-
-        attachToBone(scene, mmdModel, {
-            directionalLightPosition: directionalLight.position,
-            // cameraTargetPosition: camera.target,
-            centerBoneName: "グルーブ"
-        });
 
         // const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
@@ -157,23 +169,15 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.chromaticAberrationEnabled = true;
         defaultPipeline.chromaticAberration.aberrationAmount = 1;
-        defaultPipeline.depthOfFieldEnabled = true;
-        defaultPipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.High;
+        defaultPipeline.depthOfFieldEnabled = false;
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.imageProcessingEnabled = true;
         defaultPipeline.imageProcessing.toneMappingEnabled = true;
-        defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
+        defaultPipeline.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_KHR_PBR_NEUTRAL;
         defaultPipeline.imageProcessing.vignetteWeight = 0.5;
         defaultPipeline.imageProcessing.vignetteStretch = 0.5;
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = true;
-        const mmdCameraAutoFocus = new MmdCameraAutoFocus(mmdCamera, defaultPipeline);
-        mmdCameraAutoFocus.setTarget(mmdModel);
-        mmdCameraAutoFocus.register(scene);
-
-        for (const depthRenderer of Object.values(scene._depthRenderer)) {
-            depthRenderer.forceDepthWriteTransparentMeshes = true;
-        }
 
         return scene;
     }
