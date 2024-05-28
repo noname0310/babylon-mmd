@@ -331,9 +331,40 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
         if (computeIk && this.ikSolver !== null) {
             if (!(usePhysics && this.ikSolver.canSkipWhenPhysicsEnabled)) {
-                this.ikSolver.solve();
+                this.ikSolver.solve(usePhysics);
             }
         }
+    }
+
+    /**
+     * @internal
+     */
+    public updateWorldMatrixForIkChain(): void {
+        const ikChainInfo = this.ikChainInfo!;
+
+        const rotation = ikChainInfo.ikRotation.multiplyToRef(ikChainInfo.localRotation, MmdRuntimeBone._TempRotation);
+
+        const worldMatrix = MmdRuntimeBone._TempMatrix;
+
+        const scaling = this.linkedBone.scaling;
+        if (scaling.x !== 1 || scaling.y !== 1 || scaling.z !== 1) {
+            Matrix.ScalingToRef(scaling.x, scaling.y, scaling.z, worldMatrix);
+            const rotationMatrix = Matrix.FromQuaternionToRef(rotation, MmdRuntimeBone._TempMatrix2);
+            worldMatrix.multiplyToRef(rotationMatrix, worldMatrix);
+        } else {
+            Matrix.FromQuaternionToRef(rotation, worldMatrix);
+        }
+
+        const localPosition = this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempPosition);
+        localPosition.addInPlace(ikChainInfo.localPosition);
+        worldMatrix.setTranslation(localPosition);
+
+        if (this.parentBone !== null) {
+            const parentWorldMatrix = this.parentBone.getWorldMatrixToRef(MmdRuntimeBone._TempMatrix2);
+            worldMatrix.multiplyToRef(parentWorldMatrix, worldMatrix);
+        }
+
+        worldMatrix.copyToArray(this.worldMatrix);
     }
 
     /**

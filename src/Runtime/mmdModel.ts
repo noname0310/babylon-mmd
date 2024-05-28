@@ -457,8 +457,7 @@ export class MmdModel implements IMmdModel {
                             ikSolver.addIkChain(
                                 linkBone,
                                 physicsBoneSet.has(linkBone),
-                                link.limitation?.minimumAngle ? Vector3.FromArray(link.limitation.minimumAngle) : null,
-                                link.limitation?.maximumAngle ? Vector3.FromArray(link.limitation.maximumAngle) : null
+                                link.limitation
                             );
                         } else {
                             this._logger.error(`Invalid IK link bone index: ${linkBoneIndex}`);

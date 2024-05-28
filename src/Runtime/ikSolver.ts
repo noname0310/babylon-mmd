@@ -6,35 +6,82 @@
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import { IkLinkInfo } from "./ikLinkInfo";
+import type { PmxObject } from "@/Loader/Parser/pmxObject";
+
+import { IkChainInfo } from "./ikChainInfo";
 import type { MmdRuntimeBone } from "./mmdRuntimeBone";
 
-class IkChain {
-    public bone: MmdRuntimeBone;
-    public minimumAngle: Nullable<DeepImmutable<Vector3>>;
-    public maximumAngle: Nullable<DeepImmutable<Vector3>>;
-    public prevAngle: Vector3;
-    public savedIkRotation: Quaternion;
-    public planeModeAngle: number;
-
-    public constructor(
-        bone: MmdRuntimeBone,
-        minimumAngle: Nullable<DeepImmutable<Vector3>>,
-        maximumAngle: Nullable<DeepImmutable<Vector3>>
-    ) {
-        this.bone = bone;
-        this.minimumAngle = minimumAngle;
-        this.maximumAngle = maximumAngle;
-        this.prevAngle = Vector3.Zero();
-        this.savedIkRotation = Quaternion.Identity();
-        this.planeModeAngle = 0;
-    }
+const enum EulerRotationOrder {
+    YXZ,
+    ZYX,
+    XZY
 }
 
 const enum SolveAxis {
+    None,
+    Fixed,
     X,
     Y,
-    Z,
+    Z
+}
+
+class IkChain {
+    public readonly bone: MmdRuntimeBone;
+    public readonly minimumAngle: Nullable<DeepImmutable<Vector3>>;
+    public readonly maximumAngle: Nullable<DeepImmutable<Vector3>>;
+    public readonly rotationOrder: EulerRotationOrder;
+    public readonly solveAxis: SolveAxis;
+
+    public constructor(
+        bone: MmdRuntimeBone,
+        limitation?: PmxObject.Bone.IKLink["limitation"]
+    ) {
+        this.bone = bone;
+
+        if (limitation !== undefined) {
+            {
+                const minimumAngle = limitation.minimumAngle;
+                const maximumAngle = limitation.maximumAngle;
+                const minX = Math.min(minimumAngle[0], maximumAngle[0]);
+                const minY = Math.min(minimumAngle[1], maximumAngle[1]);
+                const minZ = Math.min(minimumAngle[2], maximumAngle[2]);
+                const maxX = Math.max(minimumAngle[0], maximumAngle[0]);
+                const maxY = Math.max(minimumAngle[1], maximumAngle[1]);
+                const maxZ = Math.max(minimumAngle[2], maximumAngle[2]);
+                this.minimumAngle = new Vector3(minX, minY, minZ);
+                this.maximumAngle = new Vector3(maxX, maxY, maxZ);
+            }
+            const min = this.minimumAngle;
+            const max = this.maximumAngle;
+
+            const halfPi = Math.PI * 0.5;
+            if (-halfPi < min.x && max.x < halfPi) {
+                this.rotationOrder = EulerRotationOrder.YXZ;
+            } else if (-halfPi < min.y && max.y < halfPi) {
+                this.rotationOrder = EulerRotationOrder.ZYX;
+            } else {
+                this.rotationOrder = EulerRotationOrder.XZY;
+            }
+
+            if (min.x === 0 && max.x === 0 && min.y === 0 && max.y === 0 && min.z === 0 && max.z === 0) {
+                this.solveAxis = SolveAxis.Fixed;
+            } else if (min.y === 0 && max.y === 0 && min.z === 0 && max.z === 0) {
+                this.solveAxis = SolveAxis.X;
+            } else if (min.x === 0 && max.x === 0 && min.z === 0 && max.z === 0) {
+                this.solveAxis = SolveAxis.Y;
+            } else if (min.x === 0 && max.x === 0 && min.y === 0 && max.y === 0) {
+                this.solveAxis = SolveAxis.Z;
+            } else {
+                this.solveAxis = SolveAxis.None;
+            }
+        } else {
+            this.minimumAngle = null;
+            this.maximumAngle = null;
+
+            this.rotationOrder = EulerRotationOrder.XZY; // not used
+            this.solveAxis = SolveAxis.None;
+        }
+    }
 }
 
 /**
@@ -51,7 +98,13 @@ export class IkSolver {
      *
      * The higher the value, the more accurate the IK solver will be, but the more expensive it will be
      */
-    public iteration: number;
+    public get iteration(): number {
+        return this._iteration;
+    }
+
+    public set iteration(value: number) {
+        this._iteration = Math.min(value, 256);
+    }
 
     /**
      * Limit angle
@@ -68,6 +121,7 @@ export class IkSolver {
      */
     public readonly targetBone: MmdRuntimeBone;
 
+    private _iteration: number;
     private readonly _ikChains: IkChain[];
     private _canSkipWhenPhysicsEnabled: boolean;
 
@@ -80,8 +134,8 @@ export class IkSolver {
     public constructor(index: number, ikBone: MmdRuntimeBone, targetBone: MmdRuntimeBone) {
         this.index = index;
 
-        this.iteration = 0;
-        this.limitAngle = 0;
+        this._iteration = 1;
+        this.limitAngle = Math.PI;
 
         this.ikBone = ikBone;
         this.targetBone = targetBone;
@@ -97,22 +151,20 @@ export class IkSolver {
      * For better performance, we do not constrain this to a type
      * @param bone Bone to add
      * @param isAffectedByPhysics Whether the bone is affected by physics
-     * @param minimumAngle minimum angle
-     * @param maximumAngle maximum angle
+     * @param limitation Angle limitation
      */
     public addIkChain(
         bone: MmdRuntimeBone,
         isAffectedByPhysics: boolean,
-        minimumAngle: Nullable<Vector3>,
-        maximumAngle: Nullable<Vector3>
+        limitation?: PmxObject.Bone.IKLink["limitation"]
     ): void {
-        bone.ikLinkInfo = new IkLinkInfo();
+        bone.ikChainInfo = new IkChainInfo();
 
         if (!isAffectedByPhysics) {
             this._canSkipWhenPhysicsEnabled = false;
         }
 
-        const ikChain = new IkChain(bone, minimumAngle, maximumAngle);
+        const ikChain = new IkChain(bone, limitation);
         this._ikChains.push(ikChain);
     }
 
@@ -123,337 +175,246 @@ export class IkSolver {
         return this._canSkipWhenPhysicsEnabled;
     }
 
-    private static readonly _TargetPosition = new Vector3();
     private static readonly _IkPosition = new Vector3();
+    private static readonly _TargetPosition = new Vector3();
 
     /**
      * Solve IK
+     * @param usePhysics Whether to use physics
      */
-    public solve(): void {
+    public solve(usePhysics: boolean): void {
+        if (this._ikChains.length === 0) return;
+
         const ikBone = this.ikBone;
         const targetBone = this.targetBone;
         const chains = this._ikChains;
-        for (let i = 0; i < chains.length; ++i) {
-            const chain = chains[i];
-            const chainbone = chain.bone;
-            chain.prevAngle.setAll(0);
-            chainbone.ikLinkInfo!.ikRotation.set(0, 0, 0, 1);
-            chain.planeModeAngle = 0;
-
-            // chainbone.updateLocalMatrix();
-            // chainbone.updateWorldMatrix();
+        for (let chainIndex = 0; chainIndex < chains.length; ++chainIndex) {
+            chains[chainIndex].bone.ikChainInfo!.ikRotation.set(0, 0, 0, 1);
         }
 
-        let maxDistance = Number.MAX_VALUE;
-        for (let i = 0; i < this.iteration; ++i) {
-            this._solveCore(i);
+        const ikPosition = ikBone.getWorldTranslationToRef(IkSolver._IkPosition);
 
-            const targetPosition = targetBone.getWorldTranslationToRef(IkSolver._TargetPosition);
-            const ikPosition = ikBone.getWorldTranslationToRef(IkSolver._IkPosition);
-            const distance = Vector3.DistanceSquared(targetPosition, ikPosition);
-            if (distance < maxDistance) {
-                maxDistance = distance;
-                for (let j = 0; j < chains.length; ++j) {
-                    const chain = chains[j];
-                    chain.savedIkRotation.copyFrom(chain.bone.ikLinkInfo!.ikRotation);
+        targetBone.updateWorldMatrix(usePhysics, true);
+        const targetPosition = targetBone.getWorldTranslationToRef(IkSolver._TargetPosition);
+
+        if (Vector3.DistanceSquared(ikPosition, targetPosition) < 1.0e-8) return;
+
+        // update ik chain, target bone world matrix
+        for (let chainIndex = chains.length - 1; chainIndex >= 0; --chainIndex) {
+            chains[chainIndex].bone.updateWorldMatrix(usePhysics, false);
+        }
+        targetBone.updateWorldMatrix(false, false);
+        targetBone.getWorldTranslationToRef(targetPosition);
+
+        if (Vector3.DistanceSquared(ikPosition, targetPosition) < 1.0e-8) return;
+
+        const iteration = this.iteration;
+        const halfIteration = iteration >> 1;
+        for (let i = 0; i < iteration; ++i) {
+            for (let chainIndex = 0; chainIndex < chains.length; ++chainIndex) {
+                const chain = chains[chainIndex];
+                if (chain.solveAxis !== SolveAxis.Fixed) {
+                    this._solveChain(chain, chainIndex, ikPosition, targetPosition, i < halfIteration);
                 }
-            } else {
-                for (let j = 0; j < chains.length; ++j) {
-                    const chain = chains[j];
-                    chain.bone.ikLinkInfo!.ikRotation.copyFrom(chain.savedIkRotation);
-                    // chain.bone.updateLocalMatrix();
-                    // chain.bone.updateWorldMatrix();
-                }
-                break;
             }
+            if (Vector3.DistanceSquared(ikPosition, targetPosition) < 1.0e-8) break;
         }
     }
 
-    private static readonly _TargetPosition2 = new Vector3();
-    private static readonly _IkPosition2 = new Vector3();
-    private static readonly _InversedChain = new Matrix();
-    private static readonly _ChainCross = new Vector3();
+    private static readonly _ChainPosition = new Vector3();
+    private static readonly _ChainTargetVector = new Vector3();
+    private static readonly _ChainIkVector = new Vector3();
+    private static readonly _ChainRotationAxis = new Vector3();
+    private static readonly _ChainParentRotationMatrix = new Matrix();
+    private static readonly _Axis = new Vector3();
     private static readonly _Rotation = new Quaternion();
-    private static readonly _ChainRotation = new Quaternion();
-    private static readonly _AnimatedRotation = new Quaternion();
-    private static readonly _ChainRotationMatrix = new Matrix();
-    private static readonly _DecomposedRotation = new Vector3();
-    private static readonly _ClampedRotation = new Vector3();
-    private static readonly _FinalRotationA = new Quaternion();
-    private static readonly _FinalRotationB = new Quaternion();
+    private static readonly _RotationVector = new Vector3();
+    private static readonly _RotationMatrix = new Matrix();
     private static readonly _Right: DeepImmutable<Vector3> = Vector3.Right();
     private static readonly _Up: DeepImmutable<Vector3> = Vector3.Up();
     private static readonly _Forward: DeepImmutable<Vector3> = Vector3.Forward();
-    private static readonly _InversedAnimatedRotation = new Quaternion();
-
-    private static readonly _RadToDeg = 180 / Math.PI;
-
-    private _solveCore(iteration: number): void {
-        const ikPosition = this.ikBone.getWorldTranslationToRef(IkSolver._IkPosition2);
-
-        const chains = this._ikChains;
-        for (let i = 0; i < chains.length; ++i) {
-            const chain = chains[i];
-            const chainBone = chain.bone;
-            if (chainBone === this.targetBone) continue;
-
-            if (chain.minimumAngle !== null /* && chain.minimumAngle !== null */) {
-                if ((chain.minimumAngle.x !== 0 || chain.maximumAngle!.x !== 0) &&
-                    (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0) &&
-                    (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
-                ) {
-                    this._solvePlane(iteration, chain, SolveAxis.X);
-                    continue;
-                } else if ((chain.minimumAngle.y !== 0 || chain.maximumAngle!.y !== 0) &&
-                    (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
-                    (chain.minimumAngle.z === 0 || chain.maximumAngle!.z === 0)
-                ) {
-                    this._solvePlane(iteration, chain, SolveAxis.Y);
-                    continue;
-                } else if ((chain.minimumAngle.z !== 0 || chain.maximumAngle!.z !== 0) &&
-                    (chain.minimumAngle.x === 0 || chain.maximumAngle!.x === 0) &&
-                    (chain.minimumAngle.y === 0 || chain.maximumAngle!.y === 0)
-                ) {
-                    this._solvePlane(iteration, chain, SolveAxis.Z);
-                    continue;
-                }
-            }
-
-            const targetPosition = this.targetBone.getWorldTranslationToRef(IkSolver._TargetPosition2);
-
-            const inverseChain = chainBone.getWorldMatrixToRef(IkSolver._InversedChain).invert();
-
-            const chainIkPosition = Vector3.TransformCoordinatesToRef(ikPosition, inverseChain, IkSolver._IkPosition);
-            const chainTargetPosition = Vector3.TransformCoordinatesToRef(targetPosition, inverseChain, IkSolver._TargetPosition);
-
-            const chainIkVector = chainIkPosition.normalize();
-            const chainTargetVector = chainTargetPosition.normalize();
-
-            let dot = Vector3.Dot(chainTargetVector, chainIkVector);
-            dot = Math.max(-1.0, Math.min(1.0, dot));
-
-            let angle = Math.acos(dot);
-            const angleDeg = angle * IkSolver._RadToDeg;
-            if (angleDeg < 1.0e-3) continue;
-            angle = Math.max(-this.limitAngle, Math.min(this.limitAngle, angle));
-            const cross = Vector3.CrossToRef(chainTargetVector, chainIkVector, IkSolver._ChainCross).normalize();
-            const rotation = Quaternion.RotationAxisToRef(cross, angle, IkSolver._Rotation);
-
-            const chainRotation = IkSolver._ChainRotation.copyFrom(chainBone.ikLinkInfo!.ikRotation);
-            const animatedRotation = chainBone.getAnimatedRotationToRef(IkSolver._AnimatedRotation);
-            chainRotation.multiplyInPlace(animatedRotation).multiplyInPlace(rotation);
-            if (chain.minimumAngle !== null /* && chain.minimumAngle !== null */) {
-                const chainRotationMatrix = chainRotation.toRotationMatrix(IkSolver._ChainRotationMatrix);
-                const rotXYZ = this._decomposeToRef(chainRotationMatrix, chain.prevAngle, IkSolver._DecomposedRotation);
-                const clampXYZ = Vector3.ClampToRef(rotXYZ, chain.minimumAngle, chain.maximumAngle!, IkSolver._ClampedRotation).subtractInPlace(chain.prevAngle);
-
-                clampXYZ.set(
-                    Math.max(-this.limitAngle, Math.min(this.limitAngle, clampXYZ.x)) + chain.prevAngle.x,
-                    Math.max(-this.limitAngle, Math.min(this.limitAngle, clampXYZ.y)) + chain.prevAngle.y,
-                    Math.max(-this.limitAngle, Math.min(this.limitAngle, clampXYZ.z)) + chain.prevAngle.z
-                );
-                const rA = Quaternion.RotationAxisToRef(IkSolver._Right, clampXYZ.x, IkSolver._FinalRotationA);
-                const rB = IkSolver._FinalRotationB;
-                Quaternion.RotationAxisToRef(IkSolver._Up, clampXYZ.y, rB);
-                rA.multiplyInPlace(rB);
-                Quaternion.RotationAxisToRef(IkSolver._Forward, clampXYZ.z, rB);
-                rA.multiplyInPlace(rB);
-                Matrix.FromQuaternionToRef(rA, chainRotationMatrix);
-                chain.prevAngle.copyFrom(clampXYZ);
-
-                Quaternion.FromRotationMatrixToRef(chainRotationMatrix, chainRotation);
-            }
-
-            chainRotation.multiplyToRef(
-                Quaternion.InverseToRef(animatedRotation, IkSolver._InversedAnimatedRotation),
-                chainBone.ikLinkInfo!.ikRotation
-            );
-
-            // chainBone.updateLocalMatrix();
-            // chainBone.updateWorldMatrix();
-        }
-    }
-
-    private static readonly _IkPosition3 = new Vector3();
-    private static readonly _TargetPosition3 = new Vector3();
-    private static readonly _InversedChain2 = new Matrix();
-    private static readonly _ChainIkPosition = new Vector3();
-    private static readonly _ChainTargetPosition = new Vector3();
     private static readonly _Rotation2 = new Quaternion();
-    private static readonly _TargetVector = new Vector3();
-    private static readonly _InversedAnimatedRotation2 = new Quaternion();
+    private static readonly _Rotation3 = new Quaternion();
 
-    private _solvePlane(iteration: number, chain: IkChain, solveAxis: SolveAxis): void {
-        let minimumAngle: number;
-        let maximumAngle: number;
-        let rotateAxis: DeepImmutable<Vector3>;
+    private _solveChain(
+        chain: IkChain,
+        chainIndex: number,
+        ikPosition: DeepImmutable<Vector3>,
+        targetPosition: Vector3,
+        useAxis: boolean
+    ): void {
+        const targetBone = this.targetBone;
+        const chainBone = chain.bone;
 
-        switch (solveAxis) {
-        case SolveAxis.X:
-            minimumAngle = chain.minimumAngle!.x;
-            maximumAngle = chain.maximumAngle!.x;
-            rotateAxis = IkSolver._Right;
-            break;
-        case SolveAxis.Y:
-            minimumAngle = chain.minimumAngle!.y;
-            maximumAngle = chain.maximumAngle!.y;
-            rotateAxis = IkSolver._Up;
-            break;
-        case SolveAxis.Z:
-            minimumAngle = chain.minimumAngle!.z;
-            maximumAngle = chain.maximumAngle!.z;
-            rotateAxis = IkSolver._Forward;
-            break;
-        default:
-            throw new Error("Invalid solve axis");
+        const chainPosition = chainBone.getWorldTranslationToRef(IkSolver._ChainPosition);
+        const chainTargetVector = chainPosition.subtractToRef(targetPosition, IkSolver._ChainTargetVector).normalize();
+        const chainIkVector = chainPosition.subtractToRef(ikPosition, IkSolver._ChainIkVector).normalize();
+
+        const chainRotationAxis = Vector3.CrossToRef(chainTargetVector, chainIkVector, IkSolver._ChainRotationAxis);
+        const chainParentRotationMatrix = chainBone.parentBone !== null
+            ? chainBone.parentBone.getWorldMatrixToRef(IkSolver._ChainParentRotationMatrix)
+            : Matrix.IdentityToRef(IkSolver._ChainParentRotationMatrix);
+        chainParentRotationMatrix.setTranslationFromFloats(0, 0, 0);
+        if (chain.minimumAngle !== null && useAxis) {
+            switch (chain.solveAxis) {
+            case SolveAxis.None:
+                chainParentRotationMatrix.transposeToRef(chainParentRotationMatrix); // inverse
+                Vector3.TransformNormalToRef(chainRotationAxis, chainParentRotationMatrix, chainRotationAxis);
+                chainRotationAxis.normalize();
+                break;
+            case SolveAxis.X: {
+                const m = chainParentRotationMatrix.m;
+                const dot = Vector3.Dot(chainRotationAxis, IkSolver._Axis.set(m[0], m[1], m[2]));
+                chainRotationAxis.x = 0 <= dot ? 1 : -1;
+                chainRotationAxis.y = 0;
+                chainRotationAxis.z = 0;
+                break;
+            }
+            case SolveAxis.Y: {
+                const m = chainParentRotationMatrix.m;
+                const dot = Vector3.Dot(chainRotationAxis, IkSolver._Axis.set(m[4], m[5], m[6]));
+                chainRotationAxis.x = 0;
+                chainRotationAxis.y = 0 <= dot ? 1 : -1;
+                chainRotationAxis.z = 0;
+                break;
+            }
+            case SolveAxis.Z: {
+                const m = chainParentRotationMatrix.m;
+                const dot = Vector3.Dot(chainRotationAxis, IkSolver._Axis.set(m[8], m[9], m[10]));
+                chainRotationAxis.x = 0;
+                chainRotationAxis.y = 0;
+                chainRotationAxis.z = 0 <= dot ? 1 : -1;
+                break;
+            }
+            }
+        } else {
+            chainParentRotationMatrix.transposeToRef(chainParentRotationMatrix); // inverse
+            Vector3.TransformNormalToRef(chainRotationAxis, chainParentRotationMatrix, chainRotationAxis);
+            chainRotationAxis.normalize();
         }
-
-        const ikPosition = this.ikBone.getWorldTranslationToRef(IkSolver._IkPosition3);
-
-        const targetPosition = this.targetBone.getWorldTranslationToRef(IkSolver._TargetPosition3);
-
-        const inverseChain = chain.bone.getWorldMatrixToRef(IkSolver._InversedChain2).invert();
-
-        const chainIkPosition = Vector3.TransformCoordinatesToRef(ikPosition, inverseChain, IkSolver._ChainIkPosition);
-        const chainTargetPosition = Vector3.TransformCoordinatesToRef(targetPosition, inverseChain, IkSolver._ChainTargetPosition);
-
-        const chainIkVector = chainIkPosition.normalize();
-        const chainTargetVector = chainTargetPosition.normalize();
 
         let dot = Vector3.Dot(chainTargetVector, chainIkVector);
         dot = Math.max(-1.0, Math.min(1.0, dot));
 
-        let angle = Math.acos(dot);
+        const angle = Math.min(this.limitAngle * (chainIndex + 1), Math.acos(dot));
+        const ikRotation = Quaternion.RotationAxisToRef(chainRotationAxis, angle, IkSolver._Rotation);
+        ikRotation.multiplyToRef(chainBone.ikChainInfo!.ikRotation, chainBone.ikChainInfo!.ikRotation);
 
-        angle = Math.max(-this.limitAngle, Math.min(this.limitAngle, angle));
+        if (chain.minimumAngle !== null) {
+            const rotationVector = IkSolver._RotationVector;
 
-        const rot1 = Quaternion.RotationAxisToRef(rotateAxis, angle, IkSolver._Rotation2);
-        const targetVec1 = chainTargetVector.applyRotationQuaternionToRef(rot1, IkSolver._TargetVector);
-        const dot1 = Vector3.Dot(targetVec1, chainIkVector);
-
-        const rot2 = Quaternion.RotationAxisToRef(rotateAxis, -angle, IkSolver._Rotation2);
-        const targetVec2 = chainTargetVector.applyRotationQuaternionToRef(rot2, IkSolver._TargetVector);
-        const dot2 = Vector3.Dot(targetVec2, chainIkVector);
-
-        let newAngle = chain.planeModeAngle;
-        if (dot1 > dot2) newAngle += angle;
-        else newAngle -= angle;
-
-        if (iteration === 0) {
-            if (newAngle < minimumAngle || newAngle > maximumAngle) {
-                if (-newAngle > minimumAngle && -newAngle < maximumAngle) newAngle = -newAngle;
-                else {
-                    const halfRad = (minimumAngle + maximumAngle) * 0.5;
-                    if (Math.abs(halfRad - newAngle) > Math.abs(halfRad + newAngle)) newAngle = -newAngle;
+            chainBone.ikChainInfo!.ikRotation.multiplyToRef(chainBone.ikChainInfo!.localRotation, ikRotation);
+            const chainRotation = Matrix.FromQuaternionToRef(ikRotation, IkSolver._RotationMatrix).m;
+            const threshold = 88 * Math.PI / 180;
+            switch (chain.rotationOrder) {
+            case EulerRotationOrder.YXZ: {
+                rotationVector.x = Math.asin(-chainRotation[9] /* m32 */);
+                if (Math.abs(rotationVector.x) > threshold) {
+                    rotationVector.x = rotationVector.x < 0 ? -threshold : threshold;
                 }
+                let cosX = Math.cos(rotationVector.x);
+                if (cosX !== 0) cosX = 1 / cosX; // inverse
+                rotationVector.y = Math.atan2(chainRotation[8] /* m31 */ * cosX, chainRotation[10] /* m33 */ * cosX);
+                rotationVector.z = Math.atan2(chainRotation[1] /* m12 */ * cosX, chainRotation[5] /* m22 */ * cosX);
+                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+
+                Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, chainBone.ikChainInfo!.ikRotation);
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                break;
             }
+            case EulerRotationOrder.ZYX: {
+                rotationVector.y = Math.asin(-chainRotation[2] /* m13 */);
+                if (Math.abs(rotationVector.y) > threshold) {
+                    rotationVector.y = rotationVector.y < 0 ? -threshold : threshold;
+                }
+                let cosY = Math.cos(rotationVector.y);
+                if (cosY !== 0) cosY = 1 / cosY; // inverse
+                rotationVector.x = Math.atan2(chainRotation[6] /* m23 */ * cosY, chainRotation[10] /* m33 */ * cosY);
+                rotationVector.z = Math.atan2(chainRotation[1] /* m12 */ * cosY, chainRotation[0] /* m11 */ * cosY);
+                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+
+                Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, chainBone.ikChainInfo!.ikRotation);
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                break;
+            }
+            case EulerRotationOrder.XZY: {
+                rotationVector.z = Math.asin(-chainRotation[4] /* m21 */);
+                if (Math.abs(rotationVector.z) > threshold) {
+                    rotationVector.z = rotationVector.z < 0 ? -threshold : threshold;
+                }
+                let cosZ = Math.cos(rotationVector.z);
+                if (cosZ !== 0) cosZ = 1 / cosZ; // inverse
+                rotationVector.y = Math.atan2(chainRotation[6] /* m23 */ * cosZ, chainRotation[5] /* m22 */ * cosZ);
+                rotationVector.x = Math.atan2(chainRotation[8] /* m31 */ * cosZ, chainRotation[0] /* m11 */ * cosZ);
+                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+
+                Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, chainBone.ikChainInfo!.ikRotation);
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                chainBone.ikChainInfo!.ikRotation.multiplyToRef(
+                    Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, IkSolver._Rotation2),
+                    chainBone.ikChainInfo!.ikRotation
+                );
+                break;
+            }
+            }
+
+            const invertedLocalRotation = Quaternion.InverseToRef(chainBone.ikChainInfo!.localRotation, IkSolver._Rotation3);
+            chainBone.ikChainInfo!.ikRotation.multiplyToRef(invertedLocalRotation, chainBone.ikChainInfo!.ikRotation);
         }
 
-        newAngle = Math.max(minimumAngle, Math.min(maximumAngle, newAngle));
-        chain.planeModeAngle = newAngle;
-
-        const inversedAnimatedRotation = Quaternion.InverseToRef(
-            chain.bone.getAnimatedRotationToRef(IkSolver._InversedAnimatedRotation2),
-            IkSolver._InversedAnimatedRotation2
-        );
-        const ikRotation = Quaternion.RotationAxisToRef(rotateAxis, newAngle, chain.bone.ikLinkInfo!.ikRotation);
-        ikRotation.multiplyInPlace(inversedAnimatedRotation);
-
-        // chain.bone.updateLocalMatrix();
-        // chain.bone.updateWorldMatrix();
+        const chains = this._ikChains;
+        for (let i = chainIndex; i >= 0; --i) {
+            chains[i].bone.updateWorldMatrixForIkChain();
+        }
+        targetBone.updateWorldMatrix(false, false);
+        targetBone.getWorldTranslationToRef(targetPosition);
     }
 
-    private static readonly _TwoPi = Math.PI * 2;
-
-    private _normalizeAngle(angle: number): number {
-        while (angle >= IkSolver._TwoPi) angle -= IkSolver._TwoPi;
-        while (angle < 0) angle += IkSolver._TwoPi;
-        return angle;
-    }
-
-    private _diffAngle(a: number, b: number): number {
-        const diff = this._normalizeAngle(a) - this._normalizeAngle(b);
-        if (diff > Math.PI) return diff - IkSolver._TwoPi;
-        else if (diff < -Math.PI) return diff + IkSolver._TwoPi;
-        return diff;
-    }
-
-    private static readonly _Tests = [
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3(),
-        new Vector3()
-    ] as const;
-
-    private _decomposeToRef(
-        m: DeepImmutable<Matrix>,
-        before: DeepImmutable<Vector3>,
-        result: Vector3
-    ): Vector3 {
-        const r = result;
-
-        const sy = -m.m[2];
-        const e = 1.0e-6;
-
-        if (Math.abs(1.0 - Math.abs(sy)) < e) {
-            r.y = Math.asin(sy);
-            const sx = Math.sin(before.x);
-            const sz = Math.sin(before.z);
-            if (Math.abs(sx) < Math.abs(sz)) {
-                const cx = Math.cos(before.x);
-                if (cx > 0) {
-                    r.x = 0;
-                    r.z = Math.asin(-m.m[4]);
-                } else {
-                    r.x = Math.PI;
-                    r.z = Math.asin(m.m[4]);
-                }
-            } else {
-                const cz = Math.cos(before.z);
-                if (cz > 0) {
-                    r.z = 0;
-                    r.x = Math.asin(-m.m[9]);
-                } else {
-                    r.z = Math.PI;
-                    r.x = Math.asin(m.m[9]);
-                }
-            }
-        } else {
-            r.x = Math.atan2(m.m[6], m.m[10]);
-            r.y = Math.asin(-m.m[2]);
-            r.z = Math.atan2(m.m[1], m.m[0]);
+    private _limitAngle(
+        angle: Vector3,
+        min: DeepImmutable<Vector3>,
+        max: DeepImmutable<Vector3>,
+        useAxis: boolean
+    ): void {
+        if (angle.x < min.x) {
+            const diff = 2 * min.x - angle.x;
+            angle.x = (diff <= max.x && useAxis) ? diff : min.x;
+        } else if (angle.x > max.x) {
+            const diff = 2 * max.x - angle.x;
+            angle.x = (diff >= min.x && useAxis) ? diff : max.x;
         }
 
-        const pi = Math.PI;
-        const tests = IkSolver._Tests;
-        tests[0].set(r.x + pi, pi - r.y, r.z + pi);
-        tests[1].set(r.x + pi, pi - r.y, r.z - pi);
-        tests[2].set(r.x + pi, -pi - r.y, r.z + pi);
-        tests[3].set(r.x + pi, -pi - r.y, r.z - pi);
-        tests[4].set(r.x - pi, pi - r.y, r.z + pi);
-        tests[5].set(r.x - pi, pi - r.y, r.z - pi);
-        tests[6].set(r.x - pi, -pi - r.y, r.z + pi);
-        tests[7].set(r.x - pi, -pi - r.y, r.z - pi);
-
-        const errX = Math.abs(this._diffAngle(r.x, before.x));
-        const errY = Math.abs(this._diffAngle(r.y, before.y));
-        const errZ = Math.abs(this._diffAngle(r.z, before.z));
-        let minErr = errX + errY + errZ;
-
-        for (let i = 0; i < tests.length; ++i) {
-            const test = tests[i];
-            const err = Math.abs(this._diffAngle(test.x, before.x))
-                + Math.abs(this._diffAngle(test.y, before.y))
-                + Math.abs(this._diffAngle(test.z, before.z));
-            if (err < minErr) {
-                minErr = err;
-                r.copyFrom(test);
-            }
+        if (angle.y < min.y) {
+            const diff = 2 * min.y - angle.y;
+            angle.y = (diff <= max.y && useAxis) ? diff : min.y;
+        } else if (angle.y > max.y) {
+            const diff = 2 * max.y - angle.y;
+            angle.y = (diff >= min.y && useAxis) ? diff : max.y;
         }
-        return r;
+
+        if (angle.z < min.z) {
+            const diff = 2 * min.z - angle.z;
+            angle.z = (diff <= max.z && useAxis) ? diff : min.z;
+        } else if (angle.z > max.z) {
+            const diff = 2 * max.z - angle.z;
+            angle.z = (diff >= min.z && useAxis) ? diff : max.z;
+        }
     }
 }
