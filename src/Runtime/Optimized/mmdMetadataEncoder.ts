@@ -335,11 +335,21 @@ export class MmdMetadataEncoder {
         }
 
         if (this.encodePhysics) {
+            const boneNameMap = new Map<string, number>();
+            for (let i = 0; i < bones.length; ++i) {
+                boneNameMap.set(bones[i].name, i);
+            }
+
             const rigidBodies = metadata.rigidBodies;
             serializer.setUint32(rigidBodies.length); // rigidBodyCount
             for (let i = 0; i < rigidBodies.length; ++i) {
                 const rigidBody = rigidBodies[i];
-                serializer.setInt32(rigidBody.boneIndex); // boneIndex
+
+                const boneIndex = rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex
+                    ? boneNameMap.get(rigidBody.name) ?? -1 // fallback to name
+                    : rigidBody.boneIndex;
+
+                serializer.setInt32(boneIndex); // boneIndex
                 serializer.setUint8(rigidBody.collisionGroup); // collisionGroup
                 serializer.setUint8(rigidBody.shapeType); // shapeType
                 serializer.setUint16(rigidBody.collisionMask); // collisionMask
