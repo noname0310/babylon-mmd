@@ -27,6 +27,7 @@ import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
+import { OiComputeTransformInjector } from "@/Runtime/Util/oiComputeTransformInjector";
 
 import type { ISceneBuilder } from "../baseRuntime";
 
@@ -149,7 +150,12 @@ export class SceneBuilder implements ISceneBuilder {
                 file,
                 scene,
                 (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-            ).then(result => result.meshes[0] as MmdMesh);
+            ).then(result => {
+                const mmdMesh = result.meshes[0] as MmdMesh;
+                OiComputeTransformInjector.OverrideComputeTransformMatrices(mmdMesh.metadata.skeleton!);
+                mmdMesh.metadata.skeleton?._markAsDirty();
+                return mmdMesh;
+            });
             {
                 const meshes = mesh!.metadata.meshes;
                 for (let i = 0; i < meshes.length; ++i) {
