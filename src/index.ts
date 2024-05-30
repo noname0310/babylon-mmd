@@ -99,6 +99,7 @@ export { MmdPhysics, MmdPhysicsModel } from "@/Runtime/Physics/mmdPhysics";
 // Runtime/Util
 export { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 export { DisplayTimeFormat, MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
+export { OiComputeTransformInjector } from "@/Runtime/Util/oiComputeTransformInjector";
 
 // Runtime
 export { IDisposeObservable } from "@/Runtime/IDisposeObserable";

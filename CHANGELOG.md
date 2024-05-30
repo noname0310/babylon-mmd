@@ -5,6 +5,8 @@
 - refactor runtime behavior to be more similar to MMD
     - sub group morph is now ignored when resolving morph target
 
+- introduce `OiComputeTransformInjector` to update the transform matrix of an mmd model with an unsorted skeleton, without mmd runtime
+
 ## 0.44.0
 
 - handle zero volume rigidbody in `MmdAmmoPhysics`
