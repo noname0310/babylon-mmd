@@ -309,18 +309,16 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
         const worldMatrix = MmdRuntimeBone._TempMatrix;
 
+        const localPosition = this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempPosition2)
+            .addInPlace(position);
+
         const scaling = this.linkedBone.scaling;
         if (scaling.x !== 1 || scaling.y !== 1 || scaling.z !== 1) {
-            Matrix.ScalingToRef(scaling.x, scaling.y, scaling.z, worldMatrix);
-            const rotationMatrix = Matrix.FromQuaternionToRef(rotation, MmdRuntimeBone._TempMatrix2);
-            worldMatrix.multiplyToRef(rotationMatrix, worldMatrix);
+            Matrix.ComposeToRef(scaling, rotation, localPosition, worldMatrix);
         } else {
             Matrix.FromQuaternionToRef(rotation, worldMatrix);
+            worldMatrix.setTranslation(localPosition);
         }
-
-        const localPosition = this.linkedBone.getRestMatrix().getTranslationToRef(MmdRuntimeBone._TempPosition2);
-        localPosition.addInPlace(position);
-        worldMatrix.setTranslation(localPosition);
 
         if (this.parentBone !== null) {
             const parentWorldMatrix = this.parentBone.getWorldMatrixToRef(MmdRuntimeBone._TempMatrix2);
