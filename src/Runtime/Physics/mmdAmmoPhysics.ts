@@ -363,11 +363,9 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         const impostors: Nullable<MmdAmmoPhysicsImpostor>[] = new Array(rigidBodies.length);
 
         const boneNameMap = new Map<string, IMmdRuntimeBone>();
-        {
-            for (let i = 0; i < bones.length; ++i) {
-                const bone = bones[i];
-                boneNameMap.set(bone.name, bone);
-            }
+        for (let i = 0; i < bones.length; ++i) {
+            const bone = bones[i];
+            boneNameMap.set(bone.name, bone);
         }
         const resolveRigidBodyBone = (rigidBody: PmxObject.RigidBody): IMmdRuntimeBone | undefined => {
             if (rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex) {
