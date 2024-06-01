@@ -337,7 +337,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     /**
      * @internal
      */
-    public updateWorldMatrixForIkChain(): void {
+    public updateIkChainWorldMatrix(): void {
         const ikChainInfo = this.ikChainInfo!;
 
         const rotation = ikChainInfo.ikRotation.multiplyToRef(ikChainInfo.localRotation, MmdRuntimeBone._TempRotation);
@@ -363,6 +363,28 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         }
 
         worldMatrix.copyToArray(this.worldMatrix);
+
+        const childBones = this.childBones;
+        for (let i = 0; i < childBones.length; ++i) {
+            childBones[i]._updateWorldMatrixRecursive();
+        }
+    }
+
+    private static readonly _WorldMatrixUpdateStack: MmdRuntimeBone[] = [];
+
+    private _updateWorldMatrixRecursive(): void {
+        const stack = MmdRuntimeBone._WorldMatrixUpdateStack;
+        stack.length = 0;
+
+        stack.push(this);
+        while (stack.length > 0) {
+            const bone = stack.pop()!;
+            bone.updateWorldMatrix(false, false);
+
+            for (let i = 0, n = bone.childBones.length; i < n; ++i) {
+                stack.push(bone.childBones[i]);
+            }
+        }
     }
 
     /**

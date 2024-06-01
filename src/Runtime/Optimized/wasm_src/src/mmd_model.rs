@@ -18,6 +18,7 @@ pub(crate) struct MmdModel {
     ik_solver_arena: IkSolverArena,
     morph_controller: MmdMorphController,
     sorted_runtime_bones: Box<[u32]>,
+    bone_stack: Option<Vec<u32>>,
     external_physics: bool,
 }
 
@@ -44,6 +45,8 @@ impl MmdModel {
             }
 
             if 0 <= metadata.parent_bone_index && metadata.parent_bone_index < bone_arena.len() as i32 {
+                let parent_bone = &mut bone_arena[metadata.parent_bone_index as usize];
+                parent_bone.child_bones.push(i);
                 let bone: &mut MmdRuntimeBone = &mut bone_arena[i as usize];
                 bone.parent_bone = Some(metadata.parent_bone_index as u32);
             }
@@ -127,6 +130,22 @@ impl MmdModel {
             a.transform_order.cmp(&b.transform_order)
         });
 
+        let mut bone_max_depth = 0;
+        for i in 0..bone_arena.len() {
+            let bone = &bone_arena[sorted_runtime_bones[i] as usize];
+            if bone.parent_bone.is_none() {
+                fn calc_depth(bone_arena: &[MmdRuntimeBone], bone: u32, depth: u32) -> u32 {
+                    let bone = &bone_arena[bone as usize];
+                    let mut max_depth = depth;
+                    for child_bone in &bone.child_bones {
+                        max_depth = max_depth.max(calc_depth(bone_arena, *child_bone, depth + 1));
+                    }
+                    max_depth
+                }
+                bone_max_depth = bone_max_depth.max(calc_depth(&bone_arena, sorted_runtime_bones[i], 1));
+            }
+        }
+
         MmdModel {
             runtime_animation: None,
             animation_arena,
@@ -135,6 +154,7 @@ impl MmdModel {
             ik_solver_arena: IkSolverArena::new(ik_solver_arena.into_boxed_slice()),
             morph_controller,
             sorted_runtime_bones: sorted_runtime_bones.into_boxed_slice(),
+            bone_stack: Some(Vec::with_capacity(bone_max_depth as usize)),
             external_physics: false,
         }
     }
@@ -205,9 +225,13 @@ impl MmdModel {
             }
 
             let compute_ik = if let Some(ik_solver) = bone.ik_solver {
-                self.animation_arena.iksolver_state_arena()[ik_solver] != 0
+                if self.animation_arena.iksolver_state_arena()[ik_solver] != 0 {
+                    &mut self.bone_stack
+                } else {
+                    &mut None
+                }
             } else {
-                false
+                &mut None
             };
 
             MmdRuntimeBoneArena::update_world_matrix(

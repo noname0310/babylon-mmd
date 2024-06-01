@@ -71,7 +71,7 @@ impl MmdRuntimeBoneArena {
         append_transform_solver_arena: &mut AppendTransformSolverArena,
         ik_solver_arena: &IkSolverArena,
         use_physics: bool,
-        compute_ik: bool,
+        compute_ik_bone_stack: &mut Option<Vec<u32>>,
     ) {
         let bone = &bone_arena.arena()[bone_index];
 
@@ -125,7 +125,7 @@ impl MmdRuntimeBoneArena {
 
         let bone = &mut bone_arena.arena_mut()[bone_index];
 
-        if compute_ik {
+        if compute_ik_bone_stack.is_some() {
             if let Some(ik_solver_index) = bone.ik_solver {
                 let ik_solver = &ik_solver_arena.arena()[ik_solver_index];
                 if !(use_physics && ik_solver.can_skip_when_physics_enabled()) {
@@ -135,17 +135,21 @@ impl MmdRuntimeBoneArena {
                         animation_arena,
                         bone_arena,
                         append_transform_solver_arena,
-                        use_physics
+                        use_physics,
+                        compute_ik_bone_stack,
                     );
                 }
             }
         }
     }
 
-    pub(crate) fn update_world_matrix_for_ik_chain(
+    pub(crate) fn update_ik_chain_world_matrix(
         bone_arena: &mut MmdRuntimeBoneArena,
         bone_index: u32,
         animation_arena: &AnimationArena,
+        append_transform_solver_arena: &mut AppendTransformSolverArena,
+        ik_solver_arena: &IkSolverArena,
+        compute_ik_bone_stack: &mut Option<Vec<u32>>,
     ) {
         let bone = &bone_arena.arena()[bone_index];
         let ik_chain_info = bone.ik_chain_info.as_ref().unwrap();
@@ -169,6 +173,49 @@ impl MmdRuntimeBoneArena {
         };
         
         bone_arena.world_matrices_mut()[bone_index] = world_matrix;
+
+        let bone = &bone_arena.arena()[bone_index];
+        for i in 0..bone.child_bones.len() {
+            let child_bone = bone_arena.arena()[bone_index].child_bones[i];
+            MmdRuntimeBoneArena::update_world_matrix_recursive(
+                bone_arena,
+                child_bone,
+                animation_arena,
+                append_transform_solver_arena,
+                ik_solver_arena,
+                compute_ik_bone_stack,
+            );
+        }
+    }
+
+    fn update_world_matrix_recursive(
+        bone_arena: &mut MmdRuntimeBoneArena,
+        bone_index: u32,
+        animation_arena: &AnimationArena,
+        append_transform_solver_arena: &mut AppendTransformSolverArena,
+        ik_solver_arena: &IkSolverArena,
+        bone_stack: &mut Option<Vec<u32>>,
+    ) {
+        let bone_stack = bone_stack.as_mut().unwrap();
+        bone_stack.clear();
+        bone_stack.push(bone_index);
+
+        while let Some(bone_index) = bone_stack.pop() {
+            MmdRuntimeBoneArena::update_world_matrix(
+                bone_arena,
+                bone_index,
+                animation_arena,
+                append_transform_solver_arena,
+                ik_solver_arena,
+                false,
+                &mut None,
+            );
+
+            let bone = &bone_arena.arena()[bone_index];
+            for &child_bone in bone.child_bones.iter() {
+                bone_stack.push(child_bone);
+            }
+        }
     }
 }
 
@@ -178,6 +225,7 @@ pub(crate) struct MmdRuntimeBone {
     index: u32,
 
     pub(crate) parent_bone: Option<u32>,
+    pub(crate) child_bones: Vec<u32>,
     pub(crate) transform_order: i32,
     pub(crate) transform_after_physics: bool,
 
@@ -198,6 +246,7 @@ impl MmdRuntimeBone {
             index,
             
             parent_bone: None,
+            child_bones: Vec::new(),
             transform_order: 0,
             transform_after_physics: false,
 

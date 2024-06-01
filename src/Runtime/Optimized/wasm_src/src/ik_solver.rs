@@ -30,6 +30,7 @@ impl IkSolverArena {
         bone_arena: &mut MmdRuntimeBoneArena,
         append_transform_solver_arena: &mut AppendTransformSolverArena,
         use_physics: bool,
+        bone_stack: &mut Option<Vec<u32>>,
     ) {
         let solver = &ik_solver_arena.arena()[ik_solver_index];
         if solver.ik_chains.is_empty() {
@@ -50,7 +51,7 @@ impl IkSolverArena {
             append_transform_solver_arena,
             ik_solver_arena,
             use_physics,
-            true,
+            bone_stack
         );
         let mut target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
 
@@ -67,7 +68,7 @@ impl IkSolverArena {
                 append_transform_solver_arena,
                 ik_solver_arena,
                 use_physics,
-                false,
+                &mut None,
             );
         }
         MmdRuntimeBoneArena::update_world_matrix(
@@ -77,7 +78,7 @@ impl IkSolverArena {
             append_transform_solver_arena,
             ik_solver_arena,
             false,
-            false,
+            &mut None,
         );
         target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
 
@@ -98,6 +99,7 @@ impl IkSolverArena {
                         animation_arena,
                         bone_arena,
                         append_transform_solver_arena,
+                        bone_stack,
                         ik_position,
                         target_position,
                         i < half_iteration,
@@ -118,6 +120,7 @@ impl IkSolverArena {
         animation_arena: &AnimationArena,
         bone_arena: &mut MmdRuntimeBoneArena,
         append_transform_solver_arena: &mut AppendTransformSolverArena,
+        bone_stack: &mut Option<Vec<u32>>,
         ik_position: Vec3A,
         target_position: Vec3A,
         use_axis: bool,
@@ -273,10 +276,13 @@ impl IkSolverArena {
         }
 
         for i in (0..=ik_chain_index).rev() {
-            MmdRuntimeBoneArena::update_world_matrix_for_ik_chain(
+            MmdRuntimeBoneArena::update_ik_chain_world_matrix(
                 bone_arena,
                 solver.ik_chains[i as usize].bone,
                 animation_arena,
+                append_transform_solver_arena,
+                ik_solver_arena,
+                bone_stack,
             );
         }
         MmdRuntimeBoneArena::update_world_matrix(
@@ -286,7 +292,7 @@ impl IkSolverArena {
             append_transform_solver_arena,
             ik_solver_arena,
             false,
-            false,
+            &mut None,
         );
         Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis)
     }

@@ -402,7 +402,7 @@ export class IkSolver {
 
         const chains = this._ikChains;
         for (let i = chainIndex; i >= 0; --i) {
-            chains[i].bone.updateWorldMatrixForIkChain();
+            chains[i].bone.updateIkChainWorldMatrix();
         }
         targetBone.updateWorldMatrix(false, false);
         targetBone.getWorldTranslationToRef(targetPosition);
