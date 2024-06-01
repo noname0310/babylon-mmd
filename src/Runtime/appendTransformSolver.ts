@@ -113,7 +113,7 @@ export class AppendTransformSolver {
             const appendPosition = this.appendPosition;
             if (this.isLocal) {
                 const targetBoneWorldMatrix = targetBone.getWorldMatrixToRef(AppendTransformSolver._TargetBoneWorldMatrix);
-                targetBone.linkedBone.getAbsoluteInverseBindMatrix().multiplyToRef(targetBoneWorldMatrix, targetBoneWorldMatrix);
+                targetBoneWorldMatrix.multiplyToRef(targetBone.linkedBone.getAbsoluteInverseBindMatrix(), targetBoneWorldMatrix);
                 targetBoneWorldMatrix.getTranslationToRef(appendPosition);
             } else {
                 if (targetBone.appendTransformSolver !== null && targetBone.appendTransformSolver.affectPosition) {

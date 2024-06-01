@@ -20,6 +20,7 @@ import { Scene } from "@babylonjs/core/scene";
 
 // import havok from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
@@ -40,15 +41,16 @@ import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-declare const FPSMeter: any;
-
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
         pmxLoader.loggingEnabled = true;
-        // const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            material.forceDepthWrite = true;
+            material.useLogarithmicDepth = true;
+        };
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
@@ -68,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
             orthoRightOffset: 50
         });
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        createDefaultGround(scene, { useLogarithmicDepth: true });
 
         const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
