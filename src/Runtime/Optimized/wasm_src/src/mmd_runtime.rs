@@ -73,7 +73,7 @@ impl MmdRuntime {
     }
 
     #[wasm_bindgen(js_name = "getAnimationIkSolverStateArena")]
-    pub fn get_animation_iksolver_state_arena_ptr(&mut self, ptr: *mut usize) -> *mut u8 {
+    pub fn get_animation_iksolver_state_arena(&mut self, ptr: *mut usize) -> *mut u8 {
         let ptr = ptr as *mut MmdModel;
         let animation_arena = unsafe {
             &mut *ptr
@@ -121,6 +121,16 @@ impl MmdRuntime {
             &mut *ptr
         }.runtime_animation_mut();
         *animation = runtime_animation;
+    }
+
+    #[wasm_bindgen(js_name = "setExternalPhysics")]
+    pub fn set_external_physics(&mut self, ptr: *mut usize, external_physics: bool) {
+        let ptr = ptr as *mut MmdModel;
+
+        let physics = unsafe {
+            &mut *ptr
+        }.external_physics_mut();
+        *physics = external_physics;
     }
 
     #[wasm_bindgen(js_name = "beforePhysics")]
@@ -198,32 +208,6 @@ impl MmdRuntime {
             mmd_runtime.after_physics();
             mmd_runtime.locked = 0;
         });
-    }
-
-    #[wasm_bindgen(js_name = "updateBoneWorldMatrix")]
-    pub fn update_bone_world_matrix(&mut self, ptr: *mut usize, root: u32) {
-        let ptr = ptr as *mut MmdModel;
-        let bone_arena = unsafe {
-            &mut *ptr
-        }.bone_arena_mut();
-        bone_arena.update_world_matrix(root);
-    }
-
-    #[wasm_bindgen(js_name = "updateBackBufferBoneWorldMatrix")]
-    pub fn update_back_buffer_bone_world_matrix(&mut self, ptr: *mut usize, root: u32) {
-        let ptr = ptr as *mut MmdModel;
-        let bone_arena = unsafe {
-            &mut *ptr
-        }.bone_arena_mut();
-        bone_arena.update_back_buffer_world_matrix(root);
-    }
-
-    #[wasm_bindgen(js_name = "updataBoneLocalMatrices")]
-    pub fn update_bone_local_matrices(&mut self, ptr: *mut usize) {
-        let ptr = ptr as *mut MmdModel;
-        unsafe {
-            &mut *ptr
-        }.update_local_matrices();
     }
 }
 

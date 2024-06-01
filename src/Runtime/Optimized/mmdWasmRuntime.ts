@@ -37,7 +37,7 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
      *
      * Asynchronous Multi-thread optimization applies when possible
      *
-     * If you are using havok or ammo.js physics, all matrix computations are computed before the physics stage (the transformAfterPhysics property is ignored)
+     * If you are using havok or ammo.js physics, only beforePhysics process is asynchronous
      */
     Buffered
 }
@@ -506,7 +506,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             if (this.wasmInstance.MmdRuntime.bufferedUpdate === undefined) { // single thread environment fallback
                 this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime ?? undefined);
-                this.wasmInternal.afterPhysics();
+                if (this._physics === null) this.wasmInternal.afterPhysics();
             }
 
             this.lock.wait(); // ensure that the runtime is not evaluating animations
@@ -530,14 +530,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
                     // compute world matrix on wasm side synchronously
                     this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
-                    this.wasmInternal.afterPhysics();
+                    if (this._physics === null) this.wasmInternal.afterPhysics();
                 } else {
                     // if there is uninitialized new model, evaluate animation synchronously
                     if (this._needToSyncEvaluate) {
                         this._needToSyncEvaluate = false;
                         // compute world matrix on wasm side synchronously
                         this.wasmInternal.beforePhysics();
-                        this.wasmInternal.afterPhysics();
+                        if (this._physics === null) this.wasmInternal.afterPhysics();
                     }
                 }
             } else {
@@ -555,7 +555,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
                     // compute world matrix on wasm side synchronously
                     this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime);
-                    this.wasmInternal.afterPhysics();
+                    if (this._physics === null) this.wasmInternal.afterPhysics();
                 }
             }
 
@@ -576,7 +576,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             // compute world matrix on wasm side asynchronously
-            this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
+            if (this._physics === null) {
+                this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
+            }
             this._lastRequestAnimationFrameTime = elapsedFrameTime;
 
             // physics initialization must be buffered 1 frame
@@ -640,7 +642,15 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             for (let i = 0; i < models.length; ++i) {
                 const model = models[i];
                 model.afterPhysicsAndWasm();
-                model.afterPhysics();
+                model.afterPhysics(); // actually, afterPhysics can be called before "wasm side afterPhysics"
+            }
+            if (this._physics !== null) {
+                { // afterPhysics is not thread safe, buffered evaluation must be done after afterPhysics
+                    this.wasmInternal.swapWorldMatrixBuffer();
+                    this.wasmInternal.afterPhysics();
+                    this.wasmInternal.swapWorldMatrixBuffer();
+                }
+                this.wasmInstance.MmdRuntime.bufferedBeforePhysics?.(this.wasmInternal, this._lastRequestAnimationFrameTime ?? undefined);
             }
         } else {
             for (let i = 0; i < models.length; ++i) models[i].afterPhysicsAndWasm();
@@ -988,13 +998,6 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         for (let i = 0; i < models.length; ++i) {
             models[i].onEvaluationTypeChanged(value);
         }
-    }
-
-    /**
-     * Indicates whether the MMD WASM runtime is reading the back buffer of the WASM
-     */
-    public get usingWasmBackBuffer(): boolean {
-        return this._usingWasmBackBuffer;
     }
 
     /**

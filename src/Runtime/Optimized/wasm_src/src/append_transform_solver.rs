@@ -26,39 +26,86 @@ impl AppendTransformSolverArena {
         UncheckedSliceMut::new(&mut self.arena)
     }
 
-    pub(crate) fn update(&mut self, index: u32, animation_arena: &AnimationArena, bone_arena: &MmdRuntimeBoneArena) {
+    pub(crate) fn reset_state(&mut self) {
+        for solver in self.arena_mut().iter_mut() {
+            solver.append_position = Vec3A::ZERO;
+            solver.append_rotation = Quat::IDENTITY;
+        }
+    }
+
+    pub(crate) fn update(
+        &mut self,
+        index: u32,
+        animation_arena: &AnimationArena,
+        bone_arena: &mut MmdRuntimeBoneArena,
+        animated_rotation: Quat,
+        animated_position: Vec3A,
+    ) {
         let solver = &self.arena()[index];
-        let target_bone = &bone_arena.arena()[solver.target_bone];
 
         if solver.affect_rotation {
-            let mut rotation = if solver.is_local {
-                target_bone.animated_rotation(animation_arena)
-            } else if let Some(append_transform_solver) = target_bone.append_transform_solver {
-                self.arena()[append_transform_solver].append_rotation_offset
+            let mut append_rotation = if solver.is_local {
+                Quat::from_mat4(&bone_arena.world_matrices()[solver.target_bone])
             } else {
-                target_bone.animated_rotation(animation_arena)
+                let target_bone = &mut bone_arena.arena_mut()[solver.target_bone];
+
+                if let Some(append_transform_solver) = target_bone.append_transform_solver {
+                    let target_solver = &self.arena()[append_transform_solver];
+                    if target_solver.affect_rotation {
+                        target_solver.append_rotation
+                    } else {
+                        target_bone.animated_rotation(animation_arena)
+                    }
+                } else {
+                    target_bone.animated_rotation(animation_arena)
+                }
             };
 
-            if let Some(ik_rotation) = target_bone.ik_rotation {
-                rotation = ik_rotation * rotation;
+            let target_bone = &mut bone_arena.arena_mut()[solver.target_bone];
+            if let Some(ik_chain_info) = &target_bone.ik_chain_info {
+                append_rotation = ik_chain_info.ik_rotation() * append_rotation
+            };
+
+            if solver.ratio != 1.0 {
+                append_rotation = Quat::IDENTITY.slerp(append_rotation, solver.ratio);
             }
 
+            append_rotation = animated_rotation * append_rotation;
+
             let solver = &mut self.arena_mut()[index];
-            solver.append_rotation_offset = Quat::IDENTITY.slerp(rotation, solver.ratio);
+            solver.append_rotation = append_rotation;
         }
 
-        let solver = &mut self.arena_mut()[index];
+        let solver = &self.arena()[index];
+
         if solver.affect_position {
-            let position = if solver.is_local {
-                target_bone.animation_position_offset(animation_arena)
-            } else if let Some(append_transform_solver) = target_bone.append_transform_solver {
-                self.arena()[append_transform_solver].append_position_offset
+            let mut append_position = if solver.is_local {
+                let target_bone_world_matrix = bone_arena.world_matrices()[solver.target_bone];
+                let absolute_inverse_bind_matrix = bone_arena.arena()[solver.target_bone].absolute_inverse_bind_matrix;
+                Vec3A::from((absolute_inverse_bind_matrix * target_bone_world_matrix).w_axis)
             } else {
-                target_bone.animation_position_offset(animation_arena)
+                let target_bone = &mut bone_arena.arena_mut()[solver.target_bone];
+
+                if let Some(append_transform_solver) = target_bone.append_transform_solver {
+                    let target_solver = &self.arena()[append_transform_solver];
+                    if target_solver.affect_position {
+                        target_solver.append_position
+                    } else {
+                        target_bone.animation_position_offset(animation_arena)
+                    }
+                } else {
+                    target_bone.animation_position_offset(animation_arena)
+                }
             };
 
+            if solver.ratio != 1.0 {
+                append_position *= solver.ratio;
+            }
+
+            append_position += animated_position;
+
             let solver = &mut self.arena_mut()[index];
-            solver.append_position_offset = position * solver.ratio;
+            solver.append_position = append_position;
         }
     }
 }
@@ -71,8 +118,8 @@ pub(crate) struct AppendTransformSolver {
 
     target_bone: u32,
 
-    append_position_offset: Vec3A,
-    append_rotation_offset: Quat,
+    append_position: Vec3A,
+    append_rotation: Quat,
 }
 
 impl AppendTransformSolver {
@@ -87,8 +134,8 @@ impl AppendTransformSolver {
             affect_position: bone_flag & BoneFlag::HasAppendMove as u16 != 0,
             ratio,
             target_bone,
-            append_position_offset: Vec3A::ZERO,
-            append_rotation_offset: Quat::IDENTITY,
+            append_position: Vec3A::ZERO,
+            append_rotation: Quat::IDENTITY,
         }
     }
 
@@ -103,12 +150,12 @@ impl AppendTransformSolver {
     }
 
     #[inline]
-    pub(crate) fn append_position_offset(&self) -> Vec3A {
-        self.append_position_offset
+    pub(crate) fn append_position(&self) -> Vec3A {
+        self.append_position
     }
 
     #[inline]
-    pub(crate) fn append_rotation_offset(&self) -> Quat {
-        self.append_rotation_offset
+    pub(crate) fn append_rotation(&self) -> Quat {
+        self.append_rotation
     }
 }

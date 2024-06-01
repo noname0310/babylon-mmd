@@ -1,10 +1,11 @@
 use glam::{Vec3A, Quat};
 
-use crate::{mmd_runtime_bone::MmdRuntimeBone, unchecked_slice::{UncheckedSliceMut, UncheckedSlice}};
+use crate::mmd_runtime_bone::MmdRuntimeBone;
+use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct AnimatedBoneData {
+pub(crate) struct AnimatedBoneData {
     pub(crate) position: Vec3A,
     pub(crate) rotation: Quat,
     pub(crate) scale: Vec3A,

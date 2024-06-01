@@ -1,12 +1,13 @@
+mod animation;
 mod animation_arena;
+mod append_transform_solver;
+mod ik_chain_info;
 mod ik_solver;
+mod mmd_model_metadata;
 mod mmd_model;
+mod mmd_morph_controller;
 mod mmd_runtime_bone;
 mod mmd_runtime;
-mod append_transform_solver;
-mod mmd_model_metadata;
-mod mmd_morph_controller;
-mod animation;
 mod unchecked_slice;
 
 use wasm_bindgen::prelude::*;

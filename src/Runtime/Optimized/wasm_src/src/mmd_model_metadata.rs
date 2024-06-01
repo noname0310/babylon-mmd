@@ -1,5 +1,5 @@
 use byte_slice_cast::{AsSliceOf, FromByteSlice};
-use glam::{Quat, Vec3A};
+use glam::{Mat4, Quat, Vec3A, Vec4};
 use num_traits::FromBytes;
 
 pub(crate) struct MetadataBuffer<'a> {
@@ -111,6 +111,7 @@ impl<'a> MetadataBuffer<'a> {
 
 pub(crate) struct BoneMetadata {
     pub(crate) rest_position: Vec3A,
+    pub(crate) absolute_inverse_bind_matrix: Mat4,
     pub(crate) parent_bone_index: i32,
     pub(crate) transform_order: i32,
     pub(crate) flag: u16,
@@ -194,6 +195,12 @@ impl<'a> BoneMetadataReader<'a> {
     pub(crate) fn enumerate(mut self, mut f: impl FnMut(u32, BoneMetadata)) -> MorphMetadataReader<'a> {
         for i in 0..self.bone_count {
             let rest_position = self.buffer.read_vector();
+            let absolute_inverse_bind_matrix = Mat4::from_cols(
+                Vec4::new(self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>()),
+                Vec4::new(self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>()),
+                Vec4::new(self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>()),
+                Vec4::new(self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>(), self.buffer.read::<f32>()),
+            );
             let parent_bone_index = self.buffer.read::<i32>();
             let transform_order = self.buffer.read::<i32>();
             let flag = self.buffer.read::<u16>();
@@ -241,6 +248,7 @@ impl<'a> BoneMetadataReader<'a> {
             };
             f(i, BoneMetadata {
                 rest_position,
+                absolute_inverse_bind_matrix,
                 parent_bone_index,
                 transform_order,
                 flag,
@@ -328,7 +336,7 @@ impl<'a> MorphMetadataReader<'a> {
 }
 
 pub(crate) struct RigidbodyMetadata {
-    bone_index: i32,
+    pub(crate) bone_index: i32,
     collision_group: u8,
     collision_mask: u16,
     shape_type: u8,
@@ -340,7 +348,7 @@ pub(crate) struct RigidbodyMetadata {
     angular_damping: f32,
     repulsion: f32,
     friction: f32,
-    physics_mode: u8,
+    pub(crate) physics_mode: u8,
 }
 
 pub(crate) enum RigidbodyShapeType {

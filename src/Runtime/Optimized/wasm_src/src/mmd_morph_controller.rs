@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use glam::Quat;
 
 use crate::mmd_model_metadata::MorphMetadata;

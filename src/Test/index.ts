@@ -6,7 +6,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 // import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
 // import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/appendTransformTestScene";
+import { SceneBuilder } from "./Scene/wasmRuntimeTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 

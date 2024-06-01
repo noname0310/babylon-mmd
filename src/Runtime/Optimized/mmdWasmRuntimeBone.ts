@@ -75,10 +75,6 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      */
     public readonly ikSolverIndex: number;
 
-    private readonly _boneIndex: number;
-    private readonly _mmdRuntime: MmdWasmRuntime;
-    private readonly _mmdModelPtr: number;
-
     /**
      * Create MMD WASM runtime bone
      * @param linkedBone Linked Babylon.js bone
@@ -95,8 +91,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
         boneIndex: number,
         ikSolverIndex: number,
-        mmdRuntime: MmdWasmRuntime,
-        mmdModelPtr: number
+        mmdRuntime: MmdWasmRuntime
     ) {
         this.linkedBone = linkedBone;
 
@@ -111,10 +106,6 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         this._worldMatrix = new WasmBufferedArraySpan(mmdRuntime.wasmInstance, worldTransformMatrices, boneIndex * 16 * 4, 16);
 
         this.ikSolverIndex = ikSolverIndex;
-
-        this._boneIndex = boneIndex;
-        this._mmdRuntime = mmdRuntime;
-        this._mmdModelPtr = mmdModelPtr;
     }
 
     /**
@@ -123,17 +114,6 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      */
     public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
         this._worldMatrix.updateBackBufferReference(wasmInstance);
-    }
-
-    /**
-     * Update the world matrix of this bone and its children bones recursively
-     */
-    public updateWorldMatrix(): void {
-        if (this._mmdRuntime.usingWasmBackBuffer) {
-            this._mmdRuntime.wasmInternal.updateBackBufferBoneWorldMatrix(this._mmdModelPtr, this._boneIndex);
-        } else {
-            this._mmdRuntime.wasmInternal.updateBoneWorldMatrix(this._mmdModelPtr, this._boneIndex);
-        }
     }
 
     /**

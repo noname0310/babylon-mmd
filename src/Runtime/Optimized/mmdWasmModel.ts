@@ -201,8 +201,7 @@ export class MmdWasmModel implements IMmdModel {
             skeleton.bones,
             mmdMetadata.bones,
             worldTransformMatrices,
-            wasmRuntime,
-            ptr
+            wasmRuntime
         );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
@@ -245,11 +244,7 @@ export class MmdWasmModel implements IMmdModel {
         );
 
         if (externalPhysics !== null) {
-            this.beforePhysicsAndWasm(null); // for apply bone morph
-            wasmRuntimeInternal.updataBoneLocalMatrices(ptr);
-            for (let i = 0; i < sortedBones.length; ++i) {
-                if (sortedBones[i].parentBone === null) sortedBones[i].updateWorldMatrix();
-            }
+            wasmRuntimeInternal.setExternalPhysics(ptr, true);
             this._physicsModel = externalPhysics.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
@@ -515,8 +510,7 @@ export class MmdWasmModel implements IMmdModel {
         bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[],
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
-        runtime: MmdWasmRuntime,
-        mmdModelPtr: number
+        runtime: MmdWasmRuntime
     ): readonly MmdWasmRuntimeBone[] {
         const runtimeBones: MmdWasmRuntimeBone[] = [];
 
@@ -537,8 +531,7 @@ export class MmdWasmModel implements IMmdModel {
                     worldTransformMatrices,
                     i,
                     ikSolverIndex,
-                    runtime,
-                    mmdModelPtr
+                    runtime
                 )
             );
         }

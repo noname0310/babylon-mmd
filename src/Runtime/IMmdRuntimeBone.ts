@@ -56,14 +56,6 @@ export interface IMmdRuntimeBone {
     readonly worldMatrix: Float32Array;
 
     /**
-     * Update the world matrix of this bone to account for append transform and ik
-     * @param usePhysics Whether to use physics simulation
-     * @param computeIk Whether to compute ik
-     * @internal
-     */
-    updateWorldMatrix(usePhysics: boolean, computeIk: boolean): void;
-
-    /**
      * Get the world matrix of this bone
      *
      * The result of this method is not same as `linkedBone.getFinalMatrix()`

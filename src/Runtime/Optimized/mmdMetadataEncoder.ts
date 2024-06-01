@@ -14,6 +14,7 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  * ikCount: uint32
  * {
  *  restPosition: float32[3]
+ *  absoluteInverseBindMatrix: float32[16]
  *  parentBoneIndex: int32
  *  transformOrder: int32
  *  flag: uint16
@@ -113,6 +114,7 @@ export class MmdMetadataEncoder {
         const bones = metadata.bones;
         for (let i = 0; i < bones.length; ++i) {
             dataLength += 4 * 3 // restPosition
+                + 4 * 16 // absoluteInverseBindMatrix
                 + 4 // parentBoneIndex
                 + 4 // transformOrder
                 + 2 // flag
@@ -218,7 +220,7 @@ export class MmdMetadataEncoder {
         return dataLength;
     }
 
-    public encode(metadata: MmdModelMetadata, linkedBone: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
+    public encode(metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
         const serializer = new MmdDataSerializer(buffer.buffer);
         serializer.offset = buffer.byteOffset;
 
@@ -241,7 +243,9 @@ export class MmdMetadataEncoder {
         serializer.setUint32(ikCount); // ikCount
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
-            serializer.setFloat32Array(linkedBone[i].getRestMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
+            const linkedBone = linkedBones[i];
+            serializer.setFloat32Array(linkedBone.getRestMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
+            serializer.setFloat32Array(linkedBone.getAbsoluteInverseBindMatrix().m); // absoluteInverseBindMatrix
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
             serializer.setInt32(bone.transformOrder); // transformOrder
             serializer.setUint16(bone.flag); // flag
