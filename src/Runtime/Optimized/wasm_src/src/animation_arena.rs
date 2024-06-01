@@ -19,11 +19,10 @@ pub(crate) struct AnimationArena {
 
 impl AnimationArena {
     pub(crate) fn new(runtime_bones: &[MmdRuntimeBone], ik_count: u32, morph_count: u32) -> Self {
-        let mut bone_arena = Vec::with_capacity(runtime_bones.len() as usize);
-        for i in 0..runtime_bones.len() {
-            let rest_position = runtime_bones[i].rest_position;
+        let mut bone_arena = Vec::with_capacity(runtime_bones.len());
+        for runtime_bone in runtime_bones {
             bone_arena.push(AnimatedBoneData {
-                position: rest_position,
+                position: runtime_bone.rest_position,
                 rotation: Quat::IDENTITY,
                 scale: Vec3A::ONE,
             });

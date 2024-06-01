@@ -223,7 +223,7 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track_mut().frame_numbers.as_mut_ptr() as *mut u32
+        animation.property_track_mut().frame_numbers.as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "getPropertyTrackIkStates")]
@@ -233,7 +233,7 @@ impl AnimationPool {
         let animation = unsafe {
             &mut *animation_ptr
         };
-        animation.property_track_mut().ik_states_mut(index).as_mut_ptr() as *mut u8
+        animation.property_track_mut().ik_states_mut(index).as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "destroyAnimation")]

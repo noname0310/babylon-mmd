@@ -112,10 +112,7 @@ impl MmdRuntime {
     pub fn set_runtime_animation(&mut self, ptr: *mut usize, runtime_animation: *mut usize) {
         let ptr = ptr as *mut MmdModel;
 
-        let runtime_animation = match NonNull::new(runtime_animation as *mut MmdRuntimeAnimation) {
-            Some(runtime_animation) => Some(runtime_animation),
-            None => None,
-        };
+        let runtime_animation = NonNull::new(runtime_animation as *mut MmdRuntimeAnimation);
 
         let animation = unsafe {
             &mut *ptr
@@ -141,7 +138,7 @@ impl MmdRuntime {
                 self.mmd_models.par_iter_mut().for_each(|mmd_model| {
                     mmd_model.before_physics(frame_time);
                 });
-            } else if 0 < self.mmd_models.len() {
+            } else if !self.mmd_models.is_empty() {
                 self.mmd_models[0].before_physics(frame_time);
             }
         }
@@ -160,7 +157,7 @@ impl MmdRuntime {
                 self.mmd_models.par_iter_mut().for_each(|mmd_model| {
                     mmd_model.after_physics();
                 });
-            } else if 0 < self.mmd_models.len() {
+            } else if !self.mmd_models.is_empty() {
                 self.mmd_models[0].after_physics();
             }
         }

@@ -110,6 +110,7 @@ impl IkSolverArena {
         }
     }
 
+    #[allow(clippy::too_many_arguments)] // can be improved in the future
     fn solve_chain(
         ik_solver_arena: &IkSolverArena,
         ik_solver_index: u32,
@@ -187,7 +188,7 @@ impl IkSolverArena {
                 let threshold = 88.0 * std::f32::consts::PI / 180.0;
                 
                 let new_ik_rotation = match chain.rotation_order {
-                    EulerRotationOrder::YXZ => {
+                    EulerRotationOrder::Yxz => {
                         let r_x = (-chain_rotation.z_axis.y).asin();
                         let r_x = if r_x.abs() > threshold {
                             if r_x < 0.0 { -threshold } else { threshold }
@@ -212,7 +213,7 @@ impl IkSolverArena {
                             Quat::from_axis_angle(Vec3::X, r_x) *
                             Quat::from_axis_angle(Vec3::Z, r_z)
                     }
-                    EulerRotationOrder::ZYX => {
+                    EulerRotationOrder::Zyx => {
                         let r_y = (-chain_rotation.x_axis.z).asin();
                         let r_y = if r_y.abs() > threshold {
                             if r_y < 0.0 { -threshold } else { threshold }
@@ -237,7 +238,7 @@ impl IkSolverArena {
                             Quat::from_axis_angle(Vec3::Y, r_y) *
                             Quat::from_axis_angle(Vec3::X, r_x)
                     }
-                    EulerRotationOrder::XZY => {
+                    EulerRotationOrder::Xzy => {
                         let r_z = (-chain_rotation.y_axis.x).asin();
                         let r_z = if r_z.abs() > threshold {
                             if r_z < 0.0 { -threshold } else { threshold }
@@ -309,9 +310,9 @@ impl IkSolverArena {
 }
 
 enum EulerRotationOrder {
-    YXZ,
-    ZYX,
-    XZY,
+    Yxz,
+    Zyx,
+    Xzy,
 }
 
 #[derive(PartialEq)]
@@ -341,11 +342,11 @@ impl IkChain {
 
             let half_pi = std::f32::consts::PI * 0.5;
             let rotation_order = if -half_pi < min.x && max.x < half_pi {
-                EulerRotationOrder::YXZ
+                EulerRotationOrder::Yxz
             } else if -half_pi < min.y && max.y < half_pi {
-                EulerRotationOrder::ZYX
+                EulerRotationOrder::Zyx
             } else /* if -half_pi < minimum_angle.z && maximum_angle.z < half_pi */ {
-                EulerRotationOrder::XZY
+                EulerRotationOrder::Xzy
             };
 
             let solve_axis = if min.x == 0.0 && max.x == 0.0 && min.y == 0.0 && max.y == 0.0 && min.z == 0.0 && max.z == 0.0 {
@@ -373,7 +374,7 @@ impl IkChain {
             IkChain {
                 bone,
                 angle_limits,
-                rotation_order: EulerRotationOrder::XZY, // not used
+                rotation_order: EulerRotationOrder::Xzy, // not used
                 solve_axis: SolveAxis::None,
             }
         }

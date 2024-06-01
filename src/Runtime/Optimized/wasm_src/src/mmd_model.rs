@@ -37,7 +37,7 @@ impl MmdModel {
         let reader = reader.enumerate(|i, metadata| {
             {
                 let bone = &mut bone_arena[i as usize];
-                bone.rest_position = metadata.rest_position.into();
+                bone.rest_position = metadata.rest_position;
                 bone.absolute_inverse_bind_matrix = metadata.absolute_inverse_bind_matrix;
                 bone.transform_order = metadata.transform_order;
                 bone.transform_after_physics = metadata.flag & BoneFlag::TransformAfterPhysics as u16 != 0;
@@ -103,10 +103,8 @@ impl MmdModel {
         let mut is_physics_bone = vec![false; bone_arena.len()];
 
         let reader = reader.for_each(|metadata| {
-            if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 {
-                if 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
-                    is_physics_bone[metadata.bone_index as usize] = true;
-                }
+            if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+                is_physics_bone[metadata.bone_index as usize] = true;
             }
             // todo add physics
         });
