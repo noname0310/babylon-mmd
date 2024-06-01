@@ -70,6 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
             orthoRightOffset: 50
         });
         shadowGenerator.transparencyShadow = true;
+        shadowGenerator.enableSoftTransparentShadow = true;
         createDefaultGround(scene, { useLogarithmicDepth: true });
 
         const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
