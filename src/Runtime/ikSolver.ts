@@ -228,7 +228,6 @@ export class IkSolver {
     private static readonly _ChainParentRotationMatrix = new Matrix();
     private static readonly _Axis = new Vector3();
     private static readonly _Rotation = new Quaternion();
-    private static readonly _RotationVector = new Vector3();
     private static readonly _RotationMatrix = new Matrix();
     private static readonly _Right: DeepImmutable<Vector3> = Vector3.Right();
     private static readonly _Up: DeepImmutable<Vector3> = Vector3.Up();
@@ -251,6 +250,8 @@ export class IkSolver {
         const chainIkVector = chainPosition.subtractToRef(ikPosition, IkSolver._ChainIkVector).normalize();
 
         const chainRotationAxis = Vector3.CrossToRef(chainTargetVector, chainIkVector, IkSolver._ChainRotationAxis);
+        if (chainRotationAxis.lengthSquared() < 1.0e-8) return;
+
         const chainParentRotationMatrix = chainBone.parentBone !== null
             ? chainBone.parentBone.getWorldMatrixToRef(IkSolver._ChainParentRotationMatrix)
             : Matrix.IdentityToRef(IkSolver._ChainParentRotationMatrix);
@@ -301,74 +302,94 @@ export class IkSolver {
         ikRotation.multiplyToRef(chainBone.ikChainInfo!.ikRotation, chainBone.ikChainInfo!.ikRotation);
 
         if (chain.minimumAngle !== null) {
-            const rotationVector = IkSolver._RotationVector;
-
             chainBone.ikChainInfo!.ikRotation.multiplyToRef(chainBone.ikChainInfo!.localRotation, ikRotation);
             const chainRotation = Matrix.FromQuaternionToRef(ikRotation, IkSolver._RotationMatrix).m;
             const threshold = 88 * Math.PI / 180;
+
+            let rX: number;
+            let rY: number;
+            let rZ: number;
             switch (chain.rotationOrder) {
             case EulerRotationOrder.YXZ: {
-                rotationVector.x = Math.asin(-chainRotation[9] /* m32 */);
-                if (Math.abs(rotationVector.x) > threshold) {
-                    rotationVector.x = rotationVector.x < 0 ? -threshold : threshold;
+                rX = Math.asin(-chainRotation[9] /* m32 */);
+                if (Math.abs(rX) > threshold) {
+                    rX = rX < 0 ? -threshold : threshold;
                 }
-                let cosX = Math.cos(rotationVector.x);
+                let cosX = Math.cos(rX);
                 if (cosX !== 0) cosX = 1 / cosX; // inverse
-                rotationVector.y = Math.atan2(chainRotation[8] /* m31 */ * cosX, chainRotation[10] /* m33 */ * cosX);
-                rotationVector.z = Math.atan2(chainRotation[1] /* m12 */ * cosX, chainRotation[5] /* m22 */ * cosX);
-                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+                rY = Math.atan2(chainRotation[8] /* m31 */ * cosX, chainRotation[10] /* m33 */ * cosX);
+                rZ = Math.atan2(chainRotation[1] /* m12 */ * cosX, chainRotation[5] /* m22 */ * cosX);
+                {
+                    const min = chain.minimumAngle;
+                    const max = chain.maximumAngle!;
+                    rX = this._limitAngle(rX, min.x, max.x, useAxis);
+                    rY = this._limitAngle(rY, min.y, max.y, useAxis);
+                    rZ = this._limitAngle(rZ, min.z, max.z, useAxis);
+                }
 
-                Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, chainBone.ikChainInfo!.ikRotation);
+                Quaternion.RotationAxisToRef(IkSolver._Up, rY, chainBone.ikChainInfo!.ikRotation);
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Right, rX, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Forward, rZ, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 break;
             }
             case EulerRotationOrder.ZYX: {
-                rotationVector.y = Math.asin(-chainRotation[2] /* m13 */);
-                if (Math.abs(rotationVector.y) > threshold) {
-                    rotationVector.y = rotationVector.y < 0 ? -threshold : threshold;
+                rY = Math.asin(-chainRotation[2] /* m13 */);
+                if (Math.abs(rY) > threshold) {
+                    rY = rY < 0 ? -threshold : threshold;
                 }
-                let cosY = Math.cos(rotationVector.y);
+                let cosY = Math.cos(rY);
                 if (cosY !== 0) cosY = 1 / cosY; // inverse
-                rotationVector.x = Math.atan2(chainRotation[6] /* m23 */ * cosY, chainRotation[10] /* m33 */ * cosY);
-                rotationVector.z = Math.atan2(chainRotation[1] /* m12 */ * cosY, chainRotation[0] /* m11 */ * cosY);
-                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+                rX = Math.atan2(chainRotation[6] /* m23 */ * cosY, chainRotation[10] /* m33 */ * cosY);
+                rZ = Math.atan2(chainRotation[1] /* m12 */ * cosY, chainRotation[0] /* m11 */ * cosY);
+                {
+                    const min = chain.minimumAngle;
+                    const max = chain.maximumAngle!;
+                    rX = this._limitAngle(rX, min.x, max.x, useAxis);
+                    rY = this._limitAngle(rY, min.y, max.y, useAxis);
+                    rZ = this._limitAngle(rZ, min.z, max.z, useAxis);
+                }
 
-                Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, chainBone.ikChainInfo!.ikRotation);
+                Quaternion.RotationAxisToRef(IkSolver._Forward, rZ, chainBone.ikChainInfo!.ikRotation);
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Up, rY, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Right, rX, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 break;
             }
             case EulerRotationOrder.XZY: {
-                rotationVector.z = Math.asin(-chainRotation[4] /* m21 */);
-                if (Math.abs(rotationVector.z) > threshold) {
-                    rotationVector.z = rotationVector.z < 0 ? -threshold : threshold;
+                rZ = Math.asin(-chainRotation[4] /* m21 */);
+                if (Math.abs(rZ) > threshold) {
+                    rZ = rZ < 0 ? -threshold : threshold;
                 }
-                let cosZ = Math.cos(rotationVector.z);
+                let cosZ = Math.cos(rZ);
                 if (cosZ !== 0) cosZ = 1 / cosZ; // inverse
-                rotationVector.y = Math.atan2(chainRotation[6] /* m23 */ * cosZ, chainRotation[5] /* m22 */ * cosZ);
-                rotationVector.x = Math.atan2(chainRotation[8] /* m31 */ * cosZ, chainRotation[0] /* m11 */ * cosZ);
-                this._limitAngle(rotationVector, chain.minimumAngle, chain.maximumAngle!, useAxis);
+                rX = Math.atan2(chainRotation[6] /* m23 */ * cosZ, chainRotation[5] /* m22 */ * cosZ);
+                rY = Math.atan2(chainRotation[8] /* m31 */ * cosZ, chainRotation[0] /* m11 */ * cosZ);
+                {
+                    const min = chain.minimumAngle;
+                    const max = chain.maximumAngle!;
+                    rX = this._limitAngle(rX, min.x, max.x, useAxis);
+                    rY = this._limitAngle(rY, min.y, max.y, useAxis);
+                    rZ = this._limitAngle(rZ, min.z, max.z, useAxis);
+                }
 
-                Quaternion.RotationAxisToRef(IkSolver._Right, rotationVector.x, chainBone.ikChainInfo!.ikRotation);
+                Quaternion.RotationAxisToRef(IkSolver._Right, rX, chainBone.ikChainInfo!.ikRotation);
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Forward, rotationVector.z, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Forward, rZ, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 chainBone.ikChainInfo!.ikRotation.multiplyToRef(
-                    Quaternion.RotationAxisToRef(IkSolver._Up, rotationVector.y, IkSolver._Rotation2),
+                    Quaternion.RotationAxisToRef(IkSolver._Up, rY, IkSolver._Rotation2),
                     chainBone.ikChainInfo!.ikRotation
                 );
                 break;
@@ -388,33 +409,19 @@ export class IkSolver {
     }
 
     private _limitAngle(
-        angle: Vector3,
-        min: DeepImmutable<Vector3>,
-        max: DeepImmutable<Vector3>,
+        angle: number,
+        min: number,
+        max: number,
         useAxis: boolean
-    ): void {
-        if (angle.x < min.x) {
-            const diff = 2 * min.x - angle.x;
-            angle.x = (diff <= max.x && useAxis) ? diff : min.x;
-        } else if (angle.x > max.x) {
-            const diff = 2 * max.x - angle.x;
-            angle.x = (diff >= min.x && useAxis) ? diff : max.x;
-        }
-
-        if (angle.y < min.y) {
-            const diff = 2 * min.y - angle.y;
-            angle.y = (diff <= max.y && useAxis) ? diff : min.y;
-        } else if (angle.y > max.y) {
-            const diff = 2 * max.y - angle.y;
-            angle.y = (diff >= min.y && useAxis) ? diff : max.y;
-        }
-
-        if (angle.z < min.z) {
-            const diff = 2 * min.z - angle.z;
-            angle.z = (diff <= max.z && useAxis) ? diff : min.z;
-        } else if (angle.z > max.z) {
-            const diff = 2 * max.z - angle.z;
-            angle.z = (diff >= min.z && useAxis) ? diff : max.z;
+    ): number {
+        if (angle < min) {
+            const diff = 2 * min - angle;
+            return (diff <= max && useAxis) ? diff : min;
+        } else if (angle > max) {
+            const diff = 2 * max - angle;
+            return (diff >= min && useAxis) ? diff : max;
+        } else {
+            return angle;
         }
     }
 }
