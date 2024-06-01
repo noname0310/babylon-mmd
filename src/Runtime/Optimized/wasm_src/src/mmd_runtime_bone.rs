@@ -69,7 +69,7 @@ impl MmdRuntimeBoneArena {
         bone_index: u32,
         animation_arena: &AnimationArena,
         append_transform_solver_arena: &mut AppendTransformSolverArena,
-        iksolver_arena: &IkSolverArena,
+        ik_solver_arena: &IkSolverArena,
         use_physics: bool,
         compute_ik: bool,
     ) {
@@ -126,13 +126,49 @@ impl MmdRuntimeBoneArena {
         let bone = &mut bone_arena.arena_mut()[bone_index];
 
         if compute_ik {
-            if let Some(ik_solver) = bone.ik_solver {
-                let ik_solver = &iksolver_arena.arena()[ik_solver];
+            if let Some(ik_solver_index) = bone.ik_solver {
+                let ik_solver = &ik_solver_arena.arena()[ik_solver_index];
                 if !(use_physics && ik_solver.can_skip_when_physics_enabled()) {
-                    ik_solver.solve(animation_arena, bone_arena, append_transform_solver_arena, use_physics);
+                    IkSolverArena::solve(
+                        ik_solver_arena,
+                        ik_solver_index,
+                        animation_arena,
+                        bone_arena,
+                        append_transform_solver_arena,
+                        use_physics
+                    );
                 }
             }
         }
+    }
+
+    pub(crate) fn update_world_matrix_for_ik_chain(
+        bone_arena: &mut MmdRuntimeBoneArena,
+        bone_index: u32,
+        animation_arena: &AnimationArena,
+    ) {
+        let bone = &bone_arena.arena()[bone_index];
+        let ik_chain_info = bone.ik_chain_info.as_ref().unwrap();
+
+        let rotation = ik_chain_info.ik_rotation() * ik_chain_info.local_rotation();
+
+        let local_scale = animation_arena.bone_arena()[bone_index].scale;
+        let local_position = ik_chain_info.local_position() + bone.rest_position;
+
+        let local_matrix = if local_scale.x != 1.0 || local_scale.y != 1.0 || local_scale.z != 1.0 {
+            Mat4::from_scale_rotation_translation(local_scale.into(), rotation, local_position.into())
+        } else {
+            Mat4::from_rotation_translation(rotation, local_position.into())
+        };
+
+        let world_matrix = if let Some(parent_bone) = bone.parent_bone {
+            let parent_world_matrix = bone_arena.world_matrices()[parent_bone];
+            parent_world_matrix * local_matrix
+        } else {
+            local_matrix
+        };
+        
+        bone_arena.world_matrices_mut()[bone_index] = world_matrix;
     }
 }
 

@@ -1,4 +1,4 @@
-use glam::{Vec3, Vec3A, Vec4, Mat3, Quat};
+use glam::{Vec3, Vec3A, Mat3, Quat};
 
 use crate::ik_chain_info::IkChainInfo;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
@@ -22,6 +22,290 @@ impl IkSolverArena {
     pub(crate) fn arena(&self) -> UncheckedSlice<IkSolver> {
         UncheckedSlice::new(&self.arena)
     }
+    
+    pub(crate) fn solve(
+        ik_solver_arena: &IkSolverArena,
+        ik_solver_index: u32,
+        animation_arena: &AnimationArena,
+        bone_arena: &mut MmdRuntimeBoneArena,
+        append_transform_solver_arena: &mut AppendTransformSolverArena,
+        use_physics: bool,
+    ) {
+        let solver = &ik_solver_arena.arena()[ik_solver_index];
+        if solver.ik_chains.is_empty() {
+            return;
+        }
+
+        for chain in &solver.ik_chains {
+            let chain_bone = &mut bone_arena.arena_mut()[chain.bone];
+            *chain_bone.ik_chain_info.as_mut().unwrap().ik_rotation_mut() = Quat::IDENTITY;
+        };
+
+        let ik_position = Vec3A::from(bone_arena.world_matrices()[solver.ik_bone].w_axis);
+
+        MmdRuntimeBoneArena::update_world_matrix(
+            bone_arena,
+            solver.target_bone,
+            animation_arena,
+            append_transform_solver_arena,
+            ik_solver_arena,
+            use_physics,
+            true,
+        );
+        let mut target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
+
+        if ik_position.distance_squared(target_position) < 1.0e-8 {
+            return;
+        }
+
+        // update ik chain, target bone world matrix
+        for chain in solver.ik_chains.iter().rev() {
+            MmdRuntimeBoneArena::update_world_matrix(
+                bone_arena,
+                chain.bone,
+                animation_arena,
+                append_transform_solver_arena,
+                ik_solver_arena,
+                use_physics,
+                false,
+            );
+        }
+        MmdRuntimeBoneArena::update_world_matrix(
+            bone_arena,
+            solver.target_bone,
+            animation_arena,
+            append_transform_solver_arena,
+            ik_solver_arena,
+            false,
+            false,
+        );
+        target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
+
+        if ik_position.distance_squared(target_position) < 1.0e-8 {
+            return;
+        }
+
+        let iteration = solver.iteration;
+        let half_iteration = iteration >> 1;
+        for i in 0..iteration {
+            for chain_index in 0..solver.ik_chains.len() {
+                let chain = &solver.ik_chains[chain_index];
+                if chain.solve_axis != SolveAxis::Fixed {
+                    target_position = IkSolverArena::solve_chain(
+                        ik_solver_arena,
+                        ik_solver_index,
+                        chain_index as u32,
+                        animation_arena,
+                        bone_arena,
+                        append_transform_solver_arena,
+                        ik_position,
+                        target_position,
+                        i < half_iteration,
+                    );
+                }
+            }
+            if ik_position.distance_squared(target_position) < 1.0e-8 {
+                break;
+            }
+        }
+    }
+
+    fn solve_chain(
+        ik_solver_arena: &IkSolverArena,
+        ik_solver_index: u32,
+        ik_chain_index: u32,
+        animation_arena: &AnimationArena,
+        bone_arena: &mut MmdRuntimeBoneArena,
+        append_transform_solver_arena: &mut AppendTransformSolverArena,
+        ik_position: Vec3A,
+        target_position: Vec3A,
+        use_axis: bool,
+    ) -> Vec3A {
+        let chain = &ik_solver_arena.arena()[ik_solver_index].ik_chains[ik_chain_index as usize];
+
+        let chain_position = Vec3A::from(bone_arena.world_matrices()[chain.bone].w_axis);
+        let chain_target_vector = (chain_position - target_position).normalize();
+        let chain_ik_vector = (chain_position - ik_position).normalize();
+
+        let chain_rotation_axis = chain_target_vector.cross(chain_ik_vector);
+        if chain_rotation_axis.length_squared() < 1.0e-8 {
+            return target_position;
+        }
+        
+        let chain_parent_rotation_matrix = if let Some(parent_bone) = bone_arena.arena()[chain.bone].parent_bone {
+            Mat3::from_mat4(bone_arena.world_matrices()[parent_bone])
+        } else {
+            Mat3::IDENTITY
+        };
+        let chain_rotation_axis = if let (Some(_), true) = (&chain.angle_limits, use_axis) {
+            match chain.solve_axis {
+                // SolveAxis::None => (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize(),
+                SolveAxis::X => {
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.x_axis.into());
+                    Vec3A::new(
+                        if 0.0 <= dot { 1.0 } else { -1.0 },
+                        0.0,
+                        0.0,
+                    )
+                },
+                SolveAxis::Y => {
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.y_axis.into());
+                    Vec3A::new(
+                        0.0,
+                        if 0.0 <= dot { 1.0 } else { -1.0 },
+                        0.0,
+                    )
+                },
+                SolveAxis::Z => {
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.z_axis.into());
+                    Vec3A::new(
+                        0.0,
+                        0.0,
+                        if 0.0 <= dot { 1.0 } else { -1.0 },
+                    )
+                }
+                _ => {
+                    (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize()
+                },
+            }
+        } else {
+            (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize()
+        };
+
+        let dot = chain_target_vector.dot(chain_ik_vector).clamp(-1.0, 1.0);
+
+        let solver = &ik_solver_arena.arena()[ik_solver_index];
+
+        let angle = (solver.limit_angle * ((ik_chain_index + 1) as f32)).min(dot.acos());
+        let ik_rotation = Quat::from_axis_angle(chain_rotation_axis.into(), angle);
+        *bone_arena.arena_mut()[chain.bone].ik_chain_info.as_mut().unwrap().ik_rotation_mut() =
+            ik_rotation * bone_arena.arena()[chain.bone].ik_chain_info.as_ref().unwrap().ik_rotation();
+
+        if let Some(angle_limits) = &chain.angle_limits {
+            if let Some(ik_chain_info) = &mut bone_arena.arena_mut()[chain.bone].ik_chain_info {
+                let chain_rotation = Mat3::from_quat(ik_chain_info.local_rotation() * ik_chain_info.ik_rotation());
+                let threshold = 88.0 * std::f32::consts::PI / 180.0;
+                
+                let new_ik_rotation = match chain.rotation_order {
+                    EulerRotationOrder::YXZ => {
+                        let r_x = (-chain_rotation.z_axis.y).asin();
+                        let r_x = if r_x.abs() > threshold {
+                            if r_x < 0.0 { -threshold } else { threshold }
+                        } else {
+                            r_x
+                        };
+                        let cos_x = r_x.cos();
+                        let cos_x = if cos_x != 0.0 { 1.0 / cos_x } else { cos_x };
+                        let r_y = (chain_rotation.z_axis.x * cos_x).atan2(chain_rotation.z_axis.z * cos_x);
+                        let r_z = (chain_rotation.x_axis.y * cos_x).atan2(chain_rotation.y_axis.y * cos_x);
+                        let (r_x, r_y, r_z) = {
+                            let min = angle_limits.minimum_angle;
+                            let max = angle_limits.maximum_angle;
+                            (
+                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                            )
+                        };
+
+                        Quat::from_axis_angle(Vec3::Y, r_y) *
+                            Quat::from_axis_angle(Vec3::X, r_x) *
+                            Quat::from_axis_angle(Vec3::Z, r_z)
+                    }
+                    EulerRotationOrder::ZYX => {
+                        let r_y = (-chain_rotation.x_axis.z).asin();
+                        let r_y = if r_y.abs() > threshold {
+                            if r_y < 0.0 { -threshold } else { threshold }
+                        } else {
+                            r_y
+                        };
+                        let cos_y = r_y.cos();
+                        let cos_y = if cos_y != 0.0 { 1.0 / cos_y } else { cos_y };
+                        let r_x = (chain_rotation.y_axis.z * cos_y).atan2(chain_rotation.z_axis.z * cos_y);
+                        let r_z = (chain_rotation.x_axis.y * cos_y).atan2(chain_rotation.x_axis.x * cos_y);
+                        let (r_x, r_y, r_z) = {
+                            let min = angle_limits.minimum_angle;
+                            let max = angle_limits.maximum_angle;
+                            (
+                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                            )
+                        };
+
+                        Quat::from_axis_angle(Vec3::Z, r_z) *
+                            Quat::from_axis_angle(Vec3::Y, r_y) *
+                            Quat::from_axis_angle(Vec3::X, r_x)
+                    }
+                    EulerRotationOrder::XZY => {
+                        let r_z = (-chain_rotation.y_axis.x).asin();
+                        let r_z = if r_z.abs() > threshold {
+                            if r_z < 0.0 { -threshold } else { threshold }
+                        } else {
+                            r_z
+                        };
+                        let cos_z = r_z.cos();
+                        let cos_z = if cos_z != 0.0 { 1.0 / cos_z } else { cos_z };
+                        let r_x = (chain_rotation.y_axis.z * cos_z).atan2(chain_rotation.y_axis.y * cos_z);
+                        let r_y = (chain_rotation.z_axis.x * cos_z).atan2(chain_rotation.x_axis.x * cos_z);
+                        let (r_x, r_y, r_z) = {
+                            let min = angle_limits.minimum_angle;
+                            let max = angle_limits.maximum_angle;
+                            (
+                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                            )
+                        };
+
+                        Quat::from_axis_angle(Vec3::X, r_x) *
+                            Quat::from_axis_angle(Vec3::Z, r_z) *
+                            Quat::from_axis_angle(Vec3::Y, r_y)
+                    }
+                };
+
+                let inverted_local_rotation = ik_chain_info.local_rotation().inverse();
+                *ik_chain_info.ik_rotation_mut() = new_ik_rotation * inverted_local_rotation;
+            } else {
+                unreachable!("ik_chain_info is None");
+            }
+        }
+
+        for i in (0..=ik_chain_index).rev() {
+            MmdRuntimeBoneArena::update_world_matrix_for_ik_chain(
+                bone_arena,
+                solver.ik_chains[i as usize].bone,
+                animation_arena,
+            );
+        }
+        MmdRuntimeBoneArena::update_world_matrix(
+            bone_arena,
+            solver.target_bone,
+            animation_arena,
+            append_transform_solver_arena,
+            ik_solver_arena,
+            false,
+            false,
+        );
+        Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis)
+    }
+
+    fn limit_angle(
+        angle: f32,
+        min: f32,
+        max: f32,
+        use_axis: bool,
+    ) -> f32 {
+        if angle < min {
+            let diff = 2.0 * min - angle;
+            if diff <= max && use_axis { diff } else { min }
+        } else if angle > max {
+            let diff = 2.0 * max - angle;
+            if diff >= min && use_axis { diff } else { max }
+        } else {
+            angle
+        }
+    }
 }
 
 enum EulerRotationOrder {
@@ -30,6 +314,7 @@ enum EulerRotationOrder {
     XZY,
 }
 
+#[derive(PartialEq)]
 enum SolveAxis {
     None,
     Fixed,
@@ -115,7 +400,7 @@ impl IkSolver {
         chain_capacity: u32,
     ) -> IkSolver {
         IkSolver {
-            iteration,
+            iteration: iteration.min(256),
             limit_angle,
             ik_bone,
             target_bone,
@@ -150,289 +435,4 @@ impl IkSolver {
     pub(crate) fn can_skip_when_physics_enabled(&self) -> bool {
         self.can_skip_when_physics_enabled
     }
-
-    pub(crate) fn solve(
-        &self,
-        animation_arena: &AnimationArena,
-        bone_arena: &mut MmdRuntimeBoneArena,
-        append_transform_solver_arena: &AppendTransformSolverArena,
-        use_physics: bool,
-    ) {
-        if self.ik_chains.is_empty() {
-            return;
-        }
-
-        for chain in &self.ik_chains {
-            let chain_bone = &mut bone_arena.arena_mut()[chain.bone];
-            *chain_bone.ik_chain_info.as_mut().unwrap().ik_rotation_mut() = Quat::IDENTITY;
-        };
-
-        // let mut max_distance = f32::MAX;
-        // for i in 0..self.iteration {
-        //     self.solve_core(animation_arena, bone_arena, append_transform_sovler_arena, i);
-
-        //     let target_position = Vec3A::from(bone_arena.world_matrices()[self.target_bone].w_axis);
-        //     let ik_position = Vec3A::from(bone_arena.world_matrices()[self.ik_bone].w_axis);
-        //     let distance = target_position.distance_squared(ik_position);
-        //     if distance < max_distance {
-        //         max_distance = distance;
-        //         for chain in &mut self.ik_chains {
-        //             chain.saved_ik_rotation = bone_arena.arena()[chain.bone].ik_rotation.unwrap();
-        //         }
-        //     } else {
-        //         for chain in &mut self.ik_chains {
-        //             let chain_bone = &mut bone_arena.arena_mut()[chain.bone];
-        //             chain_bone.ik_rotation = Some(chain.saved_ik_rotation);
-        //             chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
-        //             bone_arena.update_world_matrix(chain.bone);
-        //         }
-        //         break;
-        //     }
-        // }
-    }
-
-    // fn solve_core(&mut self, animation_arena: &AnimationArena, bone_arena: &mut MmdRuntimeBoneArena, append_transform_sovler_arena: &AppendTransformSolverArena, iteration: i32) {
-    //     let ik_position = Vec3A::from(bone_arena.world_matrices()[self.ik_bone].w_axis);
-
-    //     for chain_index in 0..self.ik_chains.len() {
-    //         let chain = &mut self.ik_chains[chain_index];
-    //         if chain.bone == self.target_bone {
-    //             continue;
-    //         }
-
-    //         if let Some(IkChainAngleLimits{minimum_angle, maximum_angle}) = &chain.angle_limits {
-    //             if (minimum_angle.x != 0.0 || maximum_angle.x != 0.0) &&
-    //                 (minimum_angle.y == 0.0 || maximum_angle.y == 0.0) &&
-    //                 (minimum_angle.z == 0.0 || maximum_angle.z == 0.0) {
-    //                 self.solve_plane(animation_arena, bone_arena, append_transform_sovler_arena, iteration, chain_index, SolveAxis::X);
-    //                 continue;
-    //             } else if (minimum_angle.x == 0.0 || maximum_angle.x == 0.0) &&
-    //                 (minimum_angle.y != 0.0 || maximum_angle.y != 0.0) &&
-    //                 (minimum_angle.z == 0.0 || maximum_angle.z == 0.0) {
-    //                 self.solve_plane(animation_arena, bone_arena, append_transform_sovler_arena, iteration, chain_index, SolveAxis::Y);
-    //                 continue;
-    //             } else if (minimum_angle.x == 0.0 || maximum_angle.x == 0.0) &&
-    //                 (minimum_angle.y == 0.0 || maximum_angle.y == 0.0) &&
-    //                 (minimum_angle.z != 0.0 || maximum_angle.z != 0.0) {
-    //                 self.solve_plane(animation_arena, bone_arena, append_transform_sovler_arena, iteration, chain_index, SolveAxis::Z);
-    //                 continue;
-    //             }
-    //         }
-
-    //         let target_position = Vec3A::from(bone_arena.world_matrices()[self.target_bone].w_axis);
-    //         let inverse_chain = bone_arena.world_matrices()[chain.bone].inverse();
-
-    //         let chain_ik_position = Vec3A::from(inverse_chain * Vec4::from((ik_position, 1.0)));
-    //         let chain_target_position = Vec3A::from(inverse_chain * Vec4::from((target_position, 1.0)));
-            
-    //         let chain_ik_vector = chain_ik_position.normalize();
-    //         let chain_target_vector = chain_target_position.normalize();
-
-    //         let dot = chain_target_vector.dot(chain_ik_vector);
-    //         let dot = dot.clamp(-1.0, 1.0);
-
-    //         let angle = dot.acos();
-    //         let angle_deg = angle.to_degrees();
-    //         if angle_deg < 1.0e-3 {
-    //             continue;
-    //         }
-    //         let angle = angle.clamp(-self.limit_angle, self.limit_angle);
-    //         let rotation = {
-    //             let cross = chain_target_vector.cross(chain_ik_vector);
-    //             if cross == Vec3A::ZERO {
-    //                 Quat::IDENTITY
-    //             } else {
-    //                 let cross = cross.normalize();
-    //                 Quat::from_axis_angle(cross.into(), angle)
-    //             }
-    //         };
-
-    //         let animated_rotation = bone_arena.arena()[chain.bone].animated_rotation(animation_arena);
-    //         let chain_bone = &bone_arena.arena()[chain.bone];
-    //         let mut chain_rotation = chain_bone.ik_rotation.unwrap() * animated_rotation * rotation;
-    //         if let Some(IkChainAngleLimits{minimum_angle, maximum_angle}) = &chain.angle_limits {
-    //             let mut chain_rotation_matrix = Mat3::from_quat(chain_rotation);
-    //             let rotation_xyz = IkSolver::decompose(&chain_rotation_matrix, chain.prev_angle);
-    //             let mut clamp_xyz = Vec3A::new(
-    //                 rotation_xyz.x.clamp(minimum_angle.x, maximum_angle.x),
-    //                 rotation_xyz.y.clamp(minimum_angle.y, maximum_angle.y),
-    //                 rotation_xyz.z.clamp(minimum_angle.z, maximum_angle.z),
-    //             );
-
-    //             clamp_xyz -= chain.prev_angle;
-    //             clamp_xyz.x = clamp_xyz.x.clamp(-self.limit_angle, self.limit_angle);
-    //             clamp_xyz.y = clamp_xyz.y.clamp(-self.limit_angle, self.limit_angle);
-    //             clamp_xyz.z = clamp_xyz.z.clamp(-self.limit_angle, self.limit_angle);
-    //             clamp_xyz += chain.prev_angle;
-
-    //             let r = Quat::from_axis_angle(Vec3::X, clamp_xyz.x)
-    //                 * Quat::from_axis_angle(Vec3::Y, clamp_xyz.y)
-    //                 * Quat::from_axis_angle(Vec3::Z, clamp_xyz.z);
-    //             chain_rotation_matrix = Mat3::from_quat(r);
-    //             chain.prev_angle = clamp_xyz;
-
-    //             chain_rotation = Quat::from_mat3(&chain_rotation_matrix);
-    //         }
-
-    //         let chain_bone = &mut bone_arena.arena_mut()[chain.bone];
-    //         chain_bone.ik_rotation = Some(chain_rotation * animated_rotation.inverse());
-
-    //         chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
-    //         bone_arena.update_world_matrix(chain.bone);
-    //     }
-    // }
-
-    // fn solve_plane(&mut self, animation_arena: &AnimationArena, bone_arena: &mut MmdRuntimeBoneArena, append_transform_sovler_arena: &AppendTransformSolverArena, iteration: i32, chain_index: usize, solve_axis: SolveAxis) {
-    //     let chain = &mut UncheckedSliceMut::new(&mut self.ik_chains)[chain_index as u32];
-    //     let (minimum_angle, maximum_angle, rotate_axis) = match solve_axis {
-    //         SolveAxis::X => (
-    //             chain.angle_limits.as_ref().unwrap().minimum_angle.x,
-    //             chain.angle_limits.as_ref().unwrap().maximum_angle.x,
-    //             Vec3::X,
-    //         ),
-    //         SolveAxis::Y => (
-    //             chain.angle_limits.as_ref().unwrap().minimum_angle.y,
-    //             chain.angle_limits.as_ref().unwrap().maximum_angle.y,
-    //             Vec3::Y,
-    //         ),
-    //         SolveAxis::Z => (
-    //             chain.angle_limits.as_ref().unwrap().minimum_angle.z,
-    //             chain.angle_limits.as_ref().unwrap().maximum_angle.z,
-    //             Vec3::Z,
-    //         ),
-    //     };
-        
-    //     let ik_position = Vec3A::from(bone_arena.world_matrices()[self.ik_bone].w_axis);
-    //     let target_position = Vec3A::from(bone_arena.world_matrices()[self.target_bone].w_axis);
-    //     let inverse_chain = bone_arena.world_matrices()[chain.bone].inverse();
-
-    //     let chain_ik_position = Vec3A::from(inverse_chain * Vec4::from((ik_position, 1.0)));
-    //     let chain_target_position = Vec3A::from(inverse_chain * Vec4::from((target_position, 1.0)));
-
-    //     let chain_ik_vector = chain_ik_position.normalize();
-    //     let chain_target_vector = chain_target_position.normalize();
-
-    //     let dot = chain_target_vector.dot(chain_ik_vector);
-    //     let dot = dot.clamp(-1.0, 1.0);
-
-    //     let angle = dot.acos();
-
-    //     let angle = angle.clamp(-self.limit_angle, self.limit_angle);
-
-    //     let rot1 = Quat::from_axis_angle(rotate_axis, angle);
-    //     let target_vec1 = rot1 * chain_target_vector;
-    //     let dot1 = target_vec1.dot(chain_ik_vector);
-
-    //     let rot2 = Quat::from_axis_angle(rotate_axis, -angle);
-    //     let target_vec2 = rot2 * chain_target_vector;
-    //     let dot2 = target_vec2.dot(chain_ik_vector);
-
-    //     let mut new_angle = chain.plane_mode_angle + if dot1 > dot2 { angle } else { -angle };
-    //     if iteration == 0 && (new_angle < minimum_angle || new_angle > maximum_angle) {
-    //         if -new_angle > minimum_angle && -new_angle < maximum_angle {
-    //             new_angle = -new_angle;
-    //         } else {
-    //             let half_rad = (minimum_angle + maximum_angle) * 0.5;
-    //             if (half_rad - new_angle).abs() > (half_rad + new_angle).abs() {
-    //                 new_angle = -new_angle;
-    //             }
-    //         }
-    //     }
-
-    //     let new_angle = new_angle.clamp(minimum_angle, maximum_angle);
-    //     chain.plane_mode_angle = new_angle;
-
-    //     let animated_rotation = bone_arena.arena()[chain.bone].animated_rotation(animation_arena);
-    //     let chain_bone = &mut bone_arena.arena_mut()[chain.bone];
-    //     chain_bone.ik_rotation = Some(Quat::from_axis_angle(rotate_axis, new_angle) * animated_rotation.inverse());
-
-    //     chain_bone.update_local_matrix(animation_arena, append_transform_sovler_arena);
-    //     bone_arena.update_world_matrix(chain.bone);
-    // }
-
-    // #[inline]
-    // fn normalize_angle(mut angle: f32) -> f32 {
-    //     while angle >= std::f32::consts::PI * 2.0 {
-    //         angle -= std::f32::consts::PI * 2.0;
-    //     }
-    //     while angle < 0.0 {
-    //         angle += std::f32::consts::PI * 2.0;
-    //     }
-    //     angle
-    // }
-
-    // fn diff_angle(a: f32, b: f32) -> f32 {
-    //     let diff = IkSolver::normalize_angle(a) - IkSolver::normalize_angle(b);
-    //     if diff > std::f32::consts::PI {
-    //         diff - std::f32::consts::PI * 2.0
-    //     } else if diff < -std::f32::consts::PI {
-    //         diff + std::f32::consts::PI * 2.0
-    //     } else {
-    //         diff
-    //     }
-    // }
-
-    // #[inline]
-    // fn decompose(matrix: &Mat3, before: Vec3A) -> Vec3A {
-    //     let mut r = Vec3A::ZERO;
-
-    //     let sy = -matrix.x_axis.z;
-    //     let e = 1.0e-6;
-
-    //     if (1.0 - sy.abs()).abs() < e {
-    //         r.y = sy.asin();
-    //         let sx = before.x.sin();
-    //         let sz = before.z.sin();
-    //         if sx.abs() < sz.abs() {
-    //             let cx = before.x.cos();
-    //             if cx > 0.0 {
-    //                 r.x = 0.0;
-    //                 r.z = (-matrix.y_axis.x).asin();
-    //             } else {
-    //                 r.x = std::f32::consts::PI;
-    //                 r.z = matrix.y_axis.x.asin();
-    //             }
-    //         } else {
-    //             let cz = before.z.cos();
-    //             if cz > 0.0 {
-    //                 r.z = 0.0;
-    //                 r.x = (-matrix.z_axis.y).asin();
-    //             } else {
-    //                 r.z = std::f32::consts::PI;
-    //                 r.x = matrix.z_axis.y.asin();
-    //             }
-    //         }
-    //     } else {
-    //         r.x = matrix.y_axis.z.atan2(matrix.z_axis.z);
-    //         r.y = (-matrix.x_axis.x).asin();
-    //         r.z = matrix.x_axis.y.atan2(matrix.x_axis.x);
-    //     }
-
-    //     let pi = std::f32::consts::PI;
-    //     let tests = [
-    //         Vec3A::new(r.x + pi, pi - r.y, r.z + pi),
-    //         Vec3A::new(r.x + pi, pi - r.y, r.z - pi),
-    //         Vec3A::new(r.x + pi, -pi - r.y, r.z + pi),
-    //         Vec3A::new(r.x + pi, -pi - r.y, r.z - pi),
-    //         Vec3A::new(r.x - pi, pi - r.y, r.z + pi),
-    //         Vec3A::new(r.x - pi, pi - r.y, r.z - pi),
-    //         Vec3A::new(r.x - pi, -pi - r.y, r.z + pi),
-    //         Vec3A::new(r.x - pi, -pi - r.y, r.z - pi),
-    //     ];
-
-    //     let err_x = IkSolver::diff_angle(r.x, before.x).abs();
-    //     let err_y = IkSolver::diff_angle(r.y, before.y).abs();
-    //     let err_z = IkSolver::diff_angle(r.z, before.z).abs();
-    //     let mut min_err = err_x + err_y + err_z;
-    //     for test in tests {
-    //         let err = IkSolver::diff_angle(test.x, before.x).abs() +
-    //             IkSolver::diff_angle(test.y, before.y).abs() +
-    //             IkSolver::diff_angle(test.z, before.z).abs();
-    //         if err < min_err {
-    //             min_err = err;
-    //             r = test;
-    //         }
-    //     }
-    //     r
-    // }
 }
