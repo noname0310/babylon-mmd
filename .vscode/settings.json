@@ -1,5 +1,8 @@
 {
     "rust-analyzer.linkedProjects": [
         "./src/Runtime/Optimized/wasm_src/Cargo.toml"
-    ]
+    ],
+    "rust-analyzer.cargo.extraEnv": {
+        "RUSTFLAGS": "-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals"
+    }
 }
