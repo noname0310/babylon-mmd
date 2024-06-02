@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.45.1
+
+- fix wasm runtime ik solver computation
+
 ## 0.45.0
 
 - refactor runtime behavior to be more similar to MMD

@@ -128,8 +128,8 @@ impl IkSolverArena {
         let chain = &ik_solver_arena.arena()[ik_solver_index].ik_chains[ik_chain_index as usize];
 
         let chain_position = Vec3A::from(bone_arena.world_matrices()[chain.bone].w_axis);
-        let chain_target_vector = (chain_position - target_position).normalize();
-        let chain_ik_vector = (chain_position - ik_position).normalize();
+        let chain_target_vector = (chain_position - target_position).normalize_or_zero();
+        let chain_ik_vector = (chain_position - ik_position).normalize_or_zero();
 
         let chain_rotation_axis = chain_target_vector.cross(chain_ik_vector);
         if chain_rotation_axis.length_squared() < 1.0e-8 {
@@ -143,7 +143,7 @@ impl IkSolverArena {
         };
         let chain_rotation_axis = if let (Some(_), true) = (&chain.angle_limits, use_axis) {
             match chain.solve_axis {
-                // SolveAxis::None => (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize(),
+                // SolveAxis::None => (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize_or_zero(),
                 SolveAxis::X => {
                     let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.x_axis.into());
                     Vec3A::new(
@@ -169,11 +169,11 @@ impl IkSolverArena {
                     )
                 }
                 _ => {
-                    (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize()
+                    (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize_or_zero()
                 },
             }
         } else {
-            (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize()
+            (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize_or_zero()
         };
 
         let dot = chain_target_vector.dot(chain_ik_vector).clamp(-1.0, 1.0);
