@@ -599,7 +599,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 angularUpperLimit: new Vector3(joint.rotationMax[0], joint.rotationMax[1], joint.rotationMax[2]),
                 linearStiffness: new Vector3(joint.springPosition[0], joint.springPosition[1], joint.springPosition[2]),
                 angularStiffness: new Vector3(joint.springRotation[0], joint.springRotation[1], joint.springRotation[2]),
-                collision: true // disable collision between the two rigid bodies. but value is true due to bug
+                collision: true // do not disable collision between the two rigid bodies
             });
             physicsJoint;
 
