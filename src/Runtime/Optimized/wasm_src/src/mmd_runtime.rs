@@ -1,4 +1,5 @@
 use std::ptr::NonNull;
+use std::sync::atomic;
 
 use wasm_bindgen::prelude::*;
 
@@ -13,7 +14,7 @@ use rayon::prelude::*;
 pub struct MmdRuntime {
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
-    locked: u8
+    locked: atomic::AtomicU8,
 }
 
 #[wasm_bindgen]
@@ -21,7 +22,7 @@ impl MmdRuntime {
     pub(crate) fn new() -> Self {
         MmdRuntime {
             mmd_models: Vec::new(),
-            locked: 0
+            locked: atomic::AtomicU8::new(0),
         }
     }
 
@@ -170,7 +171,7 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "getLockStatePtr")]
     pub fn get_lock_state_ptr(&self) -> *const u8 {
-        &self.locked as *const u8
+        &self.locked as *const atomic::AtomicU8 as *const u8
     }
 
     #[wasm_bindgen(js_name = "swapWorldMatrixBuffer")]
@@ -186,10 +187,10 @@ impl MmdRuntime {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
-        mmd_runtime.locked = 1;
+        mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
             mmd_runtime.before_physics(frame_time);
-            mmd_runtime.locked = 0;
+            mmd_runtime.locked.store(0, atomic::Ordering::Release);
         });
     }
 
@@ -199,11 +200,11 @@ impl MmdRuntime {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
-        mmd_runtime.locked = 1;
+        mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
             mmd_runtime.before_physics(frame_time);
             mmd_runtime.after_physics();
-            mmd_runtime.locked = 0;
+            mmd_runtime.locked.store(0, atomic::Ordering::Release);
         });
     }
 }

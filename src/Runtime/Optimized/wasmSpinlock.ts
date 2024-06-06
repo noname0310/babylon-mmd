@@ -21,7 +21,7 @@ export class WasmSpinlock {
         const lock = this._lock.array;
         let locked = false;
         const lockStartTime = performance.now();
-        while (lock[0] !== 0) {
+        while (Atomics.load(lock, 0) !== 0) {
             locked = true;
             // spin
         }

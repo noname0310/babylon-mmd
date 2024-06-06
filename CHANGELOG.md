@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.46.0
+
+- improve CreateMmdModelOptions parameter type
+
+- improve wasm runtime multi-threading stability
+
 ## 0.45.2
 
 - use double precision on wasm runtime ik solver computation for jitter free result
