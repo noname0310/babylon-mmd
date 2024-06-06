@@ -1,3 +1,4 @@
+import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
@@ -18,7 +19,7 @@ import type { CreateMmdModelOptions } from "./mmdRuntime";
  *
  * It can also create and remove runtime components
  */
-export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
+export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends ILogger {
     /**
      * This observable is notified when animation duration is changed
      */
@@ -60,10 +61,10 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * @returns MMD model
      * @throws {Error} if mesh is not `MmdSkinnedMesh`
      */
-    createMmdModel(
+    createMmdModel<TMaterial extends Material>(
         mmdSkinedMesh: Mesh,
-        options?: CreateMmdModelOptions
-    ): T;
+        options?: CreateMmdModelOptions<TMaterial>
+    ): TMmdModel;
 
     /**
      * Create MMD model from humanoid mesh and virtual skeleton
@@ -73,11 +74,11 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
-    createMmdModelFromSkeleton(
+    createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdSkinedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options?: CreateMmdModelOptions
-    ): T;
+        options?: CreateMmdModelOptions<TMaterial>
+    ): TMmdModel;
 
     /**
      * Destroy MMD model
@@ -88,7 +89,7 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
      * @param mmdModel MMD model to destroy
      * @throws {Error} if model is not found
      */
-    destroyMmdModel(mmdModel: T): void;
+    destroyMmdModel(mmdModel: TMmdModel): void;
 
     /**
      * Set camera to animate
@@ -169,7 +170,7 @@ export interface IMmdRuntime<T extends IMmdModel = IMmdModel> extends ILogger {
     /**
      * MMD models created by this runtime
      */
-    get models(): readonly T[];
+    get models(): readonly TMmdModel[];
 
     /**
      * MMD camera

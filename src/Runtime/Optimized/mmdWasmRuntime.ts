@@ -230,9 +230,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @returns MMD model
      * @throws {Error} if mesh is not `MmdSkinnedMesh`
      */
-    public createMmdModel(
+    public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: CreateMmdModelOptions = {}
+        options: CreateMmdModelOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -246,10 +246,10 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
-    public createMmdModelFromSkeleton(
+    public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: CreateMmdModelOptions = {}
+        options: CreateMmdModelOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -285,7 +285,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             mmdModelPtr,
             mmdMesh,
             skeleton,
-            options.materialProxyConstructor,
+            options.materialProxyConstructor as IMmdMaterialProxyConstructor<Material>,
             wasmMorphIndexMap,
             options.buildPhysics ? this._physics : null
         );

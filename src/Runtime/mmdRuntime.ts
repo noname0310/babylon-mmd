@@ -20,12 +20,14 @@ import type { IMmdPhysics } from "./Physics/IMmdPhysics";
 
 /**
  * Options for creating MMD model
+ *
+ * Generic type `TMaterial` is used to specify the material type of the model
  */
-export interface CreateMmdModelOptions {
+export interface CreateMmdModelOptions<TMaterial extends Material = Material> {
     /**
      * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
      */
-    materialProxyConstructor?: Nullable<IMmdMaterialProxyConstructor<Material>>;
+    materialProxyConstructor?: Nullable<IMmdMaterialProxyConstructor<TMaterial>>;
 
     /**
      * Whether to build physics (default: true)
@@ -181,9 +183,9 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @returns MMD model
      * @throws {Error} if mesh is not `MmdSkinnedMesh`
      */
-    public createMmdModel(
+    public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: CreateMmdModelOptions = {}
+        options: CreateMmdModelOptions<TMaterial> = {}
     ): MmdModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -197,10 +199,10 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @param skeleton Skeleton or Virtualized skeleton
      * @param options Creation options
      */
-    public createMmdModelFromSkeleton(
+    public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: CreateMmdModelOptions = {}
+        options: CreateMmdModelOptions<TMaterial> = {}
     ): MmdModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -212,7 +214,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         const model = new MmdModel(
             mmdSkinnedMesh,
             skeleton,
-            options.materialProxyConstructor,
+            options.materialProxyConstructor as IMmdMaterialProxyConstructor<Material>,
             options.buildPhysics ? this._physics : null,
             this
         );
