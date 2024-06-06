@@ -1,4 +1,4 @@
-use glam::{Vec3, Vec3A, Mat3, Quat};
+use glam::{Vec3A, Mat3, Quat, DVec3, DMat3, DQuat};
 
 use crate::ik_chain_info::IkChainInfo;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
@@ -42,7 +42,7 @@ impl IkSolverArena {
             *chain_bone.ik_chain_info.as_mut().unwrap().ik_rotation_mut() = Quat::IDENTITY;
         };
 
-        let ik_position = Vec3A::from(bone_arena.world_matrices()[solver.ik_bone].w_axis);
+        let ik_position = bone_arena.world_matrices()[solver.ik_bone].w_axis.truncate().as_dvec3();
 
         MmdRuntimeBoneArena::update_world_matrix(
             bone_arena,
@@ -53,7 +53,7 @@ impl IkSolverArena {
             use_physics,
             bone_stack
         );
-        let mut target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
+        let mut target_position = bone_arena.world_matrices()[solver.target_bone].w_axis.truncate().as_dvec3();
 
         if ik_position.distance_squared(target_position) < 1.0e-8 {
             return;
@@ -80,7 +80,7 @@ impl IkSolverArena {
             false,
             &mut None,
         );
-        target_position = Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis);
+        target_position = bone_arena.world_matrices()[solver.target_bone].w_axis.truncate().as_dvec3();
 
         if ik_position.distance_squared(target_position) < 1.0e-8 {
             return;
@@ -121,13 +121,13 @@ impl IkSolverArena {
         bone_arena: &mut MmdRuntimeBoneArena,
         append_transform_solver_arena: &mut AppendTransformSolverArena,
         bone_stack: &mut Option<Vec<u32>>,
-        ik_position: Vec3A,
-        target_position: Vec3A,
+        ik_position: DVec3,
+        target_position: DVec3,
         use_axis: bool,
-    ) -> Vec3A {
+    ) -> DVec3 {
         let chain = &ik_solver_arena.arena()[ik_solver_index].ik_chains[ik_chain_index as usize];
 
-        let chain_position = Vec3A::from(bone_arena.world_matrices()[chain.bone].w_axis);
+        let chain_position = bone_arena.world_matrices()[chain.bone].w_axis.truncate().as_dvec3();
         let chain_target_vector = (chain_position - target_position).normalize_or_zero();
         let chain_ik_vector = (chain_position - ik_position).normalize_or_zero();
 
@@ -137,16 +137,16 @@ impl IkSolverArena {
         }
         
         let chain_parent_rotation_matrix = if let Some(parent_bone) = bone_arena.arena()[chain.bone].parent_bone {
-            Mat3::from_mat4(bone_arena.world_matrices()[parent_bone])
+            Mat3::from_mat4(bone_arena.world_matrices()[parent_bone]).as_dmat3()
         } else {
-            Mat3::IDENTITY
+            DMat3::IDENTITY
         };
         let chain_rotation_axis = if let (Some(_), true) = (&chain.angle_limits, use_axis) {
             match chain.solve_axis {
                 // SolveAxis::None => (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize_or_zero(),
                 SolveAxis::X => {
                     let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.x_axis.into());
-                    Vec3A::new(
+                    DVec3::new(
                         if 0.0 <= dot { 1.0 } else { -1.0 },
                         0.0,
                         0.0,
@@ -154,7 +154,7 @@ impl IkSolverArena {
                 },
                 SolveAxis::Y => {
                     let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.y_axis.into());
-                    Vec3A::new(
+                    DVec3::new(
                         0.0,
                         if 0.0 <= dot { 1.0 } else { -1.0 },
                         0.0,
@@ -162,7 +162,7 @@ impl IkSolverArena {
                 },
                 SolveAxis::Z => {
                     let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.z_axis.into());
-                    Vec3A::new(
+                    DVec3::new(
                         0.0,
                         0.0,
                         if 0.0 <= dot { 1.0 } else { -1.0 },
@@ -180,15 +180,15 @@ impl IkSolverArena {
 
         let solver = &ik_solver_arena.arena()[ik_solver_index];
 
-        let angle = (solver.limit_angle * ((ik_chain_index + 1) as f32)).min(dot.acos());
-        let ik_rotation = Quat::from_axis_angle(chain_rotation_axis.into(), angle);
+        let angle = (solver.limit_angle as f64 * ((ik_chain_index + 1) as f64)).min(dot.acos());
+        let ik_rotation = DQuat::from_axis_angle(chain_rotation_axis.into(), angle);
         *bone_arena.arena_mut()[chain.bone].ik_chain_info.as_mut().unwrap().ik_rotation_mut() =
-            ik_rotation * bone_arena.arena()[chain.bone].ik_chain_info.as_ref().unwrap().ik_rotation();
+            (ik_rotation * bone_arena.arena()[chain.bone].ik_chain_info.as_ref().unwrap().ik_rotation().as_dquat()).as_quat();
 
         if let Some(angle_limits) = &chain.angle_limits {
             if let Some(ik_chain_info) = &mut bone_arena.arena_mut()[chain.bone].ik_chain_info {
-                let chain_rotation = Mat3::from_quat(ik_chain_info.local_rotation() * ik_chain_info.ik_rotation());
-                let threshold = 88.0 * std::f32::consts::PI / 180.0;
+                let chain_rotation = DMat3::from_quat(ik_chain_info.local_rotation().as_dquat() * ik_chain_info.ik_rotation().as_dquat());
+                let threshold = 88.0 * std::f64::consts::PI / 180.0;
                 
                 let new_ik_rotation = match chain.rotation_order {
                     EulerRotationOrder::Yxz => {
@@ -206,15 +206,15 @@ impl IkSolverArena {
                             let min = angle_limits.minimum_angle;
                             let max = angle_limits.maximum_angle;
                             (
-                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
-                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
-                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                                IkSolverArena::limit_angle(r_x, min.x as f64, max.x as f64, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y as f64, max.y as f64, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z as f64, max.z as f64, use_axis),
                             )
                         };
 
-                        Quat::from_axis_angle(Vec3::Y, r_y) *
-                            Quat::from_axis_angle(Vec3::X, r_x) *
-                            Quat::from_axis_angle(Vec3::Z, r_z)
+                        DQuat::from_axis_angle(DVec3::Y, r_y) *
+                            DQuat::from_axis_angle(DVec3::X, r_x) *
+                            DQuat::from_axis_angle(DVec3::Z, r_z)
                     }
                     EulerRotationOrder::Zyx => {
                         let r_y = (-chain_rotation.x_axis.z).asin();
@@ -231,15 +231,15 @@ impl IkSolverArena {
                             let min = angle_limits.minimum_angle;
                             let max = angle_limits.maximum_angle;
                             (
-                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
-                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
-                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                                IkSolverArena::limit_angle(r_x, min.x as f64, max.x as f64, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y as f64, max.y as f64, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z as f64, max.z as f64, use_axis),
                             )
                         };
 
-                        Quat::from_axis_angle(Vec3::Z, r_z) *
-                            Quat::from_axis_angle(Vec3::Y, r_y) *
-                            Quat::from_axis_angle(Vec3::X, r_x)
+                        DQuat::from_axis_angle(DVec3::Z, r_z) *
+                            DQuat::from_axis_angle(DVec3::Y, r_y) *
+                            DQuat::from_axis_angle(DVec3::X, r_x)
                     }
                     EulerRotationOrder::Xzy => {
                         let r_z = (-chain_rotation.y_axis.x).asin();
@@ -256,20 +256,20 @@ impl IkSolverArena {
                             let min = angle_limits.minimum_angle;
                             let max = angle_limits.maximum_angle;
                             (
-                                IkSolverArena::limit_angle(r_x, min.x, max.x, use_axis),
-                                IkSolverArena::limit_angle(r_y, min.y, max.y, use_axis),
-                                IkSolverArena::limit_angle(r_z, min.z, max.z, use_axis),
+                                IkSolverArena::limit_angle(r_x, min.x as f64, max.x as f64, use_axis),
+                                IkSolverArena::limit_angle(r_y, min.y as f64, max.y as f64, use_axis),
+                                IkSolverArena::limit_angle(r_z, min.z as f64, max.z as f64, use_axis),
                             )
                         };
 
-                        Quat::from_axis_angle(Vec3::X, r_x) *
-                            Quat::from_axis_angle(Vec3::Z, r_z) *
-                            Quat::from_axis_angle(Vec3::Y, r_y)
+                        DQuat::from_axis_angle(DVec3::X, r_x) *
+                            DQuat::from_axis_angle(DVec3::Z, r_z) *
+                            DQuat::from_axis_angle(DVec3::Y, r_y)
                     }
                 };
 
-                let inverted_local_rotation = ik_chain_info.local_rotation().inverse();
-                *ik_chain_info.ik_rotation_mut() = new_ik_rotation * inverted_local_rotation;
+                let inverted_local_rotation = ik_chain_info.local_rotation().as_dquat().inverse();
+                *ik_chain_info.ik_rotation_mut() = (new_ik_rotation * inverted_local_rotation).as_quat();
             } else {
                 unreachable!("ik_chain_info is None");
             }
@@ -294,15 +294,15 @@ impl IkSolverArena {
             false,
             &mut None,
         );
-        Vec3A::from(bone_arena.world_matrices()[solver.target_bone].w_axis)
+        bone_arena.world_matrices()[solver.target_bone].w_axis.truncate().as_dvec3()
     }
 
     fn limit_angle(
-        angle: f32,
-        min: f32,
-        max: f32,
+        angle: f64,
+        min: f64,
+        max: f64,
         use_axis: bool,
-    ) -> f32 {
+    ) -> f64 {
         if angle < min {
             let diff = 2.0 * min - angle;
             if diff <= max && use_axis { diff } else { min }
