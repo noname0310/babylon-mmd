@@ -77,9 +77,9 @@ class MmdPhysicsBody extends PhysicsBody {
 export class MmdPhysicsModel implements IMmdPhysicsModel {
     private readonly _mmdPhysics: MmdPhysics;
 
-    private readonly _nodes: readonly Nullable<MmdPhysicsTransformNode>[];
-    private readonly _bodies: readonly Nullable<PhysicsBody>[];
-    private readonly _constraints: readonly Nullable<PhysicsConstraint>[];
+    private readonly _nodes: Nullable<MmdPhysicsTransformNode>[];
+    private readonly _bodies: Nullable<PhysicsBody>[];
+    private readonly _constraints: Nullable<PhysicsConstraint>[];
 
     /**
      * Create a new MMD physics model
@@ -90,9 +90,9 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
      */
     public constructor(
         mmdPhysics: MmdPhysics,
-        nodes: readonly Nullable<MmdPhysicsTransformNode>[],
-        bodies: readonly Nullable<PhysicsBody>[],
-        constraints: readonly Nullable<PhysicsConstraint>[]
+        nodes: Nullable<MmdPhysicsTransformNode>[],
+        bodies: Nullable<PhysicsBody>[],
+        constraints: Nullable<PhysicsConstraint>[]
     ) {
         this._mmdPhysics = mmdPhysics;
 
@@ -109,6 +109,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
         for (let i = 0; i < constraints.length; ++i) {
             constraints[i]?.dispose();
         }
+        constraints.length = 0;
 
         const bodies = this._bodies;
         for (let i = 0; i < bodies.length; ++i) {
@@ -118,11 +119,13 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
             body.shape?.dispose();
             body.dispose();
         }
+        bodies.length = 0;
 
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
             nodes[i]?.dispose();
         }
+        nodes.length = 0;
     }
 
     private static readonly _NodeWorldMatrix = new Matrix();

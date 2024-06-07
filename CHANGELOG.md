@@ -8,6 +8,8 @@
 
 - fix wasm runtime physics memory leak
 
+- fix an issue with body being disposed twice
+
 ## 0.45.2
 
 - use double precision on wasm runtime ik solver computation for jitter free result

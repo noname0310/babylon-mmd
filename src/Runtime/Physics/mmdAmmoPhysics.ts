@@ -87,8 +87,8 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
 export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     private readonly _mmdPhysics: MmdAmmoPhysics;
 
-    private readonly _nodes: readonly Nullable<MmdPhysicsMesh>[];
-    private readonly _impostors: readonly Nullable<PhysicsImpostor>[];
+    private readonly _nodes: Nullable<MmdPhysicsMesh>[];
+    private readonly _impostors: Nullable<PhysicsImpostor>[];
 
     private readonly _rootMesh: Mesh;
     // eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -111,8 +111,8 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
      */
     public constructor(
         mmdPhysics: MmdAmmoPhysics,
-        nodes: readonly Nullable<MmdPhysicsMesh>[],
-        impostors: readonly Nullable<PhysicsImpostor>[],
+        nodes: Nullable<MmdPhysicsMesh>[],
+        impostors: Nullable<PhysicsImpostor>[],
         rootMesh: Mesh,
         ammoInstance: any
     ) {
@@ -138,12 +138,15 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
             const impostor = impostors[i];
             if (impostor === null) continue;
             impostor.dispose();
+            (impostor.object as MmdPhysicsMesh).physicsImpostor = null;
         }
+        impostors.length = 0;
 
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
             nodes[i]?.dispose(false, true);
         }
+        nodes.length = 0;
 
         this._ammoInstance.destroy(this._tmpBtVector3);
         this._ammoInstance.destroy(this._tmpBtQuaternion);
