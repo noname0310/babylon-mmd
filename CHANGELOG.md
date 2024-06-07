@@ -6,6 +6,8 @@
 
 - improve wasm runtime multi-threading stability
 
+- fix wasm runtime physics memory leak
+
 ## 0.45.2
 
 - use double precision on wasm runtime ik solver computation for jitter free result

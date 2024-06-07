@@ -273,6 +273,7 @@ export class MmdWasmModel implements IMmdModel {
      */
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
+        this._physicsModel?.dispose();
         this.onCurrentAnimationChangedObservable.clear();
 
         const animations = this._animations;
