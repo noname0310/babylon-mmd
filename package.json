@@ -4,7 +4,7 @@
     "description": "babylon mmd runtime",
     "main": "esm/index.js",
     "scripts": {
-        "start": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack serve --mode development",
+        "start": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack serve --env development",
         "watch": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --watch",
         "build": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --env production",
         "build-wasm-sr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/sr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128\"                                        wasm-pack build --target web --release --out-dir ../wasm/sr --out-name index -- --no-default-features && cd ../../../..",
