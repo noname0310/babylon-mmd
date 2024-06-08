@@ -129,4 +129,7 @@ dist
 
 res/private_test
 test_dist
+src/Runtime/Physics/External/ammo.wasm.d.ts
+src/Runtime/Physics/External/ammo.wasm.js
+src/Runtime/Physics/External/ammo.wasm.wasm
 src/Test/External

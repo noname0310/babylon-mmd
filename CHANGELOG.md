@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.47.0
+
+- include wasm version of ammo.js in the package
+    - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
+    - this distribution of ammo.js has been modified to work with bundlers like Webpack
+
 ## 0.46.0
 
 - improve CreateMmdModelOptions parameter type

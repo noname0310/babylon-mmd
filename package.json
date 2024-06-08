@@ -4,18 +4,28 @@
     "description": "babylon mmd runtime",
     "main": "esm/index.js",
     "scripts": {
+        "download-ammojs-wasm": "download --out src/Runtime/Physics/External https://raw.githubusercontent.com/kripken/ammo.js/1ed8b58c7058a5f697f2642ceef8ee20fdd55e10/builds/ammo.wasm.js && download --out src/Runtime/Physics/External https://github.com/kripken/ammo.js/raw/1ed8b58c7058a5f697f2642ceef8ee20fdd55e10/builds/ammo.wasm.wasm",
+        "download-ammojs-dts": "download --out src/Runtime/Physics/External --filename ammo.wasm.d.ts https://raw.githubusercontent.com/giniedp/ammojs-typed/05408a318256ca561720aad1cfd0e83e772f06cb/ammo/ammo.d.ts",
+        "patch-ammojs-wasm": "cd src/Runtime/Physics/External && git init && git apply ammo-bundler.patch && rimraf .git && cd ../../../../",
+        "postinstall": "npm run download-ammojs-wasm && npm run download-ammojs-dts && npm run patch-ammojs-wasm",
+        
         "start": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack serve --env development",
         "watch": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --watch",
         "build": "cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" webpack --env production",
+        
         "build-wasm-sr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/sr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128\"                                        wasm-pack build --target web --release --out-dir ../wasm/sr --out-name index -- --no-default-features && cd ../../../..",
         "build-wasm-sd": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/sd && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128\"                                        wasm-pack build --target web --debug   --out-dir ../wasm/sd --out-name index -- --no-default-features --features \"console_error_panic_hook\" && cd ../../../..",
         "build-wasm-mr": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/mr && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --release --out-dir ../wasm/mr --out-name index -- --no-default-features --features \"parallel\" && cd ../../../..",
         "build-wasm-md": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/md && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --debug   --out-dir ../wasm/md --out-name index -- --no-default-features --features \"console_error_panic_hook parallel\" && cd ../../../..",
         "build-wasm-all": "npm run build-wasm-sr && npm run build-wasm-sd && npm run build-wasm-mr && npm run build-wasm-md",
-        "build-esm": "tspc --project tsconfig.lib.json && copyfiles -u 3 src/Runtime/Optimized/wasm/** dist/esm/Runtime/Optimized/",
+        
+        "build-esm": "tspc --project tsconfig.lib.json && copyfiles -u 3 src/Runtime/Optimized/wasm/** dist/esm/Runtime/Optimized/ && copyfiles -u 4 src/Runtime/Physics/External/ammo.wasm.* dist/esm/Runtime/Physics/External",
         "build-umd": "webpack --env production --config webpack.lib.config.ts && webpack --env development --config webpack.lib.config.ts",
+        
         "build-lib": "rimraf dist && npm run build-wasm-all && npm run build-esm && npm run build-umd",
+        
         "publish-lib": "ts-node publishScript.ts && npm publish ./dist",
+        
         "lint": "eslint --ext .ts,.tsx . --fix --cache"
     },
     "repository": {
@@ -41,6 +51,7 @@
         "copy-webpack-plugin": "^12.0.2",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
+        "download-cli": "^1.1.1",
         "eslint": "^8.57.0",
         "eslint-plugin-simple-import-sort": "^12.1.0",
         "eslint-webpack-plugin": "^4.2.0",

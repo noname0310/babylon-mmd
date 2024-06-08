@@ -13,7 +13,6 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import ammo from "ammojs-typed";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -26,6 +25,7 @@ import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";

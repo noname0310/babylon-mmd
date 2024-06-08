@@ -28,12 +28,12 @@ import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDeb
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import ammo from "../External/ammo.wasm.js";
 import { attachToBone } from "../Util/attachToBone";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";

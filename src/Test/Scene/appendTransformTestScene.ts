@@ -28,13 +28,13 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 // import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import ammo from "../External/ammo.wasm";
 import { createCameraSwitch } from "../Util/createCameraSwitch";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";

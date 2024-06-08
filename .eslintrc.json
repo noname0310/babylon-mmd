@@ -19,7 +19,10 @@
         "simple-import-sort"
     ],
     "ignorePatterns": [
-        "dist"
+        "dist",
+        "src/Runtime/Optimized/wasm",
+        "src/Runtime/Optimized/wasm_src",
+        "src/Runtime/Physics/External"
     ],
     "rules": {
         "@typescript-eslint/consistent-type-imports": [
