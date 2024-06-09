@@ -49,7 +49,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     SdefInjector.OverrideEngineCreateEffect(engine);
 
     const scene = new Scene(engine);
-    scene.ambientColor = new Color3(1, 1, 1);
+    scene.ambientColor = new Color3(0.5, 0.5, 0.5);
 
     const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
 

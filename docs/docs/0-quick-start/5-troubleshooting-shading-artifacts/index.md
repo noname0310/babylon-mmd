@@ -114,7 +114,7 @@ So if you want to make any changes to the loaded asset, check the loader option 
 
 ```typescript title="src/sceneBuilder.ts"
 import type { Engine } from "@babylonjs/core";
-import { DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import { Color3, DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import type { MmdStandardMaterialBuilder } from "babylon-mmd";
 import { MmdCamera, MmdMesh, MmdPhysics, MmdPlayerControl, MmdRuntime, PmxLoader, SdefInjector, StreamAudioPlayer, VmdLoader } from "babylon-mmd";
@@ -142,6 +142,7 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         const scene = new Scene(engine);
+        scene.ambientColor = new Color3(0.5, 0.5, 0.5);
 
         const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
 

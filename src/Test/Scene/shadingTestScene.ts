@@ -26,7 +26,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.forceDisableAlphaEvaluation = false;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const scene = new Scene(engine);
-        scene.ambientColor = new Color3(1, 1, 1);
+        scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         createDefaultArcRotateCamera(scene);
         const { shadowGenerator } = createLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
