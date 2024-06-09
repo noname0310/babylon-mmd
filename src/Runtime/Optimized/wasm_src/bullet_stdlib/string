@@ -1,0 +1,31 @@
+#pragma once
+
+#include <stdlib.h>
+
+namespace std {
+    // very partially implemented only for building the btHashMap
+    class string {
+    private:
+        size_t m_length;
+        char* m_str;
+
+    public:
+        string();
+        
+        string(const char* str);
+
+        ~string();
+
+        string(const string& other);
+
+        string(string&& other);
+
+        string& operator=(const string& other);
+
+        string& operator=(string&& other);
+
+        bool operator==(const string& other) const;
+
+        const char* c_str() const;
+    };
+}

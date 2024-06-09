@@ -1,0 +1,9 @@
+#pragma once 
+
+inline void* operator new(size_t size, void* ptr) noexcept {
+    return ptr;
+}
+
+inline void* operator new[](size_t size, void* ptr) noexcept {
+    return ptr;
+}

@@ -10,8 +10,9 @@ license = "MIT"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook", "parallel"]
+default = ["console_error_panic_hook", "parallel", "physics"]
 parallel = ["rayon", "wasm-bindgen-rayon"]
+physics = []
 
 [profile.release]
 opt-level = 3
@@ -27,6 +28,8 @@ num-traits = "0.2.18"
 glam = { version = "0.27.0", features = ["debug-glam-assert", "fast-math"] }
 rayon = { version = "1.8.1", optional = true }
 wasm-bindgen-rayon = { version = "1.2.1", optional = true }
+thread-id = "4.2.1"
+wasm_sync = "0.1.2"
 
 [dependencies.web-sys]
 version = "0.3.68"
@@ -34,3 +37,6 @@ features = ["console"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.41"
+
+[build-dependencies]
+cc = "1.0.86"

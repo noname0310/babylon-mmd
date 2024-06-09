@@ -1,0 +1,17 @@
+#pragma once
+
+#include <math.h>
+
+// for ConstraintSolvers
+
+namespace std {
+    inline double sqrt(double x) {
+        return sqrt(x);
+    }
+
+    inline double floor(double x) {
+        return floor(x);
+    }
+}
+
+//

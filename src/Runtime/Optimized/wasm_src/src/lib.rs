@@ -1,4 +1,6 @@
 mod animation;
+#[cfg(feature = "physics")]
+mod physics;
 mod animation_arena;
 mod append_transform_solver;
 mod ik_chain_info;
@@ -19,6 +21,9 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 pub fn init() {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
+
+    #[cfg(feature = "physics")]
+    physics::init();
 }
 
 #[wasm_bindgen(js_name = createMmdRuntime)]

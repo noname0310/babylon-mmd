@@ -129,6 +129,9 @@ dist
 
 res/private_test
 test_dist
+src/Runtime/Optimized/wasm_src/bullet_src/BulletCollision
+src/Runtime/Optimized/wasm_src/bullet_src/BulletDynamics
+src/Runtime/Optimized/wasm_src/bullet_src/LinearMath
 src/Runtime/Physics/External/ammo.wasm.d.ts
 src/Runtime/Physics/External/ammo.wasm.js
 src/Runtime/Physics/External/ammo.wasm.wasm

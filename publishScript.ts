@@ -22,4 +22,4 @@ fs.copyFileSync("./LICENSE", "./dist/LICENSE");
 fs.copyFileSync("./CHANGELOG.md", "./dist/CHANGELOG.md");
 
 // execSync("npm publish ./dist");
-// fs.rmdirSync("./dist", { recursive: true });
+// fs.rmSync("./dist", { recursive: true });

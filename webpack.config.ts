@@ -56,7 +56,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         // eslint-disable-next-line @typescript-eslint/naming-convention
         __dirname: false
     },
-    plugins: [
+    plugins: ([
         new htmlWebpackPlugin({
             template: "./src/Test/index.html"
         }),
@@ -69,22 +69,16 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             patterns: [
                 { from: "res", to: "res" }
             ]
-        }),
-        // new wasmPackPlugin({
-        //     crateDirectory: path.resolve(__dirname, "src/Runtime/Optimized/wasm_src"),
-        //     outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm"),
-        //     outName: "index",
-        //     extraArgs: "--target web",
-        //     forceMode: "production"
-        // }),
+        })
+    ] as webpack.Configuration["plugins"])!.concat(env.wasmInstance !== "js" ? [
         new wasmPackPlugin({
             crateDirectory: path.resolve(__dirname, "src/Runtime/Optimized/wasm_src"),
-            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm/md"),
+            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm/" + env.wasmInstance),
             outName: "index",
             extraArgs: "--target web",
             forceMode: "development"
         })
-    ].concat(env.production ? [
+    ] : []).concat(env.production ? [
         new compressionWebpackPlugin({
             test: /\.(js|wasm|bvmd|bpmx)$/i
         }) as any
