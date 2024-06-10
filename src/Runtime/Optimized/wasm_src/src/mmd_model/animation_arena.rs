@@ -1,7 +1,8 @@
 use glam::{Vec3A, Quat};
 
-use crate::mmd_runtime_bone::MmdRuntimeBone;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
+
+use super::mmd_runtime_bone::MmdRuntimeBone;
 
 #[repr(C)]
 #[derive(Clone)]
@@ -18,7 +19,7 @@ pub(crate) struct AnimationArena {
 }
 
 impl AnimationArena {
-    pub(crate) fn new(runtime_bones: &[MmdRuntimeBone], ik_count: u32, morph_count: u32) -> Self {
+    pub(super) fn new(runtime_bones: &[MmdRuntimeBone], ik_count: u32, morph_count: u32) -> Self {
         let mut bone_arena = Vec::with_capacity(runtime_bones.len());
         for runtime_bone in runtime_bones {
             bone_arena.push(AnimatedBoneData {

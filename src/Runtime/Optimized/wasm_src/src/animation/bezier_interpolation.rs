@@ -1,7 +1,7 @@
 const ITERATIONS: i32 = 15;
 const EPSILON: f32 = 1e-5;
 
-pub(crate) fn bezier_interpolation(x1: f32, x2: f32, y1: f32, y2: f32, x: f32) -> f32 {
+pub(super) fn bezier_interpolation(x1: f32, x2: f32, y1: f32, y2: f32, x: f32) -> f32 {
     let mut c = 0.5;
     let mut t = c;
     let mut s = 1.0 - t;

@@ -1,12 +1,19 @@
+mod animation_arena;
+mod append_transform_solver;
+mod ik_chain_info;
+mod ik_solver;
+mod mmd_morph_controller;
+mod mmd_runtime_bone;
+
 use std::num::NonZeroUsize;
 use std::ptr::NonNull;
+use animation_arena::AnimationArena;
+use append_transform_solver::{AppendTransformSolver, AppendTransformSolverArena};
+use ik_solver::{IkSolver, IkSolverArena};
+use mmd_morph_controller::MmdMorphController;
+use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 
-use crate::mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
-use crate::append_transform_solver::{AppendTransformSolver, AppendTransformSolverArena};
-use crate::ik_solver::{IkSolver, IkSolverArena};
-use crate::animation_arena::AnimationArena;
-use crate::mmd_morph_controller::MmdMorphController;
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
@@ -172,6 +179,11 @@ impl MmdModel {
     }
 
     #[inline]
+    pub(crate) fn bone_arena(&self) -> &MmdRuntimeBoneArena {
+        &self.bone_arena
+    }
+
+    #[inline]
     pub(crate) fn bone_arena_mut(&mut self) -> &mut MmdRuntimeBoneArena {
         &mut self.bone_arena
     }
@@ -226,23 +238,15 @@ impl MmdModel {
 
             let compute_ik = if let Some(ik_solver) = bone.ik_solver {
                 if self.animation_arena.iksolver_state_arena()[ik_solver] != 0 {
-                    &mut self.bone_stack
+                    true
                 } else {
-                    &mut None
+                    false
                 }
             } else {
-                &mut None
+                false
             };
 
-            MmdRuntimeBoneArena::update_world_matrix(
-                &mut self.bone_arena,
-                bone_index,
-                &self.animation_arena,
-                &mut self.append_transform_solver_arena,
-                &self.ik_solver_arena,
-                self.external_physics,
-                compute_ik,
-            );
+            self.update_world_matrix(bone_index, self.external_physics, compute_ik);
         }
     }
 }

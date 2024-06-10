@@ -29,7 +29,7 @@ pub(crate) struct MmdRuntimeAnimation {
 }
 
 impl MmdRuntimeAnimation {
-    pub(crate) fn new(
+    pub(super) fn new(
         animation: &'static MmdAnimation,
         bone_bind_index_map: Box<[i32]>,
         movable_bone_bind_index_map: Box<[i32]>,
@@ -83,7 +83,7 @@ impl MmdRuntimeAnimation {
     }
 
     #[inline]
-    pub(crate) fn animation(&self) -> &'static MmdAnimation {
+    pub(super) fn animation(&self) -> &'static MmdAnimation {
         self.animation
     }
 

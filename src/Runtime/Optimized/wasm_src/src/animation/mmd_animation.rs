@@ -1,6 +1,6 @@
 use super::mmd_animation_track::{MmdBoneAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack};
 
-pub(crate) struct MmdAnimation {
+pub(super) struct MmdAnimation {
     bone_tracks: Box<[MmdBoneAnimationTrack]>,
     movable_bone_tracks: Box<[MmdMovableBoneAnimationTrack]>,
     morph_tracks: Box<[MmdMorphAnimationTrack]>,
@@ -8,7 +8,7 @@ pub(crate) struct MmdAnimation {
 }
 
 impl MmdAnimation {
-    pub(crate) fn new(
+    pub(super) fn new(
         bone_tracks: Box<[MmdBoneAnimationTrack]>,
         movable_bone_tracks: Box<[MmdMovableBoneAnimationTrack]>,
         morph_tracks: Box<[MmdMorphAnimationTrack]>,
@@ -23,27 +23,27 @@ impl MmdAnimation {
     }
 
     #[inline]
-    pub(crate) fn bone_tracks(&self) -> &[MmdBoneAnimationTrack] {
+    pub(super) fn bone_tracks(&self) -> &[MmdBoneAnimationTrack] {
         &self.bone_tracks
     }
 
     #[inline]
-    pub(crate) fn movable_bone_tracks(&self) -> &[MmdMovableBoneAnimationTrack] {
+    pub(super) fn movable_bone_tracks(&self) -> &[MmdMovableBoneAnimationTrack] {
         &self.movable_bone_tracks
     }
 
     #[inline]
-    pub(crate) fn morph_tracks(&self) -> &[MmdMorphAnimationTrack] {
+    pub(super) fn morph_tracks(&self) -> &[MmdMorphAnimationTrack] {
         &self.morph_tracks
     }
 
     #[inline]
-    pub(crate) fn property_track(&self) -> &MmdPropertyAnimationTrack {
+    pub(super) fn property_track(&self) -> &MmdPropertyAnimationTrack {
         &self.property_track
     }
 
     #[inline]
-    pub(crate) fn property_track_mut(&mut self) -> &mut MmdPropertyAnimationTrack {
+    pub(super) fn property_track_mut(&mut self) -> &mut MmdPropertyAnimationTrack {
         &mut self.property_track
     }
 }

@@ -1,39 +1,40 @@
 use glam::{Quat, Vec3A};
 
-use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 use crate::mmd_model_metadata::BoneFlag;
-use crate::animation_arena::AnimationArena;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
-pub(crate) struct AppendTransformSolverArena {
+use super::animation_arena::AnimationArena;
+use super::mmd_runtime_bone::MmdRuntimeBoneArena;
+
+pub(super) struct AppendTransformSolverArena {
     arena: Box<[AppendTransformSolver]>,
 }
 
 impl AppendTransformSolverArena {
-    pub(crate) fn new(arena: Box<[AppendTransformSolver]>) -> Self {
+    pub(super) fn new(arena: Box<[AppendTransformSolver]>) -> Self {
         AppendTransformSolverArena {
             arena,
         }
     }
 
     #[inline]
-    pub(crate) fn arena(&self) -> UncheckedSlice<AppendTransformSolver> {
+    pub(super) fn arena(&self) -> UncheckedSlice<AppendTransformSolver> {
         UncheckedSlice::new(&self.arena)
     }
 
     #[inline]
-    pub(crate) fn arena_mut(&mut self) -> UncheckedSliceMut<AppendTransformSolver> {
+    pub(super) fn arena_mut(&mut self) -> UncheckedSliceMut<AppendTransformSolver> {
         UncheckedSliceMut::new(&mut self.arena)
     }
 
-    pub(crate) fn reset_state(&mut self) {
+    pub(super) fn reset_state(&mut self) {
         for solver in self.arena_mut().iter_mut() {
             solver.append_position = Vec3A::ZERO;
             solver.append_rotation = Quat::IDENTITY;
         }
     }
 
-    pub(crate) fn update(
+    pub(super) fn update(
         &mut self,
         index: u32,
         animation_arena: &AnimationArena,
@@ -110,7 +111,7 @@ impl AppendTransformSolverArena {
     }
 }
 
-pub(crate) struct AppendTransformSolver {
+pub(super) struct AppendTransformSolver {
     is_local: bool,
     affect_rotation: bool,
     affect_position: bool,
@@ -123,7 +124,7 @@ pub(crate) struct AppendTransformSolver {
 }
 
 impl AppendTransformSolver {
-    pub(crate) fn new(
+    pub(super) fn new(
         target_bone: u32,
         bone_flag: u16,
         ratio: f32,
@@ -140,22 +141,22 @@ impl AppendTransformSolver {
     }
 
     #[inline]
-    pub(crate) fn is_affect_rotation(&self) -> bool {
+    pub(super) fn is_affect_rotation(&self) -> bool {
         self.affect_rotation
     }
 
     #[inline]
-    pub(crate) fn is_affect_position(&self) -> bool {
+    pub(super) fn is_affect_position(&self) -> bool {
         self.affect_position
     }
 
     #[inline]
-    pub(crate) fn append_position(&self) -> Vec3A {
+    pub(super) fn append_position(&self) -> Vec3A {
         self.append_position
     }
 
     #[inline]
-    pub(crate) fn append_rotation(&self) -> Quat {
+    pub(super) fn append_rotation(&self) -> Quat {
         self.append_rotation
     }
 }

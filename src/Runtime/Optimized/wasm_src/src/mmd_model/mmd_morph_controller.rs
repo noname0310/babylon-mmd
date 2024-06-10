@@ -1,16 +1,17 @@
 use glam::Quat;
 
 use crate::mmd_model_metadata::MorphMetadata;
-use crate::mmd_runtime_bone::MmdRuntimeBoneArena;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
-pub(crate) struct MmdMorphController {
+use super::mmd_runtime_bone::MmdRuntimeBoneArena;
+
+pub(super) struct MmdMorphController {
     morphs: Box<[MorphMetadata]>,
     active_morphs: Box<[bool]>
 }
 
 impl MmdMorphController {
-    pub(crate) fn new(morphs: Box<[MorphMetadata]>) -> Self {
+    pub(super) fn new(morphs: Box<[MorphMetadata]>) -> Self {
         let active_morphs = vec![false; morphs.len()].into_boxed_slice();
         MmdMorphController {
             morphs,
@@ -30,7 +31,7 @@ impl MmdMorphController {
         UncheckedSliceMut::new(&mut self.active_morphs)
     }
 
-    pub(crate) fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: UncheckedSlice<f32>) {
+    pub(super) fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: UncheckedSlice<f32>) {
         for i in 0..self.active_morphs().len() as u32 {
             if self.active_morphs()[i] {
                 self.reset_morph(i, bone_arena);
