@@ -25,7 +25,7 @@ wasm-bindgen = "0.2.91"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 byte-slice-cast = "1.2.2"
 num-traits = "0.2.18"
-glam = { version = "0.27.0", features = ["debug-glam-assert", "fast-math"] }
+glam = { version = "0.28.0", features = ["debug-glam-assert", "fast-math"] }
 rayon = { version = "1.8.1", optional = true }
 wasm-bindgen-rayon = { version = "1.2.1", optional = true }
 thread-id = "4.2.1"
