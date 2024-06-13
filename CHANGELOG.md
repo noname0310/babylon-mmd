@@ -6,7 +6,8 @@
     - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
     - this distribution of ammo.js has been modified to work with bundlers like Webpack
 
-- fix bpmx converter does not serialize bone flags correctly
+- BPMX format updated to 2.2.0. Files of version 2.1.0 and 2.0.0 are still compatible
+    - fix bpmx converter does not serialize bone flags correctly
 
 - handle axis limit in mmd runtime for reproduce mmd twist bone behavior
 

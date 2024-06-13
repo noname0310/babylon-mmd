@@ -58,6 +58,10 @@ export class BpmxReader {
         return bpmxObject;
     }
 
+    private static readonly _V200Int = 2 << 16 | 0 << 8 | 0;
+    // private static readonly _V210Int = 2 << 16 | 1 << 8 | 0;
+    private static readonly _V220Int = 2 << 16 | 2 << 8 | 0;
+
     private static _ParseHeader(dataDeserializer: MmdDataDeserializer): BpmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
             4 + // signature
@@ -75,7 +79,9 @@ export class BpmxReader {
             dataDeserializer.getInt8(),
             dataDeserializer.getInt8()
         ] as const;
-        if (version[0] !== 2 || (version[1] !== 0 && version[1] !== 1) || version[2] !== 0) {
+        const versionInt = version[0] << 16 | version[1] << 8 | version[2];
+
+        if (versionInt < this._V200Int || this._V220Int < versionInt) {
             throw new LoadFileError(`BPMX version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
 
