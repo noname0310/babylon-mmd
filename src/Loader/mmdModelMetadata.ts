@@ -293,6 +293,11 @@ export namespace MmdModelMetadata {
         readonly appendTransform: PmxObject.Bone["appendTransform"];
 
         /**
+         * Limit transform by axis (optional)
+         */
+        readonly axisLimit: PmxObject.Bone["axisLimit"];
+
+        /**
          * IK information (optional)
          *
          * @see PmxObject.Bone["ik"]
@@ -371,11 +376,6 @@ export namespace MmdModelMetadata {
          * This property is not used in runtime but used in editor
          */
         readonly tailPosition: PmxObject.Bone["tailPosition"];
-
-        /**
-         * This property is not used in runtime but used in editor
-         */
-        readonly axisLimit: PmxObject.Bone["axisLimit"];
 
         /**
          * This property is not used in runtime but used in editor

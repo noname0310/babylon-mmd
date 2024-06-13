@@ -382,7 +382,7 @@ export class HumanoidMmd {
         meshes: readonly Mesh[],
         morphMap: { [key: string]: string },
         skeleton: Skeleton
-    ): MmdModelMetadata {
+    ): Omit<MmdModelMetadata, "bones"> & { bones: MmdModelMetadata.Bone[] } {
         const header: MmdModelMetadata.Header = {
             modelName: name,
             englishModelName: name,
@@ -404,6 +404,7 @@ export class HumanoidMmd {
                 transformOrder: metadata[2],
                 flag: metadata[3],
                 appendTransform: metadata[4] !== null ? { ...metadata[4] } : undefined,
+                axisLimit: undefined,
                 ik: ik !== null ? {
                     target: ik.target,
                     iteration: ik.iteration,
@@ -507,7 +508,7 @@ export class HumanoidMmd {
     private _buildBoneProxyTree(
         skeleton: Skeleton,
         boneMap: { [key: string]: string },
-        bonesMetadata: readonly MmdModelMetadata.Bone[],
+        bonesMetadata: MmdModelMetadata.Bone[],
         transformOffset: Matrix,
         logger: ILogger
     ): LinkedBoneProxy[] {
@@ -778,6 +779,25 @@ export class HumanoidMmd {
                     positionInitializedProxies.add(boneProxy.name);
                     positionUninitializedProxyCount -= 1;
                     logger.warn(`Bone position of ${boneProxy.name} is not initialized. Use parent bone position instead. Animation may not work correctly.`);
+                }
+            }
+        }
+
+        // initialize twist bone axis
+        const twistBoneNames = ["右腕捩", "右手捩", "左腕捩", "左手捩"];
+        const twistBoneChildNames = ["右ひじ", "右手首", "左ひじ", "左手首"];
+        for (let i = 0; i < twistBoneNames.length; ++i) {
+            const twistBoneName = twistBoneNames[i];
+            const twistBone = boneProxyMap.get(twistBoneName);
+            const twistBoneChild = boneProxyMap.get(twistBoneChildNames[i]);
+            if (twistBone !== undefined && twistBoneChild !== undefined) {
+                const axis = twistBoneChild._position.subtract(twistBone._position).normalize();
+
+                for (let j = 0; j < bonesMetadata.length; ++j) {
+                    if (bonesMetadata[j].name === twistBoneName) {
+                        bonesMetadata[j] = { ...bonesMetadata[j], axisLimit: [axis.x, axis.y, axis.z] };
+                        break;
+                    }
                 }
             }
         }

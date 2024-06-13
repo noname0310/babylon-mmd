@@ -133,6 +133,7 @@ export class SceneBuilder implements ISceneBuilder {
                         transformOrder: 0,
                         flag: defaultBoneFlag,
                         appendTransform: undefined,
+                        axisLimit: undefined,
                         ik: undefined
                     };
                     bones.push(metadata);

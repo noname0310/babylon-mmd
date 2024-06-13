@@ -444,10 +444,10 @@ export abstract class MmdModelLoader<
                     transformOrder: boneInfo.transformOrder,
                     flag: boneInfo.flag,
                     appendTransform: boneInfo.appendTransform,
+                    axisLimit: boneInfo.axisLimit,
                     ik: boneInfo.ik,
                     ...preserveSerializationData ? {
                         tailPosition: boneInfo.tailPosition,
-                        axisLimit: boneInfo.axisLimit,
                         localVector: boneInfo.localVector,
                         externalParentTransform: boneInfo.externalParentTransform
                     } : undefined

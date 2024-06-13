@@ -1,10 +1,11 @@
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
+import { quaternionToAxisAngle } from "./Common/quaternionToAxisAngle";
 import type { IkChainInfo } from "./ikChainInfo";
 import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
@@ -63,6 +64,11 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public appendTransformSolver: Nullable<AppendTransformSolver>;
 
     /**
+     * Axis limitation of the bone
+     */
+    public readonly axisLimit: Nullable<DeepImmutable<Vector3>>;
+
+    /**
      * IK solver
      *
      * If the bone does not have an ik solver, it will be null
@@ -72,14 +78,14 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     /**
      * The position offset value to be moved by the bone morph
      *
-     * This is a field that is primarily updated by the append transform solver
+     * This is a field that is primarily updated by the morph controller
      */
     public readonly morphPositionOffset: Vector3;
 
     /**
      * The rotation offset value to be moved by the bone morph
      *
-     * This is a field that is primarily updated by the append transform solver
+     * This is a field that is primarily updated by the morph controller
      */
     public readonly morphRotationOffset: Quaternion;
 
@@ -139,6 +145,11 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.transformAfterPhysics = (boneMetadata.flag & PmxObject.Bone.Flag.TransformAfterPhysics) !== 0;
 
         this.appendTransformSolver = null;
+        if (boneMetadata.axisLimit !== undefined) {
+            this.axisLimit = Vector3.FromArray(boneMetadata.axisLimit).normalize();
+        } else {
+            this.axisLimit = null;
+        }
         this.ikSolver = null;
 
         this.morphPositionOffset = Vector3.Zero();
@@ -164,12 +175,36 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     //     return target;
     // }
 
+    private static readonly _TempAxis = new Vector3();
+
     private _getAnimatedRotationToRef(target: Quaternion): Quaternion {
-        return target.copyFrom(this.linkedBone.rotationQuaternion);
+        // MMD's implementation transforms the rotation axis to fit the axis limit of the target skeleton at animation load time.
+        // However, that method makes it impossible to apply one animation data to multiple models,
+        // so we use an implementation that performs the axis transformation at runtime.
+        if (this.axisLimit !== null) {
+            const animationAxis = MmdRuntimeBone._TempAxis;
+            let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+            if (Vector3.Dot(animationAxis, this.axisLimit) < 0) {
+                angle = -angle;
+            }
+            Quaternion.RotationAxisToRef(this.axisLimit, angle, target);
+        } else {
+            target.copyFrom(this.linkedBone.rotationQuaternion);
+        }
+        return target;
     }
 
     private _getAnimatedRotationWithMorphToRef(target: Quaternion): Quaternion {
-        target.copyFrom(this.linkedBone.rotationQuaternion);
+        if (this.axisLimit !== null) {
+            const animationAxis = MmdRuntimeBone._TempAxis;
+            let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+            if (Vector3.Dot(animationAxis, this.axisLimit) < 0) {
+                angle = -angle;
+            }
+            Quaternion.RotationAxisToRef(this.axisLimit, angle, target);
+        } else {
+            target.copyFrom(this.linkedBone.rotationQuaternion);
+        }
         return this.morphRotationOffset.multiplyToRef(target, target);
     }
 
