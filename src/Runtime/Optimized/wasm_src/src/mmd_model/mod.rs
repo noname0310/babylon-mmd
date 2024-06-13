@@ -49,6 +49,7 @@ impl MmdModel {
                 bone.absolute_inverse_bind_matrix = metadata.absolute_inverse_bind_matrix;
                 bone.transform_order = metadata.transform_order;
                 bone.transform_after_physics = metadata.flag & BoneFlag::TransformAfterPhysics as u16 != 0;
+                bone.axis_limit = metadata.axis_limit.map(|axis_limit| axis_limit.normalize_or_zero().into());
             }
 
             if 0 <= metadata.parent_bone_index && metadata.parent_bone_index < bone_arena.len() as i32 {

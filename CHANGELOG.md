@@ -8,6 +8,8 @@
 
 - fix bpmx converter does not serialize bone flags correctly
 
+- handle axis limit in mmd runtime for reproduce mmd twist bone behavior
+
 ## 0.46.0 (2024-06-08)
 
 - improve CreateMmdModelOptions parameter type

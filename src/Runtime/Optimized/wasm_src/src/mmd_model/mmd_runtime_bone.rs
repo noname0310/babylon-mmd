@@ -1,4 +1,4 @@
-use glam::{Vec3A, Mat4, Quat};
+use glam::{Vec3, Vec3A, Mat4, Quat};
 
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
@@ -74,6 +74,7 @@ pub(crate) struct MmdRuntimeBone {
     pub(super) transform_after_physics: bool,
 
     pub(super) append_transform_solver: Option<u32>,
+    pub(super) axis_limit: Option<Vec3>,
     pub(super) ik_solver: Option<u32>,
 
     pub(super) morph_position_offset: Option<Vec3A>,
@@ -95,6 +96,7 @@ impl MmdRuntimeBone {
             transform_after_physics: false,
 
             append_transform_solver: None,
+            axis_limit: None,
             ik_solver: None,
 
             morph_position_offset: None,
@@ -114,6 +116,18 @@ impl MmdRuntimeBone {
 
     pub(super) fn animated_rotation(&self, animation_arena: &AnimationArena) -> Quat {
         let mut rotation = animation_arena.bone_arena()[self.index].rotation;
+        
+        // MMD's implementation transforms the rotation axis to fit the axis limit of the target skeleton at animation load time.
+        // However, that method makes it impossible to apply one animation data to multiple models,
+        // so we use an implementation that performs the axis transformation at runtime.
+        if let Some(axis_limit) = self.axis_limit {
+            let (animation_axis, mut angle) = rotation.to_axis_angle();
+            if animation_axis.dot(axis_limit) < 0.0 {
+                angle = -angle;
+            }
+            rotation = Quat::from_axis_angle(axis_limit, angle);
+        }
+
         if let Some(morph_rotation_offset) = self.morph_rotation_offset {
             rotation = morph_rotation_offset * rotation;
         }

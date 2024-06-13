@@ -116,6 +116,7 @@ pub(crate) struct BoneMetadata {
     pub(crate) transform_order: i32,
     pub(crate) flag: u16,
     pub(crate) append_transform: Option<AppendTransformMetadata>,
+    pub(crate) axis_limit: Option<Vec3A>,
     pub(crate) ik: Option<Box<IkMetadata>>,
 }
 
@@ -153,7 +154,7 @@ pub(crate) enum BoneFlag {
     LocalAppendTransform = 0x0080,
     HasAppendRotate = 0x0100,
     HasAppendMove = 0x0200,
-    // HasAxisLimit = 0x0400,
+    HasAxisLimit = 0x0400,
     // HasLocalVector = 0x0800,
     TransformAfterPhysics = 0x1000,
     // IsExternalParentTransformed = 0x2000,
@@ -213,6 +214,11 @@ impl<'a> BoneMetadataReader<'a> {
             } else {
                 None
             };
+            let axis_limit = if flag & BoneFlag::HasAxisLimit as u16 != 0 {
+                Some(self.buffer.read_vector())
+            } else {
+                None
+            };
             let ik = if flag & BoneFlag::IsIkEnabled as u16 != 0 {
                 Some(Box::new(IkMetadata {
                     target: self.buffer.read::<i32>(),
@@ -253,6 +259,7 @@ impl<'a> BoneMetadataReader<'a> {
                 transform_order,
                 flag,
                 append_transform,
+                axis_limit,
                 ik,
             });
         }

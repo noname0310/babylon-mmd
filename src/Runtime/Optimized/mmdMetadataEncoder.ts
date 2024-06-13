@@ -23,6 +23,9 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *   parentIndex: int32
  *   ratio: float32
  *  }
+ *  axisLimit: { // optional
+ *   axis: float32[3]
+ *  }
  *  ik: { // optional
  *   target: int32
  *   iteration: int32
@@ -124,6 +127,9 @@ export class MmdMetadataEncoder {
             if (bone.appendTransform) {
                 dataLength += 4 // parentIndex
                     + 4; // ratio
+            }
+            if (bone.axisLimit) {
+                dataLength += 4 * 3; // axis
             }
             if (bone.ik) {
                 dataLength += 4 // target
@@ -244,6 +250,21 @@ export class MmdMetadataEncoder {
         for (let i = 0; i < bones.length; ++i) {
             const bone = bones[i];
             const linkedBone = linkedBones[i];
+
+            let flag = bone.flag;
+            flag &=
+                (bone.appendTransform === undefined
+                    ? ~(PmxObject.Bone.Flag.HasAppendMove & PmxObject.Bone.Flag.HasAppendRotate)
+                    : ~0)
+                & ~PmxObject.Bone.Flag.HasAxisLimit
+                & ~PmxObject.Bone.Flag.IsIkEnabled;
+            if (bone.axisLimit) {
+                flag |= PmxObject.Bone.Flag.HasAxisLimit;
+            }
+            if (bone.ik) {
+                flag |= PmxObject.Bone.Flag.IsIkEnabled;
+            }
+
             serializer.setFloat32Array(linkedBone.getRestMatrix().getTranslationToRef(restPosition).asArray()); // restPosition
             serializer.setFloat32Array(linkedBone.getAbsoluteInverseBindMatrix().m); // absoluteInverseBindMatrix
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
@@ -254,6 +275,10 @@ export class MmdMetadataEncoder {
             if (bone.appendTransform) {
                 serializer.setInt32(bone.appendTransform.parentIndex); // parentIndex
                 serializer.setFloat32(bone.appendTransform.ratio); // ratio
+            }
+
+            if (bone.axisLimit) {
+                serializer.setFloat32Array(bone.axisLimit); // axis
             }
 
             if (bone.ik) {
