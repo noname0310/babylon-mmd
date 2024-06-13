@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.47.0 (scheduled)
+## 0.47.0 (2024-06-14)
 
 - include wasm version of ammo.js in the package
     - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
