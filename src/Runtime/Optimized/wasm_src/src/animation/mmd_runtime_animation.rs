@@ -7,6 +7,7 @@ use super::mmd_animation::MmdAnimation;
 use super::bezier_interpolation::bezier_interpolation;
 use super::mmd_animation_track::{InterpolationVector3, InterpolationScalar};
 
+#[derive(Clone)]
 struct AnimationTrackState {
     frame_time: f32,
     frame_index: u32,
@@ -36,29 +37,29 @@ impl MmdRuntimeAnimation {
         morph_bind_index_map: Box<[Box<[i32]>]>,
         ik_solver_bind_index_map: Box<[i32]>,
     ) -> Self {
-        let mut bone_track_states = Vec::with_capacity(animation.bone_tracks().len());
-        for _ in 0..animation.bone_tracks().len() {
-            bone_track_states.push(AnimationTrackState {
+        let bone_track_states = vec![
+            AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
-            });
-        }
+            };
+            animation.bone_tracks().len()
+        ].into_boxed_slice();
 
-        let mut movable_bone_track_states = Vec::with_capacity(animation.movable_bone_tracks().len());
-        for _ in 0..animation.movable_bone_tracks().len() {
-            movable_bone_track_states.push(AnimationTrackState {
+        let movable_bone_track_states = vec![
+            AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
-            });
-        }
+            };
+            animation.movable_bone_tracks().len()
+        ].into_boxed_slice();
 
-        let mut morph_track_states = Vec::with_capacity(animation.morph_tracks().len());
-        for _ in 0..animation.morph_tracks().len() {
-            morph_track_states.push(AnimationTrackState {
+        let morph_track_states = vec![
+            AnimationTrackState {
                 frame_time: f32::NEG_INFINITY,
                 frame_index: 0,
-            });
-        }
+            };
+            animation.morph_tracks().len()
+        ].into_boxed_slice();
 
         let property_track_state = AnimationTrackState {
             frame_time: f32::NEG_INFINITY,
@@ -66,9 +67,9 @@ impl MmdRuntimeAnimation {
         };
 
         let state = AnimationState {
-            bone_track_states: bone_track_states.into_boxed_slice(),
-            movable_bone_track_states: movable_bone_track_states.into_boxed_slice(),
-            morph_track_states: morph_track_states.into_boxed_slice(),
+            bone_track_states,
+            movable_bone_track_states,
+            morph_track_states,
             property_track_state,
         };
 

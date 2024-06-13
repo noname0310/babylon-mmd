@@ -260,11 +260,7 @@ impl AnimationPool {
             &*animation_ptr
         };
 
-        let mut bone_bind_index_map = Vec::with_capacity(animation.bone_tracks().len());
-        for _ in 0..animation.bone_tracks().len() {
-            bone_bind_index_map.push(-1);
-        }
-        let mut bone_bind_index_map = bone_bind_index_map.into_boxed_slice();
+        let mut bone_bind_index_map = vec![-1; animation.bone_tracks().len()].into_boxed_slice();
         let ptr = bone_bind_index_map.as_mut_ptr();
         std::mem::forget(bone_bind_index_map);
         ptr
@@ -278,11 +274,7 @@ impl AnimationPool {
             &*animation_ptr
         };
 
-        let mut movable_bone_bind_index_map = Vec::with_capacity(animation.movable_bone_tracks().len());
-        for _ in 0..animation.movable_bone_tracks().len() {
-            movable_bone_bind_index_map.push(-1);
-        }
-        let mut movable_bone_bind_index_map = movable_bone_bind_index_map.into_boxed_slice();
+        let mut movable_bone_bind_index_map = vec![-1; animation.movable_bone_tracks().len()].into_boxed_slice();
         let ptr = movable_bone_bind_index_map.as_mut_ptr();
         std::mem::forget(movable_bone_bind_index_map);
         ptr
@@ -326,11 +318,7 @@ impl AnimationPool {
             &*animation_ptr
         };
 
-        let mut ik_solver_bind_index_map = Vec::with_capacity(animation.property_track().ik_count());
-        for _ in 0..animation.property_track().ik_count() {
-            ik_solver_bind_index_map.push(-1);
-        }
-        let mut ik_solver_bind_index_map = ik_solver_bind_index_map.into_boxed_slice();
+        let mut ik_solver_bind_index_map = vec![-1; animation.property_track().ik_count()].into_boxed_slice();
         let ptr = ik_solver_bind_index_map.as_mut_ptr();
         std::mem::forget(ik_solver_bind_index_map);
         ptr
