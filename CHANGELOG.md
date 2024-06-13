@@ -6,6 +6,8 @@
     - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
     - this distribution of ammo.js has been modified to work with bundlers like Webpack
 
+- fix bpmx converter does not serialize bone flags correctly
+
 ## 0.46.0 (2024-06-08)
 
 - improve CreateMmdModelOptions parameter type

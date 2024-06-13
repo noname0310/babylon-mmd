@@ -491,13 +491,24 @@ export class BpmxConverter implements ILogger {
                 const externalParentTransform = boneMetadata.externalParentTransform;
                 const ik = boneMetadata.ik; // remapped later
 
-                let flag = (boneMetadata.flag ?? 0) &
-                    (!Array.isArray(tailPosition) ? 0 : ~PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) &
-                    (appendTransform ? 0 : (~PmxObject.Bone.Flag.HasAppendRotate | ~PmxObject.Bone.Flag.HasAppendMove)) &
-                    (axisLimit ? 0 : ~PmxObject.Bone.Flag.HasAxisLimit) &
-                    (localVector ? 0 : ~PmxObject.Bone.Flag.HasLocalVector) &
-                    (externalParentTransform ? 0 : ~PmxObject.Bone.Flag.IsExternalParentTransformed) &
-                    (ik ? 0 : ~PmxObject.Bone.Flag.IsIkEnabled);
+                let flag = 0;
+                if (boneMetadata.flag) {
+                    flag = boneMetadata.flag;
+                } else {
+                    flag =
+                        PmxObject.Bone.Flag.IsRotatable |
+                        PmxObject.Bone.Flag.IsMovable |
+                        PmxObject.Bone.Flag.IsVisible |
+                        PmxObject.Bone.Flag.IsControllable;
+                }
+
+                flag &=
+                    (!Array.isArray(tailPosition) ? ~0 : ~PmxObject.Bone.Flag.UseBoneIndexAsTailPosition) &
+                    (appendTransform ? ~0 : (~PmxObject.Bone.Flag.HasAppendRotate | ~PmxObject.Bone.Flag.HasAppendMove)) &
+                    (axisLimit ? ~0 : ~PmxObject.Bone.Flag.HasAxisLimit) &
+                    (localVector ? ~0 : ~PmxObject.Bone.Flag.HasLocalVector) &
+                    (externalParentTransform ? ~0 : ~PmxObject.Bone.Flag.IsExternalParentTransformed) &
+                    (ik ? ~0 : ~PmxObject.Bone.Flag.IsIkEnabled);
                 flag |=
                     (!Array.isArray(tailPosition) ? PmxObject.Bone.Flag.UseBoneIndexAsTailPosition : 0) |
                     (appendTransform ? PmxObject.Bone.Flag.HasAppendRotate | PmxObject.Bone.Flag.HasAppendMove : 0) |
