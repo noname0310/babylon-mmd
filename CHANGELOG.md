@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.47.1 (2024-06-14)
+
+- package.json update for npm publish
+
 ## 0.47.0 (2024-06-14)
 
 - include wasm version of ammo.js in the package

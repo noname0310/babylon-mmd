@@ -16,7 +16,10 @@ if (!fs.existsSync("./dist")) {
     process.exit(1);
 }
 
-fs.copyFileSync("./package.json", "./dist/package.json");
+const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+delete packageJson.scripts;
+fs.writeFileSync("./dist/package.json", JSON.stringify(packageJson, null, 4));
+
 fs.copyFileSync("./README.md", "./dist/README.md");
 fs.copyFileSync("./LICENSE", "./dist/LICENSE");
 fs.copyFileSync("./CHANGELOG.md", "./dist/CHANGELOG.md");
