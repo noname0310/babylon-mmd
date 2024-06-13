@@ -3,6 +3,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
+import type { MorphIndices } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
@@ -11,8 +12,6 @@ import type { IWasmTypedArray } from "../IWasmTypedArray";
 import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmMorphController } from "../mmdWasmMorphController";
 import { MmdWasmAnimation } from "./mmdWasmAnimation";
-
-type MorphIndices = readonly number[];
 
 /**
  * Mmd WASM runtime model animation

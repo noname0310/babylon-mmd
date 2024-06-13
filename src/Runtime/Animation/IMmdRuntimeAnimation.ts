@@ -55,7 +55,10 @@ export interface IMmdRuntimeModelAnimation {
     dispose?(): void;
 }
 
-type MorphIndices = readonly number[];
+/**
+ * Morph indices for morph bind index map
+ */
+export type MorphIndices = readonly number[];
 
 /**
  * MMD Runtime Model Animation with bind index map

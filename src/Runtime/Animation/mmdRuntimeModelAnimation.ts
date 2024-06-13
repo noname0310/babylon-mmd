@@ -14,10 +14,8 @@ import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { BezierInterpolator } from "./bezierInterpolator";
 import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
+import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
-
-type MorphIndices = readonly number[];
 
 /**
  * Mmd runtime model animation

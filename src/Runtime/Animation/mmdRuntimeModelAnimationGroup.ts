@@ -15,9 +15,7 @@ import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { createAnimationState } from "./Common/createAnimationState";
 import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
-
-type MorphIndices = readonly number[];
+import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 
 /**
  * Mmd runtime model animation that use animation container of babylon.js

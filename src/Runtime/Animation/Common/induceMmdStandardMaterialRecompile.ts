@@ -6,7 +6,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { MmdMorphControllerBase, ReadonlyRuntimeMorph } from "@/Runtime/mmdMorphControllerBase";
 
-type MorphIndices = readonly number[];
+import type { MorphIndices } from "../IMmdRuntimeAnimation";
 
 /**
  * Induces a recompilation of the `MmdStandardMaterial`.
