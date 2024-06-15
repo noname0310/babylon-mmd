@@ -41,8 +41,9 @@ export function induceMmdStandardMaterialRecompile(
                     }
                     allTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].textureMultiplicativeColor;
-                    recompiledMaterials.add(materialIndex.toString());
+                    const material = materials[materialIndex];
+                    material.textureMultiplicativeColor;
+                    recompiledMaterials.add(material.name);
                 }
             }
 
@@ -54,8 +55,9 @@ export function induceMmdStandardMaterialRecompile(
                     }
                     allSphereTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].sphereTextureMultiplicativeColor;
-                    recompiledMaterials.add(materialIndex.toString());
+                    const material = materials[materialIndex];
+                    material.sphereTextureMultiplicativeColor;
+                    recompiledMaterials.add(material.name);
                 }
             }
 
@@ -67,8 +69,9 @@ export function induceMmdStandardMaterialRecompile(
                     }
                     allToonTextureColorPropertiesAreRecompiled = true;
                 } else {
-                    materials[materialIndex].toonTextureMultiplicativeColor;
-                    recompiledMaterials.add(materialIndex.toString());
+                    const material = materials[materialIndex];
+                    material.toonTextureMultiplicativeColor;
+                    recompiledMaterials.add(material.name);
                 }
             }
         }
