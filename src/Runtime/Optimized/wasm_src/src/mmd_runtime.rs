@@ -4,6 +4,7 @@ use std::sync::atomic;
 use wasm_bindgen::prelude::*;
 
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
+use crate::diagnostic::{Diagnostic, DiagnosticResult};
 use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::MetadataBuffer;
 
@@ -15,6 +16,7 @@ pub struct MmdRuntime {
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
     locked: atomic::AtomicU8,
+    diagnostic: Diagnostic,
 }
 
 #[wasm_bindgen]
@@ -23,6 +25,7 @@ impl MmdRuntime {
         MmdRuntime {
             mmd_models: Vec::new(),
             locked: atomic::AtomicU8::new(0),
+            diagnostic: Diagnostic::new(),
         }
     }
 
@@ -48,7 +51,7 @@ impl MmdRuntime {
         };
         let metadata_buffer = MetadataBuffer::new(serialized_metadata);
 
-        let mmd_model = Box::new(MmdModel::new(metadata_buffer));
+        let mmd_model = Box::new(MmdModel::new(metadata_buffer, &mut self.diagnostic));
         let ptr = &*mmd_model as *const MmdModel as *mut usize;
         self.mmd_models.push(mmd_model);
         ptr
@@ -206,6 +209,29 @@ impl MmdRuntime {
             mmd_runtime.after_physics();
             mmd_runtime.locked.store(0, atomic::Ordering::Release);
         });
+    }
+
+    #[wasm_bindgen(js_name = "acquireDiagnosticResultError")]
+    pub fn acquire_diagnostic_result_error(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_result_error() };
+        result as *const DiagnosticResult as *const usize
+    }
+
+    #[wasm_bindgen(js_name = "acquireDiagnosticResultWarning")]
+    pub fn acquire_diagnostic_result_warning(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_result_warning() };
+        result as *const DiagnosticResult as *const usize
+    }
+
+    #[wasm_bindgen(js_name = "acquireDiagnosticResultInfo")]
+    pub fn acquire_diagnostic_result_info(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_result_info() };
+        result as *const DiagnosticResult as *const usize
+    }
+
+    #[wasm_bindgen(js_name = "releaseDiagnosticResult")]
+    pub fn release_diagnostic_result(&mut self) {
+        unsafe{ self.diagnostic.release_result(); }
     }
 }
 

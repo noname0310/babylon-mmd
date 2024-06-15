@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.48.0 (scheduled)
+
+- implement wasm diagnostic logging
+
 ## 0.47.1 (2024-06-14)
 
 - package.json update for npm publish

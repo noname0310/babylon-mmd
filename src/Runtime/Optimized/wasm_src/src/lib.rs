@@ -4,6 +4,7 @@ mod mmd_model;
 #[cfg(feature = "physics")]
 mod physics;
 
+mod diagnostic;
 mod mmd_model_metadata;
 mod mmd_runtime;
 mod unchecked_slice;

@@ -221,6 +221,47 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
     }
 
+    private static readonly _TextDecoder = new TextDecoder();
+
+    private _flushWasmDiagnosticFromResultPtr(resultPtr: number, logFunction: (message: string) => void): void {
+        const textDecoder = MmdWasmRuntime._TextDecoder;
+
+        const [stringArrayPtr, stringArrayLength] = this.wasmInstance.createTypedArray(Uint32Array, resultPtr, 4).array;
+        if (stringArrayLength <= 0) return;
+
+        const stringArray = this.wasmInstance.createTypedArray(Uint32Array, stringArrayPtr, stringArrayLength * 2).array;
+        for (let i = 0; i < stringArrayLength; i += 2) {
+            const stringPtr = stringArray[i];
+            const stringLength = stringArray[i + 1];
+
+            const textBuffer = new Uint8Array(stringLength);
+            textBuffer.set(this.wasmInstance.createTypedArray(Uint8Array, stringPtr, stringLength).array);
+
+            const text = textDecoder.decode(textBuffer);
+            logFunction(text);
+        }
+    }
+
+    private _flushWasmDiagnosticLog(): void {
+        const errorResultPtr = this.wasmInternal.acquireDiagnosticResultError();
+        if (this._loggingEnabled) {
+            this._flushWasmDiagnosticFromResultPtr(errorResultPtr, this.error);
+        }
+        this.wasmInternal.releaseDiagnosticResult();
+
+        const warningResultPtr = this.wasmInternal.acquireDiagnosticResultWarning();
+        if (this._loggingEnabled) {
+            this._flushWasmDiagnosticFromResultPtr(warningResultPtr, this.warn);
+        }
+        this.wasmInternal.releaseDiagnosticResult();
+
+        const infoResultPtr = this.wasmInternal.acquireDiagnosticResultInfo();
+        if (this._loggingEnabled) {
+            this._flushWasmDiagnosticFromResultPtr(infoResultPtr, this.log);
+        }
+        this.wasmInternal.releaseDiagnosticResult();
+    }
+
     /**
      * Create MMD model from mesh that has MMD metadata
      *
@@ -260,10 +301,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         this.lock.wait(); // ensure that the runtime is not evaluating animations
 
+        const wasmRuntime = this.wasmInternal;
+
         // sync buffer temporarily
         const usingWasmBackBuffer = this._usingWasmBackBuffer;
         if (usingWasmBackBuffer) {
-            this.wasmInternal.swapWorldMatrixBuffer();
+            wasmRuntime.swapWorldMatrixBuffer();
             this._usingWasmBackBuffer = false;
         }
 
@@ -272,7 +315,6 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
 
-        const wasmRuntime = this.wasmInternal;
         const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
 
         const metadataBuffer = this.wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
@@ -300,9 +342,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         // desync again
         if (usingWasmBackBuffer) {
-            this.wasmInternal.swapWorldMatrixBuffer();
+            wasmRuntime.swapWorldMatrixBuffer();
             this._usingWasmBackBuffer = true;
         }
+
+        this._flushWasmDiagnosticLog();
 
         // because the model is created, the animation must be evaluated synchronously at least once
         this._needToSyncEvaluate = true;

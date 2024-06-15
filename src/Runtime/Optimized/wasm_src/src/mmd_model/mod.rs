@@ -13,6 +13,7 @@ use ik_solver::{IkSolver, IkSolverArena};
 use mmd_morph_controller::MmdMorphController;
 use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 
+use crate::diagnostic::Diagnostic;
 use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
@@ -30,7 +31,7 @@ pub(crate) struct MmdModel {
 }
 
 impl MmdModel {
-    pub(crate) fn new(buffer: MetadataBuffer) -> Self {
+    pub(crate) fn new(buffer: MetadataBuffer, diagnostic: &mut Diagnostic) -> Self {
         let reader = BoneMetadataReader::new(buffer);
 
         let mut bone_arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.bone_count() as usize);
@@ -41,6 +42,8 @@ impl MmdModel {
 
         let mut append_transform_solver_arena = Vec::with_capacity(reader.append_transform_count() as usize);
         let mut ik_solver_arena = Vec::with_capacity(reader.ik_count() as usize);
+
+        let mut diagnostic = diagnostic.writer();
         
         let reader = reader.enumerate(|i, metadata| {
             {
@@ -71,8 +74,7 @@ impl MmdModel {
                     bone.append_transform_solver = Some(append_transform_solver_arena.len() as u32);
                     append_transform_solver_arena.push(append_transform_solver);
                 } else {
-                    // todo diagnostic
-                    panic!();
+                    diagnostic.error(format!("Invalid append transform target bone index: {}", target_bone_index));
                 }
             }
 
@@ -94,15 +96,13 @@ impl MmdModel {
                                 link.limits,
                             );
                         } else {
-                            // todo diagnostic
-                            panic!();
+                            diagnostic.error(format!("Invalid IK link bone index: {}", link.target));
                         }
                     }
                     bone_arena[i as usize].ik_solver = Some(ik_solver_arena.len() as u32);
                     ik_solver_arena.push(ik_solver);
                 } else {
-                    // todo diagnostic
-                    panic!();
+                    diagnostic.error(format!("Invalid IK target bone index: {}", ik.target));
                 }
             }
         });
