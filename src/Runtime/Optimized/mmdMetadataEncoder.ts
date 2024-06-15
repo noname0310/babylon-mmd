@@ -1,10 +1,12 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
 
 /**
  * mmd model metadata representation in binary
@@ -62,54 +64,73 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
  *  ratios: float32[indexCount]
  * }[morphCount]
  *
- * rigidBodyCount: uint32
- * {
- *  boneIndex: int32
- *  collisionGroup: uint8
- *  shapeType: uint8
- *  collisionMask: uint16
- *  shapeSize: float32[3]
- *  shapePosition: float32[3]
- *  shapeRotation: float32[3]
- *  mass: float32
- *  linearDamping: float32
- *  angularDamping: float32
- *  repulsion: float32
- *  friction: float32
- *  physicsMode: uint8
- *  -- padding: uint8
- *  -- padding: uint16
- * }[rigidBodyCount]
+ * physicsInfoKind: uint8 // 0: no physics, 1: striped rigid bodies, 2: full physics
+ * -- padding: uint8
+ * -- padding: uint16
  *
- * jointCount: uint32
- * {
- *  type: uint8
- *  -- padding: uint8
- *  -- padding: uint16
- *  rigidBodyIndexA: int32
- *  rigidBodyIndexB: int32
- *  position: float32[3]
- *  rotation: float32[3]
- *  positionMin: float32[3]
- *  positionMax: float32[3]
- *  rotationMin: float32[3]
- *  rotationMax: float32[3]
- *  springPosition: float32[3]
- *  springRotation: float32[3]
- * }[jointCount]
+ * { // if physicsInfoKind === 1
+ *  rigidBodyCount: uint32
+ *  {
+ *   boneIndex: int32
+ *   physicsMode: uint8
+ *   -- padding: uint8
+ *   -- padding: uint16
+ *  }[rigidBodyCount]
+ * }
+ * { // if physicsInfoKind === 2
+ *  physicsWorldId: uint32
+ *  kinematicSharedPhysicsWorldIdCount: uint32
+ *  kinematicSharedPhysicsWorldIds: uint32[kinematicSharedPhysicsWorldIdCount]
+ *
+ *  rigidBodyCount: uint32
+ *  {
+ *   boneIndex: int32
+ *   collisionGroup: uint8
+ *   shapeType: uint8
+ *   collisionMask: uint16
+ *   shapeSize: float32[3]
+ *   shapePosition: float32[3]
+ *   shapeRotation: float32[3]
+ *   mass: float32
+ *   linearDamping: float32
+ *   angularDamping: float32
+ *   repulsion: float32
+ *   friction: float32
+ *   physicsMode: uint8
+ *   -- padding: uint8
+ *   -- padding: uint16
+ *  }[rigidBodyCount]
+ *
+ *  jointCount: uint32
+ *  {
+ *   type: uint8
+ *   -- padding: uint8
+ *   -- padding: uint16
+ *   rigidBodyIndexA: int32
+ *   rigidBodyIndexB: int32
+ *   position: float32[3]
+ *   rotation: float32[3]
+ *   positionMin: float32[3]
+ *   positionMax: float32[3]
+ *   rotationMin: float32[3]
+ *   rotationMax: float32[3]
+ *   springPosition: float32[3]
+ *   springRotation: float32[3]
+ *  }[jointCount]
+ * }
  */
 
 /**
  * @internal
  */
 export class MmdMetadataEncoder {
-    public encodePhysics: boolean;
+    public encodePhysicsOptions: CreateMmdWasmModelPhysicsOptions | boolean;
 
     public constructor() {
-        this.encodePhysics = true;
+        this.encodePhysicsOptions = true;
     }
 
-    public computeSize(metadata: MmdModelMetadata): number {
+    protected _computeBonesSize(metadata: MmdModelMetadata): number {
         let dataLength = 4 // boneCount
             + 4 // appendTransformCount
             + 4; // ikCount
@@ -152,7 +173,11 @@ export class MmdMetadataEncoder {
             }
         }
 
-        dataLength += 4; // morphCount
+        return dataLength;
+    }
+
+    protected _computeMorphsSize(metadata: MmdModelMetadata): number {
+        let dataLength = 4; // morphCount
         const morphs = metadata.morphs;
         for (let i = 0; i < morphs.length; ++i) {
             const morph = morphs[i];
@@ -180,56 +205,38 @@ export class MmdMetadataEncoder {
             }
         }
 
-        if (this.encodePhysics) {
-            dataLength += 4; // rigidBodyCount
+        return dataLength;
+    }
 
-            const rigidBodies = metadata.rigidBodies;
-            for (let i = 0; i < rigidBodies.length; ++i) {
-                dataLength += 4 // boneIndex
-                    + 1 // collisionGroup
-                    + 1 // shapeType
-                    + 2 // collisionMask
-                    + 4 * 3 // shapeSize
-                    + 4 * 3 // shapePosition
-                    + 4 * 3 // shapeRotation
-                    + 4 // mass
-                    + 4 // linearDamping
-                    + 4 // angularDamping
-                    + 4 // repulsion
-                    + 4 // friction
-                    + 1 // physicsMode
-                    + 3; // padding
-            }
+    protected _computePhysicsSize(metadata: Nullable<MmdModelMetadata>): number {
+        if (metadata === null) {
+            return 1 // physicsInfoKind
+                + 3; // padding
+        }
 
-            dataLength += 4; // jointCount
+        let dataLength = 1 // physicsInfoKind
+            + 3 // padding
+            + 4; // rigidBodyCount
 
-            const joints = metadata.joints;
-            for (let i = 0; i < joints.length; ++i) {
-                dataLength += 1 // type
-                    + 3 // padding
-                    + 4 // rigidBodyIndexA
-                    + 4 // rigidBodyIndexB
-                    + 4 * 3 // position
-                    + 4 * 3 // rotation
-                    + 4 * 3 // positionMin
-                    + 4 * 3 // positionMax
-                    + 4 * 3 // rotationMin
-                    + 4 * 3 // rotationMax
-                    + 4 * 3 // springPosition
-                    + 4 * 3; // springRotation
-            }
-        } else {
-            dataLength += 4 // rigidBodyCount
-                + 4; // jointCount
+        const rigidBodies = metadata.rigidBodies;
+        for (let i = 0; i < rigidBodies.length; ++i) {
+            dataLength += 4 // boneIndex
+                + 1 // physicsMode
+                + 3; // padding
         }
 
         return dataLength;
     }
 
-    public encode(metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
-        const serializer = new MmdDataSerializer(buffer.buffer);
-        serializer.offset = buffer.byteOffset;
+    public computeSize(metadata: MmdModelMetadata): number {
+        const dataLength = this._computeBonesSize(metadata)
+            + this._computeMorphsSize(metadata)
+            + this._computePhysicsSize(this.encodePhysicsOptions ? metadata : null);
 
+        return dataLength;
+    }
+
+    protected _encodeBones(serializer: MmdDataSerializer, metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[]): void {
         const restPosition = new Vector3();
 
         const bones = metadata.bones;
@@ -301,7 +308,9 @@ export class MmdMetadataEncoder {
                 }
             }
         }
+    }
 
+    protected _encodeMorphs(serializer: MmdDataSerializer, metadata: MmdModelMetadata): Int32Array {
         const morphs = metadata.morphs;
         let morphCount = 0;
         for (let i = 0; i < morphs.length; ++i) {
@@ -363,58 +372,47 @@ export class MmdMetadataEncoder {
             }
         }
 
-        if (this.encodePhysics) {
-            const boneNameMap = new Map<string, number>();
-            for (let i = 0; i < bones.length; ++i) {
-                boneNameMap.set(bones[i].name, i);
-            }
+        return wasmMorphMap;
+    }
 
-            const rigidBodies = metadata.rigidBodies;
-            serializer.setUint32(rigidBodies.length); // rigidBodyCount
-            for (let i = 0; i < rigidBodies.length; ++i) {
-                const rigidBody = rigidBodies[i];
-
-                const boneIndex = rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex
-                    ? boneNameMap.get(rigidBody.name) ?? -1 // fallback to name
-                    : rigidBody.boneIndex;
-
-                serializer.setInt32(boneIndex); // boneIndex
-                serializer.setUint8(rigidBody.collisionGroup); // collisionGroup
-                serializer.setUint8(rigidBody.shapeType); // shapeType
-                serializer.setUint16(rigidBody.collisionMask); // collisionMask
-                serializer.setFloat32Array(rigidBody.shapeSize); // shapeSize
-                serializer.setFloat32Array(rigidBody.shapePosition); // shapePosition
-                serializer.setFloat32Array(rigidBody.shapeRotation); // shapeRotation
-                serializer.setFloat32(rigidBody.mass); // mass
-                serializer.setFloat32(rigidBody.linearDamping); // linearDamping
-                serializer.setFloat32(rigidBody.angularDamping); // angularDamping
-                serializer.setFloat32(rigidBody.repulsion); // repulsion
-                serializer.setFloat32(rigidBody.friction); // friction
-                serializer.setUint8(rigidBody.physicsMode); // physicsMode
-                serializer.offset += 3; // padding
-            }
-
-            const joints = metadata.joints;
-            serializer.setUint32(joints.length); // jointCount
-            for (let i = 0; i < joints.length; ++i) {
-                const joint = joints[i];
-                serializer.setUint8(joint.type); // type
-                serializer.offset += 3; // padding
-                serializer.setInt32(joint.rigidbodyIndexA); // rigidBodyIndexA
-                serializer.setInt32(joint.rigidbodyIndexB); // rigidBodyIndexB
-                serializer.setFloat32Array(joint.position); // position
-                serializer.setFloat32Array(joint.rotation); // rotation
-                serializer.setFloat32Array(joint.positionMin); // positionMin
-                serializer.setFloat32Array(joint.positionMax); // positionMax
-                serializer.setFloat32Array(joint.rotationMin); // rotationMin
-                serializer.setFloat32Array(joint.rotationMax); // rotationMax
-                serializer.setFloat32Array(joint.springPosition); // springPosition
-                serializer.setFloat32Array(joint.springRotation); // springRotation
-            }
-        } else {
-            serializer.setUint32(0); // rigidBodyCount
-            serializer.setUint32(0); // jointCount
+    protected _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>): void {
+        if (metadata === null) {
+            serializer.setUint8(0); // physicsInfoKind
+            serializer.offset += 3; // padding
+            return;
         }
+
+        serializer.setUint8(1); // physicsInfoKind
+        serializer.offset += 3; // padding
+
+        const bones = metadata.bones;
+        const boneNameMap = new Map<string, number>();
+        for (let i = 0; i < bones.length; ++i) {
+            boneNameMap.set(bones[i].name, i);
+        }
+
+        const rigidBodies = metadata.rigidBodies;
+        serializer.setUint32(rigidBodies.length); // rigidBodyCount
+        for (let i = 0; i < rigidBodies.length; ++i) {
+            const rigidBody = rigidBodies[i];
+
+            const boneIndex = rigidBody.boneIndex < 0 || bones.length <= rigidBody.boneIndex
+                ? boneNameMap.get(rigidBody.name) ?? -1 // fallback to name
+                : rigidBody.boneIndex;
+
+            serializer.setInt32(boneIndex); // boneIndex
+            serializer.setUint8(rigidBody.physicsMode); // physicsMode
+            serializer.offset += 3; // padding
+        }
+    }
+
+    public encode(metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
+        const serializer = new MmdDataSerializer(buffer.buffer);
+        serializer.offset = buffer.byteOffset;
+
+        this._encodeBones(serializer, metadata, linkedBones);
+        const wasmMorphMap = this._encodeMorphs(serializer, metadata);
+        this._encodePhysics(serializer, this.encodePhysicsOptions ? metadata : null);
 
         return wasmMorphMap;
     }

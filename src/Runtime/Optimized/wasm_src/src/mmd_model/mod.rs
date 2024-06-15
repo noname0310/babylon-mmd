@@ -14,7 +14,7 @@ use mmd_morph_controller::MmdMorphController;
 use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 
 use crate::diagnostic::Diagnostic;
-use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
+use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, PhysicsInfoKind, RigidbodyPhysicsMode};
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
@@ -112,21 +112,34 @@ impl MmdModel {
         let morph_controller = MmdMorphController::new(morphs.into_boxed_slice());
 
         let mut is_physics_bone = vec![false; bone_arena.len()];
-
-        let reader = reader.for_each(|metadata| {
-            if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
-                is_physics_bone[metadata.bone_index as usize] = true;
+        
+        #[cfg(not(feature = "physics"))]
+        {
+            reader.for_each(|metadata| {
+                if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+                    is_physics_bone[metadata.bone_index as usize] = true;
+                }
+            });
+        }
+        #[cfg(feature = "physics")]
+        {
+            let build_physics = if let PhysicsInfoKind::FullPhysics = reader.physics_info_kind  { true } else { false };
+            let reader = reader.for_each(|metadata| {
+                if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+                    is_physics_bone[metadata.bone_index as usize] = true;
+                }
+                // todo add physics
+            });
+            if let Some(reader) = reader {
+                reader.for_each(|_metadata| {
+                    // todo add physics
+                });
             }
-            // todo add physics
-        });
+        }
 
         for ik_solver in ik_solver_arena.iter_mut() {
             ik_solver.initialize_ik_skip_flag(UncheckedSlice::new(&is_physics_bone));
         }
-
-        reader.for_each(|_metadata| {
-            // todo add physics
-        });
 
         let mut sorted_runtime_bones = Vec::with_capacity(bone_arena.len());
         for i in 0..bone_arena.len() as u32 {

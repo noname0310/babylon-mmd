@@ -304,9 +304,9 @@ impl<'a> MorphMetadataReader<'a> {
         }
     }
 
-    pub(crate) fn count(&self) -> u32 {
-        self.count
-    }
+    // pub(crate) fn count(&self) -> u32 {
+    //     self.count
+    // }
 
     pub(crate) fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader<'a>) {
         let mut morphs = Vec::with_capacity(self.count as usize);
@@ -342,6 +342,115 @@ impl<'a> MorphMetadataReader<'a> {
     }
 }
 
+pub(crate) enum PhysicsInfoKind {
+    NoPhysics = 0,
+    StripedRigidbodies = 1,
+    FullPhysics = 2,
+}
+
+// for non physics build
+
+#[cfg(not(feature = "physics"))]
+
+pub(crate) enum RigidbodyPhysicsMode {
+    FollowBone = 0,
+}
+
+#[cfg(not(feature = "physics"))]
+pub(crate) struct RigidbodyMetadata {
+    pub(crate) bone_index: i32,
+    pub(crate) physics_mode: u8,
+}
+
+#[cfg(not(feature = "physics"))]
+pub(crate) struct RigidbodyMetadataReader<'a> {
+    buffer: MetadataBuffer<'a>,
+    physics_info_kind: PhysicsInfoKind,
+    count: u32,
+}
+
+#[cfg(not(feature = "physics"))]
+impl<'a> RigidbodyMetadataReader<'a> {
+    fn new(mut buffer: MetadataBuffer<'a>) -> Self {
+        let physics_info_kind = buffer.read::<u8>();
+        buffer.offset += 3; // padding
+
+        let kind: PhysicsInfoKind;
+        let count: u32;
+
+        if physics_info_kind == PhysicsInfoKind::NoPhysics as u8 {
+            kind = PhysicsInfoKind::NoPhysics;
+            count = 0;
+        } else if physics_info_kind == PhysicsInfoKind::StripedRigidbodies as u8 {
+            kind = PhysicsInfoKind::StripedRigidbodies;
+            count = buffer.read::<u32>();
+        } else if physics_info_kind == PhysicsInfoKind::FullPhysics as u8 {
+            // skip physics world info
+            buffer.offset += 4; // physics world id (u32)
+            let kinematic_shared_physics_world_id_count = buffer.read::<u32>();
+            buffer.offset += 4 * kinematic_shared_physics_world_id_count as usize;
+            
+            kind = PhysicsInfoKind::FullPhysics;
+            count = buffer.read::<u32>();
+        } else {
+            panic!("Invalid physics info kind");
+        }
+        
+        Self {
+            buffer,
+            physics_info_kind: kind,
+            count,
+        }
+    }
+
+    // pub(crate) fn count(&self) -> u32 {
+    //     self.count
+    // }
+
+    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) {
+        match self.physics_info_kind {
+            PhysicsInfoKind::NoPhysics => {},
+            PhysicsInfoKind::StripedRigidbodies => {
+                for _ in 0..self.count {
+                    let bone_index = self.buffer.read::<i32>();
+                    let physics_mode = self.buffer.read::<u8>();
+                    self.buffer.offset += 3; // padding
+                    f(RigidbodyMetadata {
+                        bone_index,
+                        physics_mode,
+                    });
+                }
+            },
+            PhysicsInfoKind::FullPhysics => {
+                for _ in 0..self.count {
+                    let bone_index = self.buffer.read::<i32>();
+                    self.buffer.offset +=
+                        1 + // collision_group
+                        1 + // shape_type
+                        2 + // collision_mask
+                        3 * 4 + // shape_size
+                        3 * 4 + // shape_position
+                        3 * 4 + // shape_rotation
+                        4 + // mass
+                        4 + // linear_damping
+                        4 + // angular_damping
+                        4 + // repulsion
+                        4; // friction
+                    let physics_mode = self.buffer.read::<u8>();
+                    self.buffer.offset += 3; // padding
+                    f(RigidbodyMetadata {
+                        bone_index,
+                        physics_mode,
+                    });
+                }
+            },
+        }
+    }
+}
+
+// for physics build
+
+#[cfg(feature = "physics")]
 pub(crate) struct RigidbodyMetadata {
     pub(crate) bone_index: i32,
     collision_group: u8,
@@ -358,29 +467,62 @@ pub(crate) struct RigidbodyMetadata {
     pub(crate) physics_mode: u8,
 }
 
+#[cfg(feature = "physics")]
 pub(crate) enum RigidbodyShapeType {
     Sphere = 0,
     Box = 1,
     Capsule = 2,
 }
 
+#[cfg(feature = "physics")]
 pub(crate) enum RigidbodyPhysicsMode {
     FollowBone = 0,
     Physics = 1,
     PhysicsWithBone = 2,
 }
 
+#[cfg(feature = "physics")]
 pub(crate) struct RigidbodyMetadataReader<'a> {
     buffer: MetadataBuffer<'a>,
+    pub(crate) physics_info_kind: PhysicsInfoKind,
+    physics_world_id: u32,
+    kinematic_shared_physics_world_ids: Vec<u32>,
     count: u32,
 }
 
+#[cfg(feature = "physics")]
 impl<'a> RigidbodyMetadataReader<'a> {
     fn new(mut buffer: MetadataBuffer<'a>) -> Self {
-        let count = buffer.read::<u32>();
+        let physics_info_kind = buffer.read::<u8>();
+        buffer.offset += 3; // padding
 
+        let kind: PhysicsInfoKind;
+        let mut physics_world_id = 0;
+        let mut kinematic_shared_physics_world_ids = Vec::new();
+        let count: u32;
+
+        if physics_info_kind == PhysicsInfoKind::NoPhysics as u8 {
+            kind = PhysicsInfoKind::NoPhysics;
+            count = 0;
+        } else if physics_info_kind == PhysicsInfoKind::StripedRigidbodies as u8 {
+            kind = PhysicsInfoKind::StripedRigidbodies;
+            count = buffer.read::<u32>();
+        } else if physics_info_kind == PhysicsInfoKind::FullPhysics as u8 {
+            // skip physics world info
+            physics_world_id = buffer.read::<u32>();
+            let kinematic_shared_physics_world_id_count = buffer.read::<u32>();
+            kinematic_shared_physics_world_ids = buffer.read_array::<u32>(kinematic_shared_physics_world_id_count as usize);
+            kind = PhysicsInfoKind::FullPhysics;
+            count = buffer.read::<u32>();
+        } else {
+            panic!("Invalid physics info kind");
+        }
+        
         Self {
             buffer,
+            physics_info_kind: kind,
+            physics_world_id,
+            kinematic_shared_physics_world_ids,
             count,
         }
     }
@@ -389,43 +531,71 @@ impl<'a> RigidbodyMetadataReader<'a> {
         self.count
     }
 
-    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> JointMetadataReader<'a> {
-        for _ in 0..self.count {
-            let bone_index = self.buffer.read::<i32>();
-            let collision_group = self.buffer.read::<u8>();
-            let shape_type = self.buffer.read::<u8>();
-            let collision_mask = self.buffer.read::<u16>();
-            let shape_size = self.buffer.read_vector();
-            let shape_position = self.buffer.read_vector();
-            let shape_rotation = self.buffer.read_vector();
-            let mass = self.buffer.read::<f32>();
-            let linear_damping = self.buffer.read::<f32>();
-            let angular_damping = self.buffer.read::<f32>();
-            let repulsion = self.buffer.read::<f32>();
-            let friction = self.buffer.read::<f32>();
-            let physics_mode = self.buffer.read::<u8>();
-            self.buffer.offset += 3; // padding
-            f(RigidbodyMetadata {
-                bone_index,
-                collision_group,
-                collision_mask,
-                shape_type,
-                shape_size,
-                shape_position,
-                shape_rotation,
-                mass,
-                linear_damping,
-                angular_damping,
-                repulsion,
-                friction,
-                physics_mode,
-            });
+    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> Option<JointMetadataReader<'a>> {
+        match self.physics_info_kind {
+            PhysicsInfoKind::NoPhysics => { None },
+            PhysicsInfoKind::StripedRigidbodies => {
+                for _ in 0..self.count {
+                    let bone_index = self.buffer.read::<i32>();
+                    let physics_mode = self.buffer.read::<u8>();
+                    self.buffer.offset += 3; // padding
+                    f(RigidbodyMetadata {
+                        bone_index,
+                        collision_group: 0,
+                        collision_mask: 0,
+                        shape_type: 0,
+                        shape_size: Vec3A::ZERO,
+                        shape_position: Vec3A::ZERO,
+                        shape_rotation: Vec3A::ZERO,
+                        mass: 0.0,
+                        linear_damping: 0.0,
+                        angular_damping: 0.0,
+                        repulsion: 0.0,
+                        friction: 0.0,
+                        physics_mode,
+                    });
+                }
+                None
+            },
+            PhysicsInfoKind::FullPhysics => {
+                for _ in 0..self.count {
+                    let bone_index = self.buffer.read::<i32>();
+                    let collision_group = self.buffer.read::<u8>();
+                    let shape_type = self.buffer.read::<u8>();
+                    let collision_mask = self.buffer.read::<u16>();
+                    let shape_size = self.buffer.read_vector();
+                    let shape_position = self.buffer.read_vector();
+                    let shape_rotation = self.buffer.read_vector();
+                    let mass = self.buffer.read::<f32>();
+                    let linear_damping = self.buffer.read::<f32>();
+                    let angular_damping = self.buffer.read::<f32>();
+                    let repulsion = self.buffer.read::<f32>();
+                    let friction = self.buffer.read::<f32>();
+                    let physics_mode = self.buffer.read::<u8>();
+                    self.buffer.offset += 3; // padding
+                    f(RigidbodyMetadata {
+                        bone_index,
+                        collision_group,
+                        collision_mask,
+                        shape_type,
+                        shape_size,
+                        shape_position,
+                        shape_rotation,
+                        mass,
+                        linear_damping,
+                        angular_damping,
+                        repulsion,
+                        friction,
+                        physics_mode,
+                    });
+                }
+                Some(JointMetadataReader::new(self.buffer))
+            },
         }
-
-        JointMetadataReader::new(self.buffer)
     }
 }
 
+#[cfg(feature = "physics")]
 pub(crate) struct JointMetadata {
     kind: u8,
     rigidbody_index_a: i32,
@@ -440,6 +610,7 @@ pub(crate) struct JointMetadata {
     spring_rotation: Vec3A,
 }
 
+#[cfg(feature = "physics")]
 pub(crate) enum JointKind {
     Spring6Dof = 0,
     // SixDof = 1,
@@ -449,11 +620,13 @@ pub(crate) enum JointKind {
     // Hinge = 5,
 }
 
+#[cfg(feature = "physics")]
 pub(crate) struct JointMetadataReader<'a> {
     buffer: MetadataBuffer<'a>,
     count: u32,
 }
 
+#[cfg(feature = "physics")]
 impl<'a> JointMetadataReader<'a> {
     fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let count = buffer.read::<u32>();

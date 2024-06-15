@@ -34,6 +34,7 @@ import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPh
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -83,13 +84,13 @@ export class SceneBuilder implements ISceneBuilder {
                     ["motion", (): Promise<MmdAnimation> => {
                         const bvmdLoader = new BvmdLoader(scene);
                         bvmdLoader.loggingEnabled = true;
-                        return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd", updateProgress);
+                        return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion_nonphys.bvmd", updateProgress);
                     }]
                 ]);
 
                 const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
 
-                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene);//, new MmdPhysics(scene));
+                const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
                 mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
 
@@ -139,7 +140,9 @@ export class SceneBuilder implements ISceneBuilder {
         }
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
-            buildPhysics: true
+            buildPhysics: {
+                worldId: 0
+            }
         });
         mmdModel.addAnimation(mmdWasmAnimation);
         mmdModel.setAnimation("motion");

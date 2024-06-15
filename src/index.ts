@@ -83,11 +83,16 @@ export { MmdWasmInstanceTypeMR } from "@/Runtime/Optimized/InstanceType/multiRel
 export { MmdWasmInstanceTypeSD } from "@/Runtime/Optimized/InstanceType/singleDebug";
 export { MmdWasmInstanceTypeSR } from "@/Runtime/Optimized/InstanceType/singleRelease";
 
+// Runtime/Optimized/Physics
+export { IMmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/IMmdWasmPhysicsRuntime";
+export { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
+export { MmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntime";
+
 // Runtime/Optimized
 export { getMmdWasmInstance, MmdWasmInstance, MmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
-export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+export { CreateMmdWasmModelOptions, CreateMmdWasmModelPhysicsOptions, MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
 // Runtime/Physics

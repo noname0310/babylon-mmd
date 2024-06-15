@@ -21,6 +21,9 @@ import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeMod
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
+import type { IMmdWasmPhysicsRuntime } from "./Physics/IMmdWasmPhysicsRuntime";
+import type { MmdWasmPhysics } from "./Physics/mmdWasmPhysics";
+import type { MmdWasmPhysicsRuntime } from "./Physics/mmdWasmPhysicsRuntime";
 import { WasmSpinlock } from "./wasmSpinlock";
 
 /**
@@ -40,6 +43,51 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
      * If you are using havok or ammo.js physics, only beforePhysics process is asynchronous
      */
     Buffered
+}
+
+/**
+ * Options for constructing MMD WASM model physics
+ */
+export interface CreateMmdWasmModelPhysicsOptions {
+    /**
+     * Physics world ID (default: MmdWasmRuntime.physics.nextWorldId)
+     *
+     * value must be range of unsigned 32-bit integer
+     *
+     * By default, the physics world ID is automatically assigned and incremented
+     *
+     * If you need physics interaction between models, you can specify the same world ID
+     *
+     * Separating physics worlds can improve performance and enable parallel processing when using multi-threaded physics runtime (e.g. MmdWasmInstanceTypeMPR)
+     */
+    worldId?: number;
+
+    /**
+     * Physics world IDs that share kinematic and static physics objects (default: [])
+     *
+     * value must be range of unsigned 32-bit integer
+     *
+     * If you need physics interaction by across multiple physics worlds, you can specify the world IDs that share only kinematic and static physics objects
+     *
+     * Dynamic physics objects are not shared between physics worlds. Only kinematic objects are shared
+     */
+    kinematicSharedWorldIds?: number[];
+}
+
+/**
+ * Options for creating MMd WASM model
+ *
+ * Generic type `TMaterial` is used to specify the material type of the model
+ */
+export interface CreateMmdWasmModelOptions<TMaterial extends Material = Material> extends Omit<CreateMmdModelOptions<TMaterial>, "buildPhysics"> {
+    /**
+     * Whether to build physics (default: true)
+     */
+    buildPhysics?: CreateMmdWasmModelPhysicsOptions | boolean;
+}
+
+interface PhysicsInitializeSet {
+    add(model: MmdWasmModel): void;
 }
 
 /**
@@ -70,8 +118,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private _lastRequestAnimationFrameTime: Nullable<number>;
     private _needToSyncEvaluate: boolean;
 
+    private readonly _externalPhysics: Nullable<IMmdPhysics>;
+    private readonly _physicsRuntime: Nullable<MmdWasmPhysicsRuntime>;
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
-    private readonly _physics: Nullable<IMmdPhysics>;
 
     private readonly _models: MmdWasmModel[];
     private _camera: Nullable<MmdCamera>;
@@ -133,11 +182,13 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * Creates a new MMD web assembly runtime
      *
      * For use external physics engine like ammo.js or havok, you need to set `physics` to instance of `IMmdPhysics`
+     *
+     * If you want to use the wasm binary built-in physics engine, you can set `physics` to `MmdWasmPhysics` and you should use physics version of the wasm instance (e.g. `MmdWasmInstanceTypeMPR`)
      * @param wasmInstance MMD WASM instance
      * @param scene Objects that limit the lifetime of this instance
-     * @param physics MMD physics
+     * @param physics IMmdPhysics instance or MmdWasmPhysics instance
      */
-    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics> = null) {
+    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics | MmdWasmPhysics> = null) {
         this.wasmInstance = wasmInstance;
         this.wasmInternal = wasmInstance.createMmdRuntime();
 
@@ -146,8 +197,15 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this._lastRequestAnimationFrameTime = null;
         this._needToSyncEvaluate = true;
 
-        this._mmdMetadataEncoder = new MmdMetadataEncoder();
-        this._physics = physics;
+        if ((physics as MmdWasmPhysics)?.createRuntime !== undefined) {
+            this._externalPhysics = null;
+            this._physicsRuntime = (physics as MmdWasmPhysics).createRuntime(this.wasmInternal);
+            this._mmdMetadataEncoder = (physics as MmdWasmPhysics).createMetadataEncoder(this._physicsRuntime);
+        } else {
+            this._externalPhysics = physics as IMmdPhysics;
+            this._physicsRuntime = null;
+            this._mmdMetadataEncoder = new MmdMetadataEncoder();
+        }
 
         this._models = [];
         this._camera = null;
@@ -212,6 +270,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.onAnimationTickObservable.clear();
 
         this._needToInitializePhysicsModels.clear();
+        this._needToInitializePhysicsModelsBuffer.clear();
 
         this.unregister(scene);
         this.wasmInternal.free();
@@ -242,6 +301,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
     }
 
+    // flush wasm diagnostic log is always thread safe
     private _flushWasmDiagnosticLog(): void {
         // we need acquire and release the result to flush the log even if logging is disabled
 
@@ -264,6 +324,18 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.wasmInternal.releaseDiagnosticResult();
     }
 
+    private static readonly _MockWasmPhysicsInitializeSet: PhysicsInitializeSet = { // TODO: implement wasm side physics initialization set
+        add(model: MmdWasmModel): void {
+            model;
+        }
+    };
+
+    private _getPhysicsInitializeSet(): PhysicsInitializeSet {
+        return this._externalPhysics === null
+            ? MmdWasmRuntime._MockWasmPhysicsInitializeSet
+            : this._needToInitializePhysicsModels;
+    }
+
     /**
      * Create MMD model from mesh that has MMD metadata
      *
@@ -275,7 +347,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: CreateMmdModelOptions<TMaterial> = {}
+        options: CreateMmdWasmModelOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -292,7 +364,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: CreateMmdModelOptions<TMaterial> = {}
+        options: CreateMmdWasmModelOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -313,7 +385,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
 
         const metadataEncoder = this._mmdMetadataEncoder;
-        metadataEncoder.encodePhysics = options.buildPhysics;
+        metadataEncoder.encodePhysicsOptions = options.buildPhysics;
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
 
@@ -331,14 +403,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             skeleton,
             options.materialProxyConstructor as IMmdMaterialProxyConstructor<Material>,
             wasmMorphIndexMap,
-            options.buildPhysics ? this._physics : null
+            options.buildPhysics ? this._externalPhysics : null
         );
         this._models.push(model);
 
-        const needToInitializePhysicsModels = this._evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
-            ? this._needToInitializePhysicsModelsBuffer
-            : this._needToInitializePhysicsModels;
-        needToInitializePhysicsModels.add(model);
+        this._getPhysicsInitializeSet().add(model);
 
         wasmRuntime.deallocateBuffer(metadataBufferPtr, metadataSize);
 
@@ -500,11 +569,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                     }
                 } else {
                     if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
-                        const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                        const physicsInitializeSet = this._getPhysicsInitializeSet();
                         for (let i = 0; i < this._models.length; ++i) {
                             const model = this._models[i];
                             if (model.currentAnimation !== null) {
-                                needToInitializePhysicsModels.add(model);
+                                physicsInitializeSet.add(model);
                             }
                         }
                     }
@@ -552,7 +621,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             if (this.wasmInstance.MmdRuntime.bufferedUpdate === undefined) { // single thread environment fallback
                 this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime ?? undefined);
-                if (this._physics === null) this.wasmInternal.afterPhysics();
+                if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
             }
 
             this.lock.wait(); // ensure that the runtime is not evaluating animations
@@ -576,20 +645,33 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
                     // compute world matrix on wasm side synchronously
                     this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
-                    if (this._physics === null) this.wasmInternal.afterPhysics();
+                    if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                 } else {
                     // if there is uninitialized new model, evaluate animation synchronously
                     if (this._needToSyncEvaluate) {
                         this._needToSyncEvaluate = false;
+
+                        // move initialization sets to back buffer
+                        const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
+                        for (const model of this._needToInitializePhysicsModels) {
+                            needToInitializePhysicsModelsBuffer.add(model);
+                        }
+
                         // compute world matrix on wasm side synchronously
                         this.wasmInternal.beforePhysics();
-                        if (this._physics === null) this.wasmInternal.afterPhysics();
+                        if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                     }
                 }
             } else {
                 // if there is uninitialized new model, evaluate animation synchronously
                 if (this._needToSyncEvaluate) {
                     this._needToSyncEvaluate = false;
+
+                    // move initialization sets to back buffer
+                    const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
+                    for (const model of this._needToInitializePhysicsModels) {
+                        needToInitializePhysicsModelsBuffer.add(model);
+                    }
 
                     // evaluate animations on javascript side
                     for (let i = 0; i < models.length; ++i) {
@@ -601,7 +683,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
                     // compute world matrix on wasm side synchronously
                     this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime);
-                    if (this._physics === null) this.wasmInternal.afterPhysics();
+                    if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                 }
             }
 
@@ -622,31 +704,35 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             // compute world matrix on wasm side asynchronously
-            if (this._physics === null) {
+            if (this._externalPhysics === null) {
                 this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
             }
             this._lastRequestAnimationFrameTime = elapsedFrameTime;
 
-            // physics initialization must be buffered 1 frame
-            const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
-            for (const model of needToInitializePhysicsModelsBuffer) {
-                model.initializePhysics();
-            }
-            needToInitializePhysicsModelsBuffer.clear();
+            if (this._externalPhysics !== null) { // physics initialization for external physics
+                // physics initialization must be buffered 1 frame
+                const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
+                for (const model of needToInitializePhysicsModelsBuffer) {
+                    model.initializePhysics();
+                }
+                needToInitializePhysicsModelsBuffer.clear();
 
-            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-            for (const model of needToInitializePhysicsModels) {
-                needToInitializePhysicsModelsBuffer.add(model);
-            }
-            needToInitializePhysicsModels.clear();
+                const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                for (const model of needToInitializePhysicsModels) {
+                    needToInitializePhysicsModelsBuffer.add(model);
+                }
+                needToInitializePhysicsModels.clear();
+            } // physics initialization for wasm integrated physics is done in wasm side
         } else {
             // sync buffer
             if (this._usingWasmBackBuffer === true) {
-                const needToInitializePhysicsModelsBuffer = this._needToInitializePhysicsModelsBuffer;
-                const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-                for (const model of needToInitializePhysicsModelsBuffer) {
-                    needToInitializePhysicsModels.add(model);
-                }
+                if (this._externalPhysics !== null) { // for external physics
+                    // move buffered initialization sets to current initialization sets
+                    const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                    for (const model of this._needToInitializePhysicsModelsBuffer) {
+                        needToInitializePhysicsModels.add(model);
+                    }
+                } // for wasm integrated physics, move initialization sets to back buffer is performed in wasm side
 
                 this.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._usingWasmBackBuffer = false;
@@ -661,11 +747,13 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             this._needToSyncEvaluate = false;
 
-            const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
-            for (const model of needToInitializePhysicsModels) {
-                model.initializePhysics();
+            if (this._externalPhysics !== null) { // physics initialization for external physics
+                const needToInitializePhysicsModels = this._needToInitializePhysicsModels;
+                for (const model of needToInitializePhysicsModels) {
+                    model.initializePhysics();
+                }
+                needToInitializePhysicsModels.clear();
             }
-            needToInitializePhysicsModels.clear();
 
             if (elapsedFrameTime !== null) {
                 if (this._camera !== null) {
@@ -690,7 +778,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 model.afterPhysicsAndWasm();
                 model.afterPhysics(); // actually, afterPhysics can be called before "wasm side afterPhysics"
             }
-            if (this._physics !== null) {
+            if (this._externalPhysics !== null) {
                 { // afterPhysics is not thread safe, buffered evaluation must be done after afterPhysics
                     this.wasmInternal.swapWorldMatrixBuffer();
                     this.wasmInternal.afterPhysics();
@@ -793,11 +881,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (this._currentFrameTime === 0) {
             const models = this._models;
 
-            const needToInitializePhysicsModels = this._evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
-                ? this._needToInitializePhysicsModelsBuffer
-                : this._needToInitializePhysicsModels;
+            const physicsInitializeSet = this._getPhysicsInitializeSet();
             for (let i = 0; i < models.length; ++i) {
-                needToInitializePhysicsModels.add(models[i]);
+                physicsInitializeSet.add(models[i]);
             }
         }
 
@@ -848,13 +934,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
     private _seekAnimationInternal(frameTime: number, forceEvaluate: boolean): void {
         if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
-            const needToInitializePhysicsModels = this._evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
-                ? this._needToInitializePhysicsModelsBuffer
-                : this._needToInitializePhysicsModels;
+            const physicsInitializeSet = this._getPhysicsInitializeSet();
             for (let i = 0; i < this._models.length; ++i) {
                 const model = this._models[i];
                 if (model.currentAnimation !== null) {
-                    needToInitializePhysicsModels.add(model);
+                    physicsInitializeSet.add(model);
                 }
             }
         }
@@ -1044,6 +1128,15 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         for (let i = 0; i < models.length; ++i) {
             models[i].onEvaluationTypeChanged(value);
         }
+    }
+
+    /**
+     * get physics runtime
+     *
+     * If you don't set physics as `MmdWasmPhysics`, it returns null
+     */
+    public get physics(): Nullable<IMmdWasmPhysicsRuntime> {
+        return this._physicsRuntime;
     }
 
     /**
