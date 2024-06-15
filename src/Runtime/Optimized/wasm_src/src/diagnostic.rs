@@ -89,7 +89,7 @@ impl Diagnostic {
         self.result.len = self.ptr_buffer.buffer.len();
     }
 
-    pub(crate) unsafe fn acquire_result_error(&mut self) -> &DiagnosticResult {
+    pub(crate) unsafe fn acquire_error_result(&mut self) -> &DiagnosticResult {
         self.acquire_lock();
         self.last_acquired = LogLevel::Error;
 
@@ -98,7 +98,7 @@ impl Diagnostic {
         &self.result
     }
 
-    pub(crate) unsafe fn acquire_result_warning(&mut self) -> &DiagnosticResult {
+    pub(crate) unsafe fn acquire_warning_result(&mut self) -> &DiagnosticResult {
         self.acquire_lock();
         self.last_acquired = LogLevel::Warning;
 
@@ -107,7 +107,7 @@ impl Diagnostic {
         &self.result
     }
 
-    pub(crate) unsafe fn acquire_result_info(&mut self) -> &DiagnosticResult {
+    pub(crate) unsafe fn acquire_info_result(&mut self) -> &DiagnosticResult {
         self.acquire_lock();
         self.last_acquired = LogLevel::Info;
 

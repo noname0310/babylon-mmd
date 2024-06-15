@@ -211,21 +211,21 @@ impl MmdRuntime {
         });
     }
 
-    #[wasm_bindgen(js_name = "acquireDiagnosticResultError")]
-    pub fn acquire_diagnostic_result_error(&mut self) -> *const usize {
-        let result = unsafe{ self.diagnostic.acquire_result_error() };
+    #[wasm_bindgen(js_name = "acquireDiagnosticErrorResult")]
+    pub fn acquire_diagnostic_error_result(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_error_result() };
         result as *const DiagnosticResult as *const usize
     }
 
-    #[wasm_bindgen(js_name = "acquireDiagnosticResultWarning")]
-    pub fn acquire_diagnostic_result_warning(&mut self) -> *const usize {
-        let result = unsafe{ self.diagnostic.acquire_result_warning() };
+    #[wasm_bindgen(js_name = "acquireDiagnosticWarningResult")]
+    pub fn acquire_diagnostic_warning_result(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_warning_result() };
         result as *const DiagnosticResult as *const usize
     }
 
-    #[wasm_bindgen(js_name = "acquireDiagnosticResultInfo")]
-    pub fn acquire_diagnostic_result_info(&mut self) -> *const usize {
-        let result = unsafe{ self.diagnostic.acquire_result_info() };
+    #[wasm_bindgen(js_name = "acquireDiagnosticInfoResult")]
+    pub fn acquire_diagnostic_info_result(&mut self) -> *const usize {
+        let result = unsafe{ self.diagnostic.acquire_info_result() };
         result as *const DiagnosticResult as *const usize
     }
 

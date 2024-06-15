@@ -243,19 +243,21 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     private _flushWasmDiagnosticLog(): void {
-        const errorResultPtr = this.wasmInternal.acquireDiagnosticResultError();
+        // we need acquire and release the result to flush the log even if logging is disabled
+
+        const errorResultPtr = this.wasmInternal.acquireDiagnosticErrorResult();
         if (this._loggingEnabled) {
             this._flushWasmDiagnosticFromResultPtr(errorResultPtr, this.error);
         }
         this.wasmInternal.releaseDiagnosticResult();
 
-        const warningResultPtr = this.wasmInternal.acquireDiagnosticResultWarning();
+        const warningResultPtr = this.wasmInternal.acquireDiagnosticWarningResult();
         if (this._loggingEnabled) {
             this._flushWasmDiagnosticFromResultPtr(warningResultPtr, this.warn);
         }
         this.wasmInternal.releaseDiagnosticResult();
 
-        const infoResultPtr = this.wasmInternal.acquireDiagnosticResultInfo();
+        const infoResultPtr = this.wasmInternal.acquireDiagnosticInfoResult();
         if (this._loggingEnabled) {
             this._flushWasmDiagnosticFromResultPtr(infoResultPtr, this.log);
         }
