@@ -300,7 +300,7 @@ export class MmdWasmModel implements IMmdModel {
      *
      * If the animation is already added, it will be replaced
      * @param animation MMD animation or MMD model animation group to add
-     * @param retargetingMap Model bone name to animation bone name map
+     * @param retargetingMap Animation bone name to model bone name map
      */
     public addAnimation(
         animation: IMmdBindableModelAnimation | MmdWasmAnimation,

@@ -24,7 +24,7 @@ export interface IMmdBindableModelAnimation<T extends IMmdRuntimeModelAnimation 
     /**
      * Create runtime model animation
      * @param model Bind target
-     * @param retargetingMap Model bone name to animation bone name map
+     * @param retargetingMap Animation bone name to model bone name map
      * @param logger Logger
      * @returns Runtime model animation instance
      */

@@ -389,7 +389,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      * Bind animation to model and prepare material for morph animation
      * @param animation Animation to bind
      * @param model Bind target
-     * @param retargetingMap Model bone name to animation bone name map
+     * @param retargetingMap Animation bone name to model bone name map
      * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
@@ -515,7 +515,7 @@ declare module "../../Loader/Animation/mmdAnimationBase" {
 /**
  * Create runtime model animation
  * @param model Bind target
- * @param retargetingMap Model bone name to animation bone name map
+ * @param retargetingMap Animation bone name to model bone name map
  * @param logger Logger
  * @returns MmdRuntimeModelAnimation instance
  */

@@ -223,7 +223,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
      * @param animation Animation to bind
      * @param model Bind target
      * @param onDispose Callback when this instance is disposed
-     * @param retargetingMap Model bone name to animation bone name map
+     * @param retargetingMap Animation bone name to model bone name map
      * @param logger Logger
      * @return MmdRuntimeModelAnimation instance
      */
@@ -417,7 +417,7 @@ declare module "./mmdWasmAnimation" {
          * Create wasm runtime model animation
          * @param model Bind target
          * @param onDispose Callback when this instance is disposed
-         * @param retargetingMap Model bone name to animation bone name map
+         * @param retargetingMap Animation bone name to model bone name map
          * @param logger Logger
          * @returns MmdRuntimeModelAnimation instance
          */
@@ -434,7 +434,7 @@ declare module "./mmdWasmAnimation" {
  * Create runtime model animation
  * @param model Bind target
  * @param onDispose Callback when this instance is disposed
- * @param retargetingMap Model bone name to animation bone name map
+ * @param retargetingMap Animation bone name to model bone name map
  * @param logger Logger
  * @returns MmdRuntimeModelAnimation instance
  */
