@@ -3,3 +3,4 @@ build-std = ["std", "panic_abort"]
 
 [build]
 target = "wasm32-unknown-unknown"
+rustc-wrapper = "sccache"
