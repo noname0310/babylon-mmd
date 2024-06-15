@@ -1,6 +1,6 @@
 # babylon-mmd Contributing Guide
 
-An introduction to contributing to the babylon-mmd project.
+An introduction to contributing to the babylon-mmd.
 
 ## Rules
 
@@ -24,19 +24,13 @@ Only the main directories of the project are listed.
 
 - `res` - Test resource files.
 
-<br/>
-
 - `src/Loader` - MMD asset loader.
 - `src/Loader/Optimized` - Includes loaders for optimized formats like BPMX and BVMD.
-
-<br/>
 
 - `src/Runtime` - Elements to animate MMD assets.
 - `src/Runtime/Optimized` - Includes WebAssembly-based runtime.
 
 - `src/Runtime/Optimized/wasm_src` - rust cargo project.
-
-<br/>
 
 - `src/Test` - Test playground.
 
@@ -69,6 +63,7 @@ you can install the dependencies using the following links:
 - [nodejs and npm](https://nodejs.org/en/)
 - [rust](https://www.rust-lang.org/)
 - [clang and llvm](https://visualstudio.microsoft.com/vs/) (install visual studio with Clang and LLVM tools)
+- scache (install using cargo)
 
 #### clang and llvm installation details
 
