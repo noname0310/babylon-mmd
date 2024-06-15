@@ -4,6 +4,8 @@
 
 - implement wasm diagnostic logging
 
+- fix wasm physics initialization when using buffered evaluation mode
+
 ## 0.47.1 (2024-06-14)
 
 - package.json update for npm publish
