@@ -10,8 +10,7 @@ export class MmdWasmPhysics {
     }
 
     public createRuntime(mmdRuntime: InstanceType<MmdWasmInstance["MmdRuntime"]>): MmdWasmPhysicsRuntime {
-        mmdRuntime;
-        return new MmdWasmPhysicsRuntime();
+        return new MmdWasmPhysicsRuntime(mmdRuntime);
     }
 
     public createMetadataEncoder(physicsRuntime: MmdWasmPhysicsRuntime): MmdWasmPhysicsMetadataEncoder {

@@ -3,8 +3,17 @@ import { WasmSharedTypedArray } from "./wasmSharedTypedArray";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 import { WasmTypedArray } from "./wasmTypedArray";
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-export type MmdWasmType = typeof import("./wasm/mr") | typeof import("./wasm/md") | typeof import("./wasm/sr") | typeof import("./wasm/sd");
+/* eslint-disable @typescript-eslint/consistent-type-imports */
+export type MmdWasmType =
+    typeof import("./wasm/mpr") |
+    typeof import("./wasm/mpd") |
+    typeof import("./wasm/mr") |
+    typeof import("./wasm/md") |
+    typeof import("./wasm/spr") |
+    typeof import("./wasm/spd") |
+    typeof import("./wasm/sr") |
+    typeof import("./wasm/sd");
+/* eslint-enable @typescript-eslint/consistent-type-imports */
 
 /**
  * MMD WASM instance

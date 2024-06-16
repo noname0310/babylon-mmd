@@ -2,6 +2,7 @@ use std::sync::Once;
 
 mod bt_bind;
 mod bt_stdlib;
+pub(crate) mod physics_runtime;
 
 #[link(name = "bullet")]
 extern "C" {

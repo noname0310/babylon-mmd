@@ -62,14 +62,6 @@ impl PhysicsObject {
     pub(crate) fn bodies_mut(&mut self) -> &mut Vec<Rigidbody> {
         &mut self.bodies
     }
-
-    pub(crate) fn constraints(&self) -> &Vec<Constraint> {
-        &self.constraints
-    }
-
-    pub(crate) fn constraints_mut(&mut self) -> &mut Vec<Constraint> {
-        &mut self.constraints
-    }
 }
 
 impl Drop for PhysicsObject {

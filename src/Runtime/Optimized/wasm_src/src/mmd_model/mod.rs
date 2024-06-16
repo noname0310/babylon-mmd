@@ -14,7 +14,11 @@ use mmd_morph_controller::MmdMorphController;
 use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 
 use crate::diagnostic::Diagnostic;
-use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, PhysicsInfoKind, RigidbodyPhysicsMode};
+use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
+
+#[cfg(feature = "physics")]
+use crate::mmd_model_metadata::PhysicsInfoKind;
+
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 

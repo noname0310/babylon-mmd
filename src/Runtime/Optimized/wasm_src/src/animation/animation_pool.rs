@@ -393,14 +393,22 @@ impl AnimationPool {
     }
 
     #[inline]
+    #[cfg(debug_assertions)]
     fn check_animation_ptr(&self, animation_ptr: *const MmdAnimation) {
-        #[cfg(debug_assertions)]
         assert!(self.animations.iter().any(|animation| &**animation as *const MmdAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
     }
 
     #[inline]
+    #[cfg(not(debug_assertions))]
+    fn check_animation_ptr(&self, _: *const MmdAnimation) { }
+
+    #[inline]
+    #[cfg(debug_assertions)]
     fn check_runtime_animation_ptr(&self, animation_ptr: *const MmdRuntimeAnimation) {
-        #[cfg(debug_assertions)]
         assert!(self.runtime_animations.iter().any(|animation| &**animation as *const MmdRuntimeAnimation == animation_ptr), "AnimationPool: animation_ptr is invalid");
     }
+
+    #[inline]
+    #[cfg(not(debug_assertions))]
+    fn check_runtime_animation_ptr(&self, _: *const MmdRuntimeAnimation) { }
 }

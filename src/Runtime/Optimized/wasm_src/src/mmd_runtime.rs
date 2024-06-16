@@ -8,11 +8,17 @@ use crate::diagnostic::{Diagnostic, DiagnosticResult};
 use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::MetadataBuffer;
 
+#[cfg(feature = "physics")]
+use crate::physics::physics_runtime::PhysicsRuntime;
+
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 #[wasm_bindgen]
 pub struct MmdRuntime {
+    #[cfg(feature = "physics")]
+    physics_runtime: PhysicsRuntime,
+    
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
     locked: atomic::AtomicU8,
@@ -23,6 +29,9 @@ pub struct MmdRuntime {
 impl MmdRuntime {
     pub(crate) fn new() -> Self {
         MmdRuntime {
+            #[cfg(feature = "physics")]
+            physics_runtime: PhysicsRuntime::new(),
+
             mmd_models: Vec::new(),
             locked: atomic::AtomicU8::new(0),
             diagnostic: Diagnostic::new(),
@@ -134,8 +143,14 @@ impl MmdRuntime {
         *physics = external_physics;
     }
 
-    #[wasm_bindgen(js_name = "beforePhysics")]
-    pub fn before_physics(&mut self, frame_time: Option<f32>){
+    #[inline]
+    fn before_physics_internal(
+        &mut self,
+        frame_time: Option<f32>,
+
+        #[cfg(feature = "physics")]
+        time_step: Option<f32>,
+    ) {
         #[cfg(feature = "parallel")]
         {
             if 1 < self.mmd_models.len() {
@@ -151,6 +166,21 @@ impl MmdRuntime {
         for mmd_model in &mut self.mmd_models {
             mmd_model.before_physics(frame_time);
         }
+
+        #[cfg(feature = "physics")]
+        self.physics_runtime.step_simulation(time_step.unwrap_or(1.0 / 60.0));
+    }
+
+    #[cfg(feature = "physics")]
+    #[wasm_bindgen(js_name = "beforePhysics")]
+    pub fn before_physics(&mut self, frame_time: Option<f32>, time_step: Option<f32>) {
+        self.before_physics_internal(frame_time, time_step);
+    }
+
+    #[cfg(not(feature = "physics"))]
+    #[wasm_bindgen(js_name = "beforePhysics")]
+    pub fn before_physics(&mut self, frame_time: Option<f32>) {
+        self.before_physics_internal(frame_time);
     }
 
     #[wasm_bindgen(js_name = "afterPhysics")]
@@ -184,31 +214,82 @@ impl MmdRuntime {
         }
     }
 
+    #[inline]
     #[cfg(feature = "parallel")]
-    #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
-    pub fn buffered_before_physics(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
+    fn buffered_before_physics_internal(
+        mmd_runtime: &mut MmdRuntime,
+        frame_time: Option<f32>,
+
+        #[cfg(feature = "physics")]
+        time_step: Option<f32>,
+    ) {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
-            mmd_runtime.before_physics(frame_time);
+            mmd_runtime.before_physics(
+                frame_time,
+                
+                #[cfg(feature = "physics")]
+                time_step,
+            );
+
             mmd_runtime.locked.store(0, atomic::Ordering::Release);
         });
     }
 
+    #[cfg(feature = "physics")]
     #[cfg(feature = "parallel")]
-    #[wasm_bindgen(js_name = "bufferedUpdate")]
-    pub fn buffered_update(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
+    #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
+    pub fn buffered_before_physics(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>, time_step: Option<f32>) {
+        MmdRuntime::buffered_before_physics_internal(mmd_runtime, frame_time, time_step);
+    }
+
+    #[cfg(not(feature = "physics"))]
+    #[cfg(feature = "parallel")]
+    #[wasm_bindgen(js_name = "bufferedBeforePhysics")]
+    pub fn buffered_before_physics(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
+        MmdRuntime::buffered_before_physics_internal(mmd_runtime, frame_time);
+    }
+
+    #[inline]
+    #[cfg(feature = "parallel")]
+    fn buffered_update_internal(
+        mmd_runtime: &mut MmdRuntime,
+        frame_time: Option<f32>,
+
+        #[cfg(feature = "physics")]
+        time_step: Option<f32>,
+    ) {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
-            mmd_runtime.before_physics(frame_time);
+            mmd_runtime.before_physics(
+                frame_time,
+
+                #[cfg(feature = "physics")]
+                time_step,
+            );
             mmd_runtime.after_physics();
             mmd_runtime.locked.store(0, atomic::Ordering::Release);
         });
+    }
+
+    #[cfg(not(feature = "physics"))]
+    #[cfg(feature = "parallel")]
+    #[wasm_bindgen(js_name = "bufferedUpdate")]
+    pub fn buffered_update(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>) {
+        MmdRuntime::buffered_update_internal(mmd_runtime, frame_time);
+    }
+
+    #[cfg(feature = "physics")]
+    #[cfg(feature = "parallel")]
+    #[wasm_bindgen(js_name = "bufferedUpdate")]
+    pub fn buffered_update(mmd_runtime: &mut MmdRuntime, frame_time: Option<f32>, time_step: Option<f32>) {
+        MmdRuntime::buffered_update_internal(mmd_runtime, frame_time, time_step);
     }
 
     #[wasm_bindgen(js_name = "acquireDiagnosticErrorResult")]
@@ -232,6 +313,20 @@ impl MmdRuntime {
     #[wasm_bindgen(js_name = "releaseDiagnosticResult")]
     pub fn release_diagnostic_result(&mut self) {
         unsafe{ self.diagnostic.release_result(); }
+    }
+}
+
+#[cfg(feature = "physics")]
+#[wasm_bindgen]
+impl MmdRuntime {
+    #[wasm_bindgen(js_name = "setPhysicsMaxSubSteps")]
+    pub fn set_physics_max_sub_steps(&mut self, max_sub_steps: i32) {
+        *self.physics_runtime.max_sub_steps_mut() = max_sub_steps;
+    }
+
+    #[wasm_bindgen(js_name = "setPhysicsFixedTimeStep")]
+    pub fn set_physics_fixed_time_step(&mut self, fixed_time_step: f32) {
+        *self.physics_runtime.fixed_time_step_mut() = fixed_time_step;
     }
 }
 
