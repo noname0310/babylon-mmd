@@ -60,6 +60,7 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public TOON_TEXTURE = false;
     public IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
     public APPLY_AMBIENT_COLOR_TO_DIFFUSE = false;
+    public CLAMP_ALPHA = false;
     public TEXTURE_COLOR = false;
     public SPHERE_TEXTURE_COLOR = false;
     public TOON_TEXTURE_COLOR = false;
@@ -88,6 +89,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public toonTextureAdditiveColor = new Color4(0, 0, 0, 0);
 
     private _applyAmbientColorToDiffuse = true;
+    private _clampAlpha = true;
 
     private _useTextureColor = false;
     private _useSphereTextureColor = false;
@@ -153,6 +155,16 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set applyAmbientColorToDiffuse(value: boolean) {
         if (this._applyAmbientColorToDiffuse === value) return;
         this._applyAmbientColorToDiffuse = value;
+        this.markAllDefinesAsDirty();
+    }
+
+    public get clampAlpha(): boolean {
+        return this._clampAlpha;
+    }
+
+    public set clampAlpha(value: boolean) {
+        if (this._clampAlpha === value) return;
+        this._clampAlpha = value;
         this.markAllDefinesAsDirty();
     }
 
@@ -278,11 +290,6 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                     uniform sampler2D toonSampler;
                 #endif
             `;
-            codes["CUSTOM_FRAGMENT_MAIN_BEGIN"] = /* glsl */`
-                #ifdef TOON_TEXTURE
-                    vec3 toonNdl;
-                #endif
-            `;
 
             codes[`!${this._escapeRegExp("#if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)\nuniform mat4 view;\n#endif")}`] = /* glsl */`
                 #if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)
@@ -292,11 +299,25 @@ export class MmdPluginMaterial extends MaterialPluginBase {
                 #endif
             `;
 
+            codes["CUSTOM_FRAGMENT_MAIN_BEGIN"] = /* glsl */`
+                #ifdef TOON_TEXTURE
+                    vec3 toonNdl;
+                #endif
+            `;
+
             codes[`!${this._escapeRegExp("vec3 diffuseColor=vDiffuseColor.rgb;")}`] = /* glsl */`
                 #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
                     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
                 #else
                     vec3 diffuseColor = (vDiffuseColor.rgb);
+                #endif
+            `;
+
+            codes[`!${this._escapeRegExp("float alpha=vDiffuseColor.a;")}`] = /* glsl */`
+                #ifdef CLAMP_ALPHA
+                    float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
+                #else
+                    float alpha = vDiffuseColor.a;
                 #endif
             `;
 
@@ -441,6 +462,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.TOON_TEXTURE = this._toonTexture !== null && texturesEnabled;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = this._ignoreDiffuseWhenToonTextureIsNull;
             defines.APPLY_AMBIENT_COLOR_TO_DIFFUSE = this._applyAmbientColorToDiffuse;
+            defines.CLAMP_ALPHA = this._clampAlpha;
             defines.TEXTURE_COLOR = this._useTextureColor;
             defines.SPHERE_TEXTURE_COLOR = this._useSphereTextureColor;
             defines.TOON_TEXTURE_COLOR = this._useToonTextureColor;
@@ -452,6 +474,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
             defines.TOON_TEXTURE = false;
             defines.IGNORE_DIFFUSE_WHEN_TOON_TEXTURE_DISABLED = false;
             defines.APPLY_AMBIENT_COLOR_TO_DIFFUSE = false;
+            defines.CLAMP_ALPHA = false;
             defines.TEXTURE_COLOR = false;
             defines.SPHERE_TEXTURE_COLOR = false;
             defines.TOON_TEXTURE_COLOR = false;

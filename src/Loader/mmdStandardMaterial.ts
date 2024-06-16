@@ -115,6 +115,19 @@ export class MmdStandardMaterial extends StandardMaterial {
     }
 
     /**
+     * Get or set whether to apply clamp `Material.alpha` to 0.0 .. 1.0 (default: false)
+     *
+     * Babylon.js does not clamp the alpha value
+     */
+    public get clampAlpha(): boolean {
+        return this._pluginMaterial.clampAlpha;
+    }
+
+    public set clampAlpha(value: boolean) {
+        this._pluginMaterial.clampAlpha = value;
+    }
+
+    /**
      * Get or set whether to use the texture multiplicative color (default: (1, 1, 1, 1))
      *
      * If this property is first accessed as set, the shader is recompiled to support texture color properties
