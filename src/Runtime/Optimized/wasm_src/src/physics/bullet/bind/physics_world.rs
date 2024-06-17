@@ -75,7 +75,7 @@ impl Drop for PhysicsObject {
     }
 }
 
-type PhysicsObjectHandle = u32;
+pub(crate) type PhysicsObjectHandle = u32;
 
 pub(crate) struct PhysicsWorld {
     world: *mut std::ffi::c_void,

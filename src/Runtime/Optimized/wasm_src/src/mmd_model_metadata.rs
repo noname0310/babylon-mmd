@@ -342,6 +342,7 @@ impl<'a> MorphMetadataReader<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
 pub(crate) enum PhysicsInfoKind {
     NoPhysics = 0,
     StripedRigidbodies = 1,
@@ -403,11 +404,15 @@ impl<'a> RigidbodyMetadataReader<'a> {
         }
     }
 
+    pub(crate) fn physics_info_kind(&self) -> PhysicsInfoKind {
+        self.physics_info_kind
+    }
+
     // pub(crate) fn count(&self) -> u32 {
     //     self.count
     // }
 
-    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) {
+    pub(crate) fn for_each(&mut self, mut f: impl FnMut(RigidbodyMetadata)) {
         match self.physics_info_kind {
             PhysicsInfoKind::NoPhysics => {},
             PhysicsInfoKind::StripedRigidbodies => {
@@ -484,7 +489,8 @@ pub(crate) enum RigidbodyPhysicsMode {
 #[cfg(feature = "physics")]
 pub(crate) struct RigidbodyMetadataReader<'a> {
     buffer: MetadataBuffer<'a>,
-    pub(crate) physics_info_kind: PhysicsInfoKind,
+    buffer_start_offset: usize,
+    physics_info_kind: PhysicsInfoKind,
     physics_world_id: u32,
     kinematic_shared_physics_world_ids: Vec<u32>,
     count: u32,
@@ -517,9 +523,12 @@ impl<'a> RigidbodyMetadataReader<'a> {
         } else {
             panic!("Invalid physics info kind");
         }
+
+        let buffer_start_offset = buffer.offset;
         
         Self {
             buffer,
+            buffer_start_offset,
             physics_info_kind: kind,
             physics_world_id,
             kinematic_shared_physics_world_ids,
@@ -527,13 +536,25 @@ impl<'a> RigidbodyMetadataReader<'a> {
         }
     }
 
+    pub(crate) fn physics_info_kind(&self) -> PhysicsInfoKind {
+        self.physics_info_kind
+    }
+
+    pub(crate) fn physics_world_id(&self) -> u32 {
+        self.physics_world_id
+    }
+
+    pub(crate) fn take_kinematic_shared_physics_world_ids(&mut self) -> Vec<u32> {
+        std::mem::take(&mut self.kinematic_shared_physics_world_ids)
+    }
+
     pub(crate) fn count(&self) -> u32 {
         self.count
     }
 
-    pub(crate) fn for_each(mut self, mut f: impl FnMut(RigidbodyMetadata)) -> Option<JointMetadataReader<'a>> {
+    pub(crate) fn for_each(&mut self, mut f: impl FnMut(RigidbodyMetadata)) {
         match self.physics_info_kind {
-            PhysicsInfoKind::NoPhysics => { None },
+            PhysicsInfoKind::NoPhysics => { },
             PhysicsInfoKind::StripedRigidbodies => {
                 for _ in 0..self.count {
                     let bone_index = self.buffer.read::<i32>();
@@ -555,7 +576,6 @@ impl<'a> RigidbodyMetadataReader<'a> {
                         physics_mode,
                     });
                 }
-                None
             },
             PhysicsInfoKind::FullPhysics => {
                 for _ in 0..self.count {
@@ -589,6 +609,19 @@ impl<'a> RigidbodyMetadataReader<'a> {
                         physics_mode,
                     });
                 }
+            },
+        }
+    }
+
+    pub(crate) fn rewind(&mut self) {
+        self.buffer.offset = self.buffer_start_offset;
+    }
+
+    pub(crate) fn next(self) -> Option<JointMetadataReader<'a>> {
+        match self.physics_info_kind {
+            PhysicsInfoKind::NoPhysics => None,
+            PhysicsInfoKind::StripedRigidbodies => None,
+            PhysicsInfoKind::FullPhysics => {
                 Some(JointMetadataReader::new(self.buffer))
             },
         }

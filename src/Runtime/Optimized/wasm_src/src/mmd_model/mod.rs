@@ -3,7 +3,7 @@ mod append_transform_solver;
 mod ik_chain_info;
 mod ik_solver;
 mod mmd_morph_controller;
-mod mmd_runtime_bone;
+pub(crate) mod mmd_runtime_bone;
 
 use std::num::NonZeroUsize;
 use std::ptr::NonNull;
@@ -16,10 +16,16 @@ use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 use crate::diagnostic::Diagnostic;
 use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
 
-#[cfg(feature = "physics")]
 use crate::mmd_model_metadata::PhysicsInfoKind;
+use crate::physics::physics_runtime::physics_model_context;
+#[cfg(feature = "physics")]
+use crate::{
+    physics::physics_runtime::PhysicsRuntime,
+    physics::physics_runtime::physics_model_context::PhysicsModelContext,
+};
 
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
+
 use crate::unchecked_slice::{UncheckedSlice, UncheckedSliceMut};
 
 pub(crate) struct MmdModel {
@@ -32,10 +38,20 @@ pub(crate) struct MmdModel {
     sorted_runtime_bones: Box<[u32]>,
     bone_stack: Option<Vec<u32>>,
     external_physics: bool,
+
+    #[cfg(feature = "physics")]
+    physics_model_context: Option<PhysicsModelContext>,
 }
 
 impl MmdModel {
-    pub(crate) fn new(buffer: MetadataBuffer, diagnostic: &mut Diagnostic) -> Self {
+    pub(crate) fn new(
+        buffer: MetadataBuffer,
+        
+        #[cfg(feature = "physics")]
+        physics_runtime: &mut PhysicsRuntime,
+        
+        diagnostic: &mut Diagnostic
+    ) -> Self {
         let reader = BoneMetadataReader::new(buffer);
 
         let mut bone_arena: Vec<MmdRuntimeBone> = Vec::with_capacity(reader.bone_count() as usize);
@@ -111,33 +127,35 @@ impl MmdModel {
             }
         });
     
-        let (morphs, reader) = reader.read();
+        let (morphs, mut reader) = reader.read();
         let animation_arena = AnimationArena::new(&bone_arena, ik_solver_arena.len() as u32, morphs.len() as u32);
         let morph_controller = MmdMorphController::new(morphs.into_boxed_slice());
 
         let mut is_physics_bone = vec![false; bone_arena.len()];
         
+        reader.for_each(|metadata| {
+            if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+                is_physics_bone[metadata.bone_index as usize] = true;
+            }
+        });
+
+        #[cfg(feature = "physics")]
+        let mut physics_model_context = None;
+
         #[cfg(not(feature = "physics"))]
         {
-            reader.for_each(|metadata| {
-                if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
-                    is_physics_bone[metadata.bone_index as usize] = true;
-                }
-            });
+            if let PhysicsInfoKind::FullPhysics = reader.physics_info_kind() {
+                diagnostic.error("This wasm runtime does not support integrated physics. Please use other binary e.g. MmdWasmInstanceTypeMPR".to_string());
+            }
         }
         #[cfg(feature = "physics")]
         {
-            let build_physics = if let PhysicsInfoKind::FullPhysics = reader.physics_info_kind  { true } else { false };
-            let reader = reader.for_each(|metadata| {
-                if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
-                    is_physics_bone[metadata.bone_index as usize] = true;
-                }
-                // todo add physics
-            });
-            if let Some(reader) = reader {
-                reader.for_each(|_metadata| {
-                    // todo add physics
-                });
+            let build_physics = if let PhysicsInfoKind::FullPhysics = reader.physics_info_kind()  { true } else { false };
+            if build_physics {
+                reader.rewind();
+                physics_model_context = Some(
+                    physics_runtime.build_physics_object(&bone_arena, reader, diagnostic)
+                );
             }
         }
 
@@ -181,6 +199,9 @@ impl MmdModel {
             sorted_runtime_bones: sorted_runtime_bones.into_boxed_slice(),
             bone_stack: Some(Vec::with_capacity(bone_max_depth as usize)),
             external_physics: false,
+
+            #[cfg(feature = "physics")]
+            physics_model_context,
         }
     }
 

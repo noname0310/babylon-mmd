@@ -1,14 +1,23 @@
+mod physics_model_handle;
+pub(crate) mod physics_model_context;
+
+use physics_model_context::PhysicsModelContext;
+use physics_model_handle::PhysicsModelHandle;
 use rustc_hash::FxHashMap;
 
-use super::bt_bind::physics_world::PhysicsWorld;
+use crate::{diagnostic::DiagnosticWriter, mmd_model::mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::RigidbodyMetadataReader};
+
+use super::bullet::bind::physics_world::PhysicsWorld;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+pub(crate) type PhysicsWorldId = u32;
+
 pub(crate) struct PhysicsRuntime {
     max_sub_steps: i32,
     fixed_time_step: f32,
-    worlds: FxHashMap<u32, Box<PhysicsWorld>>,
+    worlds: FxHashMap<PhysicsWorldId, Box<PhysicsWorld>>,
 }
 
 impl PhysicsRuntime {
@@ -47,5 +56,21 @@ impl PhysicsRuntime {
         for world in self.worlds.values_mut() {
             world.step_simulation(time_step, max_sub_steps, fixed_time_step);
         }
+    }
+
+    pub(crate) fn build_physics_object(
+        &mut self,
+        bones: &[MmdRuntimeBone],
+        reader: RigidbodyMetadataReader,
+        diagnostic: DiagnosticWriter
+    ) -> PhysicsModelContext {
+        PhysicsModelContext::new(
+            PhysicsModelHandle::new(0, 0),
+            Vec::new(),
+        )
+    }
+
+    fn get_or_create_world(&mut self, world_id: PhysicsWorldId) -> &mut PhysicsWorld {
+        self.worlds.entry(world_id).or_insert_with(|| Box::new(PhysicsWorld::new()))
     }
 }

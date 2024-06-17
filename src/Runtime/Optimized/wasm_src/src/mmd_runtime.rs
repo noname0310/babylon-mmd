@@ -60,7 +60,16 @@ impl MmdRuntime {
         };
         let metadata_buffer = MetadataBuffer::new(serialized_metadata);
 
-        let mmd_model = Box::new(MmdModel::new(metadata_buffer, &mut self.diagnostic));
+        let mmd_model = Box::new(
+            MmdModel::new(
+                metadata_buffer,
+
+                #[cfg(feature = "physics")]
+                &mut self.physics_runtime,
+
+                &mut self.diagnostic
+            )
+        );
         let ptr = &*mmd_model as *const MmdModel as *mut usize;
         self.mmd_models.push(mmd_model);
         ptr

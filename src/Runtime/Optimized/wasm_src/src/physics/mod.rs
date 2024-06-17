@@ -1,7 +1,6 @@
 use std::sync::Once;
 
-mod bt_bind;
-mod bt_stdlib;
+mod bullet;
 pub(crate) mod physics_runtime;
 
 #[link(name = "bullet")]
