@@ -30,7 +30,12 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
 
         dataLength += 4; // kinematicSharedPhysicsWorldIdCount
         const kinematicSharedPhysicsWorldIds = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
-        dataLength += kinematicSharedPhysicsWorldIds === undefined ? 0 : kinematicSharedPhysicsWorldIds.length * 4; // kinematicSharedPhysicsWorldIds
+        if (kinematicSharedPhysicsWorldIds !== undefined) {
+            const kinematicSharedPhysicsWorldIdsSet = new Set(kinematicSharedPhysicsWorldIds);
+            const worldId = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId ?? this._physicsRuntime.nextWorldId;
+            kinematicSharedPhysicsWorldIdsSet.delete(worldId);
+            dataLength += kinematicSharedPhysicsWorldIdsSet.size * 4; // kinematicSharedPhysicsWorldIds
+        }
 
         dataLength += 4; // rigidBodyCount
 
@@ -94,9 +99,12 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         if (kinematicSharedPhysicsWorldIds === undefined) {
             serializer.setUint32(0); // kinematicSharedPhysicsWorldIdCount
         } else {
-            serializer.setUint32(kinematicSharedPhysicsWorldIds.length); // kinematicSharedPhysicsWorldIdCount
-            for (let i = 0; i < kinematicSharedPhysicsWorldIds.length; ++i) {
-                serializer.setUint32(kinematicSharedPhysicsWorldIds[i]); // kinematicSharedPhysicsWorldIds
+            const kinematicSharedPhysicsWorldIdsSet = new Set(kinematicSharedPhysicsWorldIds);
+            kinematicSharedPhysicsWorldIdsSet.delete(physicsWorldId);
+
+            serializer.setUint32(kinematicSharedPhysicsWorldIdsSet.size); // kinematicSharedPhysicsWorldIdCount
+            for (const worldId of kinematicSharedPhysicsWorldIdsSet) {
+                serializer.setUint32(worldId); // kinematicSharedPhysicsWorldIds
             }
         }
 
