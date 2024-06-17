@@ -29,10 +29,10 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
             + 4; // physicsWorldId
 
         dataLength += 4; // kinematicSharedPhysicsWorldIdCount
-        const kinematicSharedPhysicsWorldIds = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
+        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
         if (kinematicSharedPhysicsWorldIds !== undefined) {
             const kinematicSharedPhysicsWorldIdsSet = new Set(kinematicSharedPhysicsWorldIds);
-            const worldId = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId ?? this._physicsRuntime.nextWorldId;
+            const worldId = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId ?? this._physicsRuntime.nextWorldId;
             kinematicSharedPhysicsWorldIdsSet.delete(worldId);
             dataLength += kinematicSharedPhysicsWorldIdsSet.size * 4; // kinematicSharedPhysicsWorldIds
         }
@@ -88,14 +88,14 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         serializer.setUint8(2); // physicsInfoKind
         serializer.offset += 3; // padding
 
-        let physicsWorldId = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId;
+        let physicsWorldId = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId;
         if (physicsWorldId === undefined) {
             physicsWorldId = this._physicsRuntime.nextWorldId;
             this._physicsRuntime.nextWorldId += 1;
         }
         serializer.setUint32(physicsWorldId); // physicsWorldId
 
-        const kinematicSharedPhysicsWorldIds = (this.encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
+        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
         if (kinematicSharedPhysicsWorldIds === undefined) {
             serializer.setUint32(0); // kinematicSharedPhysicsWorldIdCount
         } else {

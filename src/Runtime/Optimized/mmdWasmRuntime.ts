@@ -385,7 +385,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
 
         const metadataEncoder = this._mmdMetadataEncoder;
-        metadataEncoder.encodePhysicsOptions = options.buildPhysics;
+        metadataEncoder.setEncodePhysicsOptions(options.buildPhysics);
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
 

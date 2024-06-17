@@ -124,10 +124,40 @@ import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
  * @internal
  */
 export class MmdMetadataEncoder {
-    public encodePhysicsOptions: CreateMmdWasmModelPhysicsOptions | boolean;
+    protected _encodePhysicsOptions: CreateMmdWasmModelPhysicsOptions | boolean;
 
     public constructor() {
-        this.encodePhysicsOptions = true;
+        this._encodePhysicsOptions = true;
+    }
+
+    public setEncodePhysicsOptions(options: CreateMmdWasmModelPhysicsOptions | boolean): void {
+        if (typeof options === "boolean") {
+            this._encodePhysicsOptions = options;
+        } else {
+            let validatedWorldId = options.worldId;
+            if (validatedWorldId !== undefined) {
+                if (validatedWorldId < 0 || 0xFFFFFFFF < validatedWorldId) {
+                    validatedWorldId = undefined;
+                }
+            }
+
+            const validatedKinematicSharedWorldIds: number[] = [];
+
+            const kinematicSharedWorldIds = options.kinematicSharedWorldIds;
+            if (kinematicSharedWorldIds !== undefined) {
+                for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
+                    const worldId = kinematicSharedWorldIds[i];
+                    if (0 <= worldId && worldId <= 0xFFFFFFFF) {
+                        validatedKinematicSharedWorldIds.push(worldId);
+                    }
+                }
+            }
+
+            this._encodePhysicsOptions = {
+                worldId: validatedWorldId,
+                kinematicSharedWorldIds: validatedKinematicSharedWorldIds
+            };
+        }
     }
 
     protected _computeBonesSize(metadata: MmdModelMetadata): number {
@@ -231,7 +261,7 @@ export class MmdMetadataEncoder {
     public computeSize(metadata: MmdModelMetadata): number {
         const dataLength = this._computeBonesSize(metadata)
             + this._computeMorphsSize(metadata)
-            + this._computePhysicsSize(this.encodePhysicsOptions ? metadata : null);
+            + this._computePhysicsSize(this._encodePhysicsOptions ? metadata : null);
 
         return dataLength;
     }
@@ -412,7 +442,7 @@ export class MmdMetadataEncoder {
 
         this._encodeBones(serializer, metadata, linkedBones);
         const wasmMorphMap = this._encodeMorphs(serializer, metadata);
-        this._encodePhysics(serializer, this.encodePhysicsOptions ? metadata : null);
+        this._encodePhysics(serializer, this._encodePhysicsOptions ? metadata : null);
 
         return wasmMorphMap;
     }
