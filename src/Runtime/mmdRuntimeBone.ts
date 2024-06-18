@@ -182,12 +182,17 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         // However, that method makes it impossible to apply one animation data to multiple models,
         // so we use an implementation that performs the axis transformation at runtime.
         if (this.axisLimit !== null) {
-            const animationAxis = MmdRuntimeBone._TempAxis;
-            let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
-            if (Vector3.Dot(animationAxis, this.axisLimit) < 0) {
-                angle = -angle;
+            const axisLimit = this.axisLimit;
+            if (axisLimit.x === 0 && axisLimit.y === 0 && axisLimit.z === 0) {
+                target.set(0, 0, 0, 1);
+            } else {
+                const animationAxis = MmdRuntimeBone._TempAxis;
+                let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+                if (Vector3.Dot(animationAxis, axisLimit) < 0) {
+                    angle = -angle;
+                }
+                Quaternion.RotationAxisToRef(axisLimit, angle, target);
             }
-            Quaternion.RotationAxisToRef(this.axisLimit, angle, target);
         } else {
             target.copyFrom(this.linkedBone.rotationQuaternion);
         }
@@ -196,12 +201,17 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
 
     private _getAnimatedRotationWithMorphToRef(target: Quaternion): Quaternion {
         if (this.axisLimit !== null) {
-            const animationAxis = MmdRuntimeBone._TempAxis;
-            let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
-            if (Vector3.Dot(animationAxis, this.axisLimit) < 0) {
-                angle = -angle;
+            const axisLimit = this.axisLimit;
+            if (axisLimit.x === 0 && axisLimit.y === 0 && axisLimit.z === 0) {
+                target.set(0, 0, 0, 1);
+            } else {
+                const animationAxis = MmdRuntimeBone._TempAxis;
+                let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+                if (Vector3.Dot(animationAxis, axisLimit) < 0) {
+                    angle = -angle;
+                }
+                Quaternion.RotationAxisToRef(axisLimit, angle, target);
             }
-            Quaternion.RotationAxisToRef(this.axisLimit, angle, target);
         } else {
             target.copyFrom(this.linkedBone.rotationQuaternion);
         }

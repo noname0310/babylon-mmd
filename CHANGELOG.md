@@ -9,6 +9,8 @@
 - clamp `MmdStandardMaterial.alpha` value to 0.0 .. 1.0 for better result
     - you can disable this behavior by setting `MmdStandardMaterial.clampAlpha` to `false`
 
+- handle zero vector limit axis
+
 ## 0.47.1 (2024-06-14)
 
 - package.json update for npm publish

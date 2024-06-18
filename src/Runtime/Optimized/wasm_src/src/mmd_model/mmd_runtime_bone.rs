@@ -121,6 +121,10 @@ impl MmdRuntimeBone {
         // However, that method makes it impossible to apply one animation data to multiple models,
         // so we use an implementation that performs the axis transformation at runtime.
         if let Some(axis_limit) = self.axis_limit {
+            if axis_limit == Vec3::ZERO {
+                return Quat::IDENTITY;
+            }
+
             let (animation_axis, mut angle) = rotation.to_axis_angle();
             if animation_axis.dot(axis_limit) < 0.0 {
                 angle = -angle;

@@ -1,4 +1,4 @@
-use glam::Vec3A;
+use glam::{FloatExt, Vec3A};
 
 use crate::mmd_model::MmdModel;
 use crate::unchecked_slice::UncheckedSlice;
@@ -227,9 +227,9 @@ impl MmdRuntimeAnimation {
                     let position_a = track.positions()[frame_index_a];
                     let position_b = track.positions()[frame_index_b];
                     bone.position = bone_rest_position + Vec3A::new(
-                        position_a.x + (position_b.x - position_a.x) * x_weight,
-                        position_a.y + (position_b.y - position_a.y) * y_weight,
-                        position_a.z + (position_b.z - position_a.z) * z_weight,
+                        position_a.x.lerp(position_b.x, x_weight),
+                        position_a.y.lerp(position_b.y, y_weight),
+                        position_a.z.lerp(position_b.z, z_weight),
                     );
 
                     let rotation_weight = {
