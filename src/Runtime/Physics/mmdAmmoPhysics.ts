@@ -350,7 +350,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             const worldScale = new Vector3();
             worldMatrix.decompose(worldScale, worldRotation);
             if (Math.abs(worldScale.x - worldScale.y) < 0.0001 && Math.abs(worldScale.y - worldScale.z) < 0.0001) {
-                if (Math.abs(worldScale.x - 1) < 0.0001 && Math.abs(worldScale.y - 1) < 0.0001 && Math.abs(worldScale.z - 1) < 0.0001) {
+                if (Math.abs(worldScale.x - 1.0) < 0.0001) {
                     scalingFactor = 1;
                 } else {
                     scalingFactor = worldScale.x;

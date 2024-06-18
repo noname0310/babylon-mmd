@@ -17,7 +17,6 @@ use crate::diagnostic::Diagnostic;
 use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
 
 use crate::mmd_model_metadata::PhysicsInfoKind;
-use crate::physics::physics_runtime::physics_model_context;
 #[cfg(feature = "physics")]
 use crate::{
     physics::physics_runtime::PhysicsRuntime,
@@ -133,7 +132,7 @@ impl MmdModel {
 
         let mut is_physics_bone = vec![false; bone_arena.len()];
         
-        reader.for_each(|metadata| {
+        reader.enumerate(|_, metadata| {
             if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
                 is_physics_bone[metadata.bone_index as usize] = true;
             }
@@ -150,9 +149,8 @@ impl MmdModel {
         }
         #[cfg(feature = "physics")]
         {
-            let build_physics = if let PhysicsInfoKind::FullPhysics = reader.physics_info_kind()  { true } else { false };
+            let build_physics = matches!(reader.physics_info_kind(), PhysicsInfoKind::FullPhysics);
             if build_physics {
-                reader.rewind();
                 physics_model_context = Some(
                     physics_runtime.build_physics_object(&bone_arena, reader, diagnostic)
                 );
@@ -232,6 +230,12 @@ impl MmdModel {
         &mut self.external_physics
     }
 
+    #[inline]
+    #[cfg(feature = "physics")]
+    pub(crate) fn physics_model_context(&self) -> &Option<PhysicsModelContext> {
+        &self.physics_model_context
+    }
+
     pub(crate) fn before_physics(&mut self, frame_time: Option<f32>) {
         if let Some(frame_time) = frame_time {
             if let Some(runtime_animation) = self.runtime_animation {
@@ -247,7 +251,12 @@ impl MmdModel {
             let animation_bone_arena = &mut self.animation_arena_mut().bone_arena_mut();
             for i in 0..animation_bone_arena.len() as u32 {
                 let bone_animation = &mut animation_bone_arena[i];
-                bone_animation.rotation = bone_animation.rotation.normalize();
+
+                bone_animation.rotation = if bone_animation.rotation.length_squared() == 0.0 {
+                    glam::Quat::IDENTITY
+                } else {
+                    bone_animation.rotation.normalize()
+                };
             }
         }
 
@@ -276,11 +285,7 @@ impl MmdModel {
             }
 
             let compute_ik = if let Some(ik_solver) = bone.ik_solver {
-                if self.animation_arena.iksolver_state_arena()[ik_solver] != 0 {
-                    true
-                } else {
-                    false
-                }
+                self.animation_arena.iksolver_state_arena()[ik_solver] != 0
             } else {
                 false
             };

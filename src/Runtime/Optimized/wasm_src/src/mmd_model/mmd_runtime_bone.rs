@@ -64,7 +64,7 @@ impl MmdRuntimeBoneArena {
 }
 
 pub(crate) struct MmdRuntimeBone {
-    pub(crate) rest_position: Vec3A,
+    pub(super) rest_position: Vec3A,
     pub(super) absolute_inverse_bind_matrix: Mat4,
     index: u32,
 
@@ -104,6 +104,16 @@ impl MmdRuntimeBone {
 
             ik_chain_info: None,
         }
+    }
+
+    #[inline]
+    pub(crate) fn rest_position(&self) -> Vec3A {
+        self.rest_position
+    }
+
+    #[inline]
+    pub(crate) fn absolute_inverse_bind_matrix(&self) -> &Mat4 {
+        &self.absolute_inverse_bind_matrix
     }
 
     pub(super) fn animated_position(&self, animation_arena: &AnimationArena) -> Vec3A {

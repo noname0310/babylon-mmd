@@ -178,7 +178,7 @@ impl MmdRuntimeAnimation {
             for i in 0..self.animation.movable_bone_tracks().len() {
                 let bone_index = self.movable_bone_bind_index_map[i];
                 let bone_rest_position = match mmd_model.bone_arena_mut().arena_mut().get(bone_index as u32) {
-                    Some(bone) => bone.rest_position,
+                    Some(bone) => bone.rest_position(),
                     None => continue,
                 };
                 let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as u32];

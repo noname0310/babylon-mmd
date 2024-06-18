@@ -92,7 +92,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
-                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
+                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
                 mmdRuntime.setAudioPlayer(audioPlayer);
 

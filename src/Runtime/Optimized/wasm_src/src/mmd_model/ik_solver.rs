@@ -248,7 +248,7 @@ impl MmdModel {
             match chain.solve_axis {
                 // SolveAxis::None => (chain_parent_rotation_matrix.transpose() * chain_rotation_axis).normalize_or_zero(),
                 SolveAxis::X => {
-                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.x_axis.into());
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.x_axis);
                     DVec3::new(
                         if 0.0 <= dot { 1.0 } else { -1.0 },
                         0.0,
@@ -256,7 +256,7 @@ impl MmdModel {
                     )
                 },
                 SolveAxis::Y => {
-                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.y_axis.into());
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.y_axis);
                     DVec3::new(
                         0.0,
                         if 0.0 <= dot { 1.0 } else { -1.0 },
@@ -264,7 +264,7 @@ impl MmdModel {
                     )
                 },
                 SolveAxis::Z => {
-                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.z_axis.into());
+                    let dot = chain_rotation_axis.dot(chain_parent_rotation_matrix.z_axis);
                     DVec3::new(
                         0.0,
                         0.0,
@@ -284,7 +284,7 @@ impl MmdModel {
         let solver = &self.ik_solver_arena.arena()[ik_solver_index];
 
         let angle = (solver.limit_angle as f64 * ((ik_chain_index + 1) as f64)).min(dot.acos());
-        let ik_rotation = DQuat::from_axis_angle(chain_rotation_axis.into(), angle);
+        let ik_rotation = DQuat::from_axis_angle(chain_rotation_axis, angle);
         *self.bone_arena.arena_mut()[chain.bone].ik_chain_info.as_mut().unwrap().ik_rotation_mut() =
             (ik_rotation * self.bone_arena.arena()[chain.bone].ik_chain_info.as_ref().unwrap().ik_rotation().as_dquat()).as_quat();
 

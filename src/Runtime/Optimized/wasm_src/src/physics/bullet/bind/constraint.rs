@@ -1,8 +1,6 @@
 use super::rigidbody::Rigidbody;
 use glam::{Mat4, Vec3};
 
-use super::physics_world::RigidbodyHandle;
-
 #[link(name = "bullet")]
 extern "C" {
     fn bt_create_constraint_construction_info() -> *mut std::ffi::c_void;
@@ -43,8 +41,8 @@ pub(crate) enum ConstraintType {
 
 pub(crate) struct ConstraintConstructionInfo {
     info: *mut std::ffi::c_void,
-    body_a: RigidbodyHandle,
-    body_b: RigidbodyHandle,
+    body_a: usize,
+    body_b: usize,
 }
 
 impl ConstraintConstructionInfo {
@@ -52,16 +50,16 @@ impl ConstraintConstructionInfo {
         let info = unsafe { bt_create_constraint_construction_info() };
         Self { 
             info,
-            body_a: -1,
-            body_b: -1,
+            body_a: usize::MAX,
+            body_b: usize::MAX,
         }
     }
 
-    pub(crate) fn set_type(&mut self, type_: ConstraintType) {
-        unsafe { bt_constraint_construction_info_set_type(self.info, type_ as u8) };
+    pub(crate) fn set_type(&mut self, constraint_type: ConstraintType) {
+        unsafe { bt_constraint_construction_info_set_type(self.info, constraint_type as u8) };
     }
 
-    pub(crate) fn set_bodies(&mut self, body_a: RigidbodyHandle, body_b: RigidbodyHandle) {
+    pub(crate) fn set_bodies(&mut self, body_a: usize, body_b: usize) {
         self.body_a = body_a;
         self.body_b = body_b;
     }
@@ -110,9 +108,9 @@ pub(super) struct Constraint {
 }
 
 impl Constraint {
-    pub(super) fn new(info: &ConstraintConstructionInfo, body_vector: &Vec<Rigidbody>) -> Result<Self, String> {
-        let body_a = body_vector.get(info.body_a as usize).ok_or("Body A not found")?.get_body();
-        let body_b = body_vector.get(info.body_b as usize).ok_or("Body B not found")?.get_body();
+    pub(super) fn new(info: &ConstraintConstructionInfo, body_vector: &[Rigidbody]) -> Result<Self, String> {
+        let body_a = body_vector.get(info.body_a).ok_or("Body A not found")?.get_body();
+        let body_b = body_vector.get(info.body_b).ok_or("Body B not found")?.get_body();
         let constraint = unsafe { bt_create_constraint(info.info, body_a, body_b) };
         Ok(Self { constraint })
     }

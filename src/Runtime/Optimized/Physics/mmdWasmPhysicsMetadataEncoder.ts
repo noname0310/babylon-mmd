@@ -1,3 +1,4 @@
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
@@ -36,6 +37,8 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
             kinematicSharedPhysicsWorldIdsSet.delete(worldId);
             dataLength += kinematicSharedPhysicsWorldIdsSet.size * 4; // kinematicSharedPhysicsWorldIds
         }
+
+        dataLength += 16 * 4; // modelInitialWorldMatrix
 
         dataLength += 4; // rigidBodyCount
 
@@ -78,7 +81,7 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         return dataLength;
     }
 
-    protected override _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>): void {
+    protected override _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>, rootTransform: TransformNode): void {
         if (metadata === null) {
             serializer.setUint8(0); // physicsInfoKind
             serializer.offset += 3; // padding
@@ -107,6 +110,9 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
                 serializer.setUint32(worldId); // kinematicSharedPhysicsWorldIds
             }
         }
+
+        const worldMatrix = rootTransform.computeWorldMatrix(true);
+        serializer.setFloat32Array(worldMatrix.m); // modelInitialWorldMatrix
 
         const bones = metadata.bones;
         const boneNameMap = new Map<string, number>();

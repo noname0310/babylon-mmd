@@ -146,17 +146,20 @@ impl<'a> DiagnosticWriter<'a> {
         DiagnosticWriter { diagnostic }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn error(&mut self, message: String) {
         self.diagnostic.errors.push(message);
     }
 
-    // pub(crate) fn warning(&mut self, message: String) {
-    //     self.diagnostic.warnings.push(message);
-    // }
+    #[allow(dead_code)]
+    pub(crate) fn warning(&mut self, message: String) {
+        self.diagnostic.warnings.push(message);
+    }
 
-    // pub(crate) fn info(&mut self, message: String) {
-    //     self.diagnostic.infos.push(message);
-    // }
+    #[allow(dead_code)]
+    pub(crate) fn info(&mut self, message: String) {
+        self.diagnostic.infos.push(message);
+    }
 }
 
 impl<'a> Drop for DiagnosticWriter<'a> {

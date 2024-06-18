@@ -181,8 +181,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                         node.position
                     );
 
-                    node.computeWorldMatrix(true);
-                    node.getWorldMatrix().decompose(
+                    node.computeWorldMatrix(true).decompose(
                         undefined,
                         MmdPhysicsModel._NodeWorldRotation,
                         MmdPhysicsModel._NodeWorldPosition
@@ -336,7 +335,7 @@ export class MmdPhysics implements IMmdPhysics {
             const worldScale = new Vector3();
             worldMatrix.decompose(worldScale);
             if (Math.abs(worldScale.x - worldScale.y) < 0.0001 && Math.abs(worldScale.y - worldScale.z) < 0.0001) {
-                if (Math.abs(worldScale.x - 1) < 0.0001 && Math.abs(worldScale.y - 1) < 0.0001 && Math.abs(worldScale.z - 1) < 0.0001) {
+                if (Math.abs(worldScale.x - 1.0) < 0.0001) {
                     scalingFactor = 1;
                 } else {
                     scalingFactor = worldScale.x;

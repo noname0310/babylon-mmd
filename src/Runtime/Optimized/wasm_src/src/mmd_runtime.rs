@@ -82,7 +82,19 @@ impl MmdRuntime {
             Some(index) => index,
             None => return,
         };
-        self.mmd_models.remove(index);
+
+        #[cfg(not(feature = "physics"))]
+        {
+            self.mmd_models.remove(index);
+        }
+        #[cfg(feature = "physics")]
+        {
+            let model = self.mmd_models.remove(index);
+            let context = model.physics_model_context();
+            if let Some(context) = context {
+                self.physics_runtime.destroy_physics_context(context);
+            }
+        }
     }
 
     #[wasm_bindgen(js_name = "getAnimationArena")]
@@ -326,6 +338,9 @@ impl MmdRuntime {
 }
 
 #[cfg(feature = "physics")]
+use glam::Vec3;
+
+#[cfg(feature = "physics")]
 #[wasm_bindgen]
 impl MmdRuntime {
     #[wasm_bindgen(js_name = "setPhysicsMaxSubSteps")]
@@ -336,6 +351,35 @@ impl MmdRuntime {
     #[wasm_bindgen(js_name = "setPhysicsFixedTimeStep")]
     pub fn set_physics_fixed_time_step(&mut self, fixed_time_step: f32) {
         *self.physics_runtime.fixed_time_step_mut() = fixed_time_step;
+    }
+
+    #[wasm_bindgen(js_name = "setPhysicsGravity")]
+    pub fn set_physics_gravity(&mut self, gravity_x: f32, gravity_y: f32, gravity_z: f32) {
+        self.physics_runtime.set_gravity(Vec3::new(gravity_x, gravity_y, gravity_z));
+    }
+
+    #[wasm_bindgen(js_name = "getPhysicsGravity")]
+    pub fn get_physics_gravity(&self) -> *const f32 {
+        self.physics_runtime.get_gravity().as_ref().as_ptr()
+    }
+
+    #[wasm_bindgen(js_name = "overridePhysicsGravity")]
+    pub fn override_physics_gravity(&mut self, world_id: u32, gravity_x: f32, gravity_y: f32, gravity_z: f32) {
+        self.physics_runtime.override_world_gravity(world_id, Some(Vec3::new(gravity_x, gravity_y, gravity_z)));
+    }
+
+    #[wasm_bindgen(js_name = "restorePhysicsGravity")]
+    pub fn restore_physics_gravity(&mut self, world_id: u32) {
+        self.physics_runtime.override_world_gravity(world_id, None);
+    }
+
+    #[wasm_bindgen(js_name = "getPhysicsWorldGravity")]
+    pub fn get_physics_world_gravity(&self, world_id: u32) -> *const f32 {
+        let gravity = self.physics_runtime.get_world_gravity(world_id);
+        match gravity {
+            Some(gravity) => gravity.as_ref().as_ptr(),
+            None => std::ptr::null(),
+        }
     }
 }
 

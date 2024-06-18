@@ -82,7 +82,7 @@ impl AppendTransformSolverArena {
         if solver.affect_position {
             let mut append_position = if solver.is_local {
                 let target_bone_world_matrix = bone_arena.world_matrices()[solver.target_bone];
-                let absolute_inverse_bind_matrix = bone_arena.arena()[solver.target_bone].absolute_inverse_bind_matrix;
+                let absolute_inverse_bind_matrix = *bone_arena.arena()[solver.target_bone].absolute_inverse_bind_matrix();
                 Vec3A::from_vec4((absolute_inverse_bind_matrix * target_bone_world_matrix).w_axis)
             } else {
                 let target_bone = &mut bone_arena.arena_mut()[solver.target_bone];

@@ -199,7 +199,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         if ((physics as MmdWasmPhysics)?.createRuntime !== undefined) {
             this._externalPhysics = null;
-            this._physicsRuntime = (physics as MmdWasmPhysics).createRuntime(this.wasmInternal);
+            this._physicsRuntime = (physics as MmdWasmPhysics).createRuntime(this);
             this._mmdMetadataEncoder = (physics as MmdWasmPhysics).createMetadataEncoder(this._physicsRuntime);
         } else {
             this._externalPhysics = physics as IMmdPhysics;
@@ -387,12 +387,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         const metadataEncoder = this._mmdMetadataEncoder;
         metadataEncoder.setEncodePhysicsOptions(options.buildPhysics);
 
-        const metadataSize = metadataEncoder.computeSize(mmdMesh.metadata);
+        const metadataSize = metadataEncoder.computeSize(mmdMesh);
 
         const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
 
         const metadataBuffer = this.wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
-        const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh.metadata, skeleton.bones, metadataBuffer.array);
+        const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh, skeleton.bones, metadataBuffer.array);
 
         const mmdModelPtr = wasmRuntime.createMmdModel(metadataBufferPtr, metadataSize);
 

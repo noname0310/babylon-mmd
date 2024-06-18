@@ -75,6 +75,7 @@ struct bwRigidBodyConstructionInfo final {
     btScalar m_friction = 0.5f;
     btScalar m_restitution = 0.0f;
     bool m_additionalDamping = false;
+    bool m_noContactResponse = false;
     uint16_t m_collisionGroup = 0x0001;
     uint16_t m_collisionMask = 0xFFFF;
     btScalar m_linearSleepingThreshold = 0.8f;
@@ -141,6 +142,11 @@ extern "C" void bt_rigidbody_construction_info_set_additional_damping(void* info
     i->m_additionalDamping = additionalDamping;
 }
 
+extern "C" void bt_rigidbody_construction_info_set_no_contact_response(void* info, uint8_t noContactResponse) {
+    bwRigidBodyConstructionInfo* i = static_cast<bwRigidBodyConstructionInfo*>(info);
+    i->m_noContactResponse = noContactResponse;
+}
+
 extern "C" void bt_rigidbody_construction_info_set_collision_group_mask(void* info, uint16_t collisionGroup, uint16_t collisionMask) {
     bwRigidBodyConstructionInfo* i = static_cast<bwRigidBodyConstructionInfo*>(info);
     i->m_collisionGroup = collisionGroup;
@@ -158,10 +164,38 @@ extern "C" void bt_rigidbody_construction_info_set_disable_deactivation(void* in
     i->m_disableDeactivation = disableDeactivation;
 }
 
+ATTRIBUTE_ALIGNED16(struct)
+LightMotionState : public btMotionState
+{
+	btTransform m_graphicsWorldTrans;
+	// btTransform m_startWorldTrans;
+
+	BT_DECLARE_ALIGNED_ALLOCATOR();
+
+	LightMotionState(const btTransform& startTrans = btTransform::getIdentity())
+		: m_graphicsWorldTrans(startTrans)
+		//   m_startWorldTrans(startTrans)
+	{
+	}
+
+	///synchronizes world transform from user to physics
+	virtual void getWorldTransform(btTransform& centerOfMassWorldTrans) const
+	{
+		centerOfMassWorldTrans = m_graphicsWorldTrans;
+	}
+
+	///synchronizes world transform from physics to user
+	///Bullet only calls the update of worldtransform for active objects
+	virtual void setWorldTransform(const btTransform& centerOfMassWorldTrans)
+	{
+		m_graphicsWorldTrans = centerOfMassWorldTrans;
+	}
+};
+
 class bwRigidBody final {
 private:
     btCollisionShape* m_shape;
-    btDefaultMotionState* m_motionState;
+    LightMotionState* m_motionState;
     btRigidBody* m_body;
     uint16_t m_collisionGroup;
     uint16_t m_collisionMask;
@@ -189,7 +223,7 @@ public:
                 break;
         }
 
-        m_motionState = new btDefaultMotionState(info->m_startTransform);   
+        m_motionState = new LightMotionState(info->m_startTransform);   
 
         btScalar mass = 0.0f;
         if (info->m_motionType == bwRigidBodyMotionType::DYNAMIC) {
@@ -219,6 +253,10 @@ public:
             m_body->setActivationState(DISABLE_DEACTIVATION);
         } else if (info->m_motionType == bwRigidBodyMotionType::STATIC) {
             m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+        }
+
+        if (info->m_noContactResponse) {
+            m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
         }
         
         m_collisionGroup = info->m_collisionGroup;

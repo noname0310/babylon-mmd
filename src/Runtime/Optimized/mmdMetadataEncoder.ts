@@ -1,4 +1,5 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
@@ -6,6 +7,7 @@ import { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import type { MmdMesh } from "../mmdMesh";
 import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
 
 /**
@@ -81,6 +83,7 @@ import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
  *  physicsWorldId: uint32
  *  kinematicSharedPhysicsWorldIdCount: uint32
  *  kinematicSharedPhysicsWorldIds: uint32[kinematicSharedPhysicsWorldIdCount]
+ *  modelInitialWorldMatrix: float32[16]
  *
  *  rigidBodyCount: uint32
  *  {
@@ -258,7 +261,9 @@ export class MmdMetadataEncoder {
         return dataLength;
     }
 
-    public computeSize(metadata: MmdModelMetadata): number {
+    public computeSize(mmdMesh: MmdMesh): number {
+        const metadata = mmdMesh.metadata;
+
         const dataLength = this._computeBonesSize(metadata)
             + this._computeMorphsSize(metadata)
             + this._computePhysicsSize(this._encodePhysicsOptions ? metadata : null);
@@ -405,7 +410,7 @@ export class MmdMetadataEncoder {
         return wasmMorphMap;
     }
 
-    protected _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>): void {
+    protected _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>, _rootTransform: TransformNode): void {
         if (metadata === null) {
             serializer.setUint8(0); // physicsInfoKind
             serializer.offset += 3; // padding
@@ -436,13 +441,15 @@ export class MmdMetadataEncoder {
         }
     }
 
-    public encode(metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
+    public encode(mmdMesh: MmdMesh, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
+        const metadata = mmdMesh.metadata;
+
         const serializer = new MmdDataSerializer(buffer.buffer);
         serializer.offset = buffer.byteOffset;
 
         this._encodeBones(serializer, metadata, linkedBones);
         const wasmMorphMap = this._encodeMorphs(serializer, metadata);
-        this._encodePhysics(serializer, this._encodePhysicsOptions ? metadata : null);
+        this._encodePhysics(serializer, this._encodePhysicsOptions ? metadata : null, mmdMesh);
 
         return wasmMorphMap;
     }

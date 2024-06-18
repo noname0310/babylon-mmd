@@ -15,7 +15,7 @@ export interface MmdMesh extends Mesh {
 /**
  * Mesh type that able to create `MmdModel` instance
  */
-export interface MmdSkinnedMesh extends Mesh {
+export interface MmdSkinnedMesh extends MmdMesh {
     _mmdSkinnedMeshPhantomProperty: true;
     metadata: MmdSkinedModelMetadata;
 }

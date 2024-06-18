@@ -24,6 +24,8 @@ extern "C" {
 
     fn bt_rigidbody_construction_info_set_additional_damping(info: *mut std::ffi::c_void, additional_damping: u8);
 
+    fn bt_rigidbody_construction_info_set_no_contact_response(info: *mut std::ffi::c_void, no_contact_response: u8);
+
     fn bt_rigidbody_construction_info_set_collision_group_mask(info: *mut std::ffi::c_void, collision_group: u16, collision_mask: u16);
 
     fn bt_rigidbody_construction_info_set_sleeping_threshold(info: *mut std::ffi::c_void, linear_sleeping_threshold: f32, angular_sleeping_threshold: f32);
@@ -51,6 +53,7 @@ pub(crate) enum ShapeType {
     // Compound = 8,
 }
 
+#[derive(Clone, Copy)]
 pub(crate) enum MotionType {
     Dynamic = 0,
     Kinematic = 1,
@@ -103,6 +106,10 @@ impl RigidbodyConstructionInfo {
         unsafe { bt_rigidbody_construction_info_set_additional_damping(self.info, additional_damping as u8) };
     }
 
+    pub (crate) fn set_no_contact_response(&mut self, no_contact_response: bool) {
+        unsafe { bt_rigidbody_construction_info_set_no_contact_response(self.info, no_contact_response as u8) };
+    }
+
     pub(crate) fn set_collision_group_mask(&mut self, collision_group: u16, collision_mask: u16) {
         unsafe { bt_rigidbody_construction_info_set_collision_group_mask(self.info, collision_group, collision_mask) };
     }
@@ -124,12 +131,24 @@ impl Drop for RigidbodyConstructionInfo {
 
 pub(crate) struct Rigidbody {
     body: *mut std::ffi::c_void,
+    linked_bone_index: u32,
+    body_offset_matrix: Mat4,
+    body_offset_inverse_matrix: Mat4,
 }
 
 impl Rigidbody {
-    pub(super) fn new(info: &RigidbodyConstructionInfo) -> Self {
+    pub(super) fn new(
+        info: &RigidbodyConstructionInfo,
+        linked_bone_index: u32,
+        body_offset_matrix: &Mat4,
+    ) -> Self {
         let body = unsafe { bt_create_rigidbody(info.info) };
-        Self { body }
+        Self { 
+            body,
+            linked_bone_index,
+            body_offset_matrix: *body_offset_matrix,
+            body_offset_inverse_matrix: body_offset_matrix.inverse(),
+        }
     }
 
     pub(super) fn get_body(&self) -> *const std::ffi::c_void {
