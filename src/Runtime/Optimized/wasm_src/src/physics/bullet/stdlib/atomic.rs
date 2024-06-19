@@ -1,5 +1,5 @@
 #[no_mangle]
-pub extern "C" fn bw_get_thread_id() -> usize {
+extern "C" fn bw_get_thread_id() -> usize {
     thread_id::get()
 }
 
@@ -46,7 +46,7 @@ impl UnsafeManualMutex {
 }
 
 #[no_mangle]
-pub extern "C" fn bw_mutex_init() -> *mut UnsafeManualMutex {
+unsafe extern "C" fn bw_mutex_init() -> *mut UnsafeManualMutex {
     let mutex = Box::new(UnsafeManualMutex::new());
     let ptr = Box::leak(mutex) as *mut UnsafeManualMutex;
     ptr
@@ -54,24 +54,24 @@ pub extern "C" fn bw_mutex_init() -> *mut UnsafeManualMutex {
 
 // there's no destroy bw_mutex has memory leak, but it's fine because it's used only for global mutex
 // #[no_mangle]
-// pub extern "C" fn bw_mutex_destroy(mutex: *mut ManualMutex) {
+// unsafe extern "C" fn bw_mutex_destroy(mutex: *mut ManualMutex) {
 //     unsafe {
 //         Box::from_raw(mutex);
 //     }
 // }
 
 #[no_mangle]
-pub extern "C" fn bw_mutex_lock(mutex: *mut UnsafeManualMutex) -> u8 {
+unsafe extern "C" fn bw_mutex_lock(mutex: *mut UnsafeManualMutex) -> u8 {
     unsafe { &mut *mutex }.lock()
 }
 
 #[no_mangle]
-pub extern "C" fn bw_mutex_unlock(mutex: *mut UnsafeManualMutex) -> u8 {
+unsafe extern "C" fn bw_mutex_unlock(mutex: *mut UnsafeManualMutex) -> u8 {
     unsafe { &mut *mutex }.unlock()
 }
 
 #[no_mangle]
-pub extern "C" fn bw_cond_init() -> *mut wasm_sync::Condvar {
+unsafe extern "C" fn bw_cond_init() -> *mut wasm_sync::Condvar {
     let cond = Box::new(wasm_sync::Condvar::new());
     let ptr = Box::leak(cond) as *mut wasm_sync::Condvar;
     ptr
@@ -79,14 +79,14 @@ pub extern "C" fn bw_cond_init() -> *mut wasm_sync::Condvar {
 
 // there's no destroy bw_cond has memory leak, but it's fine because it's used only for global mutex
 // #[no_mangle]
-// pub extern "C" fn bw_cond_destroy(cond: *mut wasm_sync::Condvar) {
+// unsafe extern "C" fn bw_cond_destroy(cond: *mut wasm_sync::Condvar) {
 //     unsafe {
 //         Box::from_raw(cond);
 //     }
 // }
 
 #[no_mangle]
-pub extern "C" fn bw_cond_wait(cond: *mut wasm_sync::Condvar, manual_mutex: *mut UnsafeManualMutex) -> u8 {
+unsafe extern "C" fn bw_cond_wait(cond: *mut wasm_sync::Condvar, manual_mutex: *mut UnsafeManualMutex) -> u8 {
     let manual_mutex = unsafe { &mut *manual_mutex };
 
     let guard = match manual_mutex.guard.take() {
@@ -104,7 +104,7 @@ pub extern "C" fn bw_cond_wait(cond: *mut wasm_sync::Condvar, manual_mutex: *mut
 }
 
 #[no_mangle]
-pub extern "C" fn bw_cond_broadcast(cond: *mut wasm_sync::Condvar) -> u8 {
+unsafe extern "C" fn bw_cond_broadcast(cond: *mut wasm_sync::Condvar) -> u8 {
     unsafe { &*cond }.notify_all();
     0
 }
