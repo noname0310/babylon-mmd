@@ -289,14 +289,15 @@ public:
     }
 
     void getTransform(btScalar* transformBuffer) const {
-        btTransform& transform = m_body->getWorldTransform();
+        btTransform transform;
+        m_motionState->getWorldTransform(transform);
         transform.getOpenGLMatrix(transformBuffer);
     }
 
     void setTransform(btScalar* transformBuffer) {
         btTransform transform;
         transform.setFromOpenGLMatrix(transformBuffer);
-        m_body->setWorldTransform(transform);
+        m_motionState->setWorldTransform(transform);
     }
 };
 
