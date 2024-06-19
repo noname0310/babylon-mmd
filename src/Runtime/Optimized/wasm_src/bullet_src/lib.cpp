@@ -288,14 +288,14 @@ public:
         return m_collisionMask;
     }
 
-    void getTransform(btScalar* transforBuffer) const {
+    void getTransform(btScalar* transformBuffer) const {
         btTransform& transform = m_body->getWorldTransform();
-        transform.getOpenGLMatrix(transforBuffer);
+        transform.getOpenGLMatrix(transformBuffer);
     }
 
-    void setTransform(btScalar* transforBuffer) {
+    void setTransform(btScalar* transformBuffer) {
         btTransform transform;
-        transform.setFromOpenGLMatrix(transforBuffer);
+        transform.setFromOpenGLMatrix(transformBuffer);
         m_body->setWorldTransform(transform);
     }
 };
