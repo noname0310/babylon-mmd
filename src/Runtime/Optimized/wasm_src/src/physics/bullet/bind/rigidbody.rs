@@ -1,5 +1,7 @@
 use glam::{Mat4, Quat, Vec3, Vec4};
 
+use crate::mmd_model_metadata::RigidbodyPhysicsMode;
+
 #[link(name = "bullet")]
 extern "C" {
     fn bt_create_rigidbody_construction_info() -> *mut std::ffi::c_void;
@@ -134,6 +136,7 @@ pub(crate) struct Rigidbody {
     linked_bone_index: u32,
     body_offset_matrix: Mat4,
     body_offset_inverse_matrix: Mat4,
+    physics_mode: RigidbodyPhysicsMode,
 }
 
 impl Rigidbody {
@@ -141,6 +144,7 @@ impl Rigidbody {
         info: &RigidbodyConstructionInfo,
         linked_bone_index: u32,
         body_offset_matrix: &Mat4,
+        physics_mode: RigidbodyPhysicsMode,
     ) -> Self {
         let body = unsafe { bt_create_rigidbody(info.info) };
         Self { 
@@ -148,6 +152,7 @@ impl Rigidbody {
             linked_bone_index,
             body_offset_matrix: *body_offset_matrix,
             body_offset_inverse_matrix: body_offset_matrix.inverse(),
+            physics_mode,
         }
     }
 
@@ -159,14 +164,27 @@ impl Rigidbody {
         self.body
     }
 
+    pub(crate) fn get_linked_bone_index(&self) -> u32 {
+        self.linked_bone_index
+    }
+
     pub(crate) fn get_transform(&self) -> Mat4 {
         let mut transform = Mat4::IDENTITY;
         unsafe { bt_rigidbody_get_transform(self.body, transform.as_mut().as_mut_ptr()) };
-        transform
+        transform * self.body_offset_inverse_matrix
     }
 
-    pub(crate) fn set_transform(&mut self, transform: &Mat4) {
+    pub(crate) fn set_transform(&mut self, transform: Mat4) {
+        let transform = transform * self.body_offset_matrix;
         unsafe { bt_rigidbody_set_transform(self.body, transform.as_ref().as_ptr()) };
+    }
+
+    pub(crate) fn get_physics_mode(&self) -> RigidbodyPhysicsMode {
+        self.physics_mode
+    }
+
+    pub(crate) fn set_physics_mode(&mut self, physics_mode: RigidbodyPhysicsMode) {
+        self.physics_mode = physics_mode;
     }
 }
 

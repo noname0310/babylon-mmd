@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 
 use glam::{Mat4, Vec3};
 
+use crate::mmd_model_metadata::RigidbodyPhysicsMode;
+
 use super::constraint::{Constraint, ConstraintConstructionInfo};
 use super::rigidbody::{Rigidbody, RigidbodyConstructionInfo};
 
@@ -43,8 +45,8 @@ impl PhysicsObject {
         self.bodies.reserve(count);
     }
 
-    pub(crate) fn create_rigidbody(&mut self, info: &RigidbodyConstructionInfo, linked_bone_index: u32, body_offset_matrix: &Mat4) {
-        let mut body = Rigidbody::new(info, linked_bone_index, body_offset_matrix);
+    pub(crate) fn create_rigidbody(&mut self, info: &RigidbodyConstructionInfo, linked_bone_index: u32, body_offset_matrix: &Mat4, physics_mode: RigidbodyPhysicsMode) {
+        let mut body = Rigidbody::new(info, linked_bone_index, body_offset_matrix, physics_mode);
         unsafe { bt_world_add_rigidbody(self.world, body.get_body_mut()) };
         self.bodies.push(body);
     }
@@ -137,9 +139,9 @@ impl PhysicsWorld {
         self.objects.remove(&handle);
     }
 
-    pub(crate) fn get_physics_object(&self, handle: PhysicsObjectHandle) -> &PhysicsObject {
-        self.objects.get(&handle).unwrap()
-    }
+    // pub(crate) fn get_physics_object(&self, handle: PhysicsObjectHandle) -> &PhysicsObject {
+    //     self.objects.get(&handle).unwrap()
+    // }
 
     pub(crate) fn get_physics_object_mut(&mut self, handle: PhysicsObjectHandle) -> &mut PhysicsObject {
         self.objects.get_mut(&handle).unwrap()

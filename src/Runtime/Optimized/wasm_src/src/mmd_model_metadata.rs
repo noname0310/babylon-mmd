@@ -481,6 +481,7 @@ pub(crate) enum RigidbodyShapeType {
 }
 
 #[cfg(feature = "physics")]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RigidbodyPhysicsMode {
     FollowBone = 0,
     Physics = 1,

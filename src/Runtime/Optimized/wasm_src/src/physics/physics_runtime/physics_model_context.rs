@@ -6,6 +6,7 @@ pub(crate) struct PhysicsModelContext {
     physics_handle: PhysicsModelHandle,
     kinematic_shared_physics_handles: Vec<PhysicsModelHandle>,
     world_matrix: Mat4,
+    world_matrix_inverse: Mat4,
 }
 
 impl PhysicsModelContext {
@@ -18,6 +19,7 @@ impl PhysicsModelContext {
             physics_handle,
             kinematic_shared_physics_handles,
             world_matrix,
+            world_matrix_inverse: world_matrix.inverse(),
         }
     }
 
@@ -32,8 +34,13 @@ impl PhysicsModelContext {
     pub(super) fn world_matrix(&self) -> &Mat4 {
         &self.world_matrix
     }
+    
+    pub(super) fn world_matrix_inverse(&self) -> &Mat4 {
+        &self.world_matrix_inverse
+    }
 
-    pub(super) fn world_matrix_mut(&mut self) -> &mut Mat4 {
-        &mut self.world_matrix
+    pub(super) fn set_world_matrix(&mut self, world_matrix: Mat4) {
+        self.world_matrix = world_matrix;
+        self.world_matrix_inverse = world_matrix.inverse();
     }
 }

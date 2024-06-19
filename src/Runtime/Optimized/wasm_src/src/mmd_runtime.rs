@@ -189,7 +189,7 @@ impl MmdRuntime {
         }
 
         #[cfg(feature = "physics")]
-        self.physics_runtime.step_simulation(time_step.unwrap_or(1.0 / 60.0));
+        self.physics_runtime.step_simulation(time_step.unwrap_or(1.0 / 60.0), &mut self.mmd_models);
     }
 
     #[cfg(feature = "physics")]

@@ -7,7 +7,10 @@ use physics_model_context::PhysicsModelContext;
 use physics_model_handle::PhysicsModelHandle;
 use world_container::{PhysicsWorldId, WorldContainer};
 
-use crate::{diagnostic::DiagnosticWriter, mmd_model::mmd_runtime_bone::MmdRuntimeBone, mmd_model_metadata::{JointKind, RigidbodyMetadata, RigidbodyMetadataReader, RigidbodyPhysicsMode, RigidbodyShapeType}};
+use crate::diagnostic::DiagnosticWriter;
+use crate::mmd_model::mmd_runtime_bone::MmdRuntimeBone;
+use crate::mmd_model::MmdModel;
+use crate::mmd_model_metadata::{JointKind, RigidbodyMetadata, RigidbodyMetadataReader, RigidbodyPhysicsMode, RigidbodyShapeType};
 
 use super::bullet::bind::{constraint::{ConstraintConstructionInfo, ConstraintType}, rigidbody::{MotionType, RigidbodyConstructionInfo, ShapeType}};
 
@@ -50,8 +53,74 @@ impl PhysicsRuntime {
         self.worlds.get_world_gravity(world_id)
     }
 
-    pub(crate) fn step_simulation(&mut self, time_step: f32) {
+    pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
+        for i in 0..mmd_models.len() {
+            let model = &mmd_models[i];
+            let context = if let Some(context) = model.physics_model_context() {
+                context
+            } else {
+                continue;
+            };
+            
+            let physics_handle = context.physics_handle();
+            let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
+            let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
+
+            let bone_world_matrices = model.bone_arena().world_matrices();
+
+            for body in physics_object.bodies_mut() {
+                if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone {
+                    continue;
+                }
+                let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                body.set_transform(*context.world_matrix() * bone_world_matrix);
+            }
+
+            for physics_handle in context.kinematic_shared_physics_handles() {
+                let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
+                let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
+
+                for body in physics_object.bodies_mut() {
+                    // alyways follow bone for kinematic shared physics
+                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    body.set_transform(*context.world_matrix() * bone_world_matrix);
+                }
+            }
+        }
+
         self.worlds.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
+
+        for i in 0..mmd_models.len() {
+            let model = &mut mmd_models[i];
+            let context = if let Some(context) = model.physics_model_context() {
+                context
+            } else {
+                continue;
+            };
+
+            let world_matrix_inverse = *context.world_matrix_inverse();
+
+            let physics_handle = context.physics_handle();
+            let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
+            let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
+
+            let mut bone_world_matrices = model.bone_arena_mut().world_matrices_mut();
+
+            for body in physics_object.bodies() {
+                if body.get_physics_mode() == RigidbodyPhysicsMode::FollowBone {
+                    continue;
+                }
+
+                let mut body_world_matrix = world_matrix_inverse * body.get_transform();
+
+                if body.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone {
+                    let bone_position = bone_world_matrices[body.get_linked_bone_index()].w_axis.truncate();
+                    body_world_matrix.w_axis = bone_position.extend(body_world_matrix.w_axis.w);
+                }
+
+                bone_world_matrices[body.get_linked_bone_index()] = body_world_matrix;
+            }
+        }
     }
 
     pub(crate) fn build_physics_object(
@@ -114,13 +183,13 @@ impl PhysicsRuntime {
                 return None;
             };
             rb_info.set_shape_type(shape_type);
-            
+
             rb_info.set_shape_size(shape_size.extend(0.0));
 
-            let motion_type = if metadata.physics_mode == RigidbodyPhysicsMode::FollowBone as u8 {
-                MotionType::Kinematic
+            let (motion_type, physics_mode) = if metadata.physics_mode == RigidbodyPhysicsMode::FollowBone as u8 {
+                (MotionType::Kinematic, RigidbodyPhysicsMode::FollowBone)
             } else if metadata.physics_mode == RigidbodyPhysicsMode::Physics as u8 || metadata.physics_mode == RigidbodyPhysicsMode::PhysicsWithBone as u8 {
-                MotionType::Dynamic
+                (MotionType::Dynamic, if metadata.physics_mode == RigidbodyPhysicsMode::Physics as u8 { RigidbodyPhysicsMode::Physics } else { RigidbodyPhysicsMode::PhysicsWithBone })
             } else {
                 diagnostic.warning(format!("Unsupported physics mode {} for rigid body {}", metadata.physics_mode, rigidbody_index));
                 return None;
@@ -153,11 +222,11 @@ impl PhysicsRuntime {
             rb_info.set_restitution(metadata.repulsion);
             rb_info.set_additional_damping(true);
             rb_info.set_no_contact_response(metadata.collision_mask == 0x0000 || is_zero_volume);
-            rb_info.set_collision_group_mask(metadata.collision_group as u16, metadata.collision_mask);
+            rb_info.set_collision_group_mask(1 << metadata.collision_group as u16, metadata.collision_mask);
             rb_info.set_sleeping_threshold(0.0, 0.0);
             rb_info.set_disable_deactivation(true);
 
-            Some((bone_index, motion_type, body_offset_matrix))
+            Some((bone_index, motion_type, physics_mode, body_offset_matrix))
         };
 
         physics_object.reserve_bodies(reader.count() as usize);
@@ -165,12 +234,12 @@ impl PhysicsRuntime {
             let position = metadata.shape_position;
             let rotation = metadata.shape_rotation;
 
-            let (bone_index, motion_type, body_offset_matrix) = match set_rb_info(&mut rb_info, rigidbody_index, metadata) {
+            let (bone_index, motion_type, physics_mode, body_offset_matrix) = match set_rb_info(&mut rb_info, rigidbody_index, metadata) {
                 Some(v) => v,
                 None => return,
             };
 
-            physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix);
+            physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix, physics_mode);
 
             rigidbody_map[rigidbody_index as usize] = rigidbody_initial_transforms.len() as i32;
             rigidbody_initial_transforms.push((position, rotation));
@@ -195,12 +264,12 @@ impl PhysicsRuntime {
                     return;
                 }
                 
-                let (bone_index, _, body_offset_matrix) = match set_rb_info(&mut rb_info, rigidbody_index, metadata) {
+                let (bone_index, _, physics_mode, body_offset_matrix) = match set_rb_info(&mut rb_info, rigidbody_index, metadata) {
                     Some(v) => v,
                     None => return,
                 };
 
-                physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix);
+                physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix, physics_mode);
             });
 
             kinematic_shared_physics_handles.push(physics_handle);
@@ -286,7 +355,7 @@ impl PhysicsRuntime {
             let joint_final_transform_a = rigidbody_a_inverse * joint_transform;
             let joint_final_transform_b = rigidbody_b_inverse * joint_transform;
 
-            constraint_info.set_frames(&joint_final_transform_a, &joint_final_transform_b);
+            constraint_info.set_frames(joint_final_transform_a, joint_final_transform_b);
             constraint_info.set_use_linear_reference_frame_a(true);
             constraint_info.set_disable_collisions_between_linked_bodies(false);
             constraint_info.set_linear_limits(metadata.position_min.into(), metadata.position_max.into());
@@ -297,22 +366,26 @@ impl PhysicsRuntime {
                 diagnostic.warning(message);
             }
 
-            // adjust the physics mode of the rigid bodies
-            // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135
-            // const nodeA = nodes[joint.rigidbodyIndexA]!;
-            // const nodeB = nodes[joint.rigidbodyIndexB]!;
+            let body_a = &physics_object.bodies()[rigidbody_index_a as usize];
+            let body_b = &physics_object.bodies()[rigidbody_index_b as usize];
 
-            // if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
-            //     nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: A is parent of B
-            //     if (resolveRigidBodyBone(bodyInfoB)!.parentBone === resolveRigidBodyBone(bodyInfoA)!) {
-            //         nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
-            //     }
-            // } else if (nodeB.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
-            //     nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: B is parent of A
-            //     if (resolveRigidBodyBone(bodyInfoA)!.parentBone === resolveRigidBodyBone(bodyInfoB)!) {
-            //         nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
-            //     }
-            // }
+            if body_a.get_physics_mode() != RigidbodyPhysicsMode::FollowBone &&
+                body_b.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone { // case: A is parent of B
+                if let Some(parent_bone) = bones[body_b.get_linked_bone_index() as usize].parent_bone() {
+                    if parent_bone == body_a.get_linked_bone_index() {
+                        let body_b = &mut physics_object.bodies_mut()[rigidbody_index_b as usize];
+                        body_b.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                    }
+                }
+            } else if body_b.get_physics_mode() != RigidbodyPhysicsMode::FollowBone &&
+                body_a.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone { // case: B is parent of A
+                if let Some(parent_bone) = bones[body_a.get_linked_bone_index() as usize].parent_bone() {
+                    if parent_bone == body_b.get_linked_bone_index() {
+                        let body_a = &mut physics_object.bodies_mut()[rigidbody_index_a as usize];
+                        body_a.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                    }
+                }
+            }
         });
 
         PhysicsModelContext::new(

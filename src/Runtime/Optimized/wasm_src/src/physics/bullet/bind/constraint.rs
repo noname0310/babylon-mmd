@@ -64,7 +64,7 @@ impl ConstraintConstructionInfo {
         self.body_b = body_b;
     }
 
-    pub(crate) fn set_frames(&mut self, frame_a: &Mat4, frame_b: &Mat4) {
+    pub(crate) fn set_frames(&mut self, frame_a: Mat4, frame_b: Mat4) {
         let frame_a_buffer = frame_a.as_ref().as_ptr();
         let frame_b_buffer = frame_b.as_ref().as_ptr();
         unsafe { bt_constraint_construction_info_set_frames(self.info, frame_a_buffer, frame_b_buffer) };

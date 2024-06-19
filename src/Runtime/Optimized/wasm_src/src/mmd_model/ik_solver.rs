@@ -239,7 +239,7 @@ impl MmdModel {
             return target_position;
         }
         
-        let chain_parent_rotation_matrix = if let Some(parent_bone) = self.bone_arena.arena()[chain.bone].parent_bone {
+        let chain_parent_rotation_matrix = if let Some(parent_bone) = self.bone_arena.arena()[chain.bone].parent_bone() {
             Mat3::from_mat4(self.bone_arena.world_matrices()[parent_bone]).as_dmat3()
         } else {
             DMat3::IDENTITY

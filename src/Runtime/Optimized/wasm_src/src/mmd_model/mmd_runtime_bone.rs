@@ -47,12 +47,12 @@ impl MmdRuntimeBoneArena {
     }
 
     #[inline]
-    pub(super) fn world_matrices(&self) -> UncheckedSlice<Mat4> {
+    pub(crate) fn world_matrices(&self) -> UncheckedSlice<Mat4> {
         UncheckedSlice::new(&self.world_matrix_arena)
     }
 
     #[inline]
-    pub(super) fn world_matrices_mut(&mut self) -> UncheckedSliceMut<Mat4> {
+    pub(crate) fn world_matrices_mut(&mut self) -> UncheckedSliceMut<Mat4> {
         UncheckedSliceMut::new(&mut self.world_matrix_arena)
     }
 
@@ -114,6 +114,11 @@ impl MmdRuntimeBone {
     #[inline]
     pub(crate) fn absolute_inverse_bind_matrix(&self) -> &Mat4 {
         &self.absolute_inverse_bind_matrix
+    }
+
+    #[inline]
+    pub(crate) fn parent_bone(&self) -> Option<u32> {
+        self.parent_bone
     }
 
     pub(super) fn animated_position(&self, animation_arena: &AnimationArena) -> Vec3A {

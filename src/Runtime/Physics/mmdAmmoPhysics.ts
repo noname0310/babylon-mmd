@@ -604,7 +604,6 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 angularStiffness: new Vector3(joint.springRotation[0], joint.springRotation[1], joint.springRotation[2]),
                 collision: true // do not disable collision between the two rigid bodies
             });
-            physicsJoint;
 
             bodyA.addJoint(bodyB, physicsJoint);
 

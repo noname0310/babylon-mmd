@@ -78,11 +78,11 @@ impl WorldContainer {
         }
     }
 
-    fn get_world(&self, world_id: PhysicsWorldId) -> Option<&PhysicsWorld> {
+    pub(super) fn get_world(&self, world_id: PhysicsWorldId) -> Option<&PhysicsWorld> {
         self.worlds.get(&world_id).map(|world| &**world)
     }
 
-    fn get_world_mut(&mut self, world_id: PhysicsWorldId) -> Option<&mut PhysicsWorld> {
+    pub(super) fn get_world_mut(&mut self, world_id: PhysicsWorldId) -> Option<&mut PhysicsWorld> {
         self.worlds.get_mut(&world_id).map(|world| &mut **world)
     }
 
