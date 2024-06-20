@@ -25,7 +25,7 @@ export interface IMmdWasmPhysicsRuntime {
 
     /**
      * Physics fixed time step (default 1 / 60)
-     * 
+     *
      * recommended value is 1 / 120 for high quality physics simulation
      *
      * The fixed time step of physics
