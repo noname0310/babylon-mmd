@@ -15,14 +15,18 @@ export interface IMmdWasmPhysicsRuntime {
     nextWorldId: number;
 
     /**
-     * Physics max sub steps (default 120)
+     * Physics max sub steps (default 1)
+     *
+     * recommended value is 120 for high quality physics simulation
      *
      * The maximum number of physics sub steps
      */
     maxSubSteps: number;
 
     /**
-     * Physics fixed time step (default 1 / 120)
+     * Physics fixed time step (default 1 / 60)
+     * 
+     * recommended value is 1 / 120 for high quality physics simulation
      *
      * The fixed time step of physics
      */
