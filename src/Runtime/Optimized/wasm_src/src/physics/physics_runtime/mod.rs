@@ -54,13 +54,14 @@ impl PhysicsRuntime {
     }
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
-        for i in 0..mmd_models.len() {
-            let model = &mmd_models[i];
+        for model in mmd_models.iter() {
             let context = if let Some(context) = model.physics_model_context() {
                 context
             } else {
                 continue;
             };
+
+            let world_matrix = *context.world_matrix();
             
             let physics_handle = context.physics_handle();
             let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
@@ -73,7 +74,7 @@ impl PhysicsRuntime {
                     continue;
                 }
                 let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
-                body.set_transform(*context.world_matrix() * bone_world_matrix);
+                body.set_transform(world_matrix * bone_world_matrix);
             }
 
             for physics_handle in context.kinematic_shared_physics_handles() {
@@ -83,15 +84,14 @@ impl PhysicsRuntime {
                 for body in physics_object.bodies_mut() {
                     // alyways follow bone for kinematic shared physics
                     let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
-                    body.set_transform(*context.world_matrix() * bone_world_matrix);
+                    body.set_transform(world_matrix * bone_world_matrix);
                 }
             }
         }
 
         self.worlds.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
 
-        for i in 0..mmd_models.len() {
-            let model = &mut mmd_models[i];
+        for model in mmd_models.iter_mut() {
             let context = if let Some(context) = model.physics_model_context() {
                 context
             } else {

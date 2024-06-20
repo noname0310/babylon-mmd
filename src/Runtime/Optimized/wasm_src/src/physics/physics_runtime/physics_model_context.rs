@@ -7,6 +7,9 @@ pub(crate) struct PhysicsModelContext {
     kinematic_shared_physics_handles: Vec<PhysicsModelHandle>,
     world_matrix: Mat4,
     world_matrix_inverse: Mat4,
+
+    // for thread safety, we need buffer to apply world matrix
+    world_matrix_apply_buffer: Option<Mat4>,
 }
 
 impl PhysicsModelContext {
@@ -20,6 +23,7 @@ impl PhysicsModelContext {
             kinematic_shared_physics_handles,
             world_matrix,
             world_matrix_inverse: world_matrix.inverse(),
+            world_matrix_apply_buffer: None,
         }
     }
 
@@ -39,8 +43,15 @@ impl PhysicsModelContext {
         &self.world_matrix_inverse
     }
 
-    pub(super) fn set_world_matrix(&mut self, world_matrix: Mat4) {
-        self.world_matrix = world_matrix;
-        self.world_matrix_inverse = world_matrix.inverse();
+    pub(crate) fn set_world_matrix(&mut self, world_matrix: Mat4) {
+        self.world_matrix_apply_buffer = Some(world_matrix);
+    }
+
+    pub (crate) fn apply_world_matrix(&mut self) {
+        if let Some(world_matrix) = self.world_matrix_apply_buffer {
+            self.world_matrix = world_matrix;
+            self.world_matrix_inverse = world_matrix.inverse();
+            self.world_matrix_apply_buffer = None;
+        }
     }
 }

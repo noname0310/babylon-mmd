@@ -30,7 +30,7 @@ pub(crate) enum ConstraintType {
     // Point2Point = 0,
     // Hinge = 1,
     // ConeTwist = 2,
-    Generic6Dof = 3,
+    // Generic6Dof = 3, // available but not used
     // Slider = 4,
     Generic6DofSpring = 5,
     // Universal = 6,

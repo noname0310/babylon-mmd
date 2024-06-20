@@ -195,6 +195,7 @@ impl MmdRuntime {
     #[cfg(feature = "physics")]
     #[wasm_bindgen(js_name = "beforePhysics")]
     pub fn before_physics(&mut self, frame_time: Option<f32>, time_step: Option<f32>) {
+        self.apply_mmd_models_world_matrix();
         self.before_physics_internal(frame_time, time_step);
     }
 
@@ -247,9 +248,13 @@ impl MmdRuntime {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
+
+        #[cfg(feature = "physics")]
+        mmd_runtime.apply_mmd_models_world_matrix();
+
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
-            mmd_runtime.before_physics(
+            mmd_runtime.before_physics_internal(
                 frame_time,
                 
                 #[cfg(feature = "physics")]
@@ -286,9 +291,13 @@ impl MmdRuntime {
         let mmd_runtime = unsafe {
             &mut *(mmd_runtime as *mut MmdRuntime)
         };
+        
+        #[cfg(feature = "physics")]
+        mmd_runtime.apply_mmd_models_world_matrix();
+
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
-            mmd_runtime.before_physics(
+            mmd_runtime.before_physics_internal(
                 frame_time,
 
                 #[cfg(feature = "physics")]
@@ -338,7 +347,7 @@ impl MmdRuntime {
 }
 
 #[cfg(feature = "physics")]
-use glam::Vec3;
+use glam::{Vec3, Mat4};
 
 #[cfg(feature = "physics")]
 #[wasm_bindgen]
@@ -379,6 +388,25 @@ impl MmdRuntime {
         match gravity {
             Some(gravity) => gravity.as_ref().as_ptr(),
             None => std::ptr::null(),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "setMmdModelWorldMatrix")]
+    pub fn set_mmd_model_world_matrix(&mut self, ptr: *mut usize, world_matrix: *const f32) {
+        let ptr = ptr as *mut MmdModel;
+        if let Some(context) = unsafe { &mut *ptr }.physics_model_context_mut() {
+            let world_matrix = unsafe {
+                Mat4::from_cols_slice(std::slice::from_raw_parts(world_matrix, 16))
+            };
+            context.set_world_matrix(world_matrix);
+        }
+    }
+
+    fn apply_mmd_models_world_matrix(&mut self) {
+        for mmd_model in &mut self.mmd_models {
+            if let Some(context) = mmd_model.physics_model_context_mut() {
+                context.apply_world_matrix();
+            }
         }
     }
 }

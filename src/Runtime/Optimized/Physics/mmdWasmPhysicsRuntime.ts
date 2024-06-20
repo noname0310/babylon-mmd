@@ -1,6 +1,8 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IWasmTypedArray } from "../IWasmTypedArray";
+import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmRuntime } from "../mmdWasmRuntime";
 import type { IMmdWasmPhysicsRuntime } from "./IMmdWasmPhysicsRuntime";
 
@@ -14,6 +16,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     private _maxSubSteps: number;
     private _fixedTimeStep: number;
 
+    private _worldMatrixBuffer: IWasmTypedArray<Float32Array>;
+
     public constructor(
         mmdRuntime: MmdWasmRuntime
     ) {
@@ -22,6 +26,20 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._mmdRuntime = mmdRuntime;
         this._maxSubSteps = 120;
         this._fixedTimeStep = 1 / 120;
+
+        const worldMatrixBufferPtr = mmdRuntime.wasmInternal.allocateBuffer(16 * 4);
+        this._worldMatrixBuffer = mmdRuntime.wasmInstance.createTypedArray(Float32Array, worldMatrixBufferPtr, 16);
+    }
+
+    public dispose(): void {
+        if (!this._worldMatrixBuffer) {
+            return;
+        }
+
+        const worldMatrixBuffer = this._worldMatrixBuffer.array;
+        this._mmdRuntime.wasmInternal.deallocateBuffer(worldMatrixBuffer.byteOffset, worldMatrixBuffer.byteLength);
+
+        this._worldMatrixBuffer = null!;
     }
 
     public get maxSubSteps(): number {
@@ -82,5 +100,18 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         result ??= new Vector3();
         const gravity = this._mmdRuntime.wasmInstance.createTypedArray(Float32Array, gravityPtr, 3).array;
         return result.set(gravity[0], gravity[1], gravity[2]);
+    }
+
+    public setMmdModelsWorldMatrix(mmdModels: MmdWasmModel[]): void {
+        const wasmInternal = this._mmdRuntime.wasmInternal;
+        const worldMatrixBuffer = this._worldMatrixBuffer;
+
+        for (let i = 0, len = mmdModels.length; i < len; ++i) {
+            const mmdModel = mmdModels[i];
+
+            const worldMatrixArray = worldMatrixBuffer.array;
+            mmdModel.mesh.getWorldMatrix().copyToArray(worldMatrixArray, 0);
+            wasmInternal.setMmdModelWorldMatrix(mmdModel.ptr, worldMatrixArray.byteOffset);
+        }
     }
 }

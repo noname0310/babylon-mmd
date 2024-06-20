@@ -236,6 +236,12 @@ impl MmdModel {
         &self.physics_model_context
     }
 
+    #[inline]
+    #[cfg(feature = "physics")]
+    pub(crate) fn physics_model_context_mut(&mut self) -> &mut Option<PhysicsModelContext> {
+        &mut self.physics_model_context
+    }
+
     pub(crate) fn before_physics(&mut self, frame_time: Option<f32>) {
         if let Some(frame_time) = frame_time {
             if let Some(runtime_animation) = self.runtime_animation {
@@ -277,6 +283,11 @@ impl MmdModel {
     }
 
     fn update(&mut self, after_physics_stage: bool) {
+        #[cfg(not(feature = "physics"))]
+        let use_physics = self.external_physics;
+        #[cfg(feature = "physics")]
+        let use_physics = self.external_physics || self.physics_model_context.is_some();
+
         for i in 0..self.sorted_runtime_bones.len() {
             let bone_index = self.sorted_runtime_bones[i];
             let bone = &mut self.bone_arena.arena_mut()[bone_index];
@@ -290,7 +301,7 @@ impl MmdModel {
                 false
             };
 
-            self.update_world_matrix(bone_index, self.external_physics, compute_ik);
+            self.update_world_matrix(bone_index, use_physics, compute_ik);
         }
     }
 }

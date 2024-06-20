@@ -22,8 +22,10 @@ import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
 import type { IMmdWasmPhysicsRuntime } from "./Physics/IMmdWasmPhysicsRuntime";
+import type { IPhysicsClock } from "./Physics/IPhysicsClock";
 import type { MmdWasmPhysics } from "./Physics/mmdWasmPhysics";
 import type { MmdWasmPhysicsRuntime } from "./Physics/mmdWasmPhysicsRuntime";
+import { NullPhysicsClock } from "./Physics/nullPhysicsClock";
 import { WasmSpinlock } from "./wasmSpinlock";
 
 /**
@@ -120,6 +122,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
     private readonly _externalPhysics: Nullable<IMmdPhysics>;
     private readonly _physicsRuntime: Nullable<MmdWasmPhysicsRuntime>;
+    private readonly _physicsClock: IPhysicsClock;
     private readonly _mmdMetadataEncoder: MmdMetadataEncoder;
 
     private readonly _models: MmdWasmModel[];
@@ -200,10 +203,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if ((physics as MmdWasmPhysics)?.createRuntime !== undefined) {
             this._externalPhysics = null;
             this._physicsRuntime = (physics as MmdWasmPhysics).createRuntime(this);
+            this._physicsClock = (physics as MmdWasmPhysics).createPhysicsClock();
             this._mmdMetadataEncoder = (physics as MmdWasmPhysics).createMetadataEncoder(this._physicsRuntime);
         } else {
             this._externalPhysics = physics as IMmdPhysics;
             this._physicsRuntime = null;
+            this._physicsClock = new NullPhysicsClock();
             this._mmdMetadataEncoder = new MmdMetadataEncoder();
         }
 
@@ -257,6 +262,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public dispose(scene: Scene): void {
         this.lock.wait(); // ensure that the runtime is not evaluating animations
+
+        this._physicsRuntime?.dispose();
 
         for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
         this._models.length = 0;
@@ -598,6 +605,11 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
         }
 
+        const physicsDeltaTime = this._physicsClock.getDeltaTime();
+
+        // update mmd models world matrix in scene hierarchy
+        this._physicsRuntime?.setMmdModelsWorldMatrix(this._models);
+
         if (this._evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
             const models = this._models;
             // evaluate vertex / uv animations on javascript side
@@ -620,7 +632,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             if (this.wasmInstance.MmdRuntime.bufferedUpdate === undefined) { // single thread environment fallback
-                this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime ?? undefined);
+                this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime ?? undefined, physicsDeltaTime);
                 if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
             }
 
@@ -644,7 +656,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                     }
 
                     // compute world matrix on wasm side synchronously
-                    this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
+                    this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined, physicsDeltaTime);
                     if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                 } else {
                     // if there is uninitialized new model, evaluate animation synchronously
@@ -658,7 +670,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                         }
 
                         // compute world matrix on wasm side synchronously
-                        this.wasmInternal.beforePhysics();
+                        this.wasmInternal.beforePhysics(undefined, physicsDeltaTime);
                         if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                     }
                 }
@@ -682,7 +694,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                     }
 
                     // compute world matrix on wasm side synchronously
-                    this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime);
+                    this.wasmInternal.beforePhysics(this._lastRequestAnimationFrameTime, physicsDeltaTime);
                     if (this._externalPhysics === null) this.wasmInternal.afterPhysics();
                 }
             }
@@ -705,7 +717,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             // compute world matrix on wasm side asynchronously
             if (this._externalPhysics === null) {
-                this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined);
+                this.wasmInstance.MmdRuntime.bufferedUpdate?.(this.wasmInternal, elapsedFrameTime ?? undefined, physicsDeltaTime);
             }
             this._lastRequestAnimationFrameTime = elapsedFrameTime;
 
@@ -742,7 +754,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             const models = this._models;
             for (let i = 0; i < models.length; ++i) models[i].beforePhysicsAndWasm(elapsedFrameTime);
-            this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined);
+            this.wasmInternal.beforePhysics(elapsedFrameTime ?? undefined, physicsDeltaTime);
             for (let i = 0; i < models.length; ++i) models[i].beforePhysics();
 
             this._needToSyncEvaluate = false;
@@ -784,7 +796,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                     this.wasmInternal.afterPhysics();
                     this.wasmInternal.swapWorldMatrixBuffer();
                 }
-                this.wasmInstance.MmdRuntime.bufferedBeforePhysics?.(this.wasmInternal, this._lastRequestAnimationFrameTime ?? undefined);
+                const physicsDeltaTime = this._physicsClock.getDeltaTime();
+                this.wasmInstance.MmdRuntime.bufferedBeforePhysics?.(this.wasmInternal, this._lastRequestAnimationFrameTime ?? undefined, physicsDeltaTime);
             }
         } else {
             for (let i = 0; i < models.length; ++i) models[i].afterPhysicsAndWasm();
