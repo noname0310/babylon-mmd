@@ -48,7 +48,7 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
                 + 1 // collisionGroup
                 + 1 // shapeType
                 + 2 // collisionMask
-                + 4 * 3 // shapeSize
+                + 4 * 4 // shapeSize
                 + 4 * 3 // shapePosition
                 + 4 * 3 // shapeRotation
                 + 4 // mass
@@ -133,7 +133,8 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
             serializer.setUint8(rigidBody.collisionGroup); // collisionGroup
             serializer.setUint8(rigidBody.shapeType); // shapeType
             serializer.setUint16(rigidBody.collisionMask); // collisionMask
-            serializer.setFloat32Array(rigidBody.shapeSize); // shapeSize
+            serializer.setFloat32Array(rigidBody.shapeSize); // shapeSize x, y, z
+            serializer.setFloat32(0); // shapeSize w
             serializer.setFloat32Array(rigidBody.shapePosition); // shapePosition
             serializer.setFloat32Array(rigidBody.shapeRotation); // shapeRotation
             serializer.setFloat32(rigidBody.mass); // mass

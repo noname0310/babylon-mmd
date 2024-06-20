@@ -184,7 +184,7 @@ impl PhysicsRuntime {
             };
             rb_info.set_shape_type(shape_type);
 
-            rb_info.set_shape_size(shape_size.extend(0.0));
+            rb_info.set_shape_size(shape_size);
 
             let (motion_type, physics_mode) = if metadata.physics_mode == RigidbodyPhysicsMode::FollowBone as u8 {
                 (MotionType::Kinematic, RigidbodyPhysicsMode::FollowBone)

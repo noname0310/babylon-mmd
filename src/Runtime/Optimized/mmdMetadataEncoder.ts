@@ -91,7 +91,7 @@ import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
  *   collisionGroup: uint8
  *   shapeType: uint8
  *   collisionMask: uint16
- *   shapeSize: float32[3]
+ *   shapeSize: float32[4]
  *   shapePosition: float32[3]
  *   shapeRotation: float32[3]
  *   mass: float32

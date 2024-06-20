@@ -434,7 +434,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                         1 + // collision_group
                         1 + // shape_type
                         2 + // collision_mask
-                        3 * 4 + // shape_size
+                        4 * 4 + // shape_size
                         3 * 4 + // shape_position
                         3 * 4 + // shape_rotation
                         4 + // mass
@@ -462,7 +462,7 @@ pub(crate) struct RigidbodyMetadata {
     pub(crate) collision_group: u8,
     pub(crate) collision_mask: u16,
     pub(crate) shape_type: u8,
-    pub(crate) shape_size: Vec3A,
+    pub(crate) shape_size: Vec4,
     pub(crate) shape_position: Vec3A,
     pub(crate) shape_rotation: Vec3A,
     pub(crate) mass: f32,
@@ -582,7 +582,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                         collision_group: 0,
                         collision_mask: 0,
                         shape_type: 0,
-                        shape_size: Vec3A::ZERO,
+                        shape_size: Vec4::ZERO,
                         shape_position: Vec3A::ZERO,
                         shape_rotation: Vec3A::ZERO,
                         mass: 0.0,
@@ -600,7 +600,12 @@ impl<'a> RigidbodyMetadataReader<'a> {
                     let collision_group = self.buffer.read::<u8>();
                     let shape_type = self.buffer.read::<u8>();
                     let collision_mask = self.buffer.read::<u16>();
-                    let shape_size = self.buffer.read_vector();
+                    let shape_size = Vec4::new(
+                        self.buffer.read::<f32>(), 
+                        self.buffer.read::<f32>(), 
+                        self.buffer.read::<f32>(), 
+                        self.buffer.read::<f32>()
+                    );
                     let shape_position = self.buffer.read_vector();
                     let shape_rotation = self.buffer.read_vector();
                     let mass = self.buffer.read::<f32>();
