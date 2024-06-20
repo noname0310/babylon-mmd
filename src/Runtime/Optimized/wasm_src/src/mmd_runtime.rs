@@ -409,6 +409,14 @@ impl MmdRuntime {
             }
         }
     }
+
+    #[wasm_bindgen(js_name = "markMmdModelPhysicsNeedInit")]
+    pub fn mark_mmd_model_physics_need_init(&mut self, ptr: *mut usize) {
+        let ptr = ptr as *mut MmdModel;
+        if let Some(context) = unsafe { &mut *ptr }.physics_model_context_mut() {
+            context.mark_need_init();
+        }
+    }
 }
 
 impl Default for MmdRuntime {

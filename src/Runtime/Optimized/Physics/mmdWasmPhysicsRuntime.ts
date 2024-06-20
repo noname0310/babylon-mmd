@@ -2,15 +2,31 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "../IWasmTypedArray";
+import type { MmdWasmInstance } from "../mmdWasmInstance";
 import type { MmdWasmModel } from "../mmdWasmModel";
-import type { MmdWasmRuntime } from "../mmdWasmRuntime";
+import type { MmdWasmRuntime, PhysicsInitializeSet } from "../mmdWasmRuntime";
 import type { IMmdWasmPhysicsRuntime } from "./IMmdWasmPhysicsRuntime";
+
+class PhysicsInitializer implements PhysicsInitializeSet {
+    private readonly _wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
+
+    public constructor(wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>) {
+        this._wasmInternal = wasmInternal;
+    }
+
+    public add(model: MmdWasmModel): void {
+        // this operation is thread safe
+        this._wasmInternal.markMmdModelPhysicsNeedInit(model.ptr);
+    }
+}
 
 /**
  * @internal
  */
 export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     public nextWorldId: number;
+
+    public readonly initializer: PhysicsInitializer;
 
     private readonly _mmdRuntime: MmdWasmRuntime;
     private _maxSubSteps: number;
@@ -22,6 +38,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         mmdRuntime: MmdWasmRuntime
     ) {
         this.nextWorldId = 0;
+
+        this.initializer = new PhysicsInitializer(mmdRuntime.wasmInternal);
 
         this._mmdRuntime = mmdRuntime;
         this._maxSubSteps = 120;
@@ -103,6 +121,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     }
 
     public setMmdModelsWorldMatrix(mmdModels: MmdWasmModel[]): void {
+        // set world matrix is thread safe because world matrix applied on before physics step
         const wasmInternal = this._mmdRuntime.wasmInternal;
         const worldMatrixBuffer = this._worldMatrixBuffer;
 

@@ -88,7 +88,10 @@ export interface CreateMmdWasmModelOptions<TMaterial extends Material = Material
     buildPhysics?: CreateMmdWasmModelPhysicsOptions | boolean;
 }
 
-interface PhysicsInitializeSet {
+/**
+ * @internal
+ */
+export interface PhysicsInitializeSet {
     add(model: MmdWasmModel): void;
 }
 
@@ -331,16 +334,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.wasmInternal.releaseDiagnosticResult();
     }
 
-    private static readonly _MockWasmPhysicsInitializeSet: PhysicsInitializeSet = { // TODO: implement wasm side physics initialization set
-        add(model: MmdWasmModel): void {
-            model;
-        }
-    };
+    private static readonly _NullPhysicsInitializeSet: PhysicsInitializeSet = { add(_model: MmdWasmModel): void { } };
 
     private _getPhysicsInitializeSet(): PhysicsInitializeSet {
-        return this._externalPhysics === null
-            ? MmdWasmRuntime._MockWasmPhysicsInitializeSet
-            : this._needToInitializePhysicsModels;
+        if (this._externalPhysics === null) {
+            return this._physicsRuntime?.initializer ?? MmdWasmRuntime._NullPhysicsInitializeSet;
+        } else {
+            return this._needToInitializePhysicsModels;
+        }
     }
 
     /**

@@ -10,6 +10,9 @@ pub(crate) struct PhysicsModelContext {
 
     // for thread safety, we need buffer to apply world matrix
     world_matrix_apply_buffer: Option<Mat4>,
+
+    need_init: bool,
+    need_init_buffer: bool,
 }
 
 impl PhysicsModelContext {
@@ -23,7 +26,11 @@ impl PhysicsModelContext {
             kinematic_shared_physics_handles,
             world_matrix,
             world_matrix_inverse: world_matrix.inverse(),
+            
             world_matrix_apply_buffer: None,
+
+            need_init: false,
+            need_init_buffer: false,
         }
     }
 
@@ -53,5 +60,9 @@ impl PhysicsModelContext {
             self.world_matrix_inverse = world_matrix.inverse();
             self.world_matrix_apply_buffer = None;
         }
+    }
+
+    pub(crate) fn mark_need_init(&mut self) {
+        self.need_init = true;
     }
 }
