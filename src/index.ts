@@ -79,8 +79,12 @@ export { MmdWasmRuntimeModelAnimation } from "@/Runtime/Optimized/Animation/mmdW
 
 // Runtime/Optimized/InstanceType
 export { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
+export { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
+export { MmdWasmInstanceTypeMPR } from "@/Runtime/Optimized/InstanceType/multiPhysicsRelease";
 export { MmdWasmInstanceTypeMR } from "@/Runtime/Optimized/InstanceType/multiRelease";
 export { MmdWasmInstanceTypeSD } from "@/Runtime/Optimized/InstanceType/singleDebug";
+export { MmdWasmInstanceTypeSPD } from "@/Runtime/Optimized/InstanceType/singlePhysicsDebug";
+export { MmdWasmInstanceTypeSPR } from "@/Runtime/Optimized/InstanceType/singlePhysicsRelease";
 export { MmdWasmInstanceTypeSR } from "@/Runtime/Optimized/InstanceType/singleRelease";
 
 // Runtime/Optimized/Physics
