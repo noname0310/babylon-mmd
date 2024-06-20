@@ -24,7 +24,7 @@ impl PhysicsRuntime {
     pub(crate) fn new() -> Self {
         Self {
             max_sub_steps: 1,
-            fixed_time_step: 1.0 / 60.0,
+            fixed_time_step: 1.0 / 120.0,
             worlds: WorldContainer::new(),
         }
     }

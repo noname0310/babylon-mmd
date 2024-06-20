@@ -24,7 +24,7 @@ export interface IMmdWasmPhysicsRuntime {
     maxSubSteps: number;
 
     /**
-     * Physics fixed time step (default 1 / 60)
+     * Physics fixed time step (default 1 / 120)
      *
      * recommended value is 1 / 120 for high quality physics simulation
      *
