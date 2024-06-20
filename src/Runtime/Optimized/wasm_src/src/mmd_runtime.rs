@@ -195,7 +195,7 @@ impl MmdRuntime {
     #[cfg(feature = "physics")]
     #[wasm_bindgen(js_name = "beforePhysics")]
     pub fn before_physics(&mut self, frame_time: Option<f32>, time_step: Option<f32>) {
-        self.apply_mmd_models_world_matrix();
+        self.apply_mmd_models_physics_parameters();
         self.before_physics_internal(frame_time, time_step);
     }
 
@@ -250,7 +250,7 @@ impl MmdRuntime {
         };
 
         #[cfg(feature = "physics")]
-        mmd_runtime.apply_mmd_models_world_matrix();
+        mmd_runtime.apply_mmd_models_physics_parameters();
 
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
@@ -293,7 +293,7 @@ impl MmdRuntime {
         };
         
         #[cfg(feature = "physics")]
-        mmd_runtime.apply_mmd_models_world_matrix();
+        mmd_runtime.apply_mmd_models_physics_parameters();
 
         mmd_runtime.locked.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
@@ -402,19 +402,20 @@ impl MmdRuntime {
         }
     }
 
-    fn apply_mmd_models_world_matrix(&mut self) {
+    fn apply_mmd_models_physics_parameters(&mut self) {
         for mmd_model in &mut self.mmd_models {
             if let Some(context) = mmd_model.physics_model_context_mut() {
                 context.apply_world_matrix();
+                context.apply_need_init();
             }
         }
     }
 
-    #[wasm_bindgen(js_name = "markMmdModelPhysicsNeedInit")]
-    pub fn mark_mmd_model_physics_need_init(&mut self, ptr: *mut usize) {
+    #[wasm_bindgen(js_name = "markMmdModelPhysicsAsNeedInit")]
+    pub fn mark_mmd_model_physics_as_need_init(&mut self, ptr: *mut usize) {
         let ptr = ptr as *mut MmdModel;
         if let Some(context) = unsafe { &mut *ptr }.physics_model_context_mut() {
-            context.mark_need_init();
+            context.mark_as_need_init();
         }
     }
 }

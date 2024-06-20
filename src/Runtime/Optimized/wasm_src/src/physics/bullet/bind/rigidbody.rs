@@ -41,6 +41,10 @@ extern "C" {
     fn bt_rigidbody_get_transform(body: *mut std::ffi::c_void, transform_buffer: *mut f32);
 
     fn bt_rigidbody_set_transform(body: *mut std::ffi::c_void, transform_buffer: *const f32);
+
+    fn bt_rigidbody_make_kinematic(body: *mut std::ffi::c_void);
+
+    fn bt_rigidbody_restore_dynamic(body: *mut std::ffi::c_void);
 }
 
 #[derive(Clone, Copy)]
@@ -138,6 +142,7 @@ pub(crate) struct Rigidbody {
     body_offset_matrix: Mat4,
     body_offset_inverse_matrix: Mat4,
     physics_mode: RigidbodyPhysicsMode,
+    temporary_kinematic: bool,
 }
 
 impl Rigidbody {
@@ -154,6 +159,7 @@ impl Rigidbody {
             body_offset_matrix: *body_offset_matrix,
             body_offset_inverse_matrix: body_offset_matrix.inverse(),
             physics_mode,
+            temporary_kinematic: false,
         }
     }
 
@@ -178,6 +184,19 @@ impl Rigidbody {
     pub(crate) fn set_transform(&mut self, transform: Mat4) {
         let transform = transform * self.body_offset_matrix;
         unsafe { bt_rigidbody_set_transform(self.body, transform.as_ref().as_ptr()) };
+    }
+
+    pub(crate) fn make_kinematic(&mut self) {
+        unsafe { bt_rigidbody_make_kinematic(self.body) };
+        self.temporary_kinematic = true;
+    }
+
+    pub(crate) fn restore_dynamic(&mut self) {
+        if !self.temporary_kinematic {
+            return;
+        }
+        self.temporary_kinematic = false;
+        unsafe { bt_rigidbody_restore_dynamic(self.body) };
     }
 
     pub(crate) fn get_physics_mode(&self) -> RigidbodyPhysicsMode {

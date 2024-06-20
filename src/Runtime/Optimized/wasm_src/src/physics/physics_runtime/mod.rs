@@ -55,14 +55,18 @@ impl PhysicsRuntime {
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
         // synchronize kinematic rigid bodies with bone matrices
-        for model in mmd_models.iter() {
-            let context = if let Some(context) = model.physics_model_context() {
+        for i in 0..mmd_models.len() {
+            let model = &mut mmd_models[i];
+            let context = if let Some(context) = model.physics_model_context_mut() {
                 context
             } else {
                 continue;
             };
 
             let world_matrix = *context.world_matrix();
+            let need_init = context.flush_need_init();
+
+            let context = model.physics_model_context().as_ref().unwrap();
             
             let physics_handle = context.physics_handle();
             let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
@@ -71,11 +75,17 @@ impl PhysicsRuntime {
             let bone_world_matrices = model.bone_arena().world_matrices();
 
             for body in physics_object.bodies_mut() {
-                if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone { // only kinematic object needs to update
-                    continue;
+                body.restore_dynamic();
+
+                if body.get_physics_mode() == RigidbodyPhysicsMode::FollowBone { // only kinematic object needs to update
+                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    body.set_transform(world_matrix * bone_world_matrix);
+                } else if need_init &&
+                    (body.get_physics_mode() == RigidbodyPhysicsMode::Physics || body.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone) {
+                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    body.make_kinematic();
+                    body.set_transform(world_matrix * bone_world_matrix);
                 }
-                let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
-                body.set_transform(world_matrix * bone_world_matrix);
             }
 
             for physics_handle in context.kinematic_shared_physics_handles() {
@@ -284,7 +294,7 @@ impl PhysicsRuntime {
                     metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && metadata.physics_mode != RigidbodyPhysicsMode::Static as u8 {
                     return;
                 }
-                
+
                 let (bone_index, _, physics_mode, body_offset_matrix) = match set_rb_info(&mut rb_info, rigidbody_index, metadata) {
                     Some(v) => v,
                     None => return,
@@ -330,7 +340,7 @@ impl PhysicsRuntime {
                 }
                 rigidbody_index_b
             };
-            
+
             let constraint_type = if metadata.kind == JointKind::Spring6Dof as u8 {
                 ConstraintType::Generic6DofSpring
             } else {

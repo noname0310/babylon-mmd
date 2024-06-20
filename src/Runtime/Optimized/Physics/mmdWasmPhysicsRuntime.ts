@@ -16,7 +16,7 @@ class PhysicsInitializer implements PhysicsInitializeSet {
 
     public add(model: MmdWasmModel): void {
         // this operation is thread safe
-        this._wasmInternal.markMmdModelPhysicsNeedInit(model.ptr);
+        this._wasmInternal.markMmdModelPhysicsAsNeedInit(model.ptr);
     }
 }
 

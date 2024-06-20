@@ -299,6 +299,16 @@ public:
         transform.setFromOpenGLMatrix(transformBuffer);
         m_motionState->setWorldTransform(transform);
     }
+
+    void makeKinematic() {
+        m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+    }
+
+    void restoreDynamic() {
+        m_body->setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+        m_body->setAngularVelocity(btVector3(0.0f, 0.0f, 0.0f));
+        m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+    }
 };
 
 extern "C" void* bt_create_rigidbody(void* info) {
@@ -320,6 +330,16 @@ extern "C" void bt_rigidbody_get_transform(void* body, float* transformBuffer) {
 extern "C" void bt_rigidbody_set_transform(void* body, float* transformBuffer) {
     bwRigidBody* b = static_cast<bwRigidBody*>(body);
     b->setTransform(transformBuffer);
+}
+
+extern "C" void bt_rigidbody_make_kinematic(void* body) {
+    bwRigidBody* b = static_cast<bwRigidBody*>(body);
+    b->makeKinematic();
+}
+
+extern "C" void bt_rigidbody_restore_dynamic(void* body) {
+    bwRigidBody* b = static_cast<bwRigidBody*>(body);
+    b->restoreDynamic();
 }
 
 enum class bwConstraintType : uint8_t {
