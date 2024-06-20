@@ -193,7 +193,7 @@ impl PhysicsRuntime {
                 let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0;
                 (ShapeType::Capsule, is_zero_volume)
             } else if metadata.shape_type == RigidbodyShapeType::StaticPlane as u8 {
-                let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0 || shape_size.z == 0.0;
+                let is_zero_volume = shape_size.x == 0.0 && shape_size.y == 0.0 && shape_size.z == 0.0;
                 (ShapeType::StaticPlane, is_zero_volume)
             } else {
                 diagnostic.warning(format!("Unsupported shape type {} for rigid body {}", metadata.shape_type, rigidbody_index));

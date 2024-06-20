@@ -134,7 +134,9 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
             serializer.setUint8(rigidBody.shapeType); // shapeType
             serializer.setUint16(rigidBody.collisionMask); // collisionMask
             serializer.setFloat32Array(rigidBody.shapeSize); // shapeSize x, y, z
-            serializer.setFloat32(0); // shapeSize w
+            if (rigidBody.shapeSize.length === 3) {
+                serializer.setFloat32(0); // shapeSize w
+            }
             serializer.setFloat32Array(rigidBody.shapePosition); // shapePosition
             serializer.setFloat32Array(rigidBody.shapeRotation); // shapeRotation
             serializer.setFloat32(rigidBody.mass); // mass

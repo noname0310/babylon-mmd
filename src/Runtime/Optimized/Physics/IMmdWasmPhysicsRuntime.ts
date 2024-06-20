@@ -1,6 +1,8 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { MmdWasmModel } from "../mmdWasmModel";
+
 /**
  * Mmd wasm physics runtime interface
  */
@@ -60,4 +62,14 @@ export interface IMmdWasmPhysicsRuntime {
      * @returns gravity
      */
     getWorldGravity(worldId: number, result?: Vector3): Nullable<Vector3>;
+
+    /**
+     * Create a ground mmd model
+     *
+     * Physics world id must be unsigned 32 bit integer
+     * @param affectedWorlds affected physics world ids
+     * @param planeNormal plane normal (default 0, 1, 0)
+     * @param planeConstant plane constant (default 0)
+     */
+    createGroundModel(affectedWorlds: number[], planeNormal?: Vector3, planeConstant?: number): MmdWasmModel;
 }

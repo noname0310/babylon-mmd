@@ -1,5 +1,8 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
+
+import type { MmdSkinedModelMetadata, MmdSkinnedMesh } from "@/Runtime/mmdMesh";
 
 import type { IWasmTypedArray } from "../IWasmTypedArray";
 import type { MmdWasmInstance } from "../mmdWasmInstance";
@@ -132,5 +135,122 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
             mmdModel.mesh.getWorldMatrix().copyToArray(worldMatrixArray, 0);
             wasmInternal.setMmdModelWorldMatrix(mmdModel.ptr, worldMatrixArray.byteOffset);
         }
+    }
+
+    public createGroundModel(affectedWorlds: number[], planeNormal = new Vector3(0, 1, 0), planeConstant = 0): MmdWasmModel {
+        const mmdSkinnedMesh = new PlaneMockMmdSkinnedMesh(planeNormal, planeConstant) as unknown as MmdSkinnedMesh;
+        return this._mmdRuntime.createMmdModel(mmdSkinnedMesh, {
+            materialProxyConstructor: null,
+            buildPhysics: affectedWorlds.length < 0
+                ? false
+                : {
+                    worldId: affectedWorlds[0],
+                    kinematicSharedWorldIds: affectedWorlds.slice(1)
+                }
+        });
+    }
+}
+
+class MockSkeleton {
+    public bones: MockBone[];
+
+    public constructor() {
+        this.bones = [new MockBone()];
+    }
+
+    public prepare(): void {
+        // do nothing
+    }
+
+    public _markAsDirty(): void {
+        // do nothing
+    }
+}
+
+class MockBone {
+    private readonly _matrix: Matrix;
+
+    public position: Vector3;
+    public rotationQuaternion: Quaternion;
+    public scaling: Vector3;
+
+    public constructor() {
+        this._matrix = Matrix.Identity();
+
+        this.position = Vector3.Zero();
+        this.rotationQuaternion = Quaternion.Identity();
+        this.scaling = Vector3.One();
+    }
+
+    public getRestMatrix(): Matrix {
+        return this._matrix;
+    }
+
+    public getAbsoluteInverseBindMatrix(): Matrix {
+        return this._matrix;
+    }
+}
+
+class PlaneMockMmdSkinnedMesh {
+    public metadata: MmdSkinedModelMetadata;
+    public skeleton: object;
+
+    private readonly _matrix: Matrix;
+
+    public constructor(planeNormal: Vector3, planeConstant: number) {
+        this._matrix = Matrix.Identity();
+
+        const skeleton = new MockSkeleton() as unknown as Skeleton;
+
+        this.metadata = {
+            isMmdModel: true,
+            header: {
+                modelName: "Ground",
+                englishModelName: "Ground",
+                comment: "",
+                englishComment: ""
+            },
+            bones: [{
+                name: "root",
+                englishName: "root",
+                parentBoneIndex: -1,
+                transformOrder: 0,
+                flag: 0,
+                appendTransform: undefined,
+                axisLimit: undefined,
+                ik: undefined
+            }],
+            morphs: [],
+            rigidBodies: [{
+                name: "root",
+                englishName: "root",
+                boneIndex: 0,
+                collisionGroup: 0,
+                collisionMask: 0xFFFF,
+                shapeType: 5 as number, // static plane
+                shapeSize: [planeNormal.x, planeNormal.y, planeNormal.z, planeConstant] as unknown as [number, number, number],
+                shapePosition: [0, 0, 0],
+                shapeRotation: [0, 0, 0],
+                mass: 0,
+                linearDamping: 0,
+                angularDamping: 0,
+                repulsion: 0,
+                friction: 0,
+                physicsMode: 3 as number // static
+            }],
+            joints: [],
+            meshes: [],
+            materials: [],
+            skeleton: skeleton
+        };
+        this.skeleton = skeleton;
+    }
+
+    public computeWorldMatrix(): Matrix {
+        return this._matrix;
+    }
+
+    public getWorldMatrix(): Matrix {
+        return this._matrix;
     }
 }

@@ -63,7 +63,7 @@ impl MmdModel {
         let mut ik_solver_arena = Vec::with_capacity(reader.ik_count() as usize);
 
         let mut diagnostic = diagnostic.writer();
-        
+
         let reader = reader.enumerate(|i, metadata| {
             {
                 let bone = &mut bone_arena[i as usize];
