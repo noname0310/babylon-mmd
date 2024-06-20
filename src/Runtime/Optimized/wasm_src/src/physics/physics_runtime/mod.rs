@@ -54,6 +54,7 @@ impl PhysicsRuntime {
     }
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
+        // synchronize kinematic rigid bodies with bone matrices
         for model in mmd_models.iter() {
             let context = if let Some(context) = model.physics_model_context() {
                 context
@@ -70,7 +71,7 @@ impl PhysicsRuntime {
             let bone_world_matrices = model.bone_arena().world_matrices();
 
             for body in physics_object.bodies_mut() {
-                if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone {
+                if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone { // only kinematic object needs to update
                     continue;
                 }
                 let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
@@ -82,7 +83,9 @@ impl PhysicsRuntime {
                 let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
 
                 for body in physics_object.bodies_mut() {
-                    // alyways follow bone for kinematic shared physics
+                    if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone {
+                        continue;
+                    }
                     let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
                     body.set_transform(world_matrix * bone_world_matrix);
                 }
@@ -91,6 +94,7 @@ impl PhysicsRuntime {
 
         self.worlds.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
 
+        // synchronize bone matrices with dynamic rigid bodies
         for model in mmd_models.iter_mut() {
             let context = if let Some(context) = model.physics_model_context() {
                 context
@@ -107,8 +111,8 @@ impl PhysicsRuntime {
             let mut bone_world_matrices = model.bone_arena_mut().world_matrices_mut();
 
             for body in physics_object.bodies() {
-                if body.get_physics_mode() == RigidbodyPhysicsMode::FollowBone {
-                    continue;
+                if body.get_physics_mode() == RigidbodyPhysicsMode::FollowBone || body.get_physics_mode() == RigidbodyPhysicsMode::Static {
+                    continue; // kinematic and static objects are not updated
                 }
 
                 let mut body_world_matrix = world_matrix_inverse * body.get_transform();
@@ -178,6 +182,9 @@ impl PhysicsRuntime {
             } else if metadata.shape_type == RigidbodyShapeType::Capsule as u8 {
                 let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0;
                 (ShapeType::Capsule, is_zero_volume)
+            } else if metadata.shape_type == RigidbodyShapeType::StaticPlane as u8 {
+                let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0 || shape_size.z == 0.0;
+                (ShapeType::StaticPlane, is_zero_volume)
             } else {
                 diagnostic.warning(format!("Unsupported shape type {} for rigid body {}", metadata.shape_type, rigidbody_index));
                 return None;
@@ -190,10 +197,23 @@ impl PhysicsRuntime {
                 (MotionType::Kinematic, RigidbodyPhysicsMode::FollowBone)
             } else if metadata.physics_mode == RigidbodyPhysicsMode::Physics as u8 || metadata.physics_mode == RigidbodyPhysicsMode::PhysicsWithBone as u8 {
                 (MotionType::Dynamic, if metadata.physics_mode == RigidbodyPhysicsMode::Physics as u8 { RigidbodyPhysicsMode::Physics } else { RigidbodyPhysicsMode::PhysicsWithBone })
+            } else if metadata.physics_mode == RigidbodyPhysicsMode::Static as u8 {
+                (MotionType::Static, RigidbodyPhysicsMode::Static)
             } else {
                 diagnostic.warning(format!("Unsupported physics mode {} for rigid body {}", metadata.physics_mode, rigidbody_index));
                 return None;
             };
+
+            // static plane validation
+            let (motion_type, physics_mode) = if let ShapeType::StaticPlane = shape_type {
+                if physics_mode != RigidbodyPhysicsMode::Static {
+                    diagnostic.warning(format!("Static plane shape must have static physics mode, forced to static for rigid body {}", rigidbody_index));
+                }
+                (MotionType::Static, RigidbodyPhysicsMode::Static)
+            } else {
+                (motion_type, physics_mode)
+            };
+
             rb_info.set_motion_type(motion_type);
 
             // model space position and rotation
@@ -244,7 +264,7 @@ impl PhysicsRuntime {
             rigidbody_map[rigidbody_index as usize] = rigidbody_initial_transforms.len() as i32;
             rigidbody_initial_transforms.push((position, rotation));
 
-            if let MotionType::Kinematic = motion_type {
+            if MotionType::Dynamic != motion_type {
                 kinematic_object_count += 1;
             }
         });
@@ -260,7 +280,8 @@ impl PhysicsRuntime {
 
             physics_object.reserve_bodies(kinematic_object_count);
             reader.enumerate(|rigidbody_index, metadata| {
-                if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 {
+                if metadata.shape_type != RigidbodyShapeType::StaticPlane as u8 &&
+                    metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && metadata.physics_mode != RigidbodyPhysicsMode::Static as u8 {
                     return;
                 }
                 

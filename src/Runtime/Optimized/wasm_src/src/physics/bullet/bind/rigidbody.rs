@@ -43,6 +43,7 @@ extern "C" {
     fn bt_rigidbody_set_transform(body: *mut std::ffi::c_void, transform_buffer: *const f32);
 }
 
+#[derive(Clone, Copy)]
 pub(crate) enum ShapeType {
     Box = 0,
     Sphere = 1,
@@ -55,7 +56,7 @@ pub(crate) enum ShapeType {
     // Compound = 8,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub(crate) enum MotionType {
     Dynamic = 0,
     Kinematic = 1,

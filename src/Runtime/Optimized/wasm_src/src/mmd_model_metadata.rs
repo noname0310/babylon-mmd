@@ -478,6 +478,7 @@ pub(crate) enum RigidbodyShapeType {
     Sphere = 0,
     Box = 1,
     Capsule = 2,
+    StaticPlane = 5,
 }
 
 #[cfg(feature = "physics")]
@@ -486,6 +487,7 @@ pub(crate) enum RigidbodyPhysicsMode {
     FollowBone = 0,
     Physics = 1,
     PhysicsWithBone = 2,
+    Static = 3,
 }
 
 #[cfg(feature = "physics")]
