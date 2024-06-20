@@ -30,7 +30,7 @@ enum EulerRotationOrder {
     Xzy,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 enum SolveAxis {
     None,
     Fixed,

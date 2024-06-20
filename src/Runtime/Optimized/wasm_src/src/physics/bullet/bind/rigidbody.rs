@@ -56,7 +56,7 @@ pub(crate) enum ShapeType {
     // Compound = 8,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MotionType {
     Dynamic = 0,
     Kinematic = 1,
