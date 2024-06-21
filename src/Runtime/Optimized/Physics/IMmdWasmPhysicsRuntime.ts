@@ -70,6 +70,8 @@ export interface IMmdWasmPhysicsRuntime {
     /**
      * Create a ground mmd model
      *
+     * This API is temporary and will be changed or removed in the future
+     *
      * Physics world id must be unsigned 32 bit integer
      * @param affectedWorlds affected physics world ids
      * @param planeNormal plane normal (default 0, 1, 0)

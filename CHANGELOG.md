@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.48.0 (scheduled)
+## 0.48.0 (2024-06-21)
 
 - implement wasm diagnostic logging
 
@@ -10,6 +10,8 @@
     - you can disable this behavior by setting `MmdStandardMaterial.clampAlpha` to `false`
 
 - handle zero vector limit axis
+
+- introduce WASM integrated physics runtime `MmdWasmInstanceTypeMPD` / `MmdWasmInstanceTypeMPR` / `MmdWasmInstanceTypeSPD` / `MmdWasmInstanceTypeSPR` 
 
 ## 0.47.1 (2024-06-14)
 

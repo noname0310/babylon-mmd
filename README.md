@@ -193,7 +193,7 @@ Please refer to the documentation for more detailed instructions on how to use i
 **Physics Runtime**
 
 - [x] Solve Rigid body / Joint
-- [ ] WASM based runtime for threaded bullet physics and MMD IK
+- [x] WASM based runtime for threaded bullet physics and MMD IK
 
 ## Not planned features
 

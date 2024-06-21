@@ -149,6 +149,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
                 }
         });
     }
+
+    // TODO: support multi world shared static object
 }
 
 class MockSkeleton {
