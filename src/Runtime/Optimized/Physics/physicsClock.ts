@@ -15,6 +15,10 @@ export class PhysicsClock implements IPhysicsClock {
     }
 
     public getDeltaTime(): number {
-        return this._engine.getDeltaTime() / 1000;
+        const deltaTime = this._engine.getDeltaTime();
+        if (deltaTime === 0) {
+            return 1 / 60;
+        }
+        return deltaTime / 1000;
     }
 }

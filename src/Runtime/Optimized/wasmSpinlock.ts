@@ -19,15 +19,15 @@ export class WasmSpinlock {
      */
     public wait(): void {
         const lock = this._lock.array;
-        let locked = false;
-        const lockStartTime = performance.now();
+        // let locked = false;
+        // const lockStartTime = performance.now();
         while (Atomics.load(lock, 0) !== 0) {
-            locked = true;
+            // locked = true;
             // spin
         }
-        if (locked) {
-            const lockTime = performance.now() - lockStartTime;
-            console.trace(`Spinlock wait time: ${lockTime}ms`);
-        }
+        // if (locked) {
+        //     const lockTime = performance.now() - lockStartTime;
+        //     console.trace(`Spinlock wait time: ${lockTime}ms`);
+        // }
     }
 }

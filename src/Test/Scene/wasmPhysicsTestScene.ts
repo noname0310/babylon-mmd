@@ -4,7 +4,6 @@ import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
