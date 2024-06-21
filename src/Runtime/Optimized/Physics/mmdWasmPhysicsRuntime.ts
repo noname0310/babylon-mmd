@@ -45,8 +45,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this.initializer = new PhysicsInitializer(mmdRuntime.wasmInternal);
 
         this._mmdRuntime = mmdRuntime;
-        this._maxSubSteps = 1;
-        this._fixedTimeStep = 1 / 120;
+        this._maxSubSteps = 5;
+        this._fixedTimeStep = 1 / 60;
 
         const worldMatrixBufferPtr = mmdRuntime.wasmInternal.allocateBuffer(16 * 4);
         this._worldMatrixBuffer = mmdRuntime.wasmInstance.createTypedArray(Float32Array, worldMatrixBufferPtr, 16);
