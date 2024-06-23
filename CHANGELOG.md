@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.48.1 (scheduled)
+
+- prevents infinite loops when validating bones
+
 ## 0.48.0 (2024-06-21)
 
 - implement wasm diagnostic logging

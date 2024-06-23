@@ -394,7 +394,7 @@ export abstract class MmdModelLoader<
                 let isLooped = false;
                 if (0 <= boneInfo.parentBoneIndex && boneInfo.parentBoneIndex < bonesInfo.length) {
                     let parentBoneIndex = boneInfo.parentBoneIndex;
-                    while (parentBoneIndex !== -1) {
+                    for (let depthLimit = 0; depthLimit < bonesInfo.length && parentBoneIndex !== -1; ++depthLimit) {
                         if (parentBoneIndex === i) {
                             isLooped = true;
                             this.warn(`Bone loop detected. Ignore Parenting. Bone index: ${i}`);
