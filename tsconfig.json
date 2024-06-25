@@ -5,6 +5,7 @@
         "strict": true,
         "esModuleInterop": true,
         "moduleResolution": "node",
+        "experimentalDecorators": true,
         "forceConsistentCasingInFileNames": true,
         "noEmitOnError": true,
         "noImplicitAny": true,

@@ -4,6 +4,7 @@ import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 
 import { BezierInterpolator } from "./bezierInterpolator";
 
@@ -495,4 +496,37 @@ export class BezierAnimation extends Animation {
             startValue.a * (1 - weightA) + endValue.a * weightA
         );
     }
+
+    // NOTE: clone method is just a copy of the original method with a different return type. becareful to babylon.js internal changes
+    /**
+     * Makes a copy of the animation
+     * @returns Cloned animation
+     */
+    public override clone(): BezierAnimation {
+        const clone = new BezierAnimation(this.name, this.targetPropertyPath.join("."), this.framePerSecond, this.dataType, this.loopMode);
+
+        clone.enableBlending = this.enableBlending;
+        clone.blendingSpeed = this.blendingSpeed;
+
+        if ((this as any)._keys) {
+            clone.setKeys((this as any)._keys);
+        }
+
+        if ((this as any)._ranges) {
+            (clone as any)._ranges = {};
+            for (const name in (this as any)._ranges) {
+                const range = (this as any)._ranges[name];
+                if (!range) {
+                    continue;
+                }
+                (clone as any)._ranges[name] = range.clone();
+            }
+        }
+
+        return clone;
+    }
+
+    // NOTE: currently there is no way to override Animation.Parse method
 }
+
+RegisterClass("BABYLON.BezierAnimation", BezierAnimation);

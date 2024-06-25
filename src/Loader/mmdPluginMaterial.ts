@@ -11,6 +11,8 @@ import { Color4 } from "@babylonjs/core/Maths/math.color";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import { serialize, serializeAsTexture } from "@babylonjs/core/Misc/decorators";
+import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -75,10 +77,14 @@ export enum MmdPluginMaterialSphereTextureBlendMode {
 }
 
 export class MmdPluginMaterial extends MaterialPluginBase {
+    @serializeAsTexture("sphereTexture")
     private _sphereTexture: Nullable<Texture> = null;
+    @serialize("sphereTextureBlendMode")
     private _sphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
 
+    @serializeAsTexture("toonTexture")
     private _toonTexture: Nullable<Texture> = null;
+    @serialize("ignoreDiffuseWhenToonTextureIsNull")
     private _ignoreDiffuseWhenToonTextureIsNull = false;
 
     public textureMultiplicativeColor = new Color4(1, 1, 1, 1);
@@ -88,7 +94,9 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public toonTextureMultiplicativeColor = new Color4(1, 1, 1, 1);
     public toonTextureAdditiveColor = new Color4(0, 0, 0, 0);
 
+    @serialize("applyAmbientColorToDiffuse")
     private _applyAmbientColorToDiffuse = true;
+    @serialize("clampAlpha")
     private _clampAlpha = true;
 
     private _useTextureColor = false;
@@ -115,7 +123,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set sphereTexture(value: Nullable<Texture>) {
         if (this._sphereTexture === value) return;
         this._sphereTexture = value;
-        this.markAllSubMeshesAsTexturesDirty();
+        this._markAllSubMeshesAsTexturesDirty();
     }
 
     public get sphereTextureBlendMode(): MmdPluginMaterialSphereTextureBlendMode {
@@ -135,7 +143,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     public set toonTexture(value: Nullable<Texture>) {
         if (this._toonTexture === value) return;
         this._toonTexture = value;
-        this.markAllSubMeshesAsTexturesDirty();
+        this._markAllSubMeshesAsTexturesDirty();
     }
 
     public get ignoreDiffuseWhenToonTextureIsNull(): boolean {
@@ -200,7 +208,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     private readonly _internalMarkAllSubMeshesAsTexturesDirty: () => void;
 
-    public markAllSubMeshesAsTexturesDirty(): void {
+    public _markAllSubMeshesAsTexturesDirty(): void {
         this._enable(this._isEnabled);
         this._internalMarkAllSubMeshesAsTexturesDirty();
     }
@@ -554,3 +562,5 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 }
+
+RegisterClass("BABYLON.MmdPluginMaterial", MmdPluginMaterial);

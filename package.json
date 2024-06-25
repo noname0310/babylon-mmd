@@ -86,6 +86,11 @@
         "**/mmdRuntimeModelAnimation.*",
         "**/mmdRuntimeModelAnimationGroup.*",
         "**/mmdWasmRuntimeModelAnimation.*",
+        "**/mmdPluginMaterial.*",
+        "**/mmdStandardMaterial.*",
+        "**/sdefMesh.*",
+        "**/bezierAnimation.*",
+        "**/mmdCamera.*",
         "**/index.*"
     ],
     "peerDependencies": {

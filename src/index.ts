@@ -9,6 +9,12 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+// for serialization
+import "@/Loader/mmdPluginMaterial";
+import "@/Loader/mmdStandardMaterial";
+import "@/Loader/sdefMesh";
+import "@/Runtime/Animation/bezierAnimation";
+import "@/Runtime/mmdCamera";
 
 // Loader/Animation
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";

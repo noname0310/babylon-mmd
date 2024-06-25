@@ -1,6 +1,8 @@
 import { Camera } from "@babylonjs/core/Cameras/camera";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { serialize, serializeAsVector3 } from "@babylonjs/core/Misc/decorators";
 import { Observable } from "@babylonjs/core/Misc/observable";
+import { Node } from "@babylonjs/core/node";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -9,6 +11,10 @@ import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimatio
 import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
+
+Node.AddNodeConstructor("MmdCamera", (name, scene) => {
+    return (): MmdCamera => new MmdCamera(name, undefined, scene);
+});
 
 type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
@@ -26,11 +32,13 @@ export class MmdCamera extends Camera {
     /**
      * Define the current rotation of the camera
      */
+    @serializeAsVector3()
     public rotation = new Vector3();
 
     /**
      * Define the current distance of the camera from its target (default: -45)
      */
+    @serialize()
     public distance = -45;
 
     private readonly _viewMatrix = Matrix.Zero();

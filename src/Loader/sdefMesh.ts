@@ -6,6 +6,8 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MeshLODLevel } from "@babylonjs/core/Meshes/meshLODLevel";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import type { Observable, Observer } from "@babylonjs/core/Misc/observable";
+import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
+import type { Node } from "@babylonjs/core/node";
 import type { Scene } from "@babylonjs/core/scene";
 import type { FloatArray, Nullable } from "@babylonjs/core/types";
 
@@ -282,4 +284,29 @@ export class SdefMesh extends Mesh {
 
         return this;
     }
+
+    /**
+     * Gets the class name
+     * @returns the string "SdefMesh".
+     */
+    public override getClassName(): string {
+        return "SdefMesh";
+    }
+
+    /**
+     * Returns a new Mesh object generated from the current mesh properties.
+     * This method must not get confused with createInstance()
+     * @param name is a string, the name given to the new mesh
+     * @param newParent can be any Node object (default `null`)
+     * @param doNotCloneChildren allows/denies the recursive cloning of the original mesh children if any (default `false`)
+     * @param clonePhysicsImpostor allows/denies the cloning in the same time of the original mesh `body` used by the physics engine, if any (default `true`)
+     * @returns a new mesh
+     */
+    public override clone(name: string = "", newParent: Nullable<Node> = null, doNotCloneChildren?: boolean, clonePhysicsImpostor: boolean = true): Mesh {
+        return new SdefMesh(name, this.getScene(), newParent, this, doNotCloneChildren, clonePhysicsImpostor);
+    }
+
+    // NOTE: currently there is no way to override Mesh.Parse method
 }
+
+RegisterClass("BABYLON.SdefMesh", SdefMesh);

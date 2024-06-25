@@ -6,6 +6,15 @@
 
 - fix `BpmxConverter` serialize incorrect bone metadata when bone name is not unique
 
+- support babylon.js serialization for following classes
+    - `MmdStandardMaterial`
+    - `MmdPluginMaterial`
+    - `MmdCamera`
+
+- support cloning for following classes
+    - `SdefMesh`
+    - `BezierAnimation`
+
 ## 0.48.0 (2024-06-21)
 
 - implement wasm diagnostic logging

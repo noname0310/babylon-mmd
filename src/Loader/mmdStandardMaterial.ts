@@ -1,7 +1,11 @@
+import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
+import { serialize, serializeAsColor3 } from "@babylonjs/core/Misc/decorators";
+import { SerializationHelper } from "@babylonjs/core/Misc/decorators.serialization";
+import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -20,21 +24,25 @@ import { MmdPluginMaterial } from "./mmdPluginMaterial";
 export class MmdStandardMaterial extends StandardMaterial {
     private readonly _pluginMaterial: MmdPluginMaterial;
 
+    @serialize("renderOutline")
     private _renderOutline = false;
 
     /**
      * Outline width (default: 0.01)
      */
+    @serialize()
     public outlineWidth = 0.01;
 
     /**
      * Outline color (default: (0, 0, 0))
      */
+    @serializeAsColor3()
     public outlineColor: Color3 = new Color3(0, 0, 0);
 
     /**
      * Outline alpha (default: 1.0)
      */
+    @serialize()
     public outlineAlpha = 1.0;
 
     /**
@@ -269,4 +277,45 @@ export class MmdStandardMaterial extends StandardMaterial {
             (this._pluginMaterial.sphereTexture !== null &&
             this._pluginMaterial.sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply);
     }
+
+    /**
+     * Makes a duplicate of the material, and gives it a new name
+     * @param name defines the new name for the duplicated material
+     * @param cloneTexturesOnlyOnce - if a texture is used in more than one channel (e.g diffuse and opacity), only clone it once and reuse it on the other channels. Default false.
+     * @param rootUrl defines the root URL to use to load textures
+     * @returns the cloned material
+     */
+    public override clone(name: string, cloneTexturesOnlyOnce: boolean = true, rootUrl = ""): MmdStandardMaterial {
+        const result = SerializationHelper.Clone(() => new MmdStandardMaterial(name, this.getScene()), this, { cloneTexturesOnlyOnce });
+
+        result.name = name;
+        result.id = name;
+
+        this.stencil.copyTo(result.stencil);
+
+        this._clonePlugins(result, rootUrl);
+
+        return result;
+    }
+
+    /**
+     * Creates a mmd standard material from parsed material data
+     * @param source defines the JSON representation of the material
+     * @param scene defines the hosting scene
+     * @param rootUrl defines the root URL to use to load textures and relative dependencies
+     * @returns a new standard material
+     */
+    public static override Parse(source: any, scene: Scene, rootUrl: string): StandardMaterial {
+        const material = SerializationHelper.Parse(() => new MmdStandardMaterial(source.name, scene), source, scene, rootUrl);
+
+        if (source.stencil) {
+            material.stencil.parse(source.stencil, scene, rootUrl);
+        }
+
+        Material._ParsePlugins(source, material, scene, rootUrl);
+
+        return material;
+    }
 }
+
+RegisterClass("BABYLON.MmdStandardMaterial", MmdStandardMaterial);
