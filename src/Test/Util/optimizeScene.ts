@@ -2,12 +2,16 @@ import type { Scene } from "@babylonjs/core/scene";
 
 export interface OptimizeSceneOptions {
     clearCachedVertexData?: boolean;
+    freezeMaterials?: boolean;
 }
 
 export function optimizeScene(scene: Scene, options: OptimizeSceneOptions = {}): void {
-    const { clearCachedVertexData = true } = options;
+    const {
+        clearCachedVertexData = true,
+        freezeMaterials = true
+    } = options;
 
-    scene.freezeMaterials();
+    if (freezeMaterials) scene.freezeMaterials();
 
     const meshes = scene.meshes;
     for (let i = 0, len = meshes.length; i < len; ++i) {
