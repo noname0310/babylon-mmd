@@ -4,6 +4,8 @@
 
 - prevents infinite loops when validating bones
 
+- fix `BpmxConverter` serialize incorrect bone metadata when bone name is not unique
+
 ## 0.48.0 (2024-06-21)
 
 - implement wasm diagnostic logging

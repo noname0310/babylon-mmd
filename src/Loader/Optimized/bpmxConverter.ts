@@ -351,35 +351,77 @@ export class BpmxConverter implements ILogger {
 
             const metadataToBoneMap = new Map<MmdModelMetadata.Bone, Bone>();
             {
-                const boneNameMap = new Map<string, Bone>();
+                const boneNameMap = new Map<string, { index: number; value: Bone }[]>();
                 for (let i = 0; i < skeletonBones.length; ++i) {
                     const bone = skeletonBones[i];
-                    if (boneNameMap.has(bone.name)) continue;
-                    boneNameMap.set(bone.name, bone);
+
+                    let boneList = boneNameMap.get(bone.name);
+                    if (boneList === undefined) {
+                        boneList = [];
+                        boneNameMap.set(bone.name, boneList);
+                    }
+                    boneList.push({ index: i, value: bone });
                 }
 
                 for (let i = 0; i < bonesMetadata.length; ++i) {
                     const boneMetadata = bonesMetadata[i];
-                    const bone = boneNameMap.get(boneMetadata.name);
-                    if (bone === undefined) continue;
-                    metadataToBoneMap.set(boneMetadata, bone);
+                    const boneList = boneNameMap.get(boneMetadata.name);
+                    if (boneList === undefined) continue;
+
+                    if (boneList.length === 1) {
+                        metadataToBoneMap.set(boneMetadata, boneList[0].value);
+                    } else {
+                        // exact index match
+                        let bone: Bone | undefined = undefined;
+                        for (let j = 0; j < boneList.length; ++j) {
+                            if (boneList[j].index === i) {
+                                bone = boneList[j].value;
+                                break;
+                            }
+                        }
+
+                        if (bone !== undefined) {
+                            metadataToBoneMap.set(boneMetadata, bone);
+                        }
+                    }
                 }
             }
 
             const boneToMetadataMap = new Map<Bone, MmdModelMetadata.Bone>();
             {
-                const metadataNameMap = new Map<string, MmdModelMetadata.Bone>();
+                const metadataNameMap = new Map<string, { index: number; value: MmdModelMetadata.Bone }[]>();
                 for (let i = 0; i < bonesMetadata.length; ++i) {
                     const boneMetadata = bonesMetadata[i];
-                    if (metadataNameMap.has(boneMetadata.name)) continue;
-                    metadataNameMap.set(boneMetadata.name, boneMetadata);
+
+                    let metadataList = metadataNameMap.get(boneMetadata.name);
+                    if (metadataList === undefined) {
+                        metadataList = [];
+                        metadataNameMap.set(boneMetadata.name, metadataList);
+                    }
+                    metadataList.push({ index: i, value: boneMetadata });
                 }
 
                 for (let i = 0; i < skeletonBones.length; ++i) {
                     const bone = skeletonBones[i];
                     const boneMetadata = metadataNameMap.get(bone.name);
                     if (boneMetadata === undefined) continue;
-                    boneToMetadataMap.set(bone, boneMetadata);
+
+                    if (boneMetadata.length === 1) {
+                        boneToMetadataMap.set(bone, boneMetadata[0].value);
+                    } else {
+                        // exact index match
+                        let metadata: MmdModelMetadata.Bone | undefined = undefined;
+                        for (let j = 0; j < boneMetadata.length; ++j) {
+                            if (boneMetadata[j].index === i) {
+                                metadata = boneMetadata[j].value;
+                                break;
+                            }
+                        }
+
+                        if (metadata !== undefined) {
+                            boneToMetadataMap.set(bone, metadata);
+                        }
+                    }
                 }
             }
 
