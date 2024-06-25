@@ -562,7 +562,7 @@ export namespace PmxObject {
             /**
              * Constraint angles
              */
-            limitation: {
+            limitation: Readonly<{
                 /**
                  * Minimum angle
                  */
@@ -572,7 +572,7 @@ export namespace PmxObject {
                  * Maximum angle
                  */
                 maximumAngle: Vec3;
-            } | undefined;
+            }> | undefined;
         }>;
     }
 
