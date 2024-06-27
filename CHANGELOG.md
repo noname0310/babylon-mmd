@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.48.1 (scheduled)
+## 0.49.0 (2024-06-27)
 
 - prevents infinite loops when validating bones
 
