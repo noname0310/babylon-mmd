@@ -267,9 +267,13 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * Dispose this model
      *
+     * Use MmdWasmRuntime.destroyMmdModel instead of this method
+     *
      * Restore the original bone matrix update behavior
      *
      * Dispose the physics resources if the physics is enabled
+     *
+     * @internal
      */
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();

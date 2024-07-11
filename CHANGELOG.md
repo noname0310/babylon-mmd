@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.50.0 (scheduled)
+
+- mark `MmdModel.dispose` as internal
+  
 ## 0.49.0 (2024-06-27)
 
 - prevents infinite loops when validating bones
