@@ -3,6 +3,7 @@ import "@babylonjs/core/Physics/v1/physicsEngineComponent";
 
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { IMeshDataOptions } from "@babylonjs/core/Meshes/abstractMesh";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { PhysicsImpostor, type PhysicsImpostorParameters } from "@babylonjs/core/Physics/v1/physicsImpostor";
@@ -57,6 +58,22 @@ class MmdPhysicsMesh extends AbstractMesh {
 
     public override getBoundingInfo(): BoundingInfo {
         return this._customBoundingInfo ?? super.getBoundingInfo();
+    }
+
+    public override get _positions(): Nullable<Vector3[]> {
+        return null;
+    }
+
+    public override copyVerticesData(_kind: string, _vertexData: { [kind: string]: Float32Array; }): void {
+        // do nothing
+    }
+
+    public override refreshBoundingInfo(options: IMeshDataOptions): AbstractMesh;
+
+    public override refreshBoundingInfo(applySkeletonOrOptions: boolean | IMeshDataOptions, applyMorph: boolean): AbstractMesh;
+
+    public override refreshBoundingInfo(_applySkeletonOrOptions: unknown, _applyMorph?: unknown): AbstractMesh {
+        return this;
     }
 }
 
