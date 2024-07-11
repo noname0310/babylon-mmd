@@ -4,6 +4,10 @@
 
 - mark `MmdModel.dispose` as internal
   
+- add `MmdRuntime.initializeMmdModelPhysics` and `MmdRuntime.initializeAllMmdModelsPhysics` for manual physics initialization
+
+- add `MmdRuntime.autoPhysicsInitialization` option to turn off automatic physics initialization which is enabled by default
+
 ## 0.49.0 (2024-06-27)
 
 - prevents infinite loops when validating bones

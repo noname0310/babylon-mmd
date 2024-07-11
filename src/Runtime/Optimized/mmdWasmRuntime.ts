@@ -132,6 +132,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private _camera: Nullable<MmdCamera>;
     private _audioPlayer: Nullable<IPlayer>;
 
+    /**
+     * Whether to automatically initialize rigid bodies transform and velocity (default: true)
+     *
+     * auto physics initialization is triggered when
+     * - animation seek is far from current frame time (more than 2 seconds)
+     * - browser tab is stop rendering and resumed
+     * - animation is played from the frame 0
+     */
+    public autoPhysicsInitialization: boolean;
+
     private _loggingEnabled: boolean;
 
     /** @internal */
@@ -218,6 +228,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this._models = [];
         this._camera = null;
         this._audioPlayer = null;
+
+        this.autoPhysicsInitialization = true;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -457,6 +469,39 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     /**
+     * Queue MMD model to initialize physics
+     *
+     * Actual physics initialization is done by the before physics stage
+     * @param mmdModel MMD model
+     */
+    public initializeMmdModelPhysics(mmdModel: MmdWasmModel): void {
+        this._getPhysicsInitializeSet().add(mmdModel);
+    }
+
+    /**
+     * Queue all MMD models to initialize physics
+     *
+     * Actual physics initialization is done by the before physics stage
+     *
+     * If you set onlyAnimated true, it only initializes physics for animated models
+     */
+    public initializeAllMmdModelsPhysics(onlyAnimated: boolean): void {
+        const models = this._models;
+        if (onlyAnimated) {
+            for (let i = 0; i < models.length; ++i) {
+                const model = models[i];
+                if (model.currentAnimation !== null) {
+                    this._getPhysicsInitializeSet().add(model);
+                }
+            }
+        } else {
+            for (let i = 0; i < models.length; ++i) {
+                this._getPhysicsInitializeSet().add(models[i]);
+            }
+        }
+    }
+
+    /**
      * Set camera to animate
      * @param camera MMD camera
      */
@@ -576,12 +621,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                         this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale * 1.1;
                     }
                 } else {
-                    if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
-                        const physicsInitializeSet = this._getPhysicsInitializeSet();
-                        for (let i = 0; i < this._models.length; ++i) {
-                            const model = this._models[i];
-                            if (model.currentAnimation !== null) {
-                                physicsInitializeSet.add(model);
+                    if (this.autoPhysicsInitialization) {
+                        if (2 * 30 < Math.abs(audioPlayerCurrentTime - this._currentFrameTime)) {
+                            const physicsInitializeSet = this._getPhysicsInitializeSet();
+                            for (let i = 0; i < this._models.length; ++i) {
+                                const model = this._models[i];
+                                if (model.currentAnimation !== null) {
+                                    physicsInitializeSet.add(model);
+                                }
                             }
                         }
                     }
@@ -892,12 +939,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (!this._animationPaused) return;
         this._animationPaused = false;
 
-        if (this._currentFrameTime === 0) {
-            const models = this._models;
+        if (this.autoPhysicsInitialization) {
+            if (this._currentFrameTime === 0) {
+                const models = this._models;
 
-            const physicsInitializeSet = this._getPhysicsInitializeSet();
-            for (let i = 0; i < models.length; ++i) {
-                physicsInitializeSet.add(models[i]);
+                const physicsInitializeSet = this._getPhysicsInitializeSet();
+                for (let i = 0; i < models.length; ++i) {
+                    physicsInitializeSet.add(models[i]);
+                }
             }
         }
 
@@ -947,12 +996,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     private _seekAnimationInternal(frameTime: number, forceEvaluate: boolean): void {
-        if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
-            const physicsInitializeSet = this._getPhysicsInitializeSet();
-            for (let i = 0; i < this._models.length; ++i) {
-                const model = this._models[i];
-                if (model.currentAnimation !== null) {
-                    physicsInitializeSet.add(model);
+        if (this.autoPhysicsInitialization) {
+            if (2 * 30 < Math.abs(frameTime - this._currentFrameTime)) {
+                const physicsInitializeSet = this._getPhysicsInitializeSet();
+                for (let i = 0; i < this._models.length; ++i) {
+                    const model = this._models[i];
+                    if (model.currentAnimation !== null) {
+                        physicsInitializeSet.add(model);
+                    }
                 }
             }
         }

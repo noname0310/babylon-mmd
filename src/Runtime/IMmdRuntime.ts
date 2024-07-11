@@ -21,6 +21,16 @@ import type { CreateMmdModelOptions } from "./mmdRuntime";
  */
 export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends ILogger {
     /**
+     * Whether to automatically initialize rigid bodies transform and velocity (default: true)
+     *
+     * auto physics initialization is triggered when
+     * - animation seek is far from current frame time (more than 2 seconds)
+     * - browser tab is stop rendering and resumed
+     * - animation is played from the frame 0
+     */
+    autoPhysicsInitialization: boolean;
+
+    /**
      * This observable is notified when animation duration is changed
      */
     readonly onAnimationDurationChangedObservable: Observable<void>;
@@ -90,6 +100,23 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
      * @throws {Error} if model is not found
      */
     destroyMmdModel(mmdModel: TMmdModel): void;
+
+    /**
+     * Queue MMD model to initialize physics
+     *
+     * Actual physics initialization is done by the before physics stage
+     * @param mmdModel MMD model
+     */
+    initializeMmdModelPhysics(mmdModel: TMmdModel): void;
+
+    /**
+     * Queue all MMD models to initialize physics
+     *
+     * Actual physics initialization is done by the before physics stage
+     *
+     * If you set onlyAnimated true, it only initializes physics for animated models
+     */
+    initializeAllMmdModelsPhysics(onlyAnimated: boolean): void;
 
     /**
      * Set camera to animate
