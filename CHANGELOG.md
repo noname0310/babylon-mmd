@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.50.0 (scheduled)
+## 0.50.0 (2024-07-15)
 
 - mark `MmdModel.dispose` as internal
   
