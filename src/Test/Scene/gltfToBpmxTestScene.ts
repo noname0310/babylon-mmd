@@ -8,7 +8,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import type { Material } from "@babylonjs/core/Materials/material";
+import { Material } from "@babylonjs/core/Materials/material";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -211,9 +211,15 @@ export class SceneBuilder implements ISceneBuilder {
             rootMesh.metadata = metadata;
         }
 
+        const translucentMaterials = materials.map(material => material.transparencyMode === Material.MATERIAL_ALPHABLEND || material.transparencyMode === Material.MATERIAL_ALPHATEST);
+        const alphaEvaluateResults = materials.map(material => material.transparencyMode ?? 0xF);
+
         const bpmxConverter = new BpmxConverter();
         bpmxConverter.loggingEnabled = true;
-        const arrayBuffer = bpmxConverter.convert(modelLoadResult.meshes[0] as Mesh);
+        const arrayBuffer = bpmxConverter.convert(modelLoadResult.meshes[0] as Mesh, {
+            translucentMaterials,
+            alphaEvaluateResults
+        });
         const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
