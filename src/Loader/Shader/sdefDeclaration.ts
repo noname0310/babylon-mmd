@@ -4,8 +4,8 @@ export const sdefDeclaration = /* glsl */`
 
 #if NUM_BONE_INFLUENCERS > 0 && defined(SDEF)
 attribute vec3 matricesSdefC;
-attribute vec3 matricesSdefR0;
-attribute vec3 matricesSdefR1;
+attribute vec3 matricesSdefRW0;
+attribute vec3 matricesSdefRW1;
 
 vec4 rotationMatrixToQuaternion(mat3 matrix) {
     float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];

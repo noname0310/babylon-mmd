@@ -162,14 +162,14 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 vertexData.matricesWeights = skinning.matricesWeights;
             }
             let boneSdefC: Nullable<Float32Array> = null;
-            let boneSdefR0: Nullable<Float32Array> = null;
-            let boneSdefR1: Nullable<Float32Array> = null;
+            let boneSdefRW0: Nullable<Float32Array> = null;
+            let boneSdefRW1: Nullable<Float32Array> = null;
             if (state.buildSkeleton && state.useSdef && skinning?.sdef !== undefined) {
                 const elementCount = geometryInfo.positions.length / 3;
                 const matriciesWeights = skinning.matricesWeights;
                 boneSdefC = skinning.sdef.c;
-                boneSdefR0 = skinning.sdef.r0;
-                boneSdefR1 = skinning.sdef.r1;
+                boneSdefRW0 = skinning.sdef.r0;
+                boneSdefRW1 = skinning.sdef.r1;
 
                 for (let elementIndex = 0; elementIndex < elementCount; ++elementIndex) {
                     const boneWeight0 = matriciesWeights![elementIndex * 4 + 0];
@@ -180,13 +180,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const centerZ = boneSdefC[elementIndex * 3 + 2];
 
                     // calculate rw0 and rw1
-                    let r0X = boneSdefR0[elementIndex * 3 + 0];
-                    let r0Y = boneSdefR0[elementIndex * 3 + 1];
-                    let r0Z = boneSdefR0[elementIndex * 3 + 2];
+                    let r0X = boneSdefRW0[elementIndex * 3 + 0];
+                    let r0Y = boneSdefRW0[elementIndex * 3 + 1];
+                    let r0Z = boneSdefRW0[elementIndex * 3 + 2];
 
-                    let r1X = boneSdefR1[elementIndex * 3 + 0];
-                    let r1Y = boneSdefR1[elementIndex * 3 + 1];
-                    let r1Z = boneSdefR1[elementIndex * 3 + 2];
+                    let r1X = boneSdefRW1[elementIndex * 3 + 0];
+                    let r1Y = boneSdefRW1[elementIndex * 3 + 1];
+                    let r1Z = boneSdefRW1[elementIndex * 3 + 2];
 
                     const rwX = r0X * boneWeight0 + r1X * boneWeight1;
                     const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
@@ -212,13 +212,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     boneSdefC[elementIndex * 3 + 1] = centerY;
                     boneSdefC[elementIndex * 3 + 2] = centerZ;
 
-                    boneSdefR0![elementIndex * 3 + 0] = cr0X;
-                    boneSdefR0![elementIndex * 3 + 1] = cr0Y;
-                    boneSdefR0![elementIndex * 3 + 2] = cr0Z;
+                    boneSdefRW0![elementIndex * 3 + 0] = cr0X;
+                    boneSdefRW0![elementIndex * 3 + 1] = cr0Y;
+                    boneSdefRW0![elementIndex * 3 + 2] = cr0Z;
 
-                    boneSdefR1![elementIndex * 3 + 0] = cr1X;
-                    boneSdefR1![elementIndex * 3 + 1] = cr1Y;
-                    boneSdefR1![elementIndex * 3 + 2] = cr1Z;
+                    boneSdefRW1![elementIndex * 3 + 0] = cr1X;
+                    boneSdefRW1![elementIndex * 3 + 1] = cr1Y;
+                    boneSdefRW1![elementIndex * 3 + 2] = cr1Z;
                 }
             }
 
@@ -242,8 +242,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             }
             if (boneSdefC !== null) {
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC, false, 3);
-                geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
-                geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefRW0Kind, boneSdefRW0!, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefRW1Kind, boneSdefRW1!, false, 3);
             }
             if (state.preserveSerializationData && geometryInfo.edgeScale !== undefined) {
                 geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, geometryInfo.edgeScale, false, 1);

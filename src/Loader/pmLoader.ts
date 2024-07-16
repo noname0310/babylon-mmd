@@ -188,12 +188,12 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     }
                 }
                 let boneSdefC: Nullable<Float32Array> = null;
-                let boneSdefR0: Nullable<Float32Array> = null;
-                let boneSdefR1: Nullable<Float32Array> = null;
+                let boneSdefRW0: Nullable<Float32Array> = null;
+                let boneSdefRW1: Nullable<Float32Array> = null;
                 if (state.buildSkeleton && state.useSdef) {
                     boneSdefC = new Float32Array(subMeshVertexCount * 3);
-                    boneSdefR0 = new Float32Array(subMeshVertexCount * 3);
-                    boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
+                    boneSdefRW0 = new Float32Array(subMeshVertexCount * 3);
+                    boneSdefRW1 = new Float32Array(subMeshVertexCount * 3);
                 }
                 let hasSdef = false;
                 let edgeScale: Nullable<Float32Array> = null;
@@ -350,13 +350,13 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                                             boneSdefC![vertexIndex * 3 + 1] = centerY;
                                             boneSdefC![vertexIndex * 3 + 2] = centerZ;
 
-                                            boneSdefR0![vertexIndex * 3 + 0] = cr0X;
-                                            boneSdefR0![vertexIndex * 3 + 1] = cr0Y;
-                                            boneSdefR0![vertexIndex * 3 + 2] = cr0Z;
+                                            boneSdefRW0![vertexIndex * 3 + 0] = cr0X;
+                                            boneSdefRW0![vertexIndex * 3 + 1] = cr0Y;
+                                            boneSdefRW0![vertexIndex * 3 + 2] = cr0Z;
 
-                                            boneSdefR1![vertexIndex * 3 + 0] = cr1X;
-                                            boneSdefR1![vertexIndex * 3 + 1] = cr1Y;
-                                            boneSdefR1![vertexIndex * 3 + 2] = cr1Z;
+                                            boneSdefRW1![vertexIndex * 3 + 0] = cr1X;
+                                            boneSdefRW1![vertexIndex * 3 + 1] = cr1Y;
+                                            boneSdefRW1![vertexIndex * 3 + 2] = cr1Z;
 
                                             hasSdef = true;
                                         }
@@ -414,8 +414,8 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 }
                 if (state.useSdef && hasSdef) {
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
-                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
-                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefRW0Kind, boneSdefRW0!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefRW1Kind, boneSdefRW1!, false, 3);
                 }
                 if (state.preserveSerializationData) {
                     geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, edgeScale!, false, 1);

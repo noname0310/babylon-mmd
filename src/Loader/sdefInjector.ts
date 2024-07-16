@@ -59,8 +59,8 @@ export class SdefInjector {
                     if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
 
                         effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefCKind);
-                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefR0Kind);
-                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefR1Kind);
+                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW0Kind);
+                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW1Kind);
                         effectCreationOptions.defines += "\n#define SDEF";
 
                         const originalProcessCodeAfterIncludes = effectCreationOptions.processCodeAfterIncludes;

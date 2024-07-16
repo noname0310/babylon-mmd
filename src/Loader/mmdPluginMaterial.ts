@@ -518,8 +518,8 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         if (this._isEnabled) {
             if (mesh.useBones && mesh.computeBonesUsingShaders && mesh.skeleton && mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind)) {
                 attributes.push(MmdBufferKind.MatricesSdefCKind);
-                attributes.push(MmdBufferKind.MatricesSdefR0Kind);
-                attributes.push(MmdBufferKind.MatricesSdefR1Kind);
+                attributes.push(MmdBufferKind.MatricesSdefRW0Kind);
+                attributes.push(MmdBufferKind.MatricesSdefRW1Kind);
             }
         }
     }

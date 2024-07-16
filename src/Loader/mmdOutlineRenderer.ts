@@ -270,8 +270,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
             }
             if (mesh.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind)) {
                 attribs.push(MmdBufferKind.MatricesSdefCKind);
-                attribs.push(MmdBufferKind.MatricesSdefR0Kind);
-                attribs.push(MmdBufferKind.MatricesSdefR1Kind);
+                attribs.push(MmdBufferKind.MatricesSdefRW0Kind);
+                attribs.push(MmdBufferKind.MatricesSdefRW1Kind);
                 defines.push("#define SDEF");
             }
             const skeleton = mesh.skeleton;

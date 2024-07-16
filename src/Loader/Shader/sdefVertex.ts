@@ -42,12 +42,12 @@ export const sdefVertex = /* glsl */`
 
     // add position offset
     vec3 positionOffset =
-        vec3(transformMatrix0 * vec4(matricesSdefR0, 1)) * weight0 +
-        vec3(transformMatrix1 * vec4(matricesSdefR1, 1)) * weight1;
+        vec3(transformMatrix0 * vec4(matricesSdefRW0, 1)) * weight0 +
+        vec3(transformMatrix1 * vec4(matricesSdefRW1, 1)) * weight1;
 
     sdefInflunce[3] += vec4(positionOffset, 0.0);
     
-    float useLinearDeform = step(0.0, -abs(matricesSdefR0.x));
+    float useLinearDeform = step(0.0, -abs(matricesSdefRW0.x));
 
     influence = mat4(
         mix(sdefInflunce[0], influence[0], useLinearDeform),

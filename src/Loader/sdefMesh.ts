@@ -124,12 +124,12 @@ export class SdefMesh extends Mesh {
 
         const hasSdefParams = this.isVerticesDataPresent(MmdBufferKind.MatricesSdefCKind);
         let sdefC0Data: Nullable<FloatArray> = null;
-        let sdefR0Data: Nullable<FloatArray> = null;
-        let sdefR1Data: Nullable<FloatArray> = null;
+        let sdefRW0Data: Nullable<FloatArray> = null;
+        let sdefRW1Data: Nullable<FloatArray> = null;
         if (hasSdefParams) {
             sdefC0Data = this.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-            sdefR0Data = this.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
-            sdefR1Data = this.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
+            sdefRW0Data = this.getVerticesData(MmdBufferKind.MatricesSdefRW0Kind);
+            sdefRW1Data = this.getVerticesData(MmdBufferKind.MatricesSdefRW1Kind);
         }
 
         const matricesIndicesData = this.getVerticesData(VertexBuffer.MatricesIndicesKind);
@@ -166,7 +166,7 @@ export class SdefMesh extends Mesh {
         for (let index = 0; index < positionsData.length; index += 3, matWeightIdx += 4) {
             let r0x = 0;
             if (hasSdefParams) {
-                r0x = sdefR0Data![index];
+                r0x = sdefRW0Data![index];
             }
 
             if (r0x === 0) { // Linear transform
@@ -255,12 +255,12 @@ export class SdefMesh extends Mesh {
 
                 // + glm::vec3(m0 * glm::vec4(cr0, 1)) * w0
                 Vector3.TransformCoordinatesFromFloatsToRef(
-                    sdefR0Data![index], sdefR0Data![index + 1], sdefR0Data![index + 2], transformMatrix0, tempVector3
+                    sdefRW0Data![index], sdefRW0Data![index + 1], sdefRW0Data![index + 2], transformMatrix0, tempVector3
                 ).scaleAndAddToRef(weight0, finalVector);
 
                 // + glm::vec3(m1 * glm::vec4(cr1, 1)) * w1
                 Vector3.TransformCoordinatesFromFloatsToRef(
-                    sdefR1Data![index], sdefR1Data![index + 1], sdefR1Data![index + 2], transformMatrix1, tempVector3
+                    sdefRW1Data![index], sdefRW1Data![index + 1], sdefRW1Data![index + 2], transformMatrix1, tempVector3
                 ).scaleAndAddToRef(weight1, finalVector);
 
                 finalVector.toArray(positionsData, index);

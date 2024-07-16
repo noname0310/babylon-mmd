@@ -1214,8 +1214,8 @@ export class BpmxConverter implements ILogger {
                 }
 
                 const sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-                const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
-                const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
+                const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW0Kind);
+                const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW1Kind);
                 if (sdefC !== null && sdefR0 !== null && sdefR1 !== null) {
                     dataLength += vertexCount * 3 * 4; // sdefC
                     dataLength += vertexCount * 3 * 4; // sdefR0
@@ -1579,8 +1579,8 @@ export class BpmxConverter implements ILogger {
             }
 
             let sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-            let sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
-            let sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
+            let sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW0Kind);
+            let sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW1Kind);
 
             const hasSdef = sdefC !== null && sdefR0 !== null && sdefR1 !== null;
 
