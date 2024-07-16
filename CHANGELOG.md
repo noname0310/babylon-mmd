@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.52.0 (scheduled)
+
+- fix BPMX converter does not serialize model with shared toon texture correctly
+
+- cache key infomation is omitted from mmd texture name
+
 ## 0.51.0 (2024-07-16)
 
 - fix BPMX sdef parameter serialization
