@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.51.0 (scheduled)
+## 0.51.0 (2024-07-16)
 
 - fix BPMX sdef parameter serialization
 

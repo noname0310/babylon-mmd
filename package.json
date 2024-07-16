@@ -1,7 +1,7 @@
 {
     "name": "babylon-mmd",
-    "version": "0.50.0",
-    "description": "babylon mmd runtime",
+    "version": "0.51.0",
+    "description": "babylon.js mmd loader and runtime",
     "main": "esm/index.js",
     "scripts": {
         "postinstall": "ts-node postInstallScript.ts",
