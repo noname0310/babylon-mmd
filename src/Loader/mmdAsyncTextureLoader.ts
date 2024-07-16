@@ -75,6 +75,7 @@ class MmdTextureData {
     public readonly cacheKey: string;
     private readonly _scene: Scene;
     private readonly _assetContainer: Nullable<AssetContainer>;
+    private readonly _textureName: string;
     private readonly _options: IMmdTextureLoadOptions;
     private readonly _onLoad: Nullable<() => void>;
     private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
@@ -85,7 +86,8 @@ class MmdTextureData {
         cacheKey: string,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        urlOrTextureName: string,
+        blobOrUrl: string,
+        textureName: string,
         useLazyLoadWithBuffer: boolean,
         options: IMmdTextureLoadOptions,
         onLoad: Nullable<() => void>,
@@ -94,6 +96,7 @@ class MmdTextureData {
         this.cacheKey = cacheKey;
         this._scene = scene;
         this._assetContainer = assetContainer;
+        this._textureName = textureName;
         this._options = options;
         this._onLoad = onLoad;
         this._onError = onError;
@@ -102,12 +105,12 @@ class MmdTextureData {
 
         if (!useLazyLoadWithBuffer) {
             scene._loadFile(
-                urlOrTextureName,
+                blobOrUrl,
                 (data) => {
                     this._createTexture(
                         scene,
                         assetContainer,
-                        cacheKey,
+                        textureName,
                         data as ArrayBuffer,
                         options,
                         onLoad,
@@ -130,7 +133,7 @@ class MmdTextureData {
         this._createTexture(
             this._scene,
             this._assetContainer,
-            this.cacheKey,
+            this._textureName,
             arrayBuffer,
             this._options,
             this._onLoad,
@@ -366,6 +369,7 @@ export class MmdAsyncTextureLoader {
                 scene,
                 assetContainer,
                 blobOrUrl,
+                urlOrTextureName,
                 arrayBufferOrBlob !== null,
                 options,
                 () => {
