@@ -188,10 +188,14 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                     }
                 }
                 let boneSdefC: Nullable<Float32Array> = null;
+                let boneSdefR0: Nullable<Float32Array> = null;
+                let boneSdefR1: Nullable<Float32Array> = null;
                 let boneSdefRW0: Nullable<Float32Array> = null;
                 let boneSdefRW1: Nullable<Float32Array> = null;
                 if (state.buildSkeleton && state.useSdef) {
                     boneSdefC = new Float32Array(subMeshVertexCount * 3);
+                    boneSdefR0 = new Float32Array(subMeshVertexCount * 3);
+                    boneSdefR1 = new Float32Array(subMeshVertexCount * 3);
                     boneSdefRW0 = new Float32Array(subMeshVertexCount * 3);
                     boneSdefRW1 = new Float32Array(subMeshVertexCount * 3);
                 }
@@ -326,6 +330,14 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                                             let r1Y = sdefWeights.r1[1];
                                             let r1Z = sdefWeights.r1[2];
 
+                                            boneSdefR0![vertexIndex * 3 + 0] = r0X;
+                                            boneSdefR0![vertexIndex * 3 + 1] = r0Y;
+                                            boneSdefR0![vertexIndex * 3 + 2] = r0Z;
+
+                                            boneSdefR1![vertexIndex * 3 + 0] = r1X;
+                                            boneSdefR1![vertexIndex * 3 + 1] = r1Y;
+                                            boneSdefR1![vertexIndex * 3 + 2] = r1Z;
+
                                             const rwX = r0X * boneWeight0 + r1X * boneWeight1;
                                             const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
                                             const rwZ = r0Z * boneWeight0 + r1Z * boneWeight1;
@@ -414,6 +426,8 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                 }
                 if (state.useSdef && hasSdef) {
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+                    geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefRW0Kind, boneSdefRW0!, false, 3);
                     geometry.setVerticesData(MmdBufferKind.MatricesSdefRW1Kind, boneSdefRW1!, false, 3);
                 }

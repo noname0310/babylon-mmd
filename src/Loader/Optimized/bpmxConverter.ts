@@ -1214,8 +1214,8 @@ export class BpmxConverter implements ILogger {
                 }
 
                 const sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-                const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW0Kind);
-                const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW1Kind);
+                const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
+                const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
                 if (sdefC !== null && sdefR0 !== null && sdefR1 !== null) {
                     dataLength += vertexCount * 3 * 4; // sdefC
                     dataLength += vertexCount * 3 * 4; // sdefR0
@@ -1478,7 +1478,7 @@ export class BpmxConverter implements ILogger {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setInt8Array([2, 2, 0]); // version
+        serializer.setInt8Array([2, 2, 1]); // version
 
         {
             const header = mmdModelMetadata.header;
@@ -1579,8 +1579,8 @@ export class BpmxConverter implements ILogger {
             }
 
             let sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-            let sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW0Kind);
-            let sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefRW1Kind);
+            let sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
+            let sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
 
             const hasSdef = sdefC !== null && sdefR0 !== null && sdefR1 !== null;
 

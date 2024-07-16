@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.51.0 (scheduled)
+
+- fix BPMX sdef parameter serialization
+
+- sdef r0 and r0 parameters are now preserved in geometry vertex data
+
 ## 0.50.0 (2024-07-15)
 
 - mark `MmdModel.dispose` as internal

@@ -162,14 +162,20 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 vertexData.matricesWeights = skinning.matricesWeights;
             }
             let boneSdefC: Nullable<Float32Array> = null;
+            let boneSdefR0: Nullable<Float32Array> = null;
+            let boneSdefR1: Nullable<Float32Array> = null;
             let boneSdefRW0: Nullable<Float32Array> = null;
             let boneSdefRW1: Nullable<Float32Array> = null;
             if (state.buildSkeleton && state.useSdef && skinning?.sdef !== undefined) {
                 const elementCount = geometryInfo.positions.length / 3;
                 const matriciesWeights = skinning.matricesWeights;
                 boneSdefC = skinning.sdef.c;
-                boneSdefRW0 = skinning.sdef.r0;
-                boneSdefRW1 = skinning.sdef.r1;
+                boneSdefR0 = skinning.sdef.r0;
+                boneSdefR1 = skinning.sdef.r1;
+                boneSdefRW0 = new Float32Array(boneSdefR0.length);
+                boneSdefRW0.set(boneSdefR0);
+                boneSdefRW1 = new Float32Array(boneSdefR1.length);
+                boneSdefRW1.set(boneSdefR1);
 
                 for (let elementIndex = 0; elementIndex < elementCount; ++elementIndex) {
                     const boneWeight0 = matriciesWeights![elementIndex * 4 + 0];
@@ -242,6 +248,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             }
             if (boneSdefC !== null) {
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefCKind, boneSdefC, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefR0Kind, boneSdefR0!, false, 3);
+                geometry.setVerticesData(MmdBufferKind.MatricesSdefR1Kind, boneSdefR1!, false, 3);
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefRW0Kind, boneSdefRW0!, false, 3);
                 geometry.setVerticesData(MmdBufferKind.MatricesSdefRW1Kind, boneSdefRW1!, false, 3);
             }

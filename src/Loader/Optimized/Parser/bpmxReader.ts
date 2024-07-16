@@ -29,6 +29,22 @@ export class BpmxReader {
         const header = this._ParseHeader(dataDeserializer);
         const isSkinnedMesh = dataDeserializer.getUint8() === 1;
         const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
+
+        const versionInt = header.version[0] << 16 | header.version[1] << 8 | header.version[2];
+        if (versionInt < this._V221Int) {
+            let hasSdef = false;
+            for (let i = 0; i < geometries.length; ++i) {
+                if (geometries[i].skinning?.sdef) {
+                    hasSdef = true;
+                    break;
+                }
+            }
+
+            if (hasSdef) {
+                logger.warn("Sdef parameters in this file are incorrect. sdef deformation may have some problems.");
+            }
+        }
+
         const images = await this._ParseImagesAsync(dataDeserializer);
         const textures = this._ParseTexturesAsync(dataDeserializer);
         const materials = this._ParseMaterials(dataDeserializer, header.version);
@@ -60,7 +76,8 @@ export class BpmxReader {
 
     private static readonly _V200Int = 2 << 16 | 0 << 8 | 0;
     // private static readonly _V210Int = 2 << 16 | 1 << 8 | 0;
-    private static readonly _V220Int = 2 << 16 | 2 << 8 | 0;
+    // private static readonly _V220Int = 2 << 16 | 2 << 8 | 0;
+    private static readonly _V221Int = 2 << 16 | 2 << 8 | 1;
 
     private static _ParseHeader(dataDeserializer: MmdDataDeserializer): BpmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
@@ -81,7 +98,7 @@ export class BpmxReader {
         ] as const;
         const versionInt = version[0] << 16 | version[1] << 8 | version[2];
 
-        if (versionInt < this._V200Int || this._V220Int < versionInt) {
+        if (versionInt < this._V200Int || this._V221Int < versionInt) {
             throw new LoadFileError(`BPMX version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
 
