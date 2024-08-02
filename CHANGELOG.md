@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.52.0 (scheduled)
+## 0.52.0 (2024-08-02)
 
 - fix BPMX converter does not serialize model with shared toon texture correctly
 
