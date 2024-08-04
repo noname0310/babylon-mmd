@@ -703,7 +703,7 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                 if (sphereTexturePath !== undefined) {
                     const format = scene.getEngine().isWebGPU || materialInfo.sphereTextureMode === PmxObject.Material.SphereTextureMode.Multiply
                         ? Constants.TEXTUREFORMAT_RGBA
-                        : Constants.TEXTUREFORMAT_RGB;
+                        : Constants.TEXTUREFORMAT_RGB; // Maybe we should not use RGB format for performance reasons
 
                     const sphereTextureFileFullPath = referenceFileResolver.createFullPath(sphereTexturePath);
 

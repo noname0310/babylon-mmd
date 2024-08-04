@@ -20,7 +20,7 @@ const engine = new Engine(canvas, false, {
     preserveDrawingBuffer: false,
     stencil: true,
     antialias: true,
-    alpha: false,
+    alpha: true,
     premultipliedAlpha: false,
     powerPreference: "high-performance",
     doNotHandleTouchAction: true,
