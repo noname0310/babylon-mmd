@@ -244,6 +244,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
 
     public constructor(
         material: StandardMaterial,
+        originalPluginMaterial: IMmdPluginMaterial,
         addtoPluginList = true,
         enable = false,
         resolveIncludes = false
@@ -251,6 +252,8 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList, enable, resolveIncludes);
 
         this._internalMarkAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
+
+        originalPluginMaterial;
     }
 
     public override isReadyForSubMesh(defines: MaterialDefines, scene: Scene): boolean {
