@@ -1,16 +1,47 @@
 import { Material } from "@babylonjs/core/Materials/material";
+import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import type { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { serialize, serializeAsColor3 } from "@babylonjs/core/Misc/decorators";
 import { SerializationHelper } from "@babylonjs/core/Misc/decorators.serialization";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IMmdPluginMaterial } from "./mmdPluginMaterial";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
-import { MmdPluginMaterial } from "./mmdPluginMaterial";
+
+class MmdPluginMaterialMock implements IMmdPluginMaterial {
+    public readonly isMock = true;
+
+    public sphereTexture: Nullable<Texture> = null;
+    public sphereTextureBlendMode: MmdPluginMaterialSphereTextureBlendMode = MmdPluginMaterialSphereTextureBlendMode.Add;
+
+    public toonTexture: Nullable<Texture> = null;
+
+    public ignoreDiffuseWhenToonTextureIsNull: boolean = false;
+
+    public applyAmbientColorToDiffuse: boolean = true;
+
+    public clampAlpha: boolean = true;
+
+    public textureMultiplicativeColor: Color4 = new Color4(1, 1, 1, 1);
+    public textureAdditiveColor: Color4 = new Color4(0, 0, 0, 0);
+
+    public sphereTextureMultiplicativeColor: Color4 = new Color4(1, 1, 1, 1);
+    public sphereTextureAdditiveColor: Color4 = new Color4(0, 0, 0, 0);
+
+    public toonTextureMultiplicativeColor: Color4 = new Color4(1, 1, 1, 1);
+    public toonTextureAdditiveColor: Color4 = new Color4(0, 0, 0, 0);
+
+    public useTextureColor: boolean = false;
+    public useSphereTextureColor: boolean = false;
+    public useToonTextureColor: boolean = false;
+}
 
 /**
  * MMD standard material
@@ -22,7 +53,7 @@ import { MmdPluginMaterial } from "./mmdPluginMaterial";
  * If you disable all features, it behaves the same as `StandardMaterial`
  */
 export class MmdStandardMaterial extends StandardMaterial {
-    private readonly _pluginMaterial: MmdPluginMaterial;
+    private _pluginMaterial: IMmdPluginMaterial;
 
     @serialize("renderOutline")
     private _renderOutline = false;
@@ -45,18 +76,55 @@ export class MmdStandardMaterial extends StandardMaterial {
     @serialize()
     public outlineAlpha = 1.0;
 
+    private _disposed = false;
+
     /**
      * Create a new MMD standard material
      * @param name Define the name of the material in the scene
      * @param scene The scene the material belongs to
+     * @param forceGLSL Use the GLSL code generation for the shader (even on WebGPU). Default is false
      */
-    public constructor(name: string, scene?: Scene) {
-        super(name, scene);
+    public constructor(name: string, scene?: Scene, forceGLSL = false) {
+        super(name, scene, forceGLSL);
         this.specularColor = new Color3(0, 0, 0);
 
-        const pluginMaterial = this._pluginMaterial = new MmdPluginMaterial(this);
-        pluginMaterial.isEnabled = true;
-        pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = true;
+        this._pluginMaterial = new MmdPluginMaterialMock();
+        this._initPluginShaderSourceAsync(this._shaderLanguage);
+    }
+
+    private async _initPluginShaderSourceAsync(shaderLanguage: ShaderLanguage): Promise<void> {
+        const mmdPluginMaterial = shaderLanguage === ShaderLanguage.GLSL
+            ? (await import("./mmdPluginMaterial")).MmdPluginMaterial
+            : (await import("./mmdPluginMaterial")).MmdPluginMaterial;
+        if (this._disposed) {
+            return;
+        }
+        this._pluginMaterial = new mmdPluginMaterial(this, this._pluginMaterial, undefined, undefined, undefined);
+    }
+
+    /**
+     * Disposes the material
+     * @param forceDisposeEffect specifies if effects should be forcefully disposed
+     * @param forceDisposeTextures specifies if textures should be forcefully disposed
+     */
+    public override dispose(forceDisposeEffect?: boolean, forceDisposeTextures?: boolean): void {
+        super.dispose(forceDisposeEffect, forceDisposeTextures);
+        this._disposed = true;
+    }
+
+    /**
+     * Get if the submesh is ready to be used and all its information available.
+     * Child classes can use it to update shaders
+     * @param mesh defines the mesh to check
+     * @param subMesh defines which submesh to check
+     * @param useInstances specifies that instances should be used
+     * @returns a boolean indicating that the submesh is ready or not
+     */
+    public override isReadyForSubMesh(mesh: AbstractMesh, subMesh: SubMesh, useInstances?: boolean): boolean {
+        if ((this._pluginMaterial as MmdPluginMaterialMock).isMock) {
+            return false;
+        }
+        return super.isReadyForSubMesh(mesh, subMesh, useInstances);
     }
 
     /**

@@ -17,8 +17,37 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdBufferKind } from "./mmdBufferKind";
-import { sdefDeclaration } from "./Shader/sdefDeclaration";
-import { sdefVertex } from "./Shader/sdefVertex";
+import { sdefDeclaration } from "./Shaders/sdefDeclaration";
+import { sdefVertex } from "./Shaders/sdefVertex";
+
+/**
+ * @internal
+ */
+export interface IMmdPluginMaterial {
+    sphereTexture: Nullable<Texture>;
+    sphereTextureBlendMode: MmdPluginMaterialSphereTextureBlendMode;
+
+    toonTexture: Nullable<Texture>;
+
+    ignoreDiffuseWhenToonTextureIsNull: boolean;
+
+    applyAmbientColorToDiffuse: boolean;
+
+    clampAlpha: boolean;
+
+    textureMultiplicativeColor: Color4;
+    textureAdditiveColor: Color4;
+
+    sphereTextureMultiplicativeColor: Color4;
+    sphereTextureAdditiveColor: Color4;
+
+    toonTextureMultiplicativeColor: Color4;
+    toonTextureAdditiveColor: Color4;
+
+    useTextureColor: boolean;
+    useSphereTextureColor: boolean;
+    useToonTextureColor: boolean;
+}
 
 /**
  * for convert MMD material to Babylon material
@@ -213,10 +242,19 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this._internalMarkAllSubMeshesAsTexturesDirty();
     }
 
-    public constructor(material: StandardMaterial, addtoPluginList = true) {
-        super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList);
+    public constructor(
+        material: StandardMaterial,
+        originalPluginMaterial: IMmdPluginMaterial,
+        addtoPluginList = true,
+        enable = false,
+        resolveIncludes = false
+    ) {
+        super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList, enable, resolveIncludes);
 
         this._internalMarkAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
+
+        originalPluginMaterial;
+        material.markAsDirty(Constants.MATERIAL_AllDirtyFlag);
     }
 
     public override isReadyForSubMesh(defines: MaterialDefines, scene: Scene): boolean {
@@ -273,6 +311,7 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     }
 
     public override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }> {
+        console.trace("getCustomCode");
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};
 
