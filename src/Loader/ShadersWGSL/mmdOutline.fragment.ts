@@ -28,8 +28,8 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 #include<clipPlaneFragment>
 
 #ifdef ALPHATEST
-	if (textureSample(diffuseSampler, diffuseSamplerSampler, vUV).a < 0.4) {
-		discard;
+    if (textureSample(diffuseSampler, diffuseSamplerSampler, fragmentInputs.vUV).a < 0.4) {
+        discard;
     }
 #endif
 #include<logDepthFragment>

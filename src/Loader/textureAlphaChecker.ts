@@ -1,3 +1,8 @@
+import "./Shaders/textureAlphaChecker.fragment";
+import "./Shaders/textureAlphaChecker.vertex";
+import "./ShadersWGSL/textureAlphaChecker.fragment";
+import "./ShadersWGSL/textureAlphaChecker.vertex";
+
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { Material } from "@babylonjs/core/Materials/material";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
@@ -278,28 +283,11 @@ export class TextureAlphaChecker {
     private static _GetShader(scene: Scene): ShaderMaterial {
         if (!scene._textureAlphaCheckerShader) {
             const shader = new ShaderMaterial(
-                "textureAlphaCheckerShader",
+                "textureAlphaChecker",
                 scene,
                 {
-                    vertexSource: /* glsl */`
-                        precision highp float;
-                        attribute vec2 uv;
-                        varying vec2 vUv;
-
-                        void main() {
-                            vUv = uv;
-                            gl_Position = vec4(mod(uv, 1.0) * 2.0 - 1.0, 0.0, 1.0);
-                        }
-                    `,
-                    fragmentSource: /* glsl */`
-                        precision highp float;
-                        uniform sampler2D textureSampler;
-                        varying vec2 vUv;
-
-                        void main() {
-                            gl_FragColor = vec4(vec3(1.0) - vec3(texture2D(textureSampler, vUv).a), 1.0);
-                        }
-                    `
+                    vertex: "textureAlphaChecker",
+                    fragment: "textureAlphaChecker"
                 },
                 {
                     needAlphaBlending: false,
@@ -307,7 +295,7 @@ export class TextureAlphaChecker {
                     attributes: ["uv"],
                     uniforms: [],
                     samplers: ["textureSampler"],
-                    shaderLanguage: ShaderLanguage.GLSL
+                    shaderLanguage: scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL
                 }
             );
             shader.backFaceCulling = false;

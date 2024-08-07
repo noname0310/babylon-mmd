@@ -75,17 +75,17 @@ void main(void)
     vec2 screenNormal = normalize(vec2(viewNormal));
     projectedPosition.xy += screenNormal / (viewport * 0.25 /* 0.5 */) * offset * projectedPosition.w;
 
-	gl_Position = projectedPosition;
+    gl_Position = projectedPosition;
 #ifdef WORLDPOS_REQUIRED
     vec4 worldPos = inverseViewProjection * projectedPosition;
 #endif
 
 #ifdef ALPHATEST
 #ifdef UV1
-	vUV = vec2(diffuseMatrix * vec4(uvUpdated, 1.0, 0.0));
+    vUV = vec2(diffuseMatrix * vec4(uvUpdated, 1.0, 0.0));
 #endif
 #ifdef UV2
-	vUV = vec2(diffuseMatrix * vec4(uv2, 1.0, 0.0));
+    vUV = vec2(diffuseMatrix * vec4(uv2, 1.0, 0.0));
 #endif
 #endif
 #include<clipPlaneVertex>

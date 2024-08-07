@@ -79,17 +79,17 @@ fn main(input: VertexInputs) -> FragmentInputs {
         projectedPosition.w
     );
 
-	vertexOutputs.position = projectedPosition;
+    vertexOutputs.position = projectedPosition;
 #ifdef WORLDPOS_REQUIRED
     var worldPos: vec4f = inverseViewProjection * projectedPosition;
 #endif
 
 #ifdef ALPHATEST
 #ifdef UV1
-	vUV = vec2(diffuseMatrix * vec4(uvUpdated, 1.0, 0.0));
+    vertexOutputs.vUV = vec2(diffuseMatrix * vec4(uvUpdated, 1.0, 0.0));
 #endif
 #ifdef UV2
-	vUV = vec2(diffuseMatrix * vec4(uv2, 1.0, 0.0));
+    vertexOutputs.vUV = vec2(diffuseMatrix * vec4(uv2, 1.0, 0.0));
 #endif
 #endif
 #include<clipPlaneVertex>
