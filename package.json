@@ -59,8 +59,8 @@
         "ts-node": "^10.9.2",
         "ts-patch": "^3.2.1",
         "typescript": "^5.5.4",
-        "typescript-glslminify-transformer": "^0.0.2",
-        "typescript-transform-paths": "^3.4.7",
+        "typescript-glslminify-transformer": "^0.0.3",
+        "typescript-transform-paths": "^3.4.9",
         "wasm-pack": "^0.13.0",
         "webpack": "^5.93.0",
         "webpack-cli": "^5.1.4",
@@ -75,6 +75,8 @@
         "mmd"
     ],
     "sideEffects": [
+        "**/Shaders/**",
+        "**/ShadersWGSL/**",
         "**/mmdOutlineRenderer.*",
         "**/pmdLoader.*",
         "**/pmxLoader.*",

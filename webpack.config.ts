@@ -27,7 +27,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
                 loader: "ts-loader",
                 options: {
                     getCustomTransformers: (program: ts.Program) => ({
-                        before: [glslMinifyTransformer(program)]
+                        before: [glslMinifyTransformer(program, { customPrefixes: ["glsl", "wgsl"] })]
                     })
                 }
             },

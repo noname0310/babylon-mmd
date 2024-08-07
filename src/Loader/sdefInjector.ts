@@ -5,8 +5,10 @@ import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdBufferKind } from "./mmdBufferKind";
-import { sdefDeclaration } from "./Shader/sdefDeclaration";
-import { sdefVertex } from "./Shader/sdefVertex";
+import { sdefDeclaration } from "./Shaders/sdefDeclaration";
+import { sdefVertex } from "./Shaders/sdefVertex";
+import { sdefDeclaration as sdefDeclarationWgsl } from "./ShadersWGSL/sdefDeclaration";
+import { sdefVertex as sdefVertexWgsl } from "./ShadersWGSL/sdefVertex";
 
 /**
  * Sdef injector
@@ -54,23 +56,21 @@ export class SdefInjector {
                 };
             }
 
-            if (effectCreationOptions.shaderLanguage === ShaderLanguage.GLSL || effectCreationOptions.shaderLanguage === undefined) {
-                if (effectCreationOptions.uniformsNames.includes("mBones") || effectCreationOptions.samplers.includes("boneSampler")) {
-                    if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
+            if (effectCreationOptions.uniformsNames.includes("mBones") || effectCreationOptions.samplers.includes("boneSampler")) {
+                if (effectCreationOptions.defines.indexOf("#define SDEF") === -1) {
 
-                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefCKind);
-                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW0Kind);
-                        effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW1Kind);
-                        effectCreationOptions.defines += "\n#define SDEF";
+                    effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefCKind);
+                    effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW0Kind);
+                    effectCreationOptions.attributes.push(MmdBufferKind.MatricesSdefRW1Kind);
+                    effectCreationOptions.defines += "\n#define SDEF";
 
-                        const originalProcessCodeAfterIncludes = effectCreationOptions.processCodeAfterIncludes;
-                        effectCreationOptions.processCodeAfterIncludes = originalProcessCodeAfterIncludes
-                            ? function(shaderType: string, code: string): string {
-                                code = originalProcessCodeAfterIncludes!(shaderType, code);
-                                return SdefInjector.ProcessSdefCode(shaderType, code);
-                            }
-                            : SdefInjector.ProcessSdefCode;
-                    }
+                    const originalProcessCodeAfterIncludes = effectCreationOptions.processCodeAfterIncludes;
+                    effectCreationOptions.processCodeAfterIncludes = originalProcessCodeAfterIncludes
+                        ? function(shaderType: string, code: string): string {
+                            code = originalProcessCodeAfterIncludes!(shaderType, code);
+                            return SdefInjector.ProcessSdefCode(shaderType, code);
+                        }
+                        : SdefInjector.ProcessSdefCode;
                 }
             }
 
@@ -95,16 +95,20 @@ export class SdefInjector {
     public static ProcessSdefCode(shaderType: string, code: string): string {
         if (shaderType !== "vertex") return code;
 
-        const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
-        if (code.includes(vertexDefInjectionPoint)) {
-            code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${sdefDeclaration}`);
-        } else {
-            const fallbackVertexDefInjectionPoint = "void main() {";
-            code = code.replace(fallbackVertexDefInjectionPoint, `${sdefDeclaration}\nvoid main() {`);
-        }
+        if (code.includes("finalWorld=finalWorld*influence;")) {
+            const isWgsl = code.includes("fn main");
 
-        const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
-        code = code.replace(sdefVertexInjectionPoint, `${sdefVertex}\nfinalWorld=finalWorld*influence;`);
+            const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
+            if (code.includes(vertexDefInjectionPoint)) {
+                code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${isWgsl ? sdefDeclarationWgsl : sdefDeclaration}`);
+            } else {
+                const fallbackVertexDefInjectionPoint = "void main() {";
+                code = code.replace(fallbackVertexDefInjectionPoint, `${isWgsl ? sdefDeclarationWgsl : sdefDeclaration}\nvoid main() {`);
+            }
+
+            const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
+            code = code.replace(sdefVertexInjectionPoint, `${isWgsl ? sdefVertexWgsl : sdefVertex}\nfinalWorld=finalWorld*influence;`);
+        }
 
         return code;
     }
