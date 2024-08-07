@@ -1,14 +1,17 @@
-import "@babylonjs/core/Shaders/outline.fragment";
-import "@babylonjs/core/Shaders/outline.vertex";
+import "./Shaders/mmdOutline.fragment";
+import "./Shaders/mmdOutline.vertex";
+import "./ShadersWGSL/mmdOutline.fragment";
+import "./ShadersWGSL/mmdOutline.vertex";
 
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
-import { Effect, type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
+import { type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
 import { BindBonesParameters, BindMorphTargetParameters, PrepareAttributesForMorphTargetsInfluencers, PushAttributesForInstances } from "@babylonjs/core/Materials/materialHelper.functions";
+import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
@@ -20,10 +23,6 @@ import type { Nullable } from "@babylonjs/core/types";
 import { MmdBufferKind } from "./mmdBufferKind";
 import type { MmdStandardMaterial } from "./mmdStandardMaterial";
 import { SdefInjector } from "./sdefInjector";
-import { mmdOutlinePixelShader } from "./Shader/mmdOutlineFragment";
-import { mmdOutlineVertexShader } from "./Shader/mmdOutlineVertex";
-
-Effect.RegisterShader("mmdOutline", mmdOutlinePixelShader, mmdOutlineVertexShader);
 
 declare module "@babylonjs/core/scene" {
     export interface Scene {
@@ -341,7 +340,6 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             addClipPlaneUniforms(uniforms);
             if (useClipPlane) uniforms.push("inverseViewProjection");
-
             drawWrapper.setEffect(
                 this.scene.getEngine().createEffect(
                     "mmdOutline",
@@ -351,7 +349,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
                         samplers: samplers,
                         defines: join,
                         indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
-                        processCodeAfterIncludes: SdefInjector.ProcessSdefCode
+                        processCodeAfterIncludes: SdefInjector.ProcessSdefCode,
+                        shaderLanguage: scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL
                     },
                     this.scene.getEngine()
                 ),
