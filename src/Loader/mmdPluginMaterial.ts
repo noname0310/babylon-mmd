@@ -254,7 +254,6 @@ export class MmdPluginMaterial extends MaterialPluginBase {
         this._internalMarkAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
 
         originalPluginMaterial;
-        material.markAsDirty(Constants.MATERIAL_AllDirtyFlag);
     }
 
     public override isReadyForSubMesh(defines: MaterialDefines, scene: Scene): boolean {
@@ -311,7 +310,6 @@ export class MmdPluginMaterial extends MaterialPluginBase {
     }
 
     public override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }> {
-        console.trace("getCustomCode");
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};
 
