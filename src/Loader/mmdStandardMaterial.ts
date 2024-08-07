@@ -88,18 +88,41 @@ export class MmdStandardMaterial extends StandardMaterial {
         super(name, scene, forceGLSL);
         this.specularColor = new Color3(0, 0, 0);
 
-        this._pluginMaterial = new MmdPluginMaterialMock();
+        const pluginMaterialMock = this._pluginMaterial = new MmdPluginMaterialMock();
+        pluginMaterialMock.ignoreDiffuseWhenToonTextureIsNull = true;
+
         this._initPluginShaderSourceAsync(this._shaderLanguage);
     }
 
     private async _initPluginShaderSourceAsync(shaderLanguage: ShaderLanguage): Promise<void> {
         const mmdPluginMaterial = shaderLanguage === ShaderLanguage.GLSL
-            ? (await import("./mmdPluginMaterial")).MmdPluginMaterial
-            : (await import("./mmdPluginMaterial")).MmdPluginMaterial;
+            ? (await import("./Shaders/mmdStandard")).MmdPluginMaterial
+            : (await import("./ShadersWGSL/mmdStandard")).MmdPluginMaterial;
+
         if (this._disposed) {
             return;
         }
-        this._pluginMaterial = new mmdPluginMaterial(this, this._pluginMaterial, undefined, undefined, undefined);
+
+        const pluginMaterialMock = this._pluginMaterial;
+        const pluginMaterial = this._pluginMaterial = new mmdPluginMaterial(this);
+        pluginMaterial.isEnabled = true;
+
+        // todo: copy optimization
+        pluginMaterial.sphereTexture = pluginMaterialMock.sphereTexture;
+        pluginMaterial.sphereTextureBlendMode = pluginMaterialMock.sphereTextureBlendMode;
+        pluginMaterial.toonTexture = pluginMaterialMock.toonTexture;
+        pluginMaterial.ignoreDiffuseWhenToonTextureIsNull = pluginMaterialMock.ignoreDiffuseWhenToonTextureIsNull;
+        pluginMaterial.applyAmbientColorToDiffuse = pluginMaterialMock.applyAmbientColorToDiffuse;
+        pluginMaterial.clampAlpha = pluginMaterialMock.clampAlpha;
+        pluginMaterial.textureMultiplicativeColor = pluginMaterialMock.textureMultiplicativeColor;
+        pluginMaterial.textureAdditiveColor = pluginMaterialMock.textureAdditiveColor;
+        pluginMaterial.sphereTextureMultiplicativeColor = pluginMaterialMock.sphereTextureMultiplicativeColor;
+        pluginMaterial.sphereTextureAdditiveColor = pluginMaterialMock.sphereTextureAdditiveColor;
+        pluginMaterial.toonTextureMultiplicativeColor = pluginMaterialMock.toonTextureMultiplicativeColor;
+        pluginMaterial.toonTextureAdditiveColor = pluginMaterialMock.toonTextureAdditiveColor;
+        pluginMaterial.useTextureColor = pluginMaterialMock.useTextureColor;
+        pluginMaterial.useSphereTextureColor = pluginMaterialMock.useSphereTextureColor;
+        pluginMaterial.useToonTextureColor = pluginMaterialMock.useToonTextureColor;
     }
 
     /**
