@@ -1,9 +1,9 @@
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.alpha";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.multiRender";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.alpha";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.multiRender";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
+// import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 
 import { Engine } from "@babylonjs/core/Engines/engine";
 

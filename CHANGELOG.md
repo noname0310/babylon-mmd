@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.53.0 (scheduled)
+
+- `TextureAlphaChecker` now supports WebGPU wgsl shader
+
+- `MmdStandardMaterial` now supports WebGPU wgsl shader
+
+- `MmdOutlineRenderer` now supports WebGPU wgsl shader
+
 ## 0.52.0 (2024-08-02)
 
 - fix BPMX converter does not serialize model with shared toon texture correctly
