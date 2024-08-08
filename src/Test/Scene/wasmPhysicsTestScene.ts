@@ -3,6 +3,7 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
+import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
@@ -52,7 +53,8 @@ export class SceneBuilder implements ISceneBuilder {
         const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
         pmxLoader.loggingEnabled = true;
         const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder;
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -220,6 +222,28 @@ export class SceneBuilder implements ISceneBuilder {
         for (const depthRenderer of Object.values(scene._depthRenderer)) {
             depthRenderer.forceDepthWriteTransparentMeshes = true;
         }
+
+        const video = document.createElement("video");
+        video.srcObject = canvas.captureStream();
+        video.muted = true;
+        video.play();
+
+        document.addEventListener("keydown", (event: KeyboardEvent) => {
+            if (event.key !== "p") return;
+            if (document.pictureInPictureEnabled) video.requestPictureInPicture();
+        });
+
+        video.addEventListener("enterpictureinpicture", (event: Event) => {
+            const pipEvent = event as PictureInPictureEvent;
+            engine.setSize(pipEvent.pictureInPictureWindow.width, pipEvent.pictureInPictureWindow.height);
+            pipEvent.pictureInPictureWindow.onresize = (event: Event): void => {
+                const pipWindow = event.target as PictureInPictureWindow;
+                engine.setSize(pipWindow.width, pipWindow.height);
+            };
+        });
+        video.addEventListener("leavepictureinpicture", () => {
+            engine.resize();
+        });
 
         return scene;
     }
