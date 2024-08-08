@@ -91,6 +91,11 @@ export interface MmdModelLoaderOptions {
      * This property is used to serialize the model into bpmx file
      */
     readonly preserveSerializationData: boolean;
+
+    /**
+     * Enable or disable debug logging (default: false)
+     */
+    readonly loggingEnabled: boolean;
 }
 
 /** @internal */
@@ -168,7 +173,8 @@ export abstract class MmdModelLoader<
             buildSkeleton: true,
             buildMorph: true,
             boundingBoxMargin: 10,
-            preserveSerializationData: false
+            preserveSerializationData: false,
+            loggingEnabled: false
         };
 
         this.materialBuilder = options.materialBuilder ?? loaderOptions.materialBuilder;
@@ -178,10 +184,16 @@ export abstract class MmdModelLoader<
         this.boundingBoxMargin = options.boundingBoxMargin ?? loaderOptions.boundingBoxMargin;
         this.preserveSerializationData = options.preserveSerializationData ?? loaderOptions.preserveSerializationData;
 
-        this._loggingEnabled = false;
-        this.log = this._logDisabled;
-        this.warn = this._warnDisabled;
-        this.error = this._errorDisabled;
+        this._loggingEnabled = options.loggingEnabled ?? loaderOptions.loggingEnabled;
+        if (this._loggingEnabled) {
+            this.log = this._logEnabled;
+            this.warn = this._warnEnabled;
+            this.error = this._errorEnabled;
+        } else {
+            this.log = this._logDisabled;
+            this.warn = this._warnDisabled;
+            this.error = this._errorDisabled;
+        }
     }
 
     public importMeshAsync(
