@@ -96,8 +96,16 @@ export class MmdStandardMaterial extends StandardMaterial {
 
     private async _initPluginShaderSourceAsync(shaderLanguage: ShaderLanguage): Promise<void> {
         const mmdPluginMaterial = shaderLanguage === ShaderLanguage.GLSL
-            ? (await import("./Shaders/mmdStandard")).MmdPluginMaterial
-            : (await import("./ShadersWGSL/mmdStandard")).MmdPluginMaterial;
+            ? (await import(
+                /* webpackChunkName: "mmd-shader-glsl" */
+                /* webpackMode: "lazy-once" */
+                "./Shaders/mmdStandard")
+            ).MmdPluginMaterial
+            : (await import(
+                /* webpackChunkName: "mmd-shader-wgsl" */
+                /* webpackMode: "lazy-once" */
+                "./ShadersWGSL/mmdStandard")
+            ).MmdPluginMaterial;
 
         if (this._disposed) {
             return;
