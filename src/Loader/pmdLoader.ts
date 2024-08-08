@@ -1,8 +1,10 @@
+import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
 import { type ISceneLoaderPluginAsync, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 
 import type { ILogger } from "./Parser/ILogger";
 import { PmdReader } from "./Parser/pmdReader";
 import type { PmxObject } from "./Parser/pmxObject";
+import type { PmLoaderOptions } from "./pmLoader";
 import { PmLoader } from "./pmLoader";
 
 /**
@@ -14,14 +16,20 @@ export class PmdLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
     /**
      * Create a new PmdLoader
      */
-    public constructor() {
+    public constructor(options?: Partial<PmLoaderOptions>, loaderOptions?: PmLoaderOptions) {
         super(
             "pmd",
             {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 ".pmd": { isBinary: true }
-            }
+            },
+            options,
+            loaderOptions
         );
+    }
+
+    public createPlugin(options: SceneLoaderPluginOptions): ISceneLoaderPluginAsync {
+        return new PmdLoader(options.mmdmodel, this);
     }
 
     protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<PmxObject> {

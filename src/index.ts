@@ -30,7 +30,7 @@ export { BpmxReader } from "@/Loader/Optimized/Parser/bpmxReader";
 
 // Loader/Optimized
 export { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-export { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+export { BpmxLoader, BpmxLoaderOptions } from "@/Loader/Optimized/bpmxLoader";
 export { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
 export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
@@ -54,6 +54,7 @@ export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdMod
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
+export { PmLoaderOptions } from "@/Loader/pmLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
 export { SdefInjector } from "@/Loader/sdefInjector";

@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
+import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
 import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
@@ -20,7 +21,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
-import type { BuildMaterialResult, MmdModelBuildGeometryResult } from "../mmdModelLoader";
+import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoaderOptions } from "../mmdModelLoader";
 import { MmdModelLoader, type MmdModelLoadState } from "../mmdModelLoader";
 import type { MmdModelMetadata } from "../mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "../objectUniqueIdProvider";
@@ -31,6 +32,11 @@ import { SdefMesh } from "../sdefMesh";
 import { BpmxObject } from "./Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 
+/**
+ * Options for loading BPMX model
+ */
+export interface BpmxLoaderOptions extends MmdModelLoaderOptions { }
+
 interface BpmxLoadState extends MmdModelLoadState { }
 
 interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult { }
@@ -40,17 +46,19 @@ interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult { }
  *
  * BPMX is a single binary file format that contains all the data of a model
  */
-export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBuildGeometryResult> implements ISceneLoaderPluginAsync, ILogger {
+export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBuildGeometryResult> implements BpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new BpmxLoader
      */
-    public constructor() {
+    public constructor(options?: Partial<BpmxLoaderOptions>, loaderOptions?: BpmxLoaderOptions) {
         super(
             "bpmx",
             {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 ".bpmx": { isBinary: true }
-            }
+            },
+            options,
+            loaderOptions
         );
     }
 
@@ -91,6 +99,10 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             onError
         );
         return request;
+    }
+
+    public createPlugin(options: SceneLoaderPluginOptions): ISceneLoaderPluginAsync {
+        return new BpmxLoader(options.mmdmodel, this);
     }
 
     protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<BpmxObject> {

@@ -2,7 +2,7 @@ import { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Bone } from "@babylonjs/core/Bones/bone";
 import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
-import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
+import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderPluginFactory, ISceneLoaderProgressEvent, SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -17,11 +17,81 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import type { MmdModelMetadata, MmdModelSerializationMetadata } from "./mmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
+import type { BpmxLoaderOptions } from "./Optimized/bpmxLoader";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
+import type { PmLoaderOptions } from "./pmLoader";
 import type { ProgressTask } from "./progress";
 import { Progress } from "./progress";
+
+declare module "@babylonjs/core/Loading/sceneLoader" {
+    export interface SceneLoaderPluginOptions {
+        /**
+         * Defines options for the pmx/pmd/bpmx loader.
+         */
+        mmdmodel?: Partial<PmLoaderOptions | BpmxLoaderOptions>;
+    }
+}
+
+/** @internal */
+export interface MmdModelLoaderOptions {
+    /**
+     * Material builder used by loader
+     *
+     * This property can be overwritten to customize the material of the loaded model
+     */
+    readonly materialBuilder: IMmdMaterialBuilder;
+
+    /**
+     * Whether to use SDEF (default: true)
+     *
+     * Spherical Deformation(SDEF) is a feature that allows you to deform the model more naturally than the traditional skinning method
+     *
+     * But it uses more memory and is slower than the traditional skinning method
+     *
+     * If you are targeting a platform with limited memory or performance, you may want to disable this feature
+     */
+    readonly useSdef: boolean;
+
+    /**
+     * Whether to build skeleton (default: true)
+     *
+     * If you want to load a model without a skeleton, you can disable this feature
+     *
+     * This feature is useful when you want to load a model that is not animated (e.g. background object)
+     */
+    readonly buildSkeleton: boolean;
+
+    /**
+     * Whether to build morph (default: true)
+     *
+     * If you want to load a model without morph, you can disable this feature
+     *
+     * This feature is useful when you want to load a model that is not animated (e.g. background object)
+     */
+    readonly buildMorph: boolean;
+
+    /**
+     * Margin of the bounding box of the model (default: 10)
+     *
+     * This property is used to calculate the bounding box of the model
+     *
+     * If the bounding box of the model is too small, the model may not be rendered correctly
+     *
+     * This value may need to be set higher, especially in motion with a large movement range
+     */
+    readonly boundingBoxMargin: number;
+
+    /**
+     * Whether to preserve the data used for serialization (default: false)
+     *
+     * If you want to serialize the model, you need to set this property to true
+     *
+     * This property is used to serialize the model into bpmx file
+     */
+    readonly preserveSerializationData: boolean;
+}
 
 /** @internal */
 export interface MmdModelLoadState {
@@ -56,7 +126,7 @@ export abstract class MmdModelLoader<
     LoadState extends MmdModelLoadState,
     ModelObject extends PmxObject | BpmxObject,
     BuildGeometryResult extends MmdModelBuildGeometryResult
-> implements ISceneLoaderPluginAsync, ILogger {
+> implements MmdModelLoaderOptions, ISceneLoaderPluginAsync, ISceneLoaderPluginFactory, ILogger {
     /**
      * Name of the loader
      */
@@ -67,60 +137,11 @@ export abstract class MmdModelLoader<
      */
     public extensions: ISceneLoaderPluginExtensions;
 
-    /**
-     * Material builder used by this loader
-     *
-     * This property can be overwritten to customize the material of the loaded model
-     */
     public materialBuilder: IMmdMaterialBuilder;
-
-    /**
-     * Whether to use SDEF (default: true)
-     *
-     * Spherical Deformation(SDEF) is a feature that allows you to deform the model more naturally than the traditional skinning method
-     *
-     * But it uses more memory and is slower than the traditional skinning method
-     *
-     * If you are targeting a platform with limited memory or performance, you may want to disable this feature
-     */
     public useSdef: boolean;
-
-    /**
-     * Whether to build skeleton (default: true)
-     *
-     * If you want to load a model without a skeleton, you can disable this feature
-     *
-     * This feature is useful when you want to load a model that is not animated (e.g. background object)
-     */
     public buildSkeleton: boolean;
-
-    /**
-     * Whether to build morph (default: true)
-     *
-     * If you want to load a model without morph, you can disable this feature
-     *
-     * This feature is useful when you want to load a model that is not animated (e.g. background object)
-     */
     public buildMorph: boolean;
-
-    /**
-     * Margin of the bounding box of the model (default: 10)
-     *
-     * This property is used to calculate the bounding box of the model
-     *
-     * If the bounding box of the model is too small, the model may not be rendered correctly
-     *
-     * This value may need to be set higher, especially in motion with a large movement range
-     */
     public boundingBoxMargin: number;
-
-    /**
-     * Whether to preserve the data used for serialization (default: false)
-     *
-     * If you want to serialize the model, you need to set this property to true
-     *
-     * This property is used to serialize the model into bpmx file
-     */
     public preserveSerializationData: boolean;
 
     private _loggingEnabled: boolean;
@@ -137,16 +158,25 @@ export abstract class MmdModelLoader<
     /**
      * Create a new MMD model loader
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions) {
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<MmdModelLoaderOptions> = {}, loaderOptions?: PmLoaderOptions | BpmxLoaderOptions) {
         this.name = name;
         this.extensions = extensions;
 
-        this.materialBuilder = MmdModelLoader._SharedStandardMaterialBuilder;
-        this.useSdef = true;
-        this.buildSkeleton = true;
-        this.buildMorph = true;
-        this.boundingBoxMargin = 10;
-        this.preserveSerializationData = false;
+        loaderOptions = loaderOptions ?? {
+            materialBuilder: MmdModelLoader._SharedStandardMaterialBuilder,
+            useSdef: true,
+            buildSkeleton: true,
+            buildMorph: true,
+            boundingBoxMargin: 10,
+            preserveSerializationData: false
+        };
+
+        this.materialBuilder = options.materialBuilder ?? loaderOptions.materialBuilder;
+        this.useSdef = options.useSdef ?? loaderOptions.useSdef;
+        this.buildSkeleton = options.buildSkeleton ?? loaderOptions.buildSkeleton;
+        this.buildMorph = options.buildMorph ?? loaderOptions.buildMorph;
+        this.boundingBoxMargin = options.boundingBoxMargin ?? loaderOptions.boundingBoxMargin;
+        this.preserveSerializationData = options.preserveSerializationData ?? loaderOptions.preserveSerializationData;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -190,6 +220,8 @@ export abstract class MmdModelLoader<
             return assetContainer;
         });
     }
+
+    public abstract createPlugin(options: SceneLoaderPluginOptions): ISceneLoaderPluginAsync;
 
     private async _loadAsyncInternal(
         scene: Scene,

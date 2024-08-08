@@ -17,7 +17,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdBufferKind } from "./mmdBufferKind";
-import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoadState } from "./mmdModelLoader";
+import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoaderOptions, MmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
@@ -25,6 +25,22 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { Progress, ProgressTask } from "./progress";
 import { SdefMesh } from "./sdefMesh";
+
+/**
+ * Options for loading PMX / PMD model
+ */
+export interface PmLoaderOptions extends MmdModelLoaderOptions {
+    /**
+     * Reference files for load PMX / PMD from files (textures)
+     *
+     * This property is used to load textures from files
+     *
+     * pmx / pmd files typically store texture files separately in a subdirectory of url root
+     *
+     * Therefore, in order to load it as a file, you need to put information about these files separately
+     */
+    readonly referenceFiles: readonly File[];
+}
 
 interface PmLoadState extends MmdModelLoadState {
     readonly referenceFiles: readonly File[];
@@ -42,7 +58,7 @@ interface PmBuildGeometryResult extends MmdModelBuildGeometryResult {
  * @internal
  * Base class of pmx / pmd loader
  */
-export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, PmBuildGeometryResult> implements ISceneLoaderPluginAsync, ILogger {
+export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, PmBuildGeometryResult> implements PmLoaderOptions, ISceneLoaderPluginAsync, ILogger {
     /**
      * Reference files for load PMX / PMD from files (textures)
      *
@@ -57,10 +73,10 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     /**
      * Create a new PmLoader
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions) {
-        super(name, extensions);
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<PmLoaderOptions> = {}, loaderOptions?: PmLoaderOptions) {
+        super(name, extensions, options, loaderOptions);
 
-        this.referenceFiles = [];
+        this.referenceFiles = options.referenceFiles ?? loaderOptions?.referenceFiles ?? [];
     }
 
     public loadFile(
