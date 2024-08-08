@@ -106,25 +106,33 @@ export class SceneBuilder implements ISceneBuilder {
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
             ["model", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
                 return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Hatsune Miku_10th.bpmx",
+                    "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                     scene,
-                    updateProgress
+                    {
+                        onProgress: updateProgress,
+                        pluginOptions: {
+                            mmdmodel: {
+                                boundingBoxMargin: 60
+                            }
+                        }
+                    }
                 ).then(result => result.meshes[0] as MmdMesh);
             }],
             ["stage", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
                 return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/stage/",
-                    "Stage35_02_toonfix.bpmx",
+                    "res/private_test/stage/Stage35_02_toonfix.bpmx",
                     scene,
-                    updateProgress
+                    {
+                        onProgress: updateProgress,
+                        pluginOptions: {
+                            mmdmodel: {
+                                buildSkeleton: false,
+                                buildMorph: false,
+                                boundingBoxMargin: 0
+                            }
+                        }
+                    }
                 ).then(result => result.meshes[0] as MmdMesh);
             }]
         ]);
@@ -243,6 +251,15 @@ export class SceneBuilder implements ISceneBuilder {
         });
         video.addEventListener("leavepictureinpicture", () => {
             engine.resize();
+        });
+
+        mmdRuntime.onPauseAnimationObservable.add(() => {
+            if (mmdRuntime.animationFrameTimeDuration === mmdRuntime.currentFrameTime) {
+                mmdRuntime.seekAnimation(0);
+                mmdRuntime.playAnimation().then(() => {
+                    mmdRuntime.initializeAllMmdModelsPhysics(true);
+                });
+            }
         });
 
         return scene;
