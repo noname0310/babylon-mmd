@@ -35,13 +35,17 @@ export class SceneBuilder implements ISceneBuilder {
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
-        pmxLoader.buildSkeleton = false;
-        pmxLoader.buildMorph = false;
         const mmdMesh = await SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/YYB 元气少女/",
-            "Miku.pmx",
-            scene
+            "res/private_test/model/YYB 元气少女/Miku.pmx",
+            scene,
+            {
+                pluginOptions: {
+                    mmdmodel: {
+                        buildSkeleton: false,
+                        buildMorph: false
+                    }
+                }
+            }
         ).then(result => result.meshes[0] as MmdMesh);
         for (const mesh of mmdMesh.metadata.meshes) {
             mesh.receiveShadows = true;
