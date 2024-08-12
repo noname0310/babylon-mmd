@@ -72,7 +72,7 @@ fn main(input: VertexInputs) -> FragmentInputs {
 
     var viewNormal: vec3f = uniforms.view * (mat3x3(finalWorld[0].xyz, finalWorld[1].xyz, finalWorld[2].xyz) * normalUpdated);
     var projectedPosition: vec4f = uniforms.viewProjection * finalWorld * vec4f(positionUpdated, 1.0);
-    var screenNormal: vec2f = normalize(vec2f(viewNormal.x, viewNormal.y));
+    var screenNormal: vec2f = normalize(viewNormal.xy);
     projectedPosition = vec4f(
         projectedPosition.xy + (screenNormal / (uniforms.viewport * 0.25 /* 0.5 */) * uniforms.offset * projectedPosition.w),
         projectedPosition.z,
@@ -81,15 +81,15 @@ fn main(input: VertexInputs) -> FragmentInputs {
 
     vertexOutputs.position = projectedPosition;
 #ifdef WORLDPOS_REQUIRED
-    var worldPos: vec4f = inverseViewProjection * projectedPosition;
+    var worldPos: vec4f = uniforms.inverseViewProjection * projectedPosition;
 #endif
 
 #ifdef ALPHATEST
 #ifdef UV1
-    vertexOutputs.vUV = vec2(diffuseMatrix * vec4(uvUpdated, 1.0, 0.0));
+    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4(uvUpdated, 1.0, 0.0)).xy;
 #endif
 #ifdef UV2
-    vertexOutputs.vUV = vec2(diffuseMatrix * vec4(uv2, 1.0, 0.0));
+    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4(vertexInputs.uv2, 1.0, 0.0)).xy;
 #endif
 #endif
 #include<clipPlaneVertex>
