@@ -370,6 +370,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             const savedDepthWrite = engine.getDepthWrite();
             const savedAlphaMode = engine.getAlphaMode();
+            const savedAlphaBlendState = engine.alphaState.alphaBlend;
 
             engine.setDepthWrite(true);
             engine.setAlphaMode(Constants.ALPHA_COMBINE, true);
@@ -379,6 +380,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             engine.setAlphaMode(savedAlphaMode, true);
             engine.setDepthWrite(savedDepthWrite);
+            engine.alphaState.alphaBlend = savedAlphaBlendState;
         }
     }
 }

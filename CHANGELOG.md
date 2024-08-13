@@ -10,6 +10,8 @@
 
 - Support SceneLoader Options see [SceneLoader Options](https://github.com/BabylonJS/Babylon.js/pull/15344)
 
+- fix `MmdOutlineRenderer` not work properly when using [WebGPU Non Compatibility Mode](https://doc.babylonjs.com/setup/support/webGPU/webGPUOptimization/webGPUNonCompatibilityMode)
+
 ## 0.52.0 (2024-08-02)
 
 - fix BPMX converter does not serialize model with shared toon texture correctly
