@@ -1,3 +1,4 @@
+import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdPluginMaterial as MmdPluginMaterialBase } from "../mmdPluginMaterial";
@@ -6,6 +7,20 @@ import { sdefDeclaration } from "./sdefDeclaration";
 import { sdefVertex } from "./sdefVertex";
 
 export class MmdPluginMaterial extends MmdPluginMaterialBase {
+    /**
+     * Gets a boolean indicating that the plugin is compatible with a given shader language.
+     * @param shaderLanguage The shader language to use.
+     * @returns true if the plugin is compatible with the shader language
+     */
+    public override isCompatible(shaderLanguage: ShaderLanguage): boolean {
+        switch (shaderLanguage) {
+        case ShaderLanguage.GLSL:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     public override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }> {
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};

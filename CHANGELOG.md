@@ -8,7 +8,9 @@
 
 - `MmdOutlineRenderer` now supports WebGPU wgsl shader
 
-- Support SceneLoader Options see [SceneLoader Options](https://github.com/BabylonJS/Babylon.js/pull/15344)
+- Support Babylon.js 7.20.1 SceneLoader Options see [SceneLoader Options](https://github.com/BabylonJS/Babylon.js/pull/15344)
+
+- Support Babylon.js 7.21.0 WebGPU PluginMaterial API Changes
 
 - fix `MmdOutlineRenderer` not work properly when using [WebGPU Non Compatibility Mode](https://doc.babylonjs.com/setup/support/webGPU/webGPUOptimization/webGPUNonCompatibilityMode)
 

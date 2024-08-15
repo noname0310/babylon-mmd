@@ -3,6 +3,7 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { MaterialDefines } from "@babylonjs/core/Materials/materialDefines";
 import { MaterialPluginBase } from "@babylonjs/core/Materials/materialPluginBase";
+import type { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { StandardMaterial, StandardMaterialDefines } from "@babylonjs/core/Materials/standardMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
@@ -240,6 +241,15 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
         this._internalMarkAllSubMeshesAsTexturesDirty();
     }
 
+    /**
+     * Gets a boolean indicating that the plugin is compatible with a given shader language.
+     * @param shaderLanguage The shader language to use.
+     * @returns true if the plugin is compatible with the shader language
+     */
+    public override isCompatible(_shaderLanguage: ShaderLanguage): boolean {
+        return true;
+    }
+
     public constructor(
         material: StandardMaterial,
         addtoPluginList = true,
@@ -304,7 +314,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
         }
     }
 
-    public abstract override getCustomCode(shaderType: string): Nullable<{ [pointName: string]: string; }>;
+    public abstract override getCustomCode(shaderType: string, shaderLanguage?: ShaderLanguage): Nullable<{ [pointName: string]: string; }>;
 
     public override prepareDefines(defines: MmdPluginMererialDefines, scene: Scene, mesh: Mesh): void {
         if (this._isEnabled) {
@@ -370,7 +380,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
         }
     }
 
-    public override getUniforms(): {
+    public override getUniforms(_shaderLanguage?: ShaderLanguage): {
         ubo: { name: string; size: number; type: string; }[];
         fragment: string;
         } {
