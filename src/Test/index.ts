@@ -4,12 +4,10 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
-
-// import { Engine } from "@babylonjs/core/Engines/engine";
-import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
+import "@babylonjs/core";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/wasmPhysicsTestScene";
+import { SceneBuilder } from "./Scene/appendTransformTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 
@@ -19,35 +17,40 @@ canvas.style.height = "100%";
 canvas.style.display = "block";
 document.body.appendChild(canvas);
 
-// const engine = new Engine(canvas, false, {
-//     preserveDrawingBuffer: false,
-//     stencil: false,
-//     antialias: true,
-//     alpha: true,
-//     premultipliedAlpha: false,
-//     powerPreference: "high-performance",
-//     doNotHandleTouchAction: true,
-//     doNotHandleContextLost: true,
-//     audioEngine: false,
-//     disableWebGL2Support: false
-// }, true);
+let engine;
 
-const engine = new WebGPUEngine(canvas, {
-    stencil: false,
-    antialias: true,
-    doNotHandleTouchAction: true,
-    doNotHandleContextLost: true,
-    audioEngine: false,
-    glslangOptions: {
-        jsPath: new URL("@babylonjs/core/assets/glslang/glslang.js", import.meta.url).href,
-        wasmPath: new URL("@babylonjs/core/assets/glslang/glslang.wasm", import.meta.url).href
-    },
-    twgslOptions: {
-        jsPath: new URL("@babylonjs/core/assets/twgsl/twgsl.js", import.meta.url).href,
-        wasmPath: new URL("@babylonjs/core/assets/twgsl/twgsl.wasm", import.meta.url).href
-    }
-});
-await engine.initAsync();
+const useWebGPU = true;
+if (useWebGPU) {
+    engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(canvas, {
+        stencil: false,
+        antialias: true,
+        doNotHandleTouchAction: true,
+        doNotHandleContextLost: true,
+        audioEngine: false,
+        glslangOptions: {
+            jsPath: new URL("@babylonjs/core/assets/glslang/glslang.js", import.meta.url).href,
+            wasmPath: new URL("@babylonjs/core/assets/glslang/glslang.wasm", import.meta.url).href
+        },
+        twgslOptions: {
+            jsPath: new URL("@babylonjs/core/assets/twgsl/twgsl.js", import.meta.url).href,
+            wasmPath: new URL("@babylonjs/core/assets/twgsl/twgsl.wasm", import.meta.url).href
+        }
+    });
+    await engine.initAsync();
+} else {
+    engine = new (await import("@babylonjs/core/Engines/engine")).Engine(canvas, false, {
+        preserveDrawingBuffer: false,
+        stencil: false,
+        antialias: true,
+        alpha: true,
+        premultipliedAlpha: false,
+        powerPreference: "high-performance",
+        doNotHandleTouchAction: true,
+        doNotHandleContextLost: true,
+        audioEngine: false,
+        disableWebGL2Support: false
+    }, true);
+}
 
 BaseRuntime.Create({
     canvas,
