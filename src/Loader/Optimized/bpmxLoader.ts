@@ -185,9 +185,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                 boneSdefR0 = skinning.sdef.r0;
                 boneSdefR1 = skinning.sdef.r1;
                 boneSdefRW0 = new Float32Array(boneSdefR0.length);
-                boneSdefRW0.set(boneSdefR0);
                 boneSdefRW1 = new Float32Array(boneSdefR1.length);
-                boneSdefRW1.set(boneSdefR1);
 
                 for (let elementIndex = 0; elementIndex < elementCount; ++elementIndex) {
                     const boneWeight0 = matriciesWeights![elementIndex * 4 + 0];
@@ -198,13 +196,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const centerZ = boneSdefC[elementIndex * 3 + 2];
 
                     // calculate rw0 and rw1
-                    let r0X = boneSdefRW0[elementIndex * 3 + 0];
-                    let r0Y = boneSdefRW0[elementIndex * 3 + 1];
-                    let r0Z = boneSdefRW0[elementIndex * 3 + 2];
+                    let r0X = boneSdefR0[elementIndex * 3 + 0];
+                    let r0Y = boneSdefR0[elementIndex * 3 + 1];
+                    let r0Z = boneSdefR0[elementIndex * 3 + 2];
 
-                    let r1X = boneSdefRW1[elementIndex * 3 + 0];
-                    let r1Y = boneSdefRW1[elementIndex * 3 + 1];
-                    let r1Z = boneSdefRW1[elementIndex * 3 + 2];
+                    let r1X = boneSdefR1[elementIndex * 3 + 0];
+                    let r1Y = boneSdefR1[elementIndex * 3 + 1];
+                    let r1Z = boneSdefR1[elementIndex * 3 + 2];
 
                     const rwX = r0X * boneWeight0 + r1X * boneWeight1;
                     const rwY = r0Y * boneWeight0 + r1Y * boneWeight1;
@@ -226,17 +224,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                     const cr1Y = (centerY + r1Y) * 0.5;
                     const cr1Z = (centerZ + r1Z) * 0.5;
 
-                    boneSdefC[elementIndex * 3 + 0] = centerX;
-                    boneSdefC[elementIndex * 3 + 1] = centerY;
-                    boneSdefC[elementIndex * 3 + 2] = centerZ;
+                    boneSdefRW0[elementIndex * 3 + 0] = cr0X;
+                    boneSdefRW0[elementIndex * 3 + 1] = cr0Y;
+                    boneSdefRW0[elementIndex * 3 + 2] = cr0Z;
 
-                    boneSdefRW0![elementIndex * 3 + 0] = cr0X;
-                    boneSdefRW0![elementIndex * 3 + 1] = cr0Y;
-                    boneSdefRW0![elementIndex * 3 + 2] = cr0Z;
-
-                    boneSdefRW1![elementIndex * 3 + 0] = cr1X;
-                    boneSdefRW1![elementIndex * 3 + 1] = cr1Y;
-                    boneSdefRW1![elementIndex * 3 + 2] = cr1Z;
+                    boneSdefRW1[elementIndex * 3 + 0] = cr1X;
+                    boneSdefRW1[elementIndex * 3 + 1] = cr1Y;
+                    boneSdefRW1[elementIndex * 3 + 2] = cr1Z;
                 }
             }
 
