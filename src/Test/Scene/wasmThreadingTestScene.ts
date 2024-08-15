@@ -6,7 +6,7 @@ import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -16,8 +16,7 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { Scene } from "@babylonjs/core/scene";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -45,10 +44,7 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        engine.compatibilityMode = false;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -70,6 +66,9 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
+
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const [
             [mmdRuntime, mmdAnimation, mmdWasmAnimation],
@@ -109,68 +108,110 @@ export class SceneBuilder implements ISceneBuilder {
 
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
-            ["model1", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "yyb_deep_canyons_miku.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model2", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Hatsune Miku_10th.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model3", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB miku Crown Knight.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model4", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Piano dress Miku Collision fix FF BF.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model5", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "yyb Symphony Miku by HB-Squiddy FF.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["stage", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/stage/",
-                    "water house.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
+            ["model1", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/yyb_deep_canyons_miku.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model2", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model3", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB miku Crown Knight.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model4", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Piano dress Miku Collision fix FF BF.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model5", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/yyb Symphony Miku by HB-Squiddy FF.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/stage/water house.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            boundingBoxMargin: 0,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const ammoInstance = await ammo();

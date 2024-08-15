@@ -9,7 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { BezierCurveEase } from "@babylonjs/core/Animations/easing";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -21,8 +21,7 @@ import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
@@ -46,13 +45,6 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.afterBuildSingleMaterial = (material): void => {
-            if (material.name.toLowerCase() === "hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
-        };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -94,6 +86,12 @@ export class SceneBuilder implements ISceneBuilder {
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            if (material.name.toLowerCase() === "hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
+        };
+
         const [
             mmdAnimation1,
             mmdAnimation2,
@@ -102,45 +100,63 @@ export class SceneBuilder implements ISceneBuilder {
             modelMeshA,
             modelMeshB
         ] = await parallelLoadAsync(scene, [
-            ["motion1", (updateProgress): Promise<MmdAnimation> => {
-                return bvmdLoader.loadAsync("motion1", "res/private_test/motion/kimini_totte/motion_a.bvmd", updateProgress);
-            }],
-            ["motion2", (updateProgress): Promise<MmdAnimation> => {
-                return bvmdLoader.loadAsync("motion2", "res/private_test/motion/kimini_totte/motion_b.bvmd", updateProgress);
-            }],
-            ["camera", (updateProgress): Promise<MmdAnimation> => {
-                return bvmdLoader.loadAsync("camera", "res/private_test/motion/kimini_totte/camera.bvmd", updateProgress);
-            }],
-            ["model", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB miku Crown Knight.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model_a", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Hatsune Miku Default.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
-            ["model_b", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Hatsune Miku_10th.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
+            ["motion1", (updateProgress): Promise<MmdAnimation> =>
+                bvmdLoader.loadAsync("motion1", "res/private_test/motion/kimini_totte/motion_a.bvmd", updateProgress)],
+            ["motion2", (updateProgress): Promise<MmdAnimation> =>
+                bvmdLoader.loadAsync("motion2", "res/private_test/motion/kimini_totte/motion_b.bvmd", updateProgress)],
+            ["camera", (updateProgress): Promise<MmdAnimation> =>
+                bvmdLoader.loadAsync("camera", "res/private_test/motion/kimini_totte/camera.bvmd", updateProgress)],
+            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB miku Crown Knight.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model_a", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku Default.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["model_b", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const havokInstance = await havokPhysics();

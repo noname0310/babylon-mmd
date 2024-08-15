@@ -6,12 +6,11 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 // import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 // import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor";
@@ -21,8 +20,7 @@ import { Scene } from "@babylonjs/core/scene";
 
 // import havok from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -47,10 +45,6 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -77,6 +71,9 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
         const [
             mmdAnimation,
             modelMesh,
@@ -87,28 +84,42 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<Mesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "yyb_deep_canyons_miku.bpmx",
-                    scene,
-                    updateProgress
-                ).then((result) => result.meshes[0] as MmdMesh);
-            }],
-            ["stage", (updateProgress): Promise<Mesh> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/stage/",
-                    "water house.bpmx",
-                    scene,
-                    updateProgress
-                ).then((result) => result.meshes[0] as MmdMesh);
-            }],
+            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/yyb_deep_canyons_miku.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/stage/water house.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            boundingBoxMargin: 0,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const physicsInstance = await ammo();

@@ -10,7 +10,7 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -20,10 +20,8 @@ import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-import type { PmdLoader } from "@/Loader/pmdLoader";
-import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -73,14 +71,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
-        const pmdLoader = SceneLoader.GetPluginForExtension(".pmd") as PmdLoader;
-        pmdLoader.loggingEnabled = true;
-        pmdLoader.preserveSerializationData = true;
-
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.loggingEnabled = true;
-        pmxLoader.preserveSerializationData = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.deleteTextureBufferAfterLoad = false;
         materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
 
@@ -144,13 +135,26 @@ export class SceneBuilder implements ISceneBuilder {
             engine.displayLoadingUI();
             const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
-            mesh = await SceneLoader.ImportMeshAsync(
-                undefined,
-                fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
+            mesh = await loadAssetContainerAsync(
                 file,
                 scene,
-                (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+                {
+                    onProgress: (event) => engine.loadingUIText = `<br/><br/><br/>Loading (${file.name})... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`,
+                    rootUrl: fileRelativePath.substring(0, fileRelativePath.lastIndexOf("/") + 1),
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: true,
+                            buildMorph: true,
+                            boundingBoxMargin: 0,
+                            preserveSerializationData: preserveSerializationDataInput.checked,
+                            loggingEnabled: true,
+                            referenceFiles: files
+                        }
+                    }
+                }
             ).then(result => {
+                result.addAllToScene();
                 const mmdMesh = result.meshes[0] as MmdMesh;
                 OiComputeTransformInjector.OverrideComputeTransformMatrices(mmdMesh.metadata.skeleton!);
                 mmdMesh.metadata.skeleton?._markAsDirty();
@@ -420,15 +424,11 @@ export class SceneBuilder implements ISceneBuilder {
             const fileSystemEntries = await readDirectories(entries);
             files = await entriesToFiles(fileSystemEntries);
             renderLoadedFiles();
-            pmxLoader.referenceFiles = files;
-            pmdLoader.referenceFiles = files;
         };
         fileInput.onchange = (): void => {
             if (fileInput.files === null) return;
             files = Array.from(fileInput.files);
             renderLoadedFiles();
-            pmxLoader.referenceFiles = files;
-            pmdLoader.referenceFiles = files;
         };
         innerFormDiv.appendChild(fileInput);
 
@@ -619,15 +619,13 @@ export class SceneBuilder implements ISceneBuilder {
         preserveSerializationDataInput.style.width = "16px";
         preserveSerializationDataInput.style.height = "16px";
         preserveSerializationDataInput.type = "checkbox";
-        preserveSerializationDataInput.checked = pmxLoader.preserveSerializationData;
+        preserveSerializationDataInput.checked = true;
         preserveSerializationDataDiv.appendChild(preserveSerializationDataInput);
         preserveSerializationDataInput.onclick = (event): void => {
             if (isLoading) {
                 event.preventDefault();
                 return;
             }
-            pmxLoader.preserveSerializationData = preserveSerializationDataInput.checked;
-            pmdLoader.preserveSerializationData = preserveSerializationDataInput.checked;
 
             if (selectedFile === null) return;
             loadModelAsync(selectedFile);
@@ -656,7 +654,7 @@ export class SceneBuilder implements ISceneBuilder {
         buildSkeletonInput.style.width = "16px";
         buildSkeletonInput.style.height = "16px";
         buildSkeletonInput.type = "checkbox";
-        buildSkeletonInput.checked = pmxLoader.buildSkeleton;
+        buildSkeletonInput.checked = true;
         buildSkeletonDiv.appendChild(buildSkeletonInput);
 
         const buildMorphDiv = document.createElement("div");
@@ -682,7 +680,7 @@ export class SceneBuilder implements ISceneBuilder {
         buildMorphInput.style.width = "16px";
         buildMorphInput.style.height = "16px";
         buildMorphInput.type = "checkbox";
-        buildMorphInput.checked = pmxLoader.buildMorph;
+        buildMorphInput.checked = true;
         buildMorphDiv.appendChild(buildMorphInput);
 
         const buttonContainer = document.createElement("div");

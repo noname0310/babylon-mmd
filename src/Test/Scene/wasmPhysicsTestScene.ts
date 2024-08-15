@@ -68,7 +68,6 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
 
         const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder;
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const [
@@ -104,46 +103,42 @@ export class SceneBuilder implements ISceneBuilder {
 
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => {
-                return loadAssetContainerAsync(
-                    "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
-                    scene,
-                    {
-                        onProgress: updateProgress,
-                        pluginOptions: {
-                            mmdmodel: {
-                                materialBuilder: materialBuilder,
-                                boundingBoxMargin: 60,
-                                loggingEnabled: true
-                            }
+            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
                         }
                     }
-                ).then(result => {
-                    result.addAllToScene();
-                    return result.meshes[0] as MmdMesh;
-                });
-            }],
-            ["stage", (updateProgress): Promise<MmdMesh> => {
-                return loadAssetContainerAsync(
-                    "res/private_test/stage/Stage35_02_toonfix.bpmx",
-                    scene,
-                    {
-                        onProgress: updateProgress,
-                        pluginOptions: {
-                            mmdmodel: {
-                                materialBuilder: materialBuilder,
-                                buildSkeleton: false,
-                                buildMorph: false,
-                                boundingBoxMargin: 0,
-                                loggingEnabled: true
-                            }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
+            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/stage/Stage35_02_toonfix.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            boundingBoxMargin: 0,
+                            loggingEnabled: true
                         }
                     }
-                ).then(result => {
-                    result.addAllToScene();
-                    return result.meshes[0] as MmdMesh;
-                });
-            }]
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })]
         ]);
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
@@ -207,7 +202,7 @@ export class SceneBuilder implements ISceneBuilder {
                 }
             };
             scene.onAfterRenderObservable.add(performanceTest);
-        }, 2000);
+        }, 5000);
 
         const disableSsr = (): void => {
             ssr.strength -= 0.1;
@@ -215,6 +210,7 @@ export class SceneBuilder implements ISceneBuilder {
             if (ssr.strength <= 0) {
                 scene.onAfterRenderObservable.removeCallback(disableSsr);
                 ssr.dispose(true);
+                scene.resetDrawCache();
             }
         };
 

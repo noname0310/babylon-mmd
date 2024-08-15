@@ -4,15 +4,14 @@ import "@/Loader/pmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
-import type { PmxLoader } from "@/Loader/pmxLoader";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { SdefMesh } from "@/Loader/sdefMesh";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -28,12 +27,6 @@ import { createLightComponents } from "../Util/createLightComponents";
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
-        // materialBuilder.alphaEvaluationResolution = 2048;
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -53,12 +46,24 @@ export class SceneBuilder implements ISceneBuilder {
         const bezierAnimation = new BezierAnimation("bezierAnimation", "x", 30, BezierAnimation.ANIMATIONTYPE_FLOAT);
         bezierAnimation.clone();
 
-        pmxLoader.buildSkeleton = true;
-        pmxLoader.buildMorph = true;
-        const assetContainer = await SceneLoader.LoadAssetContainerAsync(
-            "res/private_test/model/YYB Hatsune Miku_10th/",
-            "YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
-            scene
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
+        // materialBuilder.alphaEvaluationResolution = 2048;
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
+        const assetContainer = await loadAssetContainerAsync(
+            "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+            scene,
+            {
+                pluginOptions: {
+                    mmdmodel: {
+                        materialBuilder: materialBuilder,
+                        buildSkeleton: true,
+                        buildMorph: true,
+                        loggingEnabled: true
+                    }
+                }
+            }
         );
         assetContainer.addAllToScene();
         assetContainer.instantiateModelsToScene(undefined, true);

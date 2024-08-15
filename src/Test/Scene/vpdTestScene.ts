@@ -3,7 +3,7 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -14,8 +14,7 @@ import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VpdLoader } from "@/Loader/vpdLoader";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -33,10 +32,8 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        engine.compatibilityMode = false;
+        engine.snapshotRendering = true;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -58,6 +55,9 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.register(scene);
 
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
         const [
             mmdAnimation,
             modelMesh,
@@ -68,16 +68,22 @@ export class SceneBuilder implements ISceneBuilder {
                 vpdLoader.loggingEnabled = true;
                 return vpdLoader.loadAsync("motion", "res/private_test/motion/test_pose1.vpd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "YYB Hatsune Miku_10th.bpmx",
-                    scene,
-                    updateProgress
-                ).then(result => result.meshes[0] as MmdMesh);
-            }],
+            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        bpmxmodel: {
+                            materialBuilder: materialBuilder,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
             ["physics", async(updateProgress): Promise<HavokPlugin> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const havokInstance = await havokPhysics();
@@ -100,7 +106,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
         mmdModel.currentAnimation!.animate(0);
-        mmdModel.initializePhysics();
+        mmdRuntime.initializeMmdModelPhysics(mmdModel);
 
         attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,

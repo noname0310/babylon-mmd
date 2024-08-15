@@ -7,7 +7,7 @@ import "@/Loader/mmdOutlineRenderer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 // import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -24,9 +24,8 @@ import { Scene } from "@babylonjs/core/scene";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
-import type { PmxLoader } from "@/Loader/pmxLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -50,15 +49,7 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
-        materialBuilder.afterBuildSingleMaterial = (material): void => {
-            material.forceDepthWrite = true;
-            material.useLogarithmicDepth = true;
-        };
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        engine.compatibilityMode = false;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -93,6 +84,14 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
+        materialBuilder.afterBuildSingleMaterial = (material): void => {
+            material.forceDepthWrite = true;
+            material.useLogarithmicDepth = true;
+        };
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
         const [
             mmdAnimations,
             modelMesh
@@ -110,17 +109,23 @@ export class SceneBuilder implements ISceneBuilder {
                 ];
                 return Promise.all(filePaths.map((filePath) => vmdLoader.loadAsync("motion", filePath, updateProgress)));
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => {
-                pmxLoader.boundingBoxMargin = 60;
-
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/YYB Hatsune Miku_10th - faceforward - newjeans/",
-                    "YYB Hatsune Miku_10th_v1.02 - faceforward - ng.pmx",
-                    scene,
-                    updateProgress
-                ).then((result) => result.meshes[0] as MmdMesh);
-            }],
+            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/YYB Hatsune Miku_10th - faceforward - newjeans/YYB Hatsune Miku_10th_v1.02 - faceforward - ng.pmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })],
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
                 const physicsInstance = await ammo();

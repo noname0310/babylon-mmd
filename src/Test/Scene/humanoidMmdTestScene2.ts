@@ -7,10 +7,10 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -22,8 +22,7 @@ import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeli
 import { Scene } from "@babylonjs/core/scene";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -44,12 +43,6 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
-
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
@@ -75,6 +68,10 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
         mmdPlayerControl.showPlayerControl();
 
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+
         const [
             mmdAnimation,
             modelLoadResult
@@ -84,27 +81,32 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/105 degrees Celsius/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "Karin.glb",
-                    scene,
-                    updateProgress
-                );
-            }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/stage/",
-                    "Stage35_02.bpmx",
-                    scene,
-                    updateProgress
-                );
-            }]
+            ["model", (updateProgress): Promise<AssetContainer> => loadAssetContainerAsync(
+                "res/private_test/model/Karin.glb",
+                scene,
+                { onProgress: updateProgress }
+            ).then(result => {
+                result.addAllToScene();
+                return result;
+            })],
+            ["stage", (updateProgress): Promise<AssetContainer> => loadAssetContainerAsync(
+                "res/private_test/stage/Stage35_02.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result;
+            })]
         ]);
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
@@ -264,7 +266,7 @@ export class SceneBuilder implements ISceneBuilder {
                 }
             };
             scene.onAfterRenderObservable.add(performanceTest);
-        }, 2000);
+        }, 5000);
 
         const disableSsr = (): void => {
             ssr.strength -= 0.1;
@@ -272,6 +274,7 @@ export class SceneBuilder implements ISceneBuilder {
             if (ssr.strength <= 0) {
                 scene.onAfterRenderObservable.removeCallback(disableSsr);
                 ssr.dispose(true);
+                scene.resetDrawCache();
             }
         };
 

@@ -6,7 +6,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Material } from "@babylonjs/core/Materials/material";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
@@ -20,9 +20,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -32,12 +30,6 @@ import { createLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
@@ -48,12 +40,11 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.intensity = 0.7;
         createDefaultGround(scene);
 
-        const modelLoadResult = await SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/private_test/model/",
-            "Moe.glb",
+        const modelLoadResult = await loadAssetContainerAsync(
+            "res/private_test/model/Moe.glb",
             scene
         );
+        modelLoadResult.addAllToScene();
 
         const modelRoot = modelLoadResult.meshes[0] as Mesh;
         modelRoot.rotationQuaternion!.set(0, 0, 0, 1);

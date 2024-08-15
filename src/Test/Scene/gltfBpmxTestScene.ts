@@ -9,8 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import type { ISceneLoaderAsyncResult } from "@babylonjs/core/Loading/sceneLoader";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -23,8 +22,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 import type { ReferenceFileResolver } from "@/Loader/referenceFileResolver";
@@ -48,10 +46,32 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
+        const scene = new Scene(engine);
+        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
+        scene.autoClear = false;
 
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
+        mmdCamera.maxZ = 5000;
+        const camera = createDefaultArcRotateCamera(scene);
+        createCameraSwitch(scene, canvas, mmdCamera, camera);
+        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        createDefaultGround(scene);
+
+        const mmdRuntime = new MmdRuntime(scene);
+        mmdRuntime.loggingEnabled = true;
+        mmdRuntime.register(scene);
+
+        mmdRuntime.playAnimation();
+
+        const audioPlayer = new StreamAudioPlayer(scene);
+        audioPlayer.preservesPitch = false;
+        audioPlayer.source = "res/private_test/motion/cinderella/cinderella.mp3";
+        mmdRuntime.setAudioPlayer(audioPlayer);
+
+        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+        mmdPlayerControl.showPlayerControl();
+
+        const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
         const originalLoadToonTexture = materialBuilder.loadToonTexture;
         materialBuilder.loadToonTexture = (
@@ -87,31 +107,6 @@ export class SceneBuilder implements ISceneBuilder {
         };
         materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
 
-        const scene = new Scene(engine);
-        scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        scene.autoClear = false;
-
-        const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
-        mmdCamera.maxZ = 5000;
-        const camera = createDefaultArcRotateCamera(scene);
-        createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
-        createDefaultGround(scene);
-
-        const mmdRuntime = new MmdRuntime(scene);
-        mmdRuntime.loggingEnabled = true;
-        mmdRuntime.register(scene);
-
-        mmdRuntime.playAnimation();
-
-        const audioPlayer = new StreamAudioPlayer(scene);
-        audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/cinderella/cinderella.mp3";
-        mmdRuntime.setAudioPlayer(audioPlayer);
-
-        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
-        mmdPlayerControl.showPlayerControl();
-
         const [
             mmdAnimation,
             mmdMesh
@@ -121,28 +116,42 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd", updateProgress);
             }],
-            ["model", async(updateProgress): Promise<MmdMesh> => {
-                const result = await SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/model/",
-                    "Moe.bpmx",
-                    scene,
-                    updateProgress
-                );
+            ["model", async(updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/model/Moe.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
-            }],
-            ["stage", (updateProgress): Promise<ISceneLoaderAsyncResult> => {
-                pmxLoader.boundingBoxMargin = 0;
-                pmxLoader.buildSkeleton = false;
-                pmxLoader.buildMorph = false;
-                return SceneLoader.ImportMeshAsync(
-                    undefined,
-                    "res/private_test/stage/",
-                    "Stage35_02.bpmx",
-                    scene,
-                    updateProgress
-                );
-            }]
+            })],
+            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                "res/private_test/stage/Stage35_02.bpmx",
+                scene,
+                {
+                    onProgress: updateProgress,
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            boundingBoxMargin: 0,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then(result => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            })]
         ]);
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
