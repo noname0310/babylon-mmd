@@ -382,8 +382,8 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
 
     public override getUniforms(_shaderLanguage?: ShaderLanguage): {
         ubo: { name: string; size: number; type: string; }[];
-        fragment: string;
-        } {
+        fragment?: string;
+    } {
         return {
             "ubo": [
                 { name: "textureMultiplicativeColor", size: 4, type: "vec4" },
@@ -392,21 +392,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
                 { name: "sphereTextureAdditiveColor", size: 4, type: "vec4" },
                 { name: "toonTextureMultiplicativeColor", size: 4, type: "vec4" },
                 { name: "toonTextureAdditiveColor", size: 4, type: "vec4" }
-            ],
-            "fragment": /* glsl */`
-                #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
-                    uniform vec4 textureMultiplicativeColor;
-                    uniform vec4 textureAdditiveColor;
-                #endif
-                #if defined(SPHERE_TEXTURE) && defined(SPHERE_TEXTURE_COLOR)
-                    uniform vec4 sphereTextureMultiplicativeColor;
-                    uniform vec4 sphereTextureAdditiveColor;
-                #endif
-                #if defined(TOON_TEXTURE) && defined(TOON_TEXTURE_COLOR)
-                    uniform vec4 toonTextureMultiplicativeColor;
-                    uniform vec4 toonTextureAdditiveColor;
-                #endif
-            `
+            ]
         };
     }
 

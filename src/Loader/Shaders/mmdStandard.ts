@@ -208,4 +208,27 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
         }
         return null;
     }
+
+    public override getUniforms(shaderLanguage?: ShaderLanguage): {
+        ubo: { name: string; size: number; type: string; }[];
+        fragment: string;
+    } {
+        return {
+            ...super.getUniforms(shaderLanguage),
+            "fragment": /* glsl */`
+                #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
+                    uniform vec4 textureMultiplicativeColor;
+                    uniform vec4 textureAdditiveColor;
+                #endif
+                #if defined(SPHERE_TEXTURE) && defined(SPHERE_TEXTURE_COLOR)
+                    uniform vec4 sphereTextureMultiplicativeColor;
+                    uniform vec4 sphereTextureAdditiveColor;
+                #endif
+                #if defined(TOON_TEXTURE) && defined(TOON_TEXTURE_COLOR)
+                    uniform vec4 toonTextureMultiplicativeColor;
+                    uniform vec4 toonTextureAdditiveColor;
+                #endif
+            `
+        };
+    }
 }

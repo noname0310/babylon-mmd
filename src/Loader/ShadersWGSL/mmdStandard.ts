@@ -129,14 +129,14 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                     #ifdef TOON_TEXTURE_COLOR
                         toonNdl = mix(
                             vec3f(1.0),
-                            toonNdl * toonTextureMultiplicativeColor.rgb,
-                            toonTextureMultiplicativeColor.a
+                            toonNdl * uniforms.toonTextureMultiplicativeColor.rgb,
+                            uniforms.toonTextureMultiplicativeColor.a
                         );
                         toonNdl = clamp(
-                            toonNdl + (toonNdl - vec3f(1.0)) * toonTextureAdditiveColor.a,
-                            0.0,
-                            1.0
-                        ) + toonTextureAdditiveColor.rgb;
+                            toonNdl + (toonNdl - vec3f(1.0)) * uniforms.toonTextureAdditiveColor.a,
+                            vec3f(0.0),
+                            vec3f(1.0)
+                        ) + uniforms.toonTextureAdditiveColor.rgb;
                     #endif
 
                     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
@@ -186,17 +186,17 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                         sphereReflectionColor = vec4f(
                             mix(
                                 vec3f(1.0),
-                                sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
-                                sphereTextureMultiplicativeColor.a
+                                sphereReflectionColor.rgb * uniforms.sphereTextureMultiplicativeColor.rgb,
+                                uniforms.sphereTextureMultiplicativeColor.a
                             ),
                             sphereReflectionColor.a
                         );
                         sphereReflectionColor = vec4f(
                             clamp(
-                                sphereReflectionColor.rgb + (sphereReflectionColor.rgb - vec3f(1.0)) * sphereTextureAdditiveColor.a,
-                                0.0,
-                                1.0
-                            ) + sphereTextureAdditiveColor.rgb,
+                                sphereReflectionColor.rgb + (sphereReflectionColor.rgb - vec3f(1.0)) * uniforms.sphereTextureAdditiveColor.a,
+                                vec3f(0.0),
+                                vec3f(1.0)
+                            ) + uniforms.sphereTextureAdditiveColor.rgb,
                             sphereReflectionColor.a
                         );
                     #endif
