@@ -30,7 +30,7 @@ declare module "@babylonjs/core/Loading/sceneLoader" {
         /**
          * Defines options for the pmx/pmd/bpmx loader.
          */
-        mmdmodel?: Partial<PmLoaderOptions | BpmxLoaderOptions>;
+        mmdmodel?: Partial<PmLoaderOptions & BpmxLoaderOptions>;
     }
 }
 
