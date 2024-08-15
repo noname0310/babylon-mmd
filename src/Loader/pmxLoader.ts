@@ -1,5 +1,5 @@
 import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { type ISceneLoaderPluginAsync, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { type ISceneLoaderPluginAsync, registerSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
@@ -40,6 +40,4 @@ export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
     }
 }
 
-if (SceneLoader) {
-    SceneLoader.RegisterPlugin(new PmxLoader());
-}
+registerSceneLoaderPlugin(new PmxLoader());

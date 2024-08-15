@@ -9,7 +9,7 @@ import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -21,8 +21,7 @@ import { Scene } from "@babylonjs/core/scene";
 
 // import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import type { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "@/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -49,14 +48,8 @@ import { parallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
-        engine.compatibilityMode = false;
-
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder;
-        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        engine.compatibilityMode = false;
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -73,6 +66,10 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
+
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder;
+        // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const [
             [mmdRuntime, mmdAnimation, mmdWasmAnimation],
@@ -108,34 +105,44 @@ export class SceneBuilder implements ISceneBuilder {
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
             ["model", (updateProgress): Promise<MmdMesh> => {
-                return SceneLoader.ImportMeshAsync(
+                return loadAssetContainerAsync(
                     "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                     scene,
                     {
                         onProgress: updateProgress,
                         pluginOptions: {
                             mmdmodel: {
-                                boundingBoxMargin: 60
+                                materialBuilder: materialBuilder,
+                                boundingBoxMargin: 60,
+                                loggingEnabled: true
                             }
                         }
                     }
-                ).then(result => result.meshes[0] as MmdMesh);
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as MmdMesh;
+                });
             }],
             ["stage", (updateProgress): Promise<MmdMesh> => {
-                return SceneLoader.ImportMeshAsync(
+                return loadAssetContainerAsync(
                     "res/private_test/stage/Stage35_02_toonfix.bpmx",
                     scene,
                     {
                         onProgress: updateProgress,
                         pluginOptions: {
                             mmdmodel: {
+                                materialBuilder: materialBuilder,
                                 buildSkeleton: false,
                                 buildMorph: false,
-                                boundingBoxMargin: 0
+                                boundingBoxMargin: 0,
+                                loggingEnabled: true
                             }
                         }
                     }
-                ).then(result => result.meshes[0] as MmdMesh);
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as MmdMesh;
+                });
             }]
         ]);
 
@@ -177,7 +184,7 @@ export class SceneBuilder implements ISceneBuilder {
         ssr.enableSmoothReflections = false;
         ssr.enableAutomaticThicknessComputation = false;
         ssr.blurDownsample = 2;
-        ssr.ssrDownsample = 2;
+        ssr.ssrDownsample = 0;
         ssr.thickness = 0.1;
         ssr.selfCollisionNumSkip = 2;
         ssr.blurDispersionStrength = 0;

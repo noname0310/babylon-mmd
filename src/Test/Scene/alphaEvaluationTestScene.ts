@@ -3,13 +3,12 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
-import { type MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
-import type { PmxLoader } from "@/Loader/pmxLoader";
+import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -22,12 +21,6 @@ import { createLightComponents } from "../Util/createLightComponents";
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        pmxLoader.loggingEnabled = true;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
-        // materialBuilder.alphaEvaluationResolution = 2048;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
@@ -35,18 +28,28 @@ export class SceneBuilder implements ISceneBuilder {
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
-        const mmdMesh = await SceneLoader.ImportMeshAsync(
+        const materialBuilder = new MmdStandardMaterialBuilder();
+        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+        // materialBuilder.alphaEvaluationResolution = 2048;
+        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
+        const mmdMesh = await loadAssetContainerAsync(
             "res/private_test/model/YYB 元气少女/Miku.pmx",
             scene,
             {
                 pluginOptions: {
                     mmdmodel: {
+                        materialBuilder: materialBuilder,
                         buildSkeleton: false,
-                        buildMorph: false
+                        buildMorph: false,
+                        loggingEnabled: true
                     }
                 }
             }
-        ).then(result => result.meshes[0] as MmdMesh);
+        ).then(result => {
+            result.addAllToScene();
+            return result.meshes[0] as MmdMesh;
+        });
         for (const mesh of mmdMesh.metadata.meshes) {
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh, false);

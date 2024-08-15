@@ -1,5 +1,5 @@
 import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { type ISceneLoaderPluginAsync, SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { type ISceneLoaderPluginAsync, registerSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 
 import type { ILogger } from "./Parser/ILogger";
 import { PmdReader } from "./Parser/pmdReader";
@@ -40,6 +40,4 @@ export class PmdLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
     }
 }
 
-if (SceneLoader) {
-    SceneLoader.RegisterPlugin(new PmdLoader());
-}
+registerSceneLoaderPlugin(new PmdLoader());
