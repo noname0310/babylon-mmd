@@ -36,7 +36,8 @@ export class SdefInjector {
             onCompiled?: Nullable<(effect: Effect) => void>,
             onError?: Nullable<(effect: Effect, errors: string) => void>,
             indexParameters?: any,
-            shaderLanguage = ShaderLanguage.GLSL
+            shaderLanguage = ShaderLanguage.GLSL,
+            extraInitializationsAsync?: () => Promise<void>
         ): Effect {
             let effectCreationOptions: IEffectCreationOptions;
             if ((<IEffectCreationOptions>attributesNamesOrOptions).attributes) {
@@ -52,7 +53,8 @@ export class SdefInjector {
                     onCompiled: onCompiled ?? null,
                     onError: onError ?? null,
                     indexParameters: indexParameters ?? null,
-                    shaderLanguage: shaderLanguage
+                    shaderLanguage: shaderLanguage,
+                    extraInitializationsAsync: extraInitializationsAsync
                 };
             }
 

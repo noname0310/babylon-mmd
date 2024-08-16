@@ -1,8 +1,3 @@
-import "./Shaders/textureAlphaChecker.fragment";
-import "./Shaders/textureAlphaChecker.vertex";
-import "./ShadersWGSL/textureAlphaChecker.fragment";
-import "./ShadersWGSL/textureAlphaChecker.vertex";
-
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { Material } from "@babylonjs/core/Materials/material";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
@@ -282,6 +277,8 @@ export class TextureAlphaChecker {
 
     private static _GetShader(scene: Scene): ShaderMaterial {
         if (!scene._textureAlphaCheckerShader) {
+            const shaderLanguage = scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL;
+
             const shader = new ShaderMaterial(
                 "textureAlphaChecker",
                 scene,
@@ -295,7 +292,14 @@ export class TextureAlphaChecker {
                     attributes: ["uv"],
                     uniforms: [],
                     samplers: ["textureSampler"],
-                    shaderLanguage: scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL
+                    shaderLanguage: shaderLanguage,
+                    extraInitializationsAsync: async(): Promise<void> => {
+                        if (shaderLanguage === ShaderLanguage.WGSL) {
+                            await Promise.all([import("./ShadersWGSL/textureAlphaChecker.fragment"), import("./ShadersWGSL/textureAlphaChecker.vertex")]);
+                        } else {
+                            await Promise.all([import("./Shaders/textureAlphaChecker.fragment"), import("./Shaders/textureAlphaChecker.vertex")]);
+                        }
+                    }
                 }
             );
             shader.backFaceCulling = false;

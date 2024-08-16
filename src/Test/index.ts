@@ -4,10 +4,9 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
-import "@babylonjs/core";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/appendTransformTestScene";
+import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 

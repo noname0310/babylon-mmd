@@ -73,7 +73,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const [
             mmdAnimation,
-            modelMesh
+            modelMesh,
+            stageMesh
         ] = await parallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
@@ -149,7 +150,7 @@ export class SceneBuilder implements ISceneBuilder {
         groundMaterial.specularPower = 128;
         const groundReflectionTexture = groundMaterial.reflectionTexture = new MirrorTexture("MirrorTexture", 1024, scene, true, undefined, undefined, true);
         groundReflectionTexture.mirrorPlane = Plane.FromPositionAndNormal(ground.position, ground.getFacetNormal(0).scale(-1));
-        groundReflectionTexture.renderList = [...modelMesh.metadata.meshes];
+        groundReflectionTexture.renderList = [...modelMesh.metadata.meshes, ...stageMesh.metadata.meshes];
         groundReflectionTexture.level = 0.45;
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);

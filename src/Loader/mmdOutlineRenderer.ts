@@ -1,8 +1,3 @@
-import "./Shaders/mmdOutline.fragment";
-import "./Shaders/mmdOutline.vertex";
-import "./ShadersWGSL/mmdOutline.fragment";
-import "./ShadersWGSL/mmdOutline.vertex";
-
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -340,6 +335,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             addClipPlaneUniforms(uniforms);
             if (useClipPlane) uniforms.push("inverseViewProjection");
+
+            const shaderLanguage = scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL;
             drawWrapper.setEffect(
                 this.scene.getEngine().createEffect(
                     "mmdOutline",
@@ -350,7 +347,14 @@ export class MmdOutlineRenderer implements ISceneComponent {
                         defines: join,
                         indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
                         processCodeAfterIncludes: SdefInjector.ProcessSdefCode,
-                        shaderLanguage: scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL
+                        shaderLanguage: shaderLanguage,
+                        extraInitializationsAsync: async(): Promise<void> => {
+                            if (shaderLanguage === ShaderLanguage.WGSL) {
+                                await Promise.all([import("./ShadersWGSL/mmdOutline.fragment"), import("./ShadersWGSL/mmdOutline.vertex")]);
+                            } else {
+                                await Promise.all([import("./Shaders/mmdOutline.fragment"), import("./Shaders/mmdOutline.vertex")]);
+                            }
+                        }
                     },
                     this.scene.getEngine()
                 ),
