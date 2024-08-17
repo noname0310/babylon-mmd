@@ -22,13 +22,21 @@ impl PhysicsModelContext {
         kinematic_shared_physics_handles: Vec<PhysicsModelHandle>,
         world_matrix: Mat4,
     ) -> Self {
+        let invertable = world_matrix.determinant() != 0.0;
+
+        let (world_matrix, world_matrix_inverse) = if invertable {
+            (world_matrix, world_matrix.inverse())
+        } else {
+            (Mat4::IDENTITY, Mat4::IDENTITY)
+        };
+
         Self {
             physics_handle,
             kinematic_shared_physics_handles,
 
             world_matrix_apply_buffer: None,
             world_matrix,
-            world_matrix_inverse: world_matrix.inverse(),
+            world_matrix_inverse,
             
             need_init_apply_buffer: false,
             need_init: false,
@@ -49,8 +57,14 @@ impl PhysicsModelContext {
 
     pub (crate) fn apply_world_matrix(&mut self) {
         if let Some(world_matrix) = self.world_matrix_apply_buffer {
-            self.world_matrix = world_matrix;
-            self.world_matrix_inverse = world_matrix.inverse();
+            let invertable = world_matrix.determinant() != 0.0;
+            if invertable {
+                self.world_matrix = world_matrix;
+                self.world_matrix_inverse = world_matrix.inverse();
+            } else {
+                self.world_matrix = Mat4::IDENTITY;
+                self.world_matrix_inverse = Mat4::IDENTITY;
+            }
             self.world_matrix_apply_buffer = None;
         }
     }

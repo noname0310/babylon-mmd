@@ -14,6 +14,8 @@
 
 - fix `MmdOutlineRenderer` not work properly when using [WebGPU Non Compatibility Mode](https://doc.babylonjs.com/setup/support/webGPU/webGPUOptimization/webGPUNonCompatibilityMode)
 
+- handle zero scale matrix in WASM integrated physics runtime
+
 ## 0.52.0 (2024-08-02)
 
 - fix BPMX converter does not serialize model with shared toon texture correctly
