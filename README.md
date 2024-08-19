@@ -92,7 +92,11 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     camera.addAnimation(cameraMotion);
     camera.setAnimation("camera_motion_1");
 
-    const model = await SceneLoader.ImportMeshAsync(undefined, "your/root/path/", "your_file_name.pmx", scene).then((result) => result.meshes[0]);
+    const model = await loadAssetContainerAsync("path/to/your_file.pmx", scene)
+        .then(result => {
+            result.addAllToScene();
+            return result.meshes[0] as MmdMesh;
+        });
     const mmdModel = mmdRuntime.createMmdModel(model);
     const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
     mmdModel.addAnimation(modelMotion);
@@ -129,7 +133,11 @@ then you can load the converted files like below.
 // side effects that register the loader
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 
-const model = await SceneLoader.ImportMeshAsync(undefined, "your/root/path/", "your_file_name.bpmx", scene).then((result) => result.meshes[0]);
+const model = await loadAssetContainerAsync("path/to/your_file.bpmx", scene)
+    .then(result => {
+        result.addAllToScene();
+        return result.meshes[0] as MmdMesh;
+    });
 ```
 
 ### VMD to BVMD
