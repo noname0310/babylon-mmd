@@ -26,7 +26,7 @@ fn rotationMatrixToQuaternion(matrix: mat3x3f) -> vec4f {
     if (trace > 0.0) {
         s = 0.5 / sqrtValue;
 
-        return vec4(
+        return vec4f(
             (matrix[1][2] - matrix[2][1]) * s,
             (matrix[2][0] - matrix[0][2]) * s,
             (matrix[0][1] - matrix[1][0]) * s,
@@ -35,7 +35,7 @@ fn rotationMatrixToQuaternion(matrix: mat3x3f) -> vec4f {
     } else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
         s = 2.0 * sqrtValue;
 
-        return vec4(
+        return vec4f(
             0.25 * s,
             (matrix[0][1] + matrix[1][0]) / s,
             (matrix[2][0] + matrix[0][2]) / s,
@@ -44,7 +44,7 @@ fn rotationMatrixToQuaternion(matrix: mat3x3f) -> vec4f {
     } else if (matrix[1][1] > matrix[2][2]) {
         s = 2.0 * sqrtValue;
         
-        return vec4(
+        return vec4f(
             (matrix[0][1] + matrix[1][0]) / s,
             0.25 * s,
             (matrix[1][2] + matrix[2][1]) / s,
@@ -53,7 +53,7 @@ fn rotationMatrixToQuaternion(matrix: mat3x3f) -> vec4f {
     } else {
         s = 2.0 * sqrtValue;
 
-        return vec4(
+        return vec4f(
             (matrix[2][0] + matrix[0][2]) / s,
             (matrix[1][2] + matrix[2][1]) / s,
             0.25 * s,

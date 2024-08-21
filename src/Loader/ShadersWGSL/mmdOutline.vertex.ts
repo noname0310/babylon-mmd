@@ -86,10 +86,10 @@ fn main(input: VertexInputs) -> FragmentInputs {
 
 #ifdef ALPHATEST
 #ifdef UV1
-    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4(uvUpdated, 1.0, 0.0)).xy;
+    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4f(uvUpdated, 1.0, 0.0)).xy;
 #endif
 #ifdef UV2
-    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4(vertexInputs.uv2, 1.0, 0.0)).xy;
+    vertexOutputs.vUV = (uniforms.diffuseMatrix * vec4f(vertexInputs.uv2, 1.0, 0.0)).xy;
 #endif
 #endif
 #include<clipPlaneVertex>
