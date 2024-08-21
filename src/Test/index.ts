@@ -6,7 +6,7 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/bakedAnimationTestScene";
+import { SceneBuilder } from "./Scene/wasmPhysicsTestScene";
 
 await new Promise(resolve => window.onload = resolve);
 
@@ -18,7 +18,7 @@ document.body.appendChild(canvas);
 
 let engine;
 
-const useWebGPU = false;
+const useWebGPU = true;
 if (useWebGPU) {
     engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(canvas, {
         stencil: false,

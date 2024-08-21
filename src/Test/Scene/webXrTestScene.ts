@@ -7,7 +7,6 @@ import "@babylonjs/core/Helpers/sceneHelpers";
 import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import "@babylonjs/core/Materials/Node/Blocks";
 import "@babylonjs/core/XR/features/WebXRControllerMovement";
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";

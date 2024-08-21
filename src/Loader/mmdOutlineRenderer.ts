@@ -179,6 +179,12 @@ export class MmdOutlineRenderer implements ISceneComponent {
             renderingMesh._bind(subMesh, effect, material.fillMode);
         }
 
+        // Baked vertex animations
+        const bvaManager = subMesh.getMesh().bakedVertexAnimationManager;
+        if (hardwareInstancedRendering && bvaManager && bvaManager.isEnabled) {
+            bvaManager.bind(effect, true);
+        }
+
         // Alpha test
         if (material && material.needAlphaTesting()) {
             const alphaTexture = material.getAlphaTestTexture();
@@ -309,6 +315,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
             }
         }
 
+        // Baked vertex animations
+        const bvaManager = mesh.bakedVertexAnimationManager;
+        if (useInstances && bvaManager && bvaManager.isEnabled) {
+            defines.push("#define BAKED_VERTEX_ANIMATION_TEXTURE");
+            attribs.push("bakedVertexAnimationSettingsInstanced");
+        }
+
         // Get correct effect
         const drawWrapper = subMesh._getDrawWrapper(renderPassId, true)!;
         const cachedDefines = drawWrapper.defines;
@@ -329,9 +342,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 "boneTextureWidth",
                 "morphTargetCount",
                 "morphTargetTextureInfo",
-                "morphTargetTextureIndices"
+                "morphTargetTextureIndices",
+                "bakedVertexAnimationSettings",
+                "bakedVertexAnimationTextureSizeInverted",
+                "bakedVertexAnimationTime",
+                "bakedVertexAnimationTexture"
             ];
-            const samplers = ["diffuseSampler", "boneSampler", "morphTargets"];
+            const samplers = ["diffuseSampler", "boneSampler", "morphTargets", "bakedVertexAnimationTexture"];
 
             addClipPlaneUniforms(uniforms);
             if (useClipPlane) uniforms.push("inverseViewProjection");
@@ -343,8 +360,12 @@ export class MmdOutlineRenderer implements ISceneComponent {
                     <IEffectCreationOptions>{
                         attributes: attribs,
                         uniformsNames: uniforms,
+                        uniformBuffersNames: [],
                         samplers: samplers,
                         defines: join,
+                        fallbacks: fallbacks,
+                        onCompiled: null,
+                        onError: null,
                         indexParameters: { maxSimultaneousMorphTargets: numMorphInfluencers },
                         processCodeAfterIncludes: SdefInjector.ProcessSdefCode,
                         shaderLanguage: shaderLanguage,
