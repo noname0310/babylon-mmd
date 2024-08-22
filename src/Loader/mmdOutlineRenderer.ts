@@ -166,14 +166,13 @@ export class MmdOutlineRenderer implements ISceneComponent {
         effect.setMatrix("world", effectiveMesh.getWorldMatrix());
 
         // Bones
-        BindBonesParameters(effectiveMesh, effect);
-
-        if (renderingMesh.morphTargetManager && renderingMesh.morphTargetManager.isUsingTextureForTargets) {
-            renderingMesh.morphTargetManager._bind(effect);
-        }
+        BindBonesParameters(renderingMesh, effect);
 
         // Morph targets
         BindMorphTargetParameters(renderingMesh, effect);
+        if (renderingMesh.morphTargetManager && renderingMesh.morphTargetManager.isUsingTextureForTargets) {
+            renderingMesh.morphTargetManager._bind(effect);
+        }
 
         if (!hardwareInstancedRendering) {
             renderingMesh._bind(subMesh, effect, material.fillMode);
