@@ -1,6 +1,7 @@
 import type { Scene } from "@babylonjs/core/scene";
 
 import type { MmdWasmRuntime } from "../mmdWasmRuntime";
+import type { IPhysicsClock } from "./IPhysicsClock";
 import { MmdWasmPhysicsMetadataEncoder } from "./mmdWasmPhysicsMetadataEncoder";
 import { MmdWasmPhysicsRuntime } from "./mmdWasmPhysicsRuntime";
 import { PhysicsClock } from "./physicsClock";
@@ -36,7 +37,7 @@ export class MmdWasmPhysics {
      * create physics clock
      * @returns physics clock
      */
-    public createPhysicsClock(): PhysicsClock {
+    public createPhysicsClock(): IPhysicsClock {
         return new PhysicsClock(this._scene.getEngine());
     }
 
