@@ -11,7 +11,7 @@ import type { IIkStateContainer } from "../IIkStateContainer";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
-import { BezierInterpolator } from "./bezierInterpolator";
+import { bezierInterpolate } from "./bezierInterpolate";
 import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
@@ -155,7 +155,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = BezierInterpolator.Interpolate(
+                    const weight = bezierInterpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -239,21 +239,21 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         positions[upperBoundIndex * 3 + 2]
                     );
 
-                    const xWeight = BezierInterpolator.Interpolate(
+                    const xWeight = bezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
                         positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
                         positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                         positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
                         gradient
                     );
-                    const yWeight = BezierInterpolator.Interpolate(
+                    const yWeight = bezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
                         positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
                         positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                         positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
                         gradient
                     );
-                    const zWeight = BezierInterpolator.Interpolate(
+                    const zWeight = bezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
                         positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
                         positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
@@ -283,7 +283,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = BezierInterpolator.Interpolate(
+                    const weight = bezierInterpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1

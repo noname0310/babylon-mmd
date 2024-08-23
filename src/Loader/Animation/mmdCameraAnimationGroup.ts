@@ -5,7 +5,7 @@ import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationK
 import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
-import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
+import { bezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
 import { computeHermiteTangent } from "./Common/computeHermiteTangent";
@@ -361,9 +361,9 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const xWeight = BezierInterpolator.Interpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
-                const yWeight = BezierInterpolator.Interpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
-                const zWeight = BezierInterpolator.Interpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+                const xWeight = bezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = bezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = bezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -417,7 +417,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const rotationWeight = BezierInterpolator.Interpolate(rotationInterpolationXx1, rotationInterpolationXx2, rotationInterpolationXy1, rotationInterpolationXy2, gradient);
+                const rotationWeight = bezierInterpolate(rotationInterpolationXx1, rotationInterpolationXx2, rotationInterpolationXy1, rotationInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -471,7 +471,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const distanceWeight = BezierInterpolator.Interpolate(distanceInterpolationXx1, distanceInterpolationXx2, distanceInterpolationXy1, distanceInterpolationXy2, gradient);
+                const distanceWeight = bezierInterpolate(distanceInterpolationXx1, distanceInterpolationXx2, distanceInterpolationXy1, distanceInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -523,7 +523,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const fovWeight = BezierInterpolator.Interpolate(fovInterpolationXx1, fovInterpolationXx2, fovInterpolationXy1, fovInterpolationXy2, gradient);
+                const fovWeight = bezierInterpolate(fovInterpolationXx1, fovInterpolationXx2, fovInterpolationXy1, fovInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,

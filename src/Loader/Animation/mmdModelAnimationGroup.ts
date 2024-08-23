@@ -7,7 +7,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
-import { BezierInterpolator } from "@/Runtime/Animation/bezierInterpolator";
+import { bezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
@@ -580,9 +580,9 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const xWeight = BezierInterpolator.Interpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
-                const yWeight = BezierInterpolator.Interpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
-                const zWeight = BezierInterpolator.Interpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+                const xWeight = bezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = bezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = bezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -634,7 +634,7 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const rotationWeight = BezierInterpolator.Interpolate(rotationInterpolationX1, rotationInterpolationX2, rotationInterpolationY1, rotationInterpolationY2, gradient);
+                const rotationWeight = bezierInterpolate(rotationInterpolationX1, rotationInterpolationX2, rotationInterpolationY1, rotationInterpolationY2, gradient);
 
                 const value = new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]);
                 keys[j] = {
