@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.53.0 (scheduled)
+## 0.53.0 (2024-08-26)
 
 - `TextureAlphaChecker`, `MmdStandardMaterial`, `MmdOutlineRenderer` now supports WebGPU wgsl shader
 
