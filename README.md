@@ -18,9 +18,9 @@ Camera: https://www.nicovideo.jp/watch/sm36273873
 
 ![screenshot2](./docs/static/img/fig2.png)
 
-### [JavaScript Runtime Demo (stable)](https://playground.babylonjs.com/#028YR6#42)
+### [JavaScript Runtime Demo (stable)](https://playground.babylonjs.com/#028YR6#81)
 
-### [Web Assembly Runtime Demo (experimental)](https://playground.babylonjs.com/#MY96ZK#8)
+### [Web Assembly Runtime Demo (experimental)](https://playground.babylonjs.com/#MY96ZK#13)
 
 ### [Web Assembly Runtime With Integrated Physics Demo (experimental)](https://www.babylonjs-playground.com/#8CYL1V#7) - most advanced method
 
