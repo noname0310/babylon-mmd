@@ -44,6 +44,6 @@ shadowGenerator.addShadowCaster(mmdMesh);
 
 - An loadAssetContainerAsync call in pmx file guarantees that result.meshes length is always greater than 0 and result.meshes[0] is always a root mesh which type is MmdMesh.
 
-- Below is the shadow setting I won't explain in detail.
+- Below is the shadow setting. see [Shadows | Babylon.js Documentation](https://doc.babylonjs.com/features/featuresDeepDive/lights/shadows) for more information.
 
 ![result](image-2.png)

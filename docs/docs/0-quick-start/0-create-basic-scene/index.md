@@ -71,5 +71,3 @@ shadowGenerator.addShadowCaster(ground);
 ```
 
 ![now we have ground](image-1.png)
-
-

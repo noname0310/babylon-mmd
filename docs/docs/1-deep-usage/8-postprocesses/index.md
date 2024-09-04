@@ -2,7 +2,7 @@
 
 Apply post processing to improve the quality of the output.
 
-Since it is not a function of babylon-mmd, I will not explain the setting in detail.
+Since it is not a feature of babylon-mmd, I will not explain the setting in detail.
 
 ## Use Default Rendering Pipeline
 

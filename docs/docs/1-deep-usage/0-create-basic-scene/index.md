@@ -57,6 +57,8 @@ export class SceneBuilder implements ISceneBuilder {
 
 :::danger
 you must not use `import { MmdCamera } from "babylon-mmd";` or `import { Engine } from "@babylonjs/core";` for treeshaking.
+
+for treeshaking working properly, you must use full path like `import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";` when importing any classes, functions, or variables from babylon-mmd or babylonjs.
 :::
 
 add light, shadow, and ground.
