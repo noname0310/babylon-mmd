@@ -11,6 +11,6 @@ SdefInjector.OverrideEngineCreateEffect(engine);
 Outline rendering has already been disabled on [Load BPMX Model](../load-bpmx-model/) page.
 
 ```typescript title="src/sceneBuilder.ts"
-const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 ```

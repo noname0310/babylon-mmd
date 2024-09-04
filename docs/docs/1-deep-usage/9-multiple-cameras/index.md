@@ -112,7 +112,7 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { loadAssetContainerAsync, appendSceneAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -123,8 +123,7 @@ import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depth
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
-import type { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
-import type { BpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "babylon-mmd/esm/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "babylon-mmd/esm/Loader/sdefInjector";
 import { StreamAudioPlayer } from "babylon-mmd/esm/Runtime/Audio/streamAudioPlayer";
@@ -139,9 +138,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
-        const bpmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-        bpmxLoader.loggingEnabled = true;
-        const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const scene = new Scene(engine);
@@ -205,7 +202,7 @@ export class SceneBuilder implements ISceneBuilder {
         audioPlayer.source = "res/pizzicato_drops.mp3";
         mmdRuntime.setAudioPlayer(audioPlayer);
 
-        // // create player control
+        // create player control
         new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
 
         engine.displayLoadingUI();
@@ -215,48 +212,54 @@ export class SceneBuilder implements ISceneBuilder {
             loadingTexts[updateIndex] = text;
             engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
         };
-
-        const promises: Promise<any>[] = [];
-
-        bpmxLoader.boundingBoxMargin = 60;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/",
-            "YYB Piano dress Miku.bpmx",
-            scene,
-            (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ).then((result) => result.meshes[0]));
-
-        bpmxLoader.boundingBoxMargin = 0;
-        bpmxLoader.buildSkeleton = false;
-        bpmxLoader.buildMorph = false;
-        promises.push(SceneLoader.ImportMeshAsync(
-            undefined,
-            "res/",
-            "ガラス片ドームB.bpmx",
-            scene,
-            (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-        ));
-
+        
         const bvmdLoader = new BvmdLoader(scene);
         bvmdLoader.loggingEnabled = true;
 
-        promises.push(bvmdLoader.loadAsync("motion_1", "res/pizzicato_drops_yyb_piano_miku.bvmd",
-            (event) => updateLoadingText(2, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
-        );
+        const [modelMesh, , mmdAnimation] = await Promise.all([
+            loadAssetContainerAsync(
+                "res/YYB Piano dress Miku.bpmx",
+                scene,
+                {
+                    onProgress: (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`),
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            boundingBoxMargin: 60,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ).then((result) => {
+                result.addAllToScene();
+                return result.meshes[0] as MmdMesh;
+            }),
+            appendSceneAsync(
+                "res/ガラス片ドームB.bpmx",
+                scene,
+                {
+                    onProgress: (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`),
+                    pluginOptions: {
+                        mmdmodel: {
+                            materialBuilder: materialBuilder,
+                            buildSkeleton: false,
+                            buildMorph: false,
+                            boundingBoxMargin: 0,
+                            loggingEnabled: true
+                        }
+                    }
+                }
+            ),
+            bvmdLoader.loadAsync("motion_1", "res/pizzicato_drops_yyb_piano_miku.bvmd",
+                (event) => updateLoadingText(2, `Loading motion... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`))
+        ]);
 
-        loadingTexts = new Array(promises.length).fill("");
-
-        const loadResults = await Promise.all(promises);
         scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 
-        loadResults;
-
         mmdRuntime.setCamera(mmdCamera);
-        mmdCamera.addAnimation(loadResults[2]);
+        mmdCamera.addAnimation(mmdAnimation);
         mmdCamera.setAnimation("motion_1");
 
-        const modelMesh = loadResults[0] as MmdMesh;
         modelMesh.parent = mmdRoot;
         for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(modelMesh);
@@ -274,7 +277,7 @@ export class SceneBuilder implements ISceneBuilder {
         });
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh);
-        mmdModel.addAnimation(loadResults[2]);
+        mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion_1");
 
         const ssrRenderingPipeline = new SSRRenderingPipeline(

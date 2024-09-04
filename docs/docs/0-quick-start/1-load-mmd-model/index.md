@@ -26,22 +26,23 @@ For load pmx model, we need to import side effects.
 import "babylon-mmd/esm/Loader/pmxLoader";
 ```
 
-Then, load the model using the `SceneLoader`.
+Then, load the model using the `loadAssetContainerAsync`.
 
 ```typescript title="src/sceneBuilder.ts"
-const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
-    .then((result) => result.meshes[0] as MmdMesh);
+const mmdMesh = await loadAssetContainerAsync("res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx", scene)
+    .then((result) => {
+        result.addAllToScene();
+        return result.meshes[0] as MmdMesh;
+    });
 for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(mmdMesh);
 ```
 
-- `SceneLoader.ImportMeshAsync` - Load the model using the `SceneLoader` (All other loading methods are supported, but this example uses `ImportMeshAsync`).
-    - `""` - this parameter is not used in PMX loading.
-    - `"res/YYB Hatsune Miku_10th/"` - the path to the model file.
-    - `"YYB Hatsune Miku_10th_v1.02.pmx"` - If you pass a File object, you can load the model from the File object.
+- `loadAssetContainerAsync` - Load the model (All other loading methods like `SceneLoader.ImportMeshAsync` are also supported).
+    - `"res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx"` - the path to the model file. If you pass a File object, you can load the model from the File object.
     - `scene` - the scene to load the model into.
 
-- An importMeshAsync call in pmx file guarantees that result.meshes length is always greater than 0 and result.meshes[0] is always a root mesh which type is MmdMesh.
+- An loadAssetContainerAsync call in pmx file guarantees that result.meshes length is always greater than 0 and result.meshes[0] is always a root mesh which type is MmdMesh.
 
 - Below is the shadow setting I won't explain in detail.
 

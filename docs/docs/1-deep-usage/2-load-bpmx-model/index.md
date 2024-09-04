@@ -12,59 +12,49 @@ For load bpmx model, we need to import side effects.
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 ```
 
-:::info
-If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
-
-```typescript
-// side effects for TGA textures
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
-```
-:::
-
-Then, load the model using the `SceneLoader`.
+Then, load the model using the `loadAssetContainerAsync`.
 
 ```typescript title="src/sceneBuilder.ts"
-const bpmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-bpmxLoader.loggingEnabled = true;
-const materialBuilder = bpmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
 engine.displayLoadingUI();
 
-bpmxLoader.boundingBoxMargin = 60;
-const modelMesh = await SceneLoader.ImportMeshAsync(
-    undefined,
-    "res/",
-    "YYB Piano dress Miku.bpmx",
+const modelMesh = await loadAssetContainerAsync(
+    "res/YYB Piano dress Miku.bpmx",
     scene,
-    (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
-).then((result) => result.meshes[0] as MmdMesh);
+    {
+        onProgress: (event) => engine.loadingUIText = `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`,
+        pluginOptions: {
+            mmdmodel: {
+                materialBuilder: materialBuilder,
+                boundingBoxMargin: 60,
+                loggingEnabled: true
+            }
+        }
+    }
+).then((result) => {
+    result.addAllToScene();
+    return result.meshes[0] as MmdMesh;
+});
 
 modelMesh;
 
 scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 ```
 
-- `SceneLoader.GetPluginForExtension(".bpmx")` - Get the `BpmxLoader` from the `SceneLoader`.
-
-- `bpmxLoader.loggingEnabled = true;` - Enable logging for better debugging.
-
-- `bpmxLoader.materialBuilder` - In this case we get the `MmdStandardMaterialBuilder` from the `BpmxLoader`. If you implement your own material builder, you can pass it to the loader.
-
 - `materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };` - Override the method to disable outline rendering. (This is just a setting for the goal in this example.)
 
-- `bpmxLoader.boundingBoxMargin = 60;` - Set the bounding box margin. (The default value is 10.)
+- `materialBuilder: materialBuilder` - In this case we instantiate and pass the `MmdStandardMaterialBuilder`, but you can also implement your own material builder and pass it.
+
+- `boundingBoxMargin: 60` - Set the bounding box margin. (The default value is 10.)
+
+- `loggingEnabled: true` - Enable logging for better debugging. (The default value is false.)
 
 :::info
-Basically, dance motion can cause curring problem because it moves mesh a lot from rest pose.
+Basically, dance motion can cause curring problem because it moves mesh far from the bounding box.
 
 And the motion that we're going to use in this next example is especially problematic, so we need to make the bounding box bigger.
-:::
-
-:::tip
-If you change the settings of the `BpmxLoader` before calling `ImportMeshAsync`, the settings will be applied to the loaded model.
-
-The reason for using this method is that `ImportMeshAsync` does not have a parameter to pass the load options to the loader.
 :::
 
 ![result1](image.png)
@@ -79,26 +69,34 @@ You'll see this error message. These errors are often displayed when the 3D mode
 
 For models such as Stage, it is usually static. Importing these models into a static mesh can save performance.
 
+If you don't need to get the mesh object, you can use `appendSceneAsync` instead of `loadAssetContainerAsync` which is more simple.
+
 ```typescript title="src/sceneBuilder.ts"
-bpmxLoader.boundingBoxMargin = 0;
-bpmxLoader.buildSkeleton = false;
-bpmxLoader.buildMorph = false;
-// promises.push(
-await SceneLoader.ImportMeshAsync(
-    undefined,
-    "res/",
-    "ガラス片ドームB.bpmx",
+await appendSceneAsync(
+    "res/ガラス片ドームB.bpmx",
     scene,
-    (event) => engine.loadingUIText = `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`
+    {
+        onProgress: (event) => engine.loadingUIText = `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`,
+        pluginOptions: {
+            mmdmodel: {
+                buildSkeleton: false,
+                buildMorph: false,
+                boundingBoxMargin: 0,
+                loggingEnabled: true
+            }
+        }
+    }
 );
 ```
 
-- `bpmxLoader.boundingBoxMargin = 0;` - Set the bounding box margin to 0. (because static mesh doesn't move)
-- `bpmxLoader.buildSkeleton = false;` - Disable building skeleton.
-- `bpmxLoader.buildMorph = false;` - Disable building morph.
+- `buildSkeleton: false` - Disable building skeleton.
+ 
+- `buildMorph: false` - Disable building morph.
+
+- `boundingBoxMargin: 0` - Set the bounding box margin to 0. (because static mesh doesn't move)
 
 :::info
-Naturally, mmd models loaded with static mesh cannot be controlled by MMD Runtime.
+Naturally, mmd models loaded as static mesh cannot be controlled by MMD Runtime.
 :::
 
 ![result2](image-1.png)
@@ -108,9 +106,6 @@ Naturally, mmd models loaded with static mesh cannot be controlled by MMD Runtim
 Now, we are awaiting the model and stage to load one by one, but we can load them simultaneously by using `Promise.all`.
 
 ```typescript title="src/sceneBuilder.ts"
-const bpmxLoader = SceneLoader.GetPluginForExtension(".bpmx") as BpmxLoader;
-bpmxLoader.loggingEnabled = true;
-
 engine.displayLoadingUI();
 
 let loadingTexts: string[] = [];
@@ -119,34 +114,43 @@ const updateLoadingText = (updateIndex: number, text: string): void => {
     engine.loadingUIText = "<br/><br/><br/><br/>" + loadingTexts.join("<br/><br/>");
 };
 
-const promises: Promise<any>[] = [];
+const [modelMesh, ] = await Promise.all([
+    loadAssetContainerAsync(
+        "res/YYB Piano dress Miku.bpmx",
+        scene,
+        {
+            onProgress: (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`),
+            pluginOptions: {
+                mmdmodel: {
+                    materialBuilder: materialBuilder,
+                    boundingBoxMargin: 60,
+                    loggingEnabled: true
+                }
+            }
+        }
+    ).then((result) => {
+        result.addAllToScene();
+        return result.meshes[0] as MmdMesh;
+    }),
+    appendSceneAsync(
+        "res/ガラス片ドームB.bpmx",
+        scene,
+        {
+            onProgress: (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`),
+            pluginOptions: {
+                mmdmodel: {
+                    materialBuilder: materialBuilder,
+                    buildSkeleton: false,
+                    buildMorph: false,
+                    boundingBoxMargin: 0,
+                    loggingEnabled: true
+                }
+            }
+        }
+    )
+]);
 
-bpmxLoader.boundingBoxMargin = 60;
-promises.push(SceneLoader.ImportMeshAsync(
-    undefined,
-    "res/",
-    "YYB Piano dress Miku.bpmx",
-    scene,
-    (event) => updateLoadingText(0, `Loading model... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-).then((result) => result.meshes[0]));
-
-bpmxLoader.boundingBoxMargin = 0;
-bpmxLoader.buildSkeleton = false;
-bpmxLoader.buildMorph = false;
-promises.push(SceneLoader.ImportMeshAsync(
-    undefined,
-    "res/",
-    "ガラス片ドームB.bpmx",
-    scene,
-    (event) => updateLoadingText(1, `Loading stage... ${event.loaded}/${event.total} (${Math.floor(event.loaded * 100 / event.total)}%)`)
-));
-
-loadingTexts = new Array(promises.length).fill("");
-
-const loadResults = await Promise.all(promises);
 scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
-
-loadResults;
 ```
 
 - Simply added `Promise.all` and the loading screen.
@@ -154,7 +158,6 @@ loadResults;
 ## Add Shadow to Model
 
 ```typescript title="src/sceneBuilder.ts"
-const modelMesh = loadResults[0] as MmdMesh;
 for (const mesh of modelMesh.metadata.meshes) mesh.receiveShadows = true;
 shadowGenerator.addShadowCaster(modelMesh);
 ```

@@ -22,8 +22,13 @@ SdefInjector.OverrideEngineCreateEffect(engine); // Force all shaders to support
 or
 
 ```typescript title="src/sceneBuilder.ts"
-const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-pmxLoader.useSdef = false; // Disable SDEF
+const assetContainer = await loadAssetContainerAsync("res/your_model.pmx", scene, {
+    pluginOptions: { // you can pass options to the loader using pluginOptions
+        mmdmodel: {
+            useSdef: false // Disable SDEF
+        }
+    }
+});
 ```
 
 Result:
@@ -54,25 +59,37 @@ The proper `transparencyMode` of the mesh is determined at load time by a specif
 To fix this, you can disable the optimization settings. The code looks like this:
 
 ```typescript
-const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlending;
+
+const assetContainer = await loadAssetContainerAsync("res/your_model.pmx", scene, {
+    pluginOptions: {
+        mmdmodel: {
+            materialBuilder: materialBuilder // Override the material builder
+        }
+    }
+});
 ```
 
 The other approach is to choose the most appropriate `transparencyMode` possible without using `forceDepthWrite`. This approach should be compatible with most post-processing and shaders.
 
 ```typescript
-const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+
+const assetContainer = await loadAssetContainerAsync("res/your_model.pmx", scene, {
+    pluginOptions: {
+        mmdmodel: {
+            materialBuilder: materialBuilder // Override the material builder
+        }
+    }
+});
 ```
 
 The `DepthWriteAlphaBlendingWithEvaluation` and `AlphaEvaluation` methods both add some delays to the execution of the algorithm. To improve this, you can force off the optimization that automatically determines the `transparencyMode` and set the `transparencyMode` manually.
 
 ```typescript
-const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-pmxLoader.useSdef = false;
-const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.forceDisableAlphaEvaluation = true;
 const alphaBlendMaterials = ["face02", "Facial02", "HL", "Hairshadow", "q302"];
 const alphaTestMaterials = ["q301"];
@@ -84,6 +101,14 @@ materialBuilder.afterBuildSingleMaterial = (material): void => {
     material.useAlphaFromDiffuseTexture = true;
     material.diffuseTexture!.hasAlpha = true;
 };
+
+const assetContainer = await loadAssetContainerAsync("res/your_model.pmx", scene, {
+    pluginOptions: {
+        mmdmodel: {
+            materialBuilder: materialBuilder // Override the material builder
+        }
+    }
+});
 ```
 
 - `forceDisableAlphaEvaluation` - If true, the optimization that automatically determines the `transparencyMode` is disabled.
@@ -96,10 +121,16 @@ Outline rendering might looks weird with some post-processes or shaders.
 In this case, you should consider turning off outline rendering partially or disabling it in loaders.
 
 ```typescript title="src/sceneBuilder.ts"
-const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
-
+const materialBuilder = new MmdStandardMaterialBuilder();
 materialBuilder.loadOutlineRenderingProperties = () => { /* do nothing */ };
+
+const assetContainer = await loadAssetContainerAsync("res/your_model.pmx", scene, {
+    pluginOptions: {
+        mmdmodel: {
+            materialBuilder: materialBuilder // Override the material builder
+        }
+    }
+});
 ```
 
 - `loadOutlineRenderingProperties` - This callback is called when loading the outline rendering properties. You can override this to customize the outline rendering properties.
@@ -114,21 +145,18 @@ So if you want to make any changes to the loaded asset, check the loader option 
 
 ```typescript title="src/sceneBuilder.ts"
 import type { Engine } from "@babylonjs/core";
-import { Color3, DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, SceneLoader, ShadowGenerator, Vector3 } from "@babylonjs/core";
+import { Color3, DirectionalLight, HavokPlugin, HemisphericLight, Material, MeshBuilder, Scene, ShadowGenerator, Vector3 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
-import type { MmdStandardMaterialBuilder } from "babylon-mmd";
-import { MmdCamera, MmdMesh, MmdPhysics, MmdPlayerControl, MmdRuntime, PmxLoader, SdefInjector, StreamAudioPlayer, VmdLoader } from "babylon-mmd";
+import { MmdCamera, MmdMesh, MmdPhysics, MmdPlayerControl, MmdRuntime, MmdStandardMaterialBuilder, PmxLoader, SdefInjector, StreamAudioPlayer, VmdLoader } from "babylon-mmd";
 
 import type { ISceneBuilder } from "./baseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: Engine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
-        SceneLoader.RegisterPlugin(new PmxLoader());
 
         // fix material alpha mode
-        const pmxLoader = SceneLoader.GetPluginForExtension(".pmx") as PmxLoader;
-        const materialBuilder = pmxLoader.materialBuilder as MmdStandardMaterialBuilder;
+        const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.useAlphaEvaluation = false;
         const alphaBlendMaterials = ["face02", "Facial02", "HL", "Hairshadow", "q302"];
         const alphaTestMaterials = ["q301"];
@@ -165,8 +193,16 @@ export class SceneBuilder implements ISceneBuilder {
         shadowGenerator.addShadowCaster(ground);
 
         // load mmd model
-        const mmdMesh = await SceneLoader.ImportMeshAsync("", "res/YYB Hatsune Miku_10th/", "YYB Hatsune Miku_10th_v1.02.pmx", scene)
-            .then((result) => result.meshes[0] as MmdMesh);
+        const mmdMesh = await loadAssetContainerAsync("res/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx", scene, {
+            pluginOptions: {
+                mmdmodel: {
+                    materialBuilder: materialBuilder
+                }
+            }
+        }).then((result) => {
+            result.addAllToScene();
+            return result.meshes[0] as MmdMesh;
+        });
         for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;
         shadowGenerator.addShadowCaster(mmdMesh);
 
