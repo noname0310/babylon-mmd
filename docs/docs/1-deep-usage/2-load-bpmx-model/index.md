@@ -52,7 +52,7 @@ scene.onAfterRenderObservable.addOnce(() => engine.hideLoadingUI());
 - `loggingEnabled: true` - Enable logging for better debugging. (The default value is false.)
 
 :::info
-Basically, dance motion can cause curring problem because it moves mesh far from the bounding box.
+Basically, dance motion can cause culling problem because it moves mesh far from the bounding box.
 
 And the motion that we're going to use in this next example is especially problematic, so we need to make the bounding box bigger.
 :::
