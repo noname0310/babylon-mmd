@@ -25,15 +25,23 @@ export default (env: any): webpack.Configuration => ({
         minimize: env.production
     },
     module: {
-        rules: [{
-            test: /\.tsx?$/,
-            loader: "ts-loader",
-            options: {
-                getCustomTransformers: (program: ts.Program) => ({
-                    before: [glslMinifyTransformer(program, { customPrefixes: ["glsl", "wgsl"] })]
-                })
+        rules: [
+            {
+                test: /\.tsx?$/,
+                loader: "ts-loader",
+                options: {
+                    getCustomTransformers: (program: ts.Program) => ({
+                        before: [glslMinifyTransformer(program, { customPrefixes: ["glsl", "wgsl"] })]
+                    })
+                }
+            },
+            {
+                test: /\.m?js$/,
+                resolve: {
+                    fullySpecified: false
+                }
             }
-        }]
+        ]
     },
     resolve: {
         alias: {
