@@ -6,6 +6,7 @@ import type { PmxObject } from "./Parser/pmxObject";
 import { PmxReader } from "./Parser/pmxReader";
 import type { PmLoaderOptions } from "./pmLoader";
 import { PmLoader } from "./pmLoader";
+import { PmxLoaderMetadata } from "./pmxLoader.metadata";
 
 /**
  * PmxLoader is a loader that loads the model in the PMX format
@@ -18,11 +19,8 @@ export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
      */
     public constructor(options?: Partial<PmLoaderOptions>, loaderOptions?: PmLoaderOptions) {
         super(
-            "pmx",
-            {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                ".pmx": { isBinary: true }
-            },
+            PmxLoaderMetadata.name,
+            PmxLoaderMetadata.extensions,
             options,
             loaderOptions
         );

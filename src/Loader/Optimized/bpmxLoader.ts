@@ -29,6 +29,7 @@ import type { ILogger } from "../Parser/ILogger";
 import { PmxObject } from "../Parser/pmxObject";
 import type { Progress, ProgressTask } from "../progress";
 import { SdefMesh } from "../sdefMesh";
+import { BpmxLoaderMetadata } from "./bpmxLoader.metadata";
 import { BpmxObject } from "./Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 
@@ -52,11 +53,8 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
      */
     public constructor(options?: Partial<BpmxLoaderOptions>, loaderOptions?: BpmxLoaderOptions) {
         super(
-            "bpmx",
-            {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                ".bpmx": { isBinary: true }
-            },
+            BpmxLoaderMetadata.name,
+            BpmxLoaderMetadata.extensions,
             options,
             loaderOptions
         );

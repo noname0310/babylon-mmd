@@ -4,6 +4,7 @@ import { type ISceneLoaderPluginAsync, registerSceneLoaderPlugin } from "@babylo
 import type { ILogger } from "./Parser/ILogger";
 import { PmdReader } from "./Parser/pmdReader";
 import type { PmxObject } from "./Parser/pmxObject";
+import { PmdLoaderMetadata } from "./pmdLoader.metadata";
 import type { PmLoaderOptions } from "./pmLoader";
 import { PmLoader } from "./pmLoader";
 
@@ -18,11 +19,8 @@ export class PmdLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
      */
     public constructor(options?: Partial<PmLoaderOptions>, loaderOptions?: PmLoaderOptions) {
         super(
-            "pmd",
-            {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                ".pmd": { isBinary: true }
-            },
+            PmdLoaderMetadata.name,
+            PmdLoaderMetadata.extensions,
             options,
             loaderOptions
         );

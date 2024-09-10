@@ -1,7 +1,4 @@
 import "@/Loader/mmdOutlineRenderer";
-import "@/Loader/pmdLoader";
-import "@/Loader/pmxLoader";
-import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
@@ -15,6 +12,10 @@ import "@/Loader/mmdStandardMaterial";
 import "@/Loader/sdefMesh";
 import "@/Runtime/Animation/bezierAnimation";
 import "@/Runtime/mmdCamera";
+
+import { registerMmdModelLoaders } from "./Loader/dynamic";
+
+registerMmdModelLoaders();
 
 // Loader/Animation
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
@@ -31,6 +32,7 @@ export { BpmxReader } from "@/Loader/Optimized/Parser/bpmxReader";
 // Loader/Optimized
 export { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
 export { BpmxLoader, BpmxLoaderOptions } from "@/Loader/Optimized/bpmxLoader";
+export { BpmxLoaderMetadata } from "@/Loader/Optimized/bpmxLoader.metadata";
 export { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
 export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 
@@ -48,14 +50,17 @@ export { AnimationRetargeter, RetargetOptions } from "@/Loader/Util/animationRet
 export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 
 // Loader
+export { registerMmdModelLoaders } from "@/Loader/dynamic";
 export { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
 export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
 export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
+export { PmdLoaderMetadata } from "@/Loader/pmdLoader.metadata";
 export { PmLoaderOptions } from "@/Loader/pmLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
+export { PmxLoaderMetadata } from "@/Loader/pmxLoader.metadata";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
 export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
