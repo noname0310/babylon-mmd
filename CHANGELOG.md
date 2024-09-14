@@ -6,6 +6,8 @@
 
 - handle empty animation data
 
+- add `VmdLoader.optimizeEmptyTracks` option for disable empty track optimization
+
 ## 0.53.0 (2024-08-26)
 
 - `TextureAlphaChecker`, `MmdStandardMaterial`, `MmdOutlineRenderer` now supports WebGPU wgsl shader

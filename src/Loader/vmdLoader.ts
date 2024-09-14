@@ -15,6 +15,11 @@ import { VmdData, VmdObject } from "./Parser/vmdObject";
  * VMD format is a binary format for MMD animation data
  */
 export class VmdLoader {
+    /**
+     * Remove empty tracks for optimization when loading data
+     */
+    public optimizeEmptyTracks: boolean;
+
     private readonly _scene: Scene;
 
     private _loggingEnabled: boolean;
@@ -31,6 +36,8 @@ export class VmdLoader {
      * @param scene Scene for loading file
      */
     public constructor(scene: Scene) {
+        this.optimizeEmptyTracks = true;
+
         this._loggingEnabled = false;
         this.log = this._logDisabled;
         this.warn = this._warnDisabled;
@@ -75,6 +82,8 @@ export class VmdLoader {
         vmdObject: VmdObject | VmdObject[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdAnimation> {
+        const optimizeEmptyTracks = this.optimizeEmptyTracks;
+
         if (!Array.isArray(vmdObject)) {
             vmdObject = [vmdObject];
         }
@@ -217,41 +226,45 @@ export class VmdLoader {
         }
         const filteredBoneTracks: MmdBoneAnimationTrack[] = [];
         const filteredMovableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
-        for (let i = 0; i < boneTracks.length; ++i) {
-            const boneTrack = boneTracks[i];
+        if (optimizeEmptyTracks) {
+            for (let i = 0; i < boneTracks.length; ++i) {
+                const boneTrack = boneTracks[i];
 
-            let isEmptyTrack = true;
-            for (let j = 0; j < boneTrack.frameNumbers.length; ++j) {
-                const positions = boneTrack.positions;
-                if (!(positions[j * 3 + 0] === 0 && positions[j * 3 + 1] === 0 && positions[j * 3 + 2] === 0)) {
-                    isEmptyTrack = false;
-                    break;
+                let isEmptyTrack = true;
+                for (let j = 0; j < boneTrack.frameNumbers.length; ++j) {
+                    const positions = boneTrack.positions;
+                    if (!(positions[j * 3 + 0] === 0 && positions[j * 3 + 1] === 0 && positions[j * 3 + 2] === 0)) {
+                        isEmptyTrack = false;
+                        break;
+                    }
+
+                    const rotations = boneTrack.rotations;
+                    if (!(rotations[j * 4 + 0] === 0 && rotations[j * 4 + 1] === 0 && rotations[j * 4 + 2] === 0 && rotations[j * 4 + 3] === 1)) {
+                        isEmptyTrack = false;
+                        break;
+                    }
                 }
+                if (isEmptyTrack) continue;
 
-                const rotations = boneTrack.rotations;
-                if (!(rotations[j * 4 + 0] === 0 && rotations[j * 4 + 1] === 0 && rotations[j * 4 + 2] === 0 && rotations[j * 4 + 3] === 1)) {
-                    isEmptyTrack = false;
-                    break;
+                let isMovableBone = false;
+                for (let j = 0; j < boneTrack.positions.length; ++j) {
+                    if (boneTrack.positions[j] !== 0) {
+                        isMovableBone = true;
+                        break;
+                    }
+                }
+                if (isMovableBone) {
+                    filteredMovableBoneTracks.push(boneTrack);
+                } else {
+                    const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
+                    boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
+                    boneAnimationTrack.rotations.set(boneTrack.rotations);
+                    boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
+                    filteredBoneTracks.push(boneAnimationTrack);
                 }
             }
-            if (isEmptyTrack) continue;
-
-            let isMovableBone = false;
-            for (let j = 0; j < boneTrack.positions.length; ++j) {
-                if (boneTrack.positions[j] !== 0) {
-                    isMovableBone = true;
-                    break;
-                }
-            }
-            if (isMovableBone) {
-                filteredMovableBoneTracks.push(boneTrack);
-            } else {
-                const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
-                boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
-                boneAnimationTrack.rotations.set(boneTrack.rotations);
-                boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
-                filteredBoneTracks.push(boneAnimationTrack);
-            }
+        } else {
+            filteredMovableBoneTracks.push(...boneTracks);
         }
         boneTracks.length = 0;
         if (1 < vmdObject.length) {
@@ -473,17 +486,21 @@ export class VmdLoader {
             }
         }
         const filteredMorphTracks: MmdMorphAnimationTrack[] = [];
-        for (let i = 0; i < morphTracks.length; ++i) {
-            const morphTrack = morphTracks[i];
-            let isZeroValues = true;
-            for (let j = 0; j < morphTrack.weights.length; ++j) {
-                if (morphTrack.weights[j] !== 0) {
-                    isZeroValues = false;
-                    break;
+        if (optimizeEmptyTracks) {
+            for (let i = 0; i < morphTracks.length; ++i) {
+                const morphTrack = morphTracks[i];
+                let isZeroValues = true;
+                for (let j = 0; j < morphTrack.weights.length; ++j) {
+                    if (morphTrack.weights[j] !== 0) {
+                        isZeroValues = false;
+                        break;
+                    }
                 }
+                if (isZeroValues) continue;
+                filteredMorphTracks.push(morphTrack);
             }
-            if (isZeroValues) continue;
-            filteredMorphTracks.push(morphTrack);
+        } else {
+            filteredMorphTracks.push(...morphTracks);
         }
         morphTracks.length = 0;
         if (1 < vmdObject.length) {
