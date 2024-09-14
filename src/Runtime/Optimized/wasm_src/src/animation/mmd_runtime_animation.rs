@@ -1,4 +1,4 @@
-use glam::{FloatExt, Vec3A};
+use glam::{FloatExt, Quat, Vec3A};
 
 use crate::mmd_model::MmdModel;
 use crate::unchecked_slice::UncheckedSlice;
@@ -91,6 +91,10 @@ impl MmdRuntimeAnimation {
     fn upper_bound_frame_index(frame_time: f32, frame_numbers: &[u32], track_state: &mut AnimationTrackState) -> u32 {
         let frame_numbers = UncheckedSlice::new(frame_numbers);
 
+        if frame_numbers.is_empty() {
+            return 0;
+        }
+
         let AnimationTrackState {frame_time: last_frame_time, frame_index: last_frame_index} = track_state;
 
         if (frame_time - *last_frame_time).abs() < 6.0 { // if frame time is close to last frame time, use iterative search
@@ -141,6 +145,10 @@ impl MmdRuntimeAnimation {
                 };
 
                 let track = &self.animation.bone_tracks()[i];
+                if track.frame_numbers.is_empty() {
+                    bone.rotation = Quat::IDENTITY;
+                    continue;
+                }
 
                 let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
                 let frame_index_b = Self::upper_bound_frame_index(
@@ -184,6 +192,11 @@ impl MmdRuntimeAnimation {
                 let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as u32];
 
                 let track = &self.animation.movable_bone_tracks()[i];
+                if track.frame_numbers.is_empty() {
+                    bone.position = bone_rest_position;
+                    bone.rotation = Quat::IDENTITY;
+                    continue;
+                }
 
                 let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
                 let frame_index_b = Self::upper_bound_frame_index(
@@ -259,6 +272,17 @@ impl MmdRuntimeAnimation {
                 let morph_indices = &self.morph_bind_index_map[i];
 
                 let track = &self.animation.morph_tracks()[i];
+                if track.frame_numbers.is_empty() {
+                    for morph_index in morph_indices.iter() {
+                        let mut animation_morph_arena = animation_arena.morph_arena_mut();
+                        let morph = match animation_morph_arena.get_mut(*morph_index as u32) {
+                            Some(morph) => morph,
+                            None => continue,
+                        };
+                        *morph = 0.0;
+                    }
+                    continue;
+                }
 
                 let clamped_frame_time = frame_time.clamp(track.start_frame() as f32, track.end_frame() as f32);
                 let frame_index_b = Self::upper_bound_frame_index(

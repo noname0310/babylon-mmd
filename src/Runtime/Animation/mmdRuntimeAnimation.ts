@@ -23,6 +23,8 @@ export abstract class MmdRuntimeAnimation<T> {
     protected _upperBoundFrameIndex(frameTime: number, track: IMmdAnimationTrack): number {
         const frameNumbers = track.frameNumbers;
 
+        if (frameNumbers.length === 0) return 0;
+
         let lastResult = this._lastResults.get(track);
         if (lastResult === undefined) {
             lastResult = [Number.NEGATIVE_INFINITY, 0];

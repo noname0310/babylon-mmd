@@ -104,6 +104,13 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 if (bone === null) continue;
 
                 const boneTrack = boneTracks[i];
+                if (boneTrack.frameNumbers.length === 0) {
+                    bone.setRotationQuaternion(
+                        MmdRuntimeModelAnimation._BoneRotationB.set(0, 0, 0, 1),
+                        Space.LOCAL
+                    );
+                    continue;
+                }
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
                 const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, boneTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
@@ -183,6 +190,16 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 if (bone === null) continue;
 
                 const boneTrack = movableBoneTracks[i];
+                if (boneTrack.frameNumbers.length === 0) {
+                    bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimation._BonePosition);
+                    bone.position = MmdRuntimeModelAnimation._BonePosition;
+
+                    bone.setRotationQuaternion(
+                        MmdRuntimeModelAnimation._BoneRotationB.set(0, 0, 0, 1),
+                        Space.LOCAL
+                    );
+                    continue;
+                }
                 const clampedFrameTime = Math.max(boneTrack.startFrame, Math.min(boneTrack.endFrame, frameTime));
                 const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, boneTrack);
                 const upperBoundIndexMinusOne = upperBoundIndex - 1;
@@ -311,6 +328,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 if (morphIndices === null) continue;
 
                 const morphTrack = morphTracks[i];
+                if (morphTrack.frameNumbers.length === 0) {
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        morphController.setMorphWeightFromIndex(morphIndices[j], 0);
+                    }
+                    continue;
+                }
 
                 const clampedFrameTime = Math.max(morphTrack.startFrame, Math.min(morphTrack.endFrame, frameTime));
                 const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, morphTrack);

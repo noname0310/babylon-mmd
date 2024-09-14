@@ -4,6 +4,8 @@
 
 - dynamic loader import support for better chunk splitting and lazy loading see Babylon.js [Async/dynamic loader factories](https://github.com/BabylonJS/Babylon.js/pull/15499)
 
+- handle empty animation data
+
 ## 0.53.0 (2024-08-26)
 
 - `TextureAlphaChecker`, `MmdStandardMaterial`, `MmdOutlineRenderer` now supports WebGPU wgsl shader

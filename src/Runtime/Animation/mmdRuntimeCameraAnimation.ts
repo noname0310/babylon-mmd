@@ -45,9 +45,15 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
      */
     public animate(frameTime: number): void {
         const cameraTrack = this.animation;
-        if (cameraTrack.frameNumbers.length === 0) return;
-
         const camera = this._camera;
+
+        if (cameraTrack.frameNumbers.length === 0) {
+            camera.position.set(0, 10, 0);
+            camera.rotation.set(0, 0, 0);
+            camera.distance = -45;
+            camera.fov = 30 * (Math.PI / 180);
+            return;
+        }
 
         const clampedFrameTime = Math.max(cameraTrack.startFrame, Math.min(cameraTrack.endFrame, frameTime));
         const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, cameraTrack);

@@ -153,6 +153,12 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
                 if (morphIndices === null) continue;
 
                 const morphTrack = morphTracks[i];
+                if (morphTrack.frameNumbers.length === 0) {
+                    for (let j = 0; j < morphIndices.length; ++j) {
+                        morphController.setMorphWeightFromIndex(morphIndices[j], 0);
+                    }
+                    continue;
+                }
 
                 const clampedFrameTime = Math.max(morphTrack.startFrame, Math.min(morphTrack.endFrame, frameTime));
                 const upperBoundIndex = this._upperBoundFrameIndex(clampedFrameTime, morphTrack);
