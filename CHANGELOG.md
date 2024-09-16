@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.54.0 (scheduled)
+## 0.54.0 (2024-09-16)
 
 - dynamic loader import support for better chunk splitting and lazy loading see Babylon.js [Async/dynamic loader factories](https://github.com/BabylonJS/Babylon.js/pull/15499)
 
