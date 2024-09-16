@@ -1,7 +1,7 @@
 import path from "path";
 import type ts from "typescript";
 import glslMinifyTransformer from "typescript-glslminify-transformer";
-import type webpack from "webpack";
+import webpack from "webpack";
 
 export default (env: any): webpack.Configuration => ({
     entry: "./src/index.ts",
@@ -63,6 +63,11 @@ export default (env: any): webpack.Configuration => ({
             }
             callback();
         }
+    ],
+    plugins: [
+        new webpack.optimize.LimitChunkCountPlugin({
+            maxChunks: 1
+        })
     ],
     mode: env.production ? "production" : "development"
 });

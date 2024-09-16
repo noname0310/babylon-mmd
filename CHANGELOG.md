@@ -8,6 +8,8 @@
 
 - add `VmdLoader.optimizeEmptyTracks` option for disable empty track optimization
 
+- umd output disable chunk splitting for prevent script loading error
+
 ## 0.53.0 (2024-08-26)
 
 - `TextureAlphaChecker`, `MmdStandardMaterial`, `MmdOutlineRenderer` now supports WebGPU wgsl shader
