@@ -542,7 +542,10 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         }
 
         this._audioPlayer = null;
-        if (audioPlayer === null) return;
+        if (audioPlayer === null) {
+            this._onAudioDurationChanged();
+            return;
+        }
 
         if (!this._animationPaused) {
             const audioFrameTimeDuration = audioPlayer.duration * 30;
@@ -890,8 +893,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     }
 
     private readonly _onAudioDurationChanged = (): void => {
-        if (!this._animationPaused) {
-            const audioPlayer = this._audioPlayer!;
+        if (!this._animationPaused && this._audioPlayer !== null) {
+            const audioPlayer = this._audioPlayer;
             const currentTime = this._currentFrameTime / 30;
             if (currentTime < audioPlayer.duration) {
                 audioPlayer._setCurrentTimeWithoutNotify(currentTime);
@@ -906,7 +909,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         if (this._useManualAnimationDuration) return;
 
-        const audioFrameTimeDuration = this._audioPlayer!.duration * 30;
+        const audioFrameTimeDuration = this._audioPlayer !== null
+            ? this._audioPlayer.duration * 30
+            : 0;
 
         if (this._animationFrameTimeDuration < audioFrameTimeDuration) {
             this._animationFrameTimeDuration = audioFrameTimeDuration;

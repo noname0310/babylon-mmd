@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.55.0 (scheduled)
+## 0.54.1 (2024-09-18)
 
 - fix wrong return value when unmute
+
+- fix animation duration not updated when audio player is changed to null
 
 ## 0.54.0 (2024-09-16)
 
