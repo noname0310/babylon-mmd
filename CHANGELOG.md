@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.54.2 (2024-09-18)
+
+- add `MmdOutlineRenderer.zOffset`, `MmdOutlineRenderer.zOffsetUnits` for resolve outline z-fighting issue
+
 ## 0.54.1 (2024-09-18)
 
 - fix wrong return value when unmute

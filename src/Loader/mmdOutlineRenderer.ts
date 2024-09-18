@@ -60,6 +60,16 @@ export class MmdOutlineRenderer implements ISceneComponent {
      */
     public scene: Scene;
 
+    /**
+     * Defines a zOffset default Factor to prevent zFighting between the overlay and the mesh.
+     */
+    public zOffset = 4;
+
+    /**
+     * Defines a zOffset default Unit to prevent zFighting between the overlay and the mesh.
+     */
+    public zOffsetUnits = 0;
+
     private readonly _engine: AbstractEngine;
     private readonly _passIdForDrawWrapper: number;
 
@@ -201,9 +211,15 @@ export class MmdOutlineRenderer implements ISceneComponent {
             effect.setMatrix("inverseViewProjection", scene.getTransformMatrix().invertToRef(MmdOutlineRenderer._InverseViewProjectionMatrix));
         }
 
+        engine.setZOffset(this.zOffset);
+        engine.setZOffsetUnits(this.zOffsetUnits);
+
         renderingMesh._processRendering(effectiveMesh, subMesh, effect, material.fillMode, batch, hardwareInstancedRendering, (_isInstance, world) => {
             effect.setMatrix("world", world);
         });
+
+        engine.setZOffset(0);
+        engine.setZOffsetUnits(0);
     }
 
     /**
