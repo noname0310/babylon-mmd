@@ -274,7 +274,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * @returns Whether the audio is unmuted
      */
     public async unmute(): Promise<boolean> {
-        if (!this._isVirtualPlay) return false;
+        if (!this._isVirtualPlay) return true;
 
         let notAllowedError = false;
 

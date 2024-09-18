@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.55.0 (scheduled)
+
+- fix wrong return value when unmute
+
 ## 0.54.0 (2024-09-16)
 
 - dynamic loader import support for better chunk splitting and lazy loading see Babylon.js [Async/dynamic loader factories](https://github.com/BabylonJS/Babylon.js/pull/15499)
