@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.54.3
+## 0.54.3 (2024-09-20)
 
 - fix mmd wasm instance initialization on browser native module loading
 
