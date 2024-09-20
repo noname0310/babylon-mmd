@@ -60,9 +60,11 @@ export async function getMmdWasmInstance(
     let resolvePromise: (instance: MmdWasmInstance | PromiseLike<MmdWasmInstance>) => void = null!;
     wasmInstanceMap.set(wasmBindgen, new Promise<MmdWasmInstance>(resolve => resolvePromise = resolve));
 
-    const initOutput = await wasmBindgen.default();
+    const mmdWasmInstance = {...wasmBindgen} as MmdWasmInstance;
 
-    wasmBindgen.init();
+    const initOutput = await mmdWasmInstance.default();
+
+    mmdWasmInstance.init();
     const memory = initOutput.memory;
 
     function createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T> {
@@ -73,16 +75,16 @@ export async function getMmdWasmInstance(
         return new WasmSharedTypedArray(typedArrayConstructor, memory, byteOffset, length);
     }
 
-    (wasmBindgen as MmdWasmInstance).memory = memory;
+    mmdWasmInstance.memory = memory;
     if (memory.buffer instanceof ArrayBuffer) {
-        (wasmBindgen as MmdWasmInstance).createTypedArray = createTypedArray;
+        mmdWasmInstance.createTypedArray = createTypedArray;
     } else {
-        (wasmBindgen as MmdWasmInstance).createTypedArray = createSharedTypedArray;
+        mmdWasmInstance.createTypedArray = createSharedTypedArray;
     }
 
-    await wasmBindgen.initThreadPool?.(threadCount);
+    await mmdWasmInstance.initThreadPool?.(threadCount);
 
-    resolvePromise(wasmBindgen as MmdWasmInstance);
+    resolvePromise(mmdWasmInstance);
 
-    return wasmBindgen as MmdWasmInstance;
+    return mmdWasmInstance;
 }

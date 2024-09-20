@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.54.3
+
+- fix mmd wasm instance initialization on browser native module loading
+
 ## 0.54.2 (2024-09-18)
 
 - add `MmdOutlineRenderer.zOffset`, `MmdOutlineRenderer.zOffsetUnits` for resolve outline z-fighting issue
