@@ -33,6 +33,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
                         return false;
                     },
                     name: "glslShaders",
+                    chunks: "async",
                     enforce: true
                 },
                 wgslShaders: {
@@ -47,6 +48,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
                         return false;
                     },
                     name: "wgslShaders",
+                    chunks: "async",
                     enforce: true
                 }
             }
