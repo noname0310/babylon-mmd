@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.55.0 (scheduled)
+
+- update rust dependencies (might affect wasm runtime)
+
 ## 0.54.3 (2024-09-20)
 
 - fix mmd wasm instance initialization on browser native module loading
