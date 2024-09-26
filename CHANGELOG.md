@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.55.0 (scheduled)
+## 0.55.0 (2024-09-27)
 
 - update rust dependencies (might affect wasm runtime)
 
