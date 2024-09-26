@@ -311,9 +311,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (stringArrayLength <= 0) return;
 
         const stringArray = this.wasmInstance.createTypedArray(Uint32Array, stringArrayPtr, stringArrayLength * 2).array;
-        for (let i = 0; i < stringArrayLength; i += 2) {
-            const stringPtr = stringArray[i];
-            const stringLength = stringArray[i + 1];
+        for (let i = 0; i < stringArrayLength; ++i) {
+            const stringPtr = stringArray[i * 2];
+            const stringLength = stringArray[i * 2 + 1];
 
             const textBuffer = new Uint8Array(stringLength);
             textBuffer.set(this.wasmInstance.createTypedArray(Uint8Array, stringPtr, stringLength).array);
