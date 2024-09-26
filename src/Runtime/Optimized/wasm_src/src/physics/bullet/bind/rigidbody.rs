@@ -138,7 +138,7 @@ impl Drop for RigidbodyConstructionInfo {
 
 pub(crate) struct Rigidbody {
     body: *mut std::ffi::c_void,
-    linked_bone_index: u32,
+    linked_bone_index: Option<u32>,
     body_offset_matrix: Mat4,
     body_offset_inverse_matrix: Mat4,
     physics_mode: RigidbodyPhysicsMode,
@@ -148,7 +148,7 @@ pub(crate) struct Rigidbody {
 impl Rigidbody {
     pub(super) fn new(
         info: &RigidbodyConstructionInfo,
-        linked_bone_index: u32,
+        linked_bone_index: Option<u32>,
         body_offset_matrix: &Mat4,
         physics_mode: RigidbodyPhysicsMode,
     ) -> Self {
@@ -171,7 +171,7 @@ impl Rigidbody {
         self.body
     }
 
-    pub(crate) fn get_linked_bone_index(&self) -> u32 {
+    pub(crate) fn get_linked_bone_index(&self) -> Option<u32> {
         self.linked_bone_index
     }
 

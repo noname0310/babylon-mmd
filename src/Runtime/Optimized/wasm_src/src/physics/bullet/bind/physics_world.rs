@@ -45,7 +45,7 @@ impl PhysicsObject {
         self.bodies.reserve(count);
     }
 
-    pub(crate) fn create_rigidbody(&mut self, info: &RigidbodyConstructionInfo, linked_bone_index: u32, body_offset_matrix: &Mat4, physics_mode: RigidbodyPhysicsMode) {
+    pub(crate) fn create_rigidbody(&mut self, info: &RigidbodyConstructionInfo, linked_bone_index: Option<u32>, body_offset_matrix: &Mat4, physics_mode: RigidbodyPhysicsMode) {
         let mut body = Rigidbody::new(info, linked_bone_index, body_offset_matrix, physics_mode);
         unsafe { bt_world_add_rigidbody(self.world, body.get_body_mut()) };
         self.bodies.push(body);

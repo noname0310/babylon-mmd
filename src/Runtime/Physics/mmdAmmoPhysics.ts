@@ -18,7 +18,7 @@ import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
 
 class MmdPhysicsMesh extends AbstractMesh {
-    public readonly linkedBone: IMmdRuntimeBone;
+    public readonly linkedBone: Nullable<IMmdRuntimeBone>;
     public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
     public readonly bodyOffsetInverseMatrix: Matrix;
@@ -28,7 +28,7 @@ class MmdPhysicsMesh extends AbstractMesh {
     public constructor(
         name: string,
         scene: Scene,
-        linkedBone: IMmdRuntimeBone,
+        linkedBone: Nullable<IMmdRuntimeBone>,
         physicsMode: PmxObject.RigidBody.PhysicsMode,
         customBoundingInfo: Nullable<BoundingInfo>
     ) {
@@ -196,6 +196,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         for (let i = 0; i < nodes.length; ++i) {
             const node = nodes[i];
             if (node === null) continue;
+            if (node.linkedBone === null) continue;
 
             const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
             node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
@@ -236,6 +237,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         for (let i = 0; i < nodes.length; ++i) {
             const node = nodes[i];
             if (node === null) continue;
+            if (node.linkedBone === null) continue;
 
             switch (node.physicsMode) {
             case PmxObject.RigidBody.PhysicsMode.FollowBone:
@@ -270,6 +272,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         for (let i = 0; i < nodes.length; ++i) {
             const node = nodes[i];
             if (node === null) continue;
+            if (node.linkedBone === null) continue;
 
             switch (node.physicsMode) {
             case PmxObject.RigidBody.PhysicsMode.FollowBone:
@@ -380,7 +383,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         const nodes: Nullable<MmdPhysicsMesh>[] = new Array(rigidBodies.length);
-        const impostors: Nullable<MmdAmmoPhysicsImpostor>[] = new Array(rigidBodies.length);
+        const impostors: Nullable<MmdAmmoPhysicsImpostor | PhysicsImpostor>[] = new Array(rigidBodies.length);
 
         const boneNameMap = new Map<string, IMmdRuntimeBone>();
         for (let i = 0; i < bones.length; ++i) {
@@ -399,10 +402,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             const bone = resolveRigidBodyBone(rigidBody);
             if (bone === undefined) {
-                logger.warn(`Bone index out of range failed to create rigid body: ${rigidBody.name}`);
-                nodes[i] = null;
-                impostors[i] = null;
-                continue;
+                logger.warn(`Bone index out of range create unmapped rigid body: ${rigidBody.name}`);
             }
 
             let impostorType: number;
@@ -453,7 +453,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 continue;
             }
 
-            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone, rigidBody.physicsMode, new BoundingInfo(boundMin, boundMax));
+            const node = new MmdPhysicsMesh(rigidBody.name, scene, bone ?? null, rigidBody.physicsMode, new BoundingInfo(boundMin, boundMax));
 
             const shapePosition = rigidBody.shapePosition;
             node.position.copyFromFloats(
@@ -470,7 +470,9 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             );
 
             // compute the body offset matrix in local space
-            node.computeBodyOffsetMatrix(bone.linkedBone.getAbsoluteInverseBindMatrix());
+            if (bone !== undefined) {
+                node.computeBodyOffsetMatrix(bone.linkedBone.getAbsoluteInverseBindMatrix());
+            }
 
             // then convert the body transform to world space
             Vector3.TransformCoordinatesToRef(node.position, worldMatrix, node.position);
@@ -481,7 +483,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 : rigidBody.mass * scalingFactor;
             // if mass is 0, the object will be constructed as a kinematic object by babylon.js physics plugin
 
-            const impostor = node.physicsImpostor = new MmdAmmoPhysicsImpostor(node, impostorType, {
+            const physicsImpostorParameters: AmmoPhysicsImpostorParameters =  {
                 mass: mass,
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion,
@@ -489,7 +491,11 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 disableBidirectionalTransformation: rigidBody.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone,
                 group: 1 << rigidBody.collisionGroup,
                 mask: rigidBody.collisionMask
-            }, bone, scene);
+            };
+            const impostor = node.physicsImpostor = bone !== undefined
+                ? new MmdAmmoPhysicsImpostor(node, impostorType, physicsImpostorParameters, bone, scene)
+                : new PhysicsImpostor(node, impostorType, physicsImpostorParameters, scene);
+
             impostor.setDeltaPosition(new Vector3(0, 0, 0));
 
             node.setParent(rootMesh);
@@ -542,6 +548,11 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             if (bodyA === null || bodyB === null) {
                 logger.warn(`Rigid body not found failed to create joint: ${joint.name}`);
+                continue;
+            }
+
+            if ((bodyA as MmdAmmoPhysicsImpostor).linkedBone === undefined && (bodyB as MmdAmmoPhysicsImpostor).linkedBone === undefined) {
+                logger.warn(`Cannot create joint between two orphan rigid bodies: ${joint.name} (${joint.rigidbodyIndexA}, ${joint.rigidbodyIndexB})`);
                 continue;
             }
 
@@ -630,14 +641,22 @@ export class MmdAmmoPhysics implements IMmdPhysics {
             const nodeB = nodes[joint.rigidbodyIndexB]!;
 
             if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
-                nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: A is parent of B
-                if (resolveRigidBodyBone(bodyInfoB)!.parentBone === resolveRigidBodyBone(bodyInfoA)!) {
-                    nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone
+            ) { // case: A is parent of B
+                const runtimeBoneB = resolveRigidBodyBone(bodyInfoB);
+                if (runtimeBoneB !== undefined) {
+                    if (runtimeBoneB.parentBone === resolveRigidBodyBone(bodyInfoA)) {
+                        nodeB.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                    }
                 }
             } else if (nodeB.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
-                nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone) { // case: B is parent of A
-                if (resolveRigidBodyBone(bodyInfoA)!.parentBone === resolveRigidBodyBone(bodyInfoB)!) {
-                    nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                nodeA.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone
+            ) { // case: B is parent of A
+                const runtimeBoneA = resolveRigidBodyBone(bodyInfoA);
+                if (runtimeBoneA !== undefined) {
+                    if (runtimeBoneA.parentBone === resolveRigidBodyBone(bodyInfoB)) {
+                        nodeA.physicsMode = PmxObject.RigidBody.PhysicsMode.Physics;
+                    }
                 }
             }
         }

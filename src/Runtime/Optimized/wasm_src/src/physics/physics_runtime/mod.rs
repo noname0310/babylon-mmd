@@ -77,12 +77,18 @@ impl PhysicsRuntime {
             for body in physics_object.bodies_mut() {
                 body.restore_dynamic();
 
+                let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
+                    linked_bone_index
+                } else {
+                    continue;
+                };
+
                 if body.get_physics_mode() == RigidbodyPhysicsMode::FollowBone { // only kinematic object needs to update
-                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    let bone_world_matrix = bone_world_matrices[linked_bone_index];
                     body.set_transform(world_matrix * bone_world_matrix);
                 } else if need_init &&
                     (body.get_physics_mode() == RigidbodyPhysicsMode::Physics || body.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone) {
-                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    let bone_world_matrix = bone_world_matrices[linked_bone_index];
                     body.make_kinematic();
                     body.set_transform(world_matrix * bone_world_matrix);
                 }
@@ -96,7 +102,12 @@ impl PhysicsRuntime {
                     if body.get_physics_mode() != RigidbodyPhysicsMode::FollowBone {
                         continue;
                     }
-                    let bone_world_matrix = bone_world_matrices[body.get_linked_bone_index()];
+                    let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
+                        linked_bone_index
+                    } else {
+                        continue;
+                    };
+                    let bone_world_matrix = bone_world_matrices[linked_bone_index];
                     body.set_transform(world_matrix * bone_world_matrix);
                 }
             }
@@ -125,14 +136,20 @@ impl PhysicsRuntime {
                     continue; // kinematic and static objects are not updated
                 }
 
+                let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
+                    linked_bone_index
+                } else {
+                    continue;
+                };
+
                 let mut body_world_matrix = world_matrix_inverse * body.get_transform();
 
                 if body.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone {
-                    let bone_position = bone_world_matrices[body.get_linked_bone_index()].w_axis.truncate();
+                    let bone_position = bone_world_matrices[linked_bone_index].w_axis.truncate();
                     body_world_matrix.w_axis = bone_position.extend(body_world_matrix.w_axis.w);
                 }
 
-                bone_world_matrices[body.get_linked_bone_index()] = body_world_matrix;
+                bone_world_matrices[linked_bone_index] = body_world_matrix;
             }
         }
     }
@@ -176,10 +193,12 @@ impl PhysicsRuntime {
 
         let mut set_rb_info = |rb_info: &mut RigidbodyConstructionInfo, rigidbody_index: u32, metadata: RigidbodyMetadata| {
             let bone_index = metadata.bone_index;
-            if bone_index < 0 || bones.len() <= bone_index as usize {
-                diagnostic.warning(format!("Bone index out of range failed to create rigid body {}", rigidbody_index));
-                return None;
-            }
+            let bone_index = if bone_index < 0 || bones.len() <= bone_index as usize {
+                diagnostic.warning(format!("Bone index out of range create unmapped rigid body: {}", rigidbody_index));
+                None
+            } else {
+                Some(bone_index)
+            };
 
             let shape_size = metadata.shape_size * scaling_factor;
 
@@ -234,11 +253,13 @@ impl PhysicsRuntime {
             );
 
             // compute the offset matrix from the bone to the rigid body
-            let body_offset_matrix = {
+            let body_offset_matrix = if let Some(bone_index) = bone_index {
                 let world_matrix = Mat4::from_rotation_translation(rotation, position.into());
                 let parent_world_matrix_inverse = *bones[bone_index as usize].absolute_inverse_bind_matrix();
 
                 parent_world_matrix_inverse * world_matrix
+            } else {
+                Mat4::IDENTITY
             };
 
             // world space position and rotation
@@ -269,7 +290,7 @@ impl PhysicsRuntime {
                 None => return,
             };
 
-            physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix, physics_mode);
+            physics_object.create_rigidbody(&rb_info, bone_index.map(|v| v as u32), &body_offset_matrix, physics_mode);
 
             rigidbody_map[rigidbody_index as usize] = rigidbody_initial_transforms.len() as i32;
             rigidbody_initial_transforms.push((position, rotation));
@@ -300,7 +321,7 @@ impl PhysicsRuntime {
                     None => return,
                 };
 
-                physics_object.create_rigidbody(&rb_info, bone_index as u32, &body_offset_matrix, physics_mode);
+                physics_object.create_rigidbody(&rb_info, bone_index.map(|v| v as u32), &body_offset_matrix, physics_mode);
             });
 
             kinematic_shared_physics_handles.push(physics_handle);
@@ -340,6 +361,15 @@ impl PhysicsRuntime {
                 }
                 rigidbody_index_b
             };
+
+            {
+                let body_a = &physics_object.bodies()[rigidbody_index_a as usize];
+                let body_b = &physics_object.bodies()[rigidbody_index_b as usize];
+                if body_a.get_linked_bone_index().is_none() && body_b.get_linked_bone_index().is_none() {
+                    diagnostic.warning(format!("Cannot create joint between two orphan rigid bodies: {} ({}, {})", constraint_index, rigidbody_index_a, rigidbody_index_b));
+                    return;
+                }
+            }
 
             let constraint_type = if metadata.kind == JointKind::Spring6Dof as u8 {
                 ConstraintType::Generic6DofSpring
@@ -402,18 +432,22 @@ impl PhysicsRuntime {
 
             if body_a.get_physics_mode() != RigidbodyPhysicsMode::FollowBone &&
                 body_b.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone { // case: A is parent of B
-                if let Some(parent_bone) = bones[body_b.get_linked_bone_index() as usize].parent_bone() {
-                    if parent_bone == body_a.get_linked_bone_index() {
-                        let body_b = &mut physics_object.bodies_mut()[rigidbody_index_b as usize];
-                        body_b.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                if let Some(body_b_bone_index) = body_b.get_linked_bone_index() {
+                    if let (Some(parent_bone), Some(body_a_bone_index)) = (bones[body_b_bone_index as usize].parent_bone(), body_a.get_linked_bone_index()) {
+                        if parent_bone == body_a_bone_index {
+                            let body_b = &mut physics_object.bodies_mut()[rigidbody_index_b as usize];
+                            body_b.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                        }
                     }
                 }
             } else if body_b.get_physics_mode() != RigidbodyPhysicsMode::FollowBone &&
                 body_a.get_physics_mode() == RigidbodyPhysicsMode::PhysicsWithBone { // case: B is parent of A
-                if let Some(parent_bone) = bones[body_a.get_linked_bone_index() as usize].parent_bone() {
-                    if parent_bone == body_b.get_linked_bone_index() {
-                        let body_a = &mut physics_object.bodies_mut()[rigidbody_index_a as usize];
-                        body_a.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                if let Some(body_a_bone_index) = body_a.get_linked_bone_index() {
+                    if let (Some(parent_bone), Some(body_b_bone_index)) = (bones[body_a_bone_index as usize].parent_bone(), body_b.get_linked_bone_index()) {
+                        if parent_bone == body_b_bone_index {
+                            let body_a = &mut physics_object.bodies_mut()[rigidbody_index_a as usize];
+                            body_a.set_physics_mode(RigidbodyPhysicsMode::Physics);
+                        }
                     }
                 }
             }

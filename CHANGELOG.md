@@ -6,6 +6,8 @@
 
 - fix wasm runtime diagnostic logging not showing up
 
+- fix orphan rigidbody creation behavior in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
+
 ## 0.54.3 (2024-09-20)
 
 - fix mmd wasm instance initialization on browser native module loading
