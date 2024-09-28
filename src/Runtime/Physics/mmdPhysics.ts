@@ -497,13 +497,6 @@ export class MmdPhysics implements IMmdPhysics {
                 continue;
             }
 
-            if ((bodyA as MmdPhysicsBody).linkedBone === undefined && (bodyB as MmdPhysicsBody).linkedBone === undefined) {
-                logger.warn(`Cannot create joint between two orphan rigid bodies: ${joint.name} (${joint.rigidbodyIndexA}, ${joint.rigidbodyIndexB})`);
-
-                constraints[i] = null;
-                continue;
-            }
-
             Matrix.ComposeToRef(
                 one,
                 Quaternion.FromEulerAnglesToRef(

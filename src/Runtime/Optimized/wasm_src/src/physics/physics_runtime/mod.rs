@@ -362,15 +362,6 @@ impl PhysicsRuntime {
                 rigidbody_index_b
             };
 
-            {
-                let body_a = &physics_object.bodies()[rigidbody_index_a as usize];
-                let body_b = &physics_object.bodies()[rigidbody_index_b as usize];
-                if body_a.get_linked_bone_index().is_none() && body_b.get_linked_bone_index().is_none() {
-                    diagnostic.warning(format!("Cannot create joint between two orphan rigid bodies: {} ({}, {})", constraint_index, rigidbody_index_a, rigidbody_index_b));
-                    return;
-                }
-            }
-
             let constraint_type = if metadata.kind == JointKind::Spring6Dof as u8 {
                 ConstraintType::Generic6DofSpring
             } else {
