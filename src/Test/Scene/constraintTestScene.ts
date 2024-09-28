@@ -46,7 +46,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.forceDisableAlphaEvaluation = false;
 
         const mmdMesh = await loadAssetContainerAsync(
-            "res/private_test/model/Hades/Hades DebugTrimmed3.pmx",
+            "res/private_test/model/Hades/Hades.pmx",
             scene,
             {
                 pluginOptions: {
@@ -66,6 +66,27 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
+        const mmdMesh2 = await loadAssetContainerAsync(
+            "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
+            scene,
+            {
+                pluginOptions: {
+                    pmxmodel: {
+                        materialBuilder: materialBuilder,
+                        loggingEnabled: true
+                    }
+                }
+            }
+        ).then(result => {
+            result.addAllToScene();
+            return result.meshes[0] as Mesh;
+        });
+        mmdMesh2.position.set(10, 0, 0);
+        for (const mesh of mmdMesh2.metadata.meshes) {
+            mesh.receiveShadows = true;
+            shadowGenerator.addShadowCaster(mesh, false);
+        }
+
         const physicsInstance = await ammo();
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
         scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
@@ -75,6 +96,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         mmdRuntime.createMmdModel(mmdMesh);
+        mmdRuntime.createMmdModel(mmdMesh2);
 
         Inspector.Show(scene, { });
 
