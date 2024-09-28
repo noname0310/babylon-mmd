@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.56.0 (scheduled)
+
+- change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
+
 ## 0.55.0 (2024-09-27)
 
 - update rust dependencies (might affect wasm runtime)
