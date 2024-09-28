@@ -9,20 +9,23 @@ import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene";
-import havokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import { MmdRuntime } from "@/Runtime/mmdRuntime";
-import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
+import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
+import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
+import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
@@ -30,7 +33,12 @@ export class SceneBuilder implements ISceneBuilder {
 
         // materialBuilder.alphaEvaluationResolution = 2048;
         const scene = new Scene(engine);
-        createDefaultArcRotateCamera(scene);
+        scene.ambientColor = new Color3(0.5, 0.5, 0.5);
+        const camera = createDefaultArcRotateCamera(scene);
+        camera.target.set(-0.817, 15.373, -0.859);
+        camera.alpha = -0.0552;
+        camera.beta = 1.3703;
+        camera.radius = 11.7531;
         const { shadowGenerator } = createLightComponents(scene);
         createDefaultGround(scene);
 
@@ -38,7 +46,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.forceDisableAlphaEvaluation = false;
 
         const mmdMesh = await loadAssetContainerAsync(
-            "res/private_test/model/ふわミクさんセット20230901/F_Miku_202309/ふわミクさんver250.pmx",
+            "res/private_test/model/Hades/Hades DebugTrimmed3.pmx",
             scene,
             {
                 pluginOptions: {
@@ -52,17 +60,19 @@ export class SceneBuilder implements ISceneBuilder {
             result.addAllToScene();
             return result.meshes[0] as Mesh;
         });
-        mmdMesh.scaling.scaleInPlace(5);
+        // mmdMesh.scaling.scaleInPlace(5);
         for (const mesh of mmdMesh.metadata.meshes) {
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        const havokInstance = await havokPhysics();
-        const havokPlugin = new HavokPlugin(true, havokInstance);
-        scene.enablePhysics(new Vector3(0, -98, 0), havokPlugin);
+        const physicsInstance = await ammo();
+        const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+        scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
 
-        const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
+        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
+        mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         mmdRuntime.createMmdModel(mmdMesh);
 
@@ -80,7 +90,7 @@ export class SceneBuilder implements ISceneBuilder {
         const skeletionViewer = new SkeletonViewer(mmdMesh.metadata.skeleton, mmdMesh, scene, false, 3, {
             displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
         });
-        skeletionViewer.isEnabled = true;
+        skeletionViewer.isEnabled = false;
 
         return scene;
     }
