@@ -50,7 +50,6 @@ export class MmdCamera extends Camera {
      */
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeCameraAnimation>>;
     private readonly _animations: RuntimeCameraAnimation[];
-    private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<RuntimeCameraAnimation>;
 
@@ -69,7 +68,6 @@ export class MmdCamera extends Camera {
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<RuntimeCameraAnimation>>();
         this._animations = [];
-        this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
     }
@@ -85,8 +83,13 @@ export class MmdCamera extends Camera {
         } else {
             throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
         }
-        this._animationIndexMap.set(animation.name, this._animations.length);
-        this._animations.push(runtimeAnimation);
+
+        const index = this._animations.findIndex(a => a.animation.name === animation.name);
+        if (index !== -1) {
+            this._animations[index] = runtimeAnimation;
+        } else {
+            this._animations.push(runtimeAnimation);
+        }
     }
 
     /**
@@ -99,7 +102,6 @@ export class MmdCamera extends Camera {
         const animation = this._animations[index];
         if (this._currentAnimation === animation) this._currentAnimation = null;
 
-        this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
         (animation as IMmdRuntimeCameraAnimation).dispose?.();
     }
@@ -120,8 +122,8 @@ export class MmdCamera extends Camera {
             return;
         }
 
-        const index = this._animationIndexMap.get(name);
-        if (index === undefined) {
+        const index = this._animations.findIndex(a => a.animation.name === name);
+        if (index === -1) {
             throw new Error(`Animation ${name} is not found`);
         }
 

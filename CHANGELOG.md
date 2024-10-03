@@ -4,6 +4,8 @@
 
 - change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
 
+- fix crash when remove animation from `MmdModel`, `MmdWasmModel`, `MmdCamera`
+
 ## 0.55.0 (2024-09-27)
 
 - update rust dependencies (might affect wasm runtime)

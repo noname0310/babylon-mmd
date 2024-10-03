@@ -90,7 +90,6 @@ export class MmdModel implements IMmdModel {
      */
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
     private readonly _animations: RuntimeModelAnimation[];
-    private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
     private _needStateReset: boolean;
@@ -184,7 +183,6 @@ export class MmdModel implements IMmdModel {
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
         this._animations = [];
-        this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
         this._needStateReset = false;
@@ -211,7 +209,6 @@ export class MmdModel implements IMmdModel {
             (animations[i] as IMmdRuntimeModelAnimation).dispose?.();
         }
         this._animations.length = 0;
-        this._animationIndexMap.clear();
 
         (this.mesh as any).metadata = null;
     }
@@ -243,11 +240,10 @@ export class MmdModel implements IMmdModel {
             throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
 
-        const index = this._animationIndexMap.get(animation.name);
-        if (index !== undefined) {
+        const index = this._animations.findIndex(a => a.animation.name === animation.name);
+        if (index !== -1) {
             this._animations[index] = runtimeAnimation;
         } else {
-            this._animationIndexMap.set(animation.name, this._animations.length);
             this._animations.push(runtimeAnimation);
         }
     }
@@ -268,7 +264,6 @@ export class MmdModel implements IMmdModel {
             this.onCurrentAnimationChangedObservable.notifyObservers(null);
         }
 
-        this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
         (animation as IMmdRuntimeModelAnimation).dispose?.();
     }
@@ -289,8 +284,8 @@ export class MmdModel implements IMmdModel {
             return;
         }
 
-        const index = this._animationIndexMap.get(name);
-        if (index === undefined) {
+        const index = this._animations.findIndex(a => a.animation.name === name);
+        if (index === -1) {
             throw new Error(`Animation '${name}' is not found.`);
         }
 
