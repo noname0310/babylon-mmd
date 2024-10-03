@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.56.0 (scheduled)
+## 0.56.0 (2024-10-03)
 
 - change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
 
