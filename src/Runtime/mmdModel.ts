@@ -226,12 +226,16 @@ export class MmdModel implements IMmdModel {
      * Add an animation to this model
      *
      * If the animation is already added, it will be replaced
+     *
+     * updateMorphTarget is used only when the current animation is overwritten by this method
      * @param animation MMD animation or MMD model animation group to add
      * @param retargetingMap Animation bone name to model bone name map
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
      */
     public addAnimation(
         animation: IMmdBindableModelAnimation,
-        retargetingMap?: { [key: string]: string }
+        retargetingMap?: { [key: string]: string },
+        updateMorphTarget = true
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
@@ -242,7 +246,15 @@ export class MmdModel implements IMmdModel {
 
         const index = this._animations.findIndex(a => a.animation.name === animation.name);
         if (index !== -1) {
+            const oldAnimation = this._animations[index];
             this._animations[index] = runtimeAnimation;
+            if (this._currentAnimation === oldAnimation) {
+                this._currentAnimation = runtimeAnimation;
+                this._resetPose();
+                this._needStateReset = true;
+                runtimeAnimation.induceMaterialRecompile(updateMorphTarget, this._logger);
+                this.onCurrentAnimationChangedObservable.notifyObservers(runtimeAnimation);
+            }
         } else {
             this._animations.push(runtimeAnimation);
         }

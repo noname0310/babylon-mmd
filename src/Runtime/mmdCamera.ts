@@ -89,7 +89,12 @@ export class MmdCamera extends Camera {
         const existingAnimation = this._animationNameMap.get(animation.name);
         if (existingAnimation) {
             const index = this._animations.indexOf(existingAnimation);
+            const oldAnimation = this._animations[index];
             this._animations[index] = runtimeAnimation;
+            if (this._currentAnimation === oldAnimation) {
+                this._currentAnimation = runtimeAnimation;
+                this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
+            }
         } else {
             this._animations.push(runtimeAnimation);
         }
@@ -106,7 +111,10 @@ export class MmdCamera extends Camera {
         const animation = this._animations[index];
         if (animation === undefined) return;
 
-        if (this._currentAnimation === animation) this._currentAnimation = null;
+        if (this._currentAnimation === animation) {
+            this._currentAnimation = null;
+            this.onCurrentAnimationChangedObservable.notifyObservers(null);
+        }
 
         for (const [key, value] of this._animationNameMap) {
             if (value === animation) {
