@@ -4,6 +4,10 @@
 
 - fix `MmdCamera` animation loading error
 
+- fix `MmdCamera.onCurrentAnimationChangedObservable` not triggered when animation is removed
+
+- fix `onCurrentAnimationChangedObservable` not triggered when animation is overwrited by `MmdModel.addAnimation`, `MmdWasmModel.addAnimation`, `MmdCamera.addAnimation`
+
 ## 0.56.0 (2024-10-03)
 
 - change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
