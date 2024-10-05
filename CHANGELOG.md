@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.56.1 (2024-10-05)
+
+- fix `MmdCamera` animation loading error
+
 ## 0.56.0 (2024-10-03)
 
 - change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
