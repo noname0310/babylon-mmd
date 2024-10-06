@@ -213,7 +213,11 @@ export class BvmdLoader {
         return this._scene._loadFile(
             fileOrUrl,
             (data: string | ArrayBuffer, _responseURL?: string) => {
-                onLoad(this.loadFromBuffer(name, data as ArrayBuffer));
+                try {
+                    onLoad(this.loadFromBuffer(name, data as ArrayBuffer));
+                } catch (e: any) {
+                    onError?.(undefined, e);
+                }
             },
             onProgress,
             true,

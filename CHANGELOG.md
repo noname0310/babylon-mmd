@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.56.2 (scheduled)
+
+- make motion load exception catchable
+
 ## 0.56.1 (2024-10-05)
 
 - fix `MmdCamera` animation loading error
