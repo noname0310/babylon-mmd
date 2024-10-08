@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.56.2 (scheduled)
+## 0.56.2 (2024-10-08)
 
 - make motion load exception catchable
 
