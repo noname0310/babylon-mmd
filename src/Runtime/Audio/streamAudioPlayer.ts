@@ -80,7 +80,7 @@ export interface StreamAudioPlayerOptions {
      * If `false`, the audio element is created on demand
      * If `IAudioElementPool`, the specified audio element pool is used
      *
-     * Default is `true`
+     * Default is `false`
      */
     pool?: boolean | IAudioElementPool;
 }
@@ -172,7 +172,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * @param options Options
      */
     public constructor(disposeObservable: Nullable<IDisposeObservable>, options: StreamAudioPlayerOptions = {}) {
-        const poolOption = options.pool ?? true;
+        const poolOption = options.pool ?? false;
 
         this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
