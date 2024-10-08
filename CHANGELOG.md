@@ -4,6 +4,8 @@
 
 - make motion load exception catchable
 
+- add `AudioElementPool` for better html audio resource management
+
 ## 0.56.1 (2024-10-05)
 
 - fix `MmdCamera` animation loading error

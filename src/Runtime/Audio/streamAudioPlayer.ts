@@ -5,6 +5,87 @@ import type { IDisposeObservable } from "../IDisposeObserable";
 import type { IAudioPlayer } from "./IAudioPlayer";
 
 /**
+ * Audio element pool interface
+ *
+ * Pass to the constructor of `StreamAudioPlayer` to pool the audio element
+ */
+export interface IAudioElementPool {
+    /**
+     * Rent the audio element
+     * @returns The audio element
+     */
+    rent(): HTMLAudioElement;
+
+    /**
+     * Return the audio element
+     *
+     * Returned audio element should not be used anymore
+     * @param audioElement The audio element
+     */
+    return(audioElement: HTMLAudioElement): void;
+}
+
+/**
+ * This class is used to pooling the audio element
+ */
+export class AudioElementPool implements IAudioElementPool {
+    private readonly _audioElements: HTMLAudioElement[] = [];
+
+    /**
+     * Rent the audio element
+     * @returns The audio element
+     */
+    public rent(): HTMLAudioElement {
+        if (this._audioElements.length === 0) {
+            return new Audio();
+        } else {
+            const audio =  this._audioElements.pop()!;
+            audio.loop = false;
+            audio.autoplay = false;
+            audio.playbackRate = 1;
+            audio.volume = 1;
+            audio.muted = false;
+            audio.preservesPitch = true;
+            audio.ondurationchange = null;
+            audio.onerror = null;
+            audio.onplaying = null;
+            audio.onpause = null;
+            audio.onseeked = null;
+            return audio;
+        }
+    }
+
+    /**
+     * Return the audio element
+     *
+     * Returned audio element should not be used anymore
+     * @param audioElement The audio element
+     */
+    public return(audioElement: HTMLAudioElement): void {
+        audioElement.pause();
+        audioElement.src = "";
+        audioElement.load();
+        this._audioElements.push(audioElement);
+    }
+}
+
+/**
+ * Stream audio player options
+ */
+export interface StreamAudioPlayerOptions {
+    /**
+     * Whether to pooling the audio element
+     *
+     * If `true`, the `StreamAudioPlayer.DefaultAudioElementPool` is used as the audio element pool
+     * If `false`, the audio element is created on demand
+     * If `IAudioElementPool`, the specified audio element pool is used
+     *
+     * Default is `true`
+     */
+    pool?: boolean | IAudioElementPool;
+}
+
+/**
  * Stream audio player
  *
  * This class is used to play the audio from the stream
@@ -14,6 +95,11 @@ import type { IAudioPlayer } from "./IAudioPlayer";
  * Wrapper of `HTMLAudioElement` which handles audio playback permission issues gracefully
  */
 export class StreamAudioPlayer implements IAudioPlayer {
+    /**
+     * Default global audio element pool instance
+     */
+    public static readonly DefaultAudioElementPool: IAudioElementPool = new AudioElementPool();
+
     /**
      * On load error observable
      *
@@ -63,6 +149,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      */
     public readonly onSeekObservable: Observable<void>;
 
+    private readonly _pool: Nullable<IAudioElementPool>;
     private readonly _audio: HTMLAudioElement;
     private _duration: number;
     private _playbackRate: number;
@@ -82,8 +169,11 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * In general disposeObservable should be `Scene` of Babylon.js
      *
      * @param disposeObservable Objects that limit the lifetime of this instance
+     * @param options Options
      */
-    public constructor(disposeObservable: Nullable<IDisposeObservable>) {
+    public constructor(disposeObservable: Nullable<IDisposeObservable>, options: StreamAudioPlayerOptions = {}) {
+        const poolOption = options.pool ?? true;
+
         this.onLoadErrorObservable = new Observable<void>();
         this.onDurationChangedObservable = new Observable<void>();
         this.onPlaybackRateChangedObservable = new Observable<void>();
@@ -93,7 +183,15 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onPauseObservable = new Observable<void>();
         this.onSeekObservable = new Observable<void>();
 
-        const audio = this._audio = new Audio();
+        const pool = this._pool = typeof poolOption === "boolean"
+            ? poolOption
+                ? StreamAudioPlayer.DefaultAudioElementPool
+                : null
+            : poolOption;
+        const audio = this._audio = pool !== null
+            ? pool.rent()
+            : new Audio();
+
         audio.loop = false;
         audio.autoplay = false;
 
@@ -473,6 +571,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * Dispose the player
      */
     public dispose(): void {
+        if (this._audio === null) {
+            return;
+        }
+
         const audio = this._audio;
         audio.pause();
         audio.ondurationchange = null;
@@ -480,7 +582,13 @@ export class StreamAudioPlayer implements IAudioPlayer {
         audio.onplaying = null;
         audio.onpause = null;
         audio.onseeked = null;
-        this._audio.remove();
+        audio.src = "";
+        audio.load();
+        if (this._pool !== null) {
+            this._pool.return(audio);
+        } else {
+            this._audio.remove();
+        }
 
         this.onLoadErrorObservable.clear();
         this.onDurationChangedObservable.clear();
@@ -494,5 +602,8 @@ export class StreamAudioPlayer implements IAudioPlayer {
         if (this._disposeObservableObject !== null) {
             this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
         }
+
+        (this as unknown as { _audio: Nullable<HTMLAudioElement> })._audio = null;
+        (this as unknown as { _pool: Nullable<IAudioElementPool> })._pool = null;
     }
 }

@@ -82,7 +82,7 @@ export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeMod
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
-export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
+export { AudioElementPool, IAudioElementPool, StreamAudioPlayer, StreamAudioPlayerOptions } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Optimized/Animation
 export { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
