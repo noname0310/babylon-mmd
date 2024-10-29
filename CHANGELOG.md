@@ -4,6 +4,8 @@
 
 - fixed crash caused by models without IK solver or morphtarget in WASM single-threaded runtime
 
+- fix WGSL minification not applied to esm package
+
 ## 0.56.2 (2024-10-08)
 
 - make motion load exception catchable
