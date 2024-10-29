@@ -1,6 +1,6 @@
 {
     "name": "babylon-mmd",
-    "version": "0.57.0",
+    "version": "0.57.1",
     "description": "babylon.js mmd loader and runtime",
     "main": "esm/index.js",
     "scripts": {
@@ -96,6 +96,6 @@
         "**/index.*"
     ],
     "peerDependencies": {
-        "@babylonjs/core": "7.28.0"
+        "@babylonjs/core": "^7.28.0"
     }
 }
