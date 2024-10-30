@@ -91,6 +91,13 @@ export interface IAudioPlayer extends IPlayer {
     readonly onMuteStateChangedObservable: Observable<void>;
 
     /**
+     * On volume changed observable
+     *
+     * This observable is notified when the volume is changed
+     */
+    readonly onVolumeChangedObservable: Observable<void>;
+
+    /**
      * Volume (0.0 to 1.0)
      */
     volume: number;

@@ -38,6 +38,7 @@ export class MmdPlayerControl {
     private _volumeSlider: Nullable<HTMLInputElement>;
     private _currentFrameNumberSpan: HTMLSpanElement;
     private _endFrameNumberSpan: HTMLSpanElement;
+    private _speedLabel: HTMLLabelElement;
     private _speedSlider: HTMLInputElement;
     private _fullscreenButton: HTMLButtonElement;
 
@@ -73,6 +74,7 @@ export class MmdPlayerControl {
         this._volumeSlider = null;
         this._currentFrameNumberSpan = null!;
         this._endFrameNumberSpan = null!;
+        this._speedLabel = null!;
         this._speedSlider = null!;
         this._fullscreenButton = null!;
 
@@ -82,6 +84,8 @@ export class MmdPlayerControl {
         mmdRuntime.onAnimationDurationChangedObservable.add(this._onAnimationDurationChanged);
         mmdRuntime.onAnimationTickObservable.add(this._onAnimationTick);
         audioPlayer?.onMuteStateChangedObservable.add(this._onMuteStateChanged);
+        audioPlayer?.onPlaybackRateChangedObservable.add(this._onPlaybackRateChanged);
+        audioPlayer?.onVolumeChangedObservable.add(this._onVolumeChanged);
 
         this._bindedDispose = this.dispose.bind(this);
         this._scene = scene;
@@ -275,7 +279,7 @@ export class MmdPlayerControl {
                     playerLowerRightContainer.style.justifyContent = "flex-end";
                     playerLowerContainer.appendChild(playerLowerRightContainer);
                     {
-                        const speedLabel = ownerDocument.createElement("label");
+                        const speedLabel = this._speedLabel = ownerDocument.createElement("label");
                         speedLabel.style.width = "40px";
                         speedLabel.style.textAlign = "center";
                         speedLabel.style.color = "white";
@@ -294,6 +298,9 @@ export class MmdPlayerControl {
                         speedSlider.value = mmdRuntime.timeScale.toString();
                         speedSlider.oninput = (): void => {
                             mmdRuntime.timeScale = Number(speedSlider.value);
+                            if (audioPlayer) {
+                                audioPlayer.playbackRate = mmdRuntime.timeScale; // Fires audio player observable
+                            }
                             speedLabel.innerText = mmdRuntime.timeScale.toFixed(2) + "x";
                         };
                         playerLowerRightContainer.appendChild(speedSlider);
@@ -369,6 +376,17 @@ export class MmdPlayerControl {
         this._soundButton.innerText = this._audioPlayer!.muted ? "🔇" : "🔊";
     };
 
+    private readonly _onPlaybackRateChanged = (): void => {
+        if (this._speedSlider === null || this._speedLabel === null) return;
+        this._speedSlider.value = this._mmdRuntime.timeScale.toString();
+        this._speedLabel.innerText = this._mmdRuntime.timeScale.toFixed(2) + "x";
+    };
+
+    private readonly _onVolumeChanged = (): void => {
+        if (this._volumeSlider === null) return;
+        this._volumeSlider.value = this._audioPlayer!.volume.toString();
+    };
+
     private _formattedTimeCacheKey: number = NaN;
     private _formatterTimeCacheValue: string = "";
 
@@ -439,6 +457,8 @@ export class MmdPlayerControl {
         this._mmdRuntime.onAnimationDurationChangedObservable.removeCallback(this._onAnimationDurationChanged);
         this._mmdRuntime.onAnimationTickObservable.removeCallback(this._onAnimationTick);
         this._audioPlayer?.onMuteStateChangedObservable.removeCallback(this._onMuteStateChanged);
+        this._audioPlayer?.onPlaybackRateChangedObservable.removeCallback(this._onPlaybackRateChanged);
+        this._audioPlayer?.onVolumeChangedObservable.removeCallback(this._onVolumeChanged);
 
         this._scene.onDisposeObservable.removeCallback(this._bindedDispose);
     }

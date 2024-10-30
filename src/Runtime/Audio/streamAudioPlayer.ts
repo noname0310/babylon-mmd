@@ -51,6 +51,7 @@ export class AudioElementPool implements IAudioElementPool {
             audio.onplaying = null;
             audio.onpause = null;
             audio.onseeked = null;
+            audio.onvolumechange = null;
             return audio;
         }
     }
@@ -129,6 +130,13 @@ export class StreamAudioPlayer implements IAudioPlayer {
     public readonly onMuteStateChangedObservable: Observable<void>;
 
     /**
+     * On volume change observable
+     *
+     * This observable is notified when the volume is changed
+     */
+    public readonly onVolumeChangedObservable: Observable<void>;
+
+    /**
      * On play observable
      *
      * This observable is notified when the player is played
@@ -178,6 +186,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onDurationChangedObservable = new Observable<void>();
         this.onPlaybackRateChangedObservable = new Observable<void>();
         this.onMuteStateChangedObservable = new Observable<void>();
+        this.onVolumeChangedObservable = new Observable<void>();
 
         this.onPlayObservable = new Observable<void>();
         this.onPauseObservable = new Observable<void>();
@@ -209,6 +218,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         audio.onplaying = this._onPlay;
         audio.onpause = this._onPause;
         audio.onseeked = this._onSeek;
+        audio.onvolumechange = this._onVolumeChange;
 
         this._bindedDispose = this.dispose.bind(this);
         this._disposeObservableObject = disposeObservable;
@@ -271,6 +281,10 @@ export class StreamAudioPlayer implements IAudioPlayer {
             return;
         }
         this.onSeekObservable.notifyObservers();
+    };
+
+    private readonly _onVolumeChange = (): void => {
+        this.onVolumeChangedObservable.notifyObservers();
     };
 
     /**
@@ -582,6 +596,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         audio.onplaying = null;
         audio.onpause = null;
         audio.onseeked = null;
+        audio.onvolumechange = null;
         audio.src = "";
         audio.load();
         if (this._pool !== null) {
