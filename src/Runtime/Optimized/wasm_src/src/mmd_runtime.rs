@@ -40,10 +40,8 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "allocateBuffer")]
     pub fn allocate_buffer(&self, size: usize) -> *mut u8 {
-        let mut vec = vec![0; size].into_boxed_slice();
-        let ptr = vec.as_mut_ptr();
-        std::mem::forget(vec);
-        ptr
+        let vec = vec![0; size].into_boxed_slice();
+        Box::into_raw(vec) as *mut u8
     }
 
     #[wasm_bindgen(js_name = "deallocateBuffer")]
