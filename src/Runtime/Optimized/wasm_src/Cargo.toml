@@ -40,4 +40,4 @@ features = ["console"]
 wasm-bindgen-test = "0.3.42"
 
 [build-dependencies]
-cc = "1.1.21"
+cc = "=1.1.21"
