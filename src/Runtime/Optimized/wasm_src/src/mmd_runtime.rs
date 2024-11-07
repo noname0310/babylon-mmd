@@ -40,14 +40,19 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "allocateBuffer")]
     pub fn allocate_buffer(&self, size: usize) -> *mut u8 {
-        let vec = vec![0; size].into_boxed_slice();
-        Box::into_raw(vec) as *mut u8
+        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
+        let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
+        if ptr.is_null() {
+            return ptr;
+        }
+        ptr
     }
 
     #[wasm_bindgen(js_name = "deallocateBuffer")]
     pub fn deallocate_buffer(&self, ptr: *mut u8, size: usize) {
+        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
         unsafe {
-            let _ = Box::from_raw(std::slice::from_raw_parts_mut(ptr, size));
+            std::alloc::dealloc(ptr, layout);
         }
     }
 
