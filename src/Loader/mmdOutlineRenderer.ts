@@ -21,10 +21,8 @@ import { SdefInjector } from "./sdefInjector";
 
 declare module "@babylonjs/core/scene" {
     export interface Scene {
-        /* eslint-disable @typescript-eslint/naming-convention */
         /** @internal */
         _mmdOutlineRenderer: MmdOutlineRenderer;
-        /* eslint-enable @typescript-eslint/naming-convention */
 
         /**
          * Gets the outline renderer associated with the scene
