@@ -10,10 +10,6 @@ import globals from "globals";
 
 export default tseslint.config(
     {
-        extends: [
-            js.configs.recommended,
-            ...tseslint.configs.recommended,
-        ],
         ignores: [
             "**/dist/*",
             "**/test_dist/*",
@@ -21,6 +17,12 @@ export default tseslint.config(
             "**/src/Runtime/Optimized/wasm/*",
             "**/src/Runtime/Optimized/wasm_src/*",
             "**/src/Runtime/Physics/External/*"
+        ]
+    },
+    {
+        extends: [
+            js.configs.recommended,
+            ...tseslint.configs.recommended,
         ],
         files: [
             "**/*.ts",
