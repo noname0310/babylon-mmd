@@ -9,6 +9,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -22,6 +23,8 @@ export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
+        registerDxBmpTextureLoader();
+
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         createDefaultArcRotateCamera(scene);
@@ -34,7 +37,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const mmdMesh = await loadAssetContainerAsync(
-            "res/private_test/model/YYB 元气少女/Miku.pmx",
+            "res/private_test/stage/MMD School Auditorium/Auditorium.pmx",
             scene,
             {
                 pluginOptions: {
