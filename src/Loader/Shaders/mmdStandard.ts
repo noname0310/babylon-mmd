@@ -2,7 +2,7 @@ import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdPluginMaterial as MmdPluginMaterialBase } from "../mmdPluginMaterial";
-import { escapeRegExp } from "../Util/escapeRegExp";
+import { escapeRegExp } from "./escapeRegExp";
 import { sdefDeclaration } from "./sdefDeclaration";
 import { sdefVertex } from "./sdefVertex";
 
