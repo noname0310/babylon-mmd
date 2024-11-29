@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.58.0 (scheduled)
+## 0.58.0 (2024-11-29)
 
 - fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
 
