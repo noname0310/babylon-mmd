@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.58.0 (scheduled)
+
+- fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
+
 ## 0.57.0 (2024-10-29)
 
 - fixed crash caused by models without IK solver or morphtarget in WASM single-threaded runtime

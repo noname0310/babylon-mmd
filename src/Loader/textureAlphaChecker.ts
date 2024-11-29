@@ -97,6 +97,17 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderList = [mesh];
         renderTargetTexture.setMaterialForRendering(mesh, shader);
 
+        // wait for the RTT and shader to be ready
+        while (!renderTargetTexture.isReadyForRendering() || !shader.isReady()) {
+            await new Promise<void>(resolve => {
+                setTimeout(resolve, 0);
+            });
+
+            if (renderTargetTexture._texture === null) {
+                return new Uint8Array(0);
+            }
+        }
+
         // NOTE: there is too much internal api access here, becareful to babylon.js internal changes
         const currentLODIsUpToDate = mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate;
         const currentLOD = mesh._internalAbstractMeshDataInfo._currentLOD;
