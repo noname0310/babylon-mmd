@@ -3,6 +3,7 @@ import { Constants } from "@babylonjs/core/Engines/constants";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
+import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -355,6 +356,15 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
         }
     }
 
+    private _getForcedExtension(texturePath: string): string | undefined {
+        if (texturePath.substring(texturePath.length - 4).toLowerCase() === ".bmp") {
+            if (_GetCompatibleTextureLoader(".dxbmp") !== null) {
+                return ".dxbmp";
+            }
+        }
+        return undefined;
+    }
+
     /**
      * Load general scalar properties (diffuse, specular, ambient, alpha, shininess)
      *
@@ -471,7 +481,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
                             format: Constants.TEXTUREFORMAT_RGBA,
-                            mimeType: file instanceof File ? file.type : file.mimeType
+                            mimeType: file instanceof File ? file.type : file.mimeType,
+                            forcedExtension: this._getForcedExtension(diffuseTexturePath)
                         }
                     );
                 } else {
@@ -484,7 +495,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                         {
                             ...textureInfo,
                             deleteBuffer: this.deleteTextureBufferAfterLoad,
-                            format: Constants.TEXTUREFORMAT_RGBA
+                            format: Constants.TEXTUREFORMAT_RGBA,
+                            forcedExtension: this._getForcedExtension(diffuseTexturePath)
                         }
                     );
                 }
@@ -720,7 +732,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
                                 format: format,
-                                mimeType: file instanceof File ? file.type : file.mimeType
+                                mimeType: file instanceof File ? file.type : file.mimeType,
+                                forcedExtension: this._getForcedExtension(sphereTexturePath)
                             }
                         ));
                     } else {
@@ -733,7 +746,8 @@ export class MmdStandardMaterialBuilder implements IMmdMaterialBuilder {
                             {
                                 ...textureInfo,
                                 deleteBuffer: this.deleteTextureBufferAfterLoad,
-                                format: format
+                                format: format,
+                                forcedExtension: this._getForcedExtension(sphereTexturePath)
                             }
                         ));
                     }
