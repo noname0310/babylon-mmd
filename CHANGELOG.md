@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.59.0 (scheduled)
+
+- fix alpha channel of bmp textures not loading due to different bmp texture loader behavior between DirectX 9 and browser
+
 ## 0.58.0 (2024-11-29)
 
 - fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
