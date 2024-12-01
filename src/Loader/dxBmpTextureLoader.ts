@@ -3,6 +3,21 @@ import type { InternalTexture } from "@babylonjs/core/Materials/Textures/interna
 import type { IInternalTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/internalTextureLoader";
 import type { Nullable } from "@babylonjs/core/types";
 
+const enum BmpConstants {
+    MagicNumber = 0x4D42,
+
+    MagicNumberOffset = 0x00,
+    FileSizeOffset = 0x02,
+    OffsetToImageDataOffset = 0x0A,
+    SizeOfBitmapInfoHeaderOffset = 0x0E,
+    BitsPerPixelOffset = 0x1C,
+    CompressionOffset = 0x1E,
+    RedMaskOffset = 0x36,
+
+    BITMAPINFOHEADERSize = 0x28,
+    AppendHeaderSize = 0x44,
+}
+
 /**
  * Implementation of the .bmp texture loader that handle alpha for BITMAPINFOHEADER like DirectX9 behavior.
  * @internal
@@ -20,8 +35,64 @@ export class _DxBmpTextureLoader implements IInternalTextureLoader {
         throw ".dxbmp not supported in Cube";
     }
 
+    private static readonly _HeaderExtension = new Uint8Array([
+        0x00, 0x00, 0xFF, 0x00, // Red mask 0x00FF0000 (16711680)
+        0x00, 0xFF, 0x00, 0x00, // Green mask 0x0000FF00 (65280)
+        0xFF, 0x00, 0x00, 0x00, // Blue mask 0x00FF0000 (355)
+        0x00, 0x00, 0x00, 0xFF, // Alpha mask 0xFF000000 (4278190080)
+        0x00, 0x00, 0x00, 0x00, // Color space type (0x00000000) LCS_CALIBRATED_RGB
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzRed.ciexyzX)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzRed.ciexyzY)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzRed.ciexyzZ)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzGreen.ciexyzX)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzGreen.ciexyzY)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzGreen.ciexyzZ)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzBlue.ciexyzX)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzBlue.ciexyzY)
+        0x00, 0x00, 0x00, 0x00, // Endpoints (ciexyzBlue.ciexyzZ)
+        0x00, 0x00, 0x00, 0x00, // Gamma red 0x00000000 (0)
+        0x00, 0x00, 0x00, 0x00, // Gamma green 0x00000000 (0)
+        0x00, 0x00, 0x00, 0x00 // Gamma blue 0x00000000 (0)
+    ]);
+
     private _injectHeader(data: ArrayBufferView): ArrayBufferView {
-        return data;
+        const dataView = new DataView(data.buffer, data.byteOffset, data.byteLength);
+
+        if (dataView.getUint16(BmpConstants.MagicNumberOffset, true) !== BmpConstants.MagicNumber) {
+            return data;
+        }
+
+        const headerSize = dataView.getUint32(BmpConstants.SizeOfBitmapInfoHeaderOffset, true);
+        if (headerSize !== BmpConstants.BITMAPINFOHEADERSize) {
+            return data;
+        }
+
+        const bitsPerPixel = dataView.getUint16(BmpConstants.BitsPerPixelOffset, true);
+        if (bitsPerPixel !== 32) {
+            return data;
+        }
+
+        const compression = dataView.getUint32(BmpConstants.CompressionOffset, true);
+        if (compression !== 0) {
+            return data;
+        }
+
+        const copiedData = new Uint8Array(data.byteLength + BmpConstants.AppendHeaderSize);
+        copiedData.set(new Uint8Array(data.buffer, data.byteOffset, BmpConstants.RedMaskOffset), 0);
+        copiedData.set(new Uint8Array(data.buffer, data.byteOffset + BmpConstants.RedMaskOffset, data.byteLength - BmpConstants.RedMaskOffset), BmpConstants.RedMaskOffset + BmpConstants.AppendHeaderSize);
+        const copiedDataView = new DataView(copiedData.buffer, copiedData.byteOffset, copiedData.byteLength);
+
+        const fileSize = copiedDataView.getUint32(BmpConstants.FileSizeOffset, true);
+        copiedDataView.setUint32(BmpConstants.FileSizeOffset, fileSize + BmpConstants.AppendHeaderSize, true);
+
+        const offsetToImageData = copiedDataView.getUint32(BmpConstants.OffsetToImageDataOffset, true);
+        copiedDataView.setUint32(BmpConstants.OffsetToImageDataOffset, offsetToImageData + BmpConstants.AppendHeaderSize, true);
+        copiedDataView.setUint32(BmpConstants.SizeOfBitmapInfoHeaderOffset, BmpConstants.BITMAPINFOHEADERSize + BmpConstants.AppendHeaderSize, true);
+        copiedDataView.setUint32(BmpConstants.CompressionOffset, 3, true);
+
+        copiedData.set(_DxBmpTextureLoader._HeaderExtension, BmpConstants.RedMaskOffset);
+
+        return copiedData;
     }
 
     private _workingCanvas: Nullable<HTMLCanvasElement> = null;
