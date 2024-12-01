@@ -1,6 +1,7 @@
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { InternalTexture } from "@babylonjs/core/Materials/Textures/internalTexture";
 import type { IInternalTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/internalTextureLoader";
+import type { Nullable } from "@babylonjs/core/types";
 
 /**
  * Implementation of the .bmp texture loader that handle alpha for BITMAPINFOHEADER like DirectX9 behavior.
@@ -19,6 +20,35 @@ export class _DxBmpTextureLoader implements IInternalTextureLoader {
         throw ".dxbmp not supported in Cube";
     }
 
+    private _injectHeader(data: ArrayBufferView): ArrayBufferView {
+        return data;
+    }
+
+    private _workingCanvas: Nullable<HTMLCanvasElement> = null;
+    private _workingContext: Nullable<CanvasRenderingContext2D> = null;
+
+    private _prepareTextureProcess(texture: InternalTexture, img: HTMLImageElement | ImageBitmap): void {
+        const engine = texture.getEngine();
+
+        if (!this._workingCanvas) {
+            this._workingCanvas = document.createElement("canvas");
+            this._workingContext = this._workingCanvas.getContext("2d");
+            if (!this._workingContext) {
+                throw new Error("Unable to get 2d context");
+            }
+        }
+        const canvas = this._workingCanvas;
+        const context = this._workingContext!;
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0);
+        const imgData = context.getImageData(0, 0, img.width, img.height);
+        const data = imgData.data;
+
+        engine._uploadDataToTextureDirectly(texture, data);
+    }
+
     /**
      * Uploads the 2D texture data to the WebGL texture. It has already been bound once in the callback.
      * @param data contains the texture data
@@ -30,37 +60,38 @@ export class _DxBmpTextureLoader implements IInternalTextureLoader {
         texture: InternalTexture,
         callback: (width: number, height: number, loadMipmap: boolean, isCompressed: boolean, done: () => void, loadFailed?: boolean, options?: any) => void
     ): void {
-        const onload = (img: HTMLImageElement | ImageBitmap): void => {
-            const done = (): void => { };
-
+        const onLoad = (img: HTMLImageElement | ImageBitmap): void => {
             callback(
                 img.width,
                 img.height,
+                true,
                 false,
-                false,
-                done
+                (): void => this._prepareTextureProcess(texture, img)
             );
-
-            done();
         };
 
-        data;
-        texture;
-        onload;
-        AbstractEngine;
-        // According to the WebGL spec section 6.10, ImageBitmaps must be inverted on creation.
-        // So, we pass imageOrientation to _FileToolsLoadImage() as it may create an ImageBitmap.
+        const onError = (_message?: string, _exception?: any): void => {
+            callback(
+                1,
+                1,
+                false,
+                false,
+                (): void => { },
+                true
+            );
+        };
 
-        // AbstractEngine._FileToolsLoadImage(
-        //     data,
-        //     onload,
-        //     () => {
+        const fixedData = this._injectHeader(data);
 
-        //     }
-        //     scene ? scene.offlineProvider : null,
-        //     mimeType,
-        //     texture.invertY && this._features.needsInvertingBitmap ? { imageOrientation: "flipY" } : undefined
-        // );
+        const engine = texture.getEngine();
+        AbstractEngine._FileToolsLoadImage(
+            fixedData,
+            onLoad,
+            onError,
+            null,
+            undefined,
+            texture.invertY && engine._features.needsInvertingBitmap ? { imageOrientation: "flipY" } : undefined
+        );
     }
 }
 
