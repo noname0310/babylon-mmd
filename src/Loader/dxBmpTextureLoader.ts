@@ -1,4 +1,5 @@
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { Constants } from "@babylonjs/core/Engines/constants";
 import type { InternalTexture } from "@babylonjs/core/Materials/Textures/internalTexture";
 import type { IInternalTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/internalTextureLoader";
 import type { Nullable } from "@babylonjs/core/types";
@@ -117,7 +118,10 @@ export class _DxBmpTextureLoader implements IInternalTextureLoader {
         const imgData = context.getImageData(0, 0, img.width, img.height);
         const data = imgData.data;
 
-        engine._uploadDataToTextureDirectly(texture, data);
+        texture.type = Constants.TEXTURETYPE_UNSIGNED_BYTE;
+        texture.format = Constants.TEXTUREFORMAT_RGBA;
+
+        engine._uploadDataToTextureDirectly(texture, data, undefined, undefined, undefined, true);
     }
 
     /**

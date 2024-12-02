@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.59.1 (2024-12-02)
+
+- fix bmp texture creation error when texture dimension is not power of 2
+
 ## 0.59.0 (2024-12-02)
 
 - fix alpha channel of bmp textures not loading due to different bmp texture loader behavior between DirectX9 and browser
