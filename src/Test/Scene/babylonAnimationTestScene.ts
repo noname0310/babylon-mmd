@@ -180,6 +180,10 @@ export class SceneBuilder implements ISceneBuilder {
 
         for (const depthRenderer of Object.values(scene._depthRenderer)) {
             depthRenderer.forceDepthWriteTransparentMeshes = true;
+            engine.onResizeObservable.add(() => depthRenderer.getDepthMap().resize({
+                width: engine.getRenderWidth(),
+                height: engine.getRenderHeight()
+            }));
         }
 
         return scene;
