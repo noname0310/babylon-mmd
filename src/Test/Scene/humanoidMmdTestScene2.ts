@@ -303,7 +303,7 @@ export class SceneBuilder implements ISceneBuilder {
                 height: engine.getRenderHeight()
             }));
         }
-        
+
         return scene;
     }
 }
