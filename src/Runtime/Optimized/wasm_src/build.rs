@@ -135,7 +135,8 @@ fn main() {
                 "bullet_src/LinearMath/btThreads.cpp",
                 "bullet_src/LinearMath/btVector3.cpp",
             ])
-            .opt_level_str("fast")
+            .opt_level_str("3")
+            .flag("-flto")
             .compile("bullet");
 
         println!("cargo:rerun-if-changed=bullet_stdlib");

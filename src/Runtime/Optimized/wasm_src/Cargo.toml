@@ -16,9 +16,11 @@ physics = []
 
 [profile.release]
 opt-level = 3
+lto = true
 
 [profile.dev]
 opt-level = 3
+lto = true
 
 [dependencies]
 wasm-bindgen = "=0.2.92"
