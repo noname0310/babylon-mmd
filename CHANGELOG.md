@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.60.0 (scheduled)
+
+- outline shader uv2 morph support. see Babylon.js [#15602](https://github.com/BabylonJS/Babylon.js/pull/15602)
+
+- change clang optimization level from 'Ofast' to 'O3'.
+    - improve the performance of the wasm runtime physics simulation by 2.5x to 3x
+
 ## 0.59.1 (2024-12-02)
 
 - fix bmp texture creation error when texture dimension is not power of 2
