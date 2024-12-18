@@ -140,6 +140,6 @@ fn main() {
             .compile("bullet");
 
         println!("cargo:rerun-if-changed=bullet_stdlib");
-        println!("cargo:rerun-if-changed=bullet_src/lib.h");
+        println!("cargo:rerun-if-changed=bullet_src/lib.cpp");
     }
 }

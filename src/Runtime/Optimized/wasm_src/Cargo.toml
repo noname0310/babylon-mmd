@@ -16,11 +16,11 @@ physics = []
 
 [profile.release]
 opt-level = 3
-lto = true
+lto = "fat"
 
 [profile.dev]
 opt-level = 3
-lto = true
+lto = "fat"
 
 [dependencies]
 wasm-bindgen = "=0.2.92"
@@ -32,7 +32,7 @@ rayon = { version = "1.10.0", optional = true }
 wasm-bindgen-rayon = { version = "1.2.1", optional = true }
 thread-id = "5.0.0"
 wasm_sync = "0.1.2"
-rustc-hash = "2.0.0"
+rustc-hash = "2.1.0"
 
 [dependencies.web-sys]
 version = "0.3.69"

@@ -5,5 +5,3 @@ build-std = ["std", "panic_abort"]
 target = "wasm32-unknown-unknown"
 rustc-wrapper = "sccache"
 # rustflags = ["-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals"]
-
-#  -Clinker=clang -Clink-arg=-fuse-ld=lld -Clink-arg=-O3
