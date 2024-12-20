@@ -271,6 +271,10 @@ export class SceneBuilder implements ISceneBuilder {
             }
         });
 
+        // setTimeout(() => {
+        //     engine.snapshotRendering = true;
+        // }, 0);
+
         return scene;
     }
 }

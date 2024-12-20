@@ -237,9 +237,6 @@ export abstract class MmdMorphControllerBase {
         const morphWeights = this._morphWeights;
         const activeMorphs = this._activeMorphs;
 
-        const morphTargetManagers = this.morphTargetManagers;
-        for (let i = 0; i < morphTargetManagers.length; ++i) morphTargetManagers[i].areUpdatesFrozen = true;
-
         for (const morphName of activeMorphs) {
             const morphIndices = morphIndexMap.get(morphName)!;
             for (let i = 0; i < morphIndices.length; ++i) {
@@ -260,8 +257,6 @@ export abstract class MmdMorphControllerBase {
                 }
             }
         }
-
-        for (let i = 0; i < morphTargetManagers.length; ++i) morphTargetManagers[i].areUpdatesFrozen = false;
 
         const updatedMaterials = this._updatedMaterials;
         for (const updatedMaterial of updatedMaterials) {
