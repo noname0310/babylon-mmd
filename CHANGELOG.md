@@ -7,7 +7,7 @@
 - change clang optimization level from 'Ofast' to 'O3'.
     - improve the performance of the wasm runtime physics simulation by 2.5x to 3x
 
-- improve morph target performance for babylon.js 7.41.1 changes
+- improve morph target performance for Babylon.js 7.41.1 changes
   - see Babylon.js [#16014](https://github.com/BabylonJS/Babylon.js/pull/16014)
 
 ## 0.59.1 (2024-12-02)
