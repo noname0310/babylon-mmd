@@ -784,9 +784,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
                         }
                     }
 
-                    const morphTarget = morphTargets[i];
-                    morphTarget.setPositions(geometry.getVerticesData(VertexBuffer.PositionKind)!);
-                    morphTarget.setUVs(uvs);
+                    morphTargets[i].setUVs(uvs);
                 }
             } else {
                 if (preserveSerializationData) {
@@ -847,15 +845,28 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
             morphTargetManager._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
 
+            morphTargetManager.enablePositionMorphing = false;
             morphTargetManager.enableNormalMorphing = false;
             morphTargetManager.enableTangentMorphing = false;
             morphTargetManager.enableUVMorphing = false;
+            morphTargetManager.enableUV2Morphing = false;
 
             morphTargetManager.areUpdatesFrozen = true;
             for (let i = 0; i < subMeshMorphTargets.length; ++i) {
                 const subMeshMorphTarget = subMeshMorphTargets[i];
                 morphTargetManager.addTarget(subMeshMorphTarget);
+                if (subMeshMorphTarget.hasPositions) morphTargetManager.enablePositionMorphing = true;
                 if (subMeshMorphTarget.hasUVs) morphTargetManager.enableUVMorphing = true;
+            }
+            if (morphTargetManager.enablePositionMorphing) {
+                const positions = geometries[subMeshIndex].getVerticesData(VertexBuffer.PositionKind)!;
+
+                for (let i = 0; i < subMeshMorphTargets.length; ++i) {
+                    const subMeshMorphTarget = subMeshMorphTargets[i];
+                    if (!subMeshMorphTarget.hasPositions) {
+                        subMeshMorphTarget.setPositions(positions);
+                    }
+                }
             }
             if (morphTargetManager.enableUVMorphing) {
                 const uvs = geometries[subMeshIndex].getVerticesData(VertexBuffer.UVKind)!;

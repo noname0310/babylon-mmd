@@ -546,10 +546,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
                             uvs[index * 2 + 0] += uvOffsets[j * 4 + 0];
                             uvs[index * 2 + 1] += uvOffsets[j * 4 + 1];
                         }
-
-                        const morphTarget = morphTargets[i];
-                        morphTarget.setPositions(geometryInfo.positions);
-                        morphTarget.setUVs(uvs);
+                        morphTargets[i].setUVs(uvs);
                     }
                 }
             }
@@ -574,15 +571,29 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             morphTargetManager._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
 
+            morphTargetManager.enablePositionMorphing = false;
             morphTargetManager.enableNormalMorphing = false;
             morphTargetManager.enableTangentMorphing = false;
             morphTargetManager.enableUVMorphing = false;
+            morphTargetManager.enableUV2Morphing = false;
 
             morphTargetManager.areUpdatesFrozen = true;
             for (let i = 0; i < subMeshMorphTargets.length; ++i) {
                 const subMeshMorphTarget = subMeshMorphTargets[i];
                 morphTargetManager.addTarget(subMeshMorphTarget);
+                if (subMeshMorphTarget.hasPositions) morphTargetManager.enablePositionMorphing = true;
                 if (subMeshMorphTarget.hasUVs) morphTargetManager.enableUVMorphing = true;
+            }
+            if (morphTargetManager.enablePositionMorphing) {
+                const geometries = buildGeometryResult.geometries;
+                const positions = geometries[subMeshIndex].getVerticesData(VertexBuffer.PositionKind)!;
+
+                for (let i = 0; i < subMeshMorphTargets.length; ++i) {
+                    const subMeshMorphTarget = subMeshMorphTargets[i];
+                    if (!subMeshMorphTarget.hasPositions) {
+                        subMeshMorphTarget.setPositions(positions);
+                    }
+                }
             }
             if (morphTargetManager.enableUVMorphing) {
                 const geometries = buildGeometryResult.geometries;
