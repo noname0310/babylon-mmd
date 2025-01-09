@@ -150,7 +150,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
     public readonly onSeekObservable: Observable<void>;
 
     private readonly _pool: Nullable<IAudioElementPool>;
-    private readonly _audio: HTMLAudioElement;
+    private _audio: Nullable<HTMLAudioElement>;
     private _duration: number;
     private _playbackRate: number;
 
@@ -218,7 +218,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
     }
 
     private readonly _onDurationChanged = (): void => {
-        this._duration = this._audio.duration;
+        this._duration = this._audio!.duration;
 
         if (this._isVirtualPlay) {
             this._isVirtualPlay = false;
@@ -248,7 +248,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
 
     private readonly _onPlay = (): void => {
         if (!this._isVirtualPlay) {
-            this._audio.playbackRate = this._playbackRate;
+            this._audio!.playbackRate = this._playbackRate;
         }
         this.onPlayObservable.notifyObservers();
     };
@@ -301,7 +301,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
                 }
             }
         } else {
-            return this._audio.currentTime;
+            return this._audio?.currentTime ?? 0;
         }
     }
 
@@ -314,7 +314,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
             }
             this._onSeek();
         } else {
-            this._audio.currentTime = value;
+            if (this._audio !== null) {
+                this._audio.currentTime = value;
+            }
         }
     }
 
@@ -328,7 +330,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
             }
         } else {
             this._ignoreSeekedEventOnce = true;
-            this._audio.currentTime = value;
+            if (this._audio !== null) {
+                this._audio.currentTime = value;
+            }
         }
     }
 
@@ -336,11 +340,13 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * Volume (0.0 to 1.0)
      */
     public get volume(): number {
-        return this._audio.volume;
+        return this._audio?.volume ?? 0;
     }
 
     public set volume(value: number) {
-        this._audio.volume = value;
+        if (this._audio !== null) {
+            this._audio.volume = value;
+        }
     }
 
     /**
@@ -354,6 +360,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * Mute the audio
      */
     public mute(): void {
+        if (this._audio === null) return;
         if (this._isVirtualPlay) return;
 
         this._isVirtualPlay = true;
@@ -372,6 +379,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * @returns Whether the audio is unmuted
      */
     public async unmute(): Promise<boolean> {
+        if (this._audio === null) return false;
         if (!this._isVirtualPlay) return true;
 
         let notAllowedError = false;
@@ -424,18 +432,22 @@ export class StreamAudioPlayer implements IAudioPlayer {
         }
 
         this._playbackRate = value;
-        this._audio.playbackRate = value;
+        if (this._audio !== null) {
+            this._audio.playbackRate = value;
+        }
     }
 
     /**
      * Determines whether or not the browser should adjust the pitch of the audio to compensate for changes to the playback rate made by setting
      */
     public get preservesPitch(): boolean {
-        return this._audio.preservesPitch;
+        return this._audio?.preservesPitch ?? true;
     }
 
     public set preservesPitch(value: boolean) {
-        this._audio.preservesPitch = value;
+        if (this._audio !== null) {
+            this._audio.preservesPitch = value;
+        }
     }
 
     /**
@@ -445,7 +457,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         if (this._isVirtualPlay) {
             return this._virtualPaused;
         } else {
-            return this._audio.paused;
+            return this._audio?.paused ?? true;
         }
     }
 
@@ -453,10 +465,13 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * Audio source URL
      */
     public get source(): string {
-        return this._audio.src;
+        return this._audio?.src ?? "";
     }
 
     public set source(value: string) {
+        if (this._audio === null) {
+            return;
+        }
         if (value === this._audio.src) return;
 
         this._audio.src = value;
@@ -540,7 +555,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this._playRequestBlocking = true;
 
         try {
-            await this._audio.play();
+            await this._audio?.play();
         } catch (e) {
             if (e instanceof DOMException && e.name === "NotAllowedError") {
                 await this._virtualPlay();
@@ -563,7 +578,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
             this._virtualPauseCurrentTime = (performance.now() / 1000 - this._virtualStartTime) * this._playbackRate;
             this._onPause();
         } else {
-            this._audio.pause();
+            this._audio?.pause();
         }
     }
 
@@ -603,7 +618,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
             this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
         }
 
-        (this as unknown as { _audio: Nullable<HTMLAudioElement> })._audio = null;
+        this._audio = null;
         (this as unknown as { _pool: Nullable<IAudioElementPool> })._pool = null;
     }
 }

@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.60.0 (scheduled)
+## 0.60.1 (scheduled)
+
+- fix crash when using disposed `StreamAudioPlayer` in runtime
+
+## 0.60.0 (2025-01-09)
 
 - outline shader uv2 morph support. see Babylon.js [#15602](https://github.com/BabylonJS/Babylon.js/pull/15602)
 
