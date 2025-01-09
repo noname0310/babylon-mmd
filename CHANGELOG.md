@@ -10,6 +10,10 @@
 - improve morph target performance for Babylon.js 7.41.1 changes
   - see Babylon.js [#16014](https://github.com/BabylonJS/Babylon.js/pull/16014)
 
+- minimum required version of Babylon.js is now 7.43.0
+
+- fix `TextureAlphaChecker` not working after Babylon.js 7.43.0 changes
+
 ## 0.59.1 (2024-12-02)
 
 - fix bmp texture creation error when texture dimension is not power of 2

@@ -109,23 +109,16 @@ export class TextureAlphaChecker {
         }
 
         // NOTE: there is too much internal api access here, becareful to babylon.js internal changes
-        const currentLODIsUpToDate = mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate;
-        const currentLOD = mesh._internalAbstractMeshDataInfo._currentLOD;
-        mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate = true;
-        mesh._internalAbstractMeshDataInfo._currentLOD = mesh;
-
         const isEnabled = (mesh as any)._nodeDataStorage._isEnabled;
         const isParentEnabled = (mesh as any)._nodeDataStorage._isParentEnabled;
         (mesh as any)._nodeDataStorage._isEnabled = true;
         (mesh as any)._nodeDataStorage._isParentEnabled = true;
 
+        // this operation will mutate `mesh._internalAbstractMeshDataInfo._currentLOD` but it safe because we not use lod for mmd models
         renderTargetTexture.render(false, false);
 
         (mesh as any)._nodeDataStorage._isParentEnabled = isParentEnabled;
         (mesh as any)._nodeDataStorage._isEnabled = isEnabled;
-
-        mesh._internalAbstractMeshDataInfo._currentLOD = currentLOD;
-        mesh._internalAbstractMeshDataInfo._currentLODIsUpToDate = currentLODIsUpToDate;
 
         const effect = shader.getEffect();
         mesh.geometry!._releaseVertexArrayObject(effect);
