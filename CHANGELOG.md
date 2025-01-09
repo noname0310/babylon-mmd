@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.60.1 (scheduled)
+## 0.60.1 (2025-01-09)
 
 - fix crash when using disposed `StreamAudioPlayer` in runtime
 
