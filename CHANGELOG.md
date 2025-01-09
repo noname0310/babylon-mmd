@@ -12,6 +12,8 @@
 
 - minimum required version of Babylon.js is now 7.43.0
 
+- fix `TextureAlphaChecker` not working after Babylon.js 7.43.0 changes
+
 ## 0.59.1 (2024-12-02)
 
 - fix bmp texture creation error when texture dimension is not power of 2
