@@ -43,6 +43,11 @@ export interface IMmdTextureLoadOptions {
      * Defines an optional mime type information (default: undefined)
      */
     mimeType?: string;
+
+    /**
+     * Defines the extension to use to pick the right loader
+     */
+    forcedExtension?: string;
 }
 
 class TextureLoadingModel {
@@ -78,7 +83,8 @@ class MmdTextureData {
     private readonly _textureName: string;
     private readonly _options: IMmdTextureLoadOptions;
     private readonly _onLoad: Nullable<() => void>;
-    private readonly _onError?: Nullable<(message?: string, exception?: any) => void>;
+    private readonly _onError: Nullable<(message?: string, exception?: any) => void>;
+    private readonly _forcedExtension?: string;
 
     private _texture: Nullable<Texture>;
 
@@ -91,7 +97,8 @@ class MmdTextureData {
         useLazyLoadWithBuffer: boolean,
         options: IMmdTextureLoadOptions,
         onLoad: Nullable<() => void>,
-        onError?: Nullable<(message?: string, exception?: any) => void>
+        onError: Nullable<(message?: string, exception?: any) => void>,
+        forcedExtension?: string
     ) {
         this.cacheKey = cacheKey;
         this._scene = scene;
@@ -100,6 +107,7 @@ class MmdTextureData {
         this._options = options;
         this._onLoad = onLoad;
         this._onError = onError;
+        this._forcedExtension = forcedExtension;
 
         this._texture = null;
 
@@ -116,7 +124,8 @@ class MmdTextureData {
                         onLoad,
                         (message, exception) => {
                             onError?.(message, exception);
-                        }
+                        },
+                        forcedExtension
                     );
                 },
                 undefined,
@@ -139,7 +148,8 @@ class MmdTextureData {
             this._onLoad,
             (message, exception) => {
                 this._onError?.(message, exception);
-            }
+            },
+            this._forcedExtension
         );
     }
 
@@ -167,7 +177,8 @@ class MmdTextureData {
         buffer: ArrayBuffer,
         options: IMmdTextureLoadOptions,
         onLoad: Nullable<() => void>,
-        onError?: Nullable<(message?: string, exception?: any) => void>
+        onError: Nullable<(message?: string, exception?: any) => void>,
+        forcedExtension?: string
     ): void {
         scene._blockEntityCollection = !!assetContainer;
         const textureCreationOptions: ITextureCreationOptions = {
@@ -185,7 +196,8 @@ class MmdTextureData {
             buffer,
             deleteBuffer: options.deleteBuffer,
             format: options.format,
-            mimeType: options.mimeType
+            mimeType: options.mimeType,
+            forcedExtension: forcedExtension
         };
         const texture = this._texture = new Texture(
             "data:" + textureName,
@@ -386,7 +398,8 @@ export class MmdAsyncTextureLoader {
                     textureLoadInfo!.hasLoadError = true;
                     textureLoadInfo!.observable.notifyObservers(true);
                     textureLoadInfo!.observable.clear();
-                }
+                },
+                options.forcedExtension
             );
 
             this.textureCache.set(cacheKey, textureData);

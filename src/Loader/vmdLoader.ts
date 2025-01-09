@@ -161,6 +161,9 @@ export class VmdLoader {
                 time = performance.now();
             }
 
+            // todo: support physics toggle data
+            // ref: https://x.com/KuroNekoMeguMMD/status/1864306974856499520/
+
             const trackLengths = new Uint32Array(boneTrackIndexMap.size);
             for (let i = 0; i < margedBoneKeyFrameCount; ++i) {
                 const boneKeyFrame = margedBoneKeyFrames[i];
@@ -882,11 +885,15 @@ export class VmdLoader {
             requests.push(scene._loadFile(
                 item,
                 (data: string | ArrayBuffer, _responseURL?: string) => {
-                    arrayBuffers.push(data as ArrayBuffer);
-                    if (arrayBuffers.length === fileOrUrl.length) {
-                        this.loadFromBuffer(name, arrayBuffers, onLoad, onProgress, (event) => {
-                            onError?.(undefined, event);
-                        });
+                    try {
+                        arrayBuffers.push(data as ArrayBuffer);
+                        if (arrayBuffers.length === fileOrUrl.length) {
+                            this.loadFromBuffer(name, arrayBuffers, onLoad, onProgress, (event) => {
+                                onError?.(undefined, event);
+                            });
+                        }
+                    } catch (e: any) {
+                        onError?.(undefined, e);
                     }
                 },
                 onProgress,

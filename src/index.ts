@@ -14,8 +14,10 @@ import "@/Runtime/Animation/bezierAnimation";
 import "@/Runtime/mmdCamera";
 
 import { registerMmdModelLoaders } from "./Loader/dynamic";
+import { registerDxBmpTextureLoader } from "./Loader/registerDxBmpTextureLoader";
 
 registerMmdModelLoaders();
+registerDxBmpTextureLoader();
 
 // Loader/Animation
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
@@ -62,6 +64,7 @@ export { PmLoaderOptions } from "@/Loader/pmLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
 export { PmxLoaderMetadata } from "@/Loader/pmxLoader.metadata";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
+export { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
 export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChecker";
@@ -82,7 +85,7 @@ export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeMod
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
-export { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
+export { AudioElementPool, IAudioElementPool, StreamAudioPlayer, StreamAudioPlayerOptions } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Optimized/Animation
 export { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";

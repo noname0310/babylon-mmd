@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.60.1 (scheduled)
+
+- fix crash when using disposed `StreamAudioPlayer` in runtime
+
+## 0.60.0 (2025-01-09)
+
+- outline shader uv2 morph support. see Babylon.js [#15602](https://github.com/BabylonJS/Babylon.js/pull/15602)
+
+- change clang optimization level from 'Ofast' to 'O3'.
+    - improve the performance of the wasm runtime physics simulation by 2.5x to 3x
+
+- improve morph target performance for Babylon.js 7.41.1 changes
+  - see Babylon.js [#16014](https://github.com/BabylonJS/Babylon.js/pull/16014)
+
+- minimum required version of Babylon.js is now 7.43.0
+
+- fix `TextureAlphaChecker` not working after Babylon.js 7.43.0 changes
+
+## 0.59.1 (2024-12-02)
+
+- fix bmp texture creation error when texture dimension is not power of 2
+
+## 0.59.0 (2024-12-02)
+
+- fix alpha channel of bmp textures not loading due to different bmp texture loader behavior between DirectX9 and browser
+
+## 0.58.0 (2024-11-29)
+
+- fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
+
+## 0.57.0 (2024-10-29)
+
+- fixed crash caused by models without IK solver or morphtarget in WASM single-threaded runtime
+
+- fix WGSL minification not applied to esm package
+
+## 0.56.2 (2024-10-08)
+
+- make motion load exception catchable
+
+- add `AudioElementPool` for better html audio resource management
+
+## 0.56.1 (2024-10-05)
+
+- fix `MmdCamera` animation loading error
+
+- fix `MmdCamera.onCurrentAnimationChangedObservable` not triggered when animation is removed
+
+- fix `onCurrentAnimationChangedObservable` not triggered when animation is overwrited by `MmdModel.addAnimation`, `MmdWasmModel.addAnimation`, `MmdCamera.addAnimation`
+
+## 0.56.0 (2024-10-03)
+
+- change orphan body constraint creation behaviour in `MmdPhysics`, `MmdAmmoPhysics`, `MmdWasmPhysics`
+
+- fix crash when remove animation from `MmdModel`, `MmdWasmModel`, `MmdCamera`
+
 ## 0.55.0 (2024-09-27)
 
 - update rust dependencies (might affect wasm runtime)

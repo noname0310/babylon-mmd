@@ -8,8 +8,6 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 import { BaseRuntime } from "./baseRuntime";
 import { SceneBuilder } from "./Scene/wasmPhysicsTestScene";
 
-await new Promise(resolve => window.onload = resolve);
-
 const canvas = document.createElement("canvas");
 canvas.style.width = "100%";
 canvas.style.height = "100%";

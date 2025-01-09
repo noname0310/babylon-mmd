@@ -38,21 +38,84 @@ Only the main directories of the project are listed.
 
 To build the project, you need to have the following dependencies installed:
 
-- [nodejs](https://nodejs.org/en/)
+- [nodejs](https://nodejs.org/en/) 20 or higher
 - [npm](https://www.npmjs.com/)
-- [rust](https://www.rust-lang.org/)
-- [clang](https://clang.llvm.org/)
-- [llvm](https://llvm.org/)
+- [rust](https://www.rust-lang.org/) nightly-2024-11-19
+- [llvm](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.3) 19.1.3
 - [sccache](https://github.com/mozilla/sccache)
 
 ### Ubuntu
 
 you can install the dependencies using the following commands:
 
+#### install nodejs and npm:
+
 ```bash
 sudo apt-get update
-sudo apt-get install -y nodejs npm clang llvm
+sudo apt-get install -y nodejs npm
+sudo npm update npm -g
+sudo npm cache clean -f
+sudo npm install -g n
+sudo n stable
+```
+
+#### install clang and llvm:
+
+<details>
+<summary>for aarch64:</summary>
+
+```bash
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.3/clang+llvm-19.1.3-aarch64-linux-gnu.tar.xz
+tar -xf clang+llvm-19.1.3-aarch64-linux-gnu.tar.xz
+```
+
+update PATH temporarily:
+
+```bash
+export PATH=$PWD/clang+llvm-19.1.3-aarch64-linux-gnu/bin:$PATH
+```
+
+update PATH permanently:
+
+```bash
+echo "export PATH=$PWD/clang+llvm-19.1.3-aarch64-linux-gnu/bin:\$PATH" >> ~/.bashrc
+source ~/.bashrc
+```
+
+</details>
+
+<details>
+<summary>for x86_64:</summary>
+
+```bash
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.3/LLVM-19.1.3-Linux-X64.tar.xz
+tar -xf LLVM-19.1.3-Linux-X64.tar.xz
+```
+
+update PATH temporarily:
+
+```bash
+export PATH=$PWD/LLVM-19.1.3-Linux-X64/bin:$PATH
+```
+
+update PATH permanently:
+
+```bash
+echo "export PATH=$PWD/LLVM-19.1.3-Linux-X64/bin:\$PATH" >> ~/.bashrc
+source ~/.bashrc
+```
+
+</details>
+
+#### install rust:
+
+```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+#### install sccache:
+
+```bash
 cargo install sccache --locked
 ```
 
@@ -62,20 +125,14 @@ you can install the dependencies using the following links:
 
 - [nodejs and npm](https://nodejs.org/en/)
 - [rust](https://www.rust-lang.org/)
-- [clang and llvm](https://visualstudio.microsoft.com/vs/) (install visual studio with Clang and LLVM tools)
+- [clang and llvm](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.3) (add bin path to system path)
 - scache (install using cargo)
 
 #### clang and llvm installation details
 
-![vs installer screenshot](docs/static/img/vs_installer_screenshot.png)
+Download `clang+llvm-19.1.3-x86_64-pc-windows-msvc.tar.xz` from the link above and extract it.
 
-Make sure to install the Clang and LLVM tools when installing visual studio.
-
-<br/>
-
-You need to add the following paths to the system path:
-
-`C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\bin`
+Add the extracted `bin` folder to the system path.
 
 #### sccache installation
 

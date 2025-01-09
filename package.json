@@ -1,6 +1,6 @@
 {
     "name": "babylon-mmd",
-    "version": "0.55.0",
+    "version": "0.60.0",
     "description": "babylon.js mmd loader and runtime",
     "main": "esm/index.js",
     "scripts": {
@@ -19,10 +19,10 @@
         "build-wasm-mpd": "cd src/Runtime/Optimized/wasm_src && rimraf ../wasm/mpd && cross-env RUSTFLAGS=\"-Ctarget-feature=+simd128,+atomics,+bulk-memory,+mutable-globals\" wasm-pack build --target web --debug   --out-dir ../wasm/mpd --out-name index -- --no-default-features --features \"console_error_panic_hook parallel physics\" && cd ../../../..",
         "build-wasm-all": "npm run build-wasm-sr && npm run build-wasm-sd && npm run build-wasm-mr && npm run build-wasm-md && npm run build-wasm-spr && npm run build-wasm-spd && npm run build-wasm-mpr && npm run build-wasm-mpd",
         "build-esm": "tspc --project tsconfig.lib.json && copyfiles -u 3 src/Runtime/Optimized/wasm/** dist/esm/Runtime/Optimized/ && copyfiles -u 4 src/Runtime/Physics/External/ammo.wasm.* dist/esm/Runtime/Physics/External",
-        "build-umd": "webpack --env production --config webpack.lib.config.ts && webpack --env development --config webpack.lib.config.ts",        
+        "build-umd": "webpack --env production --config webpack.lib.config.ts && webpack --env development --config webpack.lib.config.ts",
         "build-lib": "rimraf dist && npm run build-wasm-all && npm run build-esm && npm run build-umd",
         "publish-lib": "ts-node publishScript.ts && npm publish ./dist",
-        "lint": "eslint --ext .ts,.tsx . --fix --cache"
+        "lint": "eslint . --fix --cache"
     },
     "repository": {
         "type": "git",
@@ -35,36 +35,39 @@
     },
     "homepage": "https://github.com/noname0310/babylon-mmd#readme",
     "devDependencies": {
-        "@babylonjs/havok": "^1.3.9",
-        "@babylonjs/inspector": "7.27.0",
-        "@babylonjs/loaders": "7.27.0",
-        "@babylonjs/materials": "7.27.0",
-        "@typescript-eslint/eslint-plugin": "^7.18.0",
-        "@typescript-eslint/parser": "^7.18.0",
+        "@babylonjs/havok": "^1.3.10",
+        "@babylonjs/inspector": "7.43.0",
+        "@babylonjs/loaders": "7.43.0",
+        "@babylonjs/materials": "7.43.0",
+        "@stylistic/eslint-plugin-js": "^2.12.1",
+        "@stylistic/eslint-plugin-ts": "^2.12.1",
+        "@typescript-eslint/eslint-plugin": "^8.19.1",
+        "@typescript-eslint/parser": "^8.19.1",
         "@wasm-tool/wasm-pack-plugin": "^1.7.0",
         "ammojs-typed": "^1.0.6",
         "compression-webpack-plugin": "^11.1.0",
         "copy-webpack-plugin": "^12.0.2",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
-        "eslint": "^8.57.1",
+        "eslint": "^9.17.0",
         "eslint-plugin-simple-import-sort": "^12.1.1",
         "eslint-webpack-plugin": "^4.2.0",
         "file-loader": "^6.2.0",
         "github-directory-downloader": "^1.3.6",
         "html-loader": "^5.1.0",
-        "html-webpack-plugin": "^5.6.0",
+        "html-webpack-plugin": "^5.6.3",
         "rimraf": "^6.0.1",
         "ts-loader": "^9.5.1",
         "ts-node": "^10.9.2",
-        "ts-patch": "^3.2.1",
-        "typescript": "5.5.4",
+        "ts-patch": "^3.3.0",
+        "typescript": "5.7.3",
+        "typescript-eslint": "^8.19.1",
         "typescript-glslminify-transformer": "^0.0.3",
-        "typescript-transform-paths": "^3.5.1",
-        "wasm-pack": "^0.13.0",
-        "webpack": "^5.95.0",
-        "webpack-cli": "^5.1.4",
-        "webpack-dev-server": "^5.1.0"
+        "typescript-transform-paths": "^3.5.3",
+        "wasm-pack": "^0.13.1",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^6.0.1",
+        "webpack-dev-server": "^5.2.0"
     },
     "keywords": [
         "3D",
@@ -96,6 +99,6 @@
         "**/index.*"
     ],
     "peerDependencies": {
-        "@babylonjs/core": "7.27.0"
+        "@babylonjs/core": "7.43.0"
     }
 }

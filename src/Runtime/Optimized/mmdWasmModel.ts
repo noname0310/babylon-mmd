@@ -128,7 +128,6 @@ export class MmdWasmModel implements IMmdModel {
 
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
     private readonly _animations: RuntimeModelAnimation[];
-    private readonly _animationIndexMap: Map<string, number>;
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
     private _needStateReset: boolean;
@@ -258,7 +257,6 @@ export class MmdWasmModel implements IMmdModel {
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<RuntimeModelAnimation>>();
         this._animations = [];
-        this._animationIndexMap = new Map();
 
         this._currentAnimation = null;
         this._needStateReset = false;
@@ -285,7 +283,6 @@ export class MmdWasmModel implements IMmdModel {
             (animations[i] as IMmdRuntimeModelAnimation).dispose?.();
         }
         this._animations.length = 0;
-        this._animationIndexMap.clear();
 
         (this.mesh as any).metadata = null;
     }
@@ -303,12 +300,16 @@ export class MmdWasmModel implements IMmdModel {
      * Add an animation to this model
      *
      * If the animation is already added, it will be replaced
+     *
+     * updateMorphTarget is used only when the current animation is overwritten by this method
      * @param animation MMD animation or MMD model animation group to add
      * @param retargetingMap Animation bone name to model bone name map
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
      */
     public addAnimation(
         animation: IMmdBindableModelAnimation | MmdWasmAnimation,
-        retargetingMap?: { [key: string]: string }
+        retargetingMap?: { [key: string]: string },
+        updateMorphTarget = true
     ): void {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as MmdWasmAnimation).createWasmRuntimeModelAnimation !== undefined) {
@@ -325,11 +326,22 @@ export class MmdWasmModel implements IMmdModel {
             throw new Error("animation is not MmdWasmAnimation or MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
 
-        const index = this._animationIndexMap.get(animation.name);
-        if (index !== undefined) {
+        const index = this._animations.findIndex((a) => a.animation.name === animation.name);
+        if (index !== -1) {
+            const oldAnimation = this._animations[index];
             this._animations[index] = runtimeAnimation;
+            if (this._currentAnimation === oldAnimation) {
+                this._currentAnimation = runtimeAnimation;
+                this._resetPose();
+                this._needStateReset = true;
+                if ((runtimeAnimation as MmdWasmRuntimeModelAnimation).wasmAnimate !== undefined) {
+                    this._runtime.lock.wait(); // ensure that the runtime is not evaluating animations
+                    this._runtime.wasmInternal.setRuntimeAnimation(this.ptr, (runtimeAnimation as MmdWasmRuntimeModelAnimation).ptr);
+                }
+                runtimeAnimation.induceMaterialRecompile(updateMorphTarget, this._runtime);
+                this.onCurrentAnimationChangedObservable.notifyObservers(runtimeAnimation);
+            }
         } else {
-            this._animationIndexMap.set(animation.name, this._animations.length);
             this._animations.push(runtimeAnimation);
         }
     }
@@ -364,7 +376,6 @@ export class MmdWasmModel implements IMmdModel {
             this.onCurrentAnimationChangedObservable.notifyObservers(null);
         }
 
-        this._animationIndexMap.delete(animation.animation.name);
         this._animations.splice(index, 1);
         if (!fromDisposeEvent) {
             (animation as IMmdRuntimeModelAnimation).dispose?.();
@@ -391,8 +402,8 @@ export class MmdWasmModel implements IMmdModel {
             return;
         }
 
-        const index = this._animationIndexMap.get(name);
-        if (index === undefined) {
+        const index = this._animations.findIndex((a) => a.animation.name === name);
+        if (index === -1) {
             throw new Error(`Animation '${name}' is not found.`);
         }
 

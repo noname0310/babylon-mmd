@@ -762,10 +762,10 @@ export class BpmxConverter implements ILogger {
                 let imageIndex: number | undefined = undefined;
 
                 if (buffer !== null) {
-                    let arrayBufferId = arrayBufferToIdMap.get(buffer.buffer);
+                    let arrayBufferId = arrayBufferToIdMap.get(buffer.buffer as ArrayBuffer);
                     if (arrayBufferId === undefined) {
                         arrayBufferId = arrayBufferToIdMap.size;
-                        arrayBufferToIdMap.set(buffer.buffer, arrayBufferId);
+                        arrayBufferToIdMap.set(buffer.buffer as ArrayBuffer, arrayBufferId);
                     }
                     const key = `${arrayBufferId}_${buffer.byteOffset}_${buffer.byteLength}` as const;
 

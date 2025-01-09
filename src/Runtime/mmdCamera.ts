@@ -50,7 +50,7 @@ export class MmdCamera extends Camera {
      */
     public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeCameraAnimation>>;
     private readonly _animations: RuntimeCameraAnimation[];
-    private readonly _animationIndexMap: Map<string, number>;
+    private readonly _animationNameMap = new Map<string, RuntimeCameraAnimation>();
 
     private _currentAnimation: Nullable<RuntimeCameraAnimation>;
 
@@ -69,7 +69,7 @@ export class MmdCamera extends Camera {
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<RuntimeCameraAnimation>>();
         this._animations = [];
-        this._animationIndexMap = new Map();
+        this._animationNameMap = new Map();
 
         this._currentAnimation = null;
     }
@@ -85,8 +85,20 @@ export class MmdCamera extends Camera {
         } else {
             throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
         }
-        this._animationIndexMap.set(animation.name, this._animations.length);
-        this._animations.push(runtimeAnimation);
+
+        const existingAnimation = this._animationNameMap.get(animation.name);
+        if (existingAnimation) {
+            const index = this._animations.indexOf(existingAnimation);
+            const oldAnimation = this._animations[index];
+            this._animations[index] = runtimeAnimation;
+            if (this._currentAnimation === oldAnimation) {
+                this._currentAnimation = runtimeAnimation;
+                this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
+            }
+        } else {
+            this._animations.push(runtimeAnimation);
+        }
+        this._animationNameMap.set(animation.name, runtimeAnimation);
     }
 
     /**
@@ -97,9 +109,19 @@ export class MmdCamera extends Camera {
      */
     public removeAnimation(index: number): void {
         const animation = this._animations[index];
-        if (this._currentAnimation === animation) this._currentAnimation = null;
+        if (animation === undefined) return;
 
-        this._animationIndexMap.delete(animation.animation.name);
+        if (this._currentAnimation === animation) {
+            this._currentAnimation = null;
+            this.onCurrentAnimationChangedObservable.notifyObservers(null);
+        }
+
+        for (const [key, value] of this._animationNameMap) {
+            if (value === animation) {
+                this._animationNameMap.delete(key);
+                break;
+            }
+        }
         this._animations.splice(index, 1);
         (animation as IMmdRuntimeCameraAnimation).dispose?.();
     }
@@ -120,12 +142,12 @@ export class MmdCamera extends Camera {
             return;
         }
 
-        const index = this._animationIndexMap.get(name);
-        if (index === undefined) {
+        const animation = this._animationNameMap.get(name);
+        if (animation === undefined) {
             throw new Error(`Animation ${name} is not found`);
         }
 
-        this._currentAnimation = this._animations[index];
+        this._currentAnimation = animation;
         this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
     }
 

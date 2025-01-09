@@ -298,6 +298,13 @@ export class SceneBuilder implements ISceneBuilder {
         mmdCameraAutoFocus.setSkeletonWorldMatrix(translationMatrix);
         mmdCameraAutoFocus.register(scene);
 
+        for (const depthRenderer of Object.values(scene._depthRenderer)) {
+            engine.onResizeObservable.add(() => depthRenderer.getDepthMap().resize({
+                width: engine.getRenderWidth(),
+                height: engine.getRenderHeight()
+            }));
+        }
+
         return scene;
     }
 }

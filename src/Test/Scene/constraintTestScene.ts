@@ -21,6 +21,7 @@ import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+// import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -93,6 +94,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
         const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
+        // const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         mmdRuntime.createMmdModel(mmdMesh);

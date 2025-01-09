@@ -55,8 +55,7 @@ impl PhysicsRuntime {
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
         // synchronize kinematic rigid bodies with bone matrices
-        for i in 0..mmd_models.len() {
-            let model = &mut mmd_models[i];
+        for model in mmd_models.iter_mut() {
             let context = if let Some(context) = model.physics_model_context_mut() {
                 context
             } else {

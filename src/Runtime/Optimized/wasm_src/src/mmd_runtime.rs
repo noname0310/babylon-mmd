@@ -21,7 +21,7 @@ pub struct MmdRuntime {
     
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
-    locked: atomic::AtomicU8,
+    lock: atomic::AtomicU8,
     diagnostic: Diagnostic,
 }
 
@@ -33,23 +33,26 @@ impl MmdRuntime {
             physics_runtime: PhysicsRuntime::new(),
 
             mmd_models: Vec::new(),
-            locked: atomic::AtomicU8::new(0),
+            lock: atomic::AtomicU8::new(0),
             diagnostic: Diagnostic::new(),
         }
     }
 
     #[wasm_bindgen(js_name = "allocateBuffer")]
     pub fn allocate_buffer(&self, size: usize) -> *mut u8 {
-        let mut vec = vec![0; size].into_boxed_slice();
-        let ptr = vec.as_mut_ptr();
-        std::mem::forget(vec);
+        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
+        let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
+        if ptr.is_null() {
+            return ptr;
+        }
         ptr
     }
 
     #[wasm_bindgen(js_name = "deallocateBuffer")]
     pub fn deallocate_buffer(&self, ptr: *mut u8, size: usize) {
+        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
         unsafe {
-            let _ = Box::from_raw(std::slice::from_raw_parts_mut(ptr, size));
+            std::alloc::dealloc(ptr, layout);
         }
     }
 
@@ -226,7 +229,7 @@ impl MmdRuntime {
 
     #[wasm_bindgen(js_name = "getLockStatePtr")]
     pub fn get_lock_state_ptr(&self) -> *const u8 {
-        &self.locked as *const atomic::AtomicU8 as *const u8
+        &self.lock as *const atomic::AtomicU8 as *const u8
     }
 
     #[wasm_bindgen(js_name = "swapWorldMatrixBuffer")]
@@ -252,7 +255,7 @@ impl MmdRuntime {
         #[cfg(feature = "physics")]
         mmd_runtime.apply_mmd_models_physics_parameters();
 
-        mmd_runtime.locked.store(1, atomic::Ordering::Release);
+        mmd_runtime.lock.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
             mmd_runtime.before_physics_internal(
                 frame_time,
@@ -261,7 +264,7 @@ impl MmdRuntime {
                 time_step,
             );
 
-            mmd_runtime.locked.store(0, atomic::Ordering::Release);
+            mmd_runtime.lock.store(0, atomic::Ordering::Release);
         });
     }
 
@@ -295,7 +298,7 @@ impl MmdRuntime {
         #[cfg(feature = "physics")]
         mmd_runtime.apply_mmd_models_physics_parameters();
 
-        mmd_runtime.locked.store(1, atomic::Ordering::Release);
+        mmd_runtime.lock.store(1, atomic::Ordering::Release);
         rayon::spawn(move || {
             mmd_runtime.before_physics_internal(
                 frame_time,
@@ -304,7 +307,7 @@ impl MmdRuntime {
                 time_step,
             );
             mmd_runtime.after_physics();
-            mmd_runtime.locked.store(0, atomic::Ordering::Release);
+            mmd_runtime.lock.store(0, atomic::Ordering::Release);
         });
     }
 

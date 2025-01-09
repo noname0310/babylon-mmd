@@ -10,6 +10,7 @@ export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int
  */
 export type TypedArrayConstructor<T extends TypedArray> = {
     new(buffer: ArrayBuffer, byteOffset?: number, length?: number): T;
+    new(length: number): T;
 };
 
 /**
@@ -35,7 +36,9 @@ export class WasmTypedArray<T extends TypedArray> implements IWasmTypedArray<T> 
         this._byteOffset = byteOffset;
         this._length = length;
 
-        this._array = new typedArrayConstructor(memory.buffer, byteOffset, length);
+        this._array = length === 0
+            ? new typedArrayConstructor(0)
+            : new typedArrayConstructor(memory.buffer, byteOffset, length);
     }
 
     /**

@@ -134,7 +134,13 @@ export class VpdLoader {
     ): IFileRequest {
         return this._scene._loadFile(
             fileOrUrl,
-            (data: string | ArrayBuffer) => onLoad(this.loadFromBuffer(name, data as ArrayBuffer)),
+            (data: string | ArrayBuffer) => {
+                try {
+                    onLoad(this.loadFromBuffer(name, data as ArrayBuffer));
+                } catch (e: any) {
+                    onError?.(undefined, e);
+                }
+            },
             onProgress,
             true,
             true,
