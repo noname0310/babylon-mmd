@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.60.2 (2025-01-20)
+
+- fix Babylon.js npm peer dependency version
+
 ## 0.60.1 (2025-01-09)
 
 - fix crash when using disposed `StreamAudioPlayer` in runtime
