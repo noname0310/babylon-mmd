@@ -99,6 +99,6 @@
         "**/index.*"
     ],
     "peerDependencies": {
-        "@babylonjs/core": "7.44.0"
+        "@babylonjs/core": "^7.44.0"
     }
 }
