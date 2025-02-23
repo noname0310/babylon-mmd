@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.61.0 (scheduled)
+
+- align `MmdOutlineRenderer` with Babylon.js changes
+    - support Babylon.js 7.48.3 alpha test method
+    - support Babylon.js 7.50.0 `PrepareDefinesAndAttributesForMorphTargets` function change
+
 ## 0.60.2 (2025-01-20)
 
 - fix Babylon.js npm peer dependency version
