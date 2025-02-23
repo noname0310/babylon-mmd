@@ -193,7 +193,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
 
         // Alpha test
-        if (material && material.needAlphaTesting()) {
+        if (material && material.needAlphaTestingForMesh(effectiveMesh)) {
             const alphaTexture = material.getAlphaTestTexture();
             if (alphaTexture) {
                 effect.setTexture("diffuseSampler", alphaTexture);
@@ -247,7 +247,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         let uv2 = false;
 
         // Alpha test
-        if (material.needAlphaTesting()) {
+        if (material.needAlphaTestingForMesh(mesh)) {
             defines.push("#define ALPHATEST");
             if (mesh.isVerticesDataPresent(VertexBuffer.UVKind)) {
                 attribs.push(VertexBuffer.UVKind);
@@ -318,7 +318,8 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 true, // useNormalMorph
                 false, // useTangentMorph
                 uv1, // useUVMorph
-                uv2 // useUV2Morph
+                uv2, // useUV2Morph
+                false // useColorMorph
             )
             : 0;
 
