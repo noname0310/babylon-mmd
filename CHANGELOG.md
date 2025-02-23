@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.61.0 (scheduled)
+## 0.61.0 (2025-02-23)
 
 - align `MmdOutlineRenderer` with Babylon.js changes
     - support Babylon.js 7.48.3 alpha test method
