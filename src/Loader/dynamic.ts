@@ -1,5 +1,5 @@
 import type { ISceneLoaderPluginAsync, ISceneLoaderPluginFactory, SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { registerSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
+import { RegisterSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 
 import { BpmxLoaderMetadata } from "./Optimized/bpmxLoader.metadata";
 import { PmdLoaderMetadata } from "./pmdLoader.metadata";
@@ -11,7 +11,7 @@ import { PmxLoaderMetadata } from "./pmxLoader.metadata";
  */
 export function registerMmdModelLoaders(): void {
     // Register the PMX loader.
-    registerSceneLoaderPlugin({
+    RegisterSceneLoaderPlugin({
         ...PmxLoaderMetadata,
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
             const { PmxLoader: pmxLoader } = await import("./pmxLoader");
@@ -20,7 +20,7 @@ export function registerMmdModelLoaders(): void {
     } satisfies ISceneLoaderPluginFactory);
 
     // Register the PMD loader.
-    registerSceneLoaderPlugin({
+    RegisterSceneLoaderPlugin({
         ...PmdLoaderMetadata,
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
             const { PmdLoader: pmdLoader } = await import("./pmdLoader");
@@ -29,7 +29,7 @@ export function registerMmdModelLoaders(): void {
     } satisfies ISceneLoaderPluginFactory);
 
     // Register the BPMX loader.
-    registerSceneLoaderPlugin({
+    RegisterSceneLoaderPlugin({
         ...BpmxLoaderMetadata,
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
             const { BpmxLoader: bpmxLoader } = await import("./Optimized/bpmxLoader");
