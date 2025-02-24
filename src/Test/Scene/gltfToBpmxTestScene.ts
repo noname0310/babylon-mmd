@@ -6,7 +6,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Material } from "@babylonjs/core/Materials/material";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
@@ -40,7 +40,7 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.intensity = 0.7;
         createDefaultGround(scene);
 
-        const modelLoadResult = await loadAssetContainerAsync(
+        const modelLoadResult = await LoadAssetContainerAsync(
             "res/private_test/model/Moe.glb",
             scene
         );

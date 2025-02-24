@@ -11,7 +11,7 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -136,7 +136,7 @@ export class SceneBuilder implements ISceneBuilder {
             engine.displayLoadingUI();
             const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
-            mesh = await loadAssetContainerAsync(
+            mesh = await LoadAssetContainerAsync(
                 file,
                 scene,
                 {

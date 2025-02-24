@@ -6,7 +6,7 @@ import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -108,7 +108,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
-            ["model1", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model1", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/yyb_deep_canyons_miku.bpmx",
                 scene,
                 {
@@ -125,7 +125,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model2", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model2", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {
@@ -142,7 +142,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model3", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model3", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB miku Crown Knight.bpmx",
                 scene,
                 {
@@ -159,7 +159,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model4", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model4", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Piano dress Miku Collision fix FF BF.bpmx",
                 scene,
                 {
@@ -176,7 +176,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model5", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model5", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/yyb Symphony Miku by HB-Squiddy FF.bpmx",
                 scene,
                 {
@@ -193,7 +193,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/stage/water house.bpmx",
                 scene,
                 {

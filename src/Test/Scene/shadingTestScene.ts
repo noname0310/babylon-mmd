@@ -2,7 +2,7 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
@@ -31,7 +31,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.forceDisableAlphaEvaluation = false;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
-        const mmdMesh = await loadAssetContainerAsync(
+        const mmdMesh = await LoadAssetContainerAsync(
             "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx",
             scene,
             {

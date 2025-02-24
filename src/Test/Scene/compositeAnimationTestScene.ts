@@ -9,7 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { BezierCurveEase } from "@babylonjs/core/Animations/easing";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -106,7 +106,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loadAsync("motion2", "res/private_test/motion/kimini_totte/motion_b.bvmd", updateProgress)],
             ["camera", (updateProgress): Promise<MmdAnimation> =>
                 bvmdLoader.loadAsync("camera", "res/private_test/motion/kimini_totte/camera.bvmd", updateProgress)],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB miku Crown Knight.bpmx",
                 scene,
                 {
@@ -123,7 +123,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model_a", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model_a", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku Default.bpmx",
                 scene,
                 {
@@ -140,7 +140,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["model_b", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model_b", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {

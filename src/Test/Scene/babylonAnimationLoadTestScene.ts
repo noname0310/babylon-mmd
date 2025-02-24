@@ -9,7 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -53,7 +53,7 @@ export class SceneBuilder implements ISceneBuilder {
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
         const [modelMesh] = await parallelLoadAsync(scene, [
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {

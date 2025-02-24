@@ -8,7 +8,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { MirrorTexture } from "@babylonjs/core/Materials/Textures/mirrorTexture";
@@ -81,7 +81,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/patchwork_staccato/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {
@@ -98,7 +98,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/stage/Stage35_02_toonfix.bpmx",
                 scene,
                 {

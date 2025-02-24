@@ -5,7 +5,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -91,7 +91,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/flos/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/yyb_deep_canyons_miku.bpmx",
                 scene,
                 {
@@ -108,7 +108,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/stage/water house.bpmx",
                 scene,
                 {

@@ -7,7 +7,7 @@ import "@/Loader/mmdOutlineRenderer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 // import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -109,7 +109,7 @@ export class SceneBuilder implements ISceneBuilder {
                 ];
                 return Promise.all(filePaths.map((filePath) => vmdLoader.loadAsync("motion", filePath, updateProgress)));
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th - faceforward - newjeans/YYB Hatsune Miku_10th_v1.02 - faceforward - ng.pmx",
                 scene,
                 {

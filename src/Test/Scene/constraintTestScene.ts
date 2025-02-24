@@ -5,7 +5,7 @@ import "@/Loader/mmdOutlineRenderer";
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -45,7 +45,7 @@ export class SceneBuilder implements ISceneBuilder {
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.forceDisableAlphaEvaluation = false;
 
-        const mmdMesh = await loadAssetContainerAsync(
+        const mmdMesh = await LoadAssetContainerAsync(
             "res/private_test/model/Hades/Hades.pmx",
             scene,
             {
@@ -66,7 +66,7 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        const mmdMesh2 = await loadAssetContainerAsync(
+        const mmdMesh2 = await LoadAssetContainerAsync(
             "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
             scene,
             {

@@ -10,7 +10,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -83,7 +83,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loggingEnabled = true;
                 return bvmdLoader.loadAsync("motion", "res/private_test/motion/cinderella/motion.bvmd", updateProgress);
             }],
-            ["model", (updateProgress): Promise<AssetContainer> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<AssetContainer> => LoadAssetContainerAsync(
                 "res/private_test/model/Moe.glb",
                 scene,
                 { onProgress: updateProgress }
@@ -91,7 +91,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result;
             })],
-            ["stage", (updateProgress): Promise<AssetContainer> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<AssetContainer> => LoadAssetContainerAsync(
                 "res/private_test/stage/Stage35_02.bpmx",
                 scene,
                 {

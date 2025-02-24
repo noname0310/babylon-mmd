@@ -3,7 +3,7 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
@@ -36,7 +36,7 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
-        const mmdMesh = await loadAssetContainerAsync(
+        const mmdMesh = await LoadAssetContainerAsync(
             "res/private_test/stage/MMD School Auditorium/Auditorium.pmx",
             scene,
             {

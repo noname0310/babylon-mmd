@@ -9,7 +9,7 @@ import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -103,7 +103,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 return [mmdRuntime, mmdAnimation, mmdWasmAnimation];
             }],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {
@@ -120,7 +120,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/stage/Stage35_02_toonfix.bpmx",
                 scene,
                 {

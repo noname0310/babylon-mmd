@@ -9,7 +9,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -71,8 +71,8 @@ export class SceneBuilder implements ISceneBuilder {
             modelMesh
         ] = await parallelLoadAsync(scene, [
             ["source", (updateProgress): Promise<AssetContainer> =>
-                loadAssetContainerAsync("res/private_test/mixamo/Walk In Circle.glb", scene, { onProgress: updateProgress })],
-            ["target", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+                LoadAssetContainerAsync("res/private_test/mixamo/Walk In Circle.glb", scene, { onProgress: updateProgress })],
+            ["target", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
                 {

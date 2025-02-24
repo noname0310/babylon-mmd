@@ -8,7 +8,7 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -80,7 +80,7 @@ export class SceneBuilder implements ISceneBuilder {
                 bvmdLoader.loadAsync("motion1", "res/private_test/motion/intergalactia/intergalactia.bvmd", updateProgress)],
             ["motion2", (updateProgress): Promise<MmdAnimation> =>
                 bvmdLoader.loadAsync("motion2", "res/private_test/motion/conqueror/motion_light.bvmd", updateProgress)],
-            ["model", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB miku Crown Knight.bpmx",
                 scene,
                 {
@@ -97,7 +97,7 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            ["stage", (updateProgress): Promise<MmdMesh> => loadAssetContainerAsync(
+            ["stage", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/stage/ガラス片ドームB.bpmx",
                 scene,
                 {

@@ -4,7 +4,7 @@ import "@/Loader/pmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
@@ -51,7 +51,7 @@ export class SceneBuilder implements ISceneBuilder {
         // materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
-        const assetContainer = await loadAssetContainerAsync(
+        const assetContainer = await LoadAssetContainerAsync(
             "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
             scene,
             {

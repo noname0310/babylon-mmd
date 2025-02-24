@@ -5,7 +5,7 @@ import "@/Loader/pmdLoader";
 import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { loadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Material } from "@babylonjs/core/Materials/material";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -55,7 +55,7 @@ export class SceneBuilder implements ISceneBuilder {
             material.useLogarithmicDepth = true;
         };
 
-        const mmdMesh = await loadAssetContainerAsync(
+        const mmdMesh = await LoadAssetContainerAsync(
             "res/private_test/model/YYB Hatsune Miku_NT/YYB Hatsune Miku_NT_1.0ver.pmx",
             scene,
             {
