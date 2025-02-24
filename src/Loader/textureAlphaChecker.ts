@@ -97,8 +97,18 @@ export class TextureAlphaChecker {
         renderTargetTexture.renderList = [mesh];
         renderTargetTexture.setMaterialForRendering(mesh, shader);
 
+        // NOTE: there is too much internal api access here, becareful to babylon.js internal changes
+        const isEnabled = (mesh as any)._nodeDataStorage._isEnabled;
+        const isParentEnabled = (mesh as any)._nodeDataStorage._isParentEnabled;
+
         // wait for the RTT and shader to be ready
-        while (!renderTargetTexture.isReadyForRendering() || !shader.isReady()) {
+        for (; ;) {
+            (mesh as any)._nodeDataStorage._isEnabled = true;
+            (mesh as any)._nodeDataStorage._isParentEnabled = true;
+            if (renderTargetTexture.isReadyForRendering() && shader.isReady()) break;
+            (mesh as any)._nodeDataStorage._isEnabled = isEnabled;
+            (mesh as any)._nodeDataStorage._isParentEnabled = isParentEnabled;
+
             await new Promise<void>(resolve => {
                 setTimeout(resolve, 0);
             });
@@ -107,12 +117,6 @@ export class TextureAlphaChecker {
                 return new Uint8Array(0);
             }
         }
-
-        // NOTE: there is too much internal api access here, becareful to babylon.js internal changes
-        const isEnabled = (mesh as any)._nodeDataStorage._isEnabled;
-        const isParentEnabled = (mesh as any)._nodeDataStorage._isParentEnabled;
-        (mesh as any)._nodeDataStorage._isEnabled = true;
-        (mesh as any)._nodeDataStorage._isParentEnabled = true;
 
         // this operation will mutate `mesh._internalAbstractMeshDataInfo._currentLOD` but it safe because we not use lod for mmd models
         renderTargetTexture.render(false, false);
