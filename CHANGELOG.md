@@ -1,10 +1,15 @@
 # Changelog
 
+## 0.62.0 (scheduled)
+
+- fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
+  - 0.58.0 fix is not working properly
+
 ## 0.61.0 (2025-02-23)
 
 - align `MmdOutlineRenderer` with Babylon.js changes
-    - support Babylon.js 7.48.3 alpha test method
-    - support Babylon.js 7.50.0 `PrepareDefinesAndAttributesForMorphTargets` function change
+  - support Babylon.js 7.48.3 alpha test method
+  - support Babylon.js 7.50.0 `PrepareDefinesAndAttributesForMorphTargets` function change
 
 ## 0.60.2 (2025-01-20)
 
@@ -19,7 +24,7 @@
 - outline shader uv2 morph support. see Babylon.js [#15602](https://github.com/BabylonJS/Babylon.js/pull/15602)
 
 - change clang optimization level from 'Ofast' to 'O3'.
-    - improve the performance of the wasm runtime physics simulation by 2.5x to 3x
+  - improve the performance of the wasm runtime physics simulation by 2.5x to 3x
 
 - improve morph target performance for Babylon.js 7.41.1 changes
   - see Babylon.js [#16014](https://github.com/BabylonJS/Babylon.js/pull/16014)
@@ -139,13 +144,13 @@
 - fix `BpmxConverter` serialize incorrect bone metadata when bone name is not unique
 
 - support babylon.js serialization for following classes
-    - `MmdStandardMaterial`
-    - `MmdPluginMaterial`
-    - `MmdCamera`
+  - `MmdStandardMaterial`
+  - `MmdPluginMaterial`
+  - `MmdCamera`
 
 - support cloning for following classes
-    - `SdefMesh`
-    - `BezierAnimation`
+  - `SdefMesh`
+  - `BezierAnimation`
 
 ## 0.48.0 (2024-06-21)
 
@@ -154,7 +159,7 @@
 - fix wasm physics initialization when using buffered evaluation mode
 
 - clamp `MmdStandardMaterial.alpha` value to 0.0 .. 1.0 for better result
-    - you can disable this behavior by setting `MmdStandardMaterial.clampAlpha` to `false`
+  - you can disable this behavior by setting `MmdStandardMaterial.clampAlpha` to `false`
 
 - handle zero vector limit axis
 
@@ -167,11 +172,11 @@
 ## 0.47.0 (2024-06-14)
 
 - include wasm version of ammo.js in the package
-    - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
-    - this distribution of ammo.js has been modified to work with bundlers like Webpack
+  - you can find the wasm version of ammo.js in `babylon-mmd/esm/Runtime/Physics/External/ammo.wasm`
+  - this distribution of ammo.js has been modified to work with bundlers like Webpack
 
 - BPMX format updated to 2.2.0. Files of version 2.1.0 and 2.0.0 are still compatible
-    - fix bpmx converter does not serialize bone flags correctly
+  - fix bpmx converter does not serialize bone flags correctly
 
 - handle axis limit in mmd runtime for reproduce mmd twist bone behavior
 
@@ -196,9 +201,9 @@
 ## 0.45.0 (2024-06-01)
 
 - refactor runtime behavior to be more similar to MMD
-    - sub group morph is now ignored when resolving morph target
+  - sub group morph is now ignored when resolving morph target
 
-    - completly rework the world matrix computation
+  - completly rework the world matrix computation
 
 - introduce `OiComputeTransformInjector` to update the transform matrix of an mmd model with an unsorted skeleton, without mmd runtime
 
@@ -275,8 +280,8 @@
 - now all mmd model loaders are share the static `MmdStandardMaterialBuilder` instance by default
 
 - BPMX format updated to 2.1.0. Files of version 2.0.0 are still compatible
-    - evaluatedTransparency is now store that weather the material is completely opaque or not
-    - multi-material support added
+  - evaluatedTransparency is now store that weather the material is completely opaque or not
+  - multi-material support added
 
 - [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter/) now converts pmx file into bpmx 2.1.0 format
 
@@ -311,10 +316,10 @@
 ## 0.37.0 (2024-03-01)
 
 - improve mmd model state reset method
-    - now, mmd models morph and ik solver state are reset when animation is change and start playing
+  - now, mmd models morph and ik solver state are reset when animation is change and start playing
 
 - morph target recompliation problem fixed
-    - see https://github.com/BabylonJS/Babylon.js/issues/14008
+  - see https://github.com/BabylonJS/Babylon.js/issues/14008
 
 - introduce WASM threaded runtime `MmdWasmInstanceTypeMD` / `MmdWasmInstanceTypeMR`
 
@@ -347,20 +352,20 @@
 ## 0.35.0 (2023-12-29)
 
 - apply typed array on ik solver state for better performance
-    - now, for toggling the ik solver, you need to use `MmdModel.ikSolverStates` instead of `MmdModel.sortedBones[i].ikSolver.enabled`
+  - now, for toggling the ik solver, you need to use `MmdModel.ikSolverStates` instead of `MmdModel.sortedBones[i].ikSolver.enabled`
 
 - typed array optimization on world matrix computation
-    - recommended to use `MmdModel.finalTransformMatrices` or `MmdModel.runtimeBones[i].getWorldMatrixToRef()` instead of `MmdModel.mesh.skeleton.bones[i].getFinalMatrix()`
+  - recommended to use `MmdModel.finalTransformMatrices` or `MmdModel.runtimeBones[i].getWorldMatrixToRef()` instead of `MmdModel.mesh.skeleton.bones[i].getFinalMatrix()`
 
 - optimize to split the SubMesh into individual meshes at load time.
-    - Because of this, to receiveShadows, you now need to change `mmdMesh.receiveShadows = true;` to `for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;`
+  - Because of this, to receiveShadows, you now need to change `mmdMesh.receiveShadows = true;` to `for (const mesh of mmdMesh.metadata.meshes) mesh.receiveShadows = true;`
 
 - fixed a bug where textures were not evaluated properly in texture alpha evaluation by `TextureAlphaChecker`
 
 - improve `TextureAlphaChecker` performance by using `RenderTargetTexture`
 
 - apply the changes made to the Animation in Babylon.js to the Bezier Animation
-    - see https://github.com/BabylonJS/Babylon.js/pull/14584
+  - see https://github.com/BabylonJS/Babylon.js/pull/14584
 
 - add `MmdModelLoader.preserveSerializationData` option for serialize model in bpmx 2.0.0 format
 
@@ -405,7 +410,7 @@
 ## 0.31.0 (2023-10-19)
 
 - fix signature validation
-    - some PMX files have "PMXP" signature instead of "PMX " (with space)
+  - some PMX files have "PMXP" signature instead of "PMX " (with space)
 
 - fix `PmxLoader` / `PmdLoader` load texture from file edge case
 
@@ -432,12 +437,12 @@
 - improve physics `PhysicsWithBone` behaviour
 
 - make angular limit clamp adjustable
-    - try increase `MmdPhysics.angularLimitClampThreshold` for fix odd bended constraints
+  - try increase `MmdPhysics.angularLimitClampThreshold` for fix odd bended constraints
 
 - pmx converter now supports pmd file format
 
 - fix pmx converter tail bone type mismatch (bpmx format updated to 1.1.0)
-    - `tailPosition` is not currently in use at runtime, so there is no need to update existing bpmx files
+  - `tailPosition` is not currently in use at runtime, so there is no need to update existing bpmx files
 
 - fix crash when loading model with no vertices
 
@@ -446,7 +451,7 @@
 - improve performance of `MmdPlayerControl` by minimizing time display updates
 
 - fix rigidbody bouncing glitch
-    - There seems to be a problem with the algorithm by which babylon js bone updates the local matrix. Bypass it and perform the optimal operation
+  - There seems to be a problem with the algorithm by which babylon js bone updates the local matrix. Bypass it and perform the optimal operation
 
 ## 0.27.0 (2023-09-16)
 
@@ -497,17 +502,17 @@
 ## 0.23.0 (2023-08-08)
 
 - fix object freezing in place to set physics body linear damping to 6.0
-    - this is a temporary fix until [this issue](https://forum.babylonjs.com/t/havok-physics-rigidbody-dont-move-when-the-damping-values-of-several-bodies-are-different/43072) is resolved
+  - this is a temporary fix until [this issue](https://forum.babylonjs.com/t/havok-physics-rigidbody-dont-move-when-the-damping-values-of-several-bodies-are-different/43072) is resolved
 
 - fix animated rigidbody collision detection
-    - use `PhysicsBody.setTargetTransform` which is added in @babylonjs/havok 1.1.2
+  - use `PhysicsBody.setTargetTransform` which is added in @babylonjs/havok 1.1.2
 
 - change 6DofSpringConstraint build method more similar to MMD
 
 - now minimum required version of @babylonjs/core is 6.15.0 (was 6.14.0) and @babylonjs/havok is 1.1.2 (was 1.1.1)
 
 - fix TGA texture loading
-    - fix Image loading failure when using custom texture loader
+  - fix Image loading failure when using custom texture loader
 
 - support custom texture format on alpha texture evaluation
 
