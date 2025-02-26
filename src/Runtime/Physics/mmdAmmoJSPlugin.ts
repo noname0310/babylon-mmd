@@ -157,6 +157,12 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             const jointPtr = this.bjsAMMO.getPointer(joint);
             const heap8 = this.bjsAMMO.HEAP8 as Uint8Array;
 
+            // The version of bullet physics used by MMD is 2.75, and in this version, the field m_useOffsetForConstraintFrame did not exist.
+            // In version 2.76, there was an update that changed the constraint handling logic, and by setting the m_useOffsetForConstraintFrame field to false, we can again use the behavior of version 2.75.
+            // We set m_useOffsetForConstraintFrame to false because we want the result to be as close to MMD's behavior as possible.
+
+            // Since this is a protected member, there is no way to access it except by modifying the heap directly.
+
             // jointPtr + 1300 = m_useLinearReferenceFrameA
 
             // check bullet binary layout

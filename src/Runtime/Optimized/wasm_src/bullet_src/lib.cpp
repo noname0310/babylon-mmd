@@ -418,6 +418,12 @@ extern "C" void bt_constraint_construction_info_set_stiffness(void* info, float*
     i->m_angularStiffness = btVector3(angularStiffnessBuffer[0], angularStiffnessBuffer[1], angularStiffnessBuffer[2]);
 }
 
+// The version of bullet physics used by MMD is 2.75, and in this version, the field m_useOffsetForConstraintFrame did not exist.
+// In version 2.76, there was an update that changed the constraint handling logic, and by setting the m_useOffsetForConstraintFrame field to false, we can again use the behavior of version 2.75.
+// We set m_useOffsetForConstraintFrame to false because we want the result to be as close to MMD's behavior as possible.
+
+// We could modify the D6_USE_FRAME_OFFSET define to false, but in this project the principle is to not modify the source of the bullet physics, so we use inheritance to modify the member.
+
 class bwGeneric6DofSpringConstraint final : public btGeneric6DofSpringConstraint {
 public:
     bwGeneric6DofSpringConstraint(btRigidBody& rbA, btRigidBody& rbB, const btTransform& frameInA, const btTransform& frameInB, bool useLinearReferenceFrameA)
