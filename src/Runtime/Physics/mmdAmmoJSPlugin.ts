@@ -45,9 +45,8 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
 
         this.name = "MmdAmmoJSPlugin";
 
-        // 120 steps per second is recommended for better reproduction of MMD physics
-        // this.setMaxSteps(120);
-        // this.setFixedTimeStep(1 / 120);
+        // for better reproduction of MMD physics
+        this.setFixedTimeStep(1 / 100);
 
         this._mmdtmpAmmoVector = new this.bjsAMMO.btVector3();
         this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();
@@ -154,6 +153,17 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const joint: import("ammojs-typed").default.btGeneric6DofSpringConstraint =
                 new this.bjsAMMO.btGeneric6DofSpringConstraint(mainBody, connectedBody, mainFrame, connectedFrame, jointData.useLinearReferenceFrameA);
+
+            const jointPtr = this.bjsAMMO.getPointer(joint);
+            const heap8 = this.bjsAMMO.HEAP8 as Uint8Array;
+
+            // jointPtr + 1300 = m_useLinearReferenceFrameA
+
+            // check bullet binary layout
+            if (heap8[jointPtr + 1300] === (jointData.useLinearReferenceFrameA ? 1 : 0) && heap8[jointPtr + 1301] === 1) {
+                // ptr + 1301 = m_useOffsetForConstraintFrame
+                heap8[jointPtr + 1301] = 0; // m_useOffsetForConstraintFrame = false
+            }
 
             if (jointData.linearStiffness.x !== 0) {
                 joint.setStiffness(0, jointData.linearStiffness.x);
