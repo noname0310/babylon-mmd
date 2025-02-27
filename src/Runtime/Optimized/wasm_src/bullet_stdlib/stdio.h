@@ -1,3 +1,7 @@
 #pragma once
 
-void printf(const char* fmt, ...);
+int printf(const char* fmt, ...);
+
+#ifdef BT_DEBUG
+void __debugbreak();
+#endif

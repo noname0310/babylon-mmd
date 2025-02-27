@@ -35,8 +35,14 @@ fn main() {
             // .define("BT_USE_SSE_IN_API", None)
             .define("BT_NO_SIMD_OPERATOR_OVERLOADS", None)
             .define("BT_USE_SIMD_VECTOR3", None)
-            .define("__wasm32__", None)
+            .define("__wasm32__", None);
+
+        
+        #[cfg(debug_assertions)]
+        build
+            .define("BT_DEBUG", None);
             
+        build
             .includes([
                 "bullet_stdlib",
                 "bullet_src"
@@ -140,6 +146,11 @@ fn main() {
             .compile("bullet");
 
         println!("cargo:rerun-if-changed=bullet_stdlib");
+        // println!("cargo:rerun-if-changed=bullet_src/bwCollisionShape.h");
+        // println!("cargo:rerun-if-changed=bullet_src/bwConstraint.h");
+        // println!("cargo:rerun-if-changed=bullet_src/bwMotionState.h");
+        // println!("cargo:rerun-if-changed=bullet_src/bwPhysicsWorld.h");
+        // println!("cargo:rerun-if-changed=bullet_src/bwRigidBody.h");
         println!("cargo:rerun-if-changed=bullet_src/lib.cpp");
     }
 }

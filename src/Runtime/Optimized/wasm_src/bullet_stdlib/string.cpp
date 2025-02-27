@@ -71,7 +71,7 @@ bool std::string::operator==(const string& other) const {
         return false;
     }
     bool equal = true;
-    for (size_t i = 0; i < m_length; i++) {
+    for (size_t i = 0; i < m_length; ++i) {
         if (m_str[i] != other.m_str[i]) {
             equal = false;
             break;
