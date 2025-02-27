@@ -1,3 +1,5 @@
+#![feature(c_variadic)]
+
 mod animation;
 mod mmd_model;
 

@@ -418,6 +418,25 @@ extern "C" void bt_constraint_construction_info_set_stiffness(void* info, float*
     i->m_angularStiffness = btVector3(angularStiffnessBuffer[0], angularStiffnessBuffer[1], angularStiffnessBuffer[2]);
 }
 
+// The version of bullet physics used by MMD is 2.75, and in this version, the field m_useOffsetForConstraintFrame did not exist.
+// In version 2.76, there was an update that changed the constraint handling logic, and by setting the m_useOffsetForConstraintFrame field to false, we can again use the behavior of version 2.75.
+// We set m_useOffsetForConstraintFrame to false because we want the result to be as close to MMD's behavior as possible.
+
+// We could modify the D6_USE_FRAME_OFFSET define to false, but in this project the principle is to not modify the source of the bullet physics, so we use inheritance to modify the member.
+
+class bwGeneric6DofSpringConstraint final : public btGeneric6DofSpringConstraint {
+public:
+    bwGeneric6DofSpringConstraint(btRigidBody& rbA, btRigidBody& rbB, const btTransform& frameInA, const btTransform& frameInB, bool useLinearReferenceFrameA)
+        : btGeneric6DofSpringConstraint(rbA, rbB, frameInA, frameInB, useLinearReferenceFrameA) {
+        m_useOffsetForConstraintFrame = false;
+    }
+
+    bwGeneric6DofSpringConstraint(btRigidBody& rbB, const btTransform& frameInB, bool useLinearReferenceFrameB)
+        : btGeneric6DofSpringConstraint(rbB, frameInB, useLinearReferenceFrameB) {
+        m_useOffsetForConstraintFrame = false;
+    }
+};
+
 class bwConstraint final {
 private:
     btTypedConstraint* m_constraint;
@@ -436,7 +455,7 @@ public:
                 );
                 break;
             case bwConstraintType::GENERIC_6DOF_SPRING:
-                m_constraint = new btGeneric6DofSpringConstraint(
+                m_constraint = new bwGeneric6DofSpringConstraint(
                     *bodyA->getBody(),
                     *bodyB->getBody(),
                     info->m_frameA,
@@ -456,7 +475,7 @@ public:
             c->setAngularLowerLimit(info->m_angularLowerLimit);
             c->setAngularUpperLimit(info->m_angularUpperLimit);
         } else if (info->m_type == bwConstraintType::GENERIC_6DOF_SPRING) {
-            btGeneric6DofSpringConstraint* c = static_cast<btGeneric6DofSpringConstraint*>(m_constraint);
+            bwGeneric6DofSpringConstraint* c = static_cast<bwGeneric6DofSpringConstraint*>(m_constraint);
             c->setLinearLowerLimit(info->m_linearLowerLimit);
             c->setLinearUpperLimit(info->m_linearUpperLimit);
             c->setAngularLowerLimit(info->m_angularLowerLimit);
