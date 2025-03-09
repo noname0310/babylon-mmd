@@ -38,7 +38,7 @@ Only the main directories of the project are listed.
 
 To build the project, you need to have the following dependencies installed:
 
-- [nodejs](https://nodejs.org/en/) 20 or higher
+- [nodejs](https://nodejs.org/en/) 20 or higher (may not work with 20.12.2 or later see the [issue](https://github.com/nodejs/node/issues/52554))
 - [npm](https://www.npmjs.com/)
 - [rust](https://www.rust-lang.org/) nightly-2024-11-19
 - [llvm](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.3) 19.1.3
