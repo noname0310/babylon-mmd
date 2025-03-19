@@ -455,7 +455,7 @@ public:
                 );
                 break;
             case bwConstraintType::GENERIC_6DOF_SPRING:
-                m_constraint = new bwGeneric6DofSpringConstraint(
+                m_constraint = new btGeneric6DofSpringConstraint(
                     *bodyA->getBody(),
                     *bodyB->getBody(),
                     info->m_frameA,
@@ -475,7 +475,7 @@ public:
             c->setAngularLowerLimit(info->m_angularLowerLimit);
             c->setAngularUpperLimit(info->m_angularUpperLimit);
         } else if (info->m_type == bwConstraintType::GENERIC_6DOF_SPRING) {
-            bwGeneric6DofSpringConstraint* c = static_cast<bwGeneric6DofSpringConstraint*>(m_constraint);
+            btGeneric6DofSpringConstraint* c = static_cast<btGeneric6DofSpringConstraint*>(m_constraint);
             c->setLinearLowerLimit(info->m_linearLowerLimit);
             c->setLinearUpperLimit(info->m_linearUpperLimit);
             c->setAngularLowerLimit(info->m_angularLowerLimit);
