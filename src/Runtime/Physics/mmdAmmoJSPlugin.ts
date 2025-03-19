@@ -30,6 +30,8 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
 
     private static readonly _BjsQuaternion = new Quaternion();
 
+    public forceDisableOffsetForConstraintFrame: boolean;
+
     /**
      * Initializes the ammoJS plugin
      * @param _useDeltaForWorldStep if the time between frames should be used when calculating physics steps (Default: true)
@@ -52,6 +54,8 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
         this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();
         this._mmdtmpAmmoTransformA = new this.bjsAMMO.btTransform();
         this._mmdtmpAmmoTransformB = new this.bjsAMMO.btTransform();
+
+        this.forceDisableOffsetForConstraintFrame = false;
     }
 
     public override dispose(): void {
@@ -154,21 +158,23 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             const joint: import("ammojs-typed").default.btGeneric6DofSpringConstraint =
                 new this.bjsAMMO.btGeneric6DofSpringConstraint(mainBody, connectedBody, mainFrame, connectedFrame, jointData.useLinearReferenceFrameA);
 
-            const jointPtr = this.bjsAMMO.getPointer(joint);
-            const heap8 = this.bjsAMMO.HEAP8 as Uint8Array;
+            if (this.forceDisableOffsetForConstraintFrame) {
+                const jointPtr = this.bjsAMMO.getPointer(joint);
+                const heap8 = this.bjsAMMO.HEAP8 as Uint8Array;
 
-            // The version of bullet physics used by MMD is 2.75, and in this version, the field m_useOffsetForConstraintFrame did not exist.
-            // In version 2.76, there was an update that changed the constraint handling logic, and by setting the m_useOffsetForConstraintFrame field to false, we can again use the behavior of version 2.75.
-            // We set m_useOffsetForConstraintFrame to false because we want the result to be as close to MMD's behavior as possible.
+                // The version of bullet physics used by MMD is 2.75, and in this version, the field m_useOffsetForConstraintFrame did not exist.
+                // In version 2.76, there was an update that changed the constraint handling logic, and by setting the m_useOffsetForConstraintFrame field to false, we can again use the behavior of version 2.75.
+                // We set m_useOffsetForConstraintFrame to false because we want the result to be as close to MMD's behavior as possible.
 
-            // Since this is a protected member, there is no way to access it except by modifying the heap directly.
+                // Since this is a protected member, there is no way to access it except by modifying the heap directly.
 
-            // jointPtr + 1300 = m_useLinearReferenceFrameA
+                // jointPtr + 1300 = m_useLinearReferenceFrameA
 
-            // check bullet binary layout
-            if (heap8[jointPtr + 1300] === (jointData.useLinearReferenceFrameA ? 1 : 0) && heap8[jointPtr + 1301] === 1) {
-                // ptr + 1301 = m_useOffsetForConstraintFrame
-                heap8[jointPtr + 1301] = 0; // m_useOffsetForConstraintFrame = false
+                // check bullet binary layout
+                if (heap8[jointPtr + 1300] === (jointData.useLinearReferenceFrameA ? 1 : 0) && heap8[jointPtr + 1301] === 1) {
+                    // ptr + 1301 = m_useOffsetForConstraintFrame
+                    heap8[jointPtr + 1301] = 0; // m_useOffsetForConstraintFrame = false
+                }
             }
 
             if (jointData.linearStiffness.x !== 0) {
