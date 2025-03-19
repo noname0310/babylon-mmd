@@ -30,6 +30,12 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
 
     private static readonly _BjsQuaternion = new Quaternion();
 
+    /**
+     * If true, the offset for the constraint frame is forcibly disabled. (Default: false)
+     *
+     * This is useful for reproducing the behavior of MMD physics.
+     * But the constraint can be broken if the offset is forcibly disabled.
+     */
     public forceDisableOffsetForConstraintFrame: boolean;
 
     /**
