@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.63.0 (scheduled)
+
+- improve MMD behavior reproduction for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
+  - you can set `MmdAmmoJSPlugin.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
+
+- change default fixedTimeStep value from 1/60 to 1/100 for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
+
 ## 0.62.0 (2025-02-25)
 
 - fix `TextureAlphaChecker` not working on first few frames for waiting shader compilation
