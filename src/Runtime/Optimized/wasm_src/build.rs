@@ -146,11 +146,11 @@ fn main() {
             .compile("bullet");
 
         println!("cargo:rerun-if-changed=bullet_stdlib");
-        // println!("cargo:rerun-if-changed=bullet_src/bwCollisionShape.h");
-        // println!("cargo:rerun-if-changed=bullet_src/bwConstraint.h");
-        // println!("cargo:rerun-if-changed=bullet_src/bwMotionState.h");
-        // println!("cargo:rerun-if-changed=bullet_src/bwPhysicsWorld.h");
-        // println!("cargo:rerun-if-changed=bullet_src/bwRigidBody.h");
+        println!("cargo:rerun-if-changed=bullet_src/bwCollisionShape.h");
+        println!("cargo:rerun-if-changed=bullet_src/bwConstraint.h");
+        println!("cargo:rerun-if-changed=bullet_src/bwMotionState.h");
+        println!("cargo:rerun-if-changed=bullet_src/bwPhysicsWorld.h");
+        println!("cargo:rerun-if-changed=bullet_src/bwRigidBody.h");
         println!("cargo:rerun-if-changed=bullet_src/lib.cpp");
     }
 }

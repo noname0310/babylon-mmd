@@ -48,7 +48,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._maxSubSteps = 5;
         this._fixedTimeStep = 1 / 100;
 
-        const worldMatrixBufferPtr = mmdRuntime.wasmInternal.allocateBuffer(16 * 4);
+        const worldMatrixBufferPtr = mmdRuntime.wasmInstance.allocateBuffer(16 * 4);
         this._worldMatrixBuffer = mmdRuntime.wasmInstance.createTypedArray(Float32Array, worldMatrixBufferPtr, 16);
     }
 
@@ -58,7 +58,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         }
 
         const worldMatrixBuffer = this._worldMatrixBuffer.array;
-        this._mmdRuntime.wasmInternal.deallocateBuffer(worldMatrixBuffer.byteOffset, worldMatrixBuffer.byteLength);
+        this._mmdRuntime.wasmInstance.deallocateBuffer(worldMatrixBuffer.byteOffset, worldMatrixBuffer.byteLength);
 
         this._worldMatrixBuffer = null!;
     }
