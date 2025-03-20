@@ -38,24 +38,6 @@ impl MmdRuntime {
         }
     }
 
-    #[wasm_bindgen(js_name = "allocateBuffer")]
-    pub fn allocate_buffer(&self, size: usize) -> *mut u8 {
-        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-        let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
-        if ptr.is_null() {
-            return ptr;
-        }
-        ptr
-    }
-
-    #[wasm_bindgen(js_name = "deallocateBuffer")]
-    pub fn deallocate_buffer(&self, ptr: *mut u8, size: usize) {
-        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-        unsafe {
-            std::alloc::dealloc(ptr, layout);
-        }
-    }
-
     #[wasm_bindgen(js_name = "createMmdModel")]
     pub fn create_mmd_model(&mut self, serialized_metadata_ptr: *const u8, serialized_metadata_size: usize) -> *mut usize {
         let serialized_metadata = unsafe {

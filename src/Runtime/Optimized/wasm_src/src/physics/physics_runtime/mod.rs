@@ -12,7 +12,8 @@ use crate::mmd_model::mmd_runtime_bone::MmdRuntimeBone;
 use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::{JointKind, RigidbodyMetadata, RigidbodyMetadataReader, RigidbodyPhysicsMode, RigidbodyShapeType};
 
-use super::bullet::bind::{constraint::{ConstraintConstructionInfo, ConstraintType}, rigidbody::{MotionType, RigidbodyConstructionInfo, ShapeType}};
+use super::bullet::runtime::constraint::{ConstraintConstructionInfo, ConstraintType};
+use super::bullet::runtime::rigidbody::{MotionType, RigidbodyConstructionInfo, ShapeType};
 
 pub(crate) struct PhysicsRuntime {
     max_sub_steps: i32,

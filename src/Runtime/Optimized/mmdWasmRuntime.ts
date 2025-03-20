@@ -409,7 +409,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh);
 
-        const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
+        const metadataBufferPtr = this.wasmInstance.allocateBuffer(metadataSize);
 
         const metadataBuffer = this.wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
         const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh, skeleton.bones, metadataBuffer.array);
@@ -429,7 +429,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         this._getPhysicsInitializeSet().add(model);
 
-        wasmRuntime.deallocateBuffer(metadataBufferPtr, metadataSize);
+        this.wasmInstance.deallocateBuffer(metadataBufferPtr, metadataSize);
 
         // desync again
         if (usingWasmBackBuffer) {
