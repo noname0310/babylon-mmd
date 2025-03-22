@@ -1,33 +1,33 @@
-pub(crate) mod physics_model_context;
-mod physics_model_handle;
-mod world_container;
-
-use glam::{EulerRot, Mat4, Quat, Vec3};
+use glam::Vec3;
 use physics_model_context::PhysicsModelContext;
-use physics_model_handle::PhysicsModelHandle;
-use world_container::{PhysicsWorldId, WorldContainer};
 
 use crate::diagnostic::DiagnosticWriter;
 use crate::mmd_model::mmd_runtime_bone::MmdRuntimeBone;
 use crate::mmd_model::MmdModel;
-use crate::mmd_model_metadata::{JointKind, RigidbodyMetadata, RigidbodyMetadataReader, RigidbodyPhysicsMode, RigidbodyShapeType};
+use crate::mmd_model_metadata::RigidbodyMetadataReader;
 
-use super::bullet::runtime::constraint::{ConstraintConstructionInfo, ConstraintType};
-use super::bullet::runtime::rigidbody::{MotionType, RigidbodyConstructionInfo, ShapeType};
+use super::bullet::runtime::multi_physics_world::MultiPhysicsWorld;
 
-pub(crate) struct PhysicsRuntime {
+pub(crate) mod physics_model_context;
+
+pub(crate) struct MmdPhysicsRuntime {
+    multi_physics_world: MultiPhysicsWorld,
     max_sub_steps: i32,
     fixed_time_step: f32,
-    worlds: WorldContainer,
 }
 
-impl PhysicsRuntime {
-    pub(crate) fn new() -> Self {
+impl MmdPhysicsRuntime {
+    pub(crate) fn new(allow_dynamic_shadow: bool) -> Self {
+        let multi_physics_world = MultiPhysicsWorld::new(allow_dynamic_shadow);
         Self {
+            multi_physics_world,
             max_sub_steps: 5,
             fixed_time_step: 1.0 / 100.0,
-            worlds: WorldContainer::new(),
         }
+    }
+    
+    pub(crate) fn world(&self) -> &MultiPhysicsWorld {
+        &self.multi_physics_world
     }
 
     pub(crate) fn max_sub_steps_mut(&mut self) -> &mut i32 {
@@ -37,21 +37,9 @@ impl PhysicsRuntime {
     pub(crate) fn fixed_time_step_mut(&mut self) -> &mut f32 {
         &mut self.fixed_time_step
     }
-
-    pub(crate) fn get_gravity(&self) -> &Vec3 {
-        self.worlds.get_gravity()
-    }
-
+    
     pub(crate) fn set_gravity(&mut self, gravity: Vec3) {
-        self.worlds.set_gravity(gravity);
-    }
-
-    pub(crate) fn override_world_gravity(&mut self, world_id: PhysicsWorldId, gravity: Option<Vec3>) {
-        self.worlds.override_world_gravity(world_id, gravity);
-    }
-
-    pub(crate) fn get_world_gravity(&self, world_id: PhysicsWorldId) -> Option<&Vec3> {
-        self.worlds.get_world_gravity(world_id)
+        self.multi_physics_world.set_gravity(gravity);
     }
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {
@@ -113,7 +101,7 @@ impl PhysicsRuntime {
             }
         }
 
-        self.worlds.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
+        self.multi_physics_world.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
 
         // synchronize bone matrices with dynamic rigid bodies
         for model in mmd_models.iter_mut() {
@@ -154,7 +142,7 @@ impl PhysicsRuntime {
         }
     }
 
-    pub(crate) fn build_physics_object(
+    pub(crate) fn create_physics_context(
         &mut self,
         bones: &[MmdRuntimeBone],
         mut reader: RigidbodyMetadataReader,
@@ -451,7 +439,17 @@ impl PhysicsRuntime {
         )
     }
 
-    pub(crate) fn destroy_physics_context(&mut self, context: &PhysicsModelContext) {
-        self.worlds.destroy_physics_context(context);
+    pub(crate) fn destroy_physics_context(&mut self, mut context: PhysicsModelContext) {
+        let world_id = context.world_id();
+
+        for constraint in context.constraints_mut() {
+            self.multi_physics_world.remove_constraint(world_id, constraint.create_handle());
+        }
+
+        for i in 0..context.shared_world_ids().len() {
+            let world_id = context.shared_world_ids()[i];
+            self.multi_physics_world.remove_rigidbody_bundle_shadow(world_id, context.bundle_mut().create_handle());
+        }
+        self.multi_physics_world.remove_rigidbody_bundle(context.world_id(), context.bundle_mut().create_handle());
     }
 }

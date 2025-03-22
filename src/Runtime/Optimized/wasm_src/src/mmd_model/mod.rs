@@ -19,8 +19,8 @@ use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, Ri
 use crate::mmd_model_metadata::PhysicsInfoKind;
 #[cfg(feature = "physics")]
 use crate::{
-    physics::physics_runtime::PhysicsRuntime,
-    physics::physics_runtime::physics_model_context::PhysicsModelContext,
+    physics::mmd::MmdPhysicsRuntime,
+    physics::mmd::physics_model_context::PhysicsModelContext,
 };
 
 use crate::animation::mmd_runtime_animation::MmdRuntimeAnimation;
@@ -47,7 +47,7 @@ impl MmdModel {
         buffer: MetadataBuffer,
         
         #[cfg(feature = "physics")]
-        physics_runtime: &mut PhysicsRuntime,
+        physics_runtime: &mut MmdPhysicsRuntime,
         
         diagnostic: &mut Diagnostic
     ) -> Self {
@@ -152,7 +152,7 @@ impl MmdModel {
             let build_physics = matches!(reader.physics_info_kind(), PhysicsInfoKind::FullPhysics);
             if build_physics {
                 physics_model_context = Some(
-                    physics_runtime.build_physics_object(&bone_arena, reader, diagnostic)
+                    physics_runtime.create_physics_context(&bone_arena, reader, diagnostic)
                 );
             }
         }
