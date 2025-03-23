@@ -9,7 +9,6 @@ use crate::mmd_model_metadata::{RigidBodyMetadata, RigidBodyMetadataReader, Rigi
 use super::bullet::runtime::collision_shape::{BoxShape, CapsuleShape, CollisionShape, SphereShape, StaticPlaneShape};
 use super::bullet::runtime::motion_type::MotionType;
 use super::bullet::runtime::multi_physics_world::MultiPhysicsWorld;
-use super::bullet::runtime::rigidbody_bundle::RigidBodyBundle;
 use super::bullet::runtime::rigidbody_construction_info::RigidBodyConstructionInfo;
 
 pub(crate) mod rigidbody_bundle_proxy;
@@ -59,18 +58,15 @@ impl MmdPhysicsRuntime {
             let world_matrix = *context.world_matrix();
             let need_init = context.flush_need_init();
 
-            let context = model.physics_model_context().as_ref().unwrap();
-            
-            let physics_handle = context.physics_handle();
-            let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
-            let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
+            let context = model.physics_model_context().as_ref().unwrap();            
+            let bundle = context.bundle_proxy().inner_mut();
 
             let bone_world_matrices = model.bone_arena().world_matrices();
 
-            for body in physics_object.bodies_mut() {
+            for i in 0..bundle.len() {
                 body.restore_dynamic();
 
-                let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
+                let linked_bone_index = if let Some(linked_bone_index) = context.bundle_proxy().linked_bone_index() {
                     linked_bone_index
                 } else {
                     continue;

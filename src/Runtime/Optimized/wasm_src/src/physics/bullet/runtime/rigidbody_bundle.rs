@@ -60,6 +60,10 @@ impl RigidBodyBundle {
         }
     }
 
+    pub(crate) fn len(&self) -> usize {
+        self.bodies.len()
+    }
+
     pub(super) fn bodies(&self) -> &[bind::rigidbody::RigidBody] {
         &self.bodies
     }
