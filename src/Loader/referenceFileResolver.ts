@@ -36,6 +36,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * File list that can be resolved
      */
     public readonly files: readonly T[];
+    private readonly _rootUrl: string;
     private readonly _fileRootId: string;
     private readonly _fileMap: Map<string, T> = new Map<string, T>();
 
@@ -48,9 +49,8 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @param fileRootId File root id for give the unique id for the files
      */
     public constructor(files: readonly T[], rootUrl: string, fileRootId: string) {
-        rootUrl = pathNormalize(rootUrl);
-
         this.files = files;
+        this._rootUrl = pathNormalize(rootUrl);
         this._fileRootId = fileRootId;
 
         if (files.length === 0) return;
@@ -58,15 +58,12 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
         if (files[0] instanceof File) {
             for (const file of files) {
                 const fileRelativePath = pathNormalize((file as File).webkitRelativePath);
-
-                if (!fileRelativePath.startsWith(rootUrl)) continue;
-
-                const relativePath = fileRootId + pathNormalize(fileRelativePath.slice(rootUrl.length));
+                const relativePath = fileRootId + pathNormalize(fileRelativePath);
                 this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
             }
         } else {
             for (const file of files) {
-                const relativePath = fileRootId + pathNormalize((file as IArrayBufferFile).relativePath);
+                const relativePath = fileRootId + pathNormalize(this._rootUrl + (file as IArrayBufferFile).relativePath);
                 this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
             }
         }
@@ -78,7 +75,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @returns Full path
      */
     public createFullPath(relativePath: string): string {
-        return this._fileRootId + pathNormalize(relativePath);
+        return this._fileRootId + pathNormalize(this._rootUrl + relativePath);
     }
 
     /**
