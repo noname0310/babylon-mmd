@@ -2,6 +2,7 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
 import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
+import "@babylonjs/core/Misc/dumpTools";
 import "@/Loader/mmdOutlineRenderer";
 import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
