@@ -14,7 +14,7 @@ use mmd_morph_controller::MmdMorphController;
 use mmd_runtime_bone::{MmdRuntimeBone, MmdRuntimeBoneArena};
 
 use crate::diagnostic::Diagnostic;
-use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidbodyPhysicsMode};
+use crate::mmd_model_metadata::{BoneFlag, BoneMetadataReader, MetadataBuffer, RigidBodyPhysicsMode};
 
 use crate::mmd_model_metadata::PhysicsInfoKind;
 #[cfg(feature = "physics")]
@@ -133,7 +133,7 @@ impl MmdModel {
         let mut is_physics_bone = vec![false; bone_arena.len()];
         
         reader.enumerate(|_, metadata| {
-            if metadata.physics_mode != RigidbodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+            if metadata.physics_mode != RigidBodyPhysicsMode::FollowBone as u8 && 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
                 is_physics_bone[metadata.bone_index as usize] = true;
             }
         });

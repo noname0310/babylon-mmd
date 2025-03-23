@@ -1,5 +1,6 @@
 pub(crate) mod collision_shape;
 pub(crate) mod constraint;
+pub(crate) mod motion_type;
 pub(crate) mod multi_physics_runtime;
 pub(crate) mod multi_physics_world;
 pub(crate) mod physics_runtime;

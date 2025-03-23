@@ -1,17 +1,19 @@
 use glam::Mat4;
 
 use crate::physics::bullet::runtime::{
-    constraint::Constraint,
-    multi_physics_world::PhysicsWorldId,
-    rigidbody_bundle::RigidBodyBundle
+    collision_shape::CollisionShape, constraint::Constraint, multi_physics_world::PhysicsWorldId, rigidbody_bundle::RigidBodyBundle
 };
 
+use super::rigidbody_bundle_proxy::RigidBodyBundleProxy;
+
 // for parallel iteration
+unsafe impl Send for CollisionShape {}
 unsafe impl Send for RigidBodyBundle {}
 unsafe impl Send for Constraint {}
 
 pub(crate) struct PhysicsModelContext {
-    bundle: RigidBodyBundle,
+    shapes: Box<[CollisionShape]>,
+    bundle_proxy: RigidBodyBundleProxy,
     constraints: Box<[Constraint]>,
     world_id: PhysicsWorldId,
     shared_world_ids: Vec<PhysicsWorldId>,
@@ -28,7 +30,8 @@ pub(crate) struct PhysicsModelContext {
 
 impl PhysicsModelContext {
     pub(super) fn new(
-        bundle: RigidBodyBundle,
+        shapes: Box<[CollisionShape]>,
+        bundle_proxy: RigidBodyBundleProxy,
         constraints: Box<[Constraint]>,
         world_id: PhysicsWorldId,
         shared_world_ids: Vec<PhysicsWorldId>,
@@ -43,7 +46,8 @@ impl PhysicsModelContext {
         };
         
         Self {
-            bundle,
+            shapes,
+            bundle_proxy,
             constraints,
             world_id,
             shared_world_ids,
@@ -57,12 +61,20 @@ impl PhysicsModelContext {
         }
     }
 
-    pub(super) fn bundle(&self) -> &RigidBodyBundle {
-        &self.bundle
+    pub(super) fn shapes(&self) -> &[CollisionShape] {
+        &self.shapes
     }
 
-    pub(super) fn bundle_mut(&mut self) -> &mut RigidBodyBundle {
-        &mut self.bundle
+    pub(super) fn shapes_mut(&mut self) -> &mut [CollisionShape] {
+        &mut self.shapes
+    }
+
+    pub(super) fn bundle_proxy(&self) -> &RigidBodyBundleProxy {
+        &self.bundle_proxy
+    }
+
+    pub(super) fn bundle_proxy_mut(&mut self) -> &mut RigidBodyBundleProxy {
+        &mut self.bundle_proxy
     }
 
     pub(super) fn constraints(&self) -> &[Constraint] {
