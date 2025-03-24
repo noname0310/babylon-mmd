@@ -88,7 +88,15 @@ impl RigidBodyBundle {
         &mut self.motion_state_bundle
     }
 
-    fn get_buffered_motion_states_mut(&mut self) -> &mut bind::motion_state::MotionStateBundle {
+    pub(crate) fn get_buffered_motion_states(&self) -> &bind::motion_state::MotionStateBundle {
+        if let Some(motion_state_bundle) = self.buffered_motion_state_bundle.as_ref() {
+            motion_state_bundle
+        } else {
+            &self.motion_state_bundle
+        }
+    }
+
+    pub(crate) fn get_buffered_motion_states_mut(&mut self) -> &mut bind::motion_state::MotionStateBundle {
         if let Some(motion_state_bundle) = self.buffered_motion_state_bundle.as_mut() {
             motion_state_bundle
         } else {
@@ -274,6 +282,10 @@ impl RigidBodyBundle {
 
     pub(crate) fn get_temporal_kinematic_states_ptr_mut(&mut self) -> *mut TemporalKinematicState {
         self.temporal_kinematic_states.as_mut_ptr()
+    }
+
+    pub(crate) fn make_temporal_kinematic(&mut self, index: usize) {
+        self.temporal_kinematic_states[index] = TemporalKinematicState::WaitForRestore;
     }
 
     pub(crate) fn create_handle(&mut self) -> RigidBodyBundleHandle {

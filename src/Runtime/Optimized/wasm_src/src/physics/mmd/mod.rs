@@ -58,46 +58,37 @@ impl MmdPhysicsRuntime {
             let world_matrix = *context.world_matrix();
             let need_init = context.flush_need_init();
 
-            let context = model.physics_model_context().as_ref().unwrap();            
-            let bundle = context.bundle_proxy().inner_mut();
+            for index in 0..context.bundle_proxy().len() {
+                let context = model.physics_model_context().as_ref();
+                // SAFETY: context validity check is done at first line of outer loop
+                let context = unsafe { context.unwrap_unchecked() };
 
-            let bone_world_matrices = model.bone_arena().world_matrices();
-
-            for i in 0..bundle.len() {
-                body.restore_dynamic();
-
-                let linked_bone_index = if let Some(linked_bone_index) = context.bundle_proxy().linked_bone_index() {
+                let linked_bone_index = if let Some(linked_bone_index) = context.bundle_proxy().linked_bone_index(index) {
                     linked_bone_index
                 } else {
                     continue;
                 };
 
-                if body.get_physics_mode() == RigidBodyPhysicsMode::FollowBone { // only kinematic object needs to update
+                let physics_mode = context.bundle_proxy().physics_mode(index);
+                if physics_mode == RigidBodyPhysicsMode::FollowBone { // only kinematic object needs to update
+                    let bone_world_matrices = model.bone_arena().world_matrices();
                     let bone_world_matrix = bone_world_matrices[linked_bone_index];
-                    body.set_transform(world_matrix * bone_world_matrix);
-                } else if need_init &&
-                    (body.get_physics_mode() == RigidBodyPhysicsMode::Physics || body.get_physics_mode() == RigidBodyPhysicsMode::PhysicsWithBone) {
-                    let bone_world_matrix = bone_world_matrices[linked_bone_index];
-                    body.make_kinematic();
-                    body.set_transform(world_matrix * bone_world_matrix);
-                }
-            }
+                    
+                    let context = model.physics_model_context_mut().as_mut();
+                    // SAFETY: context validity check is done at first line of outer loop
+                    let context = unsafe { context.unwrap_unchecked() };
 
-            for physics_handle in context.kinematic_shared_physics_handles() {
-                let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
-                let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
-
-                for body in physics_object.bodies_mut() {
-                    if body.get_physics_mode() != RigidBodyPhysicsMode::FollowBone {
-                        continue;
-                    }
-                    let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
-                        linked_bone_index
-                    } else {
-                        continue;
-                    };
+                    context.bundle_proxy_mut().set_transform(index, world_matrix * bone_world_matrix);
+                } else if need_init && (physics_mode == RigidBodyPhysicsMode::Physics || physics_mode == RigidBodyPhysicsMode::PhysicsWithBone) {
+                    let bone_world_matrices = model.bone_arena().world_matrices();
                     let bone_world_matrix = bone_world_matrices[linked_bone_index];
-                    body.set_transform(world_matrix * bone_world_matrix);
+
+                    let context = model.physics_model_context_mut().as_mut();
+                    // SAFETY: context validity check is done at first line of outer loop
+                    let context = unsafe { context.unwrap_unchecked() };
+
+                    context.bundle_proxy_mut().inner_mut().make_temporal_kinematic(index);
+                    context.bundle_proxy_mut().set_transform(index, world_matrix * bone_world_matrix);
                 }
             }
         }
@@ -110,30 +101,31 @@ impl MmdPhysicsRuntime {
                 context
             } else {
                 continue;
-            };
+            };      
 
             let world_matrix_inverse = *context.world_matrix_inverse();
 
-            let physics_handle = context.physics_handle();
-            let world = self.worlds.get_world_mut(physics_handle.world_id()).unwrap();
-            let physics_object = world.get_physics_object_mut(physics_handle.object_handle());
+            for index in 0..context.bundle_proxy().len() {
+                let context = model.physics_model_context().as_ref();
+                // SAFETY: context validity check is done at first line of outer loop
+                let context = unsafe { context.unwrap_unchecked() };
 
-            let mut bone_world_matrices = model.bone_arena_mut().world_matrices_mut();
+                let physics_mode = context.bundle_proxy().physics_mode(index);
 
-            for body in physics_object.bodies() {
-                if body.get_physics_mode() == RigidBodyPhysicsMode::FollowBone || body.get_physics_mode() == RigidBodyPhysicsMode::Static {
+                if physics_mode == RigidBodyPhysicsMode::FollowBone || physics_mode == RigidBodyPhysicsMode::Static {
                     continue; // kinematic and static objects are not updated
                 }
 
-                let linked_bone_index = if let Some(linked_bone_index) = body.get_linked_bone_index() {
+                let linked_bone_index = if let Some(linked_bone_index) = context.bundle_proxy().linked_bone_index(index) {
                     linked_bone_index
                 } else {
                     continue;
                 };
 
-                let mut body_world_matrix = world_matrix_inverse * body.get_transform();
+                let mut body_world_matrix = world_matrix_inverse * context.bundle_proxy().get_transform(index);
 
-                if body.get_physics_mode() == RigidBodyPhysicsMode::PhysicsWithBone {
+                let mut bone_world_matrices = model.bone_arena_mut().world_matrices_mut();
+                if physics_mode == RigidBodyPhysicsMode::PhysicsWithBone {
                     let bone_position = bone_world_matrices[linked_bone_index].w_axis.truncate();
                     body_world_matrix.w_axis = bone_position.extend(body_world_matrix.w_axis.w);
                 }
@@ -429,8 +421,14 @@ impl MmdPhysicsRuntime {
 
         for i in 0..context.shared_world_ids().len() {
             let world_id = context.shared_world_ids()[i];
-            self.multi_physics_world.remove_rigidbody_bundle_shadow(world_id, context.bundle_mut().create_handle());
+            self.multi_physics_world.remove_rigidbody_bundle_shadow(
+                world_id, 
+                context.bundle_proxy_mut().inner_mut().create_handle()
+            );
         }
-        self.multi_physics_world.remove_rigidbody_bundle(context.world_id(), context.bundle_mut().create_handle());
+        self.multi_physics_world.remove_rigidbody_bundle(
+            context.world_id(), 
+            context.bundle_proxy_mut().inner_mut().create_handle()
+        );
     }
 }
