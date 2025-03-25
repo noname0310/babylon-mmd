@@ -1,5 +1,6 @@
 use glam::{EulerRot, Mat4, Quat, Vec3};
 use physics_model_context::PhysicsModelContext;
+use rigidbody_bundle_proxy::{RigidBodyBundleProxy, RigidBodyProxyData};
 
 use crate::diagnostic::DiagnosticWriter;
 use crate::mmd_model::mmd_runtime_bone::MmdRuntimeBone;
@@ -18,6 +19,14 @@ pub(crate) struct MmdPhysicsRuntime {
     multi_physics_world: MultiPhysicsWorld,
     max_sub_steps: i32,
     fixed_time_step: f32,
+}
+
+struct CreateRbInfoResult<'a> {
+    bone_index: Option<i32>,
+    motion_type: MotionType,
+    physics_mode: RigidBodyPhysicsMode,
+    body_offset_matrix: Mat4,
+    construction_info: RigidBodyConstructionInfo<'a>,
 }
 
 impl MmdPhysicsRuntime {
@@ -135,6 +144,126 @@ impl MmdPhysicsRuntime {
         }
     }
 
+    fn create_shape<'a>(
+        diagnostic: &mut DiagnosticWriter,
+        scaling_factor: f32,
+        rigidbody_index: u32,
+        metadata: &RigidBodyMetadata,
+    ) -> Option<(CollisionShape, bool)> {
+        let shape_size = metadata.shape_size * scaling_factor;
+
+        let (shape, is_zero_volume) = if metadata.shape_type == RigidBodyShapeType::Sphere as u8 {
+            let shape = SphereShape::new(shape_size.x);
+            let is_zero_volume = shape_size.x == 0.0;
+            (CollisionShape::Sphere(shape), is_zero_volume)
+        } else if metadata.shape_type == RigidBodyShapeType::Box as u8 {
+            let shape = BoxShape::new(Vec3::new(shape_size.x, shape_size.y, shape_size.z));
+            let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0 || shape_size.z == 0.0;
+            (CollisionShape::Box(shape), is_zero_volume)
+        } else if metadata.shape_type == RigidBodyShapeType::Capsule as u8 {
+            let shape = CapsuleShape::new(shape_size.x, shape_size.y);
+            let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0;
+            (CollisionShape::Capsule(shape), is_zero_volume)
+        } else if metadata.shape_type == RigidBodyShapeType::StaticPlane as u8 {
+            let shape = StaticPlaneShape::new(Vec3::new(shape_size.x, shape_size.y, shape_size.z), shape_size.w);
+            let is_zero_volume = shape_size.x == 0.0 && shape_size.y == 0.0 && shape_size.z == 0.0;
+            (CollisionShape::StaticPlane(shape), is_zero_volume)
+        } else {
+            diagnostic.warning(format!("Unsupported shape type {} for rigid body {}", metadata.shape_type, rigidbody_index));
+            return None;
+        };
+
+        Some((shape, is_zero_volume))
+    }
+
+    fn create_rb_info<'a>(
+        bones: &[MmdRuntimeBone],
+        world_matrix: Mat4,
+        diagnostic: &mut DiagnosticWriter,
+        scaling_factor: f32,
+        rigidbody_index: u32,
+        metadata: &RigidBodyMetadata,
+        shape: &'a mut CollisionShape,
+        is_zero_volume: bool,
+    ) -> Option<CreateRbInfoResult<'a>> {
+        let bone_index = metadata.bone_index;
+        let bone_index = if bone_index < 0 || bones.len() <= bone_index as usize {
+            diagnostic.warning(format!("Bone index out of range create unmapped rigid body: {}", rigidbody_index));
+            None
+        } else {
+            Some(bone_index)
+        };
+
+        let (motion_type, physics_mode) = if metadata.physics_mode == RigidBodyPhysicsMode::FollowBone as u8 {
+            (MotionType::Kinematic, RigidBodyPhysicsMode::FollowBone)
+        } else if metadata.physics_mode == RigidBodyPhysicsMode::Physics as u8 || metadata.physics_mode == RigidBodyPhysicsMode::PhysicsWithBone as u8 {
+            (MotionType::Dynamic, if metadata.physics_mode == RigidBodyPhysicsMode::Physics as u8 { RigidBodyPhysicsMode::Physics } else { RigidBodyPhysicsMode::PhysicsWithBone })
+        } else if metadata.physics_mode == RigidBodyPhysicsMode::Static as u8 {
+            (MotionType::Static, RigidBodyPhysicsMode::Static)
+        } else {
+            diagnostic.warning(format!("Unsupported physics mode {} for rigid body {}", metadata.physics_mode, rigidbody_index));
+            return None;
+        };
+
+        // static plane validation
+        let (motion_type, physics_mode) = if let CollisionShape::StaticPlane(_) = shape {
+            if physics_mode != RigidBodyPhysicsMode::Static {
+                diagnostic.warning(format!("Static plane shape must have static physics mode, forced to static for rigid body {}", rigidbody_index));
+            }
+            (MotionType::Static, RigidBodyPhysicsMode::Static)
+        } else {
+            (motion_type, physics_mode)
+        };
+
+        // model space position and rotation
+        let position = metadata.shape_position;
+        let rotation = Quat::from_euler(
+            EulerRot::YXZ,
+            metadata.shape_rotation.y, metadata.shape_rotation.x, metadata.shape_rotation.z
+        );
+        let pose_matrix = Mat4::from_rotation_translation(rotation, position.into());
+
+        // compute the offset matrix from the bone to the rigid body
+        let body_offset_matrix = if let Some(bone_index) = bone_index {
+            let parent_world_matrix_inverse = *bones[bone_index as usize].absolute_inverse_bind_matrix();
+
+            parent_world_matrix_inverse * pose_matrix
+        } else {
+            Mat4::IDENTITY
+        };
+
+        // world space transform
+        let initial_transform_matrix = world_matrix * pose_matrix;
+
+        let construction_info: RigidBodyConstructionInfo<'a> = RigidBodyConstructionInfo {
+            shape: shape,
+            initial_transform: initial_transform_matrix,
+            data_mask: 0,
+            motion_type: motion_type as u8,
+            mass: metadata.mass * scaling_factor,
+            local_inertia: Vec3::ZERO,
+            linear_damping: metadata.linear_damping,
+            angular_damping: metadata.angular_damping,
+            friction: metadata.friction,
+            restitution: metadata.repulsion,
+            linear_sleeping_threshold: 0.0,
+            angular_sleeping_threshold: 0.0,
+            collision_group: 1 << (metadata.collision_group as u16),
+            collision_mask: metadata.collision_mask,
+            additional_damping: true as u8,
+            no_contact_response: (metadata.collision_mask == 0x0000 || is_zero_volume) as u8,
+            disable_deactivation: true as u8,
+        };
+
+        Some(CreateRbInfoResult {
+            bone_index,
+            motion_type,
+            physics_mode,
+            body_offset_matrix,
+            construction_info,
+        })
+    }
+
     pub(crate) fn create_physics_context(
         &mut self,
         bones: &[MmdRuntimeBone],
@@ -160,119 +289,51 @@ impl MmdPhysicsRuntime {
             }
         };
 
-        let world_id = reader.physics_world_id();
-
         let mut rigidbody_map = vec![-1; reader.count() as usize];
         let mut rigidbody_initial_transforms = Vec::with_capacity(reader.count() as usize);
 
-        let create_rb_info = |rigidbody_index: u32, metadata: RigidBodyMetadata| {
-            let bone_index = metadata.bone_index;
-            let bone_index = if bone_index < 0 || bones.len() <= bone_index as usize {
-                diagnostic.warning(format!("Bone index out of range create unmapped rigid body: {}", rigidbody_index));
-                None
-            } else {
-                Some(bone_index)
-            };
-
-            let shape_size = metadata.shape_size * scaling_factor;
-
-            let (shape, is_zero_volume) = if metadata.shape_type == RigidBodyShapeType::Sphere as u8 {
-                let shape = SphereShape::new(shape_size.x);
-                let is_zero_volume = shape_size.x == 0.0;
-                (CollisionShape::Sphere(shape), is_zero_volume)
-            } else if metadata.shape_type == RigidBodyShapeType::Box as u8 {
-                let shape = BoxShape::new(Vec3::new(shape_size.x, shape_size.y, shape_size.z));
-                let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0 || shape_size.z == 0.0;
-                (CollisionShape::Box(shape), is_zero_volume)
-            } else if metadata.shape_type == RigidBodyShapeType::Capsule as u8 {
-                let shape = CapsuleShape::new(shape_size.x, shape_size.y);
-                let is_zero_volume = shape_size.x == 0.0 || shape_size.y == 0.0;
-                (CollisionShape::Capsule(shape), is_zero_volume)
-            } else if metadata.shape_type == RigidBodyShapeType::StaticPlane as u8 {
-                let shape = StaticPlaneShape::new(Vec3::new(shape_size.x, shape_size.y, shape_size.z), shape_size.w);
-                let is_zero_volume = shape_size.x == 0.0 && shape_size.y == 0.0 && shape_size.z == 0.0;
-                (CollisionShape::StaticPlane(shape), is_zero_volume)
-            } else {
-                diagnostic.warning(format!("Unsupported shape type {} for rigid body {}", metadata.shape_type, rigidbody_index));
-                return None;
-            };
-
-            let (motion_type, physics_mode) = if metadata.physics_mode == RigidBodyPhysicsMode::FollowBone as u8 {
-                (MotionType::Kinematic, RigidBodyPhysicsMode::FollowBone)
-            } else if metadata.physics_mode == RigidBodyPhysicsMode::Physics as u8 || metadata.physics_mode == RigidBodyPhysicsMode::PhysicsWithBone as u8 {
-                (MotionType::Dynamic, if metadata.physics_mode == RigidBodyPhysicsMode::Physics as u8 { RigidBodyPhysicsMode::Physics } else { RigidBodyPhysicsMode::PhysicsWithBone })
-            } else if metadata.physics_mode == RigidBodyPhysicsMode::Static as u8 {
-                (MotionType::Static, RigidBodyPhysicsMode::Static)
-            } else {
-                diagnostic.warning(format!("Unsupported physics mode {} for rigid body {}", metadata.physics_mode, rigidbody_index));
-                return None;
-            };
-
-            // static plane validation
-            let (motion_type, physics_mode) = if let CollisionShape::StaticPlane(_) = shape {
-                if physics_mode != RigidBodyPhysicsMode::Static {
-                    diagnostic.warning(format!("Static plane shape must have static physics mode, forced to static for rigid body {}", rigidbody_index));
-                }
-                (MotionType::Static, RigidBodyPhysicsMode::Static)
-            } else {
-                (motion_type, physics_mode)
-            };
-
-            // model space position and rotation
-            let position = metadata.shape_position;
-            let rotation = Quat::from_euler(
-                EulerRot::YXZ,
-                metadata.shape_rotation.y, metadata.shape_rotation.x, metadata.shape_rotation.z
-            );
-            let pose_matrix = Mat4::from_rotation_translation(rotation, position.into());
-
-            // compute the offset matrix from the bone to the rigid body
-            let body_offset_matrix = if let Some(bone_index) = bone_index {
-                let parent_world_matrix_inverse = *bones[bone_index as usize].absolute_inverse_bind_matrix();
-
-                parent_world_matrix_inverse * pose_matrix
-            } else {
-                Mat4::IDENTITY
-            };
-
-            // world space transform
-            let initial_transform_matrix = world_matrix * pose_matrix;
-
-            let construction_info = RigidBodyConstructionInfo {
-                shape: &mut shape,
-                initial_transform: initial_transform_matrix,
-                data_mask: 0,
-                motion_type: motion_type as u8,
-                mass: metadata.mass * scaling_factor,
-                local_inertia: Vec3::ZERO,
-                linear_damping: metadata.linear_damping,
-                angular_damping: metadata.angular_damping,
-                friction: metadata.friction,
-                restitution: metadata.repulsion,
-                linear_sleeping_threshold: 0.0,
-                angular_sleeping_threshold: 0.0,
-                collision_group: 1 << (metadata.collision_group as u16),
-                collision_mask: metadata.collision_mask,
-                additional_damping: true as u8,
-                no_contact_response: (metadata.collision_mask == 0x0000 || is_zero_volume) as u8,
-                disable_deactivation: true as u8,
-            };
-
-            Some((bone_index, motion_type, physics_mode, body_offset_matrix, shape, construction_info))
-        };
-
         let mut kinematic_object_count = 0;
-        let mut rb_info_vec = Vec::with_capacity(reader.count() as usize);
+        let mut shapes = Vec::with_capacity(reader.count() as usize);
+        let mut rb_info_list = Vec::with_capacity(reader.count() as usize);
+        let mut rb_data_list = Vec::with_capacity(reader.count() as usize);
         reader.enumerate(|rigidbody_index, metadata| {
             let position = metadata.shape_position;
             let rotation = metadata.shape_rotation;
 
-            let (bone_index, motion_type, physics_mode, body_offset_matrix, shape, construction_info) = match create_rb_info(rigidbody_index, metadata) {
+            let (shape, is_zero_volume) = match Self::create_shape(&mut diagnostic, scaling_factor, rigidbody_index, &metadata) {
+                Some(v) => v,
+                None => return,
+            };
+            
+            shapes.push(shape);
+
+            let CreateRbInfoResult {
+                bone_index,
+                motion_type,
+                physics_mode,
+                body_offset_matrix,
+                construction_info
+            } = match Self::create_rb_info(
+                bones,
+                world_matrix,
+                &mut diagnostic,
+                scaling_factor,
+                rigidbody_index,
+                &metadata,
+                shapes.last_mut().unwrap(),
+                is_zero_volume
+            ) {
                 Some(v) => v,
                 None => return,
             };
 
-            physics_object.create_rigidbody(&rb_info, bone_index.map(|v| v as u32), &body_offset_matrix, physics_mode);
+            rb_info_list.push(construction_info);
+            rb_data_list.push(RigidBodyProxyData {
+                linked_bone_index: bone_index.map(|v| v as u32),
+                body_offset_matrix,
+                body_offset_inverse_matrix: body_offset_matrix.inverse(),
+                physics_mode,
+            });
 
             rigidbody_map[rigidbody_index as usize] = rigidbody_initial_transforms.len() as i32;
             rigidbody_initial_transforms.push((position, rotation));
@@ -281,11 +342,19 @@ impl MmdPhysicsRuntime {
                 kinematic_object_count += 1;
             }
         });
+        let rigidbody_bundle_proxy = RigidBodyBundleProxy::new(&mut rb_info_list, rb_data_list.into_boxed_slice());
+
+        self.multi_physics_world.add_rigidbody_bundle(
+            reader.physics_world_id(),
+            rigidbody_bundle_proxy.inner_mut().create_handle()
+        );
 
         let kinematic_shared_physics_world_ids = reader.take_kinematic_shared_physics_world_ids();
-
         for world_id in kinematic_shared_physics_world_ids {
-            
+            self.multi_physics_world.add_rigidbody_bundle_shadow(
+                world_id,
+                rigidbody_bundle_proxy.inner_mut().create_handle()
+            );
         }
 
         let mut reader = reader.next().unwrap();

@@ -84,7 +84,7 @@ pub(crate) enum ConstructionInfoDataMask {
     LocalInertia = 1 << 0,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub(crate) enum MotionType {
     Dynamic = 0,
     Static = 1,

@@ -3,10 +3,10 @@ use glam::Mat4;
 use crate::{mmd_model_metadata::RigidBodyPhysicsMode, physics::bullet::runtime::{rigidbody_bundle::RigidBodyBundle, rigidbody_construction_info::RigidBodyConstructionInfo}};
 
 pub(super) struct RigidBodyProxyData {
-    linked_bone_index: Option<u32>,
-    body_offset_matrix: Mat4,
-    body_offset_inverse_matrix: Mat4,
-    physics_mode: RigidBodyPhysicsMode,
+    pub(super) linked_bone_index: Option<u32>,
+    pub(super) body_offset_matrix: Mat4,
+    pub(super) body_offset_inverse_matrix: Mat4,
+    pub(super) physics_mode: RigidBodyPhysicsMode,
 }
 
 pub(super) struct RigidBodyBundleProxy {
@@ -19,6 +19,7 @@ impl RigidBodyBundleProxy {
         info_list: &mut [RigidBodyConstructionInfo],
         data_list: Box<[RigidBodyProxyData]>,
     ) -> Self {
+        assert!(info_list.len() == data_list.len());
         let inner = RigidBodyBundle::new(info_list);
         Self { inner, data_list }
     }
