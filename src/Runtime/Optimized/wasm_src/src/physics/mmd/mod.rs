@@ -5,9 +5,10 @@ use rigidbody_bundle_proxy::{RigidBodyBundleProxy, RigidBodyProxyData};
 use crate::diagnostic::DiagnosticWriter;
 use crate::mmd_model::mmd_runtime_bone::MmdRuntimeBone;
 use crate::mmd_model::MmdModel;
-use crate::mmd_model_metadata::{RigidBodyMetadata, RigidBodyMetadataReader, RigidBodyPhysicsMode, RigidBodyShapeType};
+use crate::mmd_model_metadata::{JointKind, RigidBodyMetadata, RigidBodyMetadataReader, RigidBodyPhysicsMode, RigidBodyShapeType};
 
 use super::bullet::runtime::collision_shape::{BoxShape, CapsuleShape, CollisionShape, SphereShape, StaticPlaneShape};
+use super::bullet::runtime::constraint::{Constraint, MmdGeneric6DofSpringConstraint};
 use super::bullet::runtime::motion_type::MotionType;
 use super::bullet::runtime::multi_physics_world::MultiPhysicsWorld;
 use super::bullet::runtime::rigidbody_construction_info::RigidBodyConstructionInfo;
@@ -21,12 +22,12 @@ pub(crate) struct MmdPhysicsRuntime {
     fixed_time_step: f32,
 }
 
-struct CreateRbInfoResult<'a> {
+struct CreateRbInfoResult {
     bone_index: Option<i32>,
     motion_type: MotionType,
     physics_mode: RigidBodyPhysicsMode,
     body_offset_matrix: Mat4,
-    construction_info: RigidBodyConstructionInfo<'a>,
+    construction_info: RigidBodyConstructionInfo,
 }
 
 impl MmdPhysicsRuntime {
@@ -78,7 +79,7 @@ impl MmdPhysicsRuntime {
                     continue;
                 };
 
-                let physics_mode = context.bundle_proxy().physics_mode(index);
+                let physics_mode = context.bundle_proxy().get_physics_mode(index);
                 if physics_mode == RigidBodyPhysicsMode::FollowBone { // only kinematic object needs to update
                     let bone_world_matrices = model.bone_arena().world_matrices();
                     let bone_world_matrix = bone_world_matrices[linked_bone_index];
@@ -119,7 +120,7 @@ impl MmdPhysicsRuntime {
                 // SAFETY: context validity check is done at first line of outer loop
                 let context = unsafe { context.unwrap_unchecked() };
 
-                let physics_mode = context.bundle_proxy().physics_mode(index);
+                let physics_mode = context.bundle_proxy().get_physics_mode(index);
 
                 if physics_mode == RigidBodyPhysicsMode::FollowBone || physics_mode == RigidBodyPhysicsMode::Static {
                     continue; // kinematic and static objects are not updated
@@ -176,16 +177,17 @@ impl MmdPhysicsRuntime {
         Some((shape, is_zero_volume))
     }
 
-    fn create_rb_info<'a>(
+    fn create_rb_info(
         bones: &[MmdRuntimeBone],
         world_matrix: Mat4,
+        world_rotation: Quat,
         diagnostic: &mut DiagnosticWriter,
         scaling_factor: f32,
         rigidbody_index: u32,
         metadata: &RigidBodyMetadata,
-        shape: &'a mut CollisionShape,
+        shape: &mut CollisionShape,
         is_zero_volume: bool,
-    ) -> Option<CreateRbInfoResult<'a>> {
+    ) -> Option<CreateRbInfoResult> {
         let bone_index = metadata.bone_index;
         let bone_index = if bone_index < 0 || bones.len() <= bone_index as usize {
             diagnostic.warning(format!("Bone index out of range create unmapped rigid body: {}", rigidbody_index));
@@ -232,12 +234,13 @@ impl MmdPhysicsRuntime {
             Mat4::IDENTITY
         };
 
-        // world space transform
-        let initial_transform_matrix = world_matrix * pose_matrix;
+        // world space position and rotation
+        let position = world_matrix.transform_point3a(position);
+        let rotation = world_rotation * rotation;
 
-        let construction_info: RigidBodyConstructionInfo<'a> = RigidBodyConstructionInfo {
-            shape: shape,
-            initial_transform: initial_transform_matrix,
+        let construction_info = RigidBodyConstructionInfo {
+            shape: unsafe { std::mem::transmute::<&mut CollisionShape, &'static mut CollisionShape>(shape) },
+            initial_transform: Mat4::from_rotation_translation(rotation, position.into()),
             data_mask: 0,
             motion_type: motion_type as u8,
             mass: metadata.mass * scaling_factor,
@@ -289,6 +292,8 @@ impl MmdPhysicsRuntime {
             }
         };
 
+        let world_id = reader.physics_world_id();
+
         let mut rigidbody_map = vec![-1; reader.count() as usize];
         let mut rigidbody_initial_transforms = Vec::with_capacity(reader.count() as usize);
 
@@ -316,6 +321,7 @@ impl MmdPhysicsRuntime {
             } = match Self::create_rb_info(
                 bones,
                 world_matrix,
+                world_rotation,
                 &mut diagnostic,
                 scaling_factor,
                 rigidbody_index,
@@ -342,28 +348,24 @@ impl MmdPhysicsRuntime {
                 kinematic_object_count += 1;
             }
         });
-        let rigidbody_bundle_proxy = RigidBodyBundleProxy::new(&mut rb_info_list, rb_data_list.into_boxed_slice());
+        let mut rigidbody_bundle_proxy = RigidBodyBundleProxy::new(&mut rb_info_list, rb_data_list.into_boxed_slice());
 
         self.multi_physics_world.add_rigidbody_bundle(
-            reader.physics_world_id(),
+            world_id,
             rigidbody_bundle_proxy.inner_mut().create_handle()
         );
 
         let kinematic_shared_physics_world_ids = reader.take_kinematic_shared_physics_world_ids();
-        for world_id in kinematic_shared_physics_world_ids {
+        for world_id in kinematic_shared_physics_world_ids.iter() {
             self.multi_physics_world.add_rigidbody_bundle_shadow(
-                world_id,
+                *world_id,
                 rigidbody_bundle_proxy.inner_mut().create_handle()
             );
         }
 
         let mut reader = reader.next().unwrap();
-        let world = self.worlds.get_or_create_world(world_id);
-        let physics_object = world.get_physics_object_mut(physics_object_handle);
-
-        let mut constraint_info = ConstraintConstructionInfo::new();
-
-        physics_object.reserve_constraints(reader.count() as usize);
+        
+        let mut constraints = Vec::with_capacity(reader.count() as usize);
         reader.enumerate(|constraint_index, metadata| {
             let rigidbody_index_a = metadata.rigidbody_index_a;
             let rigidbody_index_b = metadata.rigidbody_index_b;
@@ -391,16 +393,6 @@ impl MmdPhysicsRuntime {
                 }
                 rigidbody_index_b
             };
-
-            let constraint_type = if metadata.kind == JointKind::Spring6Dof as u8 {
-                ConstraintType::Generic6DofSpring
-            } else {
-                diagnostic.warning(format!("Unsupported joint kind {} for joint {}", metadata.kind, constraint_index));
-                return;
-            };
-
-            constraint_info.set_type(constraint_type);
-            constraint_info.set_bodies(rigidbody_index_a as usize, rigidbody_index_b as usize);
 
             let joint_transform = Mat4::from_rotation_translation(
                 Quat::from_euler(
@@ -437,37 +429,85 @@ impl MmdPhysicsRuntime {
             let joint_final_transform_a = rigidbody_a_inverse * joint_transform;
             let joint_final_transform_b = rigidbody_b_inverse * joint_transform;
 
-            constraint_info.set_frames(joint_final_transform_a, joint_final_transform_b);
-            constraint_info.set_use_linear_reference_frame_a(true);
-            constraint_info.set_disable_collisions_between_linked_bodies(false);
-            constraint_info.set_linear_limits(metadata.position_min.into(), metadata.position_max.into());
-            constraint_info.set_angular_limits(metadata.rotation_min.into(), metadata.rotation_max.into());
-            constraint_info.set_stiffness(metadata.spring_position.into(), metadata.spring_rotation.into());
+            let constraint = if metadata.kind == JointKind::Spring6Dof as u8 {
+                let mut constraint = MmdGeneric6DofSpringConstraint::from_bundle(
+                    rigidbody_bundle_proxy.inner_mut().create_handle(),
+                    rigidbody_index_a as u32,
+                    rigidbody_index_b as u32,
+                    &joint_final_transform_a,
+                    &joint_final_transform_b,
+                    true
+                );
+                constraint.set_linear_lower_limit(metadata.position_min.into());
+                constraint.set_linear_upper_limit(metadata.position_max.into());
+                constraint.set_angular_lower_limit(metadata.rotation_min.into());
+                constraint.set_angular_upper_limit(metadata.rotation_max.into());
 
-            if let Err(message) = physics_object.create_constraint(&constraint_info) {
-                diagnostic.warning(message);
-            }
+                if metadata.spring_position.x != 0.0 {
+                    constraint.set_stiffness(0, metadata.spring_position.x);
+                    constraint.enable_spring(0, true);
+                } else {
+                    constraint.enable_spring(0, false);
+                }
 
-            let body_a = &physics_object.bodies()[rigidbody_index_a as usize];
-            let body_b = &physics_object.bodies()[rigidbody_index_b as usize];
+                if metadata.spring_position.y != 0.0 {
+                    constraint.set_stiffness(1, metadata.spring_position.y);
+                    constraint.enable_spring(1, true);
+                } else {
+                    constraint.enable_spring(1, false);
+                }
 
-            if body_a.get_physics_mode() != RigidBodyPhysicsMode::FollowBone &&
-                body_b.get_physics_mode() == RigidBodyPhysicsMode::PhysicsWithBone { // case: A is parent of B
-                if let Some(body_b_bone_index) = body_b.get_linked_bone_index() {
-                    if let (Some(parent_bone), Some(body_a_bone_index)) = (bones[body_b_bone_index as usize].parent_bone(), body_a.get_linked_bone_index()) {
+                if metadata.spring_position.z != 0.0 {
+                    constraint.set_stiffness(2, metadata.spring_position.z);
+                    constraint.enable_spring(2, true);
+                } else {
+                    constraint.enable_spring(2, false);
+                }
+
+                constraint.set_stiffness(3, metadata.spring_rotation.x);
+                constraint.enable_spring(3, true);
+                constraint.set_stiffness(4, metadata.spring_rotation.y);
+                constraint.enable_spring(4, true);
+                constraint.set_stiffness(5, metadata.spring_rotation.z);
+                constraint.enable_spring(5, true);
+
+                Constraint::MmdGeneric6DofSpring(constraint)
+            } else {
+                diagnostic.warning(format!("Unsupported joint kind {} for joint {}", metadata.kind, constraint_index));
+                return;
+            };
+
+            constraints.push(constraint);
+            self.multi_physics_world.add_constraint(
+                world_id,
+                constraints.last_mut().unwrap().create_handle(),
+                false
+            );
+
+            let body_a_physics_mode = rigidbody_bundle_proxy.get_physics_mode(rigidbody_index_a as usize);
+            let body_b_physics_mode = rigidbody_bundle_proxy.get_physics_mode(rigidbody_index_b as usize);
+
+            if body_a_physics_mode != RigidBodyPhysicsMode::FollowBone &&
+                body_b_physics_mode == RigidBodyPhysicsMode::PhysicsWithBone { // case: A is parent of B
+                if let Some(body_b_bone_index) = rigidbody_bundle_proxy.linked_bone_index(rigidbody_index_b as usize) {
+                    if let (Some(parent_bone), Some(body_a_bone_index)) = (
+                        bones[body_b_bone_index as usize].parent_bone(),
+                        rigidbody_bundle_proxy.linked_bone_index(rigidbody_index_a as usize)
+                    ) {
                         if parent_bone == body_a_bone_index {
-                            let body_b = &mut physics_object.bodies_mut()[rigidbody_index_b as usize];
-                            body_b.set_physics_mode(RigidBodyPhysicsMode::Physics);
+                            rigidbody_bundle_proxy.set_physics_mode(rigidbody_index_b as usize, RigidBodyPhysicsMode::Physics);
                         }
                     }
                 }
-            } else if body_b.get_physics_mode() != RigidBodyPhysicsMode::FollowBone &&
-                body_a.get_physics_mode() == RigidBodyPhysicsMode::PhysicsWithBone { // case: B is parent of A
-                if let Some(body_a_bone_index) = body_a.get_linked_bone_index() {
-                    if let (Some(parent_bone), Some(body_b_bone_index)) = (bones[body_a_bone_index as usize].parent_bone(), body_b.get_linked_bone_index()) {
+            } else if body_b_physics_mode != RigidBodyPhysicsMode::FollowBone &&
+                body_a_physics_mode == RigidBodyPhysicsMode::PhysicsWithBone { // case: B is parent of A
+                if let Some(body_a_bone_index) = rigidbody_bundle_proxy.linked_bone_index(rigidbody_index_a as usize) {
+                    if let (Some(parent_bone), Some(body_b_bone_index)) = (
+                        bones[body_a_bone_index as usize].parent_bone(),
+                        rigidbody_bundle_proxy.linked_bone_index(rigidbody_index_b as usize)
+                    ) {
                         if parent_bone == body_b_bone_index {
-                            let body_a = &mut physics_object.bodies_mut()[rigidbody_index_a as usize];
-                            body_a.set_physics_mode(RigidBodyPhysicsMode::Physics);
+                            rigidbody_bundle_proxy.set_physics_mode(rigidbody_index_a as usize, RigidBodyPhysicsMode::Physics);
                         }
                     }
                 }
@@ -475,8 +515,11 @@ impl MmdPhysicsRuntime {
         });
 
         PhysicsModelContext::new(
-            physics_handle,
-            kinematic_shared_physics_handles,
+            shapes.into_boxed_slice(),
+            rigidbody_bundle_proxy,
+            constraints.into_boxed_slice(),
+            world_id,
+            kinematic_shared_physics_world_ids,
             world_matrix,
         )
     }

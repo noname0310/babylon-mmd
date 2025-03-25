@@ -45,8 +45,12 @@ impl RigidBodyBundleProxy {
         self.inner.get_buffered_motion_states_mut().set_transform(index, &transform);
     }
 
-    pub(super) fn physics_mode(&self, index: usize) -> RigidBodyPhysicsMode {
+    pub(super) fn get_physics_mode(&self, index: usize) -> RigidBodyPhysicsMode {
         self.data_list[index].physics_mode
+    }
+
+    pub(super) fn set_physics_mode(&mut self, index: usize, mode: RigidBodyPhysicsMode) {
+        self.data_list[index].physics_mode = mode;
     }
 
     pub(super) fn len(&self) -> usize {

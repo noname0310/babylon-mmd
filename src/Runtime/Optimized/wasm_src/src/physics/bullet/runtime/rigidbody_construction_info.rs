@@ -3,9 +3,9 @@ use glam::{Mat4, Vec3};
 use super::collision_shape::CollisionShape;
 
 #[repr(C)]
-pub(crate) struct RigidBodyConstructionInfo<'a> {
+pub(crate) struct RigidBodyConstructionInfo {
     // for shape
-    pub(crate) shape: &'a mut CollisionShape,
+    pub(crate) shape: &'static mut CollisionShape,
     
     // for motion state
     pub(crate) initial_transform: Mat4,
