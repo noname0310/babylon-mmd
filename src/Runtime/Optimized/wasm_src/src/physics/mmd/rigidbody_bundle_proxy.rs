@@ -24,10 +24,6 @@ impl RigidBodyBundleProxy {
         Self { inner, data_list }
     }
 
-    pub(super) fn inner(&self) -> &RigidBodyBundle {
-        &self.inner
-    }
-
     pub(super) fn inner_mut(&mut self) -> &mut RigidBodyBundle {
         &mut self.inner
     }

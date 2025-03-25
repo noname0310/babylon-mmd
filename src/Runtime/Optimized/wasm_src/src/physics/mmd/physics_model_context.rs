@@ -12,7 +12,8 @@ unsafe impl Send for RigidBodyBundle {}
 unsafe impl Send for Constraint {}
 
 pub(crate) struct PhysicsModelContext {
-    shapes: Box<[CollisionShape]>,
+    #[allow(dead_code)]
+    shapes: Box<[CollisionShape]>, // shapes must be alive while bundle is alive
     bundle_proxy: RigidBodyBundleProxy,
     constraints: Box<[Constraint]>,
     world_id: PhysicsWorldId,
@@ -61,24 +62,12 @@ impl PhysicsModelContext {
         }
     }
 
-    pub(super) fn shapes(&self) -> &[CollisionShape] {
-        &self.shapes
-    }
-
-    pub(super) fn shapes_mut(&mut self) -> &mut [CollisionShape] {
-        &mut self.shapes
-    }
-
     pub(super) fn bundle_proxy(&self) -> &RigidBodyBundleProxy {
         &self.bundle_proxy
     }
 
     pub(super) fn bundle_proxy_mut(&mut self) -> &mut RigidBodyBundleProxy {
         &mut self.bundle_proxy
-    }
-
-    pub(super) fn constraints(&self) -> &[Constraint] {
-        &self.constraints
     }
     
     pub(super) fn constraints_mut(&mut self) -> &mut [Constraint] {
