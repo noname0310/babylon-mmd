@@ -420,9 +420,9 @@ impl RigidBodyBundleShadow {
         &self.handle
     }
 
-    pub(super) fn handle_mut(&mut self) -> &mut RigidBodyBundleHandle {
-        &mut self.handle
-    }
+    // pub(super) fn handle_mut(&mut self) -> &mut RigidBodyBundleHandle {
+    //     &mut self.handle
+    // }
 }
 
 #[wasm_bindgen(js_name = "createRigidBodyBundle")]

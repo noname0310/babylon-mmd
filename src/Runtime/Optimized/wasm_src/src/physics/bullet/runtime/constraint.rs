@@ -384,17 +384,17 @@ impl ConstraintHandle {
         }
     }
 
-    pub(crate) fn get(&self) -> &Constraint {
-        self.constraint
-    }
+    // pub(crate) fn get(&self) -> &Constraint {
+    //     self.constraint
+    // }
 
     pub(crate) fn get_mut(&mut self) -> &mut Constraint {
         self.constraint
     }
 
-    pub(crate) fn clone(&mut self) -> Self {
-        Self::new(self.constraint)
-    }
+    // pub(crate) fn clone(&mut self) -> Self {
+    //     Self::new(self.constraint)
+    // }
 }
 
 #[cfg(debug_assertions)]

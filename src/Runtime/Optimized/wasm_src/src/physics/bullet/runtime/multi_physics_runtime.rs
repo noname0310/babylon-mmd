@@ -4,6 +4,7 @@ use std::sync::atomic;
 use super::multi_physics_world::{MultiPhysicsWorld, MultiPhysicsWorldHandle};
 
 pub(crate) struct MultiPhysicsRuntime {
+    #[allow(dead_code)] // for suppressing warning on non-multithreaded builds
     multi_physics_world_handle: MultiPhysicsWorldHandle,
     lock: atomic::AtomicU8,
     #[cfg(debug_assertions)]
@@ -43,6 +44,7 @@ impl MultiPhysicsRuntime {
         });
     }
 
+    #[allow(dead_code)] // for suppressing warning on non-multithreaded builds
     pub(crate) fn create_handle(&mut self) -> MultiPhysicsRuntimeHandle {
         MultiPhysicsRuntimeHandle::new(self)
     }
@@ -77,17 +79,18 @@ impl MultiPhysicsRuntimeHandle {
         }
     }
     
-    pub(crate) fn get(&self) -> &MultiPhysicsRuntime {
-        self.runtime
-    }
+    // pub(crate) fn get(&self) -> &MultiPhysicsRuntime {
+    //     self.runtime
+    // }
 
+    #[allow(dead_code)] // for suppressing warning on non-multithreaded builds
     pub(crate) fn get_mut(&mut self) -> &mut MultiPhysicsRuntime {
         self.runtime
     }
 
-    pub(crate) fn clone(&mut self) -> Self {
-        Self::new(self.runtime)
-    }
+    // pub(crate) fn clone(&mut self) -> Self {
+    //     Self::new(self.runtime)
+    // }
 }
 
 #[cfg(debug_assertions)]

@@ -341,9 +341,9 @@ impl RigidBodyShadow {
         }
     }
 
-    pub(super) fn get_inner(&self) -> &bind::rigidbody::RigidBodyShadow {
-        &self.inner
-    }
+    // pub(super) fn get_inner(&self) -> &bind::rigidbody::RigidBodyShadow {
+    //     &self.inner
+    // }
 
     pub(super) fn get_inner_mut(&mut self) -> &mut bind::rigidbody::RigidBodyShadow {
         &mut self.inner
@@ -360,9 +360,9 @@ impl RigidBodyShadow {
         &self.handle
     }
 
-    pub(super) fn handle_mut(&mut self) -> &mut RigidBodyHandle {
-        &mut self.handle
-    }
+    // pub(super) fn handle_mut(&mut self) -> &mut RigidBodyHandle {
+    //     &mut self.handle
+    // }
 }
 
 #[wasm_bindgen(js_name = "createRigidBody")]

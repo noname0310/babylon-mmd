@@ -413,9 +413,9 @@ impl PhysicsWorldHandle {
         }
     }
 
-    pub(crate) fn get(&self) -> &PhysicsWorld {
-        self.world
-    }
+    // pub(crate) fn get(&self) -> &PhysicsWorld {
+    //     self.world
+    // }
 
     pub(crate) fn get_mut(&mut self) -> &mut PhysicsWorld {
         self.world

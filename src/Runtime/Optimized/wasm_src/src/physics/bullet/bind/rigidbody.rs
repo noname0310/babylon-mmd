@@ -80,9 +80,9 @@ extern "C" {
     fn bw_rigidbody_shadow_set_motion_state(shadow: *mut std::ffi::c_void, motion_state: *mut std::ffi::c_void);
 }
 
-pub(crate) enum ConstructionInfoDataMask {
-    LocalInertia = 1 << 0,
-}
+// pub(crate) enum ConstructionInfoDataMask {
+//     LocalInertia = 1 << 0,
+// }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub(crate) enum MotionType {
@@ -376,9 +376,9 @@ impl RigidBodyShadow {
         }
     }
 
-    pub(super) fn ptr(&self) -> *const std::ffi::c_void {
-        self.ptr
-    }
+    // pub(super) fn ptr(&self) -> *const std::ffi::c_void {
+    //     self.ptr
+    // }
 
     pub(super) fn ptr_mut(&mut self) -> *mut std::ffi::c_void {
         self.ptr

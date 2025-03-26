@@ -163,13 +163,13 @@ impl CollisionShapeHandle {
         self.shape
     }
 
-    pub(crate) fn get_mut(&mut self) -> &mut CollisionShape {
-        self.shape
-    }
+    // pub(crate) fn get_mut(&mut self) -> &mut CollisionShape {
+    //     self.shape
+    // }
 
-    pub(crate) fn clone(&mut self) -> Self {
-        Self::new(self.shape)
-    }
+    // pub(crate) fn clone(&mut self) -> Self {
+    //     Self::new(self.shape)
+    // }
 }
 
 #[cfg(debug_assertions)]

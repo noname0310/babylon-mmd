@@ -350,17 +350,18 @@ impl MultiPhysicsWorldHandle {
         }
     }
 
-    pub(crate) fn get(&self) -> &MultiPhysicsWorld {
-        self.world
-    }
+    // pub(crate) fn get(&self) -> &MultiPhysicsWorld {
+    //     self.world
+    // }
 
+    #[allow(dead_code)] // for suppressing warning on non-multithreaded builds
     pub(crate) fn get_mut(&mut self) -> &mut MultiPhysicsWorld {
         self.world
     }
 
-    pub(crate) fn clone(&mut self) -> Self {
-        Self::new(self.world)
-    }
+    // pub(crate) fn clone(&mut self) -> Self {
+    //     Self::new(self.world)
+    // }
 }
 
 #[cfg(debug_assertions)]

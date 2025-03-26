@@ -40,9 +40,9 @@ impl MmdPhysicsRuntime {
         }
     }
     
-    pub(crate) fn world(&self) -> &MultiPhysicsWorld {
-        &self.multi_physics_world
-    }
+    // pub(crate) fn world(&self) -> &MultiPhysicsWorld {
+    //     &self.multi_physics_world
+    // }
 
     pub(crate) fn max_sub_steps_mut(&mut self) -> &mut i32 {
         &mut self.max_sub_steps

@@ -60,13 +60,13 @@ impl MotionState {
         )
     }
 
-    pub(crate) fn set_transform(&mut self, transform: &Mat4) {
-        let raw = unsafe { &mut *(self.ptr as *mut MotionStateRawWrite) };
-        raw.matrix_rowx = Vec3::new(transform.x_axis.x, transform.y_axis.x, transform.z_axis.x);
-        raw.matrix_rowy = Vec3::new(transform.x_axis.y, transform.y_axis.y, transform.z_axis.y);
-        raw.matrix_rowz = Vec3::new(transform.x_axis.z, transform.y_axis.z, transform.z_axis.z);
-        raw.translation = Vec3::new(transform.w_axis.x, transform.w_axis.y, transform.w_axis.z);
-    }
+    // pub(crate) fn set_transform(&mut self, transform: &Mat4) {
+    //     let raw = unsafe { &mut *(self.ptr as *mut MotionStateRawWrite) };
+    //     raw.matrix_rowx = Vec3::new(transform.x_axis.x, transform.y_axis.x, transform.z_axis.x);
+    //     raw.matrix_rowy = Vec3::new(transform.x_axis.y, transform.y_axis.y, transform.z_axis.y);
+    //     raw.matrix_rowz = Vec3::new(transform.x_axis.z, transform.y_axis.z, transform.z_axis.z);
+    //     raw.translation = Vec3::new(transform.w_axis.x, transform.w_axis.y, transform.w_axis.z);
+    // }
 
     pub(crate) fn copy_from(&self, other: &Self) {
         let raw = unsafe { &*(other.ptr as *const MotionStateRawRead) };
