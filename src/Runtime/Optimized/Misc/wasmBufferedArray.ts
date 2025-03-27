@@ -1,5 +1,5 @@
+import type { MmdWasmInstance } from "../mmdWasmInstance";
 import type { IWasmTypedArray } from "./IWasmTypedArray";
-import type { MmdWasmInstance } from "./mmdWasmInstance";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 
 /**

@@ -1,7 +1,7 @@
-import type { IWasmTypedArray } from "./IWasmTypedArray";
-import { WasmSharedTypedArray } from "./wasmSharedTypedArray";
-import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
-import { WasmTypedArray } from "./wasmTypedArray";
+import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
+import { WasmSharedTypedArray } from "./Misc/wasmSharedTypedArray";
+import type { TypedArray, TypedArrayConstructor } from "./Misc/wasmTypedArray";
+import { WasmTypedArray } from "./Misc/wasmTypedArray";
 
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 export type MmdWasmType =

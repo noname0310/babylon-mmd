@@ -1,7 +1,7 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IWasmTypedArray } from "../IWasmTypedArray";
+import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
 import type { MmdWasmInstance } from "../mmdWasmInstance";
 import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmRuntime, PhysicsInitializeSet } from "../mmdWasmRuntime";
