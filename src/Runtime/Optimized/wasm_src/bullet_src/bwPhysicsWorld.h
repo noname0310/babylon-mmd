@@ -20,8 +20,8 @@ class bwOverlapFilterCallback final : public btOverlapFilterCallback
         const uint16_t group1 = proxy1->m_collisionFilterGroup;
         const uint16_t mask1 = proxy1->m_collisionFilterMask;
 
-        bool collides = (group0 & mask0) != 0;
-        collides = collides && (group1 & mask1);
+        bool collides = (group0 & mask1) != 0;
+        collides = collides && (group1 & mask0);
         return collides;
     }
 };
