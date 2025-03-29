@@ -8,7 +8,7 @@ use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::{JointKind, RigidBodyMetadata, RigidBodyMetadataReader, RigidBodyPhysicsMode, RigidBodyShapeType};
 
 use super::bullet::runtime::collision_shape::{BoxShape, CapsuleShape, CollisionShape, SphereShape, StaticPlaneShape};
-use super::bullet::runtime::constraint::{Constraint, MmdGeneric6DofSpringConstraint};
+use super::bullet::runtime::constraint::{Constraint, Generic6DofSpringConstraint};
 use super::bullet::runtime::motion_type::MotionType;
 use super::bullet::runtime::multi_physics_world::MultiPhysicsWorld;
 use super::bullet::runtime::rigidbody_construction_info::RigidBodyConstructionInfo;
@@ -430,7 +430,7 @@ impl MmdPhysicsRuntime {
             let joint_final_transform_b = rigidbody_b_inverse * joint_transform;
 
             let constraint = if metadata.kind == JointKind::Spring6Dof as u8 {
-                let mut constraint = MmdGeneric6DofSpringConstraint::from_bundle(
+                let mut constraint = Generic6DofSpringConstraint::from_bundle(
                     rigidbody_bundle_proxy.inner_mut().create_handle(),
                     rigidbody_index_a as u32,
                     rigidbody_index_b as u32,
@@ -471,7 +471,7 @@ impl MmdPhysicsRuntime {
                 constraint.set_stiffness(5, metadata.spring_rotation.z);
                 constraint.enable_spring(5, true);
 
-                Constraint::MmdGeneric6DofSpring(constraint)
+                Constraint::Generic6DofSpring(constraint)
             } else {
                 diagnostic.warning(format!("Unsupported joint kind {} for joint {}", metadata.kind, constraint_index));
                 return;
