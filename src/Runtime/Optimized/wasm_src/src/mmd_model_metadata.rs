@@ -308,7 +308,7 @@ impl<'a> MorphMetadataReader<'a> {
     //     self.count
     // }
 
-    pub(crate) fn read(mut self) -> (Vec<MorphMetadata>, RigidbodyMetadataReader<'a>) {
+    pub(crate) fn read(mut self) -> (Vec<MorphMetadata>, RigidBodyMetadataReader<'a>) {
         let mut morphs = Vec::with_capacity(self.count as usize);
 
         for _ in 0..self.count {
@@ -338,7 +338,7 @@ impl<'a> MorphMetadataReader<'a> {
             }
         }
 
-        (morphs, RigidbodyMetadataReader::new(self.buffer))
+        (morphs, RigidBodyMetadataReader::new(self.buffer))
     }
 }
 
@@ -353,25 +353,25 @@ pub(crate) enum PhysicsInfoKind {
 
 #[cfg(not(feature = "physics"))]
 
-pub(crate) enum RigidbodyPhysicsMode {
+pub(crate) enum RigidBodyPhysicsMode {
     FollowBone = 0,
 }
 
 #[cfg(not(feature = "physics"))]
-pub(crate) struct RigidbodyMetadata {
+pub(crate) struct RigidBodyMetadata {
     pub(crate) bone_index: i32,
     pub(crate) physics_mode: u8,
 }
 
 #[cfg(not(feature = "physics"))]
-pub(crate) struct RigidbodyMetadataReader<'a> {
+pub(crate) struct RigidBodyMetadataReader<'a> {
     buffer: MetadataBuffer<'a>,
     physics_info_kind: PhysicsInfoKind,
     count: u32,
 }
 
 #[cfg(not(feature = "physics"))]
-impl<'a> RigidbodyMetadataReader<'a> {
+impl<'a> RigidBodyMetadataReader<'a> {
     fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let physics_info_kind = buffer.read::<u8>();
         buffer.offset += 3; // padding
@@ -413,7 +413,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
     //     self.count
     // }
 
-    pub(crate) fn enumerate(&mut self, mut f: impl FnMut(u32, RigidbodyMetadata)) {
+    pub(crate) fn enumerate(&mut self, mut f: impl FnMut(u32, RigidBodyMetadata)) {
         match self.physics_info_kind {
             PhysicsInfoKind::NoPhysics => {},
             PhysicsInfoKind::StripedRigidbodies => {
@@ -421,7 +421,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                     let bone_index = self.buffer.read::<i32>();
                     let physics_mode = self.buffer.read::<u8>();
                     self.buffer.offset += 3; // padding
-                    f(i, RigidbodyMetadata {
+                    f(i, RigidBodyMetadata {
                         bone_index,
                         physics_mode,
                     });
@@ -444,7 +444,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                         4; // friction
                     let physics_mode = self.buffer.read::<u8>();
                     self.buffer.offset += 3; // padding
-                    f(i, RigidbodyMetadata {
+                    f(i, RigidBodyMetadata {
                         bone_index,
                         physics_mode,
                     });
@@ -457,7 +457,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
 // for physics build
 
 #[cfg(feature = "physics")]
-pub(crate) struct RigidbodyMetadata {
+pub(crate) struct RigidBodyMetadata {
     pub(crate) bone_index: i32,
     pub(crate) collision_group: u8,
     pub(crate) collision_mask: u16,
@@ -474,7 +474,7 @@ pub(crate) struct RigidbodyMetadata {
 }
 
 #[cfg(feature = "physics")]
-pub(crate) enum RigidbodyShapeType {
+pub(crate) enum RigidBodyShapeType {
     Sphere = 0,
     Box = 1,
     Capsule = 2,
@@ -483,7 +483,7 @@ pub(crate) enum RigidbodyShapeType {
 
 #[cfg(feature = "physics")]
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RigidbodyPhysicsMode {
+pub(crate) enum RigidBodyPhysicsMode {
     FollowBone = 0,
     Physics = 1,
     PhysicsWithBone = 2,
@@ -491,7 +491,7 @@ pub(crate) enum RigidbodyPhysicsMode {
 }
 
 #[cfg(feature = "physics")]
-pub(crate) struct RigidbodyMetadataReader<'a> {
+pub(crate) struct RigidBodyMetadataReader<'a> {
     buffer: MetadataBuffer<'a>,
     buffer_start_offset: usize,
     physics_info_kind: PhysicsInfoKind,
@@ -502,7 +502,7 @@ pub(crate) struct RigidbodyMetadataReader<'a> {
 }
 
 #[cfg(feature = "physics")]
-impl<'a> RigidbodyMetadataReader<'a> {
+impl<'a> RigidBodyMetadataReader<'a> {
     fn new(mut buffer: MetadataBuffer<'a>) -> Self {
         let physics_info_kind = buffer.read::<u8>();
         buffer.offset += 3; // padding
@@ -569,7 +569,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
         self.count
     }
 
-    pub(crate) fn enumerate(&mut self, mut f: impl FnMut(u32, RigidbodyMetadata)) {
+    pub(crate) fn enumerate(&mut self, mut f: impl FnMut(u32, RigidBodyMetadata)) {
         self.buffer.offset = self.buffer_start_offset;
 
         match self.physics_info_kind {
@@ -579,7 +579,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                     let bone_index = self.buffer.read::<i32>();
                     let physics_mode = self.buffer.read::<u8>();
                     self.buffer.offset += 3; // padding
-                    f(i, RigidbodyMetadata {
+                    f(i, RigidBodyMetadata {
                         bone_index,
                         collision_group: 0,
                         collision_mask: 0,
@@ -617,7 +617,7 @@ impl<'a> RigidbodyMetadataReader<'a> {
                     let friction = self.buffer.read::<f32>();
                     let physics_mode = self.buffer.read::<u8>();
                     self.buffer.offset += 3; // padding
-                    f(i, RigidbodyMetadata {
+                    f(i, RigidBodyMetadata {
                         bone_index,
                         collision_group,
                         collision_mask,

@@ -9,7 +9,7 @@ use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::MetadataBuffer;
 
 #[cfg(feature = "physics")]
-use crate::physics::physics_runtime::PhysicsRuntime;
+use crate::physics::mmd::MmdPhysicsRuntime;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -17,7 +17,7 @@ use rayon::prelude::*;
 #[wasm_bindgen]
 pub struct MmdRuntime {
     #[cfg(feature = "physics")]
-    physics_runtime: PhysicsRuntime,
+    physics_runtime: MmdPhysicsRuntime,
     
     #[allow(clippy::vec_box)]
     mmd_models: Vec<Box<MmdModel>>,
@@ -30,29 +30,11 @@ impl MmdRuntime {
     pub(crate) fn new() -> Self {
         MmdRuntime {
             #[cfg(feature = "physics")]
-            physics_runtime: PhysicsRuntime::new(),
+            physics_runtime: MmdPhysicsRuntime::new(false),
 
             mmd_models: Vec::new(),
             lock: atomic::AtomicU8::new(0),
             diagnostic: Diagnostic::new(),
-        }
-    }
-
-    #[wasm_bindgen(js_name = "allocateBuffer")]
-    pub fn allocate_buffer(&self, size: usize) -> *mut u8 {
-        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-        let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
-        if ptr.is_null() {
-            return ptr;
-        }
-        ptr
-    }
-
-    #[wasm_bindgen(js_name = "deallocateBuffer")]
-    pub fn deallocate_buffer(&self, ptr: *mut u8, size: usize) {
-        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-        unsafe {
-            std::alloc::dealloc(ptr, layout);
         }
     }
 
@@ -92,9 +74,9 @@ impl MmdRuntime {
         }
         #[cfg(feature = "physics")]
         {
-            let model = self.mmd_models.remove(index);
-            let context = model.physics_model_context();
-            if let Some(context) = context {
+            let mut model = self.mmd_models.remove(index);
+            let context = model.physics_model_context_mut();
+            if let Some(context) = context.take() {
                 self.physics_runtime.destroy_physics_context(context);
             }
         }
@@ -368,30 +350,6 @@ impl MmdRuntime {
     #[wasm_bindgen(js_name = "setPhysicsGravity")]
     pub fn set_physics_gravity(&mut self, gravity_x: f32, gravity_y: f32, gravity_z: f32) {
         self.physics_runtime.set_gravity(Vec3::new(gravity_x, gravity_y, gravity_z));
-    }
-
-    #[wasm_bindgen(js_name = "getPhysicsGravity")]
-    pub fn get_physics_gravity(&self) -> *const f32 {
-        self.physics_runtime.get_gravity().as_ref().as_ptr()
-    }
-
-    #[wasm_bindgen(js_name = "overridePhysicsGravity")]
-    pub fn override_physics_gravity(&mut self, world_id: u32, gravity_x: f32, gravity_y: f32, gravity_z: f32) {
-        self.physics_runtime.override_world_gravity(world_id, Some(Vec3::new(gravity_x, gravity_y, gravity_z)));
-    }
-
-    #[wasm_bindgen(js_name = "restorePhysicsGravity")]
-    pub fn restore_physics_gravity(&mut self, world_id: u32) {
-        self.physics_runtime.override_world_gravity(world_id, None);
-    }
-
-    #[wasm_bindgen(js_name = "getPhysicsWorldGravity")]
-    pub fn get_physics_world_gravity(&self, world_id: u32) -> *const f32 {
-        let gravity = self.physics_runtime.get_world_gravity(world_id);
-        match gravity {
-            Some(gravity) => gravity.as_ref().as_ptr(),
-            None => std::ptr::null(),
-        }
     }
 
     #[wasm_bindgen(js_name = "setMmdModelWorldMatrix")]

@@ -18,6 +18,7 @@ import type { CreateMmdModelOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import type { IMmdPhysics } from "../Physics/IMmdPhysics";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
+import { WasmSpinlock } from "./Misc/wasmSpinlock";
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
@@ -26,7 +27,6 @@ import type { IPhysicsClock } from "./Physics/IPhysicsClock";
 import type { MmdWasmPhysics } from "./Physics/mmdWasmPhysics";
 import type { MmdWasmPhysicsRuntime } from "./Physics/mmdWasmPhysicsRuntime";
 import { NullPhysicsClock } from "./Physics/nullPhysicsClock";
-import { WasmSpinlock } from "./wasmSpinlock";
 
 /**
  * MMD WASM runtime animation evaluation type
@@ -409,7 +409,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         const metadataSize = metadataEncoder.computeSize(mmdMesh);
 
-        const metadataBufferPtr = wasmRuntime.allocateBuffer(metadataSize);
+        const metadataBufferPtr = this.wasmInstance.allocateBuffer(metadataSize);
 
         const metadataBuffer = this.wasmInstance.createTypedArray(Uint8Array, metadataBufferPtr, metadataSize);
         const wasmMorphIndexMap = metadataEncoder.encode(mmdMesh, skeleton.bones, metadataBuffer.array);
@@ -429,7 +429,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
         this._getPhysicsInitializeSet().add(model);
 
-        wasmRuntime.deallocateBuffer(metadataBufferPtr, metadataSize);
+        this.wasmInstance.deallocateBuffer(metadataBufferPtr, metadataSize);
 
         // desync again
         if (usingWasmBackBuffer) {

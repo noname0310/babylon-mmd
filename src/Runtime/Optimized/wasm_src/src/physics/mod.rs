@@ -1,7 +1,7 @@
 use std::sync::Once;
 
 mod bullet;
-pub(crate) mod physics_runtime;
+pub(crate) mod mmd;
 
 #[link(name = "bullet")]
 extern "C" {

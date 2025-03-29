@@ -8,7 +8,7 @@ import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
-import type { IWasmTypedArray } from "../IWasmTypedArray";
+import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
 import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmMorphController } from "../mmdWasmMorphController";
 import { MmdWasmAnimation } from "./mmdWasmAnimation";

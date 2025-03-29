@@ -1,6 +1,6 @@
 import type { IMmdAnimationTrack, IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
 
-import type { IWasmTypedArray } from "../IWasmTypedArray";
+import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
 import type { MmdWasmInstance } from "../mmdWasmInstance";
 
 /**
