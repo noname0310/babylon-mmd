@@ -305,7 +305,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
                         node.linkedBone.worldMatrix,
                         0
                     );
-                    node.linkedBone.setWorldTranslationFromRef(MmdAmmoPhysicsModel._BoneWorldPosition);
+                    node.linkedBone.setWorldTranslation(MmdAmmoPhysicsModel._BoneWorldPosition);
                 }
                 break;
 

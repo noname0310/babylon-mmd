@@ -1,6 +1,6 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdSkinedModelMetadata, MmdSkinnedMesh } from "@/Runtime/mmdMesh";
 
@@ -83,7 +83,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._mmdRuntime.wasmInternal.setPhysicsFixedTimeStep(value);
     }
 
-    public setGravity(gravity: Vector3): void {
+    public setGravity(gravity: DeepImmutable<Vector3>): void {
         this._mmdRuntime.lock.wait();
         this._mmdRuntime.wasmInternal.setPhysicsGravity(gravity.x, gravity.y, gravity.z);
     }

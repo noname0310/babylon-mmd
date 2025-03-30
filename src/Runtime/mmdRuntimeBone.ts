@@ -458,7 +458,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      * Set the world translation of this bone
      * @param source source vector
      */
-    public setWorldTranslationFromRef(source: Vector3): void {
+    public setWorldTranslation(source: DeepImmutable<Vector3>): void {
         source.toArray(this.worldMatrix, 12);
     }
 
