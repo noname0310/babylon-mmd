@@ -102,6 +102,28 @@ export { MmdWasmInstanceTypeSPD } from "@/Runtime/Optimized/InstanceType/singleP
 export { MmdWasmInstanceTypeSPR } from "@/Runtime/Optimized/InstanceType/singlePhysicsRelease";
 export { MmdWasmInstanceTypeSR } from "@/Runtime/Optimized/InstanceType/singleRelease";
 
+// Runtime/Optimized/Physics/Bind/Impl
+export { IPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/IPhysicsRuntime";
+export { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
+export { NullPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/nullPhysicsRuntime";
+export { PhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/physicsRuntime";
+export { PhysicsRuntimeEvaluationType } from "@/Runtime/Optimized/Physics/Bind/Impl/physicsRuntimeEvaluationType";
+
+// Runtime/Optimized/Physics/Bind/Plugin
+export { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
+
+// Runtime/Optimized/Physics/Bind
+export { BulletWasmInstance } from "@/Runtime/Optimized/Physics/Bind/bulletWasmInstance";
+export { Constraint, Generic6DofConstraint, Generic6DofSpringConstraint } from "@/Runtime/Optimized/Physics/Bind/constraint";}
+export { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
+export { MultiPhysicsWorld } from "@/Runtime/Optimized/Physics/Bind/multiPhysicsWorld";
+export { PhysicsShape, PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape, PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physicsShape";
+export { PhysicsWorld } from "@/Runtime/Optimized/Physics/Bind/physicsWorld";
+export { RigidBody } from "@/Runtime/Optimized/Physics/Bind/rigidBody";
+export { RigidBodyBundle } from "@/Runtime/Optimized/Physics/Bind/rigidBodyBundle";
+export { RigidBodyConstructionInfo } from "@/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfo";
+export { RigidBodyConstructionInfoList } from "@/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfoList";
+
 // Runtime/Optimized/Physics
 export { IMmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/IMmdWasmPhysicsRuntime";
 export { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
