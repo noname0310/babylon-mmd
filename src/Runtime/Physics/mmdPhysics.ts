@@ -249,7 +249,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                         node.linkedBone.worldMatrix,
                         0
                     );
-                    node.linkedBone.setWorldTranslationFromRef(MmdPhysicsModel._BoneWorldPosition);
+                    node.linkedBone.setWorldTranslation(MmdPhysicsModel._BoneWorldPosition);
                 }
                 break;
 

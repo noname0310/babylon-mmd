@@ -6,7 +6,7 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { convertToAdditiveAnimation } from "./convertToAdditiveAnimation";
 import { deepCopyAnimationGroup } from "./deepCopyAnimation";
@@ -30,7 +30,7 @@ export interface RetargetOptions {
      *
      * Typically used when converting from A to T pose
      */
-    rotationOffsets?: { [key: string]: Vector3 };
+    rotationOffsets?: { [key: string]: DeepImmutable<Vector3> };
 }
 
 /**
