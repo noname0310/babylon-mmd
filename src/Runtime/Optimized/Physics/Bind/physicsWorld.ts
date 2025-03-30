@@ -5,6 +5,7 @@ import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
+import { DeepImmutable } from "@babylonjs/core/types";
 
 class PhysicsWorldInner {
     private readonly _runtime: WeakRef<IPhysicsRuntime>;
@@ -132,11 +133,20 @@ function physicsWorldFinalizer(inner: PhysicsWorldInner): void {
 
 const physicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsWorldInner>>();
 
+/**
+ * PhysicsWorld handles the simulation of physics in the Bullet engine
+ * 
+ * It is responsible for managing the simulation step, gravity, and the rigid bodies and constraints in the world
+ */
 export class PhysicsWorld {
     private readonly _runtime: IPhysicsRuntime;
 
     private readonly _inner: PhysicsWorldInner;
 
+    /**
+     * Creates a new physics world
+     * @param runtime The physics runtime that this world belongs to
+     */
     public constructor(runtime: IPhysicsRuntime) {
         this._runtime = runtime;
 
@@ -153,6 +163,9 @@ export class PhysicsWorld {
         registry.register(this, this._inner, this);
     }
 
+    /**
+     * Disposes the physics world
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -191,18 +204,37 @@ export class PhysicsWorld {
         }
     }
 
-    public setGravity(gravity: Vector3): void {
+    /**
+     * Sets the gravity of the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param gravity The gravity vector to set
+     */
+    public setGravity(gravity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         this._runtime.lock.wait();
         this._runtime.wasmInstance.physicsWorldSetGravity(this._inner.ptr, gravity.x, gravity.y, gravity.z);
     }
 
+    /**
+     * Steps the simulation of the physics world
+     * @param timeStep The time step to use for the simulation
+     * @param maxSubSteps The maximum number of substeps to use for the simulation
+     * @param fixedTimeStep The fixed time step to use for the simulation
+     */
     public stepSimulation(timeStep: number, maxSubSteps: number, fixedTimeStep: number): void {
         this._nullCheck();
         this._runtime.lock.wait();
         this._runtime.wasmInstance.physicsWorldStepSimulation(this._inner.ptr, timeStep, maxSubSteps, fixedTimeStep);
     }
 
+    /**
+     * Adds a rigid body to the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to add
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBody(rigidBody: RigidBody): boolean {
         if (rigidBody.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body from different runtime");
@@ -216,6 +248,13 @@ export class PhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to remove
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBody(rigidBody: RigidBody): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyReference(rigidBody)) {
@@ -226,6 +265,13 @@ export class PhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body bundle to the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundle(rigidBodyBundle: RigidBodyBundle): boolean {
         if (rigidBodyBundle.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body bundle from different runtime");
@@ -239,6 +285,13 @@ export class PhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body bundle from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundle(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyBundleReference(rigidBodyBundle)) {
@@ -249,6 +302,14 @@ export class PhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a constraint to the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param constraint The constraint to add
+     * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between linked bodies
+     * @returns True if the constraint was added successfully, false otherwise
+     */
     public addConstraint(constraint: Constraint, disableCollisionsBetweenLinkedBodies: boolean): boolean {
         if (constraint.runtime !== this._runtime) {
             throw new Error("Cannot add constraint from different runtime");
@@ -262,6 +323,13 @@ export class PhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a constraint from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param constraint The constraint to remove
+     * @returns True if the constraint was removed successfully, false otherwise
+     */
     public removeConstraint(constraint: Constraint): boolean {
         this._nullCheck();
         if (this._inner.removeConstraintReference(constraint)) {

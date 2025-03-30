@@ -1,7 +1,7 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import { Scene } from "@babylonjs/core/scene";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
@@ -201,7 +201,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
     }
 
     /**
-     * Disposes the physics runtime and releases any associated resources
+     * Disposes the physics runtime
      */
     public dispose(): void {
         if (this._inner.ptr === 0) {
@@ -439,9 +439,11 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Sets the gravity vector of the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the gravity will be set after waiting for the lock
      * @param gravity The gravity vector
      */
-    public setGravity(gravity: Vector3): void {
+    public setGravity(gravity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         this._gravity.copyFrom(gravity);
         this._physicsWorld.setGravity(gravity);
@@ -654,9 +656,6 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
      * 
      * Rigid body shadow allows the rigid body to be added to multiple worlds
      * 
-     * When RigidBody with dynamic physics mode is added to the world as shadow,
-     * the rigid body will be added to the world as kinematic
-     * 
      * If the runtime evaluation type is Buffered, the rigid body shadow will be added after waiting for the lock
      * @param rigidBody The rigid body to add
      * @param worldId The ID of the world to add the rigid body as shadow
@@ -741,13 +740,11 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
     /**
      * Adds a rigid body bundle shadow to the physics world
      * 
-     * Rigid body bundle firstly needs to be added to the other world
+     * In case of Dynamic physics mode, Rigid body bundle firstly needs to be added to the other world
+     * 
      * and the worldId must be not equal to the worldId of the rigid body bundle
      * 
      * Rigid body bundle shadow allows the rigid body bundle to be added to multiple worlds
-     * 
-     * When RigidBodyBundle with dynamic physics mode is added to the world as shadow,
-     * the rigid body bundle will be added to the world as kinematic
      * 
      * If the runtime evaluation type is Buffered, the rigid body bundle shadow will be added after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to add

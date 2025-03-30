@@ -117,7 +117,13 @@ function rigidBodyFinalizer(inner: RigidBodyInner): void {
 
 const physicsRigidBodyRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyInner>>();
 
+/**
+ * bullet physics rigid body
+ */
 export class RigidBody {
+    /**
+     * @internal
+     */
     public readonly runtime: IPhysicsRuntime;
 
     private readonly _motionStatePtr: IWasmTypedArray<Float32Array>;
@@ -130,11 +136,29 @@ export class RigidBody {
 
     private _worldReference: Nullable<object>;
 
+    /**
+     * @internal
+     */
     public impl: IRigidBodyImpl;
+
+    /**
+     * Whether this rigid body is dynamic or not(kinematic or static)
+     */
     public readonly isDynamic: boolean;
 
+    /**
+     * Create a new rigid body with the given construction info
+     * @param runtime The physics runtime
+     * @param info The construction info for the rigid body
+     */
     public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfo);
 
+    /**
+     * Create a new rigid body with the given construction info list
+     * @param runtime The physics runtime
+     * @param info The construction info list for the rigid body
+     * @param n The index of the construction info in the list
+     */
     public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList, n: number);
 
     public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfo | RigidBodyConstructionInfoList, n?: number) {
@@ -191,6 +215,11 @@ export class RigidBody {
         this.isDynamic = isDynamic;
     }
 
+    /**
+     * Dispose the rigid body
+     * 
+     * rigid body must be removed from the world before disposing
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -289,6 +318,11 @@ export class RigidBody {
         }
     }
 
+    /**
+     * Get the transform matrix of the rigid body
+     * @param result The matrix to store the result
+     * @returns The transform matrix of the rigid body
+     */
     public getTransformMatrixToRef(result: Matrix): Matrix {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -316,6 +350,11 @@ export class RigidBody {
         );
     }
 
+    /**
+     * Get the transform matrix of the rigid body
+     * @param result The array to store the result
+     * @param offset The offset in the array to store the result
+     */
     public getTransformMatrixToArray(result: Float32Array, offset: number = 0): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -345,10 +384,27 @@ export class RigidBody {
         result[offset + 15] = 1;
     }
 
+    /**
+     * Set the transform matrix of the rigid body
+     * 
+     * This method will work only if the rigid body motion type is kinematic
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param matrix The transform matrix to set
+     */
     public setTransformMatrix(matrix: Matrix): void {
         this.setTransformMatrixFromArray(matrix.m, 0);
     }
-
+    
+    /**
+     * Set the transform matrix of the rigid body
+     * 
+     * This method will work only if the rigid body motion type is kinematic
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param array The array to set the transform matrix from
+     * @param offset The offset in the array to set the transform matrix from
+     */
     public setTransformMatrixFromArray(array: DeepImmutable<Tuple<number, 16>>, offset: number = 0): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -357,10 +413,29 @@ export class RigidBody {
         this.impl.setTransformMatrixFromArray(this._motionStatePtr, this._temporalKinematicStatePtr, array, offset);
     }
 
+    /**
+     * Set the dynamic transform matrix of the rigid body
+     * 
+     * This method will work only if the rigid body motion type is dynamic
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param matrix The transform matrix to set
+     * @param fallbackToSetTransformMatrix Whether to fallback to setTransformMatrix if the rigid body is not dynamic
+     */
     public setDynamicTransformMatrix(matrix: Matrix, fallbackToSetTransformMatrix: boolean = false): void {
         this.setDynamicTransformMatrixFromArray(matrix.m, 0, fallbackToSetTransformMatrix);
     }
 
+    /**
+     * Set the dynamic transform matrix of the rigid body
+     * 
+     * This method will work only if the rigid body motion type is dynamic
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param array The array to set the transform matrix from
+     * @param offset The offset in the array to set the transform matrix from
+     * @param fallbackToSetTransformMatrix Whether to fallback to setTransformMatrix if the rigid body is not dynamic
+     */
     public setDynamicTransformMatrixFromArray(array: DeepImmutable<Tuple<number, 16>>, offset: number = 0, fallbackToSetTransformMatrix: boolean = false): void {
         if (this._worldTransformPtr === null) {
             if (fallbackToSetTransformMatrix) {
@@ -377,6 +452,13 @@ export class RigidBody {
         this.impl.setDynamicTransformMatrixFromArray(this._worldTransformPtr, array, offset);
     }
 
+    /**
+     * Set the linear and angular damping of the rigid body
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param linearDamping 
+     * @param angularDamping 
+     */
     public setDamping(linearDamping: number, angularDamping: number): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -385,18 +467,33 @@ export class RigidBody {
         this.impl.setDamping(this.runtime.wasmInstance, this._inner.ptr, linearDamping, angularDamping);
     }
 
+    /**
+     * Get the linear damping of the rigid body
+     * @returns The linear damping of the rigid body
+     */
     public getLinearDamping(): number {
         this._nullCheck();
         // does not need to synchronization because damping is not changed by physics simulation
         return this.impl.getLinearDamping(this.runtime.wasmInstance, this._inner.ptr);
     }
 
+    /**
+     * Get the angular damping of the rigid body
+     * @returns The angular damping of the rigid body
+     */
     public getAngularDamping(): number {
         this._nullCheck();
         // does not need to synchronization because damping is not changed by physics simulation
         return this.impl.getAngularDamping(this.runtime.wasmInstance, this._inner.ptr);
     }
 
+    /**
+     * Set the mass and local inertia of the rigid body
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param mass The mass of the rigid body
+     * @param localInertia The local inertia of the rigid body
+     */
     public setMassProps(mass: number, localInertia: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -405,18 +502,32 @@ export class RigidBody {
         this.impl.setMassProps(this.runtime.wasmInstance, this._inner.ptr, mass, localInertia);
     }
 
+    /**
+     * Get the mass of the rigid body
+     * @returns The mass of the rigid body
+     */
     public getMass(): number {
         this._nullCheck();
         // does not need to synchronization because mass is not changed by physics simulation
         return this.impl.getMass(this.runtime.wasmInstance, this._inner.ptr);
     }
 
+    /**
+     * Get the local inertia of the rigid body
+     * @returns The local inertia of the rigid body
+     */
     public getLocalInertia(): Vector3 {
         this._nullCheck();
         // does not need to synchronization because local inertia is not changed by physics simulation
         return this.impl.getLocalInertia(this.runtime.wasmInstance, this._inner.ptr);
     }
 
+    /**
+     * Translate the rigid body
+     * 
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     * @param translation The translation vector
+     */
     public translate(translation: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -425,10 +536,16 @@ export class RigidBody {
         this.impl.translate(this.runtime.wasmInstance, this._inner.ptr, translation);
     }
 
+    /**
+     * @internal
+     */
     public get needToCommit(): boolean {
         return this.impl.needToCommit ?? false;
     }
 
+    /**
+     * @internal
+     */
     public commitToWasm(): void {
         if (this.impl.commitToWasm === undefined) {
             throw new Error("commit only avalible on buffered evaluation mode");
@@ -447,6 +564,13 @@ export class RigidBody {
 
     // these methods need to be always synchronized
 
+    /**
+     * Get the total force of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The total force of the rigid body
+     */
     public getTotalForceToRef(result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -457,6 +581,13 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the total torque of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The total torque of the rigid body
+     */
     public getTotalTorqueToRef(result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -467,6 +598,12 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Apply a central force to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param force The force vector to apply
+     */
     public applyCentralForce(force: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -475,14 +612,27 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyCentralForce(this._inner.ptr, force.x, force.y, force.z);
     }
 
+    /**
+     * Apply a torque to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param torque The torque vector to apply
+     */ 
     public applyTorque(torque: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();
         }
         this.runtime.wasmInstance.rigidBodyApplyTorque(this._inner.ptr, torque.x, torque.y, torque.z);
-    }
+    } 
 
+    /**
+     * Apply a force to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param force The force vector to apply
+     * @param relativePosition The relative position vector to apply the force at
+     */
     public applyForce(force: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -499,6 +649,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyForce(this._inner.ptr, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Apply a central impulse to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     */
     public applyCentralImpulse(impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -507,6 +663,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyCentralImpulse(this._inner.ptr, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply a torque impulse to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     */
     public applyTorqueImpulse(impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -515,6 +677,13 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyTorqueImpulse(this._inner.ptr, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply an impulse to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     * @param relativePosition The relative position vector to apply the impulse at
+     */
     public applyImpulse(impulse: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -531,6 +700,13 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyImpulse(this._inner.ptr, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Apply a push impulse to the rigid body
+     *
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     * @param relativePosition The relative position vector to apply the impulse at
+     */
     public applyPushImpulse(impulse: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -547,6 +723,13 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyPushImpulse(this._inner.ptr, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Get the push velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The push velocity of the rigid body
+     */
     public getPushVelocityToRef(result: Vector3): DeepImmutable<Vector3> {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -557,6 +740,13 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the turn velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The turn velocity of the rigid body
+     */
     public getTurnVelocityToRef(result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -567,6 +757,12 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Set the push velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param velocity The velocity vector to set
+     */
     public setPushVelocity(velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -575,6 +771,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodySetPushVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Set the turn velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param velocity The velocity vector to set
+     */
     public setTurnVelocity(velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -583,6 +785,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodySetTurnVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Apply a central push impulse to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     */
     public applyCentralPushImpulse(impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -591,6 +799,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyCentralPushImpulse(this._inner.ptr, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply a torque turn impulse to the rigid body
+     * 
+     * This operation is always synchronized
+     * @param impulse The impulse vector to apply
+     */
     public applyTorqueTurnImpulse(impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -599,6 +813,11 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyApplyTorqueTurnImpulse(this._inner.ptr, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Clear the forces of the rigid body
+     * 
+     * This operation is always synchronized
+     */
     public clearForces(): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -607,6 +826,13 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodyClearForces(this._inner.ptr);
     }
 
+    /**
+     * Get the linear velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The linear velocity of the rigid body
+     */
     public getLinearVelocityToRef(result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -617,6 +843,13 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the angular velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param result The vector to store the result
+     * @returns The angular velocity of the rigid body
+     */
     public getAngularVelocityToRef(result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -627,6 +860,12 @@ export class RigidBody {
         return result.set(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Set the linear velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param velocity The velocity vector to set
+     */
     public setLinearVelocity(velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -635,6 +874,12 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodySetLinearVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Set the angular velocity of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param velocity The velocity vector to set
+     */
     public setAngularVelocity(velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -643,6 +888,14 @@ export class RigidBody {
         this.runtime.wasmInstance.rigidBodySetAngularVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Get the velocity of the rigid body in local point
+     * 
+     * This operation is always synchronized
+     * @param relativePosition The relative position vector to get the velocity at
+     * @param result The vector to store the result
+     * @returns The velocity of the rigid body in local point
+     */
     public getVelocityInLocalPointToRef(relativePosition: DeepImmutable<Vector3>, result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -657,6 +910,14 @@ export class RigidBody {
         return result.set(vector3Buffer2[0], vector3Buffer2[1], vector3Buffer2[2]);
     }
 
+    /**
+     * Get the push velocity of the rigid body in local point
+     * 
+     * This operation is always synchronized
+     * @param relativePosition The relative position vector to get the push velocity at
+     * @param result The vector to store the result
+     * @returns The push velocity of the rigid body in local point
+     */
     public getPushVelocityInLocalPointToRef(relativePosition: DeepImmutable<Vector3>, result: Vector3): Vector3 {
         this._nullCheck();
         if (this._inner.hasReferences) {
@@ -671,11 +932,21 @@ export class RigidBody {
         return result.set(vector3Buffer2[0], vector3Buffer2[1], vector3Buffer2[2]);
     }
 
+    /**
+     * Get shape of the rigid body
+     * @returns The shape of the rigid body
+     */
     public getShape(): PhysicsShape {
         this._nullCheck();
         return this._inner.getShapeReference();
     }
 
+    /**
+     * Set shape of the rigid body
+     * 
+     * This operation is always synchronized
+     * @param shape The shape to set
+     */
     public setShape(shape: PhysicsShape): void {
         this._nullCheck();
         if (shape.runtime !== this.runtime) {

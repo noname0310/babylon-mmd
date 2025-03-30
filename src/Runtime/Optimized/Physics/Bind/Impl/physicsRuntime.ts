@@ -1,7 +1,7 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import { Scene } from "@babylonjs/core/scene";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
@@ -396,7 +396,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
      * Sets the gravity vector of the physics world
      * @param gravity The new gravity vector
      */
-    public setGravity(gravity: Vector3): void {
+    public setGravity(gravity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         this._gravity.copyFrom(gravity);
         this._physicsWorld.setGravity(gravity);

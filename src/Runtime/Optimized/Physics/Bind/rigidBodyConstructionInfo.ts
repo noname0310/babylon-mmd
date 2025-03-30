@@ -60,6 +60,11 @@ function rigidBodyConstructionInfoFinalizer(inner: RigidBodyConstructionInfoInne
 
 const rigidBodyConstructionInfoRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyConstructionInfoInner>>();
 
+/**
+ * RigidBodyConstructionInfo is used to create a rigid body in the physics engine
+ * 
+ * it contains all the information needed to create a rigid body, such as the shape, mass, inertia, damping, etc.
+ */
 export class RigidBodyConstructionInfo {
     private readonly _wasmInstance: BulletWasmInstance;
 
@@ -70,6 +75,10 @@ export class RigidBodyConstructionInfo {
 
     private readonly _inner: RigidBodyConstructionInfoInner;
 
+    /**
+     * Creates a new RigidBodyConstructionInfo
+     * @param wasmInstance The BulletWasmInstance to use
+     */
     public constructor(wasmInstance: BulletWasmInstance) {
         this._wasmInstance = wasmInstance;
 
@@ -170,6 +179,9 @@ export class RigidBodyConstructionInfo {
         registry.register(this, this._inner, this);
     }
 
+    /**
+     * Disposes the RigidBodyConstructionInfo
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -194,6 +206,9 @@ export class RigidBodyConstructionInfo {
         }
     }
 
+    /**
+     * The shape of the rigid body
+     */
     public get shape(): Nullable<PhysicsShape> {
         this._nullCheck();
         return this._inner.shape;
@@ -205,6 +220,11 @@ export class RigidBodyConstructionInfo {
         this._uint32Ptr.array[RigidBodyConstructionInfoOffsets.Shape / Constants.A32BytesPerElement] = value ? value.ptr : 0;
     }
 
+    /**
+     * Gets the initial transform of the rigid body
+     * @param result The matrix to store the result
+     * @returns The initial transform of the rigid body
+     */
     public getInitialTransformToRef(result: Matrix): Matrix {
         this._nullCheck();
         const float32Ptr = this._float32Ptr.array;
@@ -231,6 +251,10 @@ export class RigidBodyConstructionInfo {
         return result;
     }
 
+    /**
+     * Sets the initial transform of the rigid body
+     * @param value The initial transform of the rigid body
+     */
     public setInitialTransform(value: Matrix): void {
         this._nullCheck();
         const float32Ptr = this._float32Ptr.array;
@@ -238,6 +262,9 @@ export class RigidBodyConstructionInfo {
         value.copyToArray(float32Ptr, RigidBodyConstructionInfoOffsets.InitialTransform / Constants.A32BytesPerElement);
     }
 
+    /**
+     * The motion type of the rigid body
+     */
     public get motionType(): MotionType {
         this._nullCheck();
         return this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.MotionType / Constants.A8BytesPerElement];
@@ -248,6 +275,9 @@ export class RigidBodyConstructionInfo {
         this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.MotionType / Constants.A8BytesPerElement] = value;
     }
 
+    /**
+     * The mass of the rigid body
+     */
     public get mass(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Mass / Constants.A32BytesPerElement];
@@ -258,6 +288,11 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Mass / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The local inertia of the rigid body
+     * 
+     * If the local inertia is not set, it will be calculated from the shape
+     */
     public get localInertia(): Nullable<Vector3> {
         this._nullCheck();
         const maskValue = this._uint16Ptr.array[RigidBodyConstructionInfoOffsets.DataMask / Constants.A16BytesPerElement];
@@ -288,6 +323,9 @@ export class RigidBodyConstructionInfo {
         float32Ptr[RigidBodyConstructionInfoOffsets.LocalInertia / Constants.A32BytesPerElement + 2] = value.z;
     }
 
+    /**
+     * The linear damping of the rigid body
+     */
     public get linearDamping(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.LinearDamping / Constants.A32BytesPerElement];
@@ -298,6 +336,9 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.LinearDamping / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The angular damping of the rigid body
+     */
     public get angularDamping(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.AngularDamping / Constants.A32BytesPerElement];
@@ -308,6 +349,9 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.AngularDamping / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The friction of the rigid body
+     */
     public get friction(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Friction / Constants.A32BytesPerElement];
@@ -318,6 +362,9 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Friction / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The restitution of the rigid body
+     */
     public get restitution(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Restitution / Constants.A32BytesPerElement];
@@ -328,6 +375,9 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.Restitution / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The linear sleeping threshold of the rigid body
+     */
     public get linearSleepingThreshold(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.LinearSleepingThreshold / Constants.A32BytesPerElement];
@@ -338,6 +388,9 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.LinearSleepingThreshold / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The angular sleeping threshold of the rigid body
+     */
     public get angularSleepingThreshold(): number {
         this._nullCheck();
         return this._float32Ptr.array[RigidBodyConstructionInfoOffsets.AngularSleepingThreshold / Constants.A32BytesPerElement];
@@ -348,6 +401,11 @@ export class RigidBodyConstructionInfo {
         this._float32Ptr.array[RigidBodyConstructionInfoOffsets.AngularSleepingThreshold / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * The collision group of the rigid body
+     * 
+     * collision group is stored as 16-bit unsigned integer
+     */
     public get collisionGroup(): number {
         this._nullCheck();
         return this._uint16Ptr.array[RigidBodyConstructionInfoOffsets.CollisionGroup / Constants.A16BytesPerElement];
@@ -358,6 +416,11 @@ export class RigidBodyConstructionInfo {
         this._uint16Ptr.array[RigidBodyConstructionInfoOffsets.CollisionGroup / Constants.A16BytesPerElement] = value;
     }
 
+    /**
+     * The collision mask of the rigid body
+     * 
+     * collision mask is stored as 16-bit unsigned integer
+     */
     public get collisionMask(): number {
         this._nullCheck();
         return this._uint16Ptr.array[RigidBodyConstructionInfoOffsets.CollisionMask / Constants.A16BytesPerElement];
@@ -368,6 +431,9 @@ export class RigidBodyConstructionInfo {
         this._uint16Ptr.array[RigidBodyConstructionInfoOffsets.CollisionMask / Constants.A16BytesPerElement] = value;
     }
 
+    /**
+     * The additional damping of the rigid body
+     */
     public get additionalDamping(): boolean {
         this._nullCheck();
         return !!this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.AdditionalDamping / Constants.A8BytesPerElement];
@@ -378,6 +444,10 @@ export class RigidBodyConstructionInfo {
         this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.AdditionalDamping / Constants.A8BytesPerElement] = +value;
     }
 
+    
+    /**
+     * The no contact response of the rigid body
+     */
     public get noContactResponse(): boolean {
         this._nullCheck();
         return !!this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.NoContactResponse / Constants.A8BytesPerElement];
@@ -388,6 +458,9 @@ export class RigidBodyConstructionInfo {
         this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.NoContactResponse / Constants.A8BytesPerElement] = +value;
     }
 
+    /**
+     * The disable deactivation of the rigid body
+     */
     public get disableDeactivation(): boolean {
         this._nullCheck();
         return !!this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.DisableDeactivation / Constants.A8BytesPerElement];

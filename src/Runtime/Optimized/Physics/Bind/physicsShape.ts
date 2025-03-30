@@ -48,6 +48,9 @@ function physicsShapeFinalizer(inner: PhysicsShapeInner): void {
 
 const physicsShapeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsShapeInner>>();
 
+/**
+ * Base class for all bullet physics shapes
+ */
 export abstract class PhysicsShape {
     public readonly runtime: IPhysicsRuntime;
 
@@ -99,28 +102,62 @@ export abstract class PhysicsShape {
     }
 }
 
+/**
+ * Box shape
+ */
 export class PhysicsBoxShape extends PhysicsShape {
+    /**
+     * Creates a new box shape
+     * @param runtime physics runtime
+     * @param size half extents of the box shape
+     */
     public constructor(runtime: IPhysicsRuntime, size: Vector3) {
         const ptr = runtime.wasmInstance.createBoxShape(size.x, size.y, size.z);
         super(runtime, ptr);
     }
 }
 
+/**
+ * Sphere shape
+ */
 export class PhysicsSphereShape extends PhysicsShape {
+    /**
+     * Creates a new sphere shape
+     * @param runtime physics runtime
+     * @param radius radius of the sphere shape
+     */
     public constructor(runtime: IPhysicsRuntime, radius: number) {
         const ptr = runtime.wasmInstance.createSphereShape(radius);
         super(runtime, ptr);
     }
 }
 
+/**
+ * Cylinder shape
+ */
 export class PhysicsCapsuleShape extends PhysicsShape {
+    /**
+     * Creates a new capsule shape
+     * @param runtime physics runtime
+     * @param radius radius of the capsule shape
+     * @param height height of the capsule shape
+     */
     public constructor(runtime: IPhysicsRuntime, radius: number, height: number) {
         const ptr = runtime.wasmInstance.createCapsuleShape(radius, height);
         super(runtime, ptr);
     }
 }
 
+/**
+ * Static plane shape
+ */
 export class PhysicsStaticPlaneShape extends PhysicsShape {
+    /**
+     * Creates a new static plane shape
+     * @param runtime physics runtime
+     * @param normal normal of the plane shape
+     * @param planeConstant constant of the plane shape
+     */
     public constructor(runtime: IPhysicsRuntime, normal: Vector3, planeConstant: number) {
         const ptr = runtime.wasmInstance.createStaticPlaneShape(normal.x, normal.y, normal.z, planeConstant);
         super(runtime, ptr);

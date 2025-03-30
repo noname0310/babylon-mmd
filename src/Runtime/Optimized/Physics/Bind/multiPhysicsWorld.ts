@@ -5,6 +5,7 @@ import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
+import { DeepImmutable } from "@babylonjs/core/types";
 
 class MultiPhysicsWorldInner {
     private readonly _runtime: WeakRef<IPhysicsRuntime>;
@@ -312,11 +313,25 @@ function multiPhysicsWorldFinalizer(inner: MultiPhysicsWorldInner): void {
 
 const multiPhysicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsWorldInner>>();
 
+/**
+ * MultiPhysicsWorld handles multiple physics worlds and allows to add rigid bodies and constraints to them
+ * 
+ * It supports multi-threading by introducing a rigid body shadow concept
+ * 
+ * Rigid body shadow is a copy of the rigid body that can be added to a different world
+ * 
+ * Internally, it just creates a new rigid body with Kinematic motion type and synchronizes the position and rotation with the original rigid body
+ */
 export class MultiPhysicsWorld {
     private readonly _runtime: IPhysicsRuntime;
 
     private readonly _inner: MultiPhysicsWorldInner;
 
+    /**
+     * Creates a new MultiPhysicsWorld instance
+     * @param runtime The physics runtime that this world belongs to
+     * @param allowDynamicShadow Whether to allow dynamic shadow
+     */
     public constructor(runtime: IPhysicsRuntime, allowDynamicShadow: boolean) {
         this._runtime = runtime;
 
@@ -333,6 +348,9 @@ export class MultiPhysicsWorld {
         registry.register(this, this._inner, this);
     }
 
+    /**
+     * Disposes the physics world
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -371,18 +389,40 @@ export class MultiPhysicsWorld {
         }
     }
 
-    public setGravity(gravity: Vector3): void {
+    /**
+     * Sets the gravity vector of the physics world
+     *
+     * This operation performs waiting for the lock before executing
+     * @param gravity The gravity vector
+     */
+    public setGravity(gravity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         this._runtime.lock.wait();
         this._runtime.wasmInstance.multiPhysicsWorldSetGravity(this._inner.ptr, gravity.x, gravity.y, gravity.z);
     }
 
+    /**
+     * Steps the physics simulation
+     * @param timeStep The time step to use for the simulation
+     * @param maxSubSteps The maximum number of substeps to use for the simulation
+     * @param fixedTimeStep The fixed time step to use for the simulation
+     */
     public stepSimulation(timeStep: number, maxSubSteps: number, fixedTimeStep: number): void {
         this._nullCheck();
         this._runtime.lock.wait();
         this._runtime.wasmInstance.multiPhysicsWorldStepSimulation(this._inner.ptr, timeStep, maxSubSteps, fixedTimeStep);
     }
 
+    /**
+     * Adds a rigid body to the physics world
+     * 
+     * If the world is not existing, it will be created
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to add
+     * @param worldId The ID of the world to add the rigid body to
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBody(rigidBody: RigidBody, worldId: number): boolean {
         if (rigidBody.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body from a different runtime");
@@ -396,6 +436,16 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body from the physics world
+     * 
+     * If there are no more rigid bodies in the world, the world will be destroyed automatically
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to remove
+     * @param worldId The ID of the world to remove the rigid body from
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBody(rigidBody: RigidBody, worldId: number): boolean {
         if (rigidBody.hasShadows) {
             throw new Error("Cannot remove rigid body that has shadows");
@@ -409,6 +459,16 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body bundle to the physics world
+     * 
+     * If the world is not existing, it will be created
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @param worldId The ID of the world to add the rigid body bundle to
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundle(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         if (rigidBodyBundle.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body bundle from a different runtime");
@@ -422,6 +482,16 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body bundle from the physics world
+     * 
+     * If there are no more rigid body bundles in the world, the world will be destroyed automatically
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @param worldId The ID of the world to remove the rigid body bundle from
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundle(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         if (rigidBodyBundle.hasShadows) {
             throw new Error("Cannot remove rigid body bundle that has shadows");
@@ -435,6 +505,15 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body to all worlds
+     *
+     * rigid body physics mode must be Static or Kinematic
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to add
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBodyToGlobal(rigidBody: RigidBody): boolean {
         if (rigidBody.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body from a different runtime");
@@ -451,6 +530,19 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body from all worlds
+     * 
+     * This method does not remove the rigid body that is added with `MultiPhysicsWorld.addRigidBody`
+     * 
+     * Only the rigid body that is added with `MultiPhysicsWorld.addRigidBodyToGlobal` will be removed
+     * 
+     * If there are no more rigid bodies in the world, the world will be destroyed automatically
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to remove
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBodyFromGlobal(rigidBody: RigidBody): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyGlobalReference(rigidBody)) {
@@ -461,6 +553,15 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body bundle to all worlds
+     *
+     * rigid body bundle physics mode must be Static or Kinematic
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundleToGlobal(rigidBodyBundle: RigidBodyBundle): boolean {
         if (rigidBodyBundle.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body bundle from a different runtime");
@@ -477,6 +578,19 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body bundle from all worlds
+     * 
+     * This method does not remove the rigid body bundle that is added with `MultiPhysicsWorld.addRigidBodyBundle`
+     * 
+     * Only the rigid body bundle that is added with `MultiPhysicsWorld.addRigidBodyBundleToGlobal` will be removed
+     * 
+     * If there are no more rigid body bundles in the world, the world will be destroyed automatically
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundleFromGlobal(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyBundleGlobalReference(rigidBodyBundle)) {
@@ -487,6 +601,23 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body shadow to the physics world
+     * 
+     * In case of Dynamic physics mode, Rigid body firstly needs to be added to the other world
+     * 
+     * The worldId must be not equal to the worldId of the rigid body
+     * 
+     * Rigid body shadow allows the rigid body to be added to multiple worlds
+     * 
+     * When RigidBody with dynamic physics mode is added to the world as shadow,
+     * the rigid body will be added to the world as kinematic
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to add
+     * @param worldId The ID of the world to add the rigid body as shadow
+     * @returns True if the rigid body shadow was added successfully, false otherwise
+     */
     public addRigidBodyShadow(rigidBody: RigidBody, worldId: number): boolean {
         if (rigidBody.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body from a different runtime");
@@ -504,6 +635,14 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body shadow from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBody The rigid body to remove
+     * @param worldId The ID of the world to remove the rigid body shadow from
+     * @returns True if the rigid body shadow was removed successfully, false otherwise
+     */
     public removeRigidBodyShadow(rigidBody: RigidBody, worldId: number): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyShadowReference(rigidBody, worldId)) {
@@ -515,6 +654,20 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a rigid body bundle shadow to the physics world
+     * 
+     * In case of Dynamic physics mode, Rigid body bundle firstly needs to be added to the other world
+     * 
+     * The worldId must be not equal to the worldId of the rigid body bundle
+     * 
+     * Rigid body bundle shadow allows the rigid body bundle to be added to multiple worlds
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @param worldId The ID of the world to add the rigid body bundle as shadow
+     * @returns True if the rigid body shadow was added successfully, false otherwise
+     */
     public addRigidBodyBundleShadow(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         if (rigidBodyBundle.runtime !== this._runtime) {
             throw new Error("Cannot add rigid body bundle from a different runtime");
@@ -532,6 +685,14 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a rigid body bundle shadow from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @param worldId The ID of the world to remove the rigid body bundle shadow from
+     * @returns True if the rigid body bundle shadow was removed successfully, false otherwise
+     */
     public removeRigidBodyBundleShadow(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         this._nullCheck();
         if (this._inner.removeRigidBodyBundleShadowReference(rigidBodyBundle, worldId)) {
@@ -543,6 +704,17 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Adds a constraint to the physics world
+     * 
+     * Constraint worldId must be equal to the worldId of the connected rigid bodies
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param constraint The constraint to add
+     * @param worldId The ID of the world to add the constraint to
+     * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between the linked bodies
+     * @returns True if the constraint was added successfully, false otherwise
+     */
     public addConstraint(constraint: Constraint, worldId: number, disableCollisionsBetweenLinkedBodies: boolean): boolean {
         if (constraint.runtime !== this._runtime) {
             throw new Error("Cannot add constraint from a different runtime");
@@ -556,6 +728,14 @@ export class MultiPhysicsWorld {
         return false;
     }
 
+    /**
+     * Removes a constraint from the physics world
+     * 
+     * This operation performs waiting for the lock before executing
+     * @param constraint The constraint to remove
+     * @param worldId The ID of the world to remove the constraint from
+     * @returns True if the constraint was removed successfully, false otherwise
+     */
     public removeConstraint(constraint: Constraint, worldId: number): boolean {
         this._nullCheck();
         if (this._inner.removeConstraintReference(constraint)) {

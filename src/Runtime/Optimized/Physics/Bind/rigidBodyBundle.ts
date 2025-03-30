@@ -116,7 +116,21 @@ function rigidBodyBundleFinalizer(inner: RigidBodyBundleInner): void {
 
 const physicsRigidBodyBundleRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyBundleInner>>();
 
+/**
+ * bundle of bullet physics rigid bodies
+ * 
+ * rigid body bundle is a collection of rigid bodies
+ * that allocates all of its motion state data
+ * in the one big linearly contiguous memory
+ * 
+ * Bundle is useful for following cases:
+ * - when you have a lot of rigid bodies
+ * - when you want manage several rigid bodies as a group
+ */
 export class RigidBodyBundle {
+    /**
+     * @internal
+     */
     public readonly runtime: IPhysicsRuntime;
 
     private readonly _motionStatesPtr: IWasmTypedArray<Float32Array>;
@@ -130,9 +144,21 @@ export class RigidBodyBundle {
 
     private _worldReference: Nullable<object>;
 
+    /**
+     * @internal
+     */
     public impl: IRigidBodyBundleImpl;
+
+    /**
+     * Whether this bundle contains dynamic rigid bodies
+     */
     public readonly isContainsDynamic: boolean;
 
+    /**
+     * Create a new rigid body bundle
+     * @param runtime The physics runtime
+     * @param info The rigid body construction info list
+     */
     public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList) {
         if (info.ptr === 0) {
             throw new Error("Cannot create rigid body bundle with null pointer");
@@ -187,6 +213,11 @@ export class RigidBodyBundle {
         this.isContainsDynamic = isContainsDynamic;
     }
 
+    /**
+     * Dispose the rigid body bundle
+     * 
+     * rigid body bundle must be removed from the world before disposing
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -205,6 +236,9 @@ export class RigidBodyBundle {
         return this._inner.ptr;
     }
 
+    /**
+     * The number of rigid bodies in the bundle
+     */
     public get count(): number {
         return this._count;
     }
@@ -290,6 +324,12 @@ export class RigidBodyBundle {
         }
     }
 
+    /**
+     * Get the transform matrix of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @param result The matrix to store the result
+     * @returns The transform matrix of the rigid body
+     */
     public getTransformMatrixToRef(index: number, result: Matrix): Matrix {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -323,6 +363,12 @@ export class RigidBodyBundle {
         );
     }
 
+    /**
+     * Get the transform matrix of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @param result The matrix to store the result
+     * @param offset The offset in the result matrix
+     */
     public getTransformMatrixToArray(index: number, result: Float32Array, offset: number = 0): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -357,6 +403,11 @@ export class RigidBodyBundle {
         result[offset + 15] = 1;
     }
 
+    /**
+     * Get the transform matrices of the rigid bodies in the bundle
+     * @param result The array to store the result
+     * @param offset The offset in the result array
+     */
     public getTransformMatricesToArray(result: Float32Array, offset: number = 0): void {
         this._nullCheck();
         if (this._inner.hasReferences && this.impl.shouldSync) {
@@ -394,10 +445,29 @@ export class RigidBodyBundle {
         }
     }
 
+    /**
+     * Set the transform matrix of the rigid body at the given index
+     * 
+     * This method will work only if the rigid body motion type is kinematic
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param matrix The transform matrix to set
+     */
     public setTransformMatrix(index: number, matrix: Matrix): void {
         this.setTransformMatrixFromArray(index, matrix.m, 0);
     }
 
+    /**
+     * Set the transform matrix of the rigid body at the given index
+     * 
+     * This method will work only if the rigid body motion type is kinematic
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param array The array to set
+     * @param offset The offset in the array
+     */
     public setTransformMatrixFromArray(index: number, array: DeepImmutable<Tuple<number, 16>>, offset: number = 0): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -410,6 +480,15 @@ export class RigidBodyBundle {
         this.impl.setTransformMatrixFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, index, array, offset);
     }
 
+    /**
+     * Set the transform matrices of the rigid bodies in the bundle
+     * 
+     * This method will work only if the rigid body motion type is kinematic
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param array The array to set
+     * @param offset The offset in the array
+     */
     public setTransformMatricesFromArray(array: DeepImmutable<ArrayLike<number>>, offset: number = 0): void {
         this._nullCheck();
         if (array.length < this._count * 16) {
@@ -422,10 +501,31 @@ export class RigidBodyBundle {
         this.impl.setTransformMatricesFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, array, offset);
     }
 
+    /**
+     * Set the dynamic transform matrix of the rigid body at the given index
+     * 
+     * This method will work only if the rigid body motion type is dynamic
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param matrix The transform matrix to set
+     * @param fallbackToSetTransformMatrix Whether to fallback to setTransformMatrix if the rigid body is not dynamic
+     */
     public setDynamicTransformMatrix(index: number, matrix: Matrix, fallbackToSetTransformMatrix: boolean = false): void {
         this.setDynamicTransformMatrixFromArray(index, matrix.m, 0, fallbackToSetTransformMatrix);
     }
 
+    /**
+     * Set the dynamic transform matrix of the rigid body at the given index
+     * 
+     * This method will work only if the rigid body motion type is dynamic
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param array The array to set
+     * @param offset The offset in the array
+     * @param fallbackToSetTransformMatrix Whether to fallback to setTransformMatrix if the rigid body is not dynamic
+     */
     public setDynamicTransformMatrixFromArray(index: number, array: DeepImmutable<Tuple<number, 16>>, offset: number = 0, fallbackToSetTransformMatrix: boolean = false): void {
         if (this._worldTransformPtrArray[index] === null) {
             if (fallbackToSetTransformMatrix) {
@@ -446,6 +546,14 @@ export class RigidBodyBundle {
         this.impl.setDynamicTransformMatrixFromArray(this._worldTransformPtrArray, index, array, offset);
     }
 
+    /**
+     * Set the linear and angular damping of the rigid body at the given index
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param linearDamping Linear damping
+     * @param angularDamping Angular damping
+     */
     public setDamping(index: number, linearDamping: number, angularDamping: number): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -458,6 +566,11 @@ export class RigidBodyBundle {
         this.impl.setDamping(this.runtime.wasmInstance, this._inner.ptr, index, linearDamping, angularDamping);
     }
 
+    /**
+     * Get the linear damping of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @return The linear damping of the rigid body
+     */
     public getLinearDamping(index: number): number {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -471,6 +584,11 @@ export class RigidBodyBundle {
         return this.impl.getLinearDamping(this.runtime.wasmInstance, this._inner.ptr, index);
     }
 
+    /**
+     * Get the angular damping of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @return The angular damping of the rigid body
+     */
     public getAngularDamping(index: number): number {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -484,6 +602,14 @@ export class RigidBodyBundle {
         return this.impl.getAngularDamping(this.runtime.wasmInstance, this._inner.ptr, index);
     }
 
+    /**
+     * Set the mass and local inertia of the rigid body at the given index
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param mass Mass
+     * @param localInertia Local inertia
+     */
     public setMassProps(index: number, mass: number, localInertia: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -496,6 +622,11 @@ export class RigidBodyBundle {
         this.impl.setMassProps(this.runtime.wasmInstance, this._inner.ptr, index, mass, localInertia);
     }
 
+    /**
+     * Get the mass of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @return The mass of the rigid body
+     */
     public getMass(index: number): number {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -509,6 +640,11 @@ export class RigidBodyBundle {
         return this.impl.getMass(this.runtime.wasmInstance, this._inner.ptr, index);
     }
 
+    /**
+     * Get the local inertia of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @return The local inertia of the rigid body
+     */
     public getLocalInertia(index: number): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -522,6 +658,13 @@ export class RigidBodyBundle {
         return this.impl.getLocalInertia(this.runtime.wasmInstance, this._inner.ptr, index);
     }
 
+    /**
+     * Translate the rigid body at the given index
+     * 
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param translation The translation vector
+     */
     public translate(index: number, translation: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -534,10 +677,16 @@ export class RigidBodyBundle {
         this.impl.translate(this.runtime.wasmInstance, this._inner.ptr, index, translation);
     }
 
+    /**
+     * @internal
+     */
     public get needToCommit(): boolean {
         return this.impl.needToCommit ?? false;
     }
 
+    /**
+     * @internal
+     */
     public commitToWasm(): void {
         if (this.impl.commitToWasm === undefined) {
             throw new Error("commit only avalible on buffered evaluation mode");
@@ -556,6 +705,14 @@ export class RigidBodyBundle {
 
     // these methods need to be always synchronized
 
+    /**
+     * Get the total force of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The total force of the rigid body
+     */
     public getTotalForceToRef(index: number, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -569,6 +726,14 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the total torque of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The total torque of the rigid body
+     */
     public getTotalTorqueToRef(index: number, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -582,6 +747,13 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Apply a central force to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param force The force vector
+     */
     public applyCentralForce(index: number, force: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -593,6 +765,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyCentralForce(this._inner.ptr, index, force.x, force.y, force.z);
     }
 
+    /**
+     * Apply a torque to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param torque The torque vector
+     */
     public applyTorque(index: number, torque: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -604,6 +783,14 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyTorque(this._inner.ptr, index, torque.x, torque.y, torque.z);
     }
 
+    /**
+     * Apply a force to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param force The force vector
+     * @param relativePosition The relative position vector
+     */
     public applyForce(index: number, force: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -623,6 +810,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyForce(this._inner.ptr, index, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Apply a push force to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     */
     public applyCentralImpulse(index: number, impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -634,6 +828,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyCentralImpulse(this._inner.ptr, index, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply a torque impulse to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     */
     public applyTorqueImpulse(index: number, impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -645,6 +846,14 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyTorqueImpulse(this._inner.ptr, index, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply an impulse to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     * @param relativePosition The relative position vector
+     */
     public applyImpulse(index: number, impulse: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -664,6 +873,14 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyImpulse(this._inner.ptr, index, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Apply a push impulse to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     * @param relativePosition The relative position vector
+     */
     public applyPushImpulse(index: number, impulse: DeepImmutable<Vector3>, relativePosition: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -683,6 +900,14 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyPushImpulse(this._inner.ptr, index, vector3Buffer1.byteOffset, vector3Buffer2.byteOffset);
     }
 
+    /**
+     * Get the push velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The push velocity of the rigid body
+     */
     public getPushVelocityToRef(index: number, result: Vector3): DeepImmutable<Vector3> {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -696,6 +921,14 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the turn velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The turn velocity of the rigid body
+     */
     public getTurnVelocityToRef(index: number, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -709,6 +942,13 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Set the push velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param velocity The push velocity vector
+     */
     public setPushVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -720,6 +960,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleSetPushVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Set the turn velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param velocity The turn velocity vector
+     */
     public setTurnVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -731,6 +978,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleSetTurnVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Apply a central push impulse to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     */
     public applyCentralPushImpulse(index: number, impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -742,6 +996,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyCentralPushImpulse(this._inner.ptr, index, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Apply a torque turn impulse to the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param impulse The impulse vector
+     */
     public applyTorqueTurnImpulse(index: number, impulse: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -753,6 +1014,12 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleApplyTorqueTurnImpulse(this._inner.ptr, index, impulse.x, impulse.y, impulse.z);
     }
 
+    /**
+     * Clear the forces of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     */
     public clearForces(index: number): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -764,6 +1031,14 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleClearForces(this._inner.ptr, index);
     }
 
+    /**
+     * Get the linear velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The linear velocity of the rigid body
+     */
     public getLinearVelocityToRef(index: number, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -777,6 +1052,14 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Get the angular velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param result The vector to store the result
+     * @returns The angular velocity of the rigid body
+     */
     public getAngularVelocityToRef(index: number, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -790,6 +1073,13 @@ export class RigidBodyBundle {
         return result.copyFromFloats(vector3Buffer1[0], vector3Buffer1[1], vector3Buffer1[2]);
     }
 
+    /**
+     * Set the linear velocity of the rigid body at the given index
+     *
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param velocity The linear velocity vector
+     */
     public setLinearVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -801,6 +1091,13 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleSetLinearVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Set the angular velocity of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param velocity The angular velocity vector
+     */
     public setAngularVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -812,6 +1109,15 @@ export class RigidBodyBundle {
         this.runtime.wasmInstance.rigidBodyBundleSetAngularVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
+    /**
+     * Get the velocity of the rigid body at the given index in the local point
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param relativePosition The relative position vector
+     * @param result The vector to store the result
+     * @returns The velocity of the rigid body at the given index in the local point
+     */
     public getVelocityInLocalPointToRef(index: number, relativePosition: DeepImmutable<Vector3>, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -829,6 +1135,15 @@ export class RigidBodyBundle {
         return result.set(vector3Buffer2[0], vector3Buffer2[1], vector3Buffer2[2]);
     }
 
+    /**
+     * Get the push velocity of the rigid body at the given index in the local point
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param relativePosition The relative position vector
+     * @param result The vector to store the result
+     * @returns The push velocity of the rigid body at the given index in the local point
+     */
     public getPushVelocityInLocalPointToRef(index: number, relativePosition: DeepImmutable<Vector3>, result: Vector3): Vector3 {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -846,6 +1161,11 @@ export class RigidBodyBundle {
         return result.set(vector3Buffer2[0], vector3Buffer2[1], vector3Buffer2[2]);
     }
 
+    /**
+     * Get the shape of the rigid body at the given index
+     * @param index Index of the rigid body
+     * @returns The shape of the rigid body
+     */
     public getShape(index: number): PhysicsShape {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
@@ -854,6 +1174,13 @@ export class RigidBodyBundle {
         return this._inner.getShapeReference(index);
     }
 
+    /**
+     * Set the shape of the rigid body at the given index
+     * 
+     * This operation is always synchronized
+     * @param index Index of the rigid body
+     * @param shape The shape to set
+     */
     public setShape(index: number, shape: PhysicsShape): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {

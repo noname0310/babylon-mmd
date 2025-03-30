@@ -1,5 +1,5 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants } from "./constants";
@@ -71,6 +71,9 @@ function constraintFinalizer(inner: ConstraintInner): void {
 
 const constraintRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<ConstraintInner>>();
 
+/**
+ * Base class for all bullet physics constraints
+ */
 export abstract class Constraint {
     public readonly runtime: IPhysicsRuntime;
     protected readonly _inner: ConstraintInner;
@@ -101,6 +104,9 @@ export abstract class Constraint {
         registry.register(this, this._inner, this);
     }
 
+    /**
+     * Disposes the constraint and releases the resources associated with it
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -154,7 +160,69 @@ export abstract class Constraint {
 
 const matrixBufferSize = 16 * Constants.A32BytesPerElement;
 
-export class Generic6DofConstraint extends Constraint {
+abstract class Generic6DofConstraintBase extends Constraint {
+     /**
+     * Sets the linear lower limit of the constraint
+     * 
+     * If the constraint is added to a physics world, this operation will wait for the world evaluation to finish
+     * @param limit linear lower limit
+     */
+     public setLinearLowerLimit(limit: DeepImmutable<Vector3>): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetLinearLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
+    }
+
+    /**
+     * Sets the linear upper limit of the constraint
+     * @param limit linear upper limit
+     */
+    public setLinearUpperLimit(limit: DeepImmutable<Vector3>): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetLinearUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
+    }
+
+    /**
+     * Sets the angular lower limit of the constraint
+     * @param limit angular lower limit
+     */
+    public setAngularLowerLimit(limit: DeepImmutable<Vector3>): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetAngularLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
+    }
+
+    /**
+     * Sets the angular upper limit of the constraint
+     * @param limit angular upper limit
+     */
+    public setAngularUpperLimit(limit: DeepImmutable<Vector3>): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetAngularUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
+    }
+}
+
+/**
+ * Generic6DofConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
+ * 
+ * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
+ */
+export class Generic6DofConstraint extends Generic6DofConstraintBase {
+    /**
+     * Creates a new Generic6DofConstraint
+     * @param runtime physics runtime
+     * @param bodyA rigid body A
+     * @param bodyB rigid body B
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B 
+     */
     public constructor(
         runtime: IPhysicsRuntime,
         bodyA: RigidBody,
@@ -164,6 +232,15 @@ export class Generic6DofConstraint extends Constraint {
         useLinearReferenceFrameA: boolean
     );
 
+    /**
+     * Creates a new Generic6DofConstraint
+     * @param runtime physics runtime 
+     * @param bodyBundle rigid body bundle
+     * @param bodyIndices indices of the rigid bodies in the bundle
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
+     */
     public constructor(
         runtime: IPhysicsRuntime,
         bodyBundle: RigidBodyBundle,
@@ -218,37 +295,25 @@ export class Generic6DofConstraint extends Constraint {
 
         super(runtime, ptr, bodyReference);
     }
-
-    public setLinearLowerLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetLinearLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setLinearUpperLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetLinearUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setAngularLowerLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetAngularLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setAngularUpperLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetAngularUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
 }
 
-export class Generic6DofSpringConstraint extends Constraint {
+/**
+ * Generic6DofSpringConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
+ * 
+ * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
+ * 
+ * This constraint also supports springs, which can be used to create a spring-like effect between the two bodies
+ */
+export class Generic6DofSpringConstraint extends Generic6DofConstraintBase {
+    /**
+     * Creates a new Generic6DofSpringConstraint
+     * @param runtime physics runtime
+     * @param bodyA rigid body A
+     * @param bodyB rigid body B
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
+     */
     public constructor(
         runtime: IPhysicsRuntime,
         bodyA: RigidBody,
@@ -258,6 +323,15 @@ export class Generic6DofSpringConstraint extends Constraint {
         useLinearReferenceFrameA: boolean
     );
 
+    /**
+     * Creates a new Generic6DofSpringConstraint
+     * @param runtime physics runtime
+     * @param bodyBundle rigid body bundle
+     * @param bodyIndices indices of the rigid bodies in the bundle
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
+     */
     public constructor(
         runtime: IPhysicsRuntime,
         bodyBundle: RigidBodyBundle,
@@ -313,34 +387,11 @@ export class Generic6DofSpringConstraint extends Constraint {
         super(runtime, ptr, bodyReference);
     }
 
-    public setLinearLowerLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetLinearLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setLinearUpperLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetLinearUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setAngularLowerLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetAngularLowerLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
-    public setAngularUpperLimit(limit: Vector3): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetAngularUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
-    }
-
+    /**
+     * Enables or disables the spring for the specified index
+     * @param index index of the spring
+     * @param onOff true to enable the spring, false to disable it
+     */
     public enableSpring(index: number, onOff: boolean): void {
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();
@@ -348,6 +399,11 @@ export class Generic6DofSpringConstraint extends Constraint {
         this.runtime.wasmInstance.constraintEnableSpring(this._inner.ptr, index, onOff);
     }
 
+    /**
+     * Sets the spring stiffness for the specified index
+     * @param index index of the spring
+     * @param stiffness spring stiffness
+     */
     public setStiffness(index: number, stiffness: number): void {
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();
@@ -355,6 +411,11 @@ export class Generic6DofSpringConstraint extends Constraint {
         this.runtime.wasmInstance.constraintSetStiffness(this._inner.ptr, index, stiffness);
     }
 
+    /**
+     * Sets the spring damping for the specified index
+     * @param index index of the spring
+     * @param damping spring damping
+     */
     public setDamping(index: number, damping: number): void {
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();

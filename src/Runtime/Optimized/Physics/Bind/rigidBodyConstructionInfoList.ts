@@ -77,6 +77,9 @@ function rigidBodyConstructionInfoListFinalizer(inner: RigidBodyConstructionInfo
 
 const rigidBodyConstructionInfoListRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyConstructionInfoListInner>>();
 
+/**
+ * RigidBodyConstructionInfoList stores the construction information for multiple rigid bodies in a single buffer
+ */
 export class RigidBodyConstructionInfoList {
     private readonly _wasmInstance: BulletWasmInstance;
 
@@ -87,6 +90,10 @@ export class RigidBodyConstructionInfoList {
 
     private readonly _inner: RigidBodyConstructionInfoListInner;
 
+    /**
+     * Creates a new RigidBodyConstructionInfoList
+     * @param wasmInstance The BulletWasmInstance to use
+     */
     public constructor(wasmInstance: BulletWasmInstance, count: number) {
         this._wasmInstance = wasmInstance;
 
@@ -190,6 +197,9 @@ export class RigidBodyConstructionInfoList {
         registry.register(this, this._inner, this);
     }
 
+    /**
+     * Disposes the RigidBodyConstructionInfoList
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -201,14 +211,23 @@ export class RigidBodyConstructionInfoList {
         registry?.unregister(this);
     }
 
+    /**
+     * @internal
+     */
     public get ptr(): number {
         return this._inner.ptr;
     }
 
+    /**
+     * The number of rigid body construction info
+     */
     public get count(): number {
         return this._inner.count;
     }
 
+    /**
+     * @internal
+     */
     public getPtr(n: number): number {
         this._nullCheck();
         return this._inner.ptr + n * Constants.RigidBodyConstructionInfoSize;
@@ -220,11 +239,21 @@ export class RigidBodyConstructionInfoList {
         }
     }
 
+    /**
+     * Get the shape of the rigid body at index n
+     * @param n The index of the rigid body
+     * @return The shape of the rigid body
+     */
     public getShape(n: number): Nullable<PhysicsShape> {
         this._nullCheck();
         return this._inner.getShape(n);
     }
 
+    /**
+     * Set the shape of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The shape of the rigid body
+     */
     public setShape(n: number, value: Nullable<PhysicsShape>): void {
         this._nullCheck();
         this._inner.setShape(n, value);
@@ -233,6 +262,12 @@ export class RigidBodyConstructionInfoList {
         this._uint32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Shape) / Constants.A32BytesPerElement] = value ? value.ptr : 0;
     }
 
+    /**
+     * Get the initial transform of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param result The matrix to store the result
+     * @returns The initial transform of the rigid body
+     */
     public getInitialTransformToRef(n: number, result: Matrix): Matrix {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
@@ -260,6 +295,11 @@ export class RigidBodyConstructionInfoList {
         return result;
     }
 
+    /**
+     * Set the initial transform of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The initial transform of the rigid body
+     */
     public setInitialTransform(n: number, value: Matrix): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
@@ -268,30 +308,57 @@ export class RigidBodyConstructionInfoList {
         value.copyToArray(float32Ptr, (offset + RigidBodyConstructionInfoOffsets.InitialTransform) / Constants.A32BytesPerElement);
     }
 
+    /**
+     * Get the motion type of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The motion type of the rigid body
+     */
     public getMotionType(n: number): MotionType {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.MotionType) / Constants.A8BytesPerElement];
     }
 
+    /**
+     * Set the motion type of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The motion type of the rigid body
+     * @returns The motion type of the rigid body
+     */
     public setMotionType(n: number, value: MotionType): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.MotionType) / Constants.A8BytesPerElement] = value;
     }
 
+    /**
+     * Get the mass of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The mass of the rigid body
+     */
     public getMass(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Mass) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set the mass of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The mass of the rigid body
+     */
     public setMass(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Mass) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get the local inertia of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param result The vector to store the result
+     * @returns The local inertia of the rigid body
+     */
     public getLocalInertiaToRef(n: number, result: Vector3): Nullable<Vector3> {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
@@ -309,6 +376,13 @@ export class RigidBodyConstructionInfoList {
         return result;
     }
 
+    /**
+     * Set the local inertia of the rigid body at index n
+     * 
+     * If the local inertia is not set, it will be calculated from the shape
+     * @param n The index of the rigid body
+     * @param value The local inertia of the rigid body
+     */
     public setLocalInertia(n: number, value: Nullable<Vector3>): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
@@ -325,132 +399,250 @@ export class RigidBodyConstructionInfoList {
         float32Ptr[(offset + RigidBodyConstructionInfoOffsets.LocalInertia) / Constants.A32BytesPerElement + 2] = value.z;
     }
 
+    /**
+     * Get linear damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The linear damping of the rigid body
+     */
     public getLinearDamping(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.LinearDamping) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set linear damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The linear damping of the rigid body
+     */
     public setLinearDamping(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.LinearDamping) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get angular damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The angular damping of the rigid body
+     */
     public getAngularDamping(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AngularDamping) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set angular damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The angular damping of the rigid body
+     */
     public setAngularDamping(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AngularDamping) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get friction of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The friction of the rigid body
+     */
     public getFriction(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Friction) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set friction of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The friction of the rigid body
+     */
     public setFriction(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Friction) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get restitution of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The restitution of the rigid body
+     */
     public getRestitution(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Restitution) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set restitution of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The restitution of the rigid body
+     */
     public setRestitution(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.Restitution) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get linear sleeping threshold of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The linear sleeping threshold of the rigid body
+     */
     public getLinearSleepingThreshold(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.LinearSleepingThreshold) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set linear sleeping threshold of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The linear sleeping threshold of the rigid body
+     */
     public setLinearSleepingThreshold(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.LinearSleepingThreshold) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get angular sleeping threshold of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The angular sleeping threshold of the rigid body
+     */
     public getAngularSleepingThreshold(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AngularSleepingThreshold) / Constants.A32BytesPerElement];
     }
 
+    /**
+     * Set angular sleeping threshold of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The angular sleeping threshold of the rigid body
+     */
     public setAngularSleepingThreshold(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._float32Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AngularSleepingThreshold) / Constants.A32BytesPerElement] = value;
     }
 
+    /**
+     * Get collision group of the rigid body at index n
+     * 
+     * collision group is stored as 16-bit unsigned integer
+     * @param n The index of the rigid body
+     * @return The collision group of the rigid body
+     */
     public getCollisionGroup(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._uint16Ptr.array[(offset + RigidBodyConstructionInfoOffsets.CollisionGroup) / Constants.A16BytesPerElement];
     }
 
+    /**
+     * Set collision group of the rigid body at index n
+     * 
+     * collision group is stored as 16-bit unsigned integer
+     * @param n The index of the rigid body
+     * @param value The collision group of the rigid body
+     */
     public setCollisionGroup(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._uint16Ptr.array[(offset + RigidBodyConstructionInfoOffsets.CollisionGroup) / Constants.A16BytesPerElement] = value;
     }
 
+    /**
+     * Get collision mask of the rigid body at index n
+     * 
+     * collision mask is stored as 16-bit unsigned integer
+     * @param n The index of the rigid body
+     * @return The collision mask of the rigid body
+     */
     public getCollisionMask(n: number): number {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return this._uint16Ptr.array[(offset + RigidBodyConstructionInfoOffsets.CollisionMask) / Constants.A16BytesPerElement];
     }
 
+    /**
+     * Set collision mask of the rigid body at index n
+     * 
+     * collision mask is stored as 16-bit unsigned integer
+     * @param n The index of the rigid body
+     * @param value The collision mask of the rigid body
+     */
     public setCollisionMask(n: number, value: number): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._uint16Ptr.array[(offset + RigidBodyConstructionInfoOffsets.CollisionMask) / Constants.A16BytesPerElement] = value;
     }
 
+    /**
+     * Get additional damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The additional damping of the rigid body
+     */
     public getAdditionalDamping(n: number): boolean {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return !!this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AdditionalDamping) / Constants.A8BytesPerElement];
     }
 
+    /**
+     * Set additional damping of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The additional damping of the rigid body
+     */
     public setAdditionalDamping(n: number, value: boolean): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.AdditionalDamping) / Constants.A8BytesPerElement] = +value;
     }
 
+    /**
+     * Get no contact response of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The no contact response of the rigid body
+     */
     public getNoContactResponse(n: number): boolean {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return !!this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.NoContactResponse) / Constants.A8BytesPerElement];
     }
 
+    /**
+     * Set no contact response of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The no contact response of the rigid body
+     */
     public setNoContactResponse(n: number, value: boolean): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.NoContactResponse) / Constants.A8BytesPerElement] = +value;
     }
 
+    /**
+     * Get disable deactivation of the rigid body at index n
+     * @param n The index of the rigid body
+     * @returns The disable deactivation of the rigid body
+     */
     public getDisableDeactivation(n: number): boolean {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         return !!this._uint8Ptr.array[(offset + RigidBodyConstructionInfoOffsets.DisableDeactivation) / Constants.A8BytesPerElement];
     }
 
+    /**
+     * Set disable deactivation of the rigid body at index n
+     * @param n The index of the rigid body
+     * @param value The disable deactivation of the rigid body
+     */
     public setDisableDeactivation(n: number, value: boolean): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
