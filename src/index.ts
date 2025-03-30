@@ -114,7 +114,7 @@ export { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlug
 
 // Runtime/Optimized/Physics/Bind
 export { BulletWasmInstance } from "@/Runtime/Optimized/Physics/Bind/bulletWasmInstance";
-export { Constraint, Generic6DofConstraint, Generic6DofSpringConstraint } from "@/Runtime/Optimized/Physics/Bind/constraint";}
+export { Constraint, Generic6DofConstraint, Generic6DofSpringConstraint } from "@/Runtime/Optimized/Physics/Bind/constraint";
 export { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
 export { MultiPhysicsWorld } from "@/Runtime/Optimized/Physics/Bind/multiPhysicsWorld";
 export { PhysicsShape, PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape, PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physicsShape";
