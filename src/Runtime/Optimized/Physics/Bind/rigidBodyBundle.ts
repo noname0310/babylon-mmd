@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, MotionStateOffsetsInFloat32Array } from "./constants";
 import type { IRigidBodyBundleImpl } from "./Impl/IRigidBodyBundleImpl";
-import type { IRuntime } from "./Impl/IRuntime";
+import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
@@ -117,7 +117,7 @@ function rigidBodyBundleFinalizer(inner: RigidBodyBundleInner): void {
 const physicsRigidBodyBundleRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyBundleInner>>();
 
 export class RigidBodyBundle {
-    public readonly runtime: IRuntime;
+    public readonly runtime: IPhysicsRuntime;
 
     private readonly _motionStatesPtr: IWasmTypedArray<Float32Array>;
     private _bufferedMotionStatesPtr: IWasmTypedArray<Float32Array>;
@@ -133,7 +133,7 @@ export class RigidBodyBundle {
     public impl: IRigidBodyBundleImpl;
     public readonly isContainsDynamic: boolean;
 
-    public constructor(runtime: IRuntime, info: RigidBodyConstructionInfoList) {
+    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList) {
         if (info.ptr === 0) {
             throw new Error("Cannot create rigid body bundle with null pointer");
         }

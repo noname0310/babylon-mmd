@@ -15,11 +15,23 @@ import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBund
 import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";
-import type { IRuntime } from "./IRuntime";
+import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 
+/**
+ * Options for creating a MultiPhysicsRuntime
+ */
 export interface MultiPhysicsRuntimeCreationOptions {
+    /**
+     * Whether to allow dynamic rigid body shadows (default: false)
+     * 
+     * If disabled, rigid body shadow creation will be allowed only if the rigid body physics mode is set to Static or Kinematic
+     */
     allowDynamicShadow?: boolean;
+
+    /**
+     * Whether to preserve the back buffer for the motion state (default: false)
+     */
     preserveBackBuffer?: boolean;
 }
 
@@ -61,11 +73,22 @@ function multiPhysicsRuntimeFinalizer(runtime: MultiPhysicsRuntimeInner): void {
 
 const multiPhysicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsRuntimeInner>>();
 
-export class MultiPhysicsRuntime implements IRuntime {
+/**
+ * MultiPhysicsRuntime handles the multiple physics simulations and provides an interface for managing rigid bodies and constraints
+ * 
+ * It is responsible for evaluating the physics world and synchronizing the state of rigid bodies
+ */
+export class MultiPhysicsRuntime implements IPhysicsRuntime {
     /**
+     * Observable that is triggered when the physics world is synchronized
      * in this observable callback scope, ensure that the physics world is not being evaluated
      */
     public readonly onSyncObservable: Observable<void>;
+
+    /**
+     * Observable that is triggered on each physics tick
+     * in this observable callback scope, physics may be evaluating on the worker thread when evaluation type is Buffered
+     */
     public readonly onTickObservable: Observable<void>;
 
     /**
@@ -92,9 +115,31 @@ export class MultiPhysicsRuntime implements IRuntime {
     private readonly _preserveBackBuffer: boolean;
     private _dynamicShadowCount: number;
 
+    /**
+     * Whether to use delta time for world step (default: true)
+     * 
+     * If true, the delta time will be calculated based on the scene's delta time
+     * If false, the `MultiPhysicsRuntime.timeStep` property will be used as the fixed time step
+     */
     public useDeltaForWorldStep: boolean;
+
+    /**
+     * The time step for the physics simulation (default: 1/60)
+     * 
+     * This value is used when `useDeltaForWorldStep` is set to false
+     */
     public timeStep: number;
+
+    /**
+     * The maximum number of substeps for the physics simulation (default: 10)
+     * 
+     * This value is used to control the maximum number of substeps taken in a single frame
+     */
     public maxSubSteps: number;
+
+    /**
+     * The fixed time step for the physics simulation (default: 1/60)
+     */
     public fixedTimeStep: number;
 
     private readonly _rigidBodyList: RigidBody[];
@@ -155,6 +200,9 @@ export class MultiPhysicsRuntime implements IRuntime {
         this._rigidBodyBundleList = [];
     }
 
+    /**
+     * Disposes the physics runtime and releases any associated resources
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -167,6 +215,7 @@ export class MultiPhysicsRuntime implements IRuntime {
         registry?.unregister(this);
     }
 
+    /** @internal */
     public get ptr(): number {
         return this._inner.ptr;
     }
@@ -177,6 +226,7 @@ export class MultiPhysicsRuntime implements IRuntime {
         }
     }
 
+    /** @internal */
     public createRigidBodyImpl(): IRigidBodyImpl {
         if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
             return new ImmediateRigidBodyImpl();
@@ -185,6 +235,7 @@ export class MultiPhysicsRuntime implements IRuntime {
         }
     }
 
+    /** @internal */
     public createRigidBodyBundleImpl(bundle: RigidBodyBundle): IRigidBodyBundleImpl {
         if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
             return new ImmediateRigidBodyBundleImpl(bundle.count);
@@ -193,6 +244,14 @@ export class MultiPhysicsRuntime implements IRuntime {
         }
     }
 
+    /**
+     * Registers the physics runtime with the given scene
+     * 
+     * This method binds the `afterAnimations` method to the scene's `onAfterAnimationsObservable` event
+     * 
+     * You can manually call `afterAnimations` if you want to control the timing of the physics simulation
+     * @param scene The scene to register with
+     */
     public register(scene: Scene): void {
         if (this._afterAnimationsBinded !== null) return;
         this._nullCheck();
@@ -204,6 +263,9 @@ export class MultiPhysicsRuntime implements IRuntime {
         scene.onAfterAnimationsObservable.add(this._afterAnimationsBinded);
     }
 
+    /**
+     * Unregisters the physics runtime from the scene
+     */
     public unregister(): void {
         if (this._afterAnimationsBinded === null) return;
 
@@ -212,6 +274,13 @@ export class MultiPhysicsRuntime implements IRuntime {
         this._scene = null;
     }
 
+    /**
+     * Steps the physics simulation and synchronizes the state of rigid bodies
+     * 
+     * In most cases, you do not need to call this method manually,
+     * Instead, you can use the `register` method to bind it to the scene's `onAfterAnimationsObservable` event
+     * @param deltaTime The time delta in milliseconds
+     */
     public afterAnimations(deltaTime: number): void {
         if (this._inner.ptr === 0) {
             this.unregister();
@@ -360,16 +429,34 @@ export class MultiPhysicsRuntime implements IRuntime {
 
     private readonly _gravity: Vector3 = new Vector3(0, -10, 0);
 
-    public getGravityToRef(result: Vector3): void {
-        result.copyFrom(this._gravity);
+    /**
+     * Gets the gravity vector of the physics world (default: (0, -10, 0))
+     * @returns The gravity vector
+     */
+    public getGravityToRef(result: Vector3): Vector3 {
+        return result.copyFrom(this._gravity);
     }
 
+    /**
+     * Sets the gravity vector of the physics world
+     * @param gravity The gravity vector
+     */
     public setGravity(gravity: Vector3): void {
         this._nullCheck();
         this._gravity.copyFrom(gravity);
         this._physicsWorld.setGravity(gravity);
     }
 
+    /**
+     * Adds a rigid body to the physics world
+     * 
+     * If the world is not existing, it will be created
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body will be added after waiting for the lock
+     * @param rigidBody The rigid body to add
+     * @param worldId The ID of the world to add the rigid body to
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBody(rigidBody: RigidBody, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBody(rigidBody, worldId);
@@ -393,6 +480,16 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body from the physics world
+     * 
+     * If there are no more rigid bodies in the world, the world will be destroyed automatically
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
+     * @param rigidBody The rigid body to remove
+     * @param worldId The ID of the world to remove the rigid body from
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBody(rigidBody: RigidBody, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBody(rigidBody, worldId);
@@ -406,6 +503,16 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body bundle to the physics world
+     * 
+     * If the world is not existing, it will be created
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @param worldId The ID of the world to add the rigid body bundle to
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundle(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyBundle(rigidBodyBundle, worldId);
@@ -429,6 +536,16 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body bundle from the physics world
+     * 
+     * If there are no more rigid body bundles in the world, the world will be destroyed automatically
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @param worldId The ID of the world to remove the rigid body bundle from
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundle(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundle(rigidBodyBundle, worldId);
@@ -442,6 +559,15 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body to all worlds
+     *
+     * rigid body physics mode must be Static or Kinematic
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body will be added after waiting for the lock
+     * @param rigidBody The rigid body to add
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBodyToGlobal(rigidBody: RigidBody): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyToGlobal(rigidBody);
@@ -451,6 +577,19 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body from all worlds
+     * 
+     * This method does not remove the rigid body that is added with `MultiPhysicsRuntime.addRigidBody`
+     * 
+     * Only the rigid body that is added with `MultiPhysicsRuntime.addRigidBodyToGlobal` will be removed
+     * 
+     * If there are no more rigid bodies in the world, the world will be destroyed automatically
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
+     * @param rigidBody The rigid body to remove
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBodyFromGlobal(rigidBody: RigidBody): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyFromGlobal(rigidBody);
@@ -463,6 +602,15 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body bundle to all worlds
+     *
+     * rigid body bundle physics mode must be Static or Kinematic
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundleToGlobal(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyBundleToGlobal(rigidBodyBundle);
@@ -472,6 +620,19 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body bundle from all worlds
+     * 
+     * This method does not remove the rigid body bundle that is added with `MultiPhysicsRuntime.addRigidBodyBundle`
+     * 
+     * Only the rigid body bundle that is added with `MultiPhysicsRuntime.addRigidBodyBundleToGlobal` will be removed
+     * 
+     * If there are no more rigid body bundles in the world, the world will be destroyed automatically
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundleFromGlobal(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundleFromGlobal(rigidBodyBundle);
@@ -484,6 +645,23 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body shadow to the physics world
+     * 
+     * In case of Dynamic physics mode, Rigid body firstly needs to be added to the other world
+     * 
+     * The worldId must be not equal to the worldId of the rigid body
+     * 
+     * Rigid body shadow allows the rigid body to be added to multiple worlds
+     * 
+     * When RigidBody with dynamic physics mode is added to the world as shadow,
+     * the rigid body will be added to the world as kinematic
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body shadow will be added after waiting for the lock
+     * @param rigidBody The rigid body to add
+     * @param worldId The ID of the world to add the rigid body as shadow
+     * @returns True if the rigid body shadow was added successfully, false otherwise
+     */
     public addRigidBodyShadow(rigidBody: RigidBody, worldId: number): boolean {
         this._nullCheck();
 
@@ -512,6 +690,14 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body shadow from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body shadow will be removed after waiting for the lock
+     * @param rigidBody The rigid body to remove
+     * @param worldId The ID of the world to remove the rigid body shadow from
+     * @returns True if the rigid body shadow was removed successfully, false otherwise
+     */
     public removeRigidBodyShadow(rigidBody: RigidBody, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyShadow(rigidBody, worldId);
@@ -552,6 +738,22 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body bundle shadow to the physics world
+     * 
+     * Rigid body bundle firstly needs to be added to the other world
+     * and the worldId must be not equal to the worldId of the rigid body bundle
+     * 
+     * Rigid body bundle shadow allows the rigid body bundle to be added to multiple worlds
+     * 
+     * When RigidBodyBundle with dynamic physics mode is added to the world as shadow,
+     * the rigid body bundle will be added to the world as kinematic
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle shadow will be added after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @param worldId The ID of the world to add the rigid body bundle as shadow
+     * @returns True if the rigid body bundle shadow was added successfully, false otherwise
+     */
     public addRigidBodyBundleShadow(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         this._nullCheck();
 
@@ -577,6 +779,14 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body bundle shadow from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle shadow will be removed after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @param worldId The ID of the world to remove the rigid body bundle shadow from
+     * @returns True if the rigid body bundle shadow was removed successfully, false otherwise
+     */
     public removeRigidBodyBundleShadow(rigidBodyBundle: RigidBodyBundle, worldId: number): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundleShadow(rigidBodyBundle, worldId);
@@ -617,15 +827,37 @@ export class MultiPhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Gets the list of rigid bodies in the physics world
+     */
     public get rigidBodyList(): readonly RigidBody[] {
         return this._rigidBodyList;
     }
 
+    /**
+     * Adds a constraint to the physics world
+     * 
+     * Constraint worldId must be equal to the worldId of the connected rigid bodies
+     * 
+     * If the runtime evaluation type is Buffered, the constraint will be added after waiting for the lock
+     * @param constraint The constraint to add
+     * @param worldId The ID of the world to add the constraint to
+     * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between the linked bodies
+     * @returns True if the constraint was added successfully, false otherwise
+     */
     public addConstraint(constraint: Constraint, worldId: number, disableCollisionsBetweenLinkedBodies: boolean): boolean {
         this._nullCheck();
         return this._physicsWorld.addConstraint(constraint, worldId, disableCollisionsBetweenLinkedBodies);
     }
 
+    /**
+     * Removes a constraint from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the constraint will be removed after waiting for the lock
+     * @param constraint The constraint to remove
+     * @param worldId The ID of the world to remove the constraint from
+     * @returns True if the constraint was removed successfully, false otherwise
+     */
     public removeConstraint(constraint: Constraint, worldId: number): boolean {
         this._nullCheck();
         return this._physicsWorld.removeConstraint(constraint, worldId);

@@ -3,7 +3,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants } from "./constants";
-import type { IRuntime } from "./Impl/IRuntime";
+import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
 
@@ -72,12 +72,12 @@ function constraintFinalizer(inner: ConstraintInner): void {
 const constraintRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<ConstraintInner>>();
 
 export abstract class Constraint {
-    public readonly runtime: IRuntime;
+    public readonly runtime: IPhysicsRuntime;
     protected readonly _inner: ConstraintInner;
 
     private _worldReference: Nullable<object>;
 
-    protected constructor(runtime: IRuntime, ptr: number, bodyReference: readonly [RigidBody, RigidBody] | RigidBodyBundle) {
+    protected constructor(runtime: IPhysicsRuntime, ptr: number, bodyReference: readonly [RigidBody, RigidBody] | RigidBodyBundle) {
         if (Array.isArray(bodyReference)) {
             if (bodyReference[0].runtime !== runtime || bodyReference[1].runtime !== runtime) {
                 throw new Error("Cannot create constraint between bodies from different runtimes");
@@ -156,7 +156,7 @@ const matrixBufferSize = 16 * Constants.A32BytesPerElement;
 
 export class Generic6DofConstraint extends Constraint {
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyA: RigidBody,
         bodyB: RigidBody,
         frameA: Matrix,
@@ -165,7 +165,7 @@ export class Generic6DofConstraint extends Constraint {
     );
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyBundle: RigidBodyBundle,
         bodyIndices: readonly [number, number],
         frameA: Matrix,
@@ -174,7 +174,7 @@ export class Generic6DofConstraint extends Constraint {
     );
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyAOrBundle: RigidBody | RigidBodyBundle,
         bodyBOrIndices: RigidBody | readonly [number, number],
         frameA: Matrix,
@@ -250,7 +250,7 @@ export class Generic6DofConstraint extends Constraint {
 
 export class Generic6DofSpringConstraint extends Constraint {
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyA: RigidBody,
         bodyB: RigidBody,
         frameA: Matrix,
@@ -259,7 +259,7 @@ export class Generic6DofSpringConstraint extends Constraint {
     );
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyBundle: RigidBodyBundle,
         bodyIndices: readonly [number, number],
         frameA: Matrix,
@@ -268,7 +268,7 @@ export class Generic6DofSpringConstraint extends Constraint {
     );
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         bodyAOrBundle: RigidBody | RigidBodyBundle,
         bodyBOrIndices: RigidBody | readonly [number, number],
         frameA: Matrix,

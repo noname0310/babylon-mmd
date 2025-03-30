@@ -1,7 +1,7 @@
 import type { Matrix } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { IRuntime } from "../Impl/IRuntime";
+import type { IPhysicsRuntime } from "../Impl/IPhysicsRuntime";
 import type { MotionType } from "../motionType";
 import { RigidBody } from "../rigidBody";
 import type { PluginConstructionInfo } from "./pluginConstructionInfo";
@@ -13,7 +13,7 @@ export class PluginBody extends RigidBody {
     public readonly localTransform: Nullable<DeepImmutable<Matrix>>;
     public readonly localTransformInverse: Nullable<DeepImmutable<Matrix>>;
 
-    public constructor(runtime: IRuntime, info: PluginConstructionInfo) {
+    public constructor(runtime: IPhysicsRuntime, info: PluginConstructionInfo) {
         const shape = info.shape as unknown as Nullable<IPluginShape>;
         let localTransform: Nullable<DeepImmutable<Matrix>> = null;
         if (shape !== null) {

@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, MotionStateOffsetsInFloat32Array } from "./constants";
 import type { IRigidBodyImpl } from "./Impl/IRigidBodyImpl";
-import type { IRuntime } from "./Impl/IRuntime";
+import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
@@ -118,7 +118,7 @@ function rigidBodyFinalizer(inner: RigidBodyInner): void {
 const physicsRigidBodyRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyInner>>();
 
 export class RigidBody {
-    public readonly runtime: IRuntime;
+    public readonly runtime: IPhysicsRuntime;
 
     private readonly _motionStatePtr: IWasmTypedArray<Float32Array>;
     private _bufferedMotionStatePtr: IWasmTypedArray<Float32Array>;
@@ -133,11 +133,11 @@ export class RigidBody {
     public impl: IRigidBodyImpl;
     public readonly isDynamic: boolean;
 
-    public constructor(runtime: IRuntime, info: RigidBodyConstructionInfo);
+    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfo);
 
-    public constructor(runtime: IRuntime, info: RigidBodyConstructionInfoList, n: number);
+    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList, n: number);
 
-    public constructor(runtime: IRuntime, info: RigidBodyConstructionInfo | RigidBodyConstructionInfoList, n?: number) {
+    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfo | RigidBodyConstructionInfoList, n?: number) {
         const infoPtr = n !== undefined ? (info as RigidBodyConstructionInfoList).getPtr(n) : (info as RigidBodyConstructionInfo).ptr;
 
         if (infoPtr === 0) {

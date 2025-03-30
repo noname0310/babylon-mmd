@@ -2,7 +2,7 @@ import { Quaternion} from "@babylonjs/core/Maths/math.vector";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { IRuntime } from "../Impl/IRuntime";
+import type { IPhysicsRuntime } from "../Impl/IPhysicsRuntime";
 import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape } from "../physicsShape";
 
 const tempVector3 = new Vector3();
@@ -60,7 +60,7 @@ export class PluginBoxShape extends PhysicsBoxShape implements IPluginShape {
     private _material: Nullable<PluginShapeMaterial> = null;
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         center?: Vector3,
         rotation?: Quaternion,
         extents: Vector3 = new Vector3(1.0, 1.0, 1.0)
@@ -85,7 +85,7 @@ export class PluginSphereShape extends PhysicsSphereShape implements IPluginShap
     private _material: Nullable<PluginShapeMaterial> = null;
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         center?: Vector3,
         radius: number = 1.0
     ) {
@@ -109,7 +109,7 @@ export class PluginCapsuleShape extends PhysicsCapsuleShape implements IPluginSh
     private _material: Nullable<PluginShapeMaterial> = null;
 
     public constructor(
-        runtime: IRuntime,
+        runtime: IPhysicsRuntime,
         pointA: Vector3 = new Vector3(0, 0, 0),
         pointB: Vector3 = new Vector3(0, 1, 0),
         radius: number = 0

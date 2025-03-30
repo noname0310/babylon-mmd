@@ -2,12 +2,12 @@ import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import type { Constraint } from "./constraint";
-import type { IRuntime } from "./Impl/IRuntime";
+import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
 
 class MultiPhysicsWorldInner {
-    private readonly _runtime: WeakRef<IRuntime>;
+    private readonly _runtime: WeakRef<IPhysicsRuntime>;
     private _ptr: number;
 
     private readonly _rigidBodyReferences: Map<RigidBody, number>; // [RigidBody, worldId]
@@ -23,7 +23,7 @@ class MultiPhysicsWorldInner {
 
     private _referenceCount: number;
 
-    public constructor(runtime: WeakRef<IRuntime>, ptr: number) {
+    public constructor(runtime: WeakRef<IPhysicsRuntime>, ptr: number) {
         this._runtime = runtime;
         this._ptr = ptr;
 
@@ -313,11 +313,11 @@ function multiPhysicsWorldFinalizer(inner: MultiPhysicsWorldInner): void {
 const multiPhysicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsWorldInner>>();
 
 export class MultiPhysicsWorld {
-    private readonly _runtime: IRuntime;
+    private readonly _runtime: IPhysicsRuntime;
 
     private readonly _inner: MultiPhysicsWorldInner;
 
-    public constructor(runtime: IRuntime, allowDynamicShadow: boolean) {
+    public constructor(runtime: IPhysicsRuntime, allowDynamicShadow: boolean) {
         this._runtime = runtime;
 
         const ptr = runtime.wasmInstance.createMultiPhysicsWorld(allowDynamicShadow);

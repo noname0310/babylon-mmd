@@ -15,7 +15,7 @@ import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBund
 import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";
-import type { IRuntime } from "./IRuntime";
+import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 
 class PhysicsRuntimeInner {
@@ -56,11 +56,22 @@ function physicsRuntimeFinalizer(inner: PhysicsRuntimeInner): void {
 
 const physicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsRuntimeInner>>();
 
-export class PhysicsRuntime implements IRuntime {
+/**
+ * PhysicsRuntime handles the physics simulation and provides an interface for managing rigid bodies and constraints
+ * 
+ * It is responsible for evaluating the physics world and synchronizing the state of rigid bodies
+ */
+export class PhysicsRuntime implements IPhysicsRuntime {
     /**
+     * Observable that is triggered when the physics world is synchronized
      * in this observable callback scope, ensure that the physics world is not being evaluated
      */
     public readonly onSyncObservable: Observable<void>;
+
+    /**
+     * Observable that is triggered on each physics tick
+     * in this observable callback scope, physics may be evaluating on the worker thread when evaluation type is Buffered
+     */
     public readonly onTickObservable: Observable<void>;
 
     /**
@@ -84,9 +95,31 @@ export class PhysicsRuntime implements IRuntime {
     private _evaluationType: PhysicsRuntimeEvaluationType;
     private _usingWasmBackBuffer: boolean;
 
+    /**
+     * Whether to use delta time for world step (default: true)
+     * 
+     * If true, the delta time will be calculated based on the scene's delta time
+     * If false, the `MultiPhysicsRuntime.timeStep` property will be used as the fixed time step
+     */
     public useDeltaForWorldStep: boolean;
+
+    /**
+     * The time step for the physics simulation (default: 1/60)
+     * 
+     * This property is only used when `useDeltaForWorldStep` is false
+     */
     public timeStep: number;
+
+    /**
+     * The maximum number of substeps for the physics simulation (default: 10)
+     * 
+     * This value is used to control the maximum number of substeps taken in a single frame
+     */
     public maxSubSteps: number;
+    
+    /**
+     * The fixed time step for the physics simulation (default: 1/60)
+     */
     public fixedTimeStep: number;
 
     private readonly _rigidBodyList: RigidBody[];
@@ -134,6 +167,9 @@ export class PhysicsRuntime implements IRuntime {
         this._rigidBodyBundleList = [];
     }
 
+    /**
+     * Disposes the physics runtime and releases any associated resources
+     */
     public dispose(): void {
         if (this._inner.ptr === 0) {
             return;
@@ -146,6 +182,7 @@ export class PhysicsRuntime implements IRuntime {
         registry?.unregister(this);
     }
 
+    /** @internal */
     public get ptr(): number {
         return this._inner.ptr;
     }
@@ -156,6 +193,7 @@ export class PhysicsRuntime implements IRuntime {
         }
     }
 
+    /** @internal */
     public createRigidBodyImpl(): IRigidBodyImpl {
         if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
             return new ImmediateRigidBodyImpl();
@@ -164,6 +202,7 @@ export class PhysicsRuntime implements IRuntime {
         }
     }
 
+    /** @internal */
     public createRigidBodyBundleImpl(bundle: RigidBodyBundle): IRigidBodyBundleImpl {
         if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
             return new ImmediateRigidBodyBundleImpl(bundle.count);
@@ -172,6 +211,14 @@ export class PhysicsRuntime implements IRuntime {
         }
     }
 
+    /**
+     * Registers the physics runtime with the given scene
+     * 
+     * This method binds the `afterAnimations` method to the scene's `onAfterAnimationsObservable` event
+     * 
+     * You can manually call `afterAnimations` if you want to control the timing of the physics simulation
+     * @param scene The scene to register with
+     */
     public register(scene: Scene): void {
         if (this._afterAnimationsBinded !== null) return;
         this._nullCheck();
@@ -183,6 +230,9 @@ export class PhysicsRuntime implements IRuntime {
         scene.onAfterAnimationsObservable.add(this._afterAnimationsBinded);
     }
 
+    /**
+     * Unregisters the physics runtime from the scene
+     */
     public unregister(): void {
         if (this._afterAnimationsBinded === null) return;
 
@@ -191,6 +241,13 @@ export class PhysicsRuntime implements IRuntime {
         this._scene = null;
     }
 
+    /**
+     * Steps the physics simulation and synchronizes the state of rigid bodies
+     * 
+     * In most cases, you do not need to call this method manually,
+     * Instead, you can use the `register` method to bind it to the scene's `onAfterAnimationsObservable` event
+     * @param deltaTime The time delta in milliseconds
+     */
     public afterAnimations(deltaTime: number): void {
         if (this._inner.ptr === 0) {
             this.unregister();
@@ -327,16 +384,31 @@ export class PhysicsRuntime implements IRuntime {
 
     private readonly _gravity: Vector3 = new Vector3(0, -10, 0);
 
-    public getGravityToRef(result: Vector3): void {
-        result.copyFrom(this._gravity);
+    /**
+     * Gets the gravity vector of the physics worlds (default: (0, -10, 0))
+     * @returns The gravity vector
+     */
+    public getGravityToRef(result: Vector3): Vector3 {
+        return result.copyFrom(this._gravity);
     }
 
+    /**
+     * Sets the gravity vector of the physics world
+     * @param gravity The new gravity vector
+     */
     public setGravity(gravity: Vector3): void {
         this._nullCheck();
         this._gravity.copyFrom(gravity);
         this._physicsWorld.setGravity(gravity);
     }
 
+    /**
+     * Adds a rigid body to the physics world
+     * 
+     * If the world evaluation type is Buffered, the rigid body will be added after waiting for the lock
+     * @param rigidBody The rigid body to add
+     * @returns True if the rigid body was added successfully, false otherwise
+     */
     public addRigidBody(rigidBody: RigidBody): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBody(rigidBody);
@@ -357,6 +429,13 @@ export class PhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
+     * @param rigidBody The rigid body to remove
+     * @returns True if the rigid body was removed successfully, false otherwise
+     */
     public removeRigidBody(rigidBody: RigidBody): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBody(rigidBody);
@@ -369,6 +448,13 @@ export class PhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Adds a rigid body bundle to the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to add
+     * @returns True if the rigid body bundle was added successfully, false otherwise
+     */
     public addRigidBodyBundle(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyBundle(rigidBodyBundle);
@@ -389,6 +475,13 @@ export class PhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Removes a rigid body bundle from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
+     * @param rigidBodyBundle The rigid body bundle to remove
+     * @returns True if the rigid body bundle was removed successfully, false otherwise
+     */
     public removeRigidBodyBundle(rigidBodyBundle: RigidBodyBundle): boolean {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundle(rigidBodyBundle);
@@ -401,15 +494,41 @@ export class PhysicsRuntime implements IRuntime {
         return result;
     }
 
+    /**
+     * Gets the list of rigid bodies in the physics world
+     */
     public get rigidBodyList(): readonly RigidBody[] {
         return this._rigidBodyList;
     }
 
+    /**
+     * Gets the list of rigid body bundles in the physics world
+     */
+    public get rigidBodyBundleList(): readonly RigidBodyBundle[] {
+        return this._rigidBodyBundleList;
+    }
+
+    
+    /**
+     * Adds a constraint to the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the constraint will be added after waiting for the lock
+     * @param constraint The constraint to add
+     * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between the linked bodies
+     * @returns True if the constraint was added successfully, false otherwise
+     */
     public addConstraint(constraint: Constraint, disableCollisionsBetweenLinkedBodies: boolean): boolean {
         this._nullCheck();
         return this._physicsWorld.addConstraint(constraint, disableCollisionsBetweenLinkedBodies);
     }
 
+    /**
+     * Removes a constraint from the physics world
+     * 
+     * If the runtime evaluation type is Buffered, the constraint will be removed after waiting for the lock
+     * @param constraint The constraint to remove
+     * @returns True if the constraint was removed successfully, false otherwise
+     */
     public removeConstraint(constraint: Constraint): boolean {
         this._nullCheck();
         return this._physicsWorld.removeConstraint(constraint);

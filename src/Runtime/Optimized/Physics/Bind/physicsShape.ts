@@ -1,7 +1,7 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
-import type { IRuntime } from "./Impl/IRuntime";
+import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 
 class PhysicsShapeInner {
     private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
@@ -49,11 +49,11 @@ function physicsShapeFinalizer(inner: PhysicsShapeInner): void {
 const physicsShapeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsShapeInner>>();
 
 export abstract class PhysicsShape {
-    public readonly runtime: IRuntime;
+    public readonly runtime: IPhysicsRuntime;
 
     protected readonly _inner: PhysicsShapeInner;
 
-    protected constructor(runtime: IRuntime, ptr: number) {
+    protected constructor(runtime: IPhysicsRuntime, ptr: number) {
         this.runtime = runtime;
         this._inner = new PhysicsShapeInner(new WeakRef(runtime.wasmInstance), ptr);
 
@@ -100,28 +100,28 @@ export abstract class PhysicsShape {
 }
 
 export class PhysicsBoxShape extends PhysicsShape {
-    public constructor(runtime: IRuntime, size: Vector3) {
+    public constructor(runtime: IPhysicsRuntime, size: Vector3) {
         const ptr = runtime.wasmInstance.createBoxShape(size.x, size.y, size.z);
         super(runtime, ptr);
     }
 }
 
 export class PhysicsSphereShape extends PhysicsShape {
-    public constructor(runtime: IRuntime, radius: number) {
+    public constructor(runtime: IPhysicsRuntime, radius: number) {
         const ptr = runtime.wasmInstance.createSphereShape(radius);
         super(runtime, ptr);
     }
 }
 
 export class PhysicsCapsuleShape extends PhysicsShape {
-    public constructor(runtime: IRuntime, radius: number, height: number) {
+    public constructor(runtime: IPhysicsRuntime, radius: number, height: number) {
         const ptr = runtime.wasmInstance.createCapsuleShape(radius, height);
         super(runtime, ptr);
     }
 }
 
 export class PhysicsStaticPlaneShape extends PhysicsShape {
-    public constructor(runtime: IRuntime, normal: Vector3, planeConstant: number) {
+    public constructor(runtime: IPhysicsRuntime, normal: Vector3, planeConstant: number) {
         const ptr = runtime.wasmInstance.createStaticPlaneShape(normal.x, normal.y, normal.z, planeConstant);
         super(runtime, ptr);
     }

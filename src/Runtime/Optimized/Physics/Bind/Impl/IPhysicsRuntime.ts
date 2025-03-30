@@ -7,7 +7,7 @@ import type { IRigidBodyImpl } from "./IRigidBodyImpl";
 /**
  * Represents the runtime for the physics engine
  */
-export interface IRuntime {
+export interface IPhysicsRuntime {
     /**
      * The Bullet WASM instance
      */
@@ -19,7 +19,9 @@ export interface IRuntime {
      */
     readonly lock: IWasmSpinLock;
 
+    /** @internal */
     createRigidBodyImpl(): IRigidBodyImpl;
 
+    /** @internal */
     createRigidBodyBundleImpl(bundle: RigidBodyBundle): IRigidBodyBundleImpl;
 }
