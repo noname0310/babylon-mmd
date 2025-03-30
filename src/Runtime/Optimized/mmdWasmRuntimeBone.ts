@@ -1,5 +1,5 @@
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
@@ -142,7 +142,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * Set the world translation of this bone
      * @param source source vector
      */
-    public setWorldTranslationFromRef(source: Vector3): void {
+    public setWorldTranslation(source: DeepImmutable<Vector3>): void {
         const worldMatrix = this._worldMatrix.array;
         worldMatrix[12] = source.x;
         worldMatrix[13] = source.y;

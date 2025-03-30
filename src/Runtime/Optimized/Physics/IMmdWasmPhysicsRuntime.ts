@@ -1,5 +1,5 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 /**
  * Mmd wasm physics runtime interface
@@ -31,7 +31,7 @@ export interface IMmdWasmPhysicsRuntime {
      *
      * @param gravity gravity
      */
-    setGravity(gravity: Vector3): void;
+    setGravity(gravity: DeepImmutable<Vector3>): void;
 
     /**
      * Get the gravity of the all physics world (default 0, -98.0, 0)

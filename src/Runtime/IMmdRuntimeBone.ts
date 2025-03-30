@@ -1,5 +1,5 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 
@@ -77,7 +77,7 @@ export interface IMmdRuntimeBone {
      * Set the world translation of this bone
      * @param source source vector
      */
-    setWorldTranslationFromRef(source: Vector3): void;
+    setWorldTranslation(source: DeepImmutable<Vector3>): void;
 
     /**
      * Get ik solver index

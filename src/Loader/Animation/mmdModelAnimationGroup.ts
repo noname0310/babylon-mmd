@@ -4,7 +4,7 @@ import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { bezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
@@ -461,7 +461,7 @@ export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroup
     }
 
     // ref: https://github.com/UuuNyaa/blender_mmd_tools/blob/main/mmd_tools/core/vmd/importer.py#L274-L280
-    private _minimizeRotationDifference(rotation: Quaternion, previousRotation: Quaternion): void {
+    private _minimizeRotationDifference(rotation: Quaternion, previousRotation: DeepImmutable<Quaternion>): void {
         const dot = Quaternion.Dot(rotation, previousRotation);
         if (dot < 0) {
             rotation.x = -rotation.x;
