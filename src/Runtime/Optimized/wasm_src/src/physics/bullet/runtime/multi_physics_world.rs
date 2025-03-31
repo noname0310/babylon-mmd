@@ -21,12 +21,20 @@ struct MultiPhysicsWorldHandleInfo {
 pub(crate) struct MultiPhysicsWorld {
     worlds: FxHashMap<PhysicsWorldId, PhysicsWorld>,
     gravity: Vec3,
+
     #[cfg(debug_assertions)]
     ref_count: u32,
     #[cfg(debug_assertions)]
     handle_info: MultiPhysicsWorldHandleInfo,
+    
+    // global bodies and bundles are added to all worlds
     global_bodies: Vec<RigidBodyHandle>,
     global_body_bundles: Vec<RigidBodyBundleHandle>,
+
+    // orphan bodies and bundles are added to the world as only shadows
+    orphan_bodies: Vec<RigidBodyHandle>,
+    orphan_body_bundles: Vec<RigidBodyBundleHandle>,
+
     allow_dynamic_shadow: bool,
     use_motion_state_buffer: bool,
 }
@@ -36,15 +44,22 @@ impl MultiPhysicsWorld {
         Self {
             worlds: FxHashMap::default(),
             gravity: Vec3::new(0.0, -10.0, 0.0),
+            
             #[cfg(debug_assertions)]
             ref_count: 0,
+            
             #[cfg(debug_assertions)]
             handle_info: MultiPhysicsWorldHandleInfo {
                 bodies: Vec::new(),
                 body_bundles: Vec::new(),
             },
+            
             global_bodies: Vec::new(),
             global_body_bundles: Vec::new(),
+
+            orphan_bodies: Vec::new(),
+            orphan_body_bundles: Vec::new(),
+
             allow_dynamic_shadow,
             use_motion_state_buffer: false,
         }
@@ -88,6 +103,21 @@ impl MultiPhysicsWorld {
         if !self.use_motion_state_buffer {
             return;
         }
+        
+        for body in self.global_bodies.iter_mut() {
+            body.get_mut().sync_buffered_motion_state();
+        }
+        for bundle in self.global_body_bundles.iter_mut() {
+            bundle.get_mut().sync_buffered_motion_states();
+        }
+
+        for body in self.orphan_bodies.iter_mut() {
+            body.get_mut().sync_buffered_motion_state();
+        }
+        for bundle in self.orphan_body_bundles.iter_mut() {
+            bundle.get_mut().sync_buffered_motion_states();
+        }
+
         for (_, world) in self.worlds.iter_mut() {
             world.sync_buffered_motion_state();
         }
@@ -113,26 +143,30 @@ impl MultiPhysicsWorld {
         }
     }
 
-    pub(crate) fn add_rigidbody(
-        &mut self,
-        world_id: PhysicsWorldId, 
-        #[cfg(debug_assertions)]
-        mut rigidbody: RigidBodyHandle,
-        #[cfg(not(debug_assertions))]
-        rigidbody: RigidBodyHandle,
-    ) {
+    pub(crate) fn add_rigidbody(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
         #[cfg(debug_assertions)]
         {
             if self.handle_info.bodies.iter().any(|b| *b == rigidbody) {
                 panic!("RigidBody already added to the world");
             }
             self.handle_info.bodies.push(rigidbody.clone());
+
+            if self.global_bodies.iter().any(|b| *b == rigidbody) {
+                panic!("RigidBody already added as global");
+            }
         }
 
-        self.get_or_create_world(world_id).add_rigidbody(rigidbody);
+        self.get_or_create_world(world_id).add_rigidbody(rigidbody.clone());
+        
+        if rigidbody.get().has_orphan_ref() {
+            // rigidbody is no longer an orphan, remove it from the orphan list
+            if let Some(index) = self.orphan_bodies.iter().position(|b| *b == rigidbody) {
+                self.orphan_bodies.remove(index);
+            }
+        }
     }
 
-    pub(crate) fn remove_rigidbody(&mut self, world_id: PhysicsWorldId, rigidbody: RigidBodyHandle) {
+    pub(crate) fn remove_rigidbody(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
         #[cfg(debug_assertions)]
         {
             if !self.handle_info.bodies.iter().any(|b| *b == rigidbody) {
@@ -142,30 +176,39 @@ impl MultiPhysicsWorld {
             self.handle_info.bodies.remove(index);
         }
 
+        if rigidbody.get().has_orphan_ref() {
+            // rigidbody is an orphan, add it to the orphan list
+            self.orphan_bodies.push(rigidbody.clone());
+        }
+
         self.get_world(world_id).map(|world| world.remove_rigidbody(rigidbody));
         self.remove_world_if_empty(world_id);
     }
 
-    pub(crate) fn add_rigidbody_bundle(
-        &mut self,
-        world_id: PhysicsWorldId,
-        #[cfg(debug_assertions)]
-        mut bundle: RigidBodyBundleHandle,
-        #[cfg(not(debug_assertions))]
-        bundle: RigidBodyBundleHandle,
-    ) {
+    pub(crate) fn add_rigidbody_bundle(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
         #[cfg(debug_assertions)]
         {
             if self.handle_info.body_bundles.iter().any(|b| *b == bundle) {
                 panic!("RigidBodyBundle already added to the world");
             }
             self.handle_info.body_bundles.push(bundle.clone());
+
+            if self.global_body_bundles.iter().any(|b| *b == bundle) {
+                panic!("RigidBodyBundle already added as global");
+            }
         }
 
-        self.get_or_create_world(world_id).add_rigidbody_bundle(bundle);
+        self.get_or_create_world(world_id).add_rigidbody_bundle(bundle.clone());
+
+        if bundle.get().has_orphan_ref() {
+            // bundle is no longer an orphan, remove it from the orphan list
+            if let Some(index) = self.orphan_body_bundles.iter().position(|b| *b == bundle) {
+                self.orphan_body_bundles.remove(index);
+            }
+        }
     }
 
-    pub(crate) fn remove_rigidbody_bundle(&mut self, world_id: PhysicsWorldId, bundle: RigidBodyBundleHandle) {
+    pub(crate) fn remove_rigidbody_bundle(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
         #[cfg(debug_assertions)]
         {
             if !self.handle_info.body_bundles.iter().any(|b| *b == bundle) {
@@ -173,6 +216,11 @@ impl MultiPhysicsWorld {
             }
             let index: usize = self.handle_info.body_bundles.iter().position(|r| *r == bundle).unwrap();
             self.handle_info.body_bundles.remove(index);
+        }
+
+        if bundle.get().has_orphan_ref() {
+            // bundle is an orphan, add it to the orphan list
+            self.orphan_body_bundles.push(bundle.clone());
         }
 
         self.get_world(world_id).map(|world| world.remove_rigidbody_bundle(bundle));
@@ -185,13 +233,20 @@ impl MultiPhysicsWorld {
             if self.global_bodies.iter().any(|b| *b == rigidbody) {
                 panic!("RigidBody already added to the global world");
             }
+
+            if self.handle_info.bodies.iter().any(|b| *b == rigidbody) {
+                panic!("RigidBody already added to the world");
+            }
         }
-        // check if the rigidbody is dynamic on js side
 
         for (_, world) in self.worlds.iter_mut() {
             world.add_rigidbody_shadow(rigidbody.clone(), true);
         }
-        self.global_bodies.push(rigidbody);
+        self.global_bodies.push(rigidbody.clone());
+
+        if self.use_motion_state_buffer {
+            rigidbody.get_mut().acquire_buffered_motion_state(true);
+        }
     }
 
     pub(crate) fn remove_rigidbody_from_global(&mut self, mut rigidbody: RigidBodyHandle) {
@@ -210,6 +265,10 @@ impl MultiPhysicsWorld {
         }
         let index: usize = self.global_bodies.iter().position(|r| *r == rigidbody).unwrap();
         self.global_bodies.remove(index);
+
+        if self.use_motion_state_buffer {
+            rigidbody.get_mut().release_buffered_motion_state(true);
+        }
     }
 
     pub(crate) fn add_rigidbody_bundle_to_global(&mut self, mut bundle: RigidBodyBundleHandle) {
@@ -218,13 +277,20 @@ impl MultiPhysicsWorld {
             if self.global_body_bundles.iter().any(|b| *b == bundle) {
                 panic!("RigidBodyBundle already added to the global world");
             }
+
+            if self.handle_info.body_bundles.iter().any(|b| *b == bundle) {
+                panic!("RigidBodyBundle already added to the world");
+            }
         }
-        // check if the rigidbody is dynamic on js side
 
         for (_, world) in self.worlds.iter_mut() {
             world.add_rigidbody_bundle_shadow(bundle.clone(), self.allow_dynamic_shadow, true);
         }
-        self.global_body_bundles.push(bundle);
+        self.global_body_bundles.push(bundle.clone());
+
+        if self.use_motion_state_buffer {
+            bundle.get_mut().acquire_buffered_motion_states(true);
+        }
     }
 
     pub(crate) fn remove_rigidbody_bundle_from_global(&mut self, mut bundle: RigidBodyBundleHandle) {
@@ -243,9 +309,13 @@ impl MultiPhysicsWorld {
         }
         let index: usize = self.global_body_bundles.iter().position(|r| *r == bundle).unwrap();
         self.global_body_bundles.remove(index);
+
+        if self.use_motion_state_buffer {
+            bundle.get_mut().release_buffered_motion_states(true);
+        }
     }
 
-    pub(crate) fn add_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, rigidbody: RigidBodyHandle) {
+    pub(crate) fn add_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
         if !rigidbody.get().get_inner().is_static_or_kinematic() && !self.allow_dynamic_shadow {
             panic!("Dynamic shadow is not allowed");
         }
@@ -253,26 +323,65 @@ impl MultiPhysicsWorld {
         //     panic!("Dynamic shadow requires motion state buffer");
         // }
         // if is dynamic and rigidbody is not in any world, throw error on js side
-        self.get_or_create_world(world_id).add_rigidbody_shadow(rigidbody, false);
+        self.get_or_create_world(world_id).add_rigidbody_shadow(rigidbody.clone(), false);
+
+        // if rigidbody is not in any world, add it to the orphan list
+        if !rigidbody.get().has_managed_ref() && !rigidbody.get().has_orphan_ref() {
+            self.orphan_bodies.push(rigidbody.clone());
+        }
+
+        if self.use_motion_state_buffer {
+            rigidbody.get_mut().acquire_buffered_motion_state(false);
+        }
     }
 
-    pub(crate) fn remove_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, rigidbody: RigidBodyHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_shadow(rigidbody, false));
+    pub(crate) fn remove_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
+        self.get_world(world_id).map(|world| world.remove_rigidbody_shadow(rigidbody.clone(), false));
         self.remove_world_if_empty(world_id);
+
+        if self.use_motion_state_buffer {
+            rigidbody.get_mut().release_buffered_motion_state(false);
+        }
+
+        // if rigidbody is not in any world, remove it from the orphan list
+        if !rigidbody.get().has_managed_ref() && !rigidbody.get().has_orphan_ref() {
+            if let Some(index) = self.orphan_bodies.iter().position(|b| *b == rigidbody) {
+                self.orphan_bodies.remove(index);
+            }
+        }
     }
 
-    pub(crate) fn add_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, bundle: RigidBodyBundleHandle) {
+    pub(crate) fn add_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
         let allow_dynamic_shadow = self.allow_dynamic_shadow;
         // if allow_dynamic_shadow && !self.use_motion_state_buffer {
         //     panic!("Dynamic shadow requires motion state buffer");
         // }
-        // if is dynamic and rigidbody is not in any world, throw error on js side
-        self.get_or_create_world(world_id).add_rigidbody_bundle_shadow(bundle, allow_dynamic_shadow, false);
+        self.get_or_create_world(world_id).add_rigidbody_bundle_shadow(bundle.clone(), allow_dynamic_shadow, false);
+
+        // if bundle is not in any world, add it to the orphan list
+        if !bundle.get().has_managed_ref() && !bundle.get().has_orphan_ref() {
+            self.orphan_body_bundles.push(bundle.clone());
+        }
+
+        if self.use_motion_state_buffer {
+            bundle.get_mut().acquire_buffered_motion_states(false);
+        }
     }
 
-    pub(crate) fn remove_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, bundle: RigidBodyBundleHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle_shadow(bundle, false));
+    pub(crate) fn remove_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
+        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle_shadow(bundle.clone(), false));
         self.remove_world_if_empty(world_id);
+
+        if self.use_motion_state_buffer {
+            bundle.get_mut().release_buffered_motion_states(false);
+        }
+
+        // if bundle is not in any world, remove it from the orphan list
+        if !bundle.get().has_managed_ref() && !bundle.get().has_orphan_ref() {
+            if let Some(index) = self.orphan_body_bundles.iter().position(|b| *b == bundle) {
+                self.orphan_body_bundles.remove(index);
+            }
+        }
     }
 
     pub(crate) fn add_constraint(&mut self, world_id: PhysicsWorldId, constraint: ConstraintHandle, disable_collisions_between_linked_bodies: bool) {
@@ -302,12 +411,26 @@ impl MultiPhysicsWorld {
         }
 
         if use_buffer {
+            for body in self.global_bodies.iter_mut() {
+                body.get_mut().acquire_buffered_motion_state(true);
+            }
+            for bundle in self.global_body_bundles.iter_mut() {
+                bundle.get_mut().acquire_buffered_motion_states(true);
+            }
+
             for (_, world) in self.worlds.iter_mut() {
-                world.init_buffered_motion_state();
+                world.acquire_buffered_motion_state();
             }
         } else {
+            for body in self.global_bodies.iter_mut() {
+                body.get_mut().release_buffered_motion_state(true);
+            }
+            for bundle in self.global_body_bundles.iter_mut() {
+                bundle.get_mut().release_buffered_motion_states(true);
+            }
+
             for (_, world) in self.worlds.iter_mut() {
-                world.clear_buffered_motion_state();
+                world.release_buffered_motion_state();
             }
         }
 

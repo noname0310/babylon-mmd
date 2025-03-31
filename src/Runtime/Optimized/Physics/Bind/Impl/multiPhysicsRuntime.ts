@@ -142,8 +142,8 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
      */
     public fixedTimeStep: number;
 
-    private readonly _rigidBodyList: RigidBody[];
-    private readonly _rigidBodyBundleList: RigidBodyBundle[];
+    private readonly _rigidBodyMap: Map<RigidBody, number>;
+    private readonly _rigidBodyBundleMap: Map<RigidBodyBundle, number>;
 
     /**
      * Creates a new physics runtime
@@ -196,8 +196,8 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this.maxSubSteps = 10;
         this.fixedTimeStep = 1 / 60;
 
-        this._rigidBodyList = [];
-        this._rigidBodyBundleList = [];
+        this._rigidBodyMap = new Map<RigidBody, number>();
+        this._rigidBodyBundleMap = new Map<RigidBodyBundle, number>();
     }
 
     /**
@@ -318,25 +318,21 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             if (this._rigidBodyUsingBackBuffer === false) {
                 this._rigidBodyUsingBackBuffer = true;
 
-                const rigidBodyList = this._rigidBodyList;
-                for (let i = 0; i < rigidBodyList.length; ++i) {
-                    rigidBodyList[i].updateBufferedMotionState(false);
+                for (const rigidBody of this._rigidBodyMap.keys()) {
+                    rigidBody.updateBufferedMotionState(false);
                 }
-                const rigidBodyBundleList = this._rigidBodyBundleList;
-                for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                    rigidBodyBundleList[i].updateBufferedMotionStates(false);
+                for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                    rigidBodyBundle.updateBufferedMotionStates(false);
                 }
             }
 
             // commit changes
             {
-                const rigidBodyList = this._rigidBodyList;
-                for (let i = 0; i < rigidBodyList.length; ++i) {
-                    rigidBodyList[i].commitToWasm();
+                for (const rigidBody of this._rigidBodyMap.keys()) {
+                    rigidBody.commitToWasm();
                 }
-                const rigidBodyBundleList = this._rigidBodyBundleList;
-                for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                    rigidBodyBundleList[i].commitToWasm();
+                for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                    rigidBodyBundle.commitToWasm();
                 }
             }
 
@@ -359,13 +355,11 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
                 this.lock.wait(); // ensure that the runtime is not evaluating animations
                 this._rigidBodyUsingBackBuffer = false;
 
-                const rigidBodyList = this._rigidBodyList;
-                for (let i = 0; i < rigidBodyList.length; ++i) {
-                    rigidBodyList[i].updateBufferedMotionState(true);
+                for (const rigidBody of this._rigidBodyMap.keys()) {
+                    rigidBody.updateBufferedMotionState(true);
                 }
-                const rigidBodyBundleList = this._rigidBodyBundleList;
-                for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                    rigidBodyBundleList[i].updateBufferedMotionStates(true);
+                for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                    rigidBodyBundle.updateBufferedMotionStates(true);
                 }
             }
 
@@ -393,18 +387,14 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         }
 
         if (value === PhysicsRuntimeEvaluationType.Buffered) {
-            const rigidBodyList = this._rigidBodyList;
-            for (let i = 0; i < rigidBodyList.length; ++i) {
-                rigidBodyList[i].impl = new BufferedRigidBodyImpl();
+            for (const rigidBody of this._rigidBodyMap.keys()) {
+                rigidBody.impl = new BufferedRigidBodyImpl();
             }
-            const rigidBodyBundleList = this._rigidBodyBundleList;
-            for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                rigidBodyBundleList[i].impl = new BufferedRigidBodyBundleImpl(rigidBodyBundleList[i].count);
+            for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                rigidBodyBundle.impl = new BufferedRigidBodyBundleImpl(rigidBodyBundle.count);
             }
         } else {
-            const rigidBodyList = this._rigidBodyList;
-            for (let i = 0; i < rigidBodyList.length; ++i) {
-                const rigidBody = rigidBodyList[i];
+            for (const rigidBody of this._rigidBodyMap.keys()) {
                 // commit changes
                 if (rigidBody.needToCommit) {
                     this.lock.wait();
@@ -413,16 +403,14 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
                 rigidBody.impl = new ImmediateRigidBodyImpl();
             }
-            const rigidBodyBundleList = this._rigidBodyBundleList;
-            for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                const rigidBodyBundle = rigidBodyBundleList[i];
+            for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
                 // commit changes
                 if (rigidBodyBundle.needToCommit) {
                     this.lock.wait();
                     rigidBodyBundle.commitToWasm();
                 }
 
-                rigidBodyBundle.impl = new ImmediateRigidBodyBundleImpl(rigidBodyBundleList[i].count);
+                rigidBodyBundle.impl = new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
             }
         }
     }
@@ -463,7 +451,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBody(rigidBody, worldId);
         if (result) {
-            this._rigidBodyList.push(rigidBody);
+            let referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyMap.set(rigidBody, referenceCount + 1);
+            
             if (this._rigidBodyUsingBackBuffer) {
                 rigidBody.updateBufferedMotionState(false);
             }
@@ -496,10 +489,15 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBody(rigidBody, worldId);
         if (result) {
-            const index = this._rigidBodyList.indexOf(rigidBody);
-            if (index !== -1) {
-                this._rigidBodyList.splice(index, 1);
+            const referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyMap.delete(rigidBody);
+                } else {
+                    this._rigidBodyMap.set(rigidBody, referenceCount - 1);
+                }
             }
+
             rigidBody.updateBufferedMotionState(false);
         }
         return result;
@@ -519,7 +517,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyBundle(rigidBodyBundle, worldId);
         if (result) {
-            this._rigidBodyBundleList.push(rigidBodyBundle);
+            let referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount + 1);
+
             if (this._rigidBodyUsingBackBuffer) {
                 rigidBodyBundle.updateBufferedMotionStates(false);
             }
@@ -552,10 +555,15 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundle(rigidBodyBundle, worldId);
         if (result) {
-            const index = this._rigidBodyBundleList.indexOf(rigidBodyBundle);
-            if (index !== -1) {
-                this._rigidBodyBundleList.splice(index, 1);
+            const referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyBundleMap.delete(rigidBodyBundle);
+                } else {
+                    this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount - 1);
+                }
             }
+
             rigidBodyBundle.updateBufferedMotionStates(false);
         }
         return result;
@@ -574,7 +582,26 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyToGlobal(rigidBody);
         if (result) {
-            this._rigidBodyList.push(rigidBody);
+            let referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyMap.set(rigidBody, referenceCount + 1);
+
+            if (this._rigidBodyUsingBackBuffer) {
+                rigidBody.updateBufferedMotionState(false);
+            }
+
+            const isBufferedImpl = rigidBody.impl instanceof BufferedRigidBodyImpl;
+            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+                if (isBufferedImpl && rigidBody.needToCommit) {
+                    this.lock.wait();
+                    rigidBody.commitToWasm();
+                }
+                rigidBody.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                    ? new BufferedRigidBodyImpl()
+                    : new ImmediateRigidBodyImpl();
+            }
         }
         return result;
     }
@@ -596,10 +623,16 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyFromGlobal(rigidBody);
         if (result) {
-            const index = this._rigidBodyList.indexOf(rigidBody);
-            if (index !== -1) {
-                this._rigidBodyList.splice(index, 1);
+            const referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyMap.delete(rigidBody);
+                } else {
+                    this._rigidBodyMap.set(rigidBody, referenceCount - 1);
+                }
             }
+
+            rigidBody.updateBufferedMotionState(false);
         }
         return result;
     }
@@ -617,7 +650,26 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.addRigidBodyBundleToGlobal(rigidBodyBundle);
         if (result) {
-            this._rigidBodyBundleList.push(rigidBodyBundle);
+            let referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount + 1);
+
+            if (this._rigidBodyUsingBackBuffer) {
+                rigidBodyBundle.updateBufferedMotionStates(false);
+            }
+
+            const isBufferedImpl = rigidBodyBundle.impl instanceof BufferedRigidBodyBundleImpl;
+            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+                if (isBufferedImpl && rigidBodyBundle.needToCommit) {
+                    this.lock.wait();
+                    rigidBodyBundle.commitToWasm();
+                }
+                rigidBodyBundle.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                    ? new BufferedRigidBodyBundleImpl(rigidBodyBundle.count)
+                    : new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
+            }
         }
         return result;
     }
@@ -639,10 +691,16 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundleFromGlobal(rigidBodyBundle);
         if (result) {
-            const index = this._rigidBodyBundleList.indexOf(rigidBodyBundle);
-            if (index !== -1) {
-                this._rigidBodyBundleList.splice(index, 1);
+            const referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyBundleMap.delete(rigidBodyBundle);
+                } else {
+                    this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount - 1);
+                }
             }
+
+            rigidBodyBundle.updateBufferedMotionStates(false);
         }
         return result;
     }
@@ -674,8 +732,28 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         }
         const result = this._physicsWorld.addRigidBodyShadow(rigidBody, worldId);
         if (result) {
-            this._rigidBodyList.push(rigidBody);
+            let referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyMap.set(rigidBody, referenceCount + 1);
+
             this._dynamicShadowCount += 1;
+
+            if (this._rigidBodyUsingBackBuffer) {
+                rigidBody.updateBufferedMotionState(false);
+            }
+
+            const isBufferedImpl = rigidBody.impl instanceof BufferedRigidBodyImpl;
+            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+                if (isBufferedImpl && rigidBody.needToCommit) {
+                    this.lock.wait();
+                    rigidBody.commitToWasm();
+                }
+                rigidBody.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                    ? new BufferedRigidBodyImpl()
+                    : new ImmediateRigidBodyImpl();
+            }
         } else {
             if (/* !this._preserveBackBuffer && */ this._dynamicShadowCount === 0 && backBufferUpdated) {
                 this.wasmInstance.multiPhysicsWorldUseMotionStateBuffer(this._physicsWorld.ptr, false);
@@ -701,11 +779,18 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyShadow(rigidBody, worldId);
         if (result) {
-            const index = this._rigidBodyList.indexOf(rigidBody);
-            if (index !== -1) {
-                this._rigidBodyList.splice(index, 1);
+            const referenceCount = this._rigidBodyMap.get(rigidBody);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyMap.delete(rigidBody);
+                } else {
+                    this._rigidBodyMap.set(rigidBody, referenceCount - 1);
+                }
             }
+
             this._dynamicShadowCount -= 1;
+
+            rigidBody.updateBufferedMotionState(false);
         }
 
         let backBufferUpdated = false;
@@ -724,13 +809,11 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         if (backBufferUpdated && this._rigidBodyUsingBackBuffer) {
             this._rigidBodyUsingBackBuffer = false;
 
-            const rigidBodyList = this._rigidBodyList;
-            for (let i = 0; i < rigidBodyList.length; ++i) {
-                rigidBodyList[i].updateBufferedMotionState(true);
+            for (const rigidBody of this._rigidBodyMap.keys()) {
+                rigidBody.updateBufferedMotionState(true);
             }
-            const rigidBodyBundleList = this._rigidBodyBundleList;
-            for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                rigidBodyBundleList[i].updateBufferedMotionStates(true);
+            for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                rigidBodyBundle.updateBufferedMotionStates(true);
             }
         }
 
@@ -764,8 +847,28 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         }
         const result = this._physicsWorld.addRigidBodyBundleShadow(rigidBodyBundle, worldId);
         if (result) {
-            this._rigidBodyBundleList.push(rigidBodyBundle);
+            let referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount === undefined) {
+                referenceCount = 0;
+            }
+            this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount + 1);
+
             this._dynamicShadowCount += 1;
+
+            if (this._rigidBodyUsingBackBuffer) {
+                rigidBodyBundle.updateBufferedMotionStates(false);
+            }
+
+            const isBufferedImpl = rigidBodyBundle.impl instanceof BufferedRigidBodyBundleImpl;
+            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+                if (isBufferedImpl && rigidBodyBundle.needToCommit) {
+                    this.lock.wait();
+                    rigidBodyBundle.commitToWasm();
+                }
+                rigidBodyBundle.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                    ? new BufferedRigidBodyBundleImpl(rigidBodyBundle.count)
+                    : new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
+            }
         } else {
             if (/* !this._preserveBackBuffer && */ this._dynamicShadowCount === 0 && backBufferUpdated) {
                 this.wasmInstance.multiPhysicsWorldUseMotionStateBuffer(this._physicsWorld.ptr, false);
@@ -788,11 +891,18 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._nullCheck();
         const result = this._physicsWorld.removeRigidBodyBundleShadow(rigidBodyBundle, worldId);
         if (result) {
-            const index = this._rigidBodyBundleList.indexOf(rigidBodyBundle);
-            if (index !== -1) {
-                this._rigidBodyBundleList.splice(index, 1);
+            const referenceCount = this._rigidBodyBundleMap.get(rigidBodyBundle);
+            if (referenceCount !== undefined) {
+                if (referenceCount === 1) {
+                    this._rigidBodyBundleMap.delete(rigidBodyBundle);
+                } else {
+                    this._rigidBodyBundleMap.set(rigidBodyBundle, referenceCount - 1);
+                }
             }
+
             this._dynamicShadowCount -= 1;
+
+            rigidBodyBundle.updateBufferedMotionStates(false);
         }
 
         let backBufferUpdated = false;
@@ -811,13 +921,11 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         if (backBufferUpdated && this._rigidBodyUsingBackBuffer) {
             this._rigidBodyUsingBackBuffer = false;
 
-            const rigidBodyList = this._rigidBodyList;
-            for (let i = 0; i < rigidBodyList.length; ++i) {
-                rigidBodyList[i].updateBufferedMotionState(true);
+            for (const rigidBody of this._rigidBodyMap.keys()) {
+                rigidBody.updateBufferedMotionState(true);
             }
-            const rigidBodyBundleList = this._rigidBodyBundleList;
-            for (let i = 0; i < rigidBodyBundleList.length; ++i) {
-                rigidBodyBundleList[i].updateBufferedMotionStates(true);
+            for (const rigidBodyBundle of this._rigidBodyBundleMap.keys()) {
+                rigidBodyBundle.updateBufferedMotionStates(true);
             }
         }
 
@@ -825,10 +933,17 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
     }
 
     /**
-     * Gets the list of rigid bodies in the physics world
+     * Gets the rigid body reference count map
      */
-    public get rigidBodyList(): readonly RigidBody[] {
-        return this._rigidBodyList;
+    public get rigidBodyReferenceCountMap(): ReadonlyMap<RigidBody, number> {
+        return this._rigidBodyMap;
+    }
+
+    /**
+     * Gets the rigid body bundle reference count map
+     */
+    public get rigidBodyBundleReferenceCountMap(): ReadonlyMap<RigidBodyBundle, number> {
+        return this._rigidBodyBundleMap;
     }
 
     /**

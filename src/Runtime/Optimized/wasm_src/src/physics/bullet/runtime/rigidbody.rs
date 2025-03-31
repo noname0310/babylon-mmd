@@ -13,6 +13,8 @@ pub(crate) struct RigidBody {
     motion_state: bind::motion_state::MotionState,
     buffered_motion_state: Option<bind::motion_state::MotionState>,
     temporal_kinematic_state: TemporalKinematicState,
+    managed_ref: bool,
+    world_ref: u16,
     #[cfg(debug_assertions)]
     ref_count: u32,
     #[cfg(debug_assertions)]
@@ -43,6 +45,8 @@ impl RigidBody {
             } else {
                 TemporalKinematicState::Disabled
             },
+            managed_ref: false,
+            world_ref: 0,
             #[cfg(debug_assertions)]
             ref_count: 0,
             #[cfg(debug_assertions)]
@@ -82,13 +86,47 @@ impl RigidBody {
         }
     }
 
-    pub(super) fn init_buffered_motion_state(&mut self) {
+    pub(super) fn acquire_buffered_motion_state(&mut self, managed_ref: bool) {
+        if managed_ref {
+            if self.managed_ref {
+                panic!("RigidBody already has a managed reference");
+            }
+            self.managed_ref = true;
+        }
+        if self.world_ref == 0 {
+            self.init_buffered_motion_state();
+        }
+        self.world_ref += 1;
+    }
+
+    pub(super) fn release_buffered_motion_state(&mut self, managed_ref: bool) {
+        if managed_ref {
+            if !self.managed_ref {
+                panic!("RigidBody does not have a managed reference");
+            }
+            self.managed_ref = false;
+        }
+        self.world_ref -= 1;
+        if self.world_ref == 0 {
+            self.clear_buffered_motion_state();
+        }
+    }
+
+    pub(super) fn has_managed_ref(&self) -> bool {
+        self.managed_ref
+    }
+
+    pub(super) fn has_orphan_ref(&self) -> bool {
+        0 < self.world_ref - (self.managed_ref as u16)
+    }
+
+    fn init_buffered_motion_state(&mut self) {
         if !self.get_inner().is_static_or_kinematic() && self.buffered_motion_state.is_none() {
             self.buffered_motion_state = Some(bind::motion_state::MotionState::new(&self.motion_state.get_transform()));
         }
     }
 
-    pub(super) fn clear_buffered_motion_state(&mut self) {
+    fn clear_buffered_motion_state(&mut self) {
         self.buffered_motion_state = None;
     }
 

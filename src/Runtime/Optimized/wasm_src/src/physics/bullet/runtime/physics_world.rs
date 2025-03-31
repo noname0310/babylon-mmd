@@ -89,7 +89,7 @@ impl PhysicsWorld {
         self.bodies.push(rigidbody.clone());
 
         if self.use_motion_state_buffer {
-            rigidbody.get_mut().init_buffered_motion_state();
+            rigidbody.get_mut().acquire_buffered_motion_state(true);
         }
         
         #[cfg(debug_assertions)]
@@ -111,7 +111,7 @@ impl PhysicsWorld {
 
         rigidbody.get_mut().clear_temporal_kinematic_state();
         if self.use_motion_state_buffer {
-            rigidbody.get_mut().clear_buffered_motion_state();
+            rigidbody.get_mut().release_buffered_motion_state(true);
         }
 
         #[cfg(debug_assertions)]
@@ -137,7 +137,7 @@ impl PhysicsWorld {
         self.body_bundles.push(bundle.clone());
 
         if self.use_motion_state_buffer {
-            bundle.get_mut().init_buffered_motion_states();
+            bundle.get_mut().acquire_buffered_motion_states(true);
         }
 
         #[cfg(debug_assertions)]
@@ -162,7 +162,7 @@ impl PhysicsWorld {
         
         bundle.get_mut().clear_temporal_kinematic_states();
         if self.use_motion_state_buffer {
-            bundle.get_mut().clear_buffered_motion_states();
+            bundle.get_mut().release_buffered_motion_states(true);
         }
 
         #[cfg(debug_assertions)]
@@ -311,21 +311,21 @@ impl PhysicsWorld {
         self.object_count == 0
     }
 
-    pub(super) fn init_buffered_motion_state(&mut self) {
+    pub(super) fn acquire_buffered_motion_state(&mut self) {
         for body in self.bodies.iter_mut() {
-            body.get_mut().init_buffered_motion_state();
+            body.get_mut().acquire_buffered_motion_state(true);
         }
         for bundle in self.body_bundles.iter_mut() {
-            bundle.get_mut().init_buffered_motion_states();
+            bundle.get_mut().acquire_buffered_motion_states(true);
         }
     }
 
-    pub(super) fn clear_buffered_motion_state(&mut self) {
+    pub(super) fn release_buffered_motion_state(&mut self) {
         for body in self.bodies.iter_mut() {
-            body.get_mut().clear_buffered_motion_state();
+            body.get_mut().release_buffered_motion_state(true);
         }
         for bundle in self.body_bundles.iter_mut() {
-            bundle.get_mut().clear_buffered_motion_states();
+            bundle.get_mut().release_buffered_motion_states(true);
         }
     }
 
@@ -350,20 +350,20 @@ impl PhysicsWorld {
         if use_buffer {
             for body in self.bodies.iter_mut() {
                 let body = body.get_mut();
-                body.init_buffered_motion_state();
+                body.acquire_buffered_motion_state(true);
             }
             for bundle in self.body_bundles.iter_mut() {
                 let bundle = bundle.get_mut();
-                bundle.init_buffered_motion_states();
+                bundle.acquire_buffered_motion_states(true);
             }
         } else {
             for body in self.bodies.iter_mut() {
                 let body = body.get_mut();
-                body.clear_buffered_motion_state();
+                body.release_buffered_motion_state(true);
             }
             for bundle in self.body_bundles.iter_mut() {
                 let bundle = bundle.get_mut();
-                bundle.clear_buffered_motion_states();
+                bundle.release_buffered_motion_states(true);
             }
         }
 

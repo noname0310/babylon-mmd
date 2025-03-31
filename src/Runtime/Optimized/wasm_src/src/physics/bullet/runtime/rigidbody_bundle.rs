@@ -13,6 +13,8 @@ pub(crate) struct RigidBodyBundle {
     motion_state_bundle: bind::motion_state::MotionStateBundle,
     buffered_motion_state_bundle: Option<bind::motion_state::MotionStateBundle>,
     temporal_kinematic_states: Box<[TemporalKinematicState]>,
+    managed_ref: bool,
+    world_ref: u16,
     #[cfg(debug_assertions)]
     ref_count: u32,
     #[cfg(debug_assertions)]
@@ -53,6 +55,8 @@ impl RigidBodyBundle {
             motion_state_bundle,
             buffered_motion_state_bundle: None,
             temporal_kinematic_states: temporal_kinematic_states.into_boxed_slice(),
+            managed_ref: false,
+            world_ref: 0,
             #[cfg(debug_assertions)]
             ref_count: 0,
             #[cfg(debug_assertions)]
@@ -104,7 +108,41 @@ impl RigidBodyBundle {
         }
     }
 
-    pub(super) fn init_buffered_motion_states(&mut self) {
+    pub(super) fn acquire_buffered_motion_states(&mut self, managed_ref: bool) {
+        if managed_ref {
+            if self.managed_ref {
+                panic!("RigidBodyBundle already has a managed reference");
+            }
+            self.managed_ref = true;
+        }
+        if self.world_ref == 0 {
+            self.init_buffered_motion_states();
+        }
+        self.world_ref += 1;
+    }
+
+    pub(super) fn release_buffered_motion_states(&mut self, managed_ref: bool) {
+        if managed_ref {
+            if !self.managed_ref {
+                panic!("RigidBody does not have a managed reference");
+            }
+            self.managed_ref = false;
+        }
+        self.world_ref -= 1;
+        if self.world_ref == 0 {
+            self.clear_buffered_motion_states();
+        }
+    }
+
+    pub(super) fn has_managed_ref(&self) -> bool {
+        self.managed_ref
+    }
+
+    pub(super) fn has_orphan_ref(&self) -> bool {
+        0 < self.world_ref - (self.managed_ref as u16)
+    }
+
+    fn init_buffered_motion_states(&mut self) {
         if self.buffered_motion_state_bundle.is_none() {
             let buffered_motion_state_bundle = bind::motion_state::MotionStateBundle::new(self.bodies.len());
             buffered_motion_state_bundle.copy_from(&self.motion_state_bundle);
@@ -112,7 +150,7 @@ impl RigidBodyBundle {
         }
     }
 
-    pub(super) fn clear_buffered_motion_states(&mut self) {
+    fn clear_buffered_motion_states(&mut self) {
         self.buffered_motion_state_bundle = None;
     }
 
