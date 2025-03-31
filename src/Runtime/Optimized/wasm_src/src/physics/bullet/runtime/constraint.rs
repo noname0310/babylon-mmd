@@ -556,6 +556,9 @@ pub fn constraint_set_linear_lower_limit(ptr: *mut usize, x: f32, y: f32, z: f32
         Constraint::Generic6DofSpring(constraint) => {
             constraint.set_linear_lower_limit(Vec3::new(x, y, z));
         },
+        Constraint::MmdGeneric6DofSpring(constraint) => {
+            constraint.set_linear_lower_limit(Vec3::new(x, y, z));
+        },
         _ => {
             panic!("constraintSetLinearLowerLimit: set_linear_lower_limit is not supported for this constraint type");
         }
