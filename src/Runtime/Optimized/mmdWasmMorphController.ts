@@ -8,7 +8,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { RuntimeMorph } from "../mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "../mmdMorphControllerBase";
-import type { IWasmTypedArray } from "./IWasmTypedArray";
+import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
 
 /**
  * The MmdWasmMorphController uses `MorphTargetManager` to handle position uv morphs, while the material, bone, and group morphs are handled by CPU bound

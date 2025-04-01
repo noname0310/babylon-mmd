@@ -1,10 +1,23 @@
 use glam::Mat4;
 
-use super::physics_model_handle::PhysicsModelHandle;
+use crate::physics::bullet::runtime::{
+    collision_shape::CollisionShape, constraint::Constraint, multi_physics_world::PhysicsWorldId, rigidbody_bundle::RigidBodyBundle
+};
+
+use super::rigidbody_bundle_proxy::RigidBodyBundleProxy;
+
+// for parallel iteration
+unsafe impl Send for CollisionShape {}
+unsafe impl Send for RigidBodyBundle {}
+unsafe impl Send for Constraint {}
 
 pub(crate) struct PhysicsModelContext {
-    physics_handle: PhysicsModelHandle,
-    kinematic_shared_physics_handles: Vec<PhysicsModelHandle>,
+    #[allow(dead_code)]
+    shapes: Box<[CollisionShape]>, // shapes must be alive while bundle is alive
+    bundle_proxy: RigidBodyBundleProxy,
+    constraints: Box<[Constraint]>,
+    world_id: PhysicsWorldId,
+    shared_world_ids: Vec<PhysicsWorldId>,
     
     // for thread safety, we need buffer to apply world matrix
     world_matrix_apply_buffer: Option<Mat4>,
@@ -18,8 +31,11 @@ pub(crate) struct PhysicsModelContext {
 
 impl PhysicsModelContext {
     pub(super) fn new(
-        physics_handle: PhysicsModelHandle,
-        kinematic_shared_physics_handles: Vec<PhysicsModelHandle>,
+        shapes: Box<[CollisionShape]>,
+        bundle_proxy: RigidBodyBundleProxy,
+        constraints: Box<[Constraint]>,
+        world_id: PhysicsWorldId,
+        shared_world_ids: Vec<PhysicsWorldId>,
         world_matrix: Mat4,
     ) -> Self {
         let invertable = world_matrix.determinant() != 0.0;
@@ -29,10 +45,13 @@ impl PhysicsModelContext {
         } else {
             (Mat4::IDENTITY, Mat4::IDENTITY)
         };
-
+        
         Self {
-            physics_handle,
-            kinematic_shared_physics_handles,
+            shapes,
+            bundle_proxy,
+            constraints,
+            world_id,
+            shared_world_ids,
 
             world_matrix_apply_buffer: None,
             world_matrix,
@@ -43,12 +62,24 @@ impl PhysicsModelContext {
         }
     }
 
-    pub(super) fn physics_handle(&self) -> &PhysicsModelHandle {
-        &self.physics_handle
+    pub(super) fn bundle_proxy(&self) -> &RigidBodyBundleProxy {
+        &self.bundle_proxy
     }
 
-    pub(super) fn kinematic_shared_physics_handles(&self) -> &[PhysicsModelHandle] {
-        &self.kinematic_shared_physics_handles
+    pub(super) fn bundle_proxy_mut(&mut self) -> &mut RigidBodyBundleProxy {
+        &mut self.bundle_proxy
+    }
+    
+    pub(super) fn constraints_mut(&mut self) -> &mut [Constraint] {
+        &mut self.constraints
+    }
+
+    pub(super) fn world_id(&self) -> PhysicsWorldId {
+        self.world_id
+    }
+
+    pub(super) fn shared_world_ids(&self) -> &[PhysicsWorldId] {
+        &self.shared_world_ids
     }
 
     pub(crate) fn set_world_matrix(&mut self, world_matrix: Mat4) {

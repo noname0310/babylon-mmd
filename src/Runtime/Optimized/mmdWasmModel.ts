@@ -23,12 +23,12 @@ import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
 import type { IMmdPhysics, IMmdPhysicsModel } from "../Physics/IMmdPhysics";
 import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
-import type { IWasmTypedArray } from "./IWasmTypedArray";
+import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
+import { WasmBufferedArray } from "./Misc/wasmBufferedArray";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
-import { WasmBufferedArray } from "./wasmBufferedArray";
 
 type RuntimeModelAnimation = MmdWasmRuntimeModelAnimation | MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 

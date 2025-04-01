@@ -1,8 +1,6 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { MmdWasmModel } from "../mmdWasmModel";
-
 /**
  * Mmd wasm physics runtime interface
  */
@@ -39,39 +37,4 @@ export interface IMmdWasmPhysicsRuntime {
      * Get the gravity of the all physics world (default 0, -98.0, 0)
      */
     getGravity(result?: Vector3): Nullable<Vector3>;
-
-    /**
-     * Override the gravity of the physics world
-     *
-     * Physics world id must be unsigned 32 bit integer
-     *
-     * If the gravity is null, the gravity is reset to the default value
-     * @param worldId physics world id
-     * @param gravity gravity
-     */
-    overrideWorldGravity(worldId: number, gravity: Nullable<Vector3>): void;
-
-    /**
-     * Get the overridden gravity of the physics world
-     *
-     * Physics world id must be unsigned 32 bit integer
-     *
-     * If the gravity is not overridden, null is returned
-     * @param worldId physics world id
-     * @param result result vector
-     * @returns gravity
-     */
-    getWorldGravity(worldId: number, result?: Vector3): Nullable<Vector3>;
-
-    /**
-     * Create a ground mmd model
-     *
-     * This API is temporary and will be changed or removed in the future
-     *
-     * Physics world id must be unsigned 32 bit integer
-     * @param affectedWorlds affected physics world ids
-     * @param planeNormal plane normal (default 0, 1, 0)
-     * @param planeConstant plane constant (default 0)
-     */
-    createGroundModel(affectedWorlds: number[], planeNormal?: Vector3, planeConstant?: number): MmdWasmModel;
 }
