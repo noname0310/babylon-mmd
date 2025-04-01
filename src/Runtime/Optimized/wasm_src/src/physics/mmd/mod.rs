@@ -348,7 +348,9 @@ impl MmdPhysicsRuntime {
                 kinematic_object_count += 1;
             }
         });
-        let mut rigidbody_bundle_proxy = RigidBodyBundleProxy::new(&mut rb_info_list, rb_data_list.into_boxed_slice());
+        let mut rigidbody_bundle_proxy = Box::new(
+            RigidBodyBundleProxy::new(&mut rb_info_list, rb_data_list.into_boxed_slice())
+        );
 
         self.multi_physics_world.add_rigidbody_bundle(
             world_id,

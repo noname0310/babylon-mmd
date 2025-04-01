@@ -14,7 +14,7 @@ unsafe impl Send for Constraint {}
 pub(crate) struct PhysicsModelContext {
     #[allow(dead_code)]
     shapes: Box<[CollisionShape]>, // shapes must be alive while bundle is alive
-    bundle_proxy: RigidBodyBundleProxy,
+    bundle_proxy: Box<RigidBodyBundleProxy>,
     constraints: Box<[Constraint]>,
     world_id: PhysicsWorldId,
     shared_world_ids: Vec<PhysicsWorldId>,
@@ -32,7 +32,7 @@ pub(crate) struct PhysicsModelContext {
 impl PhysicsModelContext {
     pub(super) fn new(
         shapes: Box<[CollisionShape]>,
-        bundle_proxy: RigidBodyBundleProxy,
+        bundle_proxy: Box<RigidBodyBundleProxy>,
         constraints: Box<[Constraint]>,
         world_id: PhysicsWorldId,
         shared_world_ids: Vec<PhysicsWorldId>,
