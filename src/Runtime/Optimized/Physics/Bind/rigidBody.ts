@@ -1,11 +1,12 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
+import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, MotionStateOffsetsInFloat32Array } from "./constants";
-import type { IRigidBodyImpl } from "./Impl/IRigidBodyImpl";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
-import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+import type { IRigidBodyImpl } from "./Impl/IRigidBodyImpl";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
 import type { RigidBodyConstructionInfo } from "./rigidBodyConstructionInfo";
@@ -217,7 +218,7 @@ export class RigidBody {
 
     /**
      * Dispose the rigid body
-     * 
+     *
      * rigid body must be removed from the world before disposing
      */
     public dispose(): void {
@@ -386,21 +387,21 @@ export class RigidBody {
 
     /**
      * Set the transform matrix of the rigid body
-     * 
+     *
      * This method will work only if the rigid body motion type is kinematic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param matrix The transform matrix to set
      */
     public setTransformMatrix(matrix: Matrix): void {
         this.setTransformMatrixFromArray(matrix.m, 0);
     }
-    
+
     /**
      * Set the transform matrix of the rigid body
-     * 
+     *
      * This method will work only if the rigid body motion type is kinematic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param array The array to set the transform matrix from
      * @param offset The offset in the array to set the transform matrix from
@@ -415,9 +416,9 @@ export class RigidBody {
 
     /**
      * Set the dynamic transform matrix of the rigid body
-     * 
+     *
      * This method will work only if the rigid body motion type is dynamic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param matrix The transform matrix to set
      * @param fallbackToSetTransformMatrix Whether to fallback to setTransformMatrix if the rigid body is not dynamic
@@ -428,9 +429,9 @@ export class RigidBody {
 
     /**
      * Set the dynamic transform matrix of the rigid body
-     * 
+     *
      * This method will work only if the rigid body motion type is dynamic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param array The array to set the transform matrix from
      * @param offset The offset in the array to set the transform matrix from
@@ -454,10 +455,10 @@ export class RigidBody {
 
     /**
      * Set the linear and angular damping of the rigid body
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
-     * @param linearDamping 
-     * @param angularDamping 
+     * @param linearDamping
+     * @param angularDamping
      */
     public setDamping(linearDamping: number, angularDamping: number): void {
         this._nullCheck();
@@ -489,7 +490,7 @@ export class RigidBody {
 
     /**
      * Set the mass and local inertia of the rigid body
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param mass The mass of the rigid body
      * @param localInertia The local inertia of the rigid body
@@ -524,7 +525,7 @@ export class RigidBody {
 
     /**
      * Translate the rigid body
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the rigid body
      * @param translation The translation vector
      */
@@ -566,7 +567,7 @@ export class RigidBody {
 
     /**
      * Get the total force of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The total force of the rigid body
@@ -583,7 +584,7 @@ export class RigidBody {
 
     /**
      * Get the total torque of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The total torque of the rigid body
@@ -600,7 +601,7 @@ export class RigidBody {
 
     /**
      * Apply a central force to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param force The force vector to apply
      */
@@ -614,21 +615,21 @@ export class RigidBody {
 
     /**
      * Apply a torque to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param torque The torque vector to apply
-     */ 
+     */
     public applyTorque(torque: DeepImmutable<Vector3>): void {
         this._nullCheck();
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();
         }
         this.runtime.wasmInstance.rigidBodyApplyTorque(this._inner.ptr, torque.x, torque.y, torque.z);
-    } 
+    }
 
     /**
      * Apply a force to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param force The force vector to apply
      * @param relativePosition The relative position vector to apply the force at
@@ -651,7 +652,7 @@ export class RigidBody {
 
     /**
      * Apply a central impulse to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param impulse The impulse vector to apply
      */
@@ -665,7 +666,7 @@ export class RigidBody {
 
     /**
      * Apply a torque impulse to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param impulse The impulse vector to apply
      */
@@ -679,7 +680,7 @@ export class RigidBody {
 
     /**
      * Apply an impulse to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param impulse The impulse vector to apply
      * @param relativePosition The relative position vector to apply the impulse at
@@ -725,7 +726,7 @@ export class RigidBody {
 
     /**
      * Get the push velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The push velocity of the rigid body
@@ -742,7 +743,7 @@ export class RigidBody {
 
     /**
      * Get the turn velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The turn velocity of the rigid body
@@ -759,7 +760,7 @@ export class RigidBody {
 
     /**
      * Set the push velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param velocity The velocity vector to set
      */
@@ -773,7 +774,7 @@ export class RigidBody {
 
     /**
      * Set the turn velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param velocity The velocity vector to set
      */
@@ -787,7 +788,7 @@ export class RigidBody {
 
     /**
      * Apply a central push impulse to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param impulse The impulse vector to apply
      */
@@ -801,7 +802,7 @@ export class RigidBody {
 
     /**
      * Apply a torque turn impulse to the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param impulse The impulse vector to apply
      */
@@ -815,7 +816,7 @@ export class RigidBody {
 
     /**
      * Clear the forces of the rigid body
-     * 
+     *
      * This operation is always synchronized
      */
     public clearForces(): void {
@@ -828,7 +829,7 @@ export class RigidBody {
 
     /**
      * Get the linear velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The linear velocity of the rigid body
@@ -845,7 +846,7 @@ export class RigidBody {
 
     /**
      * Get the angular velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param result The vector to store the result
      * @returns The angular velocity of the rigid body
@@ -862,7 +863,7 @@ export class RigidBody {
 
     /**
      * Set the linear velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param velocity The velocity vector to set
      */
@@ -876,7 +877,7 @@ export class RigidBody {
 
     /**
      * Set the angular velocity of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param velocity The velocity vector to set
      */
@@ -890,7 +891,7 @@ export class RigidBody {
 
     /**
      * Get the velocity of the rigid body in local point
-     * 
+     *
      * This operation is always synchronized
      * @param relativePosition The relative position vector to get the velocity at
      * @param result The vector to store the result
@@ -912,7 +913,7 @@ export class RigidBody {
 
     /**
      * Get the push velocity of the rigid body in local point
-     * 
+     *
      * This operation is always synchronized
      * @param relativePosition The relative position vector to get the push velocity at
      * @param result The vector to store the result
@@ -943,7 +944,7 @@ export class RigidBody {
 
     /**
      * Set shape of the rigid body
-     * 
+     *
      * This operation is always synchronized
      * @param shape The shape to set
      */

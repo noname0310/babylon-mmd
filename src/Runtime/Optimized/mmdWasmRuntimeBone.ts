@@ -6,9 +6,9 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import { type WasmBufferedArray, WasmBufferedArraySpan } from "./Misc/wasmBufferedArray";
 import type { MmdWasmInstance } from "./mmdWasmInstance";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
-import { type WasmBufferedArray, WasmBufferedArraySpan } from "./Misc/wasmBufferedArray";
 
 /**
  * Bone for MMD WASM runtime

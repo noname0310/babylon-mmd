@@ -1,11 +1,11 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { DeepImmutable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
-import { DeepImmutable } from "@babylonjs/core/types";
 
 class PhysicsWorldInner {
     private readonly _runtime: WeakRef<IPhysicsRuntime>;
@@ -135,7 +135,7 @@ const physicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegi
 
 /**
  * PhysicsWorld handles the simulation of physics in the Bullet engine
- * 
+ *
  * It is responsible for managing the simulation step, gravity, and the rigid bodies and constraints in the world
  */
 export class PhysicsWorld {
@@ -206,7 +206,7 @@ export class PhysicsWorld {
 
     /**
      * Sets the gravity of the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param gravity The gravity vector to set
      */
@@ -230,7 +230,7 @@ export class PhysicsWorld {
 
     /**
      * Adds a rigid body to the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to add
      * @returns True if the rigid body was added successfully, false otherwise
@@ -250,7 +250,7 @@ export class PhysicsWorld {
 
     /**
      * Removes a rigid body from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to remove
      * @returns True if the rigid body was removed successfully, false otherwise
@@ -267,7 +267,7 @@ export class PhysicsWorld {
 
     /**
      * Adds a rigid body bundle to the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to add
      * @returns True if the rigid body bundle was added successfully, false otherwise
@@ -287,7 +287,7 @@ export class PhysicsWorld {
 
     /**
      * Removes a rigid body bundle from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to remove
      * @returns True if the rigid body bundle was removed successfully, false otherwise
@@ -304,7 +304,7 @@ export class PhysicsWorld {
 
     /**
      * Adds a constraint to the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param constraint The constraint to add
      * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between linked bodies
@@ -325,7 +325,7 @@ export class PhysicsWorld {
 
     /**
      * Removes a constraint from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param constraint The constraint to remove
      * @returns True if the constraint was removed successfully, false otherwise

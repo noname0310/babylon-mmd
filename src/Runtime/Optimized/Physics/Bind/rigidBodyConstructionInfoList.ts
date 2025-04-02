@@ -1,10 +1,11 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, RigidBodyConstructionInfoOffsets } from "./constants";
 import { ConstructionInfoDataMask } from "./constructionInfoDataMask";
-import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
 
@@ -378,7 +379,7 @@ export class RigidBodyConstructionInfoList {
 
     /**
      * Set the local inertia of the rigid body at index n
-     * 
+     *
      * If the local inertia is not set, it will be calculated from the shape
      * @param n The index of the rigid body
      * @param value The local inertia of the rigid body
@@ -533,7 +534,7 @@ export class RigidBodyConstructionInfoList {
 
     /**
      * Get collision group of the rigid body at index n
-     * 
+     *
      * collision group is stored as 16-bit unsigned integer
      * @param n The index of the rigid body
      * @return The collision group of the rigid body
@@ -546,7 +547,7 @@ export class RigidBodyConstructionInfoList {
 
     /**
      * Set collision group of the rigid body at index n
-     * 
+     *
      * collision group is stored as 16-bit unsigned integer
      * @param n The index of the rigid body
      * @param value The collision group of the rigid body
@@ -559,7 +560,7 @@ export class RigidBodyConstructionInfoList {
 
     /**
      * Get collision mask of the rigid body at index n
-     * 
+     *
      * collision mask is stored as 16-bit unsigned integer
      * @param n The index of the rigid body
      * @return The collision mask of the rigid body
@@ -572,7 +573,7 @@ export class RigidBodyConstructionInfoList {
 
     /**
      * Set collision mask of the rigid body at index n
-     * 
+     *
      * collision mask is stored as 16-bit unsigned integer
      * @param n The index of the rigid body
      * @param value The collision mask of the rigid body

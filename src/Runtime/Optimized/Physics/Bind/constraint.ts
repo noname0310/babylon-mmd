@@ -161,13 +161,13 @@ export abstract class Constraint {
 const matrixBufferSize = 16 * Constants.A32BytesPerElement;
 
 abstract class Generic6DofConstraintBase extends Constraint {
-     /**
+    /**
      * Sets the linear lower limit of the constraint
-     * 
+     *
      * If the constraint is added to a physics world, this operation will wait for the world evaluation to finish
      * @param limit linear lower limit
      */
-     public setLinearLowerLimit(limit: DeepImmutable<Vector3>): void {
+    public setLinearLowerLimit(limit: DeepImmutable<Vector3>): void {
         if (this._inner.hasReferences) {
             this.runtime.lock.wait();
         }
@@ -210,7 +210,7 @@ abstract class Generic6DofConstraintBase extends Constraint {
 
 /**
  * Generic6DofConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
- * 
+ *
  * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
  */
 export class Generic6DofConstraint extends Generic6DofConstraintBase {
@@ -221,7 +221,7 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
      * @param bodyB rigid body B
      * @param frameA local frame A
      * @param frameB local frame B
-     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B 
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
      */
     public constructor(
         runtime: IPhysicsRuntime,
@@ -234,7 +234,7 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
 
     /**
      * Creates a new Generic6DofConstraint
-     * @param runtime physics runtime 
+     * @param runtime physics runtime
      * @param bodyBundle rigid body bundle
      * @param bodyIndices indices of the rigid bodies in the bundle
      * @param frameA local frame A
@@ -299,9 +299,9 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
 
 /**
  * Generic6DofSpringConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
- * 
+ *
  * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
- * 
+ *
  * This constraint also supports springs, which can be used to create a spring-like effect between the two bodies
  */
 export class Generic6DofSpringConstraint extends Generic6DofConstraintBase {

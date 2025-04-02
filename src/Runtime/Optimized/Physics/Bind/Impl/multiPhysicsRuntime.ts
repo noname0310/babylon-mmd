@@ -3,9 +3,10 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
+import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
+
 import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
-import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
 import { MultiPhysicsWorld } from "../multiPhysicsWorld";
 import type { RigidBody } from "../rigidBody";
 import type { RigidBodyBundle } from "../rigidBodyBundle";
@@ -13,9 +14,9 @@ import { BufferedRigidBodyBundleImpl } from "./Buffered/bufferedRigidBodyBundleI
 import { BufferedRigidBodyImpl } from "./Buffered/bufferedRigidBodyImpl";
 import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBundleImpl";
 import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
+import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";
-import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 
 /**
@@ -24,7 +25,7 @@ import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 export interface MultiPhysicsRuntimeCreationOptions {
     /**
      * Whether to allow dynamic rigid body shadows (default: false)
-     * 
+     *
      * If disabled, rigid body shadow creation will be allowed only if the rigid body physics mode is set to Static or Kinematic
      */
     allowDynamicShadow?: boolean;
@@ -75,7 +76,7 @@ const multiPhysicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, Finalizat
 
 /**
  * MultiPhysicsRuntime handles the multiple physics simulations and provides an interface for managing rigid bodies and constraints
- * 
+ *
  * It is responsible for evaluating the physics world and synchronizing the state of rigid bodies
  */
 export class MultiPhysicsRuntime implements IPhysicsRuntime {
@@ -117,7 +118,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Whether to use delta time for world step (default: true)
-     * 
+     *
      * If true, the delta time will be calculated based on the scene's delta time
      * If false, the `MultiPhysicsRuntime.timeStep` property will be used as the fixed time step
      */
@@ -125,14 +126,14 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * The time step for the physics simulation (default: 1/60)
-     * 
+     *
      * This value is used when `useDeltaForWorldStep` is set to false
      */
     public timeStep: number;
 
     /**
      * The maximum number of substeps for the physics simulation (default: 10)
-     * 
+     *
      * This value is used to control the maximum number of substeps taken in a single frame
      */
     public maxSubSteps: number;
@@ -246,9 +247,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Registers the physics runtime with the given scene
-     * 
+     *
      * This method binds the `afterAnimations` method to the scene's `onAfterAnimationsObservable` event
-     * 
+     *
      * You can manually call `afterAnimations` if you want to control the timing of the physics simulation
      * @param scene The scene to register with
      */
@@ -276,7 +277,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Steps the physics simulation and synchronizes the state of rigid bodies
-     * 
+     *
      * In most cases, you do not need to call this method manually,
      * Instead, you can use the `register` method to bind it to the scene's `onAfterAnimationsObservable` event
      * @param deltaTime The time delta in milliseconds
@@ -427,7 +428,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Sets the gravity vector of the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the gravity will be set after waiting for the lock
      * @param gravity The gravity vector
      */
@@ -439,9 +440,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body to the physics world
-     * 
+     *
      * If the world is not existing, it will be created
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body will be added after waiting for the lock
      * @param rigidBody The rigid body to add
      * @param worldId The ID of the world to add the rigid body to
@@ -456,7 +457,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
                 referenceCount = 0;
             }
             this._rigidBodyMap.set(rigidBody, referenceCount + 1);
-            
+
             if (this._rigidBodyUsingBackBuffer) {
                 rigidBody.updateBufferedMotionState(false);
             }
@@ -477,9 +478,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body from the physics world
-     * 
+     *
      * If there are no more rigid bodies in the world, the world will be destroyed automatically
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
      * @param rigidBody The rigid body to remove
      * @param worldId The ID of the world to remove the rigid body from
@@ -505,9 +506,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body bundle to the physics world
-     * 
+     *
      * If the world is not existing, it will be created
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to add
      * @param worldId The ID of the world to add the rigid body bundle to
@@ -543,9 +544,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body bundle from the physics world
-     * 
+     *
      * If there are no more rigid body bundles in the world, the world will be destroyed automatically
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to remove
      * @param worldId The ID of the world to remove the rigid body bundle from
@@ -573,7 +574,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
      * Adds a rigid body to all worlds
      *
      * rigid body physics mode must be Static or Kinematic
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body will be added after waiting for the lock
      * @param rigidBody The rigid body to add
      * @returns True if the rigid body was added successfully, false otherwise
@@ -608,13 +609,13 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body from all worlds
-     * 
+     *
      * This method does not remove the rigid body that is added with `MultiPhysicsRuntime.addRigidBody`
-     * 
+     *
      * Only the rigid body that is added with `MultiPhysicsRuntime.addRigidBodyToGlobal` will be removed
-     * 
+     *
      * If there are no more rigid bodies in the world, the world will be destroyed automatically
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
      * @param rigidBody The rigid body to remove
      * @returns True if the rigid body was removed successfully, false otherwise
@@ -641,7 +642,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
      * Adds a rigid body bundle to all worlds
      *
      * rigid body bundle physics mode must be Static or Kinematic
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to add
      * @returns True if the rigid body bundle was added successfully, false otherwise
@@ -676,13 +677,13 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body bundle from all worlds
-     * 
+     *
      * This method does not remove the rigid body bundle that is added with `MultiPhysicsRuntime.addRigidBodyBundle`
-     * 
+     *
      * Only the rigid body bundle that is added with `MultiPhysicsRuntime.addRigidBodyBundleToGlobal` will be removed
-     * 
+     *
      * If there are no more rigid body bundles in the world, the world will be destroyed automatically
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to remove
      * @returns True if the rigid body bundle was removed successfully, false otherwise
@@ -707,13 +708,13 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body shadow to the physics world
-     * 
+     *
      * In case of Dynamic physics mode, Rigid body firstly needs to be added to the other world
-     * 
+     *
      * The worldId must be not equal to the worldId of the rigid body
-     * 
+     *
      * Rigid body shadow allows the rigid body to be added to multiple worlds
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body shadow will be added after waiting for the lock
      * @param rigidBody The rigid body to add
      * @param worldId The ID of the world to add the rigid body as shadow
@@ -769,7 +770,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body shadow from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body shadow will be removed after waiting for the lock
      * @param rigidBody The rigid body to remove
      * @param worldId The ID of the world to remove the rigid body shadow from
@@ -822,13 +823,13 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body bundle shadow to the physics world
-     * 
+     *
      * In case of Dynamic physics mode, Rigid body bundle firstly needs to be added to the other world
-     * 
+     *
      * and the worldId must be not equal to the worldId of the rigid body bundle
-     * 
+     *
      * Rigid body bundle shadow allows the rigid body bundle to be added to multiple worlds
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle shadow will be added after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to add
      * @param worldId The ID of the world to add the rigid body bundle as shadow
@@ -881,7 +882,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body bundle shadow from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle shadow will be removed after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to remove
      * @param worldId The ID of the world to remove the rigid body bundle shadow from
@@ -948,9 +949,9 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a constraint to the physics world
-     * 
+     *
      * Constraint worldId must be equal to the worldId of the connected rigid bodies
-     * 
+     *
      * If the runtime evaluation type is Buffered, the constraint will be added after waiting for the lock
      * @param constraint The constraint to add
      * @param worldId The ID of the world to add the constraint to
@@ -964,7 +965,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a constraint from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the constraint will be removed after waiting for the lock
      * @param constraint The constraint to remove
      * @param worldId The ID of the world to remove the constraint from

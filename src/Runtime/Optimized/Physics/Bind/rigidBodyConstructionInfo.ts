@@ -2,10 +2,11 @@ import type { Matrix } from "@babylonjs/core/Maths/math.vector";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, RigidBodyConstructionInfoOffsets } from "./constants";
 import { ConstructionInfoDataMask } from "./constructionInfoDataMask";
-import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
 
@@ -62,7 +63,7 @@ const rigidBodyConstructionInfoRegistryMap = new WeakMap<BulletWasmInstance, Fin
 
 /**
  * RigidBodyConstructionInfo is used to create a rigid body in the physics engine
- * 
+ *
  * it contains all the information needed to create a rigid body, such as the shape, mass, inertia, damping, etc.
  */
 export class RigidBodyConstructionInfo {
@@ -290,7 +291,7 @@ export class RigidBodyConstructionInfo {
 
     /**
      * The local inertia of the rigid body
-     * 
+     *
      * If the local inertia is not set, it will be calculated from the shape
      */
     public get localInertia(): Nullable<Vector3> {
@@ -403,7 +404,7 @@ export class RigidBodyConstructionInfo {
 
     /**
      * The collision group of the rigid body
-     * 
+     *
      * collision group is stored as 16-bit unsigned integer
      */
     public get collisionGroup(): number {
@@ -418,7 +419,7 @@ export class RigidBodyConstructionInfo {
 
     /**
      * The collision mask of the rigid body
-     * 
+     *
      * collision mask is stored as 16-bit unsigned integer
      */
     public get collisionMask(): number {
@@ -444,7 +445,7 @@ export class RigidBodyConstructionInfo {
         this._uint8Ptr.array[RigidBodyConstructionInfoOffsets.AdditionalDamping / Constants.A8BytesPerElement] = +value;
     }
 
-    
+
     /**
      * The no contact response of the rigid body
      */

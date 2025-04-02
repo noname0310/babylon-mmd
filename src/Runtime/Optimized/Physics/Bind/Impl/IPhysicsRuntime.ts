@@ -1,5 +1,6 @@
-import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { IWasmSpinLock } from "@/Runtime/Optimized/Misc/IWasmSpinLock";
+
+import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { RigidBodyBundle } from "../rigidBodyBundle";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";

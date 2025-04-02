@@ -1,11 +1,12 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
+import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, MotionStateOffsetsInFloat32Array } from "./constants";
-import type { IRigidBodyBundleImpl } from "./Impl/IRigidBodyBundleImpl";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
-import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+import type { IRigidBodyBundleImpl } from "./Impl/IRigidBodyBundleImpl";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
 import type { RigidBodyConstructionInfoList } from "./rigidBodyConstructionInfoList";
@@ -118,11 +119,11 @@ const physicsRigidBodyBundleRegistryMap = new WeakMap<BulletWasmInstance, Finali
 
 /**
  * bundle of bullet physics rigid bodies
- * 
+ *
  * rigid body bundle is a collection of rigid bodies
  * that allocates all of its motion state data
  * in the one big linearly contiguous memory
- * 
+ *
  * Bundle is useful for following cases:
  * - when you have a lot of rigid bodies
  * - when you want manage several rigid bodies as a group
@@ -215,7 +216,7 @@ export class RigidBodyBundle {
 
     /**
      * Dispose the rigid body bundle
-     * 
+     *
      * rigid body bundle must be removed from the world before disposing
      */
     public dispose(): void {
@@ -447,9 +448,9 @@ export class RigidBodyBundle {
 
     /**
      * Set the transform matrix of the rigid body at the given index
-     * 
+     *
      * This method will work only if the rigid body motion type is kinematic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param matrix The transform matrix to set
@@ -460,9 +461,9 @@ export class RigidBodyBundle {
 
     /**
      * Set the transform matrix of the rigid body at the given index
-     * 
+     *
      * This method will work only if the rigid body motion type is kinematic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param array The array to set
@@ -482,9 +483,9 @@ export class RigidBodyBundle {
 
     /**
      * Set the transform matrices of the rigid bodies in the bundle
-     * 
+     *
      * This method will work only if the rigid body motion type is kinematic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param array The array to set
      * @param offset The offset in the array
@@ -503,9 +504,9 @@ export class RigidBodyBundle {
 
     /**
      * Set the dynamic transform matrix of the rigid body at the given index
-     * 
+     *
      * This method will work only if the rigid body motion type is dynamic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param matrix The transform matrix to set
@@ -517,9 +518,9 @@ export class RigidBodyBundle {
 
     /**
      * Set the dynamic transform matrix of the rigid body at the given index
-     * 
+     *
      * This method will work only if the rigid body motion type is dynamic
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param array The array to set
@@ -548,7 +549,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the linear and angular damping of the rigid body at the given index
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param linearDamping Linear damping
@@ -604,7 +605,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the mass and local inertia of the rigid body at the given index
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param mass Mass
@@ -660,7 +661,7 @@ export class RigidBodyBundle {
 
     /**
      * Translate the rigid body at the given index
-     * 
+     *
      * Application can be deferred to the next frame when world evaluating the bundle
      * @param index Index of the rigid body
      * @param translation The translation vector
@@ -707,7 +708,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the total force of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -728,7 +729,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the total torque of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -749,7 +750,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a central force to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param force The force vector
@@ -767,7 +768,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a torque to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param torque The torque vector
@@ -785,7 +786,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a force to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param force The force vector
@@ -812,7 +813,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a push force to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -830,7 +831,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a torque impulse to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -848,7 +849,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply an impulse to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -875,7 +876,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a push impulse to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -902,7 +903,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the push velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -923,7 +924,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the turn velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -944,7 +945,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the push velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param velocity The push velocity vector
@@ -962,7 +963,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the turn velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param velocity The turn velocity vector
@@ -980,7 +981,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a central push impulse to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -998,7 +999,7 @@ export class RigidBodyBundle {
 
     /**
      * Apply a torque turn impulse to the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param impulse The impulse vector
@@ -1016,7 +1017,7 @@ export class RigidBodyBundle {
 
     /**
      * Clear the forces of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      */
@@ -1033,7 +1034,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the linear velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -1054,7 +1055,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the angular velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param result The vector to store the result
@@ -1093,7 +1094,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the angular velocity of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param velocity The angular velocity vector
@@ -1111,7 +1112,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the velocity of the rigid body at the given index in the local point
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param relativePosition The relative position vector
@@ -1137,7 +1138,7 @@ export class RigidBodyBundle {
 
     /**
      * Get the push velocity of the rigid body at the given index in the local point
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param relativePosition The relative position vector
@@ -1176,7 +1177,7 @@ export class RigidBodyBundle {
 
     /**
      * Set the shape of the rigid body at the given index
-     * 
+     *
      * This operation is always synchronized
      * @param index Index of the rigid body
      * @param shape The shape to set

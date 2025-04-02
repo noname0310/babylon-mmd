@@ -1,11 +1,11 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { DeepImmutable } from "@babylonjs/core/types";
 
 import type { BulletWasmInstance } from "./bulletWasmInstance";
 import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
-import { DeepImmutable } from "@babylonjs/core/types";
 
 class MultiPhysicsWorldInner {
     private readonly _runtime: WeakRef<IPhysicsRuntime>;
@@ -315,11 +315,11 @@ const multiPhysicsWorldRegistryMap = new WeakMap<BulletWasmInstance, Finalizatio
 
 /**
  * MultiPhysicsWorld handles multiple physics worlds and allows to add rigid bodies and constraints to them
- * 
+ *
  * It supports multi-threading by introducing a rigid body shadow concept
- * 
+ *
  * Rigid body shadow is a copy of the rigid body that can be added to a different world
- * 
+ *
  * Internally, it just creates a new rigid body with Kinematic motion type and synchronizes the position and rotation with the original rigid body
  */
 export class MultiPhysicsWorld {
@@ -415,9 +415,9 @@ export class MultiPhysicsWorld {
 
     /**
      * Adds a rigid body to the physics world
-     * 
+     *
      * If the world is not existing, it will be created
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to add
      * @param worldId The ID of the world to add the rigid body to
@@ -438,9 +438,9 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body from the physics world
-     * 
+     *
      * If there are no more rigid bodies in the world, the world will be destroyed automatically
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to remove
      * @param worldId The ID of the world to remove the rigid body from
@@ -458,9 +458,9 @@ export class MultiPhysicsWorld {
 
     /**
      * Adds a rigid body bundle to the physics world
-     * 
+     *
      * If the world is not existing, it will be created
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to add
      * @param worldId The ID of the world to add the rigid body bundle to
@@ -481,9 +481,9 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body bundle from the physics world
-     * 
+     *
      * If there are no more rigid body bundles in the world, the world will be destroyed automatically
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to remove
      * @param worldId The ID of the world to remove the rigid body bundle from
@@ -503,7 +503,7 @@ export class MultiPhysicsWorld {
      * Adds a rigid body to all worlds
      *
      * rigid body physics mode must be Static or Kinematic
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to add
      * @returns True if the rigid body was added successfully, false otherwise
@@ -526,13 +526,13 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body from all worlds
-     * 
+     *
      * This method does not remove the rigid body that is added with `MultiPhysicsWorld.addRigidBody`
-     * 
+     *
      * Only the rigid body that is added with `MultiPhysicsWorld.addRigidBodyToGlobal` will be removed
-     * 
+     *
      * If there are no more rigid bodies in the world, the world will be destroyed automatically
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to remove
      * @returns True if the rigid body was removed successfully, false otherwise
@@ -551,7 +551,7 @@ export class MultiPhysicsWorld {
      * Adds a rigid body bundle to all worlds
      *
      * rigid body bundle physics mode must be Static or Kinematic
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to add
      * @returns True if the rigid body bundle was added successfully, false otherwise
@@ -574,13 +574,13 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body bundle from all worlds
-     * 
+     *
      * This method does not remove the rigid body bundle that is added with `MultiPhysicsWorld.addRigidBodyBundle`
-     * 
+     *
      * Only the rigid body bundle that is added with `MultiPhysicsWorld.addRigidBodyBundleToGlobal` will be removed
-     * 
+     *
      * If there are no more rigid body bundles in the world, the world will be destroyed automatically
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to remove
      * @returns True if the rigid body bundle was removed successfully, false otherwise
@@ -597,16 +597,16 @@ export class MultiPhysicsWorld {
 
     /**
      * Adds a rigid body shadow to the physics world
-     * 
+     *
      * In case of Dynamic physics mode, Rigid body firstly needs to be added to the other world
-     * 
+     *
      * The worldId must be not equal to the worldId of the rigid body
-     * 
+     *
      * Rigid body shadow allows the rigid body to be added to multiple worlds
-     * 
+     *
      * When RigidBody with dynamic physics mode is added to the world as shadow,
      * the rigid body will be added to the world as kinematic
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to add
      * @param worldId The ID of the world to add the rigid body as shadow
@@ -628,7 +628,7 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body shadow from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBody The rigid body to remove
      * @param worldId The ID of the world to remove the rigid body shadow from
@@ -647,13 +647,13 @@ export class MultiPhysicsWorld {
 
     /**
      * Adds a rigid body bundle shadow to the physics world
-     * 
+     *
      * In case of Dynamic physics mode, Rigid body bundle firstly needs to be added to the other world
-     * 
+     *
      * The worldId must be not equal to the worldId of the rigid body bundle
-     * 
+     *
      * Rigid body bundle shadow allows the rigid body bundle to be added to multiple worlds
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to add
      * @param worldId The ID of the world to add the rigid body bundle as shadow
@@ -675,7 +675,7 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a rigid body bundle shadow from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param rigidBodyBundle The rigid body bundle to remove
      * @param worldId The ID of the world to remove the rigid body bundle shadow from
@@ -694,9 +694,9 @@ export class MultiPhysicsWorld {
 
     /**
      * Adds a constraint to the physics world
-     * 
+     *
      * Constraint worldId must be equal to the worldId of the connected rigid bodies
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param constraint The constraint to add
      * @param worldId The ID of the world to add the constraint to
@@ -718,7 +718,7 @@ export class MultiPhysicsWorld {
 
     /**
      * Removes a constraint from the physics world
-     * 
+     *
      * This operation performs waiting for the lock before executing
      * @param constraint The constraint to remove
      * @param worldId The ID of the world to remove the constraint from

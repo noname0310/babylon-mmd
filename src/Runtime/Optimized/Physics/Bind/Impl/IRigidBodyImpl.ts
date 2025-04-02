@@ -1,8 +1,9 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
+
+import type { BulletWasmInstance } from "../bulletWasmInstance";
 
 export interface IRigidBodyImpl {
     readonly shouldSync: boolean;

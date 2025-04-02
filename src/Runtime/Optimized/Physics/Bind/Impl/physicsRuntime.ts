@@ -3,9 +3,10 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import { Scene } from "@babylonjs/core/scene";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
+import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
+
 import type { BulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
-import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
 import { PhysicsWorld } from "../physicsWorld";
 import type { RigidBody } from "../rigidBody";
 import type { RigidBodyBundle } from "../rigidBodyBundle";
@@ -13,9 +14,9 @@ import { BufferedRigidBodyBundleImpl } from "./Buffered/bufferedRigidBodyBundleI
 import { BufferedRigidBodyImpl } from "./Buffered/bufferedRigidBodyImpl";
 import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBundleImpl";
 import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
+import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";
-import type { IPhysicsRuntime } from "./IPhysicsRuntime";
 import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 
 class PhysicsRuntimeInner {
@@ -58,7 +59,7 @@ const physicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRe
 
 /**
  * PhysicsRuntime handles the physics simulation and provides an interface for managing rigid bodies and constraints
- * 
+ *
  * It is responsible for evaluating the physics world and synchronizing the state of rigid bodies
  */
 export class PhysicsRuntime implements IPhysicsRuntime {
@@ -97,7 +98,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Whether to use delta time for world step (default: true)
-     * 
+     *
      * If true, the delta time will be calculated based on the scene's delta time
      * If false, the `MultiPhysicsRuntime.timeStep` property will be used as the fixed time step
      */
@@ -105,18 +106,18 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * The time step for the physics simulation (default: 1/60)
-     * 
+     *
      * This property is only used when `useDeltaForWorldStep` is false
      */
     public timeStep: number;
 
     /**
      * The maximum number of substeps for the physics simulation (default: 10)
-     * 
+     *
      * This value is used to control the maximum number of substeps taken in a single frame
      */
     public maxSubSteps: number;
-    
+
     /**
      * The fixed time step for the physics simulation (default: 1/60)
      */
@@ -213,9 +214,9 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Registers the physics runtime with the given scene
-     * 
+     *
      * This method binds the `afterAnimations` method to the scene's `onAfterAnimationsObservable` event
-     * 
+     *
      * You can manually call `afterAnimations` if you want to control the timing of the physics simulation
      * @param scene The scene to register with
      */
@@ -243,7 +244,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Steps the physics simulation and synchronizes the state of rigid bodies
-     * 
+     *
      * In most cases, you do not need to call this method manually,
      * Instead, you can use the `register` method to bind it to the scene's `onAfterAnimationsObservable` event
      * @param deltaTime The time delta in milliseconds
@@ -404,7 +405,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body to the physics world
-     * 
+     *
      * If the world evaluation type is Buffered, the rigid body will be added after waiting for the lock
      * @param rigidBody The rigid body to add
      * @returns True if the rigid body was added successfully, false otherwise
@@ -431,7 +432,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body will be removed after waiting for the lock
      * @param rigidBody The rigid body to remove
      * @returns True if the rigid body was removed successfully, false otherwise
@@ -450,7 +451,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Adds a rigid body bundle to the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be added after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to add
      * @returns True if the rigid body bundle was added successfully, false otherwise
@@ -477,7 +478,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a rigid body bundle from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the rigid body bundle will be removed after waiting for the lock
      * @param rigidBodyBundle The rigid body bundle to remove
      * @returns True if the rigid body bundle was removed successfully, false otherwise
@@ -508,10 +509,10 @@ export class PhysicsRuntime implements IPhysicsRuntime {
         return this._rigidBodyBundleList;
     }
 
-    
+
     /**
      * Adds a constraint to the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the constraint will be added after waiting for the lock
      * @param constraint The constraint to add
      * @param disableCollisionsBetweenLinkedBodies Whether to disable collisions between the linked bodies
@@ -524,7 +525,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
 
     /**
      * Removes a constraint from the physics world
-     * 
+     *
      * If the runtime evaluation type is Buffered, the constraint will be removed after waiting for the lock
      * @param constraint The constraint to remove
      * @returns True if the constraint was removed successfully, false otherwise
