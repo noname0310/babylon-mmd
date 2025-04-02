@@ -40,9 +40,9 @@ impl MmdPhysicsRuntime {
         }
     }
     
-    // pub(crate) fn world(&self) -> &MultiPhysicsWorld {
-    //     &self.multi_physics_world
-    // }
+    pub(crate) fn world_mut_ptr(&mut self) -> *mut MultiPhysicsWorld {
+        &mut self.multi_physics_world as *mut MultiPhysicsWorld
+    }
 
     pub(crate) fn max_sub_steps_mut(&mut self) -> &mut i32 {
         &mut self.max_sub_steps
@@ -50,10 +50,6 @@ impl MmdPhysicsRuntime {
 
     pub(crate) fn fixed_time_step_mut(&mut self) -> &mut f32 {
         &mut self.fixed_time_step
-    }
-    
-    pub(crate) fn set_gravity(&mut self, gravity: Vec3) {
-        self.multi_physics_world.set_gravity(gravity);
     }
 
     pub(crate) fn step_simulation(&mut self, time_step: f32, mmd_models: &mut [Box<MmdModel>]) {

@@ -29,6 +29,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     public readonly initializer: PhysicsInitializer;
 
     private readonly _mmdRuntime: MmdWasmRuntime;
+    private readonly _physicsWorldPtr: number;
     private _maxSubSteps: number;
     private _fixedTimeStep: number;
     private readonly _gravity: Vector3;
@@ -43,6 +44,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this.initializer = new PhysicsInitializer(mmdRuntime.wasmInternal);
 
         this._mmdRuntime = mmdRuntime;
+        this._physicsWorldPtr = mmdRuntime.wasmInternal.getMultiPhysicsWorld();
         this._maxSubSteps = 5;
         this._fixedTimeStep = 1 / 100;
         this._gravity = new Vector3(0, -98, 0);
@@ -61,6 +63,15 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._mmdRuntime.wasmInstance.deallocateBuffer(worldMatrixBuffer.byteOffset, worldMatrixBuffer.byteLength);
 
         this._worldMatrixBuffer = null!;
+    }
+
+    /**
+     * For multiple physics world methods
+     */
+    private _nullCheck(): void {
+        if (this._worldMatrixBuffer === null) {
+            throw new Error("MmdWasmPhysicsRuntime is disposed");
+        }
     }
 
     public get maxSubSteps(): number {
@@ -84,8 +95,9 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     }
 
     public setGravity(gravity: DeepImmutable<Vector3>): void {
+        this._nullCheck();
         this._mmdRuntime.lock.wait();
-        this._mmdRuntime.wasmInternal.setPhysicsGravity(gravity.x, gravity.y, gravity.z);
+        this._mmdRuntime.wasmInstance.multiPhysicsWorldSetGravity(this._physicsWorldPtr, gravity.x, gravity.y, gravity.z);
         this._gravity.copyFrom(gravity);
     }
 

@@ -332,11 +332,16 @@ impl MmdRuntime {
 }
 
 #[cfg(feature = "physics")]
-use glam::{Vec3, Mat4};
+use glam::Mat4;
 
 #[cfg(feature = "physics")]
 #[wasm_bindgen]
 impl MmdRuntime {
+    #[wasm_bindgen(js_name = "getMultiPhysicsWorld")]
+    pub fn get_multi_physics_world(&mut self) -> *mut usize {
+        self.physics_runtime.world_mut_ptr() as *mut usize
+    }
+    
     #[wasm_bindgen(js_name = "setPhysicsMaxSubSteps")]
     pub fn set_physics_max_sub_steps(&mut self, max_sub_steps: i32) {
         *self.physics_runtime.max_sub_steps_mut() = max_sub_steps;
@@ -345,11 +350,6 @@ impl MmdRuntime {
     #[wasm_bindgen(js_name = "setPhysicsFixedTimeStep")]
     pub fn set_physics_fixed_time_step(&mut self, fixed_time_step: f32) {
         *self.physics_runtime.fixed_time_step_mut() = fixed_time_step;
-    }
-
-    #[wasm_bindgen(js_name = "setPhysicsGravity")]
-    pub fn set_physics_gravity(&mut self, gravity_x: f32, gravity_y: f32, gravity_z: f32) {
-        self.physics_runtime.set_gravity(Vec3::new(gravity_x, gravity_y, gravity_z));
     }
 
     #[wasm_bindgen(js_name = "setMmdModelWorldMatrix")]
