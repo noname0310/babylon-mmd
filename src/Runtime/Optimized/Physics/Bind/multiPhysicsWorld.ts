@@ -42,7 +42,7 @@ class MultiPhysicsWorldInner {
         this._referenceCount = 0;
     }
 
-    public dispose(): void {
+    public dispose(fromPointer: boolean): void {
         if (this._referenceCount > 0) {
             throw new Error("Cannot dispose physics world while it still has references");
         }
@@ -51,10 +51,12 @@ class MultiPhysicsWorldInner {
             return;
         }
 
-        const runtime = this._runtime.deref();
-        if (runtime !== undefined) {
-            runtime.lock.wait();
-            runtime.wasmInstance.destroyMultiPhysicsWorld(this._ptr);
+        if (!fromPointer) {
+            const runtime = this._runtime.deref();
+            if (runtime !== undefined) {
+                runtime.lock.wait();
+                runtime.wasmInstance.destroyMultiPhysicsWorld(this._ptr);
+            }
         }
         this._ptr = 0;
 
@@ -308,7 +310,7 @@ class MultiPhysicsWorldInner {
 }
 
 function multiPhysicsWorldFinalizer(inner: MultiPhysicsWorldInner): void {
-    inner.dispose();
+    inner.dispose(false);
 }
 
 const multiPhysicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsWorldInner>>();
@@ -326,26 +328,44 @@ export class MultiPhysicsWorld {
     private readonly _runtime: IPhysicsRuntime;
 
     private readonly _inner: MultiPhysicsWorldInner;
+    private readonly _fromPointer: boolean;
 
     /**
      * Creates a new MultiPhysicsWorld instance
      * @param runtime The physics runtime that this world belongs to
      * @param allowDynamicShadow Whether to allow dynamic shadow
      */
-    public constructor(runtime: IPhysicsRuntime, allowDynamicShadow: boolean) {
+    public constructor(runtime: IPhysicsRuntime, allowDynamicShadow: boolean);
+
+    /**
+     * Creates a MultiPhysicsWorld instance from an existing pointer
+     * @param runtime The physics runtime that this world belongs to
+     * @param ptr The pointer to the existing MultiPhysicsWorld instance
+     * @internal
+     */
+    public constructor(runtime: IPhysicsRuntime, ptr: number);
+
+    public constructor(runtime: IPhysicsRuntime, allowDynamicShadowOrPtr: boolean | number) {
         this._runtime = runtime;
 
-        const ptr = runtime.wasmInstance.createMultiPhysicsWorld(allowDynamicShadow);
+        if (typeof allowDynamicShadowOrPtr === "boolean") {
+            const ptr = runtime.wasmInstance.createMultiPhysicsWorld(allowDynamicShadowOrPtr);
 
-        this._inner = new MultiPhysicsWorldInner(new WeakRef(runtime), ptr);
+            this._inner = new MultiPhysicsWorldInner(new WeakRef(runtime), ptr);
 
-        let registry = multiPhysicsWorldRegistryMap.get(runtime.wasmInstance);
-        if (registry === undefined) {
-            registry = new FinalizationRegistry(multiPhysicsWorldFinalizer);
-            multiPhysicsWorldRegistryMap.set(runtime.wasmInstance, registry);
+            let registry = multiPhysicsWorldRegistryMap.get(runtime.wasmInstance);
+            if (registry === undefined) {
+                registry = new FinalizationRegistry(multiPhysicsWorldFinalizer);
+                multiPhysicsWorldRegistryMap.set(runtime.wasmInstance, registry);
+            }
+
+            registry.register(this, this._inner, this);
+            this._fromPointer = false;
+        } else {
+            this._inner = new MultiPhysicsWorldInner(new WeakRef(runtime), allowDynamicShadowOrPtr);
+            // we should not finalize the world if it is created from an existing pointer
+            this._fromPointer = true;
         }
-
-        registry.register(this, this._inner, this);
     }
 
     /**
@@ -356,10 +376,12 @@ export class MultiPhysicsWorld {
             return;
         }
 
-        this._inner.dispose();
+        this._inner.dispose(this._fromPointer);
 
-        const registry = multiPhysicsWorldRegistryMap.get(this._runtime.wasmInstance);
-        registry?.unregister(this);
+        if (!this._fromPointer) {
+            const registry = multiPhysicsWorldRegistryMap.get(this._runtime.wasmInstance);
+            registry?.unregister(this);
+        }
     }
 
     /**
@@ -408,6 +430,10 @@ export class MultiPhysicsWorld {
      * @param fixedTimeStep The fixed time step to use for the simulation
      */
     public stepSimulation(timeStep: number, maxSubSteps: number, fixedTimeStep: number): void {
+        if (this._fromPointer) {
+            throw new Error("Cannot call stepSimulation on a world created from a pointer");
+        }
+
         this._nullCheck();
         this._runtime.lock.wait();
         this._runtime.wasmInstance.multiPhysicsWorldStepSimulation(this._inner.ptr, timeStep, maxSubSteps, fixedTimeStep);

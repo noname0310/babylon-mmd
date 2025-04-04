@@ -1,85 +1,37 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Observable } from "@babylonjs/core/Misc/observable";
-import { Scene } from "@babylonjs/core/scene";
-import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable } from "@babylonjs/core/types";
 
-import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
-
-import type { BulletWasmInstance } from "../bulletWasmInstance";
-import type { Constraint } from "../constraint";
-import { MultiPhysicsWorld } from "../multiPhysicsWorld";
-import type { RigidBody } from "../rigidBody";
-import type { RigidBodyBundle } from "../rigidBodyBundle";
-import { BufferedRigidBodyBundleImpl } from "./Buffered/bufferedRigidBodyBundleImpl";
-import { BufferedRigidBodyImpl } from "./Buffered/bufferedRigidBodyImpl";
-import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBundleImpl";
-import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
-import type { IPhysicsRuntime } from "./IPhysicsRuntime";
-import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
-import type { IRigidBodyImpl } from "./IRigidBodyImpl";
-import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
+import type { IWasmSpinLock } from "../Misc/IWasmSpinLock";
+import type { MmdWasmRuntime} from "../mmdWasmRuntime";
+import { MmdWasmRuntimeAnimationEvaluationType } from "../mmdWasmRuntime";
+import type { BulletWasmInstance } from "./Bind/bulletWasmInstance";
+import type { Constraint } from "./Bind/constraint";
+import { BufferedRigidBodyBundleImpl } from "./Bind/Impl/Buffered/bufferedRigidBodyBundleImpl";
+import { BufferedRigidBodyImpl } from "./Bind/Impl/Buffered/bufferedRigidBodyImpl";
+import { ImmediateRigidBodyBundleImpl } from "./Bind/Impl/Immediate/immediateRigidBodyBundleImpl";
+import { ImmediateRigidBodyImpl } from "./Bind/Impl/Immediate/immediateRigidBodyImpl";
+import type { IPhysicsRuntime } from "./Bind/Impl/IPhysicsRuntime";
+import type { IRigidBodyBundleImpl } from "./Bind/Impl/IRigidBodyBundleImpl";
+import type { IRigidBodyImpl } from "./Bind/Impl/IRigidBodyImpl";
+import { MultiPhysicsWorld } from "./Bind/multiPhysicsWorld";
+import type { RigidBody } from "./Bind/rigidBody";
+import type { RigidBodyBundle } from "./Bind/rigidBodyBundle";
 
 /**
- * Options for creating a MultiPhysicsRuntime
+ * Options for creating a MmdWasmPhysicsRuntimeImpl
  */
-export interface MultiPhysicsRuntimeCreationOptions {
-    /**
-     * Whether to allow dynamic rigid body shadows (default: false)
-     *
-     * If disabled, rigid body shadow creation will be allowed only if the rigid body physics mode is set to Static or Kinematic
-     */
-    allowDynamicShadow?: boolean;
-
+export interface MmdWasmPhysicsRuntimeImplCreationOptions {
     /**
      * Whether to preserve the back buffer for the motion state (default: false)
      */
     preserveBackBuffer?: boolean;
 }
 
-class MultiPhysicsRuntimeInner {
-    private readonly _lock: WasmSpinlock;
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
-    private _ptr: number;
-    private _worldReference: Nullable<MultiPhysicsWorld>;
-
-    public constructor(lock: WasmSpinlock, wasmInstance: WeakRef<BulletWasmInstance>, ptr: number, worldReference: MultiPhysicsWorld) {
-        this._lock = lock;
-        this._wasmInstance = wasmInstance;
-        this._ptr = ptr;
-        this._worldReference = worldReference;
-        worldReference.addReference();
-    }
-
-    public dispose(): void {
-        if (this._ptr === 0) {
-            return;
-        }
-
-        this._lock.wait(); // ensure that the runtime is not evaluating the world
-        this._wasmInstance.deref()?.destroyMultiPhysicsRuntime(this._ptr);
-
-        this._ptr = 0;
-        this._worldReference!.removeReference();
-        this._worldReference = null;
-    }
-
-    public get ptr(): number {
-        return this._ptr;
-    }
-}
-
-function multiPhysicsRuntimeFinalizer(runtime: MultiPhysicsRuntimeInner): void {
-    runtime.dispose();
-}
-
-const multiPhysicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsRuntimeInner>>();
-
 /**
- * MultiPhysicsRuntime handles the multiple physics simulations and provides an interface for managing rigid bodies and constraints
- *
- * It is responsible for evaluating the physics world and synchronizing the state of rigid bodies
+ * For access full physics world feature, you need to pass this object to the `MmdWasmPhysicsRuntime.getWorld` method
  */
-export class MultiPhysicsRuntime implements IPhysicsRuntime {
+export class MmdWasmPhysicsRuntimeImpl implements IPhysicsRuntime {
     /**
      * Observable that is triggered when the physics world is synchronized
      * in this observable callback scope, ensure that the physics world is not being evaluated
@@ -93,146 +45,93 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
     public readonly onTickObservable: Observable<void>;
 
     /**
-     * @internal
+     * The Bullet WASM instance
      */
     public readonly wasmInstance: BulletWasmInstance;
 
     /**
-     * Spinlock for the physics runtime to synchronize access to the physics world state
-     * @internal
+     * Spinlock for the runtime to synchronize access to the state
+     *
      */
-    public readonly lock: WasmSpinlock;
-
-    private readonly _inner: MultiPhysicsRuntimeInner;
+    public readonly lock: IWasmSpinLock;
 
     private readonly _physicsWorld: MultiPhysicsWorld;
 
-    private _scene: Nullable<Scene>;
-    private _afterAnimationsBinded: Nullable<() => void>;
+    private readonly _runtime: MmdWasmRuntime;
+    private readonly _gravity: Vector3;
 
-    private _evaluationType: PhysicsRuntimeEvaluationType;
     private _usingWasmBackBuffer: boolean;
     private _rigidBodyUsingBackBuffer: boolean;
     private readonly _preserveBackBuffer: boolean;
     private _dynamicShadowCount: number;
 
-    /**
-     * Whether to use delta time for world step (default: true)
-     *
-     * If true, the delta time will be calculated based on the scene's delta time
-     * If false, the `MultiPhysicsRuntime.timeStep` property will be used as the fixed time step
-     */
-    public useDeltaForWorldStep: boolean;
-
-    /**
-     * The time step for the physics simulation (default: 1/60)
-     *
-     * This value is used when `useDeltaForWorldStep` is set to false
-     */
-    public timeStep: number;
-
-    /**
-     * The maximum number of substeps for the physics simulation (default: 10)
-     *
-     * This value is used to control the maximum number of substeps taken in a single frame
-     */
-    public maxSubSteps: number;
-
-    /**
-     * The fixed time step for the physics simulation (default: 1/60)
-     */
-    public fixedTimeStep: number;
-
     private readonly _rigidBodyMap: Map<RigidBody, number>;
     private readonly _rigidBodyBundleMap: Map<RigidBodyBundle, number>;
 
     /**
-     * Creates a new physics runtime
-     * @param wasmInstance The Bullet WASM instance
-     * @param options The creation options
+     * @internal
+     * Create a new instance of the MmdWasmPhysicsRuntimeImpl class
+     * @param runtime The MmdWasmRuntime instance
+     * @param initialGravity The initial gravity vector
+     * @param options The options for creating the impl object
      */
-    public constructor(wasmInstance: BulletWasmInstance, options: MultiPhysicsRuntimeCreationOptions = {}) {
+    public constructor(runtime: MmdWasmRuntime, initialGravity: DeepImmutable<Vector3>, options: MmdWasmPhysicsRuntimeImplCreationOptions = {}) {
         const {
-            allowDynamicShadow = false,
             preserveBackBuffer = false
         } = options;
 
         this.onSyncObservable = new Observable<void>();
         this.onTickObservable = new Observable<void>();
 
-        this.wasmInstance = wasmInstance;
+        this.wasmInstance = runtime.wasmInstance;
 
-        const physicsWorld = new MultiPhysicsWorld(this, allowDynamicShadow);
-        const ptr = wasmInstance.createMultiPhysicsRuntime(physicsWorld.ptr);
+        const physicsWorld = new MultiPhysicsWorld(this, runtime.wasmInternal.getMultiPhysicsWorld());
 
-        const lockPtr = wasmInstance.multiPhysicsRuntimeGetLockStatePtr(ptr);
-        this.lock = new WasmSpinlock(wasmInstance.createTypedArray(Uint8Array, lockPtr, 1));
+        this.lock = runtime.lock;
 
         if (preserveBackBuffer) {
-            wasmInstance.multiPhysicsWorldUseMotionStateBuffer(physicsWorld.ptr, true);
+            this.wasmInstance.multiPhysicsWorldUseMotionStateBuffer(physicsWorld.ptr, true);
         }
 
-        this._inner = new MultiPhysicsRuntimeInner(this.lock, new WeakRef(wasmInstance), ptr, physicsWorld);
         this._physicsWorld = physicsWorld;
 
-        let registry = multiPhysicsRuntimeRegistryMap.get(wasmInstance);
-        if (registry === undefined) {
-            registry = new FinalizationRegistry(multiPhysicsRuntimeFinalizer);
-            multiPhysicsRuntimeRegistryMap.set(wasmInstance, registry);
-        }
+        this._runtime = runtime;
+        this._gravity = initialGravity.clone();
 
-        registry.register(this, this._inner, this);
 
-        this._scene = null;
-        this._afterAnimationsBinded = null;
-
-        this._evaluationType = PhysicsRuntimeEvaluationType.Immediate;
         this._usingWasmBackBuffer = preserveBackBuffer;
         this._rigidBodyUsingBackBuffer = false;
         this._preserveBackBuffer = preserveBackBuffer;
         this._dynamicShadowCount = 0;
 
-        this.useDeltaForWorldStep = true;
-        this.timeStep = 1 / 60;
-        this.maxSubSteps = 10;
-        this.fixedTimeStep = 1 / 60;
-
         this._rigidBodyMap = new Map<RigidBody, number>();
         this._rigidBodyBundleMap = new Map<RigidBodyBundle, number>();
+
+        runtime.onEvaluationTypeChangedObservable.add(this._onEvaluationTypeChanged);
     }
 
-    /**
-     * Disposes the physics runtime
-     */
     public dispose(): void {
-        if (this._inner.ptr === 0) {
+        if (this._physicsWorld.ptr === 0) {
             return;
         }
 
-        this._inner.dispose();
+        this._runtime.onEvaluationTypeChangedObservable.removeCallback(this._onEvaluationTypeChanged);
+
         this._physicsWorld.dispose();
 
         this.onSyncObservable.clear();
         this.onTickObservable.clear();
-
-        const registry = multiPhysicsRuntimeRegistryMap.get(this.wasmInstance);
-        registry?.unregister(this);
-    }
-
-    /** @internal */
-    public get ptr(): number {
-        return this._inner.ptr;
     }
 
     private _nullCheck(): void {
-        if (this._inner.ptr === 0) {
+        if (this._physicsWorld.ptr === 0) {
             throw new Error("Cannot access disposed physics runtime");
         }
     }
 
     /** @internal */
     public createRigidBodyImpl(): IRigidBodyImpl {
-        if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
+        if (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Immediate) {
             return new ImmediateRigidBodyImpl();
         } else {
             return new BufferedRigidBodyImpl();
@@ -241,75 +140,17 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
 
     /** @internal */
     public createRigidBodyBundleImpl(bundle: RigidBodyBundle): IRigidBodyBundleImpl {
-        if (this._evaluationType === PhysicsRuntimeEvaluationType.Immediate) {
+        if (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Immediate) {
             return new ImmediateRigidBodyBundleImpl(bundle.count);
         } else {
             return new BufferedRigidBodyBundleImpl(bundle.count);
         }
     }
 
-    /**
-     * Registers the physics runtime with the given scene
-     *
-     * This method binds the `afterAnimations` method to the scene's `onAfterAnimationsObservable` event
-     *
-     * You can manually call `afterAnimations` if you want to control the timing of the physics simulation
-     * @param scene The scene to register with
-     */
-    public register(scene: Scene): void {
-        if (this._afterAnimationsBinded !== null) return;
-        this._nullCheck();
-
-        this._afterAnimationsBinded = (): void => {
-            this.afterAnimations(scene.getEngine().getDeltaTime());
-        };
-        this._scene = scene;
-        scene.onAfterAnimationsObservable.add(this._afterAnimationsBinded);
-    }
-
-    /**
-     * Unregisters the physics runtime from the scene
-     */
-    public unregister(): void {
-        if (this._afterAnimationsBinded === null) return;
-
-        this._scene!.onAfterAnimationsObservable.removeCallback(this._afterAnimationsBinded);
-        this._afterAnimationsBinded = null;
-        this._scene = null;
-    }
-
-    /**
-     * Steps the physics simulation and synchronizes the state of rigid bodies
-     *
-     * In most cases, you do not need to call this method manually,
-     * Instead, you can use the `register` method to bind it to the scene's `onAfterAnimationsObservable` event
-     * @param deltaTime The time delta in milliseconds
-     */
-    public afterAnimations(deltaTime: number): void {
-        if (this._inner.ptr === 0) {
-            this.unregister();
-            return;
-        }
-
-        // compute delta time
-        if (this.useDeltaForWorldStep) {
-            const scene = this._scene;
-            if (scene !== null) {
-                deltaTime = scene.useConstantAnimationDeltaTime
-                    ? 16
-                    : Math.max(Scene.MinDeltaTime, Math.min(deltaTime, Scene.MaxDeltaTime));
-            } else {
-                deltaTime = Math.max(Scene.MinDeltaTime, Math.min(deltaTime, Scene.MaxDeltaTime));
-            }
-            deltaTime /= 1000;
-        } else {
-            deltaTime = this.timeStep;
-        }
-
-        if (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered) {
-            if (this.wasmInstance.multiPhysicsRuntimeBufferedStepSimulation === undefined) { // single thread environment fallback
-                this._physicsWorld.stepSimulation(deltaTime, this.maxSubSteps, this.fixedTimeStep);
-            }
+    /** @internal */
+    public beforeStep(): void {
+        if (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+            // single thread environment fallback must be done before code execution
 
             this.lock.wait(); // ensure that the runtime is not evaluating the world
 
@@ -341,7 +182,8 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             this.onSyncObservable.notifyObservers();
-            this.wasmInstance.multiPhysicsRuntimeBufferedStepSimulation?.(this._inner.ptr, deltaTime, this.maxSubSteps, this.fixedTimeStep);
+
+            // evaluate the world in the worker thread
         } else {
             if (this._preserveBackBuffer) {
                 this.lock.wait(); // ensure that the runtime is not evaluating animations
@@ -367,30 +209,22 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
                 }
             }
 
-            this._physicsWorld.stepSimulation(deltaTime, this.maxSubSteps, this.fixedTimeStep);
+            // evaluate the world in the main thread
+        }
+    }
+
+    /** @internal */
+    public afterStep(): void {
+        if (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
+            // do nothing
+        } else {
             this.onSyncObservable.notifyObservers();
         }
-
         this.onTickObservable.notifyObservers();
     }
 
-    /**
-     * Animation evaluation type
-     */
-    public get evaluationType(): PhysicsRuntimeEvaluationType {
-        return this._evaluationType;
-    }
-
-    public set evaluationType(value: PhysicsRuntimeEvaluationType) {
-        if (this._evaluationType === value) return;
-
-        if (value === PhysicsRuntimeEvaluationType.Buffered) {
-            this._evaluationType = value;
-        } else {
-            this._evaluationType = value;
-        }
-
-        if (value === PhysicsRuntimeEvaluationType.Buffered) {
+    private readonly _onEvaluationTypeChanged = (evaluationType: MmdWasmRuntimeAnimationEvaluationType): void => {
+        if (evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
             for (const rigidBody of this._rigidBodyMap.keys()) {
                 rigidBody.impl = new BufferedRigidBodyImpl();
             }
@@ -417,9 +251,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
                 rigidBodyBundle.impl = new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
             }
         }
-    }
-
-    private readonly _gravity: Vector3 = new Vector3(0, -10, 0);
+    };
 
     /**
      * Gets the gravity vector of the physics world (default: (0, -10, 0))
@@ -466,12 +298,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBody.impl instanceof BufferedRigidBodyImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBody.needToCommit) {
                     this.lock.wait();
                     rigidBody.commitToWasm();
                 }
-                rigidBody.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBody.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyImpl()
                     : new ImmediateRigidBodyImpl();
             }
@@ -532,12 +364,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBodyBundle.impl instanceof BufferedRigidBodyBundleImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBodyBundle.needToCommit) {
                     this.lock.wait();
                     rigidBodyBundle.commitToWasm();
                 }
-                rigidBodyBundle.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBodyBundle.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyBundleImpl(rigidBodyBundle.count)
                     : new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
             }
@@ -597,12 +429,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBody.impl instanceof BufferedRigidBodyImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBody.needToCommit) {
                     this.lock.wait();
                     rigidBody.commitToWasm();
                 }
-                rigidBody.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBody.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyImpl()
                     : new ImmediateRigidBodyImpl();
             }
@@ -665,12 +497,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBodyBundle.impl instanceof BufferedRigidBodyBundleImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBodyBundle.needToCommit) {
                     this.lock.wait();
                     rigidBodyBundle.commitToWasm();
                 }
-                rigidBodyBundle.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBodyBundle.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyBundleImpl(rigidBodyBundle.count)
                     : new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
             }
@@ -749,12 +581,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBody.impl instanceof BufferedRigidBodyImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBody.needToCommit) {
                     this.lock.wait();
                     rigidBody.commitToWasm();
                 }
-                rigidBody.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBody.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyImpl()
                     : new ImmediateRigidBodyImpl();
             }
@@ -803,7 +635,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             !this._preserveBackBuffer && // if back buffer is preserved, we should not desync it
             this._dynamicShadowCount === 0 &&
             this._usingWasmBackBuffer &&
-            this._evaluationType !== PhysicsRuntimeEvaluationType.Buffered // if the evaluation type is buffered, we should not desync it
+            this._runtime.evaluationType !== MmdWasmRuntimeAnimationEvaluationType.Buffered // if the evaluation type is buffered, we should not desync it
         ) {
             this.wasmInstance.multiPhysicsWorldUseMotionStateBuffer(this._physicsWorld.ptr, false);
             this._usingWasmBackBuffer = false;
@@ -864,12 +696,12 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             }
 
             const isBufferedImpl = rigidBodyBundle.impl instanceof BufferedRigidBodyBundleImpl;
-            if (isBufferedImpl !== (this._evaluationType === PhysicsRuntimeEvaluationType.Buffered)) {
+            if (isBufferedImpl !== (this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered)) {
                 if (isBufferedImpl && rigidBodyBundle.needToCommit) {
                     this.lock.wait();
                     rigidBodyBundle.commitToWasm();
                 }
-                rigidBodyBundle.impl = this._evaluationType === PhysicsRuntimeEvaluationType.Buffered
+                rigidBodyBundle.impl = this._runtime.evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered
                     ? new BufferedRigidBodyBundleImpl(rigidBodyBundle.count)
                     : new ImmediateRigidBodyBundleImpl(rigidBodyBundle.count);
             }
@@ -915,7 +747,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
             !this._preserveBackBuffer && // if back buffer is preserved, we should not desync it
             this._dynamicShadowCount === 0 &&
             this._usingWasmBackBuffer &&
-            this._evaluationType !== PhysicsRuntimeEvaluationType.Buffered // if the evaluation type is buffered, we should not desync it
+            this._runtime.evaluationType !== MmdWasmRuntimeAnimationEvaluationType.Buffered // if the evaluation type is buffered, we should not desync it
         ) {
             this.wasmInstance.multiPhysicsWorldUseMotionStateBuffer(this._physicsWorld.ptr, false);
             this._usingWasmBackBuffer = false;

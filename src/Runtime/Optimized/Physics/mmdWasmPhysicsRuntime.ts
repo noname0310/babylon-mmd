@@ -4,8 +4,9 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
 import type { MmdWasmInstance } from "../mmdWasmInstance";
 import type { MmdWasmModel } from "../mmdWasmModel";
-import type { MmdWasmRuntime, PhysicsInitializeSet } from "../mmdWasmRuntime";
+import { type MmdWasmRuntime, type PhysicsInitializeSet } from "../mmdWasmRuntime";
 import type { IMmdWasmPhysicsRuntime } from "./IMmdWasmPhysicsRuntime";
+import type { MmdWasmPhysicsRuntimeImpl, MmdWasmPhysicsRuntimeImplCreationOptions } from "./mmdWasmPhysicsRuntimeImpl";
 
 class PhysicsInitializer implements PhysicsInitializeSet {
     private readonly _wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
@@ -19,6 +20,7 @@ class PhysicsInitializer implements PhysicsInitializeSet {
         this._wasmInternal.markMmdModelPhysicsAsNeedInit(model.ptr);
     }
 }
+
 
 /**
  * @internal
@@ -36,9 +38,9 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
 
     private _worldMatrixBuffer: IWasmTypedArray<Float32Array>;
 
-    public constructor(
-        mmdRuntime: MmdWasmRuntime
-    ) {
+    private _impl: Nullable<MmdWasmPhysicsRuntimeImpl>;
+
+    public constructor(mmdRuntime: MmdWasmRuntime) {
         this.nextWorldId = 0;
 
         this.initializer = new PhysicsInitializer(mmdRuntime.wasmInternal);
@@ -52,6 +54,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
 
         const worldMatrixBufferPtr = mmdRuntime.wasmInstance.allocateBuffer(16 * 4);
         this._worldMatrixBuffer = mmdRuntime.wasmInstance.createTypedArray(Float32Array, worldMatrixBufferPtr, 16);
+
+        this._impl = null;
     }
 
     public dispose(): void {
@@ -63,6 +67,9 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._mmdRuntime.wasmInstance.deallocateBuffer(worldMatrixBuffer.byteOffset, worldMatrixBuffer.byteLength);
 
         this._worldMatrixBuffer = null!;
+
+        this._impl?.dispose();
+        this._impl = null;
     }
 
     /**
@@ -95,15 +102,23 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
     }
 
     public setGravity(gravity: DeepImmutable<Vector3>): void {
-        this._nullCheck();
-        this._mmdRuntime.lock.wait();
-        this._mmdRuntime.wasmInstance.multiPhysicsWorldSetGravity(this._physicsWorldPtr, gravity.x, gravity.y, gravity.z);
-        this._gravity.copyFrom(gravity);
+        if (this._impl !== null) {
+            this._impl.setGravity(gravity);
+        } else {
+            this._nullCheck();
+            this._mmdRuntime.lock.wait();
+            this._mmdRuntime.wasmInstance.multiPhysicsWorldSetGravity(this._physicsWorldPtr, gravity.x, gravity.y, gravity.z);
+            this._gravity.copyFrom(gravity);
+        }
     }
 
     public getGravity(result?: Vector3): Nullable<Vector3> {
-        result ??= new Vector3();
-        return result.copyFrom(this._gravity);
+        if (this._impl !== null) {
+            return this._impl.getGravityToRef(result ?? new Vector3());
+        } else {
+            result ??= new Vector3();
+            return result.copyFrom(this._gravity);
+        }
     }
 
     public setMmdModelsWorldMatrix(mmdModels: MmdWasmModel[]): void {
@@ -118,5 +133,13 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
             mmdModel.mesh.getWorldMatrix().copyToArray(worldMatrixArray, 0);
             wasmInternal.setMmdModelWorldMatrix(mmdModel.ptr, worldMatrixArray.byteOffset);
         }
+    }
+
+    public getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl, options: MmdWasmPhysicsRuntimeImplCreationOptions = {}): MmdWasmPhysicsRuntimeImpl {
+        if (this._impl === null) {
+            this._impl = new implCtor(this._mmdRuntime, this._gravity, options);
+        }
+
+        return this._impl;
     }
 }

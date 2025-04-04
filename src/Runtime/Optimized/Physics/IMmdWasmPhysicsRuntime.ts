@@ -1,6 +1,8 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
+import type { MmdWasmPhysicsRuntimeImpl } from "./mmdWasmPhysicsRuntimeImpl";
+
 /**
  * Mmd wasm physics runtime interface
  */
@@ -35,6 +37,17 @@ export interface IMmdWasmPhysicsRuntime {
 
     /**
      * Get the gravity of the all physics world (default 0, -98.0, 0)
+     *
+     * @param result gravity vector to store the result
+     * @returns gravity vector
      */
     getGravity(result?: Vector3): Nullable<Vector3>;
+
+    /**
+     * Get the physics runtime full implementation object
+     *
+     * @param implCtor physics runtime impl constructor
+     * @returns physics runtime impl
+     */
+    getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl): MmdWasmPhysicsRuntimeImpl;
 }

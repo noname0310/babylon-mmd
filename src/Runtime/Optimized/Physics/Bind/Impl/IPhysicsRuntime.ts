@@ -16,7 +16,6 @@ export interface IPhysicsRuntime {
 
     /**
      * Spinlock for the runtime to synchronize access to the state
-     *
      */
     readonly lock: IWasmSpinLock;
 
