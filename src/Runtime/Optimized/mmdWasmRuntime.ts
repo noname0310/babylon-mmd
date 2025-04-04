@@ -695,6 +695,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
 
             this.lock.wait(); // ensure that the runtime is not evaluating animations
 
+            this._physicsRuntime?.impl?.beforeStep(); // for physics object buffer swap and commit changes
+
             // desync buffer
             if (this._usingWasmBackBuffer === false) {
                 this._usingWasmBackBuffer = true;
@@ -793,6 +795,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 needToInitializePhysicsModels.clear();
             } // physics initialization for wasm integrated physics is done in wasm side
         } else {
+            this._physicsRuntime?.impl?.beforeStep(); // for physics object buffer swap and commit changes
+
             // sync buffer
             if (this._usingWasmBackBuffer === true) {
                 if (this._externalPhysics !== null) { // for external physics
@@ -830,6 +834,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 }
             }
         }
+
+        this._physicsRuntime?.impl?.afterStep(); // for trigger onSyncObservable and onTickObservable of physics runtime
 
         if (elapsedFrameTime !== null) {
             this.onAnimationTickObservable.notifyObservers();

@@ -143,4 +143,8 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
 
         return this._impl;
     }
+
+    public get impl(): Nullable<MmdWasmPhysicsRuntimeImpl> {
+        return this._impl;
+    }
 }
