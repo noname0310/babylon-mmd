@@ -2,6 +2,9 @@
 
 ## 0.63.0 (scheduled)
 
+- now support Bullet Physics Interface with `MmdRuntime.physics.getImpl()`
+  - bullet physics can also be used standalone using `MultiPhysicsRuntime` or `PhysicsRuntime`
+
 - improve MMD behavior reproduction for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
   - you can set `MmdAmmoJSPlugin.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
 
