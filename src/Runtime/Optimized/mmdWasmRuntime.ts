@@ -178,11 +178,6 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public readonly onAnimationTickObservable: Observable<void>;
 
-    /**
-     * This observable is notified when animation evaluation type is changed
-     */
-    public readonly onEvaluationTypeChangedObservable: Observable<MmdWasmRuntimeAnimationEvaluationType>;
-
     private _evaluationType: MmdWasmRuntimeAnimationEvaluationType;
     private _currentFrameTime: number;
     private _animationTimeScale: number;
@@ -248,7 +243,6 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.onPauseAnimationObservable = new Observable<void>();
         this.onSeekAnimationObservable = new Observable<void>();
         this.onAnimationTickObservable = new Observable<void>();
-        this.onEvaluationTypeChangedObservable = new Observable<MmdWasmRuntimeAnimationEvaluationType>();
 
         this._evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
         this._currentFrameTime = 0;
@@ -1211,7 +1205,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             models[i].onEvaluationTypeChanged(value);
         }
 
-        this.onEvaluationTypeChangedObservable.notifyObservers(value);
+        this._physicsRuntime?.impl?.onEvaluationTypeChanged(value);
     }
 
     /**

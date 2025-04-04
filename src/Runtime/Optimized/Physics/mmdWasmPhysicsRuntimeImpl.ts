@@ -106,16 +106,12 @@ export class MmdWasmPhysicsRuntimeImpl implements IPhysicsRuntime {
 
         this._rigidBodyMap = new Map<RigidBody, number>();
         this._rigidBodyBundleMap = new Map<RigidBodyBundle, number>();
-
-        runtime.onEvaluationTypeChangedObservable.add(this._onEvaluationTypeChanged);
     }
 
     public dispose(): void {
         if (this._physicsWorld.ptr === 0) {
             return;
         }
-
-        this._runtime.onEvaluationTypeChangedObservable.removeCallback(this._onEvaluationTypeChanged);
 
         this._physicsWorld.dispose();
 
@@ -223,7 +219,7 @@ export class MmdWasmPhysicsRuntimeImpl implements IPhysicsRuntime {
         this.onTickObservable.notifyObservers();
     }
 
-    private readonly _onEvaluationTypeChanged = (evaluationType: MmdWasmRuntimeAnimationEvaluationType): void => {
+    public onEvaluationTypeChanged(evaluationType: MmdWasmRuntimeAnimationEvaluationType): void {
         if (evaluationType === MmdWasmRuntimeAnimationEvaluationType.Buffered) {
             for (const rigidBody of this._rigidBodyMap.keys()) {
                 rigidBody.impl = new BufferedRigidBodyImpl();
