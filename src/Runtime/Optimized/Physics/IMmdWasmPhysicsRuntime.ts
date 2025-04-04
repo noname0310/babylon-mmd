@@ -1,7 +1,7 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { MmdWasmPhysicsRuntimeImpl } from "./mmdWasmPhysicsRuntimeImpl";
+import type { MmdWasmPhysicsRuntimeImpl, MmdWasmPhysicsRuntimeImplCreationOptions } from "./mmdWasmPhysicsRuntimeImpl";
 
 /**
  * Mmd wasm physics runtime interface
@@ -47,7 +47,8 @@ export interface IMmdWasmPhysicsRuntime {
      * Get the physics runtime full implementation object
      *
      * @param implCtor physics runtime impl constructor
+     * @param options physics runtime impl creation options
      * @returns physics runtime impl
      */
-    getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl): MmdWasmPhysicsRuntimeImpl;
+    getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl, options?: MmdWasmPhysicsRuntimeImplCreationOptions): MmdWasmPhysicsRuntimeImpl;
 }
