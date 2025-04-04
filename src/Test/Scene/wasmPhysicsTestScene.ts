@@ -33,7 +33,12 @@ import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPh
 import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
+import { PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physicsShape";
+import { RigidBody } from "@/Runtime/Optimized/Physics/Bind/rigidBody";
+import { RigidBodyConstructionInfo } from "@/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfo";
 import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
+import { MmdWasmPhysicsRuntimeImpl } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -159,6 +164,15 @@ export class SceneBuilder implements ISceneBuilder {
         });
         mmdModel.addAnimation(mmdWasmAnimation);
         mmdModel.setAnimation("motion");
+
+        const physicsRuntime = mmdRuntime.physics?.getImpl(MmdWasmPhysicsRuntimeImpl);
+        if (physicsRuntime !== undefined) {
+            const info = new RigidBodyConstructionInfo(mmdRuntime.wasmInstance);
+            info.motionType = MotionType.Static;
+            info.shape = new PhysicsStaticPlaneShape(physicsRuntime, new Vector3(0, 1, 0), 0);
+            const groundBody = new RigidBody(physicsRuntime, info);
+            physicsRuntime.addRigidBodyToGlobal(groundBody);
+        }
 
         attachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
