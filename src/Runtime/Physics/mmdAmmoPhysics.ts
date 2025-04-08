@@ -21,7 +21,7 @@ class MmdPhysicsMesh extends AbstractMesh {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
     public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
-    public readonly bodyOffsetInverseMatrix: Matrix;
+    public readonly bodyOffsetMatrixInverse: Matrix;
 
     private readonly _customBoundingInfo: Nullable<BoundingInfo>;
 
@@ -37,7 +37,7 @@ class MmdPhysicsMesh extends AbstractMesh {
         this.linkedBone = linkedBone;
         this.physicsMode = physicsMode;
         this.bodyOffsetMatrix = Matrix.Identity();
-        this.bodyOffsetInverseMatrix = Matrix.Identity();
+        this.bodyOffsetMatrixInverse = Matrix.Identity();
 
         this._customBoundingInfo = customBoundingInfo;
     }
@@ -53,7 +53,7 @@ class MmdPhysicsMesh extends AbstractMesh {
         );
 
         worldMatrix.multiplyToRef(parentWorldMatrixInverse, this.bodyOffsetMatrix);
-        this.bodyOffsetMatrix.invertToRef(this.bodyOffsetInverseMatrix);
+        this.bodyOffsetMatrix.invertToRef(this.bodyOffsetMatrixInverse);
     }
 
     public override getBoundingInfo(): BoundingInfo {
@@ -279,7 +279,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
                 break;
             case PmxObject.RigidBody.PhysicsMode.Physics:
                 {
-                    node.bodyOffsetInverseMatrix.multiplyToArray(
+                    node.bodyOffsetMatrixInverse.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
@@ -295,7 +295,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
                 {
                     node.linkedBone.getWorldTranslationToRef(MmdAmmoPhysicsModel._BoneWorldPosition);
-                    node.bodyOffsetInverseMatrix.multiplyToArray(
+                    node.bodyOffsetMatrixInverse.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
@@ -327,7 +327,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
     private readonly _kinematicOnces: PhysicsImpostor[] = [];
 
     /**
-     * Create a new MMD ammo.js physics engine
+     * Create a new MMD ammo.js physics
      *
      * Scene must have a physics engine enabled
      * @param scene The scene to build the physics model
