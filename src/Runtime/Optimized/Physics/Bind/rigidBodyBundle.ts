@@ -159,12 +159,19 @@ export class RigidBodyBundle {
      * Create a new rigid body bundle
      * @param runtime The physics runtime
      * @param info The rigid body construction info list
+     * @param countOverride The number of rigid bodies in the bundle
      */
-    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList) {
+    public constructor(runtime: IPhysicsRuntime, info: RigidBodyConstructionInfoList, countOverride?: number) {
         if (info.ptr === 0) {
             throw new Error("Cannot create rigid body bundle with null pointer");
         }
-        const count = info.count;
+        if (countOverride !== undefined) {
+            if (info.count < countOverride) {
+                throw new Error("Cannot create rigid body bundle with count greater than info count");
+            }
+            countOverride = Math.max(0, countOverride);
+        }
+        const count = countOverride ?? info.count;
         const shapeReferences: PhysicsShape[] = [];
         for (let i = 0; i < count; ++i) {
             const shape = info.getShape(i);
