@@ -1,5 +1,5 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Nullable } from "@babylonjs/core/types";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
@@ -301,7 +301,7 @@ export class RigidBodyConstructionInfoList {
      * @param n The index of the rigid body
      * @param value The initial transform of the rigid body
      */
-    public setInitialTransform(n: number, value: Matrix): void {
+    public setInitialTransform(n: number, value: DeepImmutable<Matrix>): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         const float32Ptr = this._float32Ptr.array;
@@ -384,7 +384,7 @@ export class RigidBodyConstructionInfoList {
      * @param n The index of the rigid body
      * @param value The local inertia of the rigid body
      */
-    public setLocalInertia(n: number, value: Nullable<Vector3>): void {
+    public setLocalInertia(n: number, value: Nullable<DeepImmutable<Vector3>>): void {
         this._nullCheck();
         const offset = n * Constants.RigidBodyConstructionInfoSize;
         if (value === null) {
