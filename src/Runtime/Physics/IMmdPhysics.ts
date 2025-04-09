@@ -4,7 +4,11 @@ import type { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
+import { CreateMmdWasmModelPhysicsOptions } from "../Optimized/mmdWasmRuntime";
 
+/**
+ * Interface for MMD physics implementation
+ */
 export interface IMmdPhysics {
     /**
      * Build the physics model of the MMD model
@@ -13,6 +17,7 @@ export interface IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
+     * @param physicsOptions Optional physics creation options
      * @returns MMD physics model
      * @throws If the physics model cannot be built
      */
@@ -21,10 +26,14 @@ export interface IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
-        logger: ILogger
+        logger: ILogger,
+        physicsOptions?: CreateMmdWasmModelPhysicsOptions
     ): IMmdPhysicsModel;
 }
 
+/**
+ * Interface for MMD physics model
+ */
 export interface IMmdPhysicsModel {
     /**
      * Dispose the physics resources

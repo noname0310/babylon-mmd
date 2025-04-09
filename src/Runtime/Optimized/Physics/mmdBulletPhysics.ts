@@ -14,6 +14,7 @@ import { MotionType } from "./Bind/motionType";
 import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsShape, PhysicsSphereShape } from "./Bind/physicsShape";
 import { Constraint, Generic6DofSpringConstraint } from "./Bind/constraint";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { CreateMmdWasmModelPhysicsOptions } from "../mmdWasmRuntime";
 
 class MmdRigidBodyData {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
@@ -53,38 +54,79 @@ class MmdRigidBodyBundle extends RigidBodyBundle {
  * MMD bullet physics model is container of the bullet physics resources of the MMD model
  */
 export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
+    private readonly _physicsRuntime: MultiPhysicsRuntime;
+    private readonly _worldId: number;
+    private readonly _kinematicSharedWorldIds: readonly number[];
     private readonly _rigidBodyIndexMap: Int32Array;
     private _bundle: Nullable<MmdRigidBodyBundle>;
     private readonly _constraints: Nullable<Constraint>[];
 
     /**
      * Create a new MMD bullet physics model
+     * @param physicsRuntime The physics runtime
+     * @param worldId The world id
+     * @param kinematicSharedWorldIds The kinematic shared world ids
      * @param rigidBodyIndexMap The rigid body index map
      * @param bundle Rigid body bundle
      * @param constraints Physics constraints
      */
     public constructor(
+        physicsRuntime: MultiPhysicsRuntime,
+        worldId: number,
+        kinematicSharedWorldIds: readonly number[],
         rigidBodyIndexMap: Int32Array,
         bundle: MmdRigidBodyBundle,
         constraints: Nullable<Constraint>[]
     ) {
+        this._physicsRuntime = physicsRuntime;
+        this._worldId = worldId;
+        this._kinematicSharedWorldIds = kinematicSharedWorldIds;
         this._rigidBodyIndexMap = rigidBodyIndexMap;
         this._bundle = bundle;
         this._constraints = constraints;
+
+        physicsRuntime.addRigidBodyBundle(bundle, worldId);
+        for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
+            const kinematicWorldId = kinematicSharedWorldIds[i];
+            if (kinematicWorldId !== worldId) {
+                physicsRuntime.addRigidBodyBundleShadow(bundle, kinematicWorldId);
+            }
+        }
+
+        for (let i = 0; i < constraints.length; ++i) {
+            const constraint = constraints[i];
+            if (constraint === null) continue;
+            physicsRuntime.addConstraint(constraint, worldId, false);
+        }
     }
 
     /**
      * Dispose the physics resources
      */
     public dispose(): void {
+        const physicsRuntime = this._physicsRuntime;
+        const worldId = this._worldId;
+        const kinematicSharedWorldIds = this._kinematicSharedWorldIds;
+
         const constraints = this._constraints;
         for (let i = 0; i < constraints.length; ++i) {
-            constraints[i]?.dispose();
+            const constraint = constraints[i];
+            if (constraint === null) continue;
+            physicsRuntime.removeConstraint(constraint, worldId);
+            constraint.dispose();
         }
         constraints.length = 0;
 
         const bundle = this._bundle;
         if (bundle !== null) {
+            for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
+                const kinematicWorldId = kinematicSharedWorldIds[i];
+                if (kinematicWorldId !== worldId) {
+                    physicsRuntime.removeRigidBodyBundleShadow(bundle, kinematicWorldId);
+                }
+            }
+            physicsRuntime.removeRigidBodyBundle(bundle, worldId);
+
             for (let i = 0; i < bundle.count; ++i) {
                 const shape = bundle.getShape(i);
                 shape.dispose();
@@ -233,6 +275,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
+     * @param physicsOptions Optional physics creation options
      * @returns MMD physics model
      * @throws If the physics model cannot be built
      */
@@ -241,8 +284,12 @@ export class MmdBulletPhysics implements IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
-        logger: ILogger
+        logger: ILogger,
+        physicsOptions: CreateMmdWasmModelPhysicsOptions = { }
     ): IMmdPhysicsModel {
+        const worldId = physicsOptions.worldId ?? 0;
+        const kinematicSharedWorldIds = [...(physicsOptions.kinematicSharedWorldIds ?? [])];
+
         const scene = (this._sceneOrRuntime as Scene).getPhysicsEngine
             ? (this._sceneOrRuntime as Scene)
             : undefined;
@@ -570,8 +617,6 @@ export class MmdBulletPhysics implements IMmdPhysics {
             constraint.setStiffness(5, joint.springRotation[2]);
             constraint.enableSpring(5, true);
 
-            // bodyA.addConstraint(bodyB, constraint);
-
             constraints[i] = constraint;
 
             // adjust the physics mode of the rigid bodies
@@ -600,6 +645,13 @@ export class MmdBulletPhysics implements IMmdPhysics {
             }
         }
 
-        return new MmdBulletPhysicsModel(rigidBodyIndexMap, bundle, constraints);
+        return new MmdBulletPhysicsModel(
+            physicsRuntime,
+            worldId,
+            kinematicSharedWorldIds,
+            rigidBodyIndexMap,
+            bundle,
+            constraints
+        );
     }
 }
