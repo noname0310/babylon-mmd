@@ -17,7 +17,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 
 class MmdRigidBodyData {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
-    public readonly physicsMode: PmxObject.RigidBody.PhysicsMode;
+    public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
     public readonly bodyOffsetMatrixInverse: Matrix;
 
@@ -415,6 +415,8 @@ export class MmdBulletPhysics implements IMmdPhysics {
 
         const bundle = new MmdRigidBodyBundle(physicsRuntime, rbInfoList, rbDataList, rbDataList.length);
 
+        const constraints: Nullable<Constraint>[] = new Array(joints.length);
+
         const jointRotation = new Quaternion();
         const jointPosition = new Vector3();
         const jointTransform = new Matrix();
@@ -444,10 +446,10 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 continue;
             }
 
-            const bodyA = bodies[joint.rigidbodyIndexA];
-            const bodyB = bodies[joint.rigidbodyIndexB];
+            const bodyAIndex = rigidBodyIndexMap[joint.rigidbodyIndexA] ?? -1;
+            const bodyBIndex = rigidBodyIndexMap[joint.rigidbodyIndexB] ?? -1;
 
-            if (bodyA === null || bodyB === null) {
+            if (bodyAIndex === -1 || bodyBIndex === -1) {
                 logger.warn(`Rigid body not found failed to create joint: ${joint.name}`);
 
                 constraints[i] = null;
@@ -518,101 +520,64 @@ export class MmdBulletPhysics implements IMmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
-            // TODO: not sure that convert also applies to joints
-            const damping = this._convertParameter(1);
-
-            const limits: Physics6DoFLimit[] = [
-                {
-                    axis: PhysicsConstraintAxis.LINEAR_X,
-                    minLimit: joint.positionMin[0],
-                    maxLimit: joint.positionMax[0],
-                    stiffness: this._convertParameter(joint.springPosition[0]),
-                    damping: damping
-                },
-                {
-                    axis: PhysicsConstraintAxis.LINEAR_Y,
-                    minLimit: joint.positionMin[1],
-                    maxLimit: joint.positionMax[1],
-                    stiffness: this._convertParameter(joint.springPosition[1]),
-                    damping: damping
-                },
-                {
-                    axis: PhysicsConstraintAxis.LINEAR_Z,
-                    minLimit: joint.positionMin[2],
-                    maxLimit: joint.positionMax[2],
-                    stiffness: this._convertParameter(joint.springPosition[2]),
-                    damping: damping
-                },
-                {
-                    axis: PhysicsConstraintAxis.ANGULAR_X,
-                    minLimit: this._clampAngularLimit(joint.rotationMin[0]),
-                    maxLimit: this._clampAngularLimit(joint.rotationMax[0]),
-                    stiffness: this._convertParameter(joint.springRotation[0]),
-                    damping: damping
-                },
-                {
-                    axis: PhysicsConstraintAxis.ANGULAR_Y,
-                    minLimit: this._clampAngularLimit(joint.rotationMin[1]),
-                    maxLimit: this._clampAngularLimit(joint.rotationMax[1]),
-                    stiffness: this._convertParameter(joint.springRotation[1]),
-                    damping: damping
-                },
-                {
-                    axis: PhysicsConstraintAxis.ANGULAR_Z,
-                    minLimit: this._clampAngularLimit(joint.rotationMin[2]),
-                    maxLimit: this._clampAngularLimit(joint.rotationMax[2]),
-                    stiffness: this._convertParameter(joint.springRotation[2]),
-                    damping: damping
-                }
-            ];
-            for (let j = 0; j < 3; ++j) {
-                const limit = limits[j];
-                if (limit.stiffness === 0) {
-                    limit.stiffness = undefined;
-                    limit.damping = undefined;
-                }
-            }
-
             const constraint = new Generic6DofSpringConstraint(
                 physicsRuntime,
-                {
-                    pivotA: jointFinalTransformA.getTranslation(),
-                    pivotB: jointFinalTransformB.getTranslation(),
-
-                    axisA: new Vector3(
-                        jointFinalTransformA.m[0],
-                        jointFinalTransformA.m[1],
-                        jointFinalTransformA.m[2]
-                    ).negateInPlace(),
-                    axisB: new Vector3(
-                        jointFinalTransformB.m[0],
-                        jointFinalTransformB.m[1],
-                        jointFinalTransformB.m[2]
-                    ).negateInPlace(),
-                    perpAxisA: new Vector3(
-                        jointFinalTransformA.m[4],
-                        jointFinalTransformA.m[5],
-                        jointFinalTransformA.m[6]
-                    ),
-                    perpAxisB: new Vector3(
-                        jointFinalTransformB.m[4],
-                        jointFinalTransformB.m[5],
-                        jointFinalTransformB.m[6]
-                    ),
-                    collision: true
-                },
-                limits,
-                scene
+                bundle,
+                [bodyAIndex, bodyBIndex],
+                jointFinalTransformA,
+                jointFinalTransformB,
+                true
             );
+            const limitVector = new Vector3();
 
-            bodyA.addConstraint(bodyB, constraint);
+            limitVector.fromArray(joint.positionMin);
+            constraint.setLinearLowerLimit(limitVector);
+            
+            limitVector.fromArray(joint.positionMax);
+            constraint.setLinearUpperLimit(limitVector);
+            
+            limitVector.fromArray(joint.rotationMin);
+            constraint.setAngularLowerLimit(limitVector);
+            
+            limitVector.fromArray(joint.rotationMax);
+            constraint.setAngularUpperLimit(limitVector);
+            
+            if (joint.springPosition[0] !== 0) {
+                constraint.setStiffness(0, joint.springPosition[0]);
+                constraint.enableSpring(0, true);
+            } else {
+                constraint.enableSpring(0, false);
+            }
+
+            if (joint.springPosition[1] !== 0) {
+                constraint.setStiffness(1, joint.springPosition[1]);
+                constraint.enableSpring(1, true);
+            } else {
+                constraint.enableSpring(1, false);
+            }
+
+            if (joint.springPosition[2] !== 0) {
+                constraint.setStiffness(2, joint.springPosition[2]);
+                constraint.enableSpring(2, true);
+            } else {
+                constraint.enableSpring(2, false);
+            }
+
+            constraint.setStiffness(3, joint.springRotation[0]);
+            constraint.enableSpring(3, true);
+            constraint.setStiffness(4, joint.springRotation[1]);
+            constraint.enableSpring(4, true);
+            constraint.setStiffness(5, joint.springRotation[2]);
+            constraint.enableSpring(5, true);
+
+            // bodyA.addConstraint(bodyB, constraint);
 
             constraints[i] = constraint;
 
             // adjust the physics mode of the rigid bodies
             // ref: https://web.archive.org/web/20140815111315/www20.atpages.jp/katwat/wp/?p=4135
-            const nodeA = nodes[joint.rigidbodyIndexA]!;
-            const nodeB = nodes[joint.rigidbodyIndexB]!;
+            const nodeA = bundle.rigidBodyData[bodyAIndex];
+            const nodeB = bundle.rigidBodyData[bodyBIndex];
 
             if (nodeA.physicsMode !== PmxObject.RigidBody.PhysicsMode.FollowBone &&
                 nodeB.physicsMode === PmxObject.RigidBody.PhysicsMode.PhysicsWithBone
