@@ -23,7 +23,7 @@ class MmdPhysicsTransformNode extends TransformNode {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
     public physicsMode: PmxObject.RigidBody.PhysicsMode;
     public readonly bodyOffsetMatrix: Matrix;
-    public readonly bodyOffsetInverseMatrix: Matrix;
+    public readonly bodyOffsetMatrixInverse: Matrix;
 
     public constructor(
         name: string,
@@ -37,7 +37,7 @@ class MmdPhysicsTransformNode extends TransformNode {
         this.linkedBone = linkedBone;
         this.physicsMode = physicsMode;
         this.bodyOffsetMatrix = Matrix.Identity();
-        this.bodyOffsetInverseMatrix = Matrix.Identity();
+        this.bodyOffsetMatrixInverse = Matrix.Identity();
     }
 
     private static readonly _WorldMatrix = new Matrix();
@@ -51,7 +51,7 @@ class MmdPhysicsTransformNode extends TransformNode {
         );
 
         worldMatrix.multiplyToRef(parentWorldMatrixInverse, this.bodyOffsetMatrix);
-        this.bodyOffsetMatrix.invertToRef(this.bodyOffsetInverseMatrix);
+        this.bodyOffsetMatrix.invertToRef(this.bodyOffsetMatrixInverse);
     }
 }
 
@@ -223,7 +223,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                 break;
             case PmxObject.RigidBody.PhysicsMode.Physics:
                 {
-                    node.bodyOffsetInverseMatrix.multiplyToArray(
+                    node.bodyOffsetMatrixInverse.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
@@ -239,7 +239,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
                 {
                     node.linkedBone.getWorldTranslationToRef(MmdPhysicsModel._BoneWorldPosition);
-                    node.bodyOffsetInverseMatrix.multiplyToArray(
+                    node.bodyOffsetMatrixInverse.multiplyToArray(
                         Matrix.ComposeToRef(
                             node.scaling,
                             node.rotationQuaternion!,
