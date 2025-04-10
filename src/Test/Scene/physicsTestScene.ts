@@ -27,9 +27,9 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
-import ammo from "@/Runtime/Physics/External/ammo.wasm";
-import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
-import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
+// import ammo from "@/Runtime/Physics/External/ammo.wasm";
+// import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+// import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 // import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
@@ -41,6 +41,10 @@ import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
+import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
+import { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
@@ -56,20 +60,6 @@ export class SceneBuilder implements ISceneBuilder {
         createCameraSwitch(scene, canvas, mmdCamera, camera);
         const { directionalLight, shadowGenerator } = createLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-
-        const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
-        mmdRuntime.loggingEnabled = true;
-
-        mmdRuntime.register(scene);
-        mmdRuntime.playAnimation();
-
-        const audioPlayer = new StreamAudioPlayer(scene);
-        audioPlayer.preservesPitch = false;
-        audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
-        mmdRuntime.setAudioPlayer(audioPlayer);
-
-        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
-        mmdPlayerControl.showPlayerControl();
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
@@ -120,14 +110,36 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
+            // ["physics", async(updateProgress): Promise<void> => {
+            //     updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+            //     const physicsInstance = await ammo();
+            //     const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+            //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
+            //     updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            // }]
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const physicsInstance = await ammo();
-                const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+                const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
+                const physicsPlugin = new BulletPlugin(mmdWasmInstance);
                 scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);
+        
+        // const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(scene));
+        mmdRuntime.loggingEnabled = true;
+
+        mmdRuntime.register(scene);
+        mmdRuntime.playAnimation();
+
+        const audioPlayer = new StreamAudioPlayer(scene);
+        audioPlayer.preservesPitch = false;
+        audioPlayer.source = "res/private_test/motion/flos/flos - R Sound Design (Piano Cover).mp3";
+        mmdRuntime.setAudioPlayer(audioPlayer);
+
+        const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
+        mmdPlayerControl.showPlayerControl();
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
