@@ -126,6 +126,7 @@ export { RigidBodyConstructionInfoList } from "@/Runtime/Optimized/Physics/Bind/
 
 // Runtime/Optimized/Physics
 export { IMmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/IMmdWasmPhysicsRuntime";
+export { MmdBulletPhysics, MmdBulletPhysicsModel } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 export { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 export { MmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntime";
 
