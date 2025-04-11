@@ -70,7 +70,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     /**
      * @internal
      */
-    public readonly wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
+    public readonly wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>;
 
     /**
      * Spinlock for MMD WASM runtime to synchronize animation evaluation

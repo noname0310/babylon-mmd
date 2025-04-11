@@ -7,10 +7,10 @@ export class AnimationPoolWrapper {
     private static readonly _Map = new Map<MmdWasmInstance, AnimationPoolWrapper>();
 
     public readonly instance: MmdWasmInstance;
-    public readonly pool: InstanceType<MmdWasmInstance["AnimationPool"]>;
+    public readonly pool: ReturnType<MmdWasmInstance["createAnimationPool"]>;
     private _referenceCount: number;
 
-    private constructor(instance: MmdWasmInstance, pool: InstanceType<MmdWasmInstance["AnimationPool"]>) {
+    private constructor(instance: MmdWasmInstance, pool: ReturnType<MmdWasmInstance["createAnimationPool"]>) {
         this.instance = instance;
         this.pool = pool;
         this._referenceCount = 0;

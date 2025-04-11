@@ -9,9 +9,9 @@ import type { IMmdWasmPhysicsRuntime } from "./IMmdWasmPhysicsRuntime";
 import type { MmdWasmPhysicsRuntimeImpl, MmdWasmPhysicsRuntimeImplCreationOptions } from "./mmdWasmPhysicsRuntimeImpl";
 
 class PhysicsInitializer implements PhysicsInitializeSet {
-    private readonly _wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>;
+    private readonly _wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>;
 
-    public constructor(wasmInternal: InstanceType<MmdWasmInstance["MmdRuntime"]>) {
+    public constructor(wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>) {
         this._wasmInternal = wasmInternal;
     }
 
