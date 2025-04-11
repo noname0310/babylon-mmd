@@ -14,7 +14,7 @@ import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
 import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
-import type { CreateMmdModelOptions } from "../mmdRuntime";
+import type { MmdModelCreationOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import type { IMmdPhysics } from "../Physics/IMmdPhysics";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
@@ -45,47 +45,6 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
      * If you are using havok or ammo.js physics, only beforePhysics process is asynchronous
      */
     Buffered
-}
-
-/**
- * Options for constructing MMD WASM model physics
- */
-export interface CreateMmdWasmModelPhysicsOptions {
-    /**
-     * Physics world ID (default: MmdWasmRuntime.physics.nextWorldId)
-     *
-     * value must be range of unsigned 32-bit integer
-     *
-     * By default, the physics world ID is automatically assigned and incremented
-     *
-     * If you need physics interaction between models, you can specify the same world ID
-     *
-     * Separating physics worlds can improve performance and enable parallel processing when using multi-threaded physics runtime (e.g. MmdWasmInstanceTypeMPR)
-     */
-    worldId?: number;
-
-    /**
-     * Physics world IDs that share kinematic and static physics objects (default: [])
-     *
-     * value must be range of unsigned 32-bit integer
-     *
-     * If you need physics interaction by across multiple physics worlds, you can specify the world IDs that share only kinematic and static physics objects
-     *
-     * Dynamic physics objects are not shared between physics worlds. Only kinematic objects are shared
-     */
-    kinematicSharedWorldIds?: number[];
-}
-
-/**
- * Options for creating MMd WASM model
- *
- * Generic type `TMaterial` is used to specify the material type of the model
- */
-export interface CreateMmdWasmModelOptions<TMaterial extends Material = Material> extends Omit<CreateMmdModelOptions<TMaterial>, "buildPhysics"> {
-    /**
-     * Whether to build physics (default: true)
-     */
-    buildPhysics?: CreateMmdWasmModelPhysicsOptions | boolean;
 }
 
 /**
@@ -217,12 +176,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             this._externalPhysics = null;
             this._physicsRuntime = (physics as MmdWasmPhysics).createRuntime(this);
             this._physicsClock = (physics as MmdWasmPhysics).createPhysicsClock();
-            this._mmdMetadataEncoder = (physics as MmdWasmPhysics).createMetadataEncoder(this._physicsRuntime);
+            this._mmdMetadataEncoder = (physics as MmdWasmPhysics).createMetadataEncoder(this._physicsRuntime, this);
         } else {
             this._externalPhysics = physics as IMmdPhysics;
             this._physicsRuntime = null;
             this._physicsClock = new NullPhysicsClock();
-            this._mmdMetadataEncoder = new MmdMetadataEncoder();
+            this._mmdMetadataEncoder = new MmdMetadataEncoder(this);
         }
 
         this._models = [];
@@ -367,7 +326,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: CreateMmdWasmModelOptions<TMaterial> = {}
+        options: MmdModelCreationOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -384,7 +343,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: CreateMmdWasmModelOptions<TMaterial> = {}
+        options: MmdModelCreationOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -423,7 +382,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             skeleton,
             options.materialProxyConstructor as IMmdMaterialProxyConstructor<Material>,
             wasmMorphIndexMap,
-            options.buildPhysics ? this._externalPhysics : null
+            options.buildPhysics
+                ? this._externalPhysics !== null
+                    ? {
+                        physicsImpl: this._externalPhysics,
+                        physicsOptions: typeof options.buildPhysics === "boolean"
+                            ? null
+                            : options.buildPhysics
+                    }
+                    : null
+                : null
         );
         this._models.push(model);
 

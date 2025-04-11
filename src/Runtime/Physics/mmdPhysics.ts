@@ -17,6 +17,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
+import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 
 class MmdPhysicsTransformNode extends TransformNode {
@@ -312,6 +313,7 @@ export class MmdPhysics implements IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
+     * @param physicsOptions Optional physics options
      * @returns MMD physics model
      * @throws If the havok physics engine is not enabled
      */
@@ -320,8 +322,13 @@ export class MmdPhysics implements IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
-        logger: ILogger
+        logger: ILogger,
+        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): MmdPhysicsModel {
+        if (physicsOptions !== null) {
+            logger.warn("Havok physics does not support physics options");
+        }
+
         const scene = this._scene;
         const physicsPlugin = scene.getPhysicsEngine()?.getPhysicsPlugin() as HavokPlugin | null | undefined;
         if (!physicsPlugin) {

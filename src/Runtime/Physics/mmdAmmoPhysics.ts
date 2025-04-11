@@ -14,6 +14,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
+import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
 
@@ -343,6 +344,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
+     * @param physicsOptions Optional physics options
      * @returns MMD physics model
      * @throws If the ammo physics engine is not enabled
      */
@@ -351,8 +353,13 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
-        logger: ILogger
+        logger: ILogger,
+        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel {
+        if (physicsOptions !== null) {
+            logger.warn("Ammo physics does not support physics options");
+        }
+
         const scene = this._scene;
         const physicsPlugin = scene.getPhysicsEngine()?.getPhysicsPlugin() as MmdAmmoJSPlugin | null | undefined;
         if (!physicsPlugin) {

@@ -134,7 +134,7 @@ export { MmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/mmdWasmPhysic
 export { getMmdWasmInstance, MmdWasmInstance, MmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
-export { CreateMmdWasmModelOptions, CreateMmdWasmModelPhysicsOptions, MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 export { MmdWasmRuntimeBone } from "@/Runtime/Optimized/mmdWasmRuntimeBone";
 
 // Runtime/Physics
@@ -160,5 +160,5 @@ export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, Runtim
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController } from "@/Runtime/mmdMorphController";
 export { MmdMorphControllerBase, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphControllerBase";
-export { CreateMmdModelOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
+export { MmdModelCreationOptions as CreateMmdModelOptions, MmdModelPhysicsCreationOptions as CreateMmdModelPhysicsOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";

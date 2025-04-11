@@ -3,9 +3,10 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import type { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
+import type { ILogger } from "@/Runtime/ILogger";
 
+import type { MmdModelPhysicsCreationOptions } from "../../mmdRuntime";
 import { MmdMetadataEncoder } from "../mmdMetadataEncoder";
-import type { CreateMmdWasmModelPhysicsOptions } from "../mmdWasmRuntime";
 import type { MmdWasmPhysicsRuntime } from "./mmdWasmPhysicsRuntime";
 
 /**
@@ -14,8 +15,8 @@ import type { MmdWasmPhysicsRuntime } from "./mmdWasmPhysicsRuntime";
 export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
     private readonly _physicsRuntime: MmdWasmPhysicsRuntime;
 
-    public constructor(physicsRuntime: MmdWasmPhysicsRuntime) {
-        super();
+    public constructor(physicsRuntime: MmdWasmPhysicsRuntime, logger: ILogger) {
+        super(logger);
         this._physicsRuntime = physicsRuntime;
     }
 
@@ -30,10 +31,11 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
             + 4; // physicsWorldId
 
         dataLength += 4; // kinematicSharedPhysicsWorldIdCount
-        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
+
+        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).kinematicSharedWorldIds;
         if (kinematicSharedPhysicsWorldIds !== undefined) {
             const kinematicSharedPhysicsWorldIdsSet = new Set(kinematicSharedPhysicsWorldIds);
-            const worldId = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId ?? this._physicsRuntime.nextWorldId;
+            const worldId = (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).worldId ?? this._physicsRuntime.nextWorldId;
             kinematicSharedPhysicsWorldIdsSet.delete(worldId);
             dataLength += kinematicSharedPhysicsWorldIdsSet.size * 4; // kinematicSharedPhysicsWorldIds
         }
@@ -91,14 +93,14 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         serializer.setUint8(2); // physicsInfoKind
         serializer.offset += 3; // padding
 
-        let physicsWorldId = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).worldId;
+        let physicsWorldId = (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).worldId;
         if (physicsWorldId === undefined) {
             physicsWorldId = this._physicsRuntime.nextWorldId;
             this._physicsRuntime.nextWorldId += 1;
         }
         serializer.setUint32(physicsWorldId); // physicsWorldId
 
-        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as CreateMmdWasmModelPhysicsOptions).kinematicSharedWorldIds;
+        const kinematicSharedPhysicsWorldIds = (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).kinematicSharedWorldIds;
         if (kinematicSharedPhysicsWorldIds === undefined) {
             serializer.setUint32(0); // kinematicSharedPhysicsWorldIdCount
         } else {

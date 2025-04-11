@@ -1,5 +1,7 @@
 import type { Scene } from "@babylonjs/core/scene";
 
+import type { ILogger } from "@/Runtime/ILogger";
+
 import type { MmdWasmRuntime } from "../mmdWasmRuntime";
 import type { IPhysicsClock } from "./IPhysicsClock";
 import { MmdWasmPhysicsMetadataEncoder } from "./mmdWasmPhysicsMetadataEncoder";
@@ -44,9 +46,10 @@ export class MmdWasmPhysics {
     /**
      * create physics metadata encoder
      * @param physicsRuntime physics runtime
+     * @param logger logger
      * @returns physics metadata encoder
      */
-    public createMetadataEncoder(physicsRuntime: MmdWasmPhysicsRuntime): MmdWasmPhysicsMetadataEncoder {
-        return new MmdWasmPhysicsMetadataEncoder(physicsRuntime);
+    public createMetadataEncoder(physicsRuntime: MmdWasmPhysicsRuntime, logger: ILogger): MmdWasmPhysicsMetadataEncoder {
+        return new MmdWasmPhysicsMetadataEncoder(physicsRuntime, logger);
     }
 }

@@ -6,9 +6,10 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
+import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMesh } from "../mmdMesh";
-import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
+import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 
 /**
  * mmd model metadata representation in binary
@@ -127,13 +128,15 @@ import type { CreateMmdWasmModelPhysicsOptions } from "./mmdWasmRuntime";
  * @internal
  */
 export class MmdMetadataEncoder {
-    protected _encodePhysicsOptions: CreateMmdWasmModelPhysicsOptions | boolean;
+    protected readonly _logger: ILogger;
+    protected _encodePhysicsOptions: MmdModelPhysicsCreationOptions | boolean;
 
-    public constructor() {
+    public constructor(logger: ILogger) {
+        this._logger = logger;
         this._encodePhysicsOptions = true;
     }
 
-    public setEncodePhysicsOptions(options: CreateMmdWasmModelPhysicsOptions | boolean): void {
+    public setEncodePhysicsOptions(options: MmdModelPhysicsCreationOptions | boolean): void {
         if (typeof options === "boolean") {
             this._encodePhysicsOptions = options;
         } else {
@@ -141,17 +144,19 @@ export class MmdMetadataEncoder {
             if (validatedWorldId !== undefined) {
                 if (validatedWorldId < 0 || 0xFFFFFFFF < validatedWorldId) {
                     validatedWorldId = undefined;
+                    this._logger.warn(`WorldId ${options.worldId} is out of range`);
                 }
             }
-
             const validatedKinematicSharedWorldIds: number[] = [];
-
-            const kinematicSharedWorldIds = options.kinematicSharedWorldIds;
-            if (kinematicSharedWorldIds !== undefined) {
-                for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
-                    const worldId = kinematicSharedWorldIds[i];
-                    if (0 <= worldId && worldId <= 0xFFFFFFFF) {
-                        validatedKinematicSharedWorldIds.push(worldId);
+            if (options.kinematicSharedWorldIds !== undefined) {
+                const kinematicSharedWorldIds = new Set(options.kinematicSharedWorldIds);
+                for (const kinematicWorldId of kinematicSharedWorldIds) {
+                    if (kinematicWorldId === validatedWorldId) {
+                        this._logger.warn(`Kinematic shared worldId ${kinematicWorldId} is same as worldId`);
+                    } else if (kinematicWorldId < 0 || 0xFFFFFFFF < kinematicWorldId) {
+                        this._logger.warn(`Kinematic shared worldId ${kinematicWorldId} is out of range`);
+                    } else {
+                        validatedKinematicSharedWorldIds.push(kinematicWorldId);
                     }
                 }
             }

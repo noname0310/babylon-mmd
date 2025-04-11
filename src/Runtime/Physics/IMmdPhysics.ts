@@ -1,15 +1,25 @@
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Nullable } from "@babylonjs/core/types";
 
 import type { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
-import { CreateMmdWasmModelPhysicsOptions } from "../Optimized/mmdWasmRuntime";
+import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 
 /**
- * Interface for MMD physics implementation
+ * Mmd physics builder implementation object
  */
 export interface IMmdPhysics {
+    /**
+     * The world id of the physics model
+     *
+     * when you not specify the world id, the physics model will be created in new world
+     *
+     * if nextWorldId is undefined, the physics implementation will not support multi world
+     */
+    nextWorldId?: number;
+
     /**
      * Build the physics model of the MMD model
      * @param rootMesh Root mesh of the MMD model
@@ -17,7 +27,7 @@ export interface IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
-     * @param physicsOptions Optional physics creation options
+     * @param physicsOptions Optional physics options
      * @returns MMD physics model
      * @throws If the physics model cannot be built
      */
@@ -27,12 +37,12 @@ export interface IMmdPhysics {
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger,
-        physicsOptions?: CreateMmdWasmModelPhysicsOptions
+        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel;
 }
 
 /**
- * Interface for MMD physics model
+ * Physics model that contains the rigid bodies and joints of the MMD model
  */
 export interface IMmdPhysicsModel {
     /**

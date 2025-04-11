@@ -27,6 +27,10 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
+import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
+import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 // import ammo from "@/Runtime/Physics/External/ammo.wasm";
 // import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 // import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
@@ -41,10 +45,6 @@ import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
-import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
-import { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
@@ -125,7 +125,7 @@ export class SceneBuilder implements ISceneBuilder {
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
         ]);
-        
+
         // const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
         const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(scene));
         mmdRuntime.loggingEnabled = true;

@@ -24,10 +24,20 @@ import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
+import type { MmdModelPhysicsCreationOptions } from "./mmdRuntime";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./Physics/IMmdPhysics";
 
 type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
+
+/**
+ * Physics options for construct MmdModel
+ */
+export interface MmdModelCtorPhysicsOptions {
+    physicsImpl: IMmdPhysics;
+    physicsOptions: Nullable<MmdModelPhysicsCreationOptions>;
+}
+
 
 /**
  * MmdModel is a class that controls the `MmdSkinnedMesh` to animate the Mesh with MMD Runtime
@@ -99,14 +109,14 @@ export class MmdModel implements IMmdModel {
      * @param mmdSkinnedMesh Mesh that able to instantiate `MmdModel`
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
-     * @param mmdPhysics Physics builder
+     * @param physicsParams Physics options
      * @param logger Logger
      */
     public constructor(
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        mmdPhysics: Nullable<IMmdPhysics>,
+        physicsParams: Nullable<MmdModelCtorPhysicsOptions>,
         logger: ILogger
     ) {
         this._logger = logger;
@@ -169,13 +179,14 @@ export class MmdModel implements IMmdModel {
             morphTargetManagers
         );
 
-        if (mmdPhysics !== null) {
-            this._physicsModel = mmdPhysics.buildPhysics(
+        if (physicsParams !== null) {
+            this._physicsModel = physicsParams.physicsImpl.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
                 mmdMetadata.rigidBodies,
                 mmdMetadata.joints,
-                logger
+                logger,
+                physicsParams.physicsOptions
             );
         } else {
             this._physicsModel = null;

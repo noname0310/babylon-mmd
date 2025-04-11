@@ -1,20 +1,26 @@
-import { DeepImmutable, Nullable } from "@babylonjs/core/types";
-import { RigidBodyBundle } from "./Bind/rigidBodyBundle";
-import { IMmdPhysics, IMmdPhysicsModel } from "../../Physics/IMmdPhysics";
-import { IMmdRuntimeBone } from "../../IMmdRuntimeBone";
+import "@babylonjs/core/Physics/v2/physicsEngineComponent";
+
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Scene } from "@babylonjs/core/scene";
+import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
+
 import { PmxObject } from "@/Loader/Parser/pmxObject";
-import { IPhysicsRuntime } from "./Bind/Impl/IPhysicsRuntime";
-import { RigidBodyConstructionInfoList } from "./Bind/rigidBodyConstructionInfoList";
-import { ILogger } from "../../ILogger";
-import { MultiPhysicsRuntime } from "./Bind/Impl/multiPhysicsRuntime";
-import { Scene } from "@babylonjs/core/scene";
-import { BulletPlugin } from "./Bind/Plugin/bulletPlugin";
+
+import type { ILogger } from "../../ILogger";
+import type { IMmdRuntimeBone } from "../../IMmdRuntimeBone";
+import type { MmdModelPhysicsCreationOptions } from "../../mmdRuntime";
+import type { IMmdPhysics, IMmdPhysicsModel } from "../../Physics/IMmdPhysics";
+import type { Constraint } from "./Bind/constraint";
+import { Generic6DofSpringConstraint } from "./Bind/constraint";
+import type { IPhysicsRuntime } from "./Bind/Impl/IPhysicsRuntime";
+import type { MultiPhysicsRuntime } from "./Bind/Impl/multiPhysicsRuntime";
 import { MotionType } from "./Bind/motionType";
-import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsShape, PhysicsSphereShape } from "./Bind/physicsShape";
-import { Constraint, Generic6DofSpringConstraint } from "./Bind/constraint";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { CreateMmdWasmModelPhysicsOptions } from "../mmdWasmRuntime";
+import type { PhysicsShape} from "./Bind/physicsShape";
+import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape } from "./Bind/physicsShape";
+import type { BulletPlugin } from "./Bind/Plugin/bulletPlugin";
+import { RigidBodyBundle } from "./Bind/rigidBodyBundle";
+import { RigidBodyConstructionInfoList } from "./Bind/rigidBodyConstructionInfoList";
 
 class MmdRigidBodyData {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
@@ -156,11 +162,7 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
 
             const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
             data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
-            bundle.setDynamicTransformMatrix(
-                index,
-                bodyWorldMatrix,
-                true
-            );
+            bundle.setTransformMatrix(index, bodyWorldMatrix);
 
             // bundle.setAngularVelocity(index, MmdBulletPhysicsModel._ZeroVector);
             // bundle.setLinearVelocity(index, MmdBulletPhysicsModel._ZeroVector);
@@ -200,7 +202,7 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
             }
         }
     }
-    
+
     private static readonly _BoneWorldPosition = new Vector3();
 
     /**
@@ -217,7 +219,7 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
 
             const data = bundle.rigidBodyData[index];
             if (data.linkedBone === null) continue;
-            
+
             switch (data.physicsMode) {
             case PmxObject.RigidBody.PhysicsMode.FollowBone:
                 break;
@@ -256,7 +258,14 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
  * If you do not want to use a physics engine, you can reduce the bundling size by not import this class
  */
 export class MmdBulletPhysics implements IMmdPhysics {
-    private readonly _sceneOrRuntime: Scene | MultiPhysicsRuntime; 
+    /**
+     * The world id of the physics model
+     *
+     * when you not specify the world id, the physics model will be created in new world
+     */
+    public nextWorldId: number;
+
+    private readonly _sceneOrRuntime: Scene | MultiPhysicsRuntime;
 
     /**
      * Create a new MMD bullet physics
@@ -265,6 +274,8 @@ export class MmdBulletPhysics implements IMmdPhysics {
      * @param sceneOrRuntime The scene or the physics runtime to build the physics model
      */
     public constructor(sceneOrRuntime: Scene | MultiPhysicsRuntime) {
+        this.nextWorldId = 0;
+
         this._sceneOrRuntime = sceneOrRuntime;
     }
 
@@ -275,7 +286,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
      * @param rigidBodies rigid bodies information
      * @param joints joints information
      * @param logger Logger
-     * @param physicsOptions Optional physics creation options
+     * @param physicsOptions Optional physics options
      * @returns MMD physics model
      * @throws If the physics model cannot be built
      */
@@ -285,10 +296,32 @@ export class MmdBulletPhysics implements IMmdPhysics {
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger,
-        physicsOptions: CreateMmdWasmModelPhysicsOptions = { }
+        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel {
-        const worldId = physicsOptions.worldId ?? 0;
-        const kinematicSharedWorldIds = [...(physicsOptions.kinematicSharedWorldIds ?? [])];
+        let validatedWorldId = physicsOptions?.worldId;
+        if (validatedWorldId !== undefined) {
+            if (validatedWorldId < 0 || 0xFFFFFFFF < validatedWorldId) {
+                logger.warn(`WorldId ${validatedWorldId} is out of range`);
+                validatedWorldId = this.nextWorldId;
+                this.nextWorldId += 1;
+            }
+        } else {
+            validatedWorldId = this.nextWorldId;
+            this.nextWorldId += 1;
+        }
+        const validatedKinematicSharedWorldIds = [];
+        if (physicsOptions !== null && physicsOptions.kinematicSharedWorldIds !== undefined) {
+            const kinematicSharedWorldIds = new Set(physicsOptions.kinematicSharedWorldIds);
+            for (const kinematicWorldId of kinematicSharedWorldIds) {
+                if (kinematicWorldId === validatedWorldId) {
+                    logger.warn(`Kinematic shared worldId ${kinematicWorldId} is same as worldId`);
+                } else if (kinematicWorldId < 0 || 0xFFFFFFFF < kinematicWorldId) {
+                    logger.warn(`Kinematic shared worldId ${kinematicWorldId} is out of range`);
+                } else {
+                    validatedKinematicSharedWorldIds.push(kinematicWorldId);
+                }
+            }
+        }
 
         const scene = (this._sceneOrRuntime as Scene).getPhysicsEngine
             ? (this._sceneOrRuntime as Scene)
@@ -350,7 +383,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
         const one: DeepImmutable<Vector3> = Vector3.One();
         for (let i = 0; i < rigidBodies.length; ++i) {
             const rigidBody = rigidBodies[i];
-            
+
             const bone = resolveRigidBodyBone(rigidBody);
             if (bone === undefined) {
                 logger.warn(`Bone index out of range create unmapped rigid body: ${rigidBody.name}`);
@@ -392,7 +425,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
 
             const index = rbDataList.length;
             rbInfoList.setShape(index, shape);
-            
+
             const shapePosition = rigidBody.shapePosition;
             initialPosition.copyFromFloats(
                 shapePosition[0] * scalingFactor,
@@ -428,7 +461,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
             // then convert the body transform to world space
             Vector3.TransformCoordinatesToRef(initialPosition, worldMatrix, initialPosition);
             worldRotation.multiplyToRef(initialRotation, initialRotation);
-            
+
             Matrix.ComposeToRef(
                 one,
                 initialRotation,
@@ -444,7 +477,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 ? MotionType.Kinematic
                 : MotionType.Dynamic;
             rbInfoList.setMotionType(index, motionType);
-            
+
             rbInfoList.setMass(index, rigidBody.mass);
             rbInfoList.setLinearDamping(index, rigidBody.linearDamping);
             rbInfoList.setAngularDamping(index, rigidBody.angularDamping);
@@ -579,16 +612,16 @@ export class MmdBulletPhysics implements IMmdPhysics {
 
             limitVector.fromArray(joint.positionMin);
             constraint.setLinearLowerLimit(limitVector);
-            
+
             limitVector.fromArray(joint.positionMax);
             constraint.setLinearUpperLimit(limitVector);
-            
+
             limitVector.fromArray(joint.rotationMin);
             constraint.setAngularLowerLimit(limitVector);
-            
+
             limitVector.fromArray(joint.rotationMax);
             constraint.setAngularUpperLimit(limitVector);
-            
+
             if (joint.springPosition[0] !== 0) {
                 constraint.setStiffness(0, joint.springPosition[0]);
                 constraint.enableSpring(0, true);
@@ -647,8 +680,8 @@ export class MmdBulletPhysics implements IMmdPhysics {
 
         return new MmdBulletPhysicsModel(
             physicsRuntime,
-            worldId,
-            kinematicSharedWorldIds,
+            validatedWorldId,
+            validatedKinematicSharedWorldIds,
             rigidBodyIndexMap,
             bundle,
             constraints

@@ -20,7 +20,8 @@ import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
-import type { IMmdPhysics, IMmdPhysicsModel } from "../Physics/IMmdPhysics";
+import type { MmdModelCtorPhysicsOptions } from "../mmdModel";
+import type { IMmdPhysicsModel } from "../Physics/IMmdPhysics";
 import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
@@ -143,7 +144,7 @@ export class MmdWasmModel implements IMmdModel {
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param wasmMorphIndexMap Mmd morph to WASM morph index map
-     * @param externalPhysics The external physics engine
+     * @param physicsParams Physics options
      */
     public constructor(
         wasmRuntime: MmdWasmRuntime,
@@ -152,7 +153,7 @@ export class MmdWasmModel implements IMmdModel {
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         wasmMorphIndexMap: Int32Array,
-        externalPhysics: Nullable<IMmdPhysics>
+        physicsParams: Nullable<MmdModelCtorPhysicsOptions>
     ) {
         const wasmInstance = wasmRuntime.wasmInstance;
         const wasmRuntimeInternal = wasmRuntime.wasmInternal;
@@ -242,14 +243,15 @@ export class MmdWasmModel implements IMmdModel {
             morphTargetManagers
         );
 
-        if (externalPhysics !== null) {
+        if (physicsParams !== null) {
             wasmRuntimeInternal.setExternalPhysics(ptr, true);
-            this._physicsModel = externalPhysics.buildPhysics(
+            this._physicsModel = physicsParams.physicsImpl.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
                 mmdMetadata.rigidBodies,
                 mmdMetadata.joints,
-                wasmRuntime
+                wasmRuntime,
+                physicsParams.physicsOptions
             );
         } else {
             this._physicsModel = null;
