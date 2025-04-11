@@ -38,7 +38,7 @@ impl RigidBodyBundleProxy {
 
     pub(super) fn set_transform(&mut self, index: usize, transform: Mat4) {
         let transform = transform * self.data_list[index].body_offset_matrix;
-        self.inner.get_buffered_motion_states_mut().set_transform(index, &transform);
+        self.inner.get_motion_states_mut().set_transform(index, &transform);
     }
 
     pub(super) fn get_physics_mode(&self, index: usize) -> RigidBodyPhysicsMode {

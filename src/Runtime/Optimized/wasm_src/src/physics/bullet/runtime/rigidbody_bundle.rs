@@ -88,7 +88,7 @@ impl RigidBodyBundle {
         }
     }
 
-    fn get_motion_states_mut(&mut self) -> &mut bind::motion_state::MotionStateBundle {
+    pub(crate) fn get_motion_states_mut(&mut self) -> &mut bind::motion_state::MotionStateBundle {
         &mut self.motion_state_bundle
     }
 

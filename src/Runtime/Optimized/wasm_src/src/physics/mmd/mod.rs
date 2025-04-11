@@ -99,6 +99,7 @@ impl MmdPhysicsRuntime {
             }
         }
 
+        self.multi_physics_world.sync_buffered_motion_state();
         self.multi_physics_world.step_simulation(time_step, self.max_sub_steps, self.fixed_time_step);
 
         // synchronize bone matrices with dynamic rigid bodies
