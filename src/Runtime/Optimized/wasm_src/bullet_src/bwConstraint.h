@@ -27,7 +27,7 @@ public:
 
 // Generic 6 DOF ctor and dtor
 
-extern "C" void* bw_create_generic6dofconstraint(void* bodyA, void* bodyB, float* frameABuffer, float* frameBBuffer, uint8_t useLinearReferenceFrameA)
+extern "C" void* bw_create_generic6dofconstraint(void* bodyA, void* bodyB, double* frameABuffer, double* frameBBuffer, uint8_t useLinearReferenceFrameA)
 {
     bwRigidBody* a = static_cast<bwRigidBody*>(bodyA);
     bwRigidBody* b = static_cast<bwRigidBody*>(bodyB);
@@ -73,7 +73,7 @@ extern "C" void bw_generic6dofconstraint_set_angular_upper_limit(void* constrain
 
 // Generic 6 DOF spring ctor and dtor
 
-extern "C" void* bw_create_generic6dofspringconstraint(void* bodyA, void* bodyB, float* frameABuffer, float* frameBBuffer, uint8_t useLinearReferenceFrameA)
+extern "C" void* bw_create_generic6dofspringconstraint(void* bodyA, void* bodyB, double* frameABuffer, double* frameBBuffer, uint8_t useLinearReferenceFrameA)
 {
     bwRigidBody* a = static_cast<bwRigidBody*>(bodyA);
     bwRigidBody* b = static_cast<bwRigidBody*>(bodyB);
@@ -113,7 +113,7 @@ extern "C" void bw_generic6dofspringconstraint_set_damping(void* constraint, uin
 
 // MmdGeneric6DofSpring ctor and dtor
 
-extern "C" void* bw_create_mmdgeneric6dofspringconstraint(void* bodyA, void* bodyB, float* frameABuffer, float* frameBBuffer, uint8_t useLinearReferenceFrameA)
+extern "C" void* bw_create_mmdgeneric6dofspringconstraint(void* bodyA, void* bodyB, double* frameABuffer, double* frameBBuffer, uint8_t useLinearReferenceFrameA)
 {
     bwRigidBody* a = static_cast<bwRigidBody*>(bodyA);
     bwRigidBody* b = static_cast<bwRigidBody*>(bodyB);

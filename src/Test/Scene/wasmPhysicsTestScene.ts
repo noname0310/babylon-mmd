@@ -96,7 +96,7 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
-                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
+                mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
 
                 mmdRuntime.setAudioPlayer(audioPlayer);
 
@@ -165,8 +165,10 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdWasmAnimation);
         mmdModel.setAnimation("motion");
 
-        const physicsRuntime = mmdRuntime.physics?.getImpl(MmdWasmPhysicsRuntimeImpl);
-        if (physicsRuntime !== undefined) {
+        if (mmdRuntime.physics !== null) {
+            mmdRuntime.physics.maxSubSteps = 120;
+            mmdRuntime.physics.fixedTimeStep = 1 / 120;
+            const physicsRuntime = mmdRuntime.physics.getImpl(MmdWasmPhysicsRuntimeImpl);
             const info = new RigidBodyConstructionInfo(mmdRuntime.wasmInstance);
             info.motionType = MotionType.Static;
             info.shape = new PhysicsStaticPlaneShape(physicsRuntime, new Vector3(0, 1, 0), 0);

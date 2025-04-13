@@ -1,10 +1,10 @@
-use glam::{Vec3, Mat4};
+use glam::{DMat4, DVec4, Mat4, Vec3};
 
 use super::rigidbody::RigidBody;
 
 #[link(name = "bullet")]
 extern "C" {
-    fn bw_create_generic6dofconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f32, frame_b: *const f32, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
+    fn bw_create_generic6dofconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f64, frame_b: *const f64, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
 
     fn bw_destroy_generic6dofconstraint(constraint: *mut std::ffi::c_void);
 
@@ -16,7 +16,7 @@ extern "C" {
 
     fn bw_generic6dofconstraint_set_angular_upper_limit(constraint: *mut std::ffi::c_void, x: f32, y: f32, z: f32);
 
-    fn bw_create_generic6dofspringconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f32, frame_b: *const f32, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
+    fn bw_create_generic6dofspringconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f64, frame_b: *const f64, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
 
     fn bw_destroy_generic6dofspringconstraint(constraint: *mut std::ffi::c_void);
 
@@ -26,7 +26,7 @@ extern "C" {
 
     fn bw_generic6dofspringconstraint_set_damping(constraint: *mut std::ffi::c_void, index: u8, damping: f32);
 
-    fn bw_create_mmdgeneric6dofspringconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f32, frame_b: *const f32, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
+    fn bw_create_mmdgeneric6dofspringconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f64, frame_b: *const f64, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
 
     fn bw_destroy_mmdgeneric6dofspringconstraint(constraint: *mut std::ffi::c_void);
 }
@@ -37,6 +37,58 @@ pub(crate) struct Generic6DofConstraint {
 
 impl Generic6DofConstraint {
     pub(crate) fn new(body_a: &RigidBody, body_b: &RigidBody, frame_a: &Mat4, frame_b: &Mat4, use_linear_reference_frame_a: bool) -> Self {
+        let frame_a = DMat4::from_cols(
+            DVec4::new(
+                frame_a.x_axis.x as f64,
+                frame_a.x_axis.y as f64,
+                frame_a.x_axis.z as f64,
+                frame_a.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.y_axis.x as f64,
+                frame_a.y_axis.y as f64,
+                frame_a.y_axis.z as f64,
+                frame_a.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.z_axis.x as f64,
+                frame_a.z_axis.y as f64,
+                frame_a.z_axis.z as f64,
+                frame_a.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.w_axis.x as f64,
+                frame_a.w_axis.y as f64,
+                frame_a.w_axis.z as f64,
+                frame_a.w_axis.w as f64,
+            )
+        );
+        let frame_b = DMat4::from_cols(
+            DVec4::new(
+                frame_b.x_axis.x as f64,
+                frame_b.x_axis.y as f64,
+                frame_b.x_axis.z as f64,
+                frame_b.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.y_axis.x as f64,
+                frame_b.y_axis.y as f64,
+                frame_b.y_axis.z as f64,
+                frame_b.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.z_axis.x as f64,
+                frame_b.z_axis.y as f64,
+                frame_b.z_axis.z as f64,
+                frame_b.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.w_axis.x as f64,
+                frame_b.w_axis.y as f64,
+                frame_b.w_axis.z as f64,
+                frame_b.w_axis.w as f64,
+            )
+        );
         let frame_a = frame_a.as_ref();
         let frame_b = frame_b.as_ref();
         
@@ -88,6 +140,58 @@ pub(crate) struct Generic6DofSpringConstraint {
 
 impl Generic6DofSpringConstraint {
     pub(crate) fn new(body_a: &RigidBody, body_b: &RigidBody, frame_a: &Mat4, frame_b: &Mat4, use_linear_reference_frame_a: bool) -> Self {
+        let frame_a = DMat4::from_cols(
+            DVec4::new(
+                frame_a.x_axis.x as f64,
+                frame_a.x_axis.y as f64,
+                frame_a.x_axis.z as f64,
+                frame_a.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.y_axis.x as f64,
+                frame_a.y_axis.y as f64,
+                frame_a.y_axis.z as f64,
+                frame_a.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.z_axis.x as f64,
+                frame_a.z_axis.y as f64,
+                frame_a.z_axis.z as f64,
+                frame_a.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.w_axis.x as f64,
+                frame_a.w_axis.y as f64,
+                frame_a.w_axis.z as f64,
+                frame_a.w_axis.w as f64,
+            )
+        );
+        let frame_b = DMat4::from_cols(
+            DVec4::new(
+                frame_b.x_axis.x as f64,
+                frame_b.x_axis.y as f64,
+                frame_b.x_axis.z as f64,
+                frame_b.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.y_axis.x as f64,
+                frame_b.y_axis.y as f64,
+                frame_b.y_axis.z as f64,
+                frame_b.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.z_axis.x as f64,
+                frame_b.z_axis.y as f64,
+                frame_b.z_axis.z as f64,
+                frame_b.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.w_axis.x as f64,
+                frame_b.w_axis.y as f64,
+                frame_b.w_axis.z as f64,
+                frame_b.w_axis.w as f64,
+            )
+        );
         let frame_a = frame_a.as_ref();
         let frame_b = frame_b.as_ref();
         
@@ -151,6 +255,58 @@ pub(crate) struct MmdGeneric6DofSpringConstraint {
 
 impl MmdGeneric6DofSpringConstraint {
     pub(crate) fn new(body_a: &RigidBody, body_b: &RigidBody, frame_a: &Mat4, frame_b: &Mat4, use_linear_reference_frame_a: bool) -> Self {
+        let frame_a = DMat4::from_cols(
+            DVec4::new(
+                frame_a.x_axis.x as f64,
+                frame_a.x_axis.y as f64,
+                frame_a.x_axis.z as f64,
+                frame_a.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.y_axis.x as f64,
+                frame_a.y_axis.y as f64,
+                frame_a.y_axis.z as f64,
+                frame_a.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.z_axis.x as f64,
+                frame_a.z_axis.y as f64,
+                frame_a.z_axis.z as f64,
+                frame_a.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_a.w_axis.x as f64,
+                frame_a.w_axis.y as f64,
+                frame_a.w_axis.z as f64,
+                frame_a.w_axis.w as f64,
+            )
+        );
+        let frame_b = DMat4::from_cols(
+            DVec4::new(
+                frame_b.x_axis.x as f64,
+                frame_b.x_axis.y as f64,
+                frame_b.x_axis.z as f64,
+                frame_b.x_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.y_axis.x as f64,
+                frame_b.y_axis.y as f64,
+                frame_b.y_axis.z as f64,
+                frame_b.y_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.z_axis.x as f64,
+                frame_b.z_axis.y as f64,
+                frame_b.z_axis.z as f64,
+                frame_b.z_axis.w as f64,
+            ),
+            DVec4::new(
+                frame_b.w_axis.x as f64,
+                frame_b.w_axis.y as f64,
+                frame_b.w_axis.z as f64,
+                frame_b.w_axis.w as f64,
+            )
+        );
         let frame_a = frame_a.as_ref();
         let frame_b = frame_b.as_ref();
         

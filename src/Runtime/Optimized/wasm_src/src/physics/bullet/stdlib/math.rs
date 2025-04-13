@@ -4,11 +4,6 @@ extern "C" fn bw_sqrtf(x: f32) -> f32 {
 }
 
 #[no_mangle]
-extern "C" fn bw_fabsf(x: f32) -> f32 {
-    x.abs()
-}
-
-#[no_mangle]
 extern "C" fn bw_cosf(x: f32) -> f32 {
     x.cos()
 }
@@ -60,6 +55,61 @@ extern "C" fn bw_powf(x: f32, y: f32) -> f32 {
 
 #[no_mangle]
 extern "C" fn bw_fmodf(x: f32, y: f32) -> f32 {
+    x % y
+}
+
+#[no_mangle]
+extern "C" fn bw_cos(x: f64) -> f64 {
+    x.cos()
+}
+
+#[no_mangle]
+extern "C" fn bw_sin(x: f64) -> f64 {
+    x.sin()
+}
+
+#[no_mangle]
+extern "C" fn bw_tan(x: f64) -> f64 {
+    x.tan()
+}
+
+#[no_mangle]
+extern "C" fn bw_acos(x: f64) -> f64 {
+    x.acos()
+}
+
+#[no_mangle]
+extern "C" fn bw_asin(x: f64) -> f64 {
+    x.asin()
+}
+
+#[no_mangle]
+extern "C" fn bw_atan(x: f64) -> f64 {
+    x.atan()
+}
+
+#[no_mangle]
+extern "C" fn bw_atan2(y: f64, x: f64) -> f64 {
+    y.atan2(x)
+}
+
+#[no_mangle]
+extern "C" fn bw_exp(x: f64) -> f64 {
+    x.exp()
+}
+
+#[no_mangle]
+extern "C" fn bw_log(x: f64) -> f64 {
+    x.ln()
+}
+
+#[no_mangle]
+extern "C" fn bw_pow(x: f64, y: f64) -> f64 {
+    x.powf(y)
+}
+
+#[no_mangle]
+extern "C" fn bw_fmod(x: f64, y: f64) -> f64 {
     x % y
 }
 

@@ -31,11 +31,12 @@ fn main() {
             .define("__SSE3__", None)
             .define("__SSSE3__", None)
             .define("__SSE4_1__", None)
-            .define("BT_USE_SSE", None)
+            // .define("BT_USE_SSE", None)
             // .define("BT_USE_SSE_IN_API", None)
             .define("BT_NO_SIMD_OPERATOR_OVERLOADS", None)
-            .define("BT_USE_SIMD_VECTOR3", None)
-            .define("__wasm32__", None);
+            // .define("BT_USE_SIMD_VECTOR3", None)
+            .define("__wasm32__", None)
+            .define("BT_USE_DOUBLE_PRECISION", None);
 
         
         #[cfg(debug_assertions)]

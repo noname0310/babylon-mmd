@@ -67,7 +67,7 @@ public:
 	}
 };
 
-extern "C" void* bw_create_motion_state(float* transformBuffer)
+extern "C" void* bw_create_motion_state(double* transformBuffer)
 {
     btTransform transform;
     transform.setFromOpenGLMatrix(transformBuffer);

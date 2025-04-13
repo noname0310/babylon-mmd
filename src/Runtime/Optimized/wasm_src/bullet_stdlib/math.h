@@ -3,6 +3,7 @@
 // for btScalar
 
 extern "C" {
+    // for single precision
     float bw_sqrtf(float x);
 
     float bw_fabsf(float x);
@@ -21,6 +22,23 @@ extern "C" {
     float bw_powf(float x, float y);
     float bw_fmodf(float x, float y);
 
+    // for double precision
+    double bw_cos(double x);
+    double bw_sin(double x);
+    double bw_tan(double x);
+
+    double bw_acos(double x);
+    double bw_asin(double x);
+    double bw_atan(double x);
+    double bw_atan2(double y, double x);
+
+    double bw_exp(double x);
+    double bw_log(double x);
+    double bw_pow(double x, double y);
+    double bw_fmod(double x, double y);
+
+    // these are only for double precision
+    double bw_sqrt(double x);
     double bw_floor(double x);
     double bw_ceil(double x);
 
@@ -77,6 +95,50 @@ inline float powf(float x, float y) {
 
 inline float fmodf(float x, float y) {
     return bw_fmodf(x, y);
+}
+
+inline double cos(double x) {
+    return bw_cos(x);
+}
+
+inline double sin(double x) {
+    return bw_sin(x);
+}
+
+inline double tan(double x) {
+    return bw_tan(x);
+}
+
+inline double acos(double x) {
+    return bw_acos(x);
+}
+
+inline double asin(double x) {
+    return bw_asin(x);
+}
+
+inline double atan(double x) {
+    return bw_atan(x);
+}
+
+inline double atan2(double y, double x) {
+    return bw_atan2(y, x);
+}
+
+inline double exp(double x) {
+    return bw_exp(x);
+}
+
+inline double log(double x) {
+    return bw_log(x);
+}
+
+inline double pow(double x, double y) {
+    return bw_pow(x, y);
+}
+
+inline double fmod(double x, double y) {
+    return bw_fmod(x, y);
 }
 
 // for xmmintrin.h

@@ -1,8 +1,8 @@
-use glam::{Mat4, Vec3, Vec3A, Vec4};
+use glam::{DMat4, DVec3, DVec4, Mat4, Vec4};
 
 #[link(name = "bullet")]
 extern "C" {
-    fn bw_create_motion_state(transform_buffer: *const f32) -> *mut std::ffi::c_void;
+    fn bw_create_motion_state(transform_buffer: *const f64) -> *mut std::ffi::c_void;
 
     fn bw_destroy_motion_state(motion_state: *mut std::ffi::c_void);
 
@@ -18,24 +18,29 @@ extern "C" {
 #[repr(C, align(16))]
 struct MotionStateRawRead {
     vtable: *const std::ffi::c_void,
-    matrix_rowx: Vec3A,
-    matrix_rowy: Vec3A,
-    matrix_rowz: Vec3A,
-    translation: Vec3A,
+    padding0: [u32; 3],
+    matrix_rowx: DVec3,
+    padding1: f64,
+    matrix_rowy: DVec3,
+    padding2: f64,
+    matrix_rowz: DVec3,
+    padding3: f64,
+    translation: DVec3,
+    padding4: f64,
 }
 
 #[repr(C, align(16))]
 struct MotionStateRawWrite {
     vtable: *const std::ffi::c_void,
     padding0: [u32; 3],
-    matrix_rowx: Vec3,
-    padding1: f32,
-    matrix_rowy: Vec3,
-    padding2: f32,
-    matrix_rowz: Vec3,
-    padding3: f32,
-    translation: Vec3,
-    padding4: f32,
+    matrix_rowx: DVec3,
+    padding1: f64,
+    matrix_rowy: DVec3,
+    padding2: f64,
+    matrix_rowz: DVec3,
+    padding3: f64,
+    translation: DVec3,
+    padding4: f64,
 }
 
 pub(crate) struct MotionState {
@@ -44,6 +49,32 @@ pub(crate) struct MotionState {
 
 impl MotionState {
     pub(crate) fn new(transform: &Mat4) -> Self {
+        let transform = DMat4::from_cols(
+            DVec4::new(
+                transform.x_axis.x as f64,
+                transform.x_axis.y as f64,
+                transform.x_axis.z as f64,
+                transform.x_axis.w as f64,
+            ),
+            DVec4::new(
+                transform.y_axis.x as f64,
+                transform.y_axis.y as f64,
+                transform.y_axis.z as f64,
+                transform.y_axis.w as f64,
+            ),
+            DVec4::new(
+                transform.z_axis.x as f64,
+                transform.z_axis.y as f64,
+                transform.z_axis.z as f64,
+                transform.z_axis.w as f64,
+            ),
+            DVec4::new(
+                transform.w_axis.x as f64,
+                transform.w_axis.y as f64,
+                transform.w_axis.z as f64,
+                transform.w_axis.w as f64,
+            ),
+        );
         let transform_buffer = transform.as_ref();
         Self {
             ptr: unsafe { bw_create_motion_state(transform_buffer.as_ptr()) },
@@ -53,10 +84,10 @@ impl MotionState {
     pub(crate) fn get_transform(&self) -> Mat4 {
         let raw = unsafe { &*(self.ptr as *const MotionStateRawRead) };
         Mat4::from_cols(
-            Vec4::new(raw.matrix_rowx.x, raw.matrix_rowy.x, raw.matrix_rowz.x, 0.0),
-            Vec4::new(raw.matrix_rowx.y, raw.matrix_rowy.y, raw.matrix_rowz.y, 0.0),
-            Vec4::new(raw.matrix_rowx.z, raw.matrix_rowy.z, raw.matrix_rowz.z, 0.0),
-            Vec4::new(raw.translation.x, raw.translation.y, raw.translation.z, 1.0),
+            Vec4::new(raw.matrix_rowx.x as f32, raw.matrix_rowy.x as f32, raw.matrix_rowz.x as f32, 0.0),
+            Vec4::new(raw.matrix_rowx.y as f32, raw.matrix_rowy.y as f32, raw.matrix_rowz.y as f32, 0.0),
+            Vec4::new(raw.matrix_rowx.z as f32, raw.matrix_rowy.z as f32, raw.matrix_rowz.z as f32, 0.0),
+            Vec4::new(raw.translation.x as f32, raw.translation.y as f32, raw.translation.z as f32, 1.0),
         )
     }
 
@@ -130,10 +161,10 @@ impl MotionStateBundle {
         let raw = unsafe { &*motion_state_ptr };
         
         Mat4::from_cols(
-            Vec4::new(raw.matrix_rowx.x, raw.matrix_rowy.x, raw.matrix_rowz.x, 0.0),
-            Vec4::new(raw.matrix_rowx.y, raw.matrix_rowy.y, raw.matrix_rowz.y, 0.0),
-            Vec4::new(raw.matrix_rowx.z, raw.matrix_rowy.z, raw.matrix_rowz.z, 0.0),
-            Vec4::new(raw.translation.x, raw.translation.y, raw.translation.z, 1.0),
+            Vec4::new(raw.matrix_rowx.x as f32, raw.matrix_rowy.x as f32, raw.matrix_rowz.x as f32, 0.0),
+            Vec4::new(raw.matrix_rowx.y as f32, raw.matrix_rowy.y as f32, raw.matrix_rowz.y as f32, 0.0),
+            Vec4::new(raw.matrix_rowx.z as f32, raw.matrix_rowy.z as f32, raw.matrix_rowz.z as f32, 0.0),
+            Vec4::new(raw.translation.x as f32, raw.translation.y as f32, raw.translation.z as f32, 1.0),
         )
     }
 
@@ -145,10 +176,10 @@ impl MotionStateBundle {
         let motion_state_ptr = unsafe { motion_states_ptr.add(index) };
 
         let raw = unsafe { &mut *motion_state_ptr };
-        raw.matrix_rowx = Vec3::new(transform.x_axis.x, transform.y_axis.x, transform.z_axis.x);
-        raw.matrix_rowy = Vec3::new(transform.x_axis.y, transform.y_axis.y, transform.z_axis.y);
-        raw.matrix_rowz = Vec3::new(transform.x_axis.z, transform.y_axis.z, transform.z_axis.z);
-        raw.translation = Vec3::new(transform.w_axis.x, transform.w_axis.y, transform.w_axis.z);
+        raw.matrix_rowx = DVec3::new(transform.x_axis.x as f64, transform.y_axis.x as f64, transform.z_axis.x as f64);
+        raw.matrix_rowy = DVec3::new(transform.x_axis.y as f64, transform.y_axis.y as f64, transform.z_axis.y as f64);
+        raw.matrix_rowz = DVec3::new(transform.x_axis.z as f64, transform.y_axis.z as f64, transform.z_axis.z as f64);
+        raw.translation = DVec3::new(transform.w_axis.x as f64, transform.w_axis.y as f64, transform.w_axis.z as f64);
     }
 
     pub(crate) fn copy_from(&self, other: &Self) {
