@@ -8,8 +8,6 @@
 - improve MMD behavior reproduction for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
   - you can set `MmdAmmoJSPlugin.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
 
-- change default fixedTimeStep value from 1/60 to 1/100 for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
-
 - introduce `MmdBulletPhysics` for use custom bullet physics build implementation on `MmdRuntime`
 
 - enable handling of texture files that are not contained in hierarchies below the pmx file - by [neguse](https://github.com/neguse) ([#36](https://github.com/noname0310/babylon-mmd/pull/36))

@@ -22,7 +22,7 @@ export interface IMmdWasmPhysicsRuntime {
     maxSubSteps: number;
 
     /**
-     * Physics fixed time step (default 1 / 100)
+     * Physics fixed time step (default 1 / 60)
      *
      * The fixed time step of physics
      */

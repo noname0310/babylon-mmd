@@ -54,7 +54,7 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
         this.name = "MmdAmmoJSPlugin";
 
         // for better reproduction of MMD physics
-        this.setFixedTimeStep(1 / 100);
+        this.setFixedTimeStep(1 / 60);
 
         this._mmdtmpAmmoVector = new this.bjsAMMO.btVector3();
         this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();
