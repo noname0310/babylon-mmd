@@ -6,7 +6,7 @@
   - bullet physics can also be used standalone using `MultiPhysicsRuntime` or `PhysicsRuntime`
 
 - improve MMD behavior reproduction for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
-  - you can set `MmdAmmoJSPlugin.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
+  - you can set `MmdModelPhysicsCreationOptions.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
 
 - introduce `MmdBulletPhysics` for use custom bullet physics build implementation on `MmdRuntime`
 

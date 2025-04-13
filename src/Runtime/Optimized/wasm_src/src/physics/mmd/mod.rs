@@ -8,7 +8,7 @@ use crate::mmd_model::MmdModel;
 use crate::mmd_model_metadata::{JointKind, RigidBodyMetadata, RigidBodyMetadataReader, RigidBodyPhysicsMode, RigidBodyShapeType};
 
 use super::bullet::runtime::collision_shape::{BoxShape, CapsuleShape, CollisionShape, SphereShape, StaticPlaneShape};
-use super::bullet::runtime::constraint::{Constraint, Generic6DofSpringConstraint};
+use super::bullet::runtime::constraint::{Constraint, ConstraintParams, Generic6DofSpringConstraint, MmdGeneric6DofSpringConstraint};
 use super::bullet::runtime::motion_type::MotionType;
 use super::bullet::runtime::multi_physics_world::MultiPhysicsWorld;
 use super::bullet::runtime::rigidbody_construction_info::RigidBodyConstructionInfo;
@@ -36,7 +36,7 @@ impl MmdPhysicsRuntime {
         Self {
             multi_physics_world,
             max_sub_steps: 5,
-            fixed_time_step: 1.0 / 100.0,
+            fixed_time_step: 1.0 / 60.0,
         }
     }
     
@@ -290,6 +290,7 @@ impl MmdPhysicsRuntime {
         };
 
         let world_id = reader.physics_world_id();
+        let force_disable_offset_for_constraint_frame = reader.force_disable_offset_for_constraint_frame();
 
         let mut rigidbody_map = vec![-1; reader.count() as usize];
         let mut rigidbody_initial_transforms = Vec::with_capacity(reader.count() as usize);
@@ -429,48 +430,101 @@ impl MmdPhysicsRuntime {
             let joint_final_transform_b = rigidbody_b_inverse * joint_transform;
 
             let constraint = if metadata.kind == JointKind::Spring6Dof as u8 {
-                let mut constraint = Generic6DofSpringConstraint::from_bundle(
-                    rigidbody_bundle_proxy.inner_mut().create_handle(),
-                    rigidbody_index_a as u32,
-                    rigidbody_index_b as u32,
-                    &joint_final_transform_a,
-                    &joint_final_transform_b,
-                    true
-                );
-                constraint.set_linear_lower_limit(metadata.position_min.into());
-                constraint.set_linear_upper_limit(metadata.position_max.into());
-                constraint.set_angular_lower_limit(metadata.rotation_min.into());
-                constraint.set_angular_upper_limit(metadata.rotation_max.into());
+                if force_disable_offset_for_constraint_frame {
+                    let mut constraint = MmdGeneric6DofSpringConstraint::from_bundle(
+                        rigidbody_bundle_proxy.inner_mut().create_handle(),
+                        rigidbody_index_a as u32,
+                        rigidbody_index_b as u32,
+                        &joint_final_transform_a,
+                        &joint_final_transform_b,
+                        true
+                    );
 
-                if metadata.spring_position.x != 0.0 {
-                    constraint.set_stiffness(0, metadata.spring_position.x);
-                    constraint.enable_spring(0, true);
+                    for axis in 0..6 {
+                        constraint.set_param(ConstraintParams::ConstraintStopERP, 0.475, axis);
+                    }
+                    constraint.set_linear_lower_limit(metadata.position_min.into());
+                    constraint.set_linear_upper_limit(metadata.position_max.into());
+                    constraint.set_angular_lower_limit(metadata.rotation_min.into());
+                    constraint.set_angular_upper_limit(metadata.rotation_max.into());
+
+                    if metadata.spring_position.x != 0.0 {
+                        constraint.set_stiffness(0, metadata.spring_position.x);
+                        constraint.enable_spring(0, true);
+                    } else {
+                        constraint.enable_spring(0, false);
+                    }
+
+                    if metadata.spring_position.y != 0.0 {
+                        constraint.set_stiffness(1, metadata.spring_position.y);
+                        constraint.enable_spring(1, true);
+                    } else {
+                        constraint.enable_spring(1, false);
+                    }
+
+                    if metadata.spring_position.z != 0.0 {
+                        constraint.set_stiffness(2, metadata.spring_position.z);
+                        constraint.enable_spring(2, true);
+                    } else {
+                        constraint.enable_spring(2, false);
+                    }
+
+                    constraint.set_stiffness(3, metadata.spring_rotation.x);
+                    constraint.enable_spring(3, true);
+                    constraint.set_stiffness(4, metadata.spring_rotation.y);
+                    constraint.enable_spring(4, true);
+                    constraint.set_stiffness(5, metadata.spring_rotation.z);
+                    constraint.enable_spring(5, true);
+
+                    Constraint::MmdGeneric6DofSpring(constraint)
                 } else {
-                    constraint.enable_spring(0, false);
+                    let mut constraint = Generic6DofSpringConstraint::from_bundle(
+                        rigidbody_bundle_proxy.inner_mut().create_handle(),
+                        rigidbody_index_a as u32,
+                        rigidbody_index_b as u32,
+                        &joint_final_transform_a,
+                        &joint_final_transform_b,
+                        true
+                    );
+
+                    for axis in 0..6 {
+                        constraint.set_param(ConstraintParams::ConstraintStopERP, 0.475, axis);
+                    }
+                    constraint.set_linear_lower_limit(metadata.position_min.into());
+                    constraint.set_linear_upper_limit(metadata.position_max.into());
+                    constraint.set_angular_lower_limit(metadata.rotation_min.into());
+                    constraint.set_angular_upper_limit(metadata.rotation_max.into());
+
+                    if metadata.spring_position.x != 0.0 {
+                        constraint.set_stiffness(0, metadata.spring_position.x);
+                        constraint.enable_spring(0, true);
+                    } else {
+                        constraint.enable_spring(0, false);
+                    }
+
+                    if metadata.spring_position.y != 0.0 {
+                        constraint.set_stiffness(1, metadata.spring_position.y);
+                        constraint.enable_spring(1, true);
+                    } else {
+                        constraint.enable_spring(1, false);
+                    }
+
+                    if metadata.spring_position.z != 0.0 {
+                        constraint.set_stiffness(2, metadata.spring_position.z);
+                        constraint.enable_spring(2, true);
+                    } else {
+                        constraint.enable_spring(2, false);
+                    }
+
+                    constraint.set_stiffness(3, metadata.spring_rotation.x);
+                    constraint.enable_spring(3, true);
+                    constraint.set_stiffness(4, metadata.spring_rotation.y);
+                    constraint.enable_spring(4, true);
+                    constraint.set_stiffness(5, metadata.spring_rotation.z);
+                    constraint.enable_spring(5, true);
+
+                    Constraint::Generic6DofSpring(constraint)
                 }
-
-                if metadata.spring_position.y != 0.0 {
-                    constraint.set_stiffness(1, metadata.spring_position.y);
-                    constraint.enable_spring(1, true);
-                } else {
-                    constraint.enable_spring(1, false);
-                }
-
-                if metadata.spring_position.z != 0.0 {
-                    constraint.set_stiffness(2, metadata.spring_position.z);
-                    constraint.enable_spring(2, true);
-                } else {
-                    constraint.enable_spring(2, false);
-                }
-
-                constraint.set_stiffness(3, metadata.spring_rotation.x);
-                constraint.enable_spring(3, true);
-                constraint.set_stiffness(4, metadata.spring_rotation.y);
-                constraint.enable_spring(4, true);
-                constraint.set_stiffness(5, metadata.spring_rotation.z);
-                constraint.enable_spring(5, true);
-
-                Constraint::Generic6DofSpring(constraint)
             } else {
                 diagnostic.warning(format!("Unsupported joint kind {} for joint {}", metadata.kind, constraint_index));
                 return;

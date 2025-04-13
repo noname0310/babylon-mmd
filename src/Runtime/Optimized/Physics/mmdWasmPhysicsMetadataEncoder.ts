@@ -116,6 +116,13 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         const worldMatrix = rootTransform.computeWorldMatrix(true);
         serializer.setFloat32Array(worldMatrix.m); // modelInitialWorldMatrix
 
+        serializer.setUint8(
+            (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).forceDisableOffsetForConstraintFrame
+                ? 1
+                : 0
+        ); // forceDisableOffsetForConstraintFrame
+        serializer.offset += 3; // padding
+
         const bones = metadata.bones;
         const boneNameMap = new Map<string, number>();
         for (let i = 0; i < bones.length; ++i) {

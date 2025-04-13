@@ -16,6 +16,8 @@ extern "C" {
 
     fn bw_generic6dofconstraint_set_angular_upper_limit(constraint: *mut std::ffi::c_void, x: f32, y: f32, z: f32);
 
+    fn bw_generic6dofconstraint_set_param(constraint: *mut std::ffi::c_void, num: i32, value: f32, axis: i32);
+
     fn bw_create_generic6dofspringconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f32, frame_b: *const f32, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
 
     fn bw_destroy_generic6dofspringconstraint(constraint: *mut std::ffi::c_void);
@@ -63,6 +65,10 @@ impl Generic6DofConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         unsafe { bw_generic6dofconstraint_set_angular_upper_limit(self.ptr, limit.x, limit.y, limit.z) };
+    }
+
+    pub(crate) fn set_param(&mut self, num: i32, value: f32, axis: i32) {
+        unsafe { bw_generic6dofconstraint_set_param(self.ptr, num, value, axis) };
     }
 }
 
@@ -114,6 +120,10 @@ impl Generic6DofSpringConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         unsafe { bw_generic6dofconstraint_set_angular_upper_limit(self.ptr, limit.x, limit.y, limit.z) };
+    }
+
+    pub(crate) fn set_param(&mut self, num: i32, value: f32, axis: i32) {
+        unsafe { bw_generic6dofconstraint_set_param(self.ptr, num, value, axis) };
     }
 
     pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {
@@ -177,6 +187,10 @@ impl MmdGeneric6DofSpringConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         unsafe { bw_generic6dofconstraint_set_angular_upper_limit(self.ptr, limit.x, limit.y, limit.z) };
+    }
+
+    pub(crate) fn set_param(&mut self, num: i32, value: f32, axis: i32) {
+        unsafe { bw_generic6dofconstraint_set_param(self.ptr, num, value, axis) };
     }
 
     pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {

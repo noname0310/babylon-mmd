@@ -356,9 +356,10 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         logger: ILogger,
         physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel {
-        if (physicsOptions !== null) {
-            logger.warn("Ammo physics does not support physics options");
+        if (physicsOptions?.worldId !== undefined) {
+            logger.warn("Ammo physics does not support multiple physics world");
         }
+        const forceDisableOffsetForConstraintFrame = physicsOptions?.forceDisableOffsetForConstraintFrame ?? false;
 
         const scene = this._scene;
         const physicsPlugin = scene.getPhysicsEngine()?.getPhysicsPlugin() as MmdAmmoJSPlugin | null | undefined;
@@ -367,6 +368,12 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
         if (physicsPlugin.name !== "MmdAmmoJSPlugin") {
             throw new Error("Physics engine is not MMDAmmoJSPlugin");
+        }
+
+        const originalForceDisableOffsetForConstraintFrame = physicsPlugin.forceDisableOffsetForConstraintFrame;
+        if (forceDisableOffsetForConstraintFrame) {
+            // create constraint with forceDisableOffsetForConstraintFrame
+            physicsPlugin.forceDisableOffsetForConstraintFrame = true;
         }
 
         let scalingFactor: number;
@@ -661,6 +668,11 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                     }
                 }
             }
+        }
+
+        // restore the original forceDisableOffsetForConstraintFrame
+        if (forceDisableOffsetForConstraintFrame) {
+            physicsPlugin.forceDisableOffsetForConstraintFrame = originalForceDisableOffsetForConstraintFrame;
         }
 
         return new MmdAmmoPhysicsModel(this, nodes, impostors, rootMesh, physicsPlugin.bjsAMMO);

@@ -7,6 +7,25 @@ use super::rigidbody_bundle::{RigidBodyBundle, RigidBodyBundleHandle};
 
 use wasm_bindgen::prelude::*;
 
+pub(crate) enum ConstraintParams {
+    ConstraintERP = 1,
+    ConstraintStopERP = 2,
+    ConstraintCFM = 3,
+    ConstraintStopCFM = 4,
+}
+
+impl From<u8> for ConstraintParams {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => ConstraintParams::ConstraintERP,
+            2 => ConstraintParams::ConstraintStopERP,
+            3 => ConstraintParams::ConstraintCFM,
+            4 => ConstraintParams::ConstraintStopCFM,
+            _ => panic!("Invalid ConstraintParams value"),
+        }
+    }
+}
+
 #[allow(dead_code)]
 enum ConstraintRigidBodyHandleInfo {
     RigidBody((RigidBodyHandle, RigidBodyHandle)),
@@ -99,6 +118,10 @@ impl Generic6DofConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         self.inner.set_angular_upper_limit(limit);
+    }
+
+    pub(crate) fn set_param(&mut self, num: ConstraintParams, value: f32, axis: i32) {
+        self.inner.set_param(num as i32, value, axis);
     }
 }
 
@@ -197,6 +220,10 @@ impl Generic6DofSpringConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         self.inner.set_angular_upper_limit(limit);
+    }
+
+    pub(crate) fn set_param(&mut self, num: ConstraintParams, value: f32, axis: i32) {
+        self.inner.set_param(num as i32, value, axis);
     }
 
     pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {
@@ -307,6 +334,10 @@ impl MmdGeneric6DofSpringConstraint {
 
     pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
         self.inner.set_angular_upper_limit(limit);
+    }
+
+    pub(crate) fn set_param(&mut self, num: ConstraintParams, value: f32, axis: i32) {
+        self.inner.set_param(num as i32, value, axis);
     }
 
     pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {
@@ -621,6 +652,26 @@ pub fn constraint_set_angular_upper_limit(ptr: *mut usize, x: f32, y: f32, z: f3
         },
         _ => {
             panic!("constraintSetAngularUpperLimit: set_angular_upper_limit is not supported for this constraint type");
+        }
+    }
+}
+
+#[wasm_bindgen(js_name = "constraintSetParam")]
+pub fn constraint_set_param(ptr: *mut usize, num: u8, value: f32, axis: i32) {
+    let constraint = unsafe { &mut *(ptr as *mut Constraint) };
+    
+    match constraint {
+        Constraint::Generic6Dof(constraint) => {
+            constraint.set_param(ConstraintParams::from(num), value, axis);
+        },
+        Constraint::Generic6DofSpring(constraint) => {
+            constraint.set_param(ConstraintParams::from(num), value, axis);
+        },
+        Constraint::MmdGeneric6DofSpring(constraint) => {
+            constraint.set_param(ConstraintParams::from(num), value, axis);
+        },
+        _ => {
+            panic!("constraintSetParam: set_param is not supported for this constraint type");
         }
     }
 }
