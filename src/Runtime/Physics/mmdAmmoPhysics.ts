@@ -359,7 +359,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         if (physicsOptions?.worldId !== undefined) {
             logger.warn("Ammo physics does not support multiple physics world");
         }
-        const forceDisableOffsetForConstraintFrame = physicsOptions?.forceDisableOffsetForConstraintFrame ?? false;
+        const disableOffsetForConstraintFrame = physicsOptions?.disableOffsetForConstraintFrame ?? false;
 
         const scene = this._scene;
         const physicsPlugin = scene.getPhysicsEngine()?.getPhysicsPlugin() as MmdAmmoJSPlugin | null | undefined;
@@ -371,7 +371,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         const originalForceDisableOffsetForConstraintFrame = physicsPlugin.forceDisableOffsetForConstraintFrame;
-        if (forceDisableOffsetForConstraintFrame) {
+        if (disableOffsetForConstraintFrame) {
             // create constraint with forceDisableOffsetForConstraintFrame
             physicsPlugin.forceDisableOffsetForConstraintFrame = true;
         }
@@ -671,7 +671,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         // restore the original forceDisableOffsetForConstraintFrame
-        if (forceDisableOffsetForConstraintFrame) {
+        if (disableOffsetForConstraintFrame) {
             physicsPlugin.forceDisableOffsetForConstraintFrame = originalForceDisableOffsetForConstraintFrame;
         }
 

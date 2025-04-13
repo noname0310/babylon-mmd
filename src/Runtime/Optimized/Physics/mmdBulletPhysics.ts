@@ -322,7 +322,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 }
             }
         }
-        const forceDisableOffsetForConstraintFrame = physicsOptions?.forceDisableOffsetForConstraintFrame ?? false;
+        const disableOffsetForConstraintFrame = physicsOptions?.disableOffsetForConstraintFrame ?? false;
 
         const scene = (this._sceneOrRuntime as Scene).getPhysicsEngine
             ? (this._sceneOrRuntime as Scene)
@@ -601,7 +601,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
-            const constraintCtor = forceDisableOffsetForConstraintFrame
+            const constraintCtor = disableOffsetForConstraintFrame
                 ? MmdGeneric6DofSpringConstraint
                 : Generic6DofSpringConstraint;
             const constraint = new constraintCtor(

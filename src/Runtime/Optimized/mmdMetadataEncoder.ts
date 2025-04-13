@@ -85,7 +85,7 @@ import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
  *  kinematicSharedPhysicsWorldIdCount: uint32
  *  kinematicSharedPhysicsWorldIds: uint32[kinematicSharedPhysicsWorldIdCount]
  *  modelInitialWorldMatrix: float32[16]
- *  forceDisableOffsetForConstraintFrame: uint8
+ *  disableOffsetForConstraintFrame: uint8
  *  -- padding: uint8
  *  -- padding: uint16
  *
@@ -167,7 +167,7 @@ export class MmdMetadataEncoder {
             this._encodePhysicsOptions = {
                 worldId: validatedWorldId,
                 kinematicSharedWorldIds: validatedKinematicSharedWorldIds,
-                forceDisableOffsetForConstraintFrame: options.forceDisableOffsetForConstraintFrame
+                disableOffsetForConstraintFrame: options.disableOffsetForConstraintFrame
             };
         }
     }

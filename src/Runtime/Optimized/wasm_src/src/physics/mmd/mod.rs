@@ -290,7 +290,7 @@ impl MmdPhysicsRuntime {
         };
 
         let world_id = reader.physics_world_id();
-        let force_disable_offset_for_constraint_frame = reader.force_disable_offset_for_constraint_frame();
+        let disable_offset_for_constraint_frame = reader.disable_offset_for_constraint_frame();
 
         let mut rigidbody_map = vec![-1; reader.count() as usize];
         let mut rigidbody_initial_transforms = Vec::with_capacity(reader.count() as usize);
@@ -430,7 +430,7 @@ impl MmdPhysicsRuntime {
             let joint_final_transform_b = rigidbody_b_inverse * joint_transform;
 
             let constraint = if metadata.kind == JointKind::Spring6Dof as u8 {
-                if force_disable_offset_for_constraint_frame {
+                if disable_offset_for_constraint_frame {
                     let mut constraint = MmdGeneric6DofSpringConstraint::from_bundle(
                         rigidbody_bundle_proxy.inner_mut().create_handle(),
                         rigidbody_index_a as u32,

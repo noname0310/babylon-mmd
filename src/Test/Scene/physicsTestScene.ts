@@ -27,13 +27,13 @@ import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
-import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
-import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
-// import ammo from "@/Runtime/Physics/External/ammo.wasm";
-// import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
-// import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
+// import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
+// import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+// import { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
+// import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
+import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 // import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
@@ -110,24 +110,24 @@ export class SceneBuilder implements ISceneBuilder {
                 result.addAllToScene();
                 return result.meshes[0] as MmdMesh;
             })],
-            // ["physics", async(updateProgress): Promise<void> => {
-            //     updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-            //     const physicsInstance = await ammo();
-            //     const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
-            //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
-            //     updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
-            // }]
             ["physics", async(updateProgress): Promise<void> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-                const physicsPlugin = new BulletPlugin(mmdWasmInstance);
+                const physicsInstance = await ammo();
+                const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
                 scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
             }]
+            // ["physics", async(updateProgress): Promise<void> => {
+            //     updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
+            //     const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
+            //     const physicsPlugin = new BulletPlugin(mmdWasmInstance);
+            //     scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
+            //     updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
+            // }]
         ]);
 
-        // const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
-        const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
+        // const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(scene));
         mmdRuntime.loggingEnabled = true;
 
         mmdRuntime.register(scene);

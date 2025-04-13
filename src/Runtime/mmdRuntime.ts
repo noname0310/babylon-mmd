@@ -55,7 +55,7 @@ export interface MmdModelPhysicsCreationOptions {
      * 
      * For handling the constraint breaking, you can set fixedTimeStep to 1 / 120 or lower.
      */
-    forceDisableOffsetForConstraintFrame?: boolean;
+    disableOffsetForConstraintFrame?: boolean;
 }
 
 /**

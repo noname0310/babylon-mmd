@@ -89,15 +89,14 @@ export class SceneBuilder implements ISceneBuilder {
 
         const physicsInstance = await ammo();
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
-        physicsPlugin.forceDisableOffsetForConstraintFrame = true;
         scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
 
         const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
         const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
-        mmdRuntime.createMmdModel(mmdMesh);
-        mmdRuntime.createMmdModel(mmdMesh2);
+        mmdRuntime.createMmdModel(mmdMesh, { buildPhysics: { disableOffsetForConstraintFrame: true } });
+        mmdRuntime.createMmdModel(mmdMesh2, { buildPhysics: { disableOffsetForConstraintFrame: true } });
 
         Inspector.Show(scene, { });
 
