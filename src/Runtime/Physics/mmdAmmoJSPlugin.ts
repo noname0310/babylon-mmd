@@ -183,6 +183,10 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
                 }
             }
 
+            for (let i = 0; i < 6; ++i) {
+                joint.setParam(2 /* BT_CONSTRAINT_STOP_ERP */, 0.475, i);
+            }
+
             if (jointData.linearStiffness.x !== 0) {
                 joint.setStiffness(0, jointData.linearStiffness.x);
                 joint.enableSpring(0, true);

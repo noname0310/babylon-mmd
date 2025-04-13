@@ -89,6 +89,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const physicsInstance = await ammo();
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+        physicsPlugin.forceDisableOffsetForConstraintFrame = true;
         scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
 
         const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
