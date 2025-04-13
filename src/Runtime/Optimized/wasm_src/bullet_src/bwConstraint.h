@@ -71,6 +71,12 @@ extern "C" void bw_generic6dofconstraint_set_angular_upper_limit(void* constrain
     c->setAngularUpperLimit(btVector3(x, y, z));
 }
 
+extern "C" void bw_generic6dofconstraint_set_param(void* constraint, int num, float value, int axis)
+{
+    btGeneric6DofConstraint* c = static_cast<btGeneric6DofConstraint*>(constraint);
+    c->setParam(num, value, axis);
+}
+
 // Generic 6 DOF spring ctor and dtor
 
 extern "C" void* bw_create_generic6dofspringconstraint(void* bodyA, void* bodyB, float* frameABuffer, float* frameBBuffer, uint8_t useLinearReferenceFrameA)

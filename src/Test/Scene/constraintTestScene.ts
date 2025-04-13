@@ -95,8 +95,8 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
-        mmdRuntime.createMmdModel(mmdMesh);
-        mmdRuntime.createMmdModel(mmdMesh2);
+        mmdRuntime.createMmdModel(mmdMesh, { buildPhysics: { disableOffsetForConstraintFrame: true } });
+        mmdRuntime.createMmdModel(mmdMesh2, { buildPhysics: { disableOffsetForConstraintFrame: true } });
 
         Inspector.Show(scene, { });
 

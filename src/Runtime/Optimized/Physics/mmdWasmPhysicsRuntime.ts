@@ -48,7 +48,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         this._mmdRuntime = mmdRuntime;
         this._physicsWorldPtr = mmdRuntime.wasmInternal.getMultiPhysicsWorld();
         this._maxSubSteps = 5;
-        this._fixedTimeStep = 1 / 100;
+        this._fixedTimeStep = 1 / 60;
         this._gravity = new Vector3(0, -98, 0);
 
         const worldMatrixBufferPtr = mmdRuntime.wasmInstance.allocateBuffer(16 * 4);

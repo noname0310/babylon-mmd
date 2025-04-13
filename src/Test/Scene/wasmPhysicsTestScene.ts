@@ -38,7 +38,11 @@ import { PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physic
 import { RigidBody } from "@/Runtime/Optimized/Physics/Bind/rigidBody";
 import { RigidBodyConstructionInfo } from "@/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfo";
 import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
+// import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 import { MmdWasmPhysicsRuntimeImpl } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl";
+// import ammo from "@/Runtime/Physics/External/ammo.wasm";
+// import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+// import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -94,6 +98,12 @@ export class SceneBuilder implements ISceneBuilder {
 
                 const mmdWasmAnimation = new MmdWasmAnimation(mmdAnimation, mmdWasmInstance, scene);
 
+                // const physicsInstance = await ammo();
+                // const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+                // physicsPlugin.setFixedTimeStep(1 / 120);
+                // scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
+
+                // const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
                 mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
@@ -159,7 +169,8 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: {
-                worldId: 0
+                worldId: 0,
+                disableOffsetForConstraintFrame: false
             }
         });
         mmdModel.addAnimation(mmdWasmAnimation);

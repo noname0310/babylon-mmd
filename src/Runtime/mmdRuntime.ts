@@ -45,6 +45,17 @@ export interface MmdModelPhysicsCreationOptions {
      * Dynamic physics objects are not shared between physics worlds. Only kinematic objects are shared
      */
     kinematicSharedWorldIds?: number[];
+
+    
+    /**
+     * If true, the offset for the constraint frame is forcibly disabled. (Default: false)
+     *
+     * This is useful for reproducing the behavior of MMD physics.
+     * But the constraint can be broken if the offset is forcibly disabled.
+     * 
+     * For handling the constraint breaking, you can set fixedTimeStep to 1 / 120 or lower.
+     */
+    disableOffsetForConstraintFrame?: boolean;
 }
 
 /**

@@ -42,6 +42,9 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
 
         dataLength += 16 * 4; // modelInitialWorldMatrix
 
+        dataLength += 1; // disableOffsetForConstraintFrame
+        dataLength += 3; // padding
+
         dataLength += 4; // rigidBodyCount
 
         const rigidBodies = metadata.rigidBodies;
@@ -115,6 +118,13 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
 
         const worldMatrix = rootTransform.computeWorldMatrix(true);
         serializer.setFloat32Array(worldMatrix.m); // modelInitialWorldMatrix
+
+        serializer.setUint8(
+            (this._encodePhysicsOptions as MmdModelPhysicsCreationOptions).disableOffsetForConstraintFrame
+                ? 1
+                : 0
+        ); // disableOffsetForConstraintFrame
+        serializer.offset += 3; // padding
 
         const bones = metadata.bones;
         const boneNameMap = new Map<string, number>();

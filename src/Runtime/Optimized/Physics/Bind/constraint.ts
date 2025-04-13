@@ -160,6 +160,13 @@ export abstract class Constraint {
 
 const matrixBufferSize = 16 * Constants.A32BytesPerElement;
 
+export const enum ConstraintParams {
+    ConstraintERP = 1,
+    ConstraintStopERP = 2,
+    ConstraintCFM = 3,
+    ConstraintStopCFM = 4,
+}
+
 abstract class Generic6DofConstraintBase extends Constraint {
     /**
      * Sets the linear lower limit of the constraint
@@ -205,6 +212,30 @@ abstract class Generic6DofConstraintBase extends Constraint {
             this.runtime.lock.wait();
         }
         this.runtime.wasmInstance.constraintSetAngularUpperLimit(this._inner.ptr, limit.x, limit.y, limit.z);
+    }
+
+    /**
+     * Sets the parameter of the constraint
+     * 
+     * axis is
+     * - 0 for linear x
+     * - 1 for linear y
+     * - 2 for linear z
+     * - 3 for angular x
+     * - 4 for angular y
+     * - 5 for angular z
+     * 
+     * out of range axis will be ignored
+     * 
+     * @param num parameter number
+     * @param value parameter value
+     * @param axis parameter axis
+     */
+    public setParam(num: ConstraintParams, value: number, axis: number): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetParam(this._inner.ptr, num, value, axis);
     }
 }
 
@@ -297,6 +328,44 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
     }
 }
 
+abstract class Generic6DofSpringConstraintBase extends Generic6DofConstraintBase {
+        /**
+     * Enables or disables the spring for the specified index
+     * @param index index of the spring
+     * @param onOff true to enable the spring, false to disable it
+     */
+    public enableSpring(index: number, onOff: boolean): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintEnableSpring(this._inner.ptr, index, onOff);
+    }
+
+    /**
+     * Sets the spring stiffness for the specified index
+     * @param index index of the spring
+     * @param stiffness spring stiffness
+     */
+    public setStiffness(index: number, stiffness: number): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetStiffness(this._inner.ptr, index, stiffness);
+    }
+
+    /**
+     * Sets the spring damping for the specified index
+     * @param index index of the spring
+     * @param damping spring damping
+     */
+    public setDamping(index: number, damping: number): void {
+        if (this._inner.hasReferences) {
+            this.runtime.lock.wait();
+        }
+        this.runtime.wasmInstance.constraintSetDamping(this._inner.ptr, index, damping);
+    }
+}
+
 /**
  * Generic6DofSpringConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
  *
@@ -304,7 +373,7 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
  *
  * This constraint also supports springs, which can be used to create a spring-like effect between the two bodies
  */
-export class Generic6DofSpringConstraint extends Generic6DofConstraintBase {
+export class Generic6DofSpringConstraint extends Generic6DofSpringConstraintBase {
     /**
      * Creates a new Generic6DofSpringConstraint
      * @param runtime physics runtime
@@ -386,40 +455,97 @@ export class Generic6DofSpringConstraint extends Generic6DofConstraintBase {
 
         super(runtime, ptr, bodyReference);
     }
+}
+
+/**
+ * MmdGeneric6DofSpringConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
+ * 
+ * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
+ * 
+ * This constraint also supports springs, which can be used to create a spring-like effect between the two bodies
+ * 
+ * This constraint is modified to reproduces the behavior of the MMD constraint
+ */
+export class MmdGeneric6DofSpringConstraint extends Generic6DofSpringConstraintBase {
+    /**
+     * Creates a new MmdGeneric6DofSpringConstraint
+     * @param runtime physics runtime
+     * @param bodyA rigid body A
+     * @param bodyB rigid body B
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
+     */
+    public constructor(
+        runtime: IPhysicsRuntime,
+        bodyA: RigidBody,
+        bodyB: RigidBody,
+        frameA: Matrix,
+        frameB: Matrix,
+        useLinearReferenceFrameA: boolean
+    );
 
     /**
-     * Enables or disables the spring for the specified index
-     * @param index index of the spring
-     * @param onOff true to enable the spring, false to disable it
+     * Creates a new MmdGeneric6DofSpringConstraint
+     * @param runtime physics runtime
+     * @param bodyBundle rigid body bundle
+     * @param bodyIndices indices of the rigid bodies in the bundle
+     * @param frameA local frame A
+     * @param frameB local frame B
+     * @param useLinearReferenceFrameA if true, the linear reference frame is set to body A, otherwise it is set to body B
      */
-    public enableSpring(index: number, onOff: boolean): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintEnableSpring(this._inner.ptr, index, onOff);
-    }
+    public constructor(
+        runtime: IPhysicsRuntime,
+        bodyBundle: RigidBodyBundle,
+        bodyIndices: readonly [number, number],
+        frameA: Matrix,
+        frameB: Matrix,
+        useLinearReferenceFrameA: boolean
+    );
 
-    /**
-     * Sets the spring stiffness for the specified index
-     * @param index index of the spring
-     * @param stiffness spring stiffness
-     */
-    public setStiffness(index: number, stiffness: number): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetStiffness(this._inner.ptr, index, stiffness);
-    }
+    public constructor(
+        runtime: IPhysicsRuntime,
+        bodyAOrBundle: RigidBody | RigidBodyBundle,
+        bodyBOrIndices: RigidBody | readonly [number, number],
+        frameA: Matrix,
+        frameB: Matrix,
+        useLinearReferenceFrameA: boolean
+    ) {
+        const wasmInstance = runtime.wasmInstance;
+        const frameABufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
+        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        frameA.copyToArray(frameABuffer.array);
 
-    /**
-     * Sets the spring damping for the specified index
-     * @param index index of the spring
-     * @param damping spring damping
-     */
-    public setDamping(index: number, damping: number): void {
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
-        }
-        this.runtime.wasmInstance.constraintSetDamping(this._inner.ptr, index, damping);
+        const frameBBufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
+        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        frameB.copyToArray(frameBBuffer.array);
+
+        const isBundleParam = Array.isArray(bodyBOrIndices);
+
+        const ptr = isBundleParam
+            ? wasmInstance.createMmdGeneric6DofSpringConstraintFromBundle(
+                bodyAOrBundle.ptr,
+                bodyBOrIndices[0],
+                bodyBOrIndices[1],
+                frameABufferPtr,
+                frameBBufferPtr,
+                useLinearReferenceFrameA
+            )
+            : wasmInstance.createMmdGeneric6DofSpringConstraint(
+                bodyAOrBundle.ptr,
+                (bodyBOrIndices as RigidBody).ptr,
+                frameABufferPtr,
+                frameBBufferPtr,
+                useLinearReferenceFrameA
+            );
+
+        wasmInstance.deallocateBuffer(frameABufferPtr, matrixBufferSize);
+        wasmInstance.deallocateBuffer(frameBBufferPtr, matrixBufferSize);
+
+        const bodyReference = isBundleParam
+            ? (bodyAOrBundle as RigidBodyBundle)
+            : [bodyAOrBundle as RigidBody, bodyBOrIndices as RigidBody] as const;
+
+        super(runtime, ptr, bodyReference);
     }
 }

@@ -12,11 +12,11 @@ import type { IMmdRuntimeBone } from "../../IMmdRuntimeBone";
 import type { MmdModelPhysicsCreationOptions } from "../../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "../../Physics/IMmdPhysics";
 import type { Constraint } from "./Bind/constraint";
-import { Generic6DofSpringConstraint } from "./Bind/constraint";
+import { ConstraintParams, Generic6DofSpringConstraint, MmdGeneric6DofSpringConstraint } from "./Bind/constraint";
 import type { IPhysicsRuntime } from "./Bind/Impl/IPhysicsRuntime";
 import type { MultiPhysicsRuntime } from "./Bind/Impl/multiPhysicsRuntime";
 import { MotionType } from "./Bind/motionType";
-import type { PhysicsShape} from "./Bind/physicsShape";
+import type { PhysicsShape } from "./Bind/physicsShape";
 import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape } from "./Bind/physicsShape";
 import type { BulletPlugin } from "./Bind/Plugin/bulletPlugin";
 import { RigidBodyBundle } from "./Bind/rigidBodyBundle";
@@ -322,6 +322,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 }
             }
         }
+        const disableOffsetForConstraintFrame = physicsOptions?.disableOffsetForConstraintFrame ?? false;
 
         const scene = (this._sceneOrRuntime as Scene).getPhysicsEngine
             ? (this._sceneOrRuntime as Scene)
@@ -600,7 +601,10 @@ export class MmdBulletPhysics implements IMmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
-            const constraint = new Generic6DofSpringConstraint(
+            const constraintCtor = disableOffsetForConstraintFrame
+                ? MmdGeneric6DofSpringConstraint
+                : Generic6DofSpringConstraint;
+            const constraint = new constraintCtor(
                 physicsRuntime,
                 bundle,
                 [bodyAIndex, bodyBIndex],
@@ -608,6 +612,10 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 jointFinalTransformB,
                 true
             );
+            for (let i = 0; i < 6; ++i) {
+                constraint.setParam(ConstraintParams.ConstraintStopERP, 0.475, i);
+            }
+
             const limitVector = new Vector3();
 
             limitVector.fromArray(joint.positionMin);

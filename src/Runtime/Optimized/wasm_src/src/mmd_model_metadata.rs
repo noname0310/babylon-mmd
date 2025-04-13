@@ -498,6 +498,7 @@ pub(crate) struct RigidBodyMetadataReader<'a> {
     physics_world_id: u32,
     kinematic_shared_physics_world_ids: Vec<u32>,
     model_initial_world_matrix: Mat4,
+    disable_offset_for_constraint_frame: bool,
     count: u32,
 }
 
@@ -511,6 +512,7 @@ impl<'a> RigidBodyMetadataReader<'a> {
         let mut physics_world_id = 0;
         let mut kinematic_shared_physics_world_ids = Vec::new();
         let mut model_initial_world_matrix = Mat4::IDENTITY;
+        let mut disable_offset_for_constraint_frame = false;
         let count: u32;
 
         if physics_info_kind == PhysicsInfoKind::NoPhysics as u8 {
@@ -530,6 +532,8 @@ impl<'a> RigidBodyMetadataReader<'a> {
                 Vec4::new(buffer.read::<f32>(), buffer.read::<f32>(), buffer.read::<f32>(), buffer.read::<f32>()),
                 Vec4::new(buffer.read::<f32>(), buffer.read::<f32>(), buffer.read::<f32>(), buffer.read::<f32>()),
             );
+            disable_offset_for_constraint_frame = buffer.read::<u8>() != 0;
+            buffer.offset += 3; // padding
             kind = PhysicsInfoKind::FullPhysics;
             count = buffer.read::<u32>();
         } else {
@@ -545,6 +549,7 @@ impl<'a> RigidBodyMetadataReader<'a> {
             physics_world_id,
             kinematic_shared_physics_world_ids,
             model_initial_world_matrix,
+            disable_offset_for_constraint_frame,
             count,
         }
     }
@@ -563,6 +568,10 @@ impl<'a> RigidBodyMetadataReader<'a> {
 
     pub(crate) fn model_initial_world_matrix(&self) -> &Mat4 {
         &self.model_initial_world_matrix
+    }
+
+    pub(crate) fn disable_offset_for_constraint_frame(&self) -> bool {
+        self.disable_offset_for_constraint_frame
     }
 
     pub(crate) fn count(&self) -> u32 {

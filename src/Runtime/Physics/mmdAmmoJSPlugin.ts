@@ -54,7 +54,7 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
         this.name = "MmdAmmoJSPlugin";
 
         // for better reproduction of MMD physics
-        this.setFixedTimeStep(1 / 100);
+        this.setFixedTimeStep(1 / 60);
 
         this._mmdtmpAmmoVector = new this.bjsAMMO.btVector3();
         this._mmdtmpAmmoQuat = new this.bjsAMMO.btQuaternion();
@@ -181,6 +181,10 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
                     // ptr + 1301 = m_useOffsetForConstraintFrame
                     heap8[jointPtr + 1301] = 0; // m_useOffsetForConstraintFrame = false
                 }
+            }
+
+            for (let i = 0; i < 6; ++i) {
+                joint.setParam(2 /* BT_CONSTRAINT_STOP_ERP */, 0.475, i);
             }
 
             if (jointData.linearStiffness.x !== 0) {
