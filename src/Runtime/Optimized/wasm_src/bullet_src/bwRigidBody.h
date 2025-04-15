@@ -363,7 +363,6 @@ public:
 
     void setWorld(bwPhysicsWorld* world)
     {
-        btAssert(m_world == nullptr);
         m_world = world;
     }
 

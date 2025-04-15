@@ -568,9 +568,9 @@ impl MmdPhysicsRuntime {
         });
 
         PhysicsModelContext::new(
-            shapes.into_boxed_slice(),
-            rigidbody_bundle_proxy,
             constraints.into_boxed_slice(),
+            rigidbody_bundle_proxy,
+            shapes.into_boxed_slice(),
             world_id,
             kinematic_shared_physics_world_ids,
             world_matrix,
