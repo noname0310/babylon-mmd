@@ -1,12 +1,16 @@
 # Changelog
 
-## 0.63.0 (scheduled)
+## 0.64.0 (scheduled)
+
+- fix `MmdBulletPhysics` and `MmdWasmPhysics` constraint stability on `disableOffsetForConstraintFrame` mode by [Lunuy](https://github.com/Lunuy)
+
+## 0.63.0 (2025-04-14)
 
 - now support Bullet Physics Interface with `MmdRuntime.physics.getImpl()`
   - bullet physics can also be used standalone using `MultiPhysicsRuntime` or `PhysicsRuntime`
 
 - improve MMD behavior reproduction for `MmdAmmoPhysics` and `MmdWasmPhysics` physics runtime
-  - you can set `MmdModelPhysicsCreationOptions.forceDisableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
+  - you can set `MmdModelPhysicsCreationOptions.disableOffsetForConstraintFrame` to `true` for reproduce MMD behavior
 
 - introduce `MmdBulletPhysics` for use custom bullet physics build implementation on `MmdRuntime`
 
