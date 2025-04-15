@@ -1,7 +1,7 @@
 /**
  * Bullet physics motion type
  */
-export const enum MotionType {
+export enum MotionType {
     /**
      * Dynamic motion type Rigid bodies are affected by forces and can be moved by the user
      */

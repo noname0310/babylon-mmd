@@ -160,5 +160,5 @@ export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, Runtim
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController } from "@/Runtime/mmdMorphController";
 export { MmdMorphControllerBase, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphControllerBase";
-export { MmdModelCreationOptions as CreateMmdModelOptions, MmdModelPhysicsCreationOptions as CreateMmdModelPhysicsOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
+export { MmdModelCreationOptions, MmdModelPhysicsCreationOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";
