@@ -17,6 +17,7 @@ import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
+import { Geometry } from "@babylonjs/core/Meshes/geometry";
 
 class MmdPhysicsMesh extends AbstractMesh {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
@@ -75,6 +76,10 @@ class MmdPhysicsMesh extends AbstractMesh {
 
     public override refreshBoundingInfo(_applySkeletonOrOptions: unknown, _applyMorph?: unknown): AbstractMesh {
         return this;
+    }
+
+    public override get geometry(): Nullable<Geometry> {
+        return null;
     }
 }
 
