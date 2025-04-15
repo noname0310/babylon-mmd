@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.64.1 (scheduled)
+
+- fix `MmdWasmPhysics` crash on debug build due to wrong drop order of physics resources
+
 ## 0.64.0 (2025-04-15)
 
 - fix `MmdBulletPhysics` and `MmdWasmPhysics` constraint stability on `disableOffsetForConstraintFrame` mode by [Lunuy](https://github.com/Lunuy)
