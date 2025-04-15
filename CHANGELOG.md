@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.64.0 (scheduled)
+## 0.64.0 (2025-04-15)
 
 - fix `MmdBulletPhysics` and `MmdWasmPhysics` constraint stability on `disableOffsetForConstraintFrame` mode by [Lunuy](https://github.com/Lunuy)
 
