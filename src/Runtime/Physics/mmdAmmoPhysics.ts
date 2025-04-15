@@ -5,6 +5,7 @@ import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { IMeshDataOptions } from "@babylonjs/core/Meshes/abstractMesh";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { Geometry } from "@babylonjs/core/Meshes/geometry";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { PhysicsImpostor, type PhysicsImpostorParameters } from "@babylonjs/core/Physics/v1/physicsImpostor";
 import type { Scene } from "@babylonjs/core/scene";
@@ -17,7 +18,6 @@ import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
-import { Geometry } from "@babylonjs/core/Meshes/geometry";
 
 class MmdPhysicsMesh extends AbstractMesh {
     public readonly linkedBone: Nullable<IMmdRuntimeBone>;
