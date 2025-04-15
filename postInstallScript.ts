@@ -45,9 +45,12 @@ async function installAmmo(): Promise<void> {
 }
 
 async function installBullet(): Promise<void> {
+    let updated = false;
+
     if (!fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/BulletCollision")) {
         try {
             execSync("cd src/Runtime/Optimized/wasm_src/bullet_src && github-directory-downloader https://github.com/bulletphysics/bullet3/tree/d7f9d662076ed8c7cc2a62720ffbc7aea574cf3e/src/BulletCollision --dir=BulletCollision");
+            updated = true;
         } catch (error: any) {
             console.log(error.output.toString());
             if (fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/BulletCollision")) {
@@ -60,6 +63,7 @@ async function installBullet(): Promise<void> {
     if (!fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/BulletDynamics")) {
         try {
             execSync("cd src/Runtime/Optimized/wasm_src/bullet_src && github-directory-downloader https://github.com/bulletphysics/bullet3/tree/d7f9d662076ed8c7cc2a62720ffbc7aea574cf3e/src/BulletDynamics --dir=BulletDynamics");
+            updated = true;
         } catch (error: any) {
             console.log(error.output.toString());
             if (fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/BulletDynamics")) {
@@ -72,12 +76,25 @@ async function installBullet(): Promise<void> {
     if (!fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/LinearMath")) {
         try {
             execSync("cd src/Runtime/Optimized/wasm_src/bullet_src && github-directory-downloader https://github.com/bulletphysics/bullet3/tree/d7f9d662076ed8c7cc2a62720ffbc7aea574cf3e/src/LinearMath --dir=LinearMath");
+            updated = true;
         } catch (error: any) {
             console.log(error.output.toString());
             if (fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/LinearMath")) {
                 fs.rmSync("./src/Runtime/Optimized/wasm_src/bullet_src/LinearMath", { recursive: true });
             }
             process.exit(1);
+        }
+    }
+
+    if (updated) {
+        try {
+            execSync("cd src/Runtime/Optimized/wasm_src/bullet_src && git init && git apply constraint-fix.patch");
+        } catch (error: any) {
+            console.log(error.output.toString());
+            process.exit(1);
+        }
+        if (fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/.git")) {
+            fs.rmSync("./src/Runtime/Optimized/wasm_src/bullet_src/.git", { recursive: true });
         }
     }
 }
