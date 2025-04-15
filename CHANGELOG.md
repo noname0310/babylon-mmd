@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.64.1 (scheduled)
+## 0.64.1 (2025-04-16)
 
 - fix `MmdWasmPhysics` crash on debug build due to wrong drop order of physics resources
 
