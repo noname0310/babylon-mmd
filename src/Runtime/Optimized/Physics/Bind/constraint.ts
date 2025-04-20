@@ -216,7 +216,7 @@ abstract class Generic6DofConstraintBase extends Constraint {
 
     /**
      * Sets the parameter of the constraint
-     * 
+     *
      * axis is
      * - 0 for linear x
      * - 1 for linear y
@@ -224,9 +224,9 @@ abstract class Generic6DofConstraintBase extends Constraint {
      * - 3 for angular x
      * - 4 for angular y
      * - 5 for angular z
-     * 
+     *
      * out of range axis will be ignored
-     * 
+     *
      * @param num parameter number
      * @param value parameter value
      * @param axis parameter axis
@@ -329,7 +329,7 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
 }
 
 abstract class Generic6DofSpringConstraintBase extends Generic6DofConstraintBase {
-        /**
+    /**
      * Enables or disables the spring for the specified index
      * @param index index of the spring
      * @param onOff true to enable the spring, false to disable it
@@ -459,11 +459,11 @@ export class Generic6DofSpringConstraint extends Generic6DofSpringConstraintBase
 
 /**
  * MmdGeneric6DofSpringConstraint is a constraint that allows for 6 degrees of freedom (3 linear and 3 angular) between two rigid bodies
- * 
+ *
  * It can be used to create a variety of constraints, such as a hinge, slider, or ball-and-socket joint
- * 
+ *
  * This constraint also supports springs, which can be used to create a spring-like effect between the two bodies
- * 
+ *
  * This constraint is modified to reproduces the behavior of the MMD constraint
  */
 export class MmdGeneric6DofSpringConstraint extends Generic6DofSpringConstraintBase {
