@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.65.0 (scheduled)
+
+- introduce `StandardMaterialBuilder` for build mmd model with `StandardMaterial` instead of `MmdStandardMaterial`
+- rename`MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
+
 ## 0.64.1 (2025-04-16)
 
 - fix `MmdWasmPhysics` crash on debug build due to wrong drop order of physics resources
