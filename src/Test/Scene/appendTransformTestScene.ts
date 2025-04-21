@@ -22,6 +22,7 @@ import { Scene } from "@babylonjs/core/scene";
 
 // import havok from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -45,7 +46,6 @@ import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
 import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
-import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

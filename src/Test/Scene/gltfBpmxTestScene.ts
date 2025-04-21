@@ -21,6 +21,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -43,7 +44,6 @@ import { createLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
 import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
-import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

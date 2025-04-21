@@ -25,6 +25,7 @@ import { WebXRFeatureName } from "@babylonjs/core/XR/webXRFeaturesManager";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -43,7 +44,6 @@ import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCame
 import { createLightComponents } from "../Util/createLightComponents";
 import { optimizeScene } from "../Util/optimizeScene";
 import { parallelLoadAsync } from "../Util/parallelLoadAsync";
-import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

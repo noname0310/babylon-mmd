@@ -21,6 +21,7 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
@@ -30,7 +31,6 @@ import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { OiComputeTransformInjector } from "@/Runtime/Util/oiComputeTransformInjector";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 
 async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
     const result: FileSystemFileEntry[] = [];

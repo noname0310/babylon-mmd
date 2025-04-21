@@ -10,6 +10,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -23,7 +24,6 @@ import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { createDefaultGround } from "../Util/createDefaultGround";
 import { createLightComponents } from "../Util/createLightComponents";
-import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

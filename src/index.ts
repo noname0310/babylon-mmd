@@ -68,7 +68,7 @@ export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileR
 export { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
-export { StandardMaterialBuilderBase, StandardMaterialBuilder } from "@/Loader/standardMaterialBuilder";
+export { StandardMaterialBuilder, StandardMaterialBuilderBase } from "@/Loader/standardMaterialBuilder";
 export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChecker";
 export { VmdLoader } from "@/Loader/vmdLoader";
 export { VpdLoader } from "@/Loader/vpdLoader";
