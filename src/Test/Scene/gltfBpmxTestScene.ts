@@ -21,8 +21,9 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 import type { ReferenceFileResolver } from "@/Loader/referenceFileResolver";
@@ -86,7 +87,7 @@ export class SceneBuilder implements ISceneBuilder {
             referenceFileResolver: ReferenceFileResolver,
             logger: ILogger,
             onTextureLoadComplete?: () => void
-        ): void => {
+        ): Promise<void> => {
             if (!materialInfo.isSharedToonTexture && materialInfo.toonTextureIndex === -1) {
                 (materialInfo as any).isSharedToonTexture = true;
                 (materialInfo as any).toonTextureIndex = 1;
@@ -104,8 +105,10 @@ export class SceneBuilder implements ISceneBuilder {
                 logger,
                 onTextureLoadComplete
             );
+
+            return Promise.resolve();
         };
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.AlphaEvaluation;
 
         const [
             mmdAnimation,

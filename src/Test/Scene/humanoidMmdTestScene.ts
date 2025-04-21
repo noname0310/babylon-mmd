@@ -22,7 +22,8 @@ import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeli
 import { Scene } from "@babylonjs/core/scene";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
@@ -72,7 +73,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.AlphaEvaluation;
 
         const [
             mmdAnimation,

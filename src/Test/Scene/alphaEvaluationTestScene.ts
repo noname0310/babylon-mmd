@@ -8,7 +8,8 @@ import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -32,7 +33,7 @@ export class SceneBuilder implements ISceneBuilder {
         createDefaultGround(scene);
 
         const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.AlphaEvaluation;
         // materialBuilder.alphaEvaluationResolution = 2048;
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 

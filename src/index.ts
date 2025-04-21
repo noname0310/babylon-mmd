@@ -54,10 +54,11 @@ export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmd
 // Loader
 export { registerMmdModelLoaders } from "@/Loader/dynamic";
 export { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
+export { MaterialBuilderBase, MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
 export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-export { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
 export { PmdLoaderMetadata } from "@/Loader/pmdLoader.metadata";
 export { PmLoaderOptions } from "@/Loader/pmLoader";
@@ -67,6 +68,7 @@ export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileR
 export { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
+export { StandardMaterialBuilder, StandardMaterialBuilderBase } from "@/Loader/standardMaterialBuilder";
 export { TextureAlphaChecker, TransparencyMode } from "@/Loader/textureAlphaChecker";
 export { VmdLoader } from "@/Loader/vmdLoader";
 export { VpdLoader } from "@/Loader/vpdLoader";

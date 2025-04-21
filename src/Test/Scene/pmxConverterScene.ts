@@ -21,8 +21,9 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -75,7 +76,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.deleteTextureBufferAfterLoad = false;
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.AlphaEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.AlphaEvaluation;
 
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);

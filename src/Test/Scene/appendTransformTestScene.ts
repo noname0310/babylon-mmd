@@ -22,9 +22,10 @@ import { Scene } from "@babylonjs/core/scene";
 
 // import havok from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
@@ -85,7 +86,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdPlayerControl.showPlayerControl();
 
         const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
         materialBuilder.afterBuildSingleMaterial = (material): void => {
             material.forceDepthWrite = true;
             material.useLogarithmicDepth = true;

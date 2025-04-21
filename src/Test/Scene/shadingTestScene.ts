@@ -10,6 +10,7 @@ import { Inspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { StandardMaterialBuilder } from "@/Loader/standardMaterialBuilder";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -23,33 +24,67 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         createDefaultArcRotateCamera(scene);
-        const { shadowGenerator } = createLightComponents(scene);
+        const { shadowGenerator } = createLightComponents(scene, {
+            orthoLeftOffset: -10,
+            orthoRightOffset: 10,
+            shadowMaxZOffset: 5
+        });
         shadowGenerator.transparencyShadow = true;
         createDefaultGround(scene);
 
-        const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder.forceDisableAlphaEvaluation = false;
-        materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+        await Promise.all([
+            (async(): Promise<void> => {
+                const materialBuilder = new MmdStandardMaterialBuilder();
+                materialBuilder.forceDisableAlphaEvaluation = false;
+                materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
-        const mmdMesh = await LoadAssetContainerAsync(
-            "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx",
-            scene,
-            {
-                pluginOptions: {
-                    mmdmodel: {
-                        materialBuilder: materialBuilder,
-                        loggingEnabled: true
+                const mmdMesh = await LoadAssetContainerAsync(
+                    // "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx", // uv morph test model
+                    "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    scene,
+                    {
+                        pluginOptions: {
+                            mmdmodel: {
+                                materialBuilder: materialBuilder,
+                                loggingEnabled: true
+                            }
+                        }
                     }
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as Mesh;
+                });
+                for (const mesh of mmdMesh.metadata.meshes) {
+                    mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
                 }
-            }
-        ).then(result => {
-            result.addAllToScene();
-            return result.meshes[0] as Mesh;
-        });
-        for (const mesh of mmdMesh.metadata.meshes) {
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh, false);
-        }
+                mmdMesh.position.x = -5;
+            })(),
+            (async(): Promise<void> => {
+                const materialBuilder = new StandardMaterialBuilder();
+
+                const mmdMesh = await LoadAssetContainerAsync(
+                    "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    scene,
+                    {
+                        pluginOptions: {
+                            mmdmodel: {
+                                materialBuilder: materialBuilder,
+                                loggingEnabled: true
+                            }
+                        }
+                    }
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as Mesh;
+                });
+                for (const mesh of mmdMesh.metadata.meshes) {
+                    mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
+                }
+                mmdMesh.position.x = 5;
+            })()
+        ]);
 
         Inspector.Show(scene, { enablePopup: false });
 

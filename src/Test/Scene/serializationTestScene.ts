@@ -10,8 +10,9 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
+import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
-import { MmdStandardMaterialBuilder, MmdStandardMaterialRenderMethod } from "@/Loader/mmdStandardMaterialBuilder";
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { SdefMesh } from "@/Loader/sdefMesh";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -47,7 +48,7 @@ export class SceneBuilder implements ISceneBuilder {
         bezierAnimation.clone();
 
         const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder.renderMethod = MmdStandardMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
+        materialBuilder.renderMethod = MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation;
         // materialBuilder.alphaEvaluationResolution = 2048;
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
