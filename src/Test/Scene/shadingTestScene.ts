@@ -112,6 +112,10 @@ export class SceneBuilder implements ISceneBuilder {
             })()
         ]);
 
+        scene.createDefaultEnvironment({
+            createGround: false
+        });
+
         Inspector.Show(scene, { enablePopup: false });
 
         return scene;

@@ -77,7 +77,8 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> impleme
             }
         }
 
-        material.specularIntensity = materialInfo.shininess;
+        material.metallic = 0.0;
+        material.roughness = materialInfo.shininess / 100.0;
     }
 
     public override async loadDiffuseTexture(
