@@ -9,6 +9,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { PBRMaterialBuilder } from "@/Loader/pbrMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StandardMaterialBuilder } from "@/Loader/standardMaterialBuilder";
 
@@ -27,6 +28,7 @@ export class SceneBuilder implements ISceneBuilder {
         const { shadowGenerator } = createLightComponents(scene, {
             orthoLeftOffset: -10,
             orthoRightOffset: 10,
+            orthoTopOffset: 2,
             shadowMaxZOffset: 5
         });
         shadowGenerator.transparencyShadow = true;
@@ -58,7 +60,7 @@ export class SceneBuilder implements ISceneBuilder {
                     mesh.receiveShadows = true;
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
-                mmdMesh.position.x = -5;
+                mmdMesh.position.x = -8;
             })(),
             (async(): Promise<void> => {
                 const materialBuilder = new StandardMaterialBuilder();
@@ -82,9 +84,37 @@ export class SceneBuilder implements ISceneBuilder {
                     mesh.receiveShadows = true;
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
-                mmdMesh.position.x = 5;
+                mmdMesh.position.x = 0;
+            })(),
+            (async(): Promise<void> => {
+                const materialBuilder = new PBRMaterialBuilder();
+
+                const mmdMesh = await LoadAssetContainerAsync(
+                    "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    scene,
+                    {
+                        pluginOptions: {
+                            mmdmodel: {
+                                materialBuilder: materialBuilder,
+                                loggingEnabled: true
+                            }
+                        }
+                    }
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as Mesh;
+                });
+                for (const mesh of mmdMesh.metadata.meshes) {
+                    mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
+                }
+                mmdMesh.position.x = 8;
             })()
         ]);
+
+        scene.createDefaultEnvironment({
+            createGround: false
+        });
 
         Inspector.Show(scene, { enablePopup: false });
 
