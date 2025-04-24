@@ -912,7 +912,12 @@ export class BpmxConverter implements ILogger {
                             (((+(translucentMaterials[materialIndex] ?? -1)) & 0x3) << 4) | // 00: opaque 01: transparent 11: not evaluated
                             (((alphaEvaluateResults[materialIndex] ?? -1) & 0xF) << 0); // 0000: opaque 0001: alphatest 0010: alphablend 0011: alphatest and blend 1111: not evaluated
 
-                        const flag = (material.backFaceCulling === false ? PmxObject.Material.Flag.IsDoubleSided : 0) |
+                        let flag = (materialMetadata?.flag ?? 0);
+                        flag &=
+                            ~PmxObject.Material.Flag.IsDoubleSided &
+                            ~PmxObject.Material.Flag.EnabledToonEdge;
+                        flag |=
+                            (material.backFaceCulling === false ? PmxObject.Material.Flag.IsDoubleSided : 0) |
                             ((material.renderOutline ?? false) ? PmxObject.Material.Flag.EnabledToonEdge : 0);
 
                         const edgeColor = (material.outlineColor?.asArray() ?? [0, 0, 0]) as number[] as Vec4;
