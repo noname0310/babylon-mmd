@@ -7,7 +7,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "./IMmdMaterialBuilder";
+import type { MaterialInfo, TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdStandardMaterial } from "./mmdStandardMaterial";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
@@ -19,7 +19,9 @@ import { StandardMaterialBuilderBase } from "./standardMaterialBuilder";
  *
  * Use `MmdStandardMaterial` to create a mmdmesh material
  */
-export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdStandardMaterial> implements IMmdMaterialBuilder {
+export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdStandardMaterial> {
+    public override readonly preserveSerlizationData = true;
+    
     public constructor() {
         super(MmdStandardMaterial);
     }

@@ -10,7 +10,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder, MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
+import type { MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
 import { MaterialBuilderBase, MmdMaterialRenderMethod } from "./materialBuilderBase";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
@@ -21,7 +21,7 @@ import type { TextureAlphaChecker } from "./textureAlphaChecker";
 /**
  * Standard material builder base class
  */
-export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMaterial> extends MaterialBuilderBase<TMaterial> implements IMmdMaterialBuilder {
+export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMaterial> extends MaterialBuilderBase<TMaterial> {
     protected _getForcedExtension(texturePath: string): string | undefined {
         if (texturePath.substring(texturePath.length - 4).toLowerCase() === ".bmp") {
             if (_GetCompatibleTextureLoader(".dxbmp") !== null) {
@@ -215,6 +215,8 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
  * Use `StandardMaterial` to create a mmdmesh material
  */
 export class StandardMaterialBuilder extends StandardMaterialBuilderBase<StandardMaterial> {
+    public override readonly preserveSerlizationData = false;
+    
     public constructor() {
         super(StandardMaterial);
     }

@@ -250,12 +250,12 @@ import { MmdMesh } from "@/Runtime/mmdMesh";
 
 import { MmdBufferKind } from "../mmdBufferKind";
 import { MmdModelMetadata } from "../mmdModelMetadata";
-import type{ MmdStandardMaterial } from "../mmdStandardMaterial";
 import type { ILogger } from "../Parser/ILogger";
 import type { Vec3, Vec4 } from "../Parser/mmdTypes";
 import { PmxObject } from "../Parser/pmxObject";
 import { MmdDataSerializer } from "./mmdDataSerializer";
 import { BpmxObject } from "./Parser/bpmxObject";
+import { IMmdSerlizationMaterial } from "../IMmdSerlizationMaterial";
 
 /**
  * BPMX convert options
@@ -712,22 +712,22 @@ export class BpmxConverter implements ILogger {
                     const subMaterial = subMeterials[subMeterialIndex];
                     if (subMaterial === null) continue;
 
-                    if ((subMaterial as MmdStandardMaterial).diffuseTexture) {
-                        textureSet.add((subMaterial as MmdStandardMaterial).diffuseTexture!);
+                    if ((subMaterial as IMmdSerlizationMaterial).diffuseTexture) {
+                        textureSet.add((subMaterial as IMmdSerlizationMaterial).diffuseTexture!);
                     } else if ((subMaterial as PBRMaterial).albedoTexture) {
                         textureSet.add((subMaterial as PBRMaterial).albedoTexture!);
                     }
 
-                    if ((subMaterial as MmdStandardMaterial).sphereTexture) {
-                        textureSet.add((subMaterial as MmdStandardMaterial).sphereTexture!);
+                    if ((subMaterial as IMmdSerlizationMaterial).sphereTexture) {
+                        textureSet.add((subMaterial as IMmdSerlizationMaterial).sphereTexture!);
                     }
-                    if ((subMaterial as MmdStandardMaterial).toonTexture) {
-                        const toonTextureName = (subMaterial as MmdStandardMaterial).toonTexture!.name;
+                    if ((subMaterial as IMmdSerlizationMaterial).toonTexture) {
+                        const toonTextureName = (subMaterial as IMmdSerlizationMaterial).toonTexture!.name;
                         if (!(toonTextureName.startsWith("file:shared_toon_texture_") &&
                             toonTextureName.length <= 27 && // format: file:shared_toon_texture_0 or file:shared_toon_texture_00
                             !isNaN(Number(toonTextureName.substring(25)))
                         )) {
-                            textureSet.add((subMaterial as MmdStandardMaterial).toonTexture!);
+                            textureSet.add((subMaterial as IMmdSerlizationMaterial).toonTexture!);
                         }
                     }
                 }
@@ -832,14 +832,14 @@ export class BpmxConverter implements ILogger {
             for (let i = 0; i < meshesToSerialize.length; ++i) {
                 const mesh = meshesToSerialize[i];
 
-                const subMaterials: Nullable<Partial<MmdStandardMaterial> & Partial<PBRMaterial>>[] = [];
+                const subMaterials: Nullable<Partial<IMmdSerlizationMaterial> & Partial<PBRMaterial>>[] = [];
                 {
                     const multiMaterialSubMaterials = ((mesh.material as MultiMaterial)?.subMaterials ?? [mesh.material]) as Nullable<Material>[];
                     const subMeshes = mesh.subMeshes;
                     for (let subMeshIndex = 0; subMeshIndex < subMeshes.length; ++subMeshIndex) {
                         const subMesh = subMeshes[subMeshIndex];
                         const material = multiMaterialSubMaterials[subMesh.materialIndex];
-                        subMaterials.push(material as Nullable<Partial<MmdStandardMaterial> & Partial<PBRMaterial>>);
+                        subMaterials.push(material as Nullable<Partial<IMmdSerlizationMaterial> & Partial<PBRMaterial>>);
                     }
                 }
                 for (let subMaterialIndex = 0; subMaterialIndex < subMaterials.length; ++subMaterialIndex) {
