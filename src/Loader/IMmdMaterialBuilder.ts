@@ -11,7 +11,6 @@ import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
 import type { IArrayBufferFile } from "./referenceFileResolver";
-import { IMmdSerlizationMaterial } from "./IMmdSerlizationMaterial";
 
 /**
  * Material information
@@ -39,23 +38,7 @@ export type ReferencedMesh = Mesh | { mesh: Mesh, subMeshIndex: number };
  *
  * We recommend that you refer to the `MmdStandardMaterialBuilder` to make your own builder
  */
-export interface IMmdMaterialBuilder<TMaterial extends Material = any> {
-    /**
-     * Indicates if this builder preserves serialization data in the material
-     * 
-     * If true, the loader will preserve the Material metadata in the material
-     * 
-     * Otherwise, the loader will preserve the Material metadata separately to ensure that no data is lost in serialization
-     * 
-     * The following three properties are always preserved Regardless of this value:
-     * - englishName
-     * - comment
-     * - flag
-     * 
-     * and other MMD material properties should be preserved in the form of `MmdStandardMaterial`
-     */
-    readonly preserveSerlizationData: TMaterial extends IMmdSerlizationMaterial ? boolean : false;
-
+export interface IMmdMaterialBuilder {
     /**
      * Build materials
      * @param uniqueId Model unique id for load texture with cache

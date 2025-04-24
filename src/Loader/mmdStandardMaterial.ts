@@ -14,7 +14,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdPluginMaterial } from "./mmdPluginMaterial";
 import { MmdPluginMaterialSphereTextureBlendMode } from "./mmdPluginMaterial";
-import { IMmdSerlizationMaterial } from "./IMmdSerlizationMaterial";
 
 class MmdPluginMaterialMock implements IMmdPluginMaterial {
     public readonly isMock = true;
@@ -53,7 +52,7 @@ class MmdPluginMaterialMock implements IMmdPluginMaterial {
  *
  * If you disable all features, it behaves the same as `StandardMaterial`
  */
-export class MmdStandardMaterial extends StandardMaterial implements IMmdSerlizationMaterial {
+export class MmdStandardMaterial extends StandardMaterial {
     private _pluginMaterial: IMmdPluginMaterial;
 
     @serialize("renderOutline")

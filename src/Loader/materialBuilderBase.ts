@@ -12,7 +12,6 @@ import type { ILogger } from "./Parser/ILogger";
 import type { IArrayBufferFile } from "./referenceFileResolver";
 import { ReferenceFileResolver } from "./referenceFileResolver";
 import { TextureAlphaChecker } from "./textureAlphaChecker";
-import { IMmdSerlizationMaterial } from "./IMmdSerlizationMaterial";
 
 /**
  * Render method of MMD material
@@ -61,9 +60,7 @@ export type MmdMaterialConstructor<TMaterial extends Material> = new (name: stri
 /**
  * Material builder base class for creating mmd model materials
  */
-export abstract class MaterialBuilderBase<TMaterial extends Material> implements IMmdMaterialBuilder<TMaterial> {
-    public abstract readonly preserveSerlizationData: TMaterial extends IMmdSerlizationMaterial ? true : false;
-    
+export abstract class MaterialBuilderBase<TMaterial extends Material> implements IMmdMaterialBuilder {
     /**
      * Render method of MMD standard material (default: DepthWriteAlphaBlendingWithEvaluation)
      */

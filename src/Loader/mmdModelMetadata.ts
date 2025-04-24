@@ -389,9 +389,9 @@ export namespace MmdModelMetadata {
     }
 
     /**
-     * Mmd model material partial information for serialization
+     * Mmd model material information for serialization
      */
-    export interface MaterialPartialMetadata {
+    export interface MaterialMetadata {
         /**
          * Material name in english
          */
@@ -408,73 +408,6 @@ export namespace MmdModelMetadata {
          * @see PmxObject.Material.Flag
          */
         readonly flag: PmxObject.Material["flag"];
-    }
-
-    /**
-     * Mmd model material information for serialization
-     */
-    export interface MaterialMetadata extends MaterialPartialMetadata {
-        /**
-         * Name of the material
-         */
-        readonly name: PmxObject.Material["name"];
-
-        /**
-         * Diffuse color (RGBA)
-         */
-        readonly diffuse: PmxObject.Material["diffuse"];
-
-        /**
-         * Specular color (RGB)
-         */
-        readonly specular: PmxObject.Material["specular"];
-
-        /**
-         * Shininess
-         */
-        readonly shininess: PmxObject.Material["shininess"];
-
-        /**
-         * Ambient color (RGB)
-         */
-        readonly ambient: PmxObject.Material["ambient"];
-
-        /**
-         * Edge color (RGBA)
-         */
-        readonly edgeColor: PmxObject.Material["edgeColor"];
-
-        /**
-         * Edge size
-         *
-         * Final edge size is calculated by multiplying this value by the vertex edge scale
-         */
-        readonly edgeSize: PmxObject.Material["edgeSize"];
-
-        /**
-         * Texture data or url
-         */
-        readonly textureData: ArrayBuffer | string;
-
-        /**
-         * Sphere texture data or url
-         */
-        readonly sphereTextureData: ArrayBuffer | string;
-
-        /**
-         * Sphere texture blend mode
-         */
-        readonly sphereTextureMode: PmxObject.Material.SphereTextureMode;
-
-        /**
-         * Toon texture data or url
-         *
-         * If type is number, this value is the index of the shared toon texture
-         *
-         * for shared toon texture, this value is -1 to 9 and should be mapped to SharedToonTextures.Data index by adding 1
-         * for non-shared toon texture, null means no toon texture
-         */
-        readonly toonTextureData: Nullable<number | ArrayBuffer | string>;
     }
 
     /**

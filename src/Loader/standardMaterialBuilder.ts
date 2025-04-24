@@ -215,8 +215,6 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
  * Use `StandardMaterial` to create a mmdmesh material
  */
 export class StandardMaterialBuilder extends StandardMaterialBuilderBase<StandardMaterial> {
-    public override readonly preserveSerlizationData = false;
-    
     public constructor() {
         super(StandardMaterial);
     }

@@ -25,8 +25,6 @@ import type { TextureAlphaChecker } from "./textureAlphaChecker";
  * Use `PBRMaterial` to create a mmdmesh material
  */
 export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
-    public readonly preserveSerlizationData = false;
-    
     public constructor() {
         super(PBRMaterial);
     }

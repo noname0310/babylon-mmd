@@ -19,9 +19,7 @@ import { StandardMaterialBuilderBase } from "./standardMaterialBuilder";
  *
  * Use `MmdStandardMaterial` to create a mmdmesh material
  */
-export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdStandardMaterial> {
-    public override readonly preserveSerlizationData = true;
-    
+export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdStandardMaterial> {    
     public constructor() {
         super(MmdStandardMaterial);
     }
