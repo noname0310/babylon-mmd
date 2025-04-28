@@ -401,6 +401,13 @@ export namespace MmdModelMetadata {
          * Material comment
          */
         readonly comment: PmxObject.Material["comment"];
+
+        /**
+         * Flag of the material
+         *
+         * @see PmxObject.Material.Flag
+         */
+        readonly flag: PmxObject.Material["flag"];
     }
 
     /**

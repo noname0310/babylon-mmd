@@ -10,7 +10,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdMaterialBuilder, MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
+import type { MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
 import { MaterialBuilderBase, MmdMaterialRenderMethod } from "./materialBuilderBase";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
@@ -24,7 +24,7 @@ import type { TextureAlphaChecker } from "./textureAlphaChecker";
  *
  * Use `PBRMaterial` to create a mmdmesh material
  */
-export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> implements IMmdMaterialBuilder {
+export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
     public constructor() {
         super(PBRMaterial);
     }

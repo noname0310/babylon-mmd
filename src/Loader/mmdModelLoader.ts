@@ -334,7 +334,8 @@ export abstract class MmdModelLoader<
                 const material = materials[i];
                 materialsMetadata.push({
                     englishName: material.englishName,
-                    comment: material.comment
+                    comment: material.comment,
+                    flag: material.flag
                 });
             }
 
