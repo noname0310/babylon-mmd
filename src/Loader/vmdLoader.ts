@@ -161,9 +161,6 @@ export class VmdLoader {
                 time = performance.now();
             }
 
-            // todo: support physics toggle data
-            // ref: https://x.com/KuroNekoMeguMMD/status/1864306974856499520/
-
             const trackLengths = new Uint32Array(boneTrackIndexMap.size);
             for (let i = 0; i < margedBoneKeyFrameCount; ++i) {
                 const boneKeyFrame = margedBoneKeyFrames[i];
