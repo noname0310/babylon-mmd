@@ -589,6 +589,18 @@ export namespace VmdObject {
         }
     }
 
+    export enum BoneKeyFramePhysicsInfoKind {
+        /**
+         * Physics off
+         */
+        Off = 0,
+
+        /**
+         * Physics on
+         */
+        On = 0x630F
+    }
+
     /**
      * Morph key frame reader
      */

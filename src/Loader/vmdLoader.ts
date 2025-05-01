@@ -211,6 +211,18 @@ export class VmdLoader {
                 boneTrackRotationInterpolations[insertIndex * 4 + 2] = boneKeyFrameInterpolation[3 * 16 + 4];// y1
                 boneTrackRotationInterpolations[insertIndex * 4 + 3] = boneKeyFrameInterpolation[3 * 16 + 12];// y2
 
+                const physicsToggleInfo = (boneKeyFrameInterpolation[2] << 8) | boneKeyFrameInterpolation[3];
+                switch (physicsToggleInfo) {
+                case VmdObject.BoneKeyFramePhysicsInfoKind.On:
+                    boneTrack.physicsToggles[insertIndex] = 1;
+                    break;
+                case VmdObject.BoneKeyFramePhysicsInfoKind.Off:
+                    boneTrack.physicsToggles[insertIndex] = 0;
+                    break;
+                default:
+                    this.warn(`Unknown physics toggle info: ${physicsToggleInfo}`);
+                    break;
+                }
 
                 trackLengths[trackIndex] += 1;
 
