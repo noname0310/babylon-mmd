@@ -272,6 +272,7 @@ export class VmdLoader {
                     boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
                     boneAnimationTrack.rotations.set(boneTrack.rotations);
                     boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
+                    boneAnimationTrack.physicsToggles.set(boneTrack.physicsToggles);
                     filteredBoneTracks.push(boneAnimationTrack);
                 }
             }
@@ -307,6 +308,7 @@ export class VmdLoader {
                 const frameNumbers = boneTrack.frameNumbers;
                 const rotations = boneTrack.rotations;
                 const rotationInterpolations = boneTrack.rotationInterpolations;
+                const physicsToggles = boneTrack.physicsToggles;
 
                 const newTrack = new MmdBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
 
@@ -330,6 +332,8 @@ export class VmdLoader {
                         newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
                         newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
                         newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        newTrack.physicsToggles[insertIndex] = physicsToggles[currentIndex];
 
                         insertIndex += 1;
                         currentFrameNumber = nextFrameNumber;
@@ -368,6 +372,7 @@ export class VmdLoader {
                 const positionInterpolations = boneTrack.positionInterpolations;
                 const rotations = boneTrack.rotations;
                 const rotationInterpolations = boneTrack.rotationInterpolations;
+                const physicsToggles = boneTrack.physicsToggles;
 
                 const newTrack = new MmdMovableBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
 
@@ -412,6 +417,8 @@ export class VmdLoader {
                         newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
                         newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
                         newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        newTrack.physicsToggles[insertIndex] = physicsToggles[currentIndex];
 
                         insertIndex += 1;
                         currentFrameNumber = nextFrameNumber;
