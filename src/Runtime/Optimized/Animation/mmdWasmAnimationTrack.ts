@@ -111,6 +111,21 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
         return this._rotationInterpolations.array;
     }
 
+    private readonly _physicsToggles: IWasmTypedArray<Uint8Array>;
+
+    /**
+     * Physics toggle data
+     *
+     * The physics toggle data must be sorted by frame number in ascending order
+     *
+     * Repr: [..., physicsToggle, ...]
+     *
+     * This array reference should not be copied elsewhere and must be read and written with minimal scope
+     */
+    public get physicsToggles(): Uint8Array {
+        return this._physicsToggles.array;
+    }
+
     /**
      * Create a new `MmdBoneAnimationTrack` instance
      * @param trackName track name for bind to model's bone
@@ -119,6 +134,7 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
      * @param frameNumberByteOffset Byte offset of frame numbers in wasm memory
      * @param rotationByteOffset Byte offset of rotations in wasm memory
      * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in wasm memory
+     * @param physicsToggleByteOffset Byte offset of physics toggles in wasm memory
      */
     public constructor(
         trackName: string,
@@ -126,12 +142,14 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
         wasmInstance: MmdWasmInstance,
         frameNumberByteOffset: number,
         rotationByteOffset: number,
-        rotationInterpolationByteOffset: number
+        rotationInterpolationByteOffset: number,
+        physicsToggleByteOffset: number
     ) {
         super("bone", trackName, frameCount, wasmInstance, frameNumberByteOffset);
 
         this._rotations = wasmInstance.createTypedArray(Float32Array, rotationByteOffset, frameCount * 4);
         this._rotationInterpolations = wasmInstance.createTypedArray(Uint8Array, rotationInterpolationByteOffset, frameCount * 4);
+        this._physicsToggles = wasmInstance.createTypedArray(Uint8Array, physicsToggleByteOffset, frameCount);
     }
 }
 
@@ -201,6 +219,21 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
         return this._rotationInterpolations.array;
     }
 
+    private readonly _physicsToggles: IWasmTypedArray<Uint8Array>;
+
+    /**
+     * Physics toggle data
+     *
+     * The physics toggle data must be sorted by frame number in ascending order
+     *
+     * Repr: [..., physicsToggle, ...]
+     *
+     * This array reference should not be copied elsewhere and must be read and written with minimal scope
+     */
+    public get physicsToggles(): Uint8Array {
+        return this._physicsToggles.array;
+    }
+
     /**
      * Create a new `MmdMovableBoneAnimationTrack` instance
      * @param trackName Track name for bind to model's bone
@@ -211,6 +244,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
      * @param positionInterpolationByteOffset Byte offset of position interpolations in wasm memory
      * @param rotationByteOffset Byte offset of rotations in wasm memory
      * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in wasm memory
+     * @param physicsToggleByteOffset Byte offset of physics toggles in wasm memory
      */
     public constructor(
         trackName: string,
@@ -220,7 +254,8 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
         positionByteOffset: number,
         positionInterpolationByteOffset: number,
         rotationByteOffset: number,
-        rotationInterpolationByteOffset: number
+        rotationInterpolationByteOffset: number,
+        physicsToggleByteOffset: number
     ) {
         super("movableBone", trackName, frameCount, wasmInstance, frameNumberByteOffset);
 
@@ -229,6 +264,8 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
 
         this._rotations = wasmInstance.createTypedArray(Float32Array, rotationByteOffset, frameCount * 4);
         this._rotationInterpolations = wasmInstance.createTypedArray(Uint8Array, rotationInterpolationByteOffset, frameCount * 4);
+
+        this._physicsToggles = wasmInstance.createTypedArray(Uint8Array, physicsToggleByteOffset, frameCount);
     }
 }
 

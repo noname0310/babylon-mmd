@@ -1,5 +1,3 @@
-import type { Nullable } from "@babylonjs/core/types";
-
 import type { IMmdAnimationTrack, IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "./IMmdAnimationTrack";
 
 /**
@@ -113,7 +111,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
      *
      * Repr: [..., physicsToggle, ...]
      */
-    public physicsToggles: Nullable<Uint8Array>;
+    public readonly physicsToggles: Uint8Array;
 
     /**
      * Create a new `MmdBoneAnimationTrack` instance
@@ -139,12 +137,12 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
         if (arrayBuffer === undefined) {
             this.rotations = new Float32Array(frameCount * 4);
             this.rotationInterpolations = new Uint8Array(frameCount * 4);
-            this.physicsToggles = null;
+            this.physicsToggles = new Uint8Array(frameCount);
         } else {
             this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
             if (physicsToggleByteOffset === undefined) {
-                this.physicsToggles = null;
+                this.physicsToggles = new Uint8Array(frameCount);
             } else {
                 this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
             }
@@ -200,7 +198,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
      *
      * Repr: [..., physicsToggle, ...]
      */
-    public physicsToggles: Nullable<Uint8Array>;
+    public readonly physicsToggles: Uint8Array;
 
     /**
      * Create a new `MmdMovableBoneAnimationTrack` instance
@@ -234,7 +232,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
             this.rotations = new Float32Array(frameCount * 4);
             this.rotationInterpolations = new Uint8Array(frameCount * 4);
 
-            this.physicsToggles = null;
+            this.physicsToggles = new Uint8Array(frameCount);
         } else {
             this.positions = new Float32Array(arrayBuffer, positionByteOffset, frameCount * 3);
             this.positionInterpolations = new Uint8Array(arrayBuffer, positionInterpolationByteOffset, frameCount * 12);
@@ -243,7 +241,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
 
             if (physicsToggleByteOffset === undefined) {
-                this.physicsToggles = null;
+                this.physicsToggles = new Uint8Array(frameCount);
             } else {
                 this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
             }

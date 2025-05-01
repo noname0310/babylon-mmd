@@ -71,6 +71,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             const frameNumbersPtr = animationPool.getBoneTrackFrameNumbers(boneTracksPtr, i);
             const rotationsPtr = animationPool.getBoneTrackRotations(boneTracksPtr, i);
             const rotationInterpolationsPtr = animationPool.getBoneTrackRotationInterpolations(boneTracksPtr, i);
+            const physicsTogglesPtr = animationPool.getBoneTrackPhysicsToggles(boneTracksPtr, i);
 
             const newBoneTrack = new MmdWasmBoneAnimationTrack(
                 mmdAnimationBoneTrack.name,
@@ -78,11 +79,13 @@ export class MmdWasmAnimation extends MmdAnimationBase<
                 wasmInstance,
                 frameNumbersPtr,
                 rotationsPtr,
-                rotationInterpolationsPtr
+                rotationInterpolationsPtr,
+                physicsTogglesPtr
             );
             newBoneTrack.frameNumbers.set(mmdAnimationBoneTrack.frameNumbers);
             newBoneTrack.rotations.set(mmdAnimationBoneTrack.rotations);
             newBoneTrack.rotationInterpolations.set(mmdAnimationBoneTrack.rotationInterpolations);
+            newBoneTrack.physicsToggles.set(mmdAnimationBoneTrack.physicsToggles);
             newBoneTracks[i] = newBoneTrack;
         }
 
@@ -104,6 +107,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
             const positionInterpolationsPtr = animationPool.getMovableBoneTrackPositionInterpolations(movableBoneTracksPtr, i);
             const rotationsPtr = animationPool.getMovableBoneTrackRotations(movableBoneTracksPtr, i);
             const rotationInterpolationsPtr = animationPool.getMovableBoneTrackRotationInterpolations(movableBoneTracksPtr, i);
+            const physicsTogglesPtr = animationPool.getMovableBoneTrackPhysicsToggles(movableBoneTracksPtr, i);
 
             const newMovableBoneTrack = new MmdWasmMovableBoneAnimationTrack(
                 mmdAnimationMovableBoneTrack.name,
@@ -113,13 +117,15 @@ export class MmdWasmAnimation extends MmdAnimationBase<
                 positionsPtr,
                 positionInterpolationsPtr,
                 rotationsPtr,
-                rotationInterpolationsPtr
+                rotationInterpolationsPtr,
+                physicsTogglesPtr
             );
             newMovableBoneTrack.frameNumbers.set(mmdAnimationMovableBoneTrack.frameNumbers);
             newMovableBoneTrack.positions.set(mmdAnimationMovableBoneTrack.positions);
             newMovableBoneTrack.positionInterpolations.set(mmdAnimationMovableBoneTrack.positionInterpolations);
             newMovableBoneTrack.rotations.set(mmdAnimationMovableBoneTrack.rotations);
             newMovableBoneTrack.rotationInterpolations.set(mmdAnimationMovableBoneTrack.rotationInterpolations);
+            newMovableBoneTrack.physicsToggles.set(mmdAnimationMovableBoneTrack.physicsToggles);
             newMovableBoneTracks[i] = newMovableBoneTrack;
         }
 

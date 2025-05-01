@@ -78,6 +78,15 @@ impl AnimationPool {
         track.rotation_interpolations_mut().as_mut_ptr() as *mut u8
     }
 
+    #[wasm_bindgen(js_name = "getBoneTrackPhysicsToggles")]
+    pub fn get_bone_track_physics_toggles(&self, tracks: *mut usize, index: usize) -> *mut u8 {
+        let tracks = tracks as *mut MmdBoneAnimationTrack;
+        let track = unsafe {
+            &mut *tracks.add(index)
+        };
+        track.physics_toggles_mut().as_mut_ptr()
+    }
+
     #[wasm_bindgen(js_name = "createMovableBoneTracks")]
     pub fn create_movable_bone_tracks(&mut self, track_lengths: *const u32, track_count: usize) -> *mut usize {
         let mut tracks = Vec::with_capacity(track_count);
@@ -135,6 +144,15 @@ impl AnimationPool {
             &mut *tracks.add(index)
         };
         track.rotation_interpolations_mut().as_mut_ptr() as *mut u8
+    }
+
+    #[wasm_bindgen(js_name = "getMovableBoneTrackPhysicsToggles")]
+    pub fn get_movable_bone_track_physics_toggles(&self, tracks: *mut usize, index: usize) -> *mut u8 {
+        let tracks = tracks as *mut MmdMovableBoneAnimationTrack;
+        let track = unsafe {
+            &mut *tracks.add(index)
+        };
+        track.physics_toggles_mut().as_mut_ptr()
     }
 
     #[wasm_bindgen(js_name = "createMorphTracks")]
