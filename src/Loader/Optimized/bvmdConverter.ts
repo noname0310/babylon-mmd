@@ -9,31 +9,41 @@
  * boneTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
+ *  trackFlag: uint32 - 0x00000004: has physics toggle track 
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
+ *  { // if trackFlag & 0x00000004
+ *   physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
+ *  }
  * }[boneTrackCount]
  *
  * movableBoneTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
+ *  trackFlag: uint32 - 0x00000004: has physics toggle track
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  positions: float32[frameCount * 3] - [..., x, y, z, ...]
  *  positionInterpolations: uint8[frameCount * 12] - [..., x_x1, x_x2, x_y1, x_y2, y_x1, y_x2, y_y1, y_y2, z_x1, z_x2, z_y1, z_y2, ...]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
+ *  { // if trackFlag & 0x00000004
+ *   physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
+ *  }
  * }[movableBoneTrackCount]
  *
  * morphTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
+ *  trackFlag: uint32 - reserved
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  weights: float32[frameCount] - [..., weight, ...]
  * }[morphTrackCount]
  *
+ * propertyTrackFlag: uint32 - reserved
  * propertyFrameCount: uint32
  * ikBoneNameCount: uint32
  * frameNumbers: uint32[frameCount]
@@ -43,6 +53,7 @@
  *  ikState: uint8[frameCount] - [..., ikState, ...]
  * }[ikBoneNameCount]
  *
+ * cameraTrackFlag: uint32 - reserved
  * cameraFrameCount: uint32
  * frameNumbers: uint32[frameCount]
  * positions: float32[frameCount * 3] - [..., x, y, z, ...]
@@ -57,6 +68,7 @@
 
 import type { MmdAnimationBase } from "../Animation/mmdAnimationBase";
 import { MmdDataSerializer } from "./mmdDataSerializer";
+import { BvmdObject } from "./Parser/bvmdObject";
 
 /**
  * BVMD converter
@@ -84,10 +96,14 @@ export class BvmdConverter {
 
                 const trackNameBytes = encoder.encode(boneTrack.name);
                 dataLength += 4 + trackNameBytes.length; // trackName
+                dataLength += 4; // trackFlag
                 dataLength += 4; // frameCount
                 dataLength += 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
                 dataLength += 4 * 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * boneTrack.frameNumbers.length; // rotationInterpolations
+                if (boneTrack.physicsToggles !== null) {
+                    dataLength += 1 * boneTrack.frameNumbers.length; // physicsToggles
+                }
             }
 
             dataLength += 4; // movableBoneTrackCount
@@ -97,12 +113,16 @@ export class BvmdConverter {
 
                 const trackNameBytes = encoder.encode(movableBoneTrack.name);
                 dataLength += 4 + trackNameBytes.length; // trackName
+                dataLength += 4; // trackFlag
                 dataLength += 4; // frameCount
                 dataLength += 4 * movableBoneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
                 dataLength += 4 * 3 * movableBoneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // positions
                 dataLength += 1 * 12 * movableBoneTrack.frameNumbers.length; // positionInterpolations
                 dataLength += 4 * 4 * movableBoneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * movableBoneTrack.frameNumbers.length; // rotationInterpolations
+                if (movableBoneTrack.physicsToggles !== null) {
+                    dataLength += 1 * movableBoneTrack.frameNumbers.length; // physicsToggles
+                }
             }
 
             dataLength += 4; // morphTrackCount
@@ -112,11 +132,13 @@ export class BvmdConverter {
 
                 const trackNameBytes = encoder.encode(morphTrack.name);
                 dataLength += 4 + trackNameBytes.length; // trackName
+                dataLength += 4; // trackFlag
                 dataLength += 4; // frameCount
                 dataLength += 4 * morphTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
                 dataLength += 4 * morphTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // weights
             }
 
+            dataLength += 4; // property trackFlag
             dataLength += 4; // property frameCount
             dataLength += 4 * animation.propertyTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
             dataLength += 1 * animation.propertyTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // visibles
@@ -130,6 +152,7 @@ export class BvmdConverter {
             }
             dataLength += 1 * ikBoneNameCount * animation.propertyTrack.frameNumbers.length; // ikStates
 
+            dataLength += 4; // camera trackFlag
             dataLength += 4; // camera frameCount
             dataLength += 4 * animation.cameraTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
             dataLength += 4 * 3 * animation.cameraTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // positions
@@ -146,7 +169,7 @@ export class BvmdConverter {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BVMD")); // signature
-        serializer.setInt8Array([2, 0, 0]); // version
+        serializer.setInt8Array([2, 1, 0]); // version
 
         const boneTracks = animation.boneTracks;
         serializer.setUint32(boneTracks.length); // boneTrackCount
@@ -154,6 +177,11 @@ export class BvmdConverter {
             const boneTrack = boneTracks[i];
 
             serializer.setString(boneTrack.name); // trackName
+            serializer.setUint32(
+                boneTrack.physicsToggles !== null
+                    ? BvmdObject.BoneTrackFlag.HasPhysicsToggles
+                    : 0
+            ); // trackFlag
             serializer.setUint32(boneTrack.frameNumbers.length); // frameCount
 
             serializer.offset += MmdDataSerializer.Padding(serializer.offset, 4); // padding
@@ -163,6 +191,10 @@ export class BvmdConverter {
             serializer.setFloat32Array(boneTrack.rotations); // rotations
 
             serializer.setUint8Array(boneTrack.rotationInterpolations); // rotationInterpolations
+
+            if (boneTrack.physicsToggles !== null) {
+                serializer.setUint8Array(boneTrack.physicsToggles); // physicsToggles
+            }
         }
 
         const movableBoneTracks = animation.movableBoneTracks;
@@ -171,6 +203,11 @@ export class BvmdConverter {
             const movableBoneTrack = movableBoneTracks[i];
 
             serializer.setString(movableBoneTrack.name); // trackName
+            serializer.setUint32(
+                movableBoneTrack.physicsToggles !== null
+                    ? BvmdObject.BoneTrackFlag.HasPhysicsToggles
+                    : 0
+            ); // trackFlag
             serializer.setUint32(movableBoneTrack.frameNumbers.length); // frameCount
 
             serializer.offset += MmdDataSerializer.Padding(serializer.offset, 4); // padding
@@ -185,6 +222,10 @@ export class BvmdConverter {
             serializer.setFloat32Array(movableBoneTrack.rotations); // rotations
 
             serializer.setUint8Array(movableBoneTrack.rotationInterpolations); // rotationInterpolations
+
+            if (movableBoneTrack.physicsToggles !== null) {
+                serializer.setUint8Array(movableBoneTrack.physicsToggles); // physicsToggles
+            }
         }
 
         const morphTracks = animation.morphTracks;
@@ -193,6 +234,7 @@ export class BvmdConverter {
             const morphTrack = morphTracks[i];
 
             serializer.setString(morphTrack.name); // trackName
+            serializer.setUint32(0); // trackFlag
             serializer.setUint32(morphTrack.frameNumbers.length); // frameCount
 
             serializer.offset += MmdDataSerializer.Padding(serializer.offset, 4); // padding
@@ -202,6 +244,7 @@ export class BvmdConverter {
             serializer.setFloat32Array(morphTrack.weights); // weights
         }
 
+        serializer.setUint32(0); // property trackFlag
         serializer.setUint32(animation.propertyTrack.frameNumbers.length); // propertyFrameCount
         serializer.setUint32(animation.propertyTrack.ikBoneNames.length); // ikBoneNameCount
 
@@ -218,6 +261,7 @@ export class BvmdConverter {
             serializer.setUint8Array(animation.propertyTrack.getIkState(i)); // ikStates
         }
 
+        serializer.setUint32(0); // camera trackFlag
         serializer.setUint32(animation.cameraTrack.frameNumbers.length); // cameraFrameCount
 
         serializer.offset += MmdDataSerializer.Padding(serializer.offset, 4); // padding

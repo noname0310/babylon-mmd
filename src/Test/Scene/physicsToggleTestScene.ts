@@ -65,7 +65,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
         const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
-            buildPhysics: false //{ disableOffsetForConstraintFrame: true }
+            buildPhysics: false // { disableOffsetForConstraintFrame: true }
         });
 
         const vmdLoader = new VmdLoader(scene);
