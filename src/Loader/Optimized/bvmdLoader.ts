@@ -8,7 +8,6 @@ import type { Scene } from "@babylonjs/core/scene";
 import { MmdAnimation } from "../Animation/mmdAnimation";
 import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../Animation/mmdAnimationTrack";
 import { MmdDataDeserializer } from "../Parser/mmdDataDeserializer";
-import { BvmdObject } from "./Parser/bvmdObject";
 
 /**
  * BvmdLoader is a loader that loads MMD animation data in BVMD format
@@ -76,14 +75,11 @@ export class BvmdLoader {
         const boneTracks: MmdBoneAnimationTrack[] = new Array(boneTrackCount);
         for (let i = 0; i < boneTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const tackFlag = this._v210Int <= versionInt
-                ? deserializer.getUint8()
-                : 0;
             const frameCount = deserializer.getUint32();
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
-            const physicsToggleByteOffset = (tackFlag & BvmdObject.BoneTrackFlag.HasPhysicsToggles) !== 0
+            const physicsToggleByteOffset = this._v210Int <= versionInt
                 ? deserializer.getPaddedArrayOffset(1, frameCount)
                 : undefined;
 
@@ -106,16 +102,13 @@ export class BvmdLoader {
         const movableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(movableBoneTrackCount);
         for (let i = 0; i < movableBoneTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const tackFlag = this._v210Int <= versionInt
-                ? deserializer.getUint8()
-                : 0;
             const frameCount = deserializer.getUint32();
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
             const positionByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 3);
             const positionInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 12);
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
-            const physicsToggleByteOffset = (tackFlag & BvmdObject.BoneTrackFlag.HasPhysicsToggles) !== 0
+            const physicsToggleByteOffset = this._v210Int <= versionInt
                 ? deserializer.getPaddedArrayOffset(1, frameCount)
                 : undefined;
 
@@ -141,10 +134,6 @@ export class BvmdLoader {
         const morphTracks: MmdMorphAnimationTrack[] = new Array(morphTrackCount);
         for (let i = 0; i < morphTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const trackFlag = this._v210Int <= versionInt
-                ? deserializer.getUint8()
-                : 0;
-            trackFlag; // reserve for future use
             const frameCount = deserializer.getUint32();
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
             const weightByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
@@ -162,10 +151,6 @@ export class BvmdLoader {
             }
         }
 
-        const propertyTrackFlag = this._v210Int <= versionInt
-            ? deserializer.getUint8()
-            : 0;
-        propertyTrackFlag; // reserve for future use
         const propertyFrameCount = deserializer.getUint32();
         const ikBoneNameCount = deserializer.getUint32();
         const propertyFrameNumberByteOffset = deserializer.getPaddedArrayOffset(4, propertyFrameCount);
@@ -190,10 +175,6 @@ export class BvmdLoader {
             deserializer.swap32Array(propertyTrack.frameNumbers);
         }
 
-        const cameraTrackFlag = this._v210Int <= versionInt
-            ? deserializer.getUint8()
-            : 0;
-        cameraTrackFlag; // reserve for future use
         const cameraFrameCount = deserializer.getUint32();
         const cameraFrameNumberByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount);
         const cameraPositionByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount * 3);
