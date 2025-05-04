@@ -4,6 +4,9 @@
 
 - introduce `StandardMaterialBuilder`/`PBRMaterialBuilder` for build mmd model with `StandardMaterial`/`PBRMaterial` instead of `MmdStandardMaterial`
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
+- support MMD physics toggle specification
+- BVMD format updated to 2.1.0. Files of version 2.0.0 is still compatible
+  - physics toggle data is now stored in BVMD file
 
 ## 0.64.1 (2025-04-16)
 
