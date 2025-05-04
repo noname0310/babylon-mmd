@@ -90,9 +90,7 @@ export class BvmdConverter {
                 dataLength += 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
                 dataLength += 4 * 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * boneTrack.frameNumbers.length; // rotationInterpolations
-                if (boneTrack.physicsToggles !== null) {
-                    dataLength += 1 * boneTrack.frameNumbers.length; // physicsToggles
-                }
+                dataLength += 1 * boneTrack.frameNumbers.length; // physicsToggles
             }
 
             dataLength += 4; // movableBoneTrackCount
@@ -108,9 +106,7 @@ export class BvmdConverter {
                 dataLength += 1 * 12 * movableBoneTrack.frameNumbers.length; // positionInterpolations
                 dataLength += 4 * 4 * movableBoneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * movableBoneTrack.frameNumbers.length; // rotationInterpolations
-                if (movableBoneTrack.physicsToggles !== null) {
-                    dataLength += 1 * movableBoneTrack.frameNumbers.length; // physicsToggles
-                }
+                dataLength += 1 * movableBoneTrack.frameNumbers.length; // physicsToggles
             }
 
             dataLength += 4; // morphTrackCount
