@@ -76,11 +76,11 @@ export class MmdModel implements IMmdModel {
     public readonly ikSolverStates: Uint8Array;
 
     /**
-     * Uint8Array that stores the state of RigidBody 
-     * 
+     * Uint8Array that stores the state of RigidBody
+     *
      * - If bone position is driven by physics, the value is 1
      * - If bone position is driven by only animation, the value is 0
-     * 
+     *
      * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
      */
     public readonly rigidBodyStates: Uint8Array;

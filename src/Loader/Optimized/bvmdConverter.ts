@@ -9,7 +9,7 @@
  * boneTrackCount: uint32
  * {
  *  trackName: uint32, uint8[] - length, string
- *  trackFlag: uint32 - 0x00000004: has physics toggle track 
+ *  trackFlag: uint32 - 0x00000004: has physics toggle track
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]

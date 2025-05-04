@@ -308,9 +308,9 @@ export class MmdPhysics implements IMmdPhysics {
 
     /**
      * Build the physics model of the MMD model
-     * 
+     *
      * bodyToBoneMap is a map of rigid body index to runtime bone index
-     * 
+     *
      * bodyToBoneMap should be initialized to null with the size of the number of rigid bodies
      * @param rootMesh Root mesh of the MMD model
      * @param bones MMD runtime bones

@@ -87,8 +87,8 @@ export interface IMmdRuntimeBone {
     get ikSolverIndex(): number;
 
     /**
-     * Get rigid body index 
-     * 
+     * Get rigid body index
+     *
      * If the bone does not have a rigid body, it will return -1
      */
     get rigidBodyIndex(): number;

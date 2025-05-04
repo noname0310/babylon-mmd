@@ -39,7 +39,7 @@ export class BvmdLoader {
 
         this._scene = scene;
     }
-    
+
     private readonly _V200Int = 2 << 16 | 0 << 8 | 0;
     private readonly _V210Int = 2 << 16 | 1 << 8 | 0;
 

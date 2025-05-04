@@ -95,10 +95,10 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
      * If this bone is an Ik chain, this value is non-null
      */
     public ikChainInfo: Nullable<IkChainInfo>;
-    
+
     /**
-     * Rigid body index 
-     * 
+     * Rigid body index
+     *
      * If the bone does not have a rigid body, it will -1
      */
     public rigidBodyIndex: number;
