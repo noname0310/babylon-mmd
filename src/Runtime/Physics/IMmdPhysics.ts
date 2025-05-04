@@ -23,16 +23,16 @@ export interface IMmdPhysics {
     /**
      * Build the physics model of the MMD model
      * 
-     * rigidBodyIndexMap is a map of runTime bone index to rigid body index
+     * bodyToBoneMap is a map of rigid body index to runtime bone index
      * 
-     * rigidBodyIndexMap should be initialized to -1 with the size of the number of bones
+     * bodyToBoneMap should be initialized to null with the size of the number of rigid bodies
      * @param rootMesh Root mesh of the MMD model
      * @param bones MMD runtime bones
      * @param rigidBodies rigid bodies information
      * @param joints joints information
+     * @param bodyToBoneMap output body index to bone map
      * @param logger Logger
      * @param physicsOptions Optional physics options
-     * @param rigidBodyIndexMap output rigid body index map
      * @returns MMD physics model
      * @throws If the physics model cannot be built
      */
@@ -41,9 +41,9 @@ export interface IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
+        bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
         physicsOptions: Nullable<MmdModelPhysicsCreationOptions>,
-        rigidBodyIndexMap: Int32Array,
     ): IMmdPhysicsModel;
 }
 

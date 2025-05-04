@@ -308,10 +308,15 @@ export class MmdPhysics implements IMmdPhysics {
 
     /**
      * Build the physics model of the MMD model
+     * 
+     * bodyToBoneMap is a map of rigid body index to runtime bone index
+     * 
+     * bodyToBoneMap should be initialized to null with the size of the number of rigid bodies
      * @param rootMesh Root mesh of the MMD model
      * @param bones MMD runtime bones
      * @param rigidBodies rigid bodies information
      * @param joints joints information
+     * @param bodyToBoneMap output body index to bone map
      * @param logger Logger
      * @param physicsOptions Optional physics options
      * @returns MMD physics model
@@ -322,9 +327,10 @@ export class MmdPhysics implements IMmdPhysics {
         bones: readonly IMmdRuntimeBone[],
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
+        bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
         physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
-    ): MmdPhysicsModel {
+    ): IMmdPhysicsModel {
         if (physicsOptions !== null) {
             logger.warn("Havok physics does not support physics options");
         }
@@ -462,6 +468,7 @@ export class MmdPhysics implements IMmdPhysics {
 
             nodes[i] = node;
             bodies[i] = body;
+            if (bone !== undefined) bodyToBoneMap[i] = bone;
         }
 
         const one: DeepImmutable<Vector3> = Vector3.One();

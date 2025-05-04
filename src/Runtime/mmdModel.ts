@@ -71,9 +71,19 @@ export class MmdModel implements IMmdModel {
     /**
      * Uint8Array that stores the state of IK solvers
      *
-     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and if it is 1, IK solver is enabled
      */
     public readonly ikSolverStates: Uint8Array;
+
+    /**
+     * Uint8Array that stores the state of RigidBody 
+     * 
+     * - If bone position is driven by physics, the value is 1
+     * - If bone position is driven by only animation, the value is 0
+     * 
+     * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
+     */
+    public readonly rigidBodyStates: Uint8Array;
 
     /**
      * Runtime bones of this model
@@ -180,16 +190,24 @@ export class MmdModel implements IMmdModel {
         );
 
         if (physicsParams !== null) {
+            const bodyToBoneMap: Nullable<MmdRuntimeBone>[] = new Array(mmdMetadata.rigidBodies.length).fill(null);
             this._physicsModel = physicsParams.physicsImpl.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
                 mmdMetadata.rigidBodies,
                 mmdMetadata.joints,
+                bodyToBoneMap,
                 logger,
                 physicsParams.physicsOptions
             );
+            for (let i = 0; i < bodyToBoneMap.length; ++i) {
+                const bone = bodyToBoneMap[i];
+                if (bone !== null) bone.rigidBodyIndex = i;
+            }
+            this.rigidBodyStates = new Uint8Array(mmdMetadata.rigidBodies.length).fill(1);
         } else {
             this._physicsModel = null;
+            this.rigidBodyStates = new Uint8Array(0);
         }
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();

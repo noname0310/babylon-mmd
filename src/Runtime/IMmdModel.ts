@@ -37,7 +37,10 @@ export interface IMmdModel extends IIkStateContainer {
     /**
      * Uint8Array that stores the state of RigidBody 
      * 
-     * If `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]` is 0, RigidBody of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * - If bone position is driven by physics, the value is 1
+     * - If bone position is driven by only animation, the value is 0
+     * 
+     * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
      */
     readonly rigidBodyStates: Uint8Array;
 
