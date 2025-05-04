@@ -592,11 +592,15 @@ export namespace VmdObject {
     export enum BoneKeyFramePhysicsInfoKind {
         /**
          * Physics off
+         *
+         * Rigid body position is driven by animation
          */
         Off = 0,
 
         /**
          * Physics on
+         *
+         * Rigid body position is driven by physics
          */
         On = 0x630F
     }
