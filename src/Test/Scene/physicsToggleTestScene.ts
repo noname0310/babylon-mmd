@@ -17,7 +17,9 @@ import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
-import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
+import ammo from "@/Runtime/Physics/External/ammo.wasm";
+import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -58,19 +60,25 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
+        const physicsInstance = await ammo();
+        const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+        scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
+
         const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
         const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
-            buildPhysics: false // { disableOffsetForConstraintFrame: true }
+            buildPhysics: true
         });
 
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
-        const animation = await vmdLoader.loadAsync("motion", "res/motion/physics_toggle_test_yyb10th.vmd");
+        const animation = await vmdLoader.loadAsync("motion", [
+            "res/motion/physics_toggle_test_yyb10th.vmd"
+        ]);
         const wasmAnimation = new MmdWasmAnimation(animation, mmdWasmInstance, scene);
         mmdModel.addAnimation(wasmAnimation);
         mmdModel.setAnimation("motion");

@@ -35,6 +35,13 @@ export interface IMmdModel extends IIkStateContainer {
     readonly ikSolverStates: Uint8Array;
 
     /**
+     * Uint8Array that stores the state of RigidBody 
+     * 
+     * If `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]` is 0, RigidBody of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     */
+    readonly rigidBodyStates: Uint8Array;
+
+    /**
      * Runtime bones of this model
      *
      * You can get the final transform matrix of a bone by `MmdModel.runtimeBones[i].getFinalMatrixToRef()`
