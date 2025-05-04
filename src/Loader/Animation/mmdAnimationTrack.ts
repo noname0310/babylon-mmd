@@ -142,7 +142,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
             this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
             if (physicsToggleByteOffset === undefined) { // for BPMX 2.0.0 support, will be removed in the future
-                this.physicsToggles = new Uint8Array(frameCount);
+                this.physicsToggles = new Uint8Array(frameCount).fill(1);
             } else {
                 this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
             }
@@ -241,7 +241,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
 
             if (physicsToggleByteOffset === undefined) { // for BPMX 2.0.0 support, will be removed in the future
-                this.physicsToggles = new Uint8Array(frameCount);
+                this.physicsToggles = new Uint8Array(frameCount).fill(1);
             } else {
                 this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
             }
