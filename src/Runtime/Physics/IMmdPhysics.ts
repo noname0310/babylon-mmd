@@ -43,7 +43,7 @@ export interface IMmdPhysics {
         joints: PmxObject["joints"],
         bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
-        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>,
+        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel;
 }
 
