@@ -40,8 +40,8 @@ export class BvmdLoader {
         this._scene = scene;
     }
 
-    private readonly _V200Int = 2 << 16 | 0 << 8 | 0;
-    private readonly _V210Int = 2 << 16 | 1 << 8 | 0;
+    private readonly _v200Int = 2 << 16 | 0 << 8 | 0;
+    private readonly _v210Int = 2 << 16 | 1 << 8 | 0;
 
     /**
      * Load MMD animation data from BVMD array buffer
@@ -68,7 +68,7 @@ export class BvmdLoader {
             deserializer.getInt8()
         ] as const;
         const versionInt = version[0] << 16 | version[1] << 8 | version[2];
-        if (versionInt < this._V200Int || this._V210Int < versionInt) {
+        if (versionInt < this._v200Int || this._v210Int < versionInt) {
             throw new LoadFileError(`BVMD version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
 
@@ -76,7 +76,7 @@ export class BvmdLoader {
         const boneTracks: MmdBoneAnimationTrack[] = new Array(boneTrackCount);
         for (let i = 0; i < boneTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const tackFlag = this._V210Int <= versionInt
+            const tackFlag = this._v210Int <= versionInt
                 ? deserializer.getUint8()
                 : 0;
             const frameCount = deserializer.getUint32();
@@ -106,7 +106,7 @@ export class BvmdLoader {
         const movableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(movableBoneTrackCount);
         for (let i = 0; i < movableBoneTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const tackFlag = this._V210Int <= versionInt
+            const tackFlag = this._v210Int <= versionInt
                 ? deserializer.getUint8()
                 : 0;
             const frameCount = deserializer.getUint32();
@@ -141,7 +141,7 @@ export class BvmdLoader {
         const morphTracks: MmdMorphAnimationTrack[] = new Array(morphTrackCount);
         for (let i = 0; i < morphTrackCount; ++i) {
             const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
-            const trackFlag = this._V210Int <= versionInt
+            const trackFlag = this._v210Int <= versionInt
                 ? deserializer.getUint8()
                 : 0;
             trackFlag; // reserve for future use
@@ -162,7 +162,7 @@ export class BvmdLoader {
             }
         }
 
-        const propertyTrackFlag = this._V210Int <= versionInt
+        const propertyTrackFlag = this._v210Int <= versionInt
             ? deserializer.getUint8()
             : 0;
         propertyTrackFlag; // reserve for future use
@@ -190,7 +190,7 @@ export class BvmdLoader {
             deserializer.swap32Array(propertyTrack.frameNumbers);
         }
 
-        const cameraTrackFlag = this._V210Int <= versionInt
+        const cameraTrackFlag = this._v210Int <= versionInt
             ? deserializer.getUint8()
             : 0;
         cameraTrackFlag; // reserve for future use
