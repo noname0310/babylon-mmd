@@ -1,4 +1,4 @@
-import type { MmdWasmInstance } from "../mmdWasmInstance";
+import type { IMmdWasmInstance } from "../mmdWasmInstance";
 import type { IWasmTypedArray } from "./IWasmTypedArray";
 import type { TypedArray, TypedArrayConstructor } from "./wasmTypedArray";
 
@@ -77,7 +77,7 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
      * @param length Length of the span
      */
     public constructor(
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         data: WasmBufferedArray<T>,
         byteOffset: number,
         length: number
@@ -105,7 +105,7 @@ export class WasmBufferedArraySpan<T extends TypedArray> {
      * This method should be called once before starting multi-threading when the back buffer is not initialized
      * @param wasmInstance MMD WASM instance
      */
-    public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
+    public updateBackBufferReference(wasmInstance: IMmdWasmInstance): void {
         const frontBufferSpan = this._frontBufferSpan.array;
 
         const byteOffset = frontBufferSpan.byteOffset - this._frontBufferPtr;

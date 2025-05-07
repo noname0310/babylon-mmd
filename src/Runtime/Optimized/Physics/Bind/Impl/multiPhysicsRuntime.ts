@@ -5,7 +5,7 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
 import { MultiPhysicsWorld } from "../multiPhysicsWorld";
 import type { RigidBody } from "../rigidBody";
@@ -22,7 +22,7 @@ import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 /**
  * Options for creating a MultiPhysicsRuntime
  */
-export interface MultiPhysicsRuntimeCreationOptions {
+export interface IMultiPhysicsRuntimeCreationOptions {
     /**
      * Whether to allow dynamic rigid body shadows (default: false)
      *
@@ -38,11 +38,11 @@ export interface MultiPhysicsRuntimeCreationOptions {
 
 class MultiPhysicsRuntimeInner {
     private readonly _lock: WasmSpinlock;
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private _worldReference: Nullable<MultiPhysicsWorld>;
 
-    public constructor(lock: WasmSpinlock, wasmInstance: WeakRef<BulletWasmInstance>, ptr: number, worldReference: MultiPhysicsWorld) {
+    public constructor(lock: WasmSpinlock, wasmInstance: WeakRef<IBulletWasmInstance>, ptr: number, worldReference: MultiPhysicsWorld) {
         this._lock = lock;
         this._wasmInstance = wasmInstance;
         this._ptr = ptr;
@@ -68,11 +68,11 @@ class MultiPhysicsRuntimeInner {
     }
 }
 
-function multiPhysicsRuntimeFinalizer(runtime: MultiPhysicsRuntimeInner): void {
+function MultiPhysicsRuntimeFinalizer(runtime: MultiPhysicsRuntimeInner): void {
     runtime.dispose();
 }
 
-const multiPhysicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsRuntimeInner>>();
+const MultiPhysicsRuntimeRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<MultiPhysicsRuntimeInner>>();
 
 /**
  * MultiPhysicsRuntime handles the multiple physics simulations and provides an interface for managing rigid bodies and constraints
@@ -95,7 +95,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
     /**
      * @internal
      */
-    public readonly wasmInstance: BulletWasmInstance;
+    public readonly wasmInstance: IBulletWasmInstance;
 
     /**
      * Spinlock for the physics runtime to synchronize access to the physics world state
@@ -151,7 +151,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
      * @param wasmInstance The Bullet WASM instance
      * @param options The creation options
      */
-    public constructor(wasmInstance: BulletWasmInstance, options: MultiPhysicsRuntimeCreationOptions = {}) {
+    public constructor(wasmInstance: IBulletWasmInstance, options: IMultiPhysicsRuntimeCreationOptions = {}) {
         const {
             allowDynamicShadow = false,
             preserveBackBuffer = false
@@ -175,10 +175,10 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this._inner = new MultiPhysicsRuntimeInner(this.lock, new WeakRef(wasmInstance), ptr, physicsWorld);
         this._physicsWorld = physicsWorld;
 
-        let registry = multiPhysicsRuntimeRegistryMap.get(wasmInstance);
+        let registry = MultiPhysicsRuntimeRegistryMap.get(wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(multiPhysicsRuntimeFinalizer);
-            multiPhysicsRuntimeRegistryMap.set(wasmInstance, registry);
+            registry = new FinalizationRegistry(MultiPhysicsRuntimeFinalizer);
+            MultiPhysicsRuntimeRegistryMap.set(wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -215,7 +215,7 @@ export class MultiPhysicsRuntime implements IPhysicsRuntime {
         this.onSyncObservable.clear();
         this.onTickObservable.clear();
 
-        const registry = multiPhysicsRuntimeRegistryMap.get(this.wasmInstance);
+        const registry = MultiPhysicsRuntimeRegistryMap.get(this.wasmInstance);
         registry?.unregister(this);
     }
 

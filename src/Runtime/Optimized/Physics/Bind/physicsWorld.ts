@@ -1,7 +1,7 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable } from "@babylonjs/core/types";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
@@ -127,11 +127,11 @@ class PhysicsWorldInner {
     }
 }
 
-function physicsWorldFinalizer(inner: PhysicsWorldInner): void {
+function PhysicsWorldFinalizer(inner: PhysicsWorldInner): void {
     inner.dispose();
 }
 
-const physicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsWorldInner>>();
+const PhysicsWorldRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<PhysicsWorldInner>>();
 
 /**
  * PhysicsWorld handles the simulation of physics in the Bullet engine
@@ -154,10 +154,10 @@ export class PhysicsWorld {
 
         this._inner = new PhysicsWorldInner(new WeakRef(runtime), ptr);
 
-        let registry = physicsWorldRegistryMap.get(runtime.wasmInstance);
+        let registry = PhysicsWorldRegistryMap.get(runtime.wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(physicsWorldFinalizer);
-            physicsWorldRegistryMap.set(runtime.wasmInstance, registry);
+            registry = new FinalizationRegistry(PhysicsWorldFinalizer);
+            PhysicsWorldRegistryMap.set(runtime.wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -173,7 +173,7 @@ export class PhysicsWorld {
 
         this._inner.dispose();
 
-        const registry = physicsWorldRegistryMap.get(this._runtime.wasmInstance);
+        const registry = PhysicsWorldRegistryMap.get(this._runtime.wasmInstance);
         registry?.unregister(this);
     }
 

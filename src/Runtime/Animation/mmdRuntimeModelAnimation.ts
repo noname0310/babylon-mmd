@@ -11,8 +11,8 @@ import type { IIkStateContainer } from "../IIkStateContainer";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
-import { bezierInterpolate } from "./bezierInterpolate";
-import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
+import { BezierInterpolate } from "./bezierInterpolate";
+import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
@@ -162,7 +162,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = bezierInterpolate(
+                    const weight = BezierInterpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -256,21 +256,21 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         positions[upperBoundIndex * 3 + 2]
                     );
 
-                    const xWeight = bezierInterpolate(
+                    const xWeight = BezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12] / 127, // x_x1
                         positionInterpolations[upperBoundIndex * 12 + 1] / 127, // x_x2
                         positionInterpolations[upperBoundIndex * 12 + 2] / 127, // x_y1
                         positionInterpolations[upperBoundIndex * 12 + 3] / 127, // x_y2
                         gradient
                     );
-                    const yWeight = bezierInterpolate(
+                    const yWeight = BezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12 + 4] / 127, // y_x1
                         positionInterpolations[upperBoundIndex * 12 + 5] / 127, // y_x2
                         positionInterpolations[upperBoundIndex * 12 + 6] / 127, // y_y1
                         positionInterpolations[upperBoundIndex * 12 + 7] / 127, // y_y2
                         gradient
                     );
-                    const zWeight = bezierInterpolate(
+                    const zWeight = BezierInterpolate(
                         positionInterpolations[upperBoundIndex * 12 + 8] / 127, // z_x1
                         positionInterpolations[upperBoundIndex * 12 + 9] / 127, // z_x2
                         positionInterpolations[upperBoundIndex * 12 + 10] / 127, // z_y1
@@ -300,7 +300,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                         rotations[upperBoundIndex * 4 + 3]
                     );
 
-                    const weight = bezierInterpolate(
+                    const weight = BezierInterpolate(
                         rotationInterpolations[upperBoundIndex * 4] / 127, // x1
                         rotationInterpolations[upperBoundIndex * 4 + 1] / 127, // x2
                         rotationInterpolations[upperBoundIndex * 4 + 2] / 127, // y1
@@ -403,7 +403,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             logger
         );
         if (updateMorphTarget) {
-            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+            SetMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
         }
         this._materialRecompileInduceInfo = null;
     }
@@ -523,7 +523,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
-    ) => void = induceMmdStandardMaterialRecompile as (
+    ) => void = InduceMmdStandardMaterialRecompile as (
         materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
@@ -532,6 +532,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
 }
 
 declare module "../../Loader/Animation/mmdAnimationBase" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MmdAnimationBase extends IMmdBindableModelAnimation<MmdRuntimeModelAnimation> { }
 }
 

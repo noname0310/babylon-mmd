@@ -5,8 +5,8 @@ import "@babylonjs/core/Shaders/ShadersInclude/logDepthFragment";
 
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "mmdOutlinePixelShader";
-const shader = /* glsl */`
+const Name = "mmdOutlinePixelShader";
+const Shader = /* glsl */`
 #ifdef LOGARITHMICDEPTH
 #extension GL_EXT_frag_depth : enable
 #endif
@@ -39,6 +39,6 @@ void main(void) {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[name] = shader;
+ShaderStore.ShadersStore[Name] = Shader;
 /** @internal */
-export const mmdOutlinePixelShader = { name, shader };
+export const MmdOutlinePixelShader = { name: Name, shader: Shader };

@@ -61,6 +61,7 @@ export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdS
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async loadSphereTexture(
         uniqueId: number,
         material: MmdStandardMaterial,
@@ -132,6 +133,7 @@ export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdS
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async loadToonTexture(
         uniqueId: number,
         material: MmdStandardMaterial,

@@ -6,7 +6,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
-import type { RuntimeMorph } from "../mmdMorphControllerBase";
+import type { IRuntimeMorph } from "../mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
 
@@ -127,9 +127,9 @@ export class MmdWasmMorphController extends MmdMorphControllerBase {
         }
     }
 
-    protected override _resetBoneMorph(_morph: RuntimeMorph): void { }
+    protected override _resetBoneMorph(_morph: IRuntimeMorph): void { }
 
-    protected override _applyBoneMorph(_morph: RuntimeMorph, _weight: number): void { }
+    protected override _applyBoneMorph(_morph: IRuntimeMorph, _weight: number): void { }
 
     /**
      * @internal

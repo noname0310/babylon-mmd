@@ -1,6 +1,6 @@
 import type { IWasmSpinLock } from "@/Runtime/Optimized/Misc/IWasmSpinLock";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 import type { RigidBodyBundle } from "../rigidBodyBundle";
 import { ImmediateRigidBodyBundleImpl } from "./Immediate/immediateRigidBodyBundleImpl";
 import { ImmediateRigidBodyImpl } from "./Immediate/immediateRigidBodyImpl";
@@ -18,7 +18,7 @@ export class NullPhysicsRuntime implements IPhysicsRuntime {
     /**
      * @internal
      */
-    public readonly wasmInstance: BulletWasmInstance;
+    public readonly wasmInstance: IBulletWasmInstance;
 
     /**
      * Spinlock for the physics runtime to synchronize access to the physics world state
@@ -30,7 +30,7 @@ export class NullPhysicsRuntime implements IPhysicsRuntime {
      * Creates a new physics runtime
      * @param wasmInstance The Bullet WASM instance
      */
-    public constructor(wasmInstance: BulletWasmInstance) {
+    public constructor(wasmInstance: IBulletWasmInstance) {
         this.wasmInstance = wasmInstance;
         this.lock = new NullSpinlock();
     }

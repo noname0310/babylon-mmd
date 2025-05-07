@@ -33,29 +33,29 @@ import { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
-import { createCameraSwitch } from "../Util/createCameraSwitch";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { AttachToBone } from "../Util/attachToBone";
+import { CreateCameraSwitch } from "../Util/createCameraSwitch";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
-        const camera = createDefaultArcRotateCamera(scene);
-        createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { hemisphericLight, directionalLight, shadowGenerator } = createLightComponents(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
+        CreateCameraSwitch(scene, canvas, mmdCamera, camera);
+        const { hemisphericLight, directionalLight, shadowGenerator } = CreateLightComponents(scene);
         hemisphericLight.intensity = 0.3;
         directionalLight.intensity = 0.7;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene);
         mmdRuntime.loggingEnabled = true;
@@ -78,7 +78,7 @@ export class SceneBuilder implements ISceneBuilder {
         const [
             mmdAnimation,
             modelLoadResult
-        ] = await parallelLoadAsync(scene, [
+        ] = await ParallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
@@ -224,13 +224,13 @@ export class SceneBuilder implements ISceneBuilder {
         const translationMatrix = modelMesh.getWorldMatrix().clone();
         translationMatrix.removeRotationAndScaling();
 
-        attachToBone(scene, mmdModel, {
+        AttachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target,
             cameraTargetYpositionOffset: -3,
             worldMatrix: translationMatrix
         });
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",

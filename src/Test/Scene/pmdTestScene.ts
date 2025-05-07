@@ -32,17 +32,17 @@ import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
-import { createCameraSwitch } from "../Util/createCameraSwitch";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { AttachToBone } from "../Util/attachToBone";
+import { CreateCameraSwitch } from "../Util/createCameraSwitch";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
@@ -51,11 +51,11 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
         mmdCamera.parent = mmdRoot;
-        const camera = createDefaultArcRotateCamera(scene);
-        createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
+        CreateCameraSwitch(scene, canvas, mmdCamera, camera);
+        const { directionalLight, shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const mmdPhysics = new MmdPhysics(scene);
         mmdPhysics.angularLimitClampThreshold = 10 * Math.PI / 180;
@@ -83,7 +83,7 @@ export class SceneBuilder implements ISceneBuilder {
         const [
             mmdAnimation,
             modelMesh
-        ] = await parallelLoadAsync(scene, [
+        ] = await ParallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const bvmdLoader = new BvmdLoader(scene);
                 bvmdLoader.loggingEnabled = true;
@@ -133,7 +133,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(mmdAnimation);
         mmdModel.setAnimation("motion");
 
-        attachToBone(scene, mmdModel, {
+        AttachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
@@ -143,7 +143,7 @@ export class SceneBuilder implements ISceneBuilder {
         });
         viewer.isEnabled = false;
 
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 
         {
             const physicsViewer = new PhysicsViewer(scene);

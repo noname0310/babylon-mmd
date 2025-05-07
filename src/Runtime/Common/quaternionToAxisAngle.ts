@@ -8,7 +8,7 @@ import type { DeepImmutable } from "@babylonjs/core/types";
  * @param tempQuaternion temporary quaternion
  * @returns angle
  */
-export function quaternionToAxisAngle(q: DeepImmutable<Quaternion>, outAxis: Vector3): number {
+export function QuaternionToAxisAngle(q: DeepImmutable<Quaternion>, outAxis: Vector3): number {
     outAxis.set(q.x, q.y, q.z);
     const length = outAxis.length();
     if (length >= 1.0e-8) {

@@ -17,19 +17,19 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdBufferKind } from "./mmdBufferKind";
-import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoaderOptions, MmdModelLoadState } from "./mmdModelLoader";
+import type { IBuildMaterialResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions, IMmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
-import type { Progress, ProgressTask } from "./progress";
+import type { IProgressTask, Progress } from "./progress";
 import { SdefMesh } from "./sdefMesh";
 
 /**
  * Options for loading PMX / PMD model
  */
-export interface PmLoaderOptions extends MmdModelLoaderOptions {
+export interface IPmLoaderOptions extends IMmdModelLoaderOptions {
     /**
      * Reference files for load PMX / PMD from files (textures)
      *
@@ -42,11 +42,11 @@ export interface PmLoaderOptions extends MmdModelLoaderOptions {
     readonly referenceFiles: readonly File[];
 }
 
-interface PmLoadState extends MmdModelLoadState {
+interface IPmLoadState extends IMmdModelLoadState {
     readonly referenceFiles: readonly File[];
 }
 
-interface PmBuildGeometryResult extends MmdModelBuildGeometryResult {
+interface IPmBuildGeometryResult extends IMmdModelBuildGeometryResult {
     readonly indices: Uint16Array | Uint32Array;
     readonly indexToSubmehIndexMaps: {
         map: Uint8Array | Uint16Array | Int32Array;
@@ -58,7 +58,7 @@ interface PmBuildGeometryResult extends MmdModelBuildGeometryResult {
  * @internal
  * Base class of pmx / pmd loader
  */
-export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, PmBuildGeometryResult> implements PmLoaderOptions, ISceneLoaderPluginAsync, ILogger {
+export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, IPmBuildGeometryResult> implements IPmLoaderOptions, ISceneLoaderPluginAsync, ILogger {
     /**
      * Reference files for load PMX / PMD from files (textures)
      *
@@ -73,7 +73,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     /**
      * Create a new PmLoader
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<PmLoaderOptions> = {}, loaderOptions?: PmLoaderOptions) {
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IPmLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions) {
         super(name, extensions, options, loaderOptions);
 
         this.referenceFiles = options.referenceFiles ?? loaderOptions?.referenceFiles ?? [];
@@ -83,7 +83,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         scene: Scene,
         fileOrUrl: string | File,
         _rootUrl: string,
-        onSuccess: (data: PmLoadState, responseURL?: string | undefined) => void,
+        onSuccess: (data: IPmLoadState, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
         onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
@@ -99,7 +99,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         const request = scene._loadFile(
             fileOrUrl,
             (data, responseURL) => {
-                const loadState: PmLoadState = {
+                const loadState: IPmLoadState = {
                     arrayBuffer: data as ArrayBuffer,
                     pmFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
@@ -120,7 +120,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         return request;
     }
 
-    protected override _getProgressTaskCosts(state: PmLoadState, modelObject: PmxObject): ProgressTask[] {
+    protected override _getProgressTaskCosts(state: IPmLoadState, modelObject: PmxObject): IProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
 
         tasks.push({ name: "Build Geometry", cost: modelObject.indices.length });
@@ -151,17 +151,17 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     }
 
     protected override async _buildGeometryAsync(
-        state: PmLoadState,
+        state: IPmLoadState,
         modelObject: PmxObject,
         rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
-    ): Promise<PmBuildGeometryResult> {
+    ): Promise<IPmBuildGeometryResult> {
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
         let indices: Uint16Array | Uint32Array;
-        const indexToSubmehIndexMaps: PmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
+        const indexToSubmehIndexMaps: IPmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
         {
             if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.indices.length);
@@ -474,7 +474,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     }
 
     protected override async _buildMaterialAsync(
-        state: PmLoadState,
+        state: IPmLoadState,
         modelObject: PmxObject,
         rootMesh: Mesh,
         meshes: Mesh[],
@@ -483,7 +483,7 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         progress: Progress
-    ): Promise<BuildMaterialResult> {
+    ): Promise<IBuildMaterialResult> {
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
         const texturesInfo: TextureInfo[] = new Array(modelObject.textures.length);
@@ -546,9 +546,9 @@ export abstract class PmLoader extends MmdModelLoader<PmLoadState, PmxObject, Pm
     }
 
     protected override async _buildMorphAsync(
-        state: PmLoadState,
+        state: IPmLoadState,
         modelObject: PmxObject,
-        buildGeometryResult: PmBuildGeometryResult,
+        buildGeometryResult: IPmBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],

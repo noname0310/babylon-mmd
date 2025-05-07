@@ -3,13 +3,13 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 
 export interface IRigidBodyImpl {
     readonly shouldSync: boolean;
     readonly needToCommit?: boolean;
     commitToWasm?(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         motionStatePtr: IWasmTypedArray<Float32Array>,
         temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
@@ -27,20 +27,20 @@ export interface IRigidBodyImpl {
         offset: number
     ): void;
     setDamping(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         linearDamping: number,
         angularDamping: number
     ): void;
-    getLinearDamping(wasmInstance: BulletWasmInstance, bodyPtr: number): number;
-    getAngularDamping(wasmInstance: BulletWasmInstance, bodyPtr: number): number;
+    getLinearDamping(wasmInstance: IBulletWasmInstance, bodyPtr: number): number;
+    getAngularDamping(wasmInstance: IBulletWasmInstance, bodyPtr: number): number;
     setMassProps(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         mass: number,
         localInertia: DeepImmutable<Vector3>
     ): void;
-    getMass(wasmInstance: BulletWasmInstance, bodyPtr: number): number;
-    getLocalInertia(wasmInstance: BulletWasmInstance, bodyPtr: number): Vector3;
-    translate(wasmInstance: BulletWasmInstance, bodyPtr: number, translation: DeepImmutable<Vector3>): void;
+    getMass(wasmInstance: IBulletWasmInstance, bodyPtr: number): number;
+    getLocalInertia(wasmInstance: IBulletWasmInstance, bodyPtr: number): Vector3;
+    translate(wasmInstance: IBulletWasmInstance, bodyPtr: number, translation: DeepImmutable<Vector3>): void;
 }

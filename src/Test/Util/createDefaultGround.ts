@@ -8,7 +8,7 @@ export interface ICreateDefaultGroundOptions {
     useLogarithmicDepth?: boolean;
 }
 
-export function createDefaultGround(scene: Scene, options: ICreateDefaultGroundOptions = {}): Mesh {
+export function CreateDefaultGround(scene: Scene, options: ICreateDefaultGroundOptions = {}): Mesh {
     const useLogarithmicDepth = options.useLogarithmicDepth ?? false;
 
     const ground = CreateGround("ground1", { width: 120, height: 120, subdivisions: 2, updatable: false }, scene);

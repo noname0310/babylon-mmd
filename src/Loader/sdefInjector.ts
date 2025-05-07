@@ -5,10 +5,10 @@ import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdBufferKind } from "./mmdBufferKind";
-import { sdefDeclaration } from "./Shaders/sdefDeclaration";
-import { sdefVertex } from "./Shaders/sdefVertex";
-import { sdefDeclaration as sdefDeclarationWgsl } from "./ShadersWGSL/sdefDeclaration";
-import { sdefVertex as sdefVertexWgsl } from "./ShadersWGSL/sdefVertex";
+import { SdefDeclaration } from "./Shaders/sdefDeclaration";
+import { SdefVertex } from "./Shaders/sdefVertex";
+import { SdefDeclaration as sdefDeclarationWgsl } from "./ShadersWGSL/sdefDeclaration";
+import { SdefVertex as sdefVertexWgsl } from "./ShadersWGSL/sdefVertex";
 
 /**
  * Sdef injector
@@ -102,14 +102,14 @@ export class SdefInjector {
 
             const vertexDefInjectionPoint = "#define CUSTOM_VERTEX_DEFINITIONS";
             if (code.includes(vertexDefInjectionPoint)) {
-                code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${isWgsl ? sdefDeclarationWgsl : sdefDeclaration}`);
+                code = code.replace(vertexDefInjectionPoint, `${vertexDefInjectionPoint}\n${isWgsl ? sdefDeclarationWgsl : SdefDeclaration}`);
             } else {
                 const fallbackVertexDefInjectionPoint = "void main() {";
-                code = code.replace(fallbackVertexDefInjectionPoint, `${isWgsl ? sdefDeclarationWgsl : sdefDeclaration}\nvoid main() {`);
+                code = code.replace(fallbackVertexDefInjectionPoint, `${isWgsl ? sdefDeclarationWgsl : SdefDeclaration}\nvoid main() {`);
             }
 
             const sdefVertexInjectionPoint = new RegExp("finalWorld=finalWorld\\*influence;", "g");
-            code = code.replace(sdefVertexInjectionPoint, `${isWgsl ? sdefVertexWgsl : sdefVertex}\nfinalWorld=finalWorld*influence;`);
+            code = code.replace(sdefVertexInjectionPoint, `${isWgsl ? sdefVertexWgsl : SdefVertex}\nfinalWorld=finalWorld*influence;`);
         }
 
         return code;

@@ -21,13 +21,13 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
-import type { BuildMaterialResult, MmdModelBuildGeometryResult, MmdModelLoaderOptions } from "../mmdModelLoader";
-import { MmdModelLoader, type MmdModelLoadState } from "../mmdModelLoader";
+import type { IBuildMaterialResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions } from "../mmdModelLoader";
+import { type IMmdModelLoadState, MmdModelLoader } from "../mmdModelLoader";
 import type { MmdModelMetadata } from "../mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "../objectUniqueIdProvider";
 import type { ILogger } from "../Parser/ILogger";
 import { PmxObject } from "../Parser/pmxObject";
-import type { Progress, ProgressTask } from "../progress";
+import type { IProgressTask, Progress } from "../progress";
 import { SdefMesh } from "../sdefMesh";
 import { BpmxLoaderMetadata } from "./bpmxLoader.metadata";
 import { BpmxObject } from "./Parser/bpmxObject";
@@ -36,22 +36,22 @@ import { BpmxReader } from "./Parser/bpmxReader";
 /**
  * Options for loading BPMX model
  */
-export interface BpmxLoaderOptions extends MmdModelLoaderOptions { }
+export interface IBpmxLoaderOptions extends IMmdModelLoaderOptions { }
 
-interface BpmxLoadState extends MmdModelLoadState { }
+interface IBpmxLoadState extends IMmdModelLoadState { }
 
-interface BpmxBuildGeometryResult extends MmdModelBuildGeometryResult { }
+interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
 
 /**
  * BpmxLoader is a loader that loads models in BPMX format
  *
  * BPMX is a single binary file format that contains all the data of a model
  */
-export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBuildGeometryResult> implements BpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
+export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmxBuildGeometryResult> implements IBpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new BpmxLoader
      */
-    public constructor(options?: Partial<BpmxLoaderOptions>, loaderOptions?: BpmxLoaderOptions) {
+    public constructor(options?: Partial<IBpmxLoaderOptions>, loaderOptions?: IBpmxLoaderOptions) {
         super(
             BpmxLoaderMetadata.name,
             BpmxLoaderMetadata.extensions,
@@ -64,7 +64,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         scene: Scene,
         fileOrUrl: string | File,
         _rootUrl: string,
-        onSuccess: (data: BpmxLoadState, responseURL?: string | undefined) => void,
+        onSuccess: (data: IBpmxLoadState, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
         onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
@@ -79,7 +79,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         const request = scene._loadFile(
             fileOrUrl,
             (data, responseURL) => {
-                const loadState: BpmxLoadState = {
+                const loadState: IBpmxLoadState = {
                     arrayBuffer: data as ArrayBuffer,
                     pmFileId: fileOrUrl instanceof File ? ObjectUniqueIdProvider.GetId(fileOrUrl).toString() : fileOrUrl,
                     materialBuilder,
@@ -110,7 +110,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
             });
     }
 
-    protected override _getProgressTaskCosts(state: BpmxLoadState, modelObject: BpmxObject): ProgressTask[] {
+    protected override _getProgressTaskCosts(state: IBpmxLoadState, modelObject: BpmxObject): IProgressTask[] {
         const tasks = super._getProgressTaskCosts(state, modelObject);
 
         let geometriesPositionCount = 0;
@@ -144,13 +144,13 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     }
 
     protected override async _buildGeometryAsync(
-        state: BpmxLoadState,
+        state: IBpmxLoadState,
         modelObject: BpmxObject,
         rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
-    ): Promise<BpmxBuildGeometryResult> {
+    ): Promise<IBpmxBuildGeometryResult> {
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
 
@@ -283,7 +283,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     }
 
     protected override async _buildMaterialAsync(
-        state: BpmxLoadState,
+        state: IBpmxLoadState,
         modelObject: BpmxObject,
         rootMesh: Mesh,
         meshes: Mesh[],
@@ -292,7 +292,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         progress: Progress
-    ): Promise<BuildMaterialResult> {
+    ): Promise<IBuildMaterialResult> {
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
         const imagePathTable: string[] = new Array(modelObject.images.length);
@@ -415,7 +415,7 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     }
 
     protected override _buildSkeletonAsync(
-        state: BpmxLoadState,
+        state: IBpmxLoadState,
         modelObject: BpmxObject,
         meshes: Mesh[],
         scene: Scene,
@@ -431,9 +431,9 @@ export class BpmxLoader extends MmdModelLoader<BpmxLoadState, BpmxObject, BpmxBu
     }
 
     protected override async _buildMorphAsync(
-        state: BpmxLoadState,
+        state: IBpmxLoadState,
         modelObject: BpmxObject,
-        buildGeometryResult: BpmxBuildGeometryResult,
+        buildGeometryResult: IBpmxBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         morphsMetadata: MmdModelMetadata.Morph[],

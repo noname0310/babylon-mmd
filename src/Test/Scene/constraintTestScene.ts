@@ -16,31 +16,31 @@ import { Inspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         // materialBuilder.alphaEvaluationResolution = 2048;
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
-        const camera = createDefaultArcRotateCamera(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
         camera.target.set(-0.817, 15.373, -0.859);
         camera.alpha = -0.0552;
         camera.beta = 1.3703;
         camera.radius = 11.7531;
-        const { shadowGenerator } = createLightComponents(scene);
-        createDefaultGround(scene);
+        const { shadowGenerator } = CreateLightComponents(scene);
+        CreateDefaultGround(scene);
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.forceDisableAlphaEvaluation = false;
@@ -91,7 +91,7 @@ export class SceneBuilder implements ISceneBuilder {
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
         scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
 
-        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
+        const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
         const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);

@@ -30,8 +30,8 @@ import type { MmdMesh } from "@/Runtime/mmdMesh";
 // import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
-import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import type { IMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
 import { PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physicsShape";
@@ -46,17 +46,17 @@ import { MmdWasmPhysicsRuntimeImpl } from "@/Runtime/Optimized/Physics/mmdWasmPh
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
-import { createCameraSwitch } from "../Util/createCameraSwitch";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { AttachToBone } from "../Util/attachToBone";
+import { CreateCameraSwitch } from "../Util/createCameraSwitch";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 import { MmdCameraAutoFocus } from "../Util/mmdCameraAutoFocus";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 
@@ -66,11 +66,11 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
-        const camera = createDefaultArcRotateCamera(scene);
-        createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
+        CreateCameraSwitch(scene, canvas, mmdCamera, camera);
+        const { directionalLight, shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
@@ -82,11 +82,11 @@ export class SceneBuilder implements ISceneBuilder {
         const [
             [mmdRuntime, mmdAnimation, mmdWasmAnimation],
             modelMesh
-        ] = await parallelLoadAsync(scene, [
+        ] = await ParallelLoadAsync(scene, [
             ["runtime & motion", async(updateProgress): Promise<[MmdWasmRuntime, MmdAnimation, MmdWasmAnimation]> => {
-                const [mmdWasmInstance, mmdAnimation] = await parallelLoadAsync(scene, [
-                    ["runtime", async(): Promise<MmdWasmInstance> => {
-                        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD(), 2);
+                const [mmdWasmInstance, mmdAnimation] = await ParallelLoadAsync(scene, [
+                    ["runtime", async(): Promise<IMmdWasmInstance> => {
+                        const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD(), 2);
                         return mmdWasmInstance;
                     }],
                     ["motion", (): Promise<MmdAnimation> => {
@@ -185,11 +185,11 @@ export class SceneBuilder implements ISceneBuilder {
             physicsRuntime.addRigidBodyToGlobal(groundBody);
         }
 
-        attachToBone(scene, mmdModel, {
+        AttachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 
         const ssr = new SSRRenderingPipeline(
             "ssr",

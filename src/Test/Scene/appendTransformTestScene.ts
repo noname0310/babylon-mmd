@@ -40,15 +40,15 @@ import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createCameraSwitch } from "../Util/createCameraSwitch";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { CreateCameraSwitch } from "../Util/createCameraSwitch";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 
@@ -58,9 +58,9 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
         mmdCamera.maxZ = 5000;
         mmdCamera.parent = mmdRoot;
-        const camera = createDefaultArcRotateCamera(scene);
-        createCameraSwitch(scene, canvas, mmdCamera, camera);
-        const { shadowGenerator } = createLightComponents(scene, {
+        const camera = CreateDefaultArcRotateCamera(scene);
+        CreateCameraSwitch(scene, canvas, mmdCamera, camera);
+        const { shadowGenerator } = CreateLightComponents(scene, {
             shadowMaxZOffset: 25,
             shadowMinZOffset: -20,
             orthoTopOffset: 20,
@@ -70,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
         });
         shadowGenerator.transparencyShadow = true;
         shadowGenerator.enableSoftTransparentShadow = true;
-        createDefaultGround(scene, { useLogarithmicDepth: true });
+        CreateDefaultGround(scene, { useLogarithmicDepth: true });
 
         const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
@@ -96,7 +96,7 @@ export class SceneBuilder implements ISceneBuilder {
         const [
             mmdAnimations,
             modelMesh
-        ] = await parallelLoadAsync(scene, [
+        ] = await ParallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation[]> => {
                 const vmdLoader = new VmdLoader(scene);
                 vmdLoader.loggingEnabled = true;
@@ -265,7 +265,7 @@ export class SceneBuilder implements ISceneBuilder {
         }
         mmdRuntime.playAnimation();
 
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene, { clearCachedVertexData: true, freezeMaterials: false }));
+        scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene, { clearCachedVertexData: true, freezeMaterials: false }));
 
         // const viewer = new SkeletonViewer(modelMesh.metadata.skeleton, modelMesh, scene, false, 3, {
         //     displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS

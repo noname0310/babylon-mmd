@@ -1,6 +1,6 @@
 import type { IWasmSpinLock } from "@/Runtime/Optimized/Misc/IWasmSpinLock";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 import type { RigidBodyBundle } from "../rigidBodyBundle";
 import type { IRigidBodyBundleImpl } from "./IRigidBodyBundleImpl";
 import type { IRigidBodyImpl } from "./IRigidBodyImpl";
@@ -12,7 +12,7 @@ export interface IPhysicsRuntime {
     /**
      * The Bullet WASM instance
      */
-    readonly wasmInstance: BulletWasmInstance;
+    readonly wasmInstance: IBulletWasmInstance;
 
     /**
      * Spinlock for the runtime to synchronize access to the state

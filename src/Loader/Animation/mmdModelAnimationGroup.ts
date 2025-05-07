@@ -7,11 +7,11 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
-import { bezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
+import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
-import { computeHermiteTangent } from "./Common/computeHermiteTangent";
+import { ComputeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
 import type { IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "./IMmdAnimationTrack";
 import type { MmdAnimationBase } from "./mmdAnimationBase";
@@ -439,16 +439,16 @@ export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroup
                 value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? new Vector3(
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 1] / 127, 1 - positionInterpolations[i * 12 + 3] / 127, inFrameDelta, positions[i * 3] - positions[(i - 1) * 3]),
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 5] / 127, 1 - positionInterpolations[i * 12 + 7] / 127, inFrameDelta, positions[i * 3 + 1] - positions[(i - 1) * 3 + 1]),
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 9] / 127, 1 - positionInterpolations[i * 12 + 11] / 127, inFrameDelta, positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 1] / 127, 1 - positionInterpolations[i * 12 + 3] / 127, inFrameDelta, positions[i * 3] - positions[(i - 1) * 3]),
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 5] / 127, 1 - positionInterpolations[i * 12 + 7] / 127, inFrameDelta, positions[i * 3 + 1] - positions[(i - 1) * 3 + 1]),
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 9] / 127, 1 - positionInterpolations[i * 12 + 11] / 127, inFrameDelta, positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Vector3(
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127, outFrameDelta, positions[(i + 1) * 3] - positions[i * 3]),
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127, outFrameDelta, positions[(i + 1) * 3 + 1] - positions[i * 3 + 1]),
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127, outFrameDelta, positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127, outFrameDelta, positions[(i + 1) * 3] - positions[i * 3]),
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127, outFrameDelta, positions[(i + 1) * 3 + 1] - positions[i * 3 + 1]),
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127, outFrameDelta, positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])
                     )
                     : undefined,
                 interpolation: AnimationKeyInterpolation.NONE,
@@ -506,18 +506,18 @@ export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroup
                 value: rotation,
                 inTangent: hasPreviousFrame
                     ? new Quaternion(
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.x - previousRotation.x),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.y - previousRotation.y),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.z - previousRotation.z),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.w - previousRotation.w)
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.x - previousRotation.x),
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.y - previousRotation.y),
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.z - previousRotation.z),
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotation.w - previousRotation.w)
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Quaternion(
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.x - rotation.x),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.y - rotation.y),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.z - rotation.z),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.w - rotation.w)
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.x - rotation.x),
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.y - rotation.y),
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.z - rotation.z),
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, nextRotation.w - rotation.w)
                     )
                     : undefined,
                 interpolation: AnimationKeyInterpolation.NONE,
@@ -580,9 +580,9 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const xWeight = bezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
-                const yWeight = bezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
-                const zWeight = bezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+                const xWeight = BezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = BezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = BezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -634,7 +634,7 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const rotationWeight = bezierInterpolate(rotationInterpolationX1, rotationInterpolationX2, rotationInterpolationY1, rotationInterpolationY2, gradient);
+                const rotationWeight = BezierInterpolate(rotationInterpolationX1, rotationInterpolationX2, rotationInterpolationY1, rotationInterpolationY2, gradient);
 
                 const value = new Quaternion(rotations[i * 4], rotations[i * 4 + 1], rotations[i * 4 + 2], rotations[i * 4 + 3]);
                 keys[j] = {

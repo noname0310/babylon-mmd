@@ -3,7 +3,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, MotionStateOffsetsInFloat32Array } from "./constants";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { IRigidBodyBundleImpl } from "./Impl/IRigidBodyBundleImpl";
@@ -12,7 +12,7 @@ import type { PhysicsShape } from "./physicsShape";
 import type { RigidBodyConstructionInfoList } from "./rigidBodyConstructionInfoList";
 
 class RigidBodyBundleInner {
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private readonly _vector3Buffer1: IWasmTypedArray<Float32Array>;
     private readonly _vector3Buffer2: IWasmTypedArray<Float32Array>;
@@ -20,7 +20,7 @@ class RigidBodyBundleInner {
     private _referenceCount: number;
     private _shadowCount: number;
 
-    public constructor(wasmInstance: BulletWasmInstance, ptr: number, shapeReferences: PhysicsShape[]) {
+    public constructor(wasmInstance: IBulletWasmInstance, ptr: number, shapeReferences: PhysicsShape[]) {
         this._wasmInstance = new WeakRef(wasmInstance);
         this._ptr = ptr;
 
@@ -111,11 +111,11 @@ class RigidBodyBundleInner {
     }
 }
 
-function rigidBodyBundleFinalizer(inner: RigidBodyBundleInner): void {
+function RigidBodyBundleFinalizer(inner: RigidBodyBundleInner): void {
     inner.dispose();
 }
 
-const physicsRigidBodyBundleRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyBundleInner>>();
+const PhysicsRigidBodyBundleRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<RigidBodyBundleInner>>();
 
 /**
  * bundle of bullet physics rigid bodies
@@ -209,10 +209,10 @@ export class RigidBodyBundle {
         this._count = count;
         this._worldReference = null;
 
-        let registry = physicsRigidBodyBundleRegistryMap.get(wasmInstance);
+        let registry = PhysicsRigidBodyBundleRegistryMap.get(wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(rigidBodyBundleFinalizer);
-            physicsRigidBodyBundleRegistryMap.set(wasmInstance, registry);
+            registry = new FinalizationRegistry(RigidBodyBundleFinalizer);
+            PhysicsRigidBodyBundleRegistryMap.set(wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -233,7 +233,7 @@ export class RigidBodyBundle {
 
         this._inner.dispose();
 
-        const registry = physicsRigidBodyBundleRegistryMap.get(this.runtime.wasmInstance);
+        const registry = PhysicsRigidBodyBundleRegistryMap.get(this.runtime.wasmInstance);
         registry?.unregister(this);
     }
 

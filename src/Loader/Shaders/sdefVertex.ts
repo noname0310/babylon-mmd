@@ -1,4 +1,4 @@
-export const sdefVertex = /* glsl */`
+export const SdefVertex = /* glsl */`
 #ifndef SDEFVERTEX
 #define SDEFVERTEX
 

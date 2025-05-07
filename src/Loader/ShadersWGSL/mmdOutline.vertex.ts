@@ -15,8 +15,8 @@ import "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthVertex";
 
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "mmdOutlineVertexShader";
-const shader = /* wgsl */`
+const Name = "mmdOutlineVertexShader";
+const Shader = /* wgsl */`
 // Attribute
 attribute position: vec3f;
 attribute normal: vec3f;
@@ -100,6 +100,6 @@ fn main(input: VertexInputs) -> FragmentInputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[name] = shader;
+ShaderStore.ShadersStoreWGSL[Name] = Shader;
 /** @internal */
-export const mmdOutlineVertexShader = { name, shader };
+export const MmdOutlineVertexShader = { name: Name, shader: Shader };

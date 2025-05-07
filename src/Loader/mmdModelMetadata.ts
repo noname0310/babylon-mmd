@@ -14,6 +14,7 @@ import type { PmxObject } from "./Parser/pmxObject";
  *
  * You can also put MmdModelMetadata into a non-mmd mesh as metadata to make it work by mmd runtime
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MmdModelMetadata {
     /**
      * Indicate this mesh.metadata is a mmd model metadata
@@ -68,6 +69,7 @@ export interface MmdModelMetadata {
  *
  * Additional information for serialization into bpmx file
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MmdModelSerializationMetadata extends MmdModelMetadata {
     /**
      * Indicate this mesh.metadata is a mmd model metadata for serialization
@@ -104,6 +106,7 @@ export namespace MmdModelMetadata {
     /**
      * Mmd model metadata header
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Header {
         /**
          * Model name
@@ -134,6 +137,7 @@ export namespace MmdModelMetadata {
     /**
      * Base morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface BaseMorph {
         /**
          * Morph name
@@ -159,6 +163,7 @@ export namespace MmdModelMetadata {
     /**
      * Group morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface GroupMorph extends BaseMorph {
         /**
          * Morph type
@@ -179,6 +184,7 @@ export namespace MmdModelMetadata {
     /**
      * Bone morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface BoneMorph extends BaseMorph {
         /**
          * Morph type
@@ -208,6 +214,7 @@ export namespace MmdModelMetadata {
     /**
      * Material morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MaterialMorph extends BaseMorph {
         /**
          * Morph type
@@ -225,6 +232,7 @@ export namespace MmdModelMetadata {
     /**
      * Vertex morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface VertexMorph extends BaseMorph {
         /**
          * Morph type
@@ -240,6 +248,7 @@ export namespace MmdModelMetadata {
     /**
      * UV morph information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface UvMorph extends BaseMorph {
         /**
          * Morph type
@@ -255,6 +264,7 @@ export namespace MmdModelMetadata {
     /**
      * Mmd model bone information
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Bone {
         /**
          * Bone name
@@ -313,6 +323,7 @@ export namespace MmdModelMetadata {
     /**
      * Vertex morph information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SerializationVertexMorph extends VertexMorph {
         elements: SerializationVertexMorphElement[];
     }
@@ -320,6 +331,7 @@ export namespace MmdModelMetadata {
     /**
      * Vertex morph element information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SerializationVertexMorphElement {
         /**
          * Mesh index
@@ -342,6 +354,7 @@ export namespace MmdModelMetadata {
     /**
      * UV morph information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SerializationUvMorph extends UvMorph {
         elements: SerializationUvMorphElement[];
     }
@@ -349,6 +362,7 @@ export namespace MmdModelMetadata {
     /**
      * UV morph element information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SerializationUvMorphElement {
         /**
          * Mesh index
@@ -371,6 +385,7 @@ export namespace MmdModelMetadata {
     /**
      * Mmd model bone information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SerializationBone extends Bone {
         /**
          * This property is not used in runtime but used in editor
@@ -391,6 +406,7 @@ export namespace MmdModelMetadata {
     /**
      * Mmd model material information for serialization
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MaterialMetadata {
         /**
          * Material name in english

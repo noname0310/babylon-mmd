@@ -7,7 +7,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import { type WasmBufferedArray, WasmBufferedArraySpan } from "./Misc/wasmBufferedArray";
-import type { MmdWasmInstance } from "./mmdWasmInstance";
+import type { IMmdWasmInstance } from "./mmdWasmInstance";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 
 /**
@@ -112,7 +112,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @internal
      * @param wasmInstance MMD WASM instance
      */
-    public updateBackBufferReference(wasmInstance: MmdWasmInstance): void {
+    public updateBackBufferReference(wasmInstance: IMmdWasmInstance): void {
         this._worldMatrix.updateBackBufferReference(wasmInstance);
     }
 

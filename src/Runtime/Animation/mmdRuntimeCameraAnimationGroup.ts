@@ -3,7 +3,7 @@ import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 import { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
 
 import type { MmdCamera } from "../mmdCamera";
-import { createAnimationState } from "./Common/createAnimationState";
+import { CreateAnimationState } from "./Common/createAnimationState";
 import type { IMmdBindableCameraAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
 
@@ -31,10 +31,10 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
     ) {
         this.animation = animation;
 
-        this._positionAnimationState = createAnimationState();
-        this._rotationAnimationState = createAnimationState();
-        this._distanceAnimationState = createAnimationState();
-        this._fovAnimationState = createAnimationState();
+        this._positionAnimationState = CreateAnimationState();
+        this._rotationAnimationState = CreateAnimationState();
+        this._distanceAnimationState = CreateAnimationState();
+        this._fovAnimationState = CreateAnimationState();
 
         this._camera = camera;
     }
@@ -64,6 +64,7 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
 }
 
 declare module "../../Loader/Animation/mmdCameraAnimationGroup" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MmdCameraAnimationGroup extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimationGroup> { }
 }
 

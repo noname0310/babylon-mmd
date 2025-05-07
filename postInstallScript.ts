@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import https from "https";
 
-async function download(url: string, dest: string): Promise<void> {
+async function Download(url: string, dest: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         const file = fs.createWriteStream(dest);
         https.get(url, (response) => {
@@ -17,18 +17,18 @@ async function download(url: string, dest: string): Promise<void> {
     });
 }
 
-async function installAmmo(): Promise<void> {
+async function InstallAmmo(): Promise<void> {
     if (fs.existsSync("./src/Runtime/Physics/External/ammo.wasm.d.ts")) return;
 
-    await download(
+    await Download(
         "https://raw.githubusercontent.com/kripken/ammo.js/1ed8b58c7058a5f697f2642ceef8ee20fdd55e10/builds/ammo.wasm.js",
         "./src/Runtime/Physics/External/ammo.wasm.js"
     );
-    await download(
+    await Download(
         "https://raw.githubusercontent.com/kripken/ammo.js/1ed8b58c7058a5f697f2642ceef8ee20fdd55e10/builds/ammo.wasm.wasm",
         "./src/Runtime/Physics/External/ammo.wasm.wasm"
     );
-    await download(
+    await Download(
         "https://raw.githubusercontent.com/giniedp/ammojs-typed/05408a318256ca561720aad1cfd0e83e772f06cb/ammo/ammo.d.ts",
         "./src/Runtime/Physics/External/ammo.wasm.d.ts"
     );
@@ -44,7 +44,7 @@ async function installAmmo(): Promise<void> {
     }
 }
 
-async function installBullet(): Promise<void> {
+async function InstallBullet(): Promise<void> {
     let updated = false;
 
     if (!fs.existsSync("./src/Runtime/Optimized/wasm_src/bullet_src/BulletCollision")) {
@@ -99,9 +99,9 @@ async function installBullet(): Promise<void> {
     }
 }
 
-async function main(): Promise<void> {
-    await installAmmo();
-    await installBullet();
+async function Main(): Promise<void> {
+    await InstallAmmo();
+    await InstallBullet();
 }
 
-main();
+Main();

@@ -400,7 +400,7 @@ export abstract class MaterialBuilderBase<TMaterial extends Material> implements
      * @param getTextureAlphaChecker get texture alpha checker function
      * @returns transparency mode
      */
-    protected async _evaluateDiffuseTextureTransparencyMode(
+    protected async _evaluateDiffuseTextureTransparencyModeAsync(
         diffuseTexture: BaseTexture,
         evaluatedTransparency: number,
         referencedMeshes: readonly ReferencedMesh[],
@@ -423,7 +423,7 @@ export abstract class MaterialBuilderBase<TMaterial extends Material> implements
                     for (let i = 0; i < referencedMeshes.length; ++i) {
                         const referencedMesh = referencedMeshes[i];
 
-                        const isMeshOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometry(
+                        const isMeshOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometryAsync(
                             diffuseTexture,
                             (referencedMesh as { mesh: Mesh })?.mesh ?? referencedMesh as Mesh,
                             (referencedMesh as { subMeshIndex: number })?.subMeshIndex !== undefined
@@ -456,7 +456,7 @@ export abstract class MaterialBuilderBase<TMaterial extends Material> implements
                     for (let i = 0; i < referencedMeshes.length; ++i) {
                         const referencedMesh = referencedMeshes[i];
 
-                        const newTransparencyMode = await textureAlphaChecker.hasTranslucentFragmentsOnGeometry(
+                        const newTransparencyMode = await textureAlphaChecker.hasTranslucentFragmentsOnGeometryAsync(
                             diffuseTexture,
                             (referencedMesh as { mesh: Mesh })?.mesh ?? referencedMesh as Mesh,
                             (referencedMesh as { subMeshIndex: number })?.subMeshIndex !== undefined

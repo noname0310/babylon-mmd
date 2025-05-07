@@ -5,6 +5,7 @@
 - introduce `StandardMaterialBuilder`/`PBRMaterialBuilder` for build mmd model with `StandardMaterial`/`PBRMaterial` instead of `MmdStandardMaterial`
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
 - align with Babylon.js 8.6.0 method name change, see [#16455](https://github.com/BabylonJS/Babylon.js/pull/16455)
+- apply new naming convention
 
 ## 0.64.1 (2025-04-16)
 

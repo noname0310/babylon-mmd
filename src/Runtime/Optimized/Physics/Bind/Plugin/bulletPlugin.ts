@@ -15,7 +15,7 @@ import { type PhysicsMaterial, PhysicsMaterialCombineMode } from "@babylonjs/cor
 import type { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 import { MultiPhysicsRuntime } from "../Impl/multiPhysicsRuntime";
 import { MotionType } from "../motionType";
 import type { PhysicsShape as BulletPhysicsShape } from "../physicsShape";
@@ -74,7 +74,7 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
     private static readonly _TempVector2: Vector3 = new Vector3();
     private static readonly _TempQuaternion: Quaternion = new Quaternion();
 
-    public constructor(wasmInstance: BulletWasmInstance) {
+    public constructor(wasmInstance: IBulletWasmInstance) {
         this.world = new MultiPhysicsRuntime(wasmInstance);
     }
 

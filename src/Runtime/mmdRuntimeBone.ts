@@ -5,7 +5,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { AppendTransformSolver } from "./appendTransformSolver";
-import { quaternionToAxisAngle } from "./Common/quaternionToAxisAngle";
+import { QuaternionToAxisAngle } from "./Common/quaternionToAxisAngle";
 import type { IkChainInfo } from "./ikChainInfo";
 import type { IkSolver } from "./ikSolver";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
@@ -187,7 +187,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
                 target.set(0, 0, 0, 1);
             } else {
                 const animationAxis = MmdRuntimeBone._TempAxis;
-                let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+                let angle = QuaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
                 if (Vector3.Dot(animationAxis, axisLimit) < 0) {
                     angle = -angle;
                 }
@@ -206,7 +206,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
                 target.set(0, 0, 0, 1);
             } else {
                 const animationAxis = MmdRuntimeBone._TempAxis;
-                let angle = quaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
+                let angle = QuaternionToAxisAngle(this.linkedBone.rotationQuaternion, animationAxis);
                 if (Vector3.Dot(animationAxis, axisLimit) < 0) {
                     angle = -angle;
                 }

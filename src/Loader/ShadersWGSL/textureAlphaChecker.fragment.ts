@@ -1,7 +1,7 @@
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "textureAlphaCheckerPixelShader";
-const shader = /* wgsl */`
+const Name = "textureAlphaCheckerPixelShader";
+const Shader = /* wgsl */`
 var textureSamplerSampler: sampler;
 var textureSampler: texture_2d<f32>;
 varying vUv: vec2f;
@@ -15,6 +15,6 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[name] = shader;
+ShaderStore.ShadersStoreWGSL[Name] = Shader;
 /** @internal */
-export const textureAlphaCheckerPixelShader = { name, shader };
+export const TextureAlphaCheckerPixelShader = { name: Name, shader: Shader };

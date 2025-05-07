@@ -4,7 +4,7 @@ import type { DeepImmutable, Tuple } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "@/Runtime/Optimized/Physics/Bind/constants";
 
-import type { BulletWasmInstance } from "../../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../../bulletWasmInstance";
 import type { IRigidBodyImpl } from "../IRigidBodyImpl";
 
 export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
@@ -69,7 +69,7 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
     }
 
     public setDamping(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         linearDamping: number,
         angularDamping: number
@@ -77,16 +77,16 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
         wasmInstance.rigidBodySetDamping(bodyPtr, linearDamping, angularDamping);
     }
 
-    public getLinearDamping(wasmInstance: BulletWasmInstance, bodyPtr: number): number {
+    public getLinearDamping(wasmInstance: IBulletWasmInstance, bodyPtr: number): number {
         return wasmInstance.rigidBodyGetLinearDamping(bodyPtr);
     }
 
-    public getAngularDamping(wasmInstance: BulletWasmInstance, bodyPtr: number): number {
+    public getAngularDamping(wasmInstance: IBulletWasmInstance, bodyPtr: number): number {
         return wasmInstance.rigidBodyGetAngularDamping(bodyPtr);
     }
 
     public setMassProps(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         mass: number,
         localInertia: DeepImmutable<Vector3>
@@ -94,11 +94,11 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
         wasmInstance.rigidBodySetMassProps(bodyPtr, mass, localInertia.x, localInertia.y, localInertia.z);
     }
 
-    public getMass(wasmInstance: BulletWasmInstance, bodyPtr: number): number {
+    public getMass(wasmInstance: IBulletWasmInstance, bodyPtr: number): number {
         return wasmInstance.rigidBodyGetMass(bodyPtr);
     }
 
-    public getLocalInertia(wasmInstance: BulletWasmInstance, bodyPtr: number): Vector3 {
+    public getLocalInertia(wasmInstance: IBulletWasmInstance, bodyPtr: number): Vector3 {
         const outBufferPtr = wasmInstance.allocateBuffer(3 * Constants.A32BytesPerElement);
         const outBuffer = wasmInstance.createTypedArray(Float32Array, outBufferPtr, 3).array;
         wasmInstance.rigidBodyGetLocalInertia(bodyPtr, outBufferPtr);
@@ -107,7 +107,7 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
         return result;
     }
 
-    public translate(wasmInstance: BulletWasmInstance, bodyPtr: number, translation: DeepImmutable<Vector3>): void {
+    public translate(wasmInstance: IBulletWasmInstance, bodyPtr: number, translation: DeepImmutable<Vector3>): void {
         wasmInstance.rigidBodyTranslate(bodyPtr, translation.x, translation.y, translation.z);
     }
 }

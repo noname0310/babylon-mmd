@@ -16,7 +16,7 @@ import type { MmdRuntimeBone } from "./mmdRuntimeBone";
  *
  * This information is used to induce material recompilation
  */
-export interface RuntimeMaterialMorphElement {
+export interface IRuntimeMaterialMorphElement {
     index: number; // material index
     type: PmxObject.Morph.MaterialMorph.Type;
     diffuse: Nullable<Vec4>;
@@ -34,10 +34,10 @@ export interface RuntimeMaterialMorphElement {
  * @internal
  * Represents a morph in MMD runtime
  */
-export interface RuntimeMorph {
+export interface IRuntimeMorph {
     readonly name: string;
     readonly type: PmxObject.Morph.Type;
-    readonly materialElements: Nullable<readonly RuntimeMaterialMorphElement[]>;
+    readonly materialElements: Nullable<readonly IRuntimeMaterialMorphElement[]>;
     readonly elements: Nullable<
         Int32Array // group morph / bone morph indices
         | MorphTarget[] // MorphTargetManager morph targets
@@ -52,7 +52,7 @@ export interface RuntimeMorph {
  *
  * Only material morphs data are exposed
  */
-export interface ReadonlyRuntimeMorph {
+export interface IReadonlyRuntimeMorph {
     /**
      * Name of the morph
      */
@@ -66,7 +66,7 @@ export interface ReadonlyRuntimeMorph {
     /**
      * Material morph elements
      */
-    readonly materialElements: Nullable<readonly DeepImmutable<RuntimeMaterialMorphElement>[]>;
+    readonly materialElements: Nullable<readonly DeepImmutable<IRuntimeMaterialMorphElement>[]>;
 
     /**
      * Group morph / bone morph / uv morph / vertex morph bindings
@@ -86,7 +86,7 @@ export abstract class MmdMorphControllerBase {
     protected readonly _runtimeBones: readonly MmdRuntimeBone[];
     private readonly _materials: readonly (IMmdMaterialProxy | undefined)[];
 
-    protected readonly _morphs: readonly RuntimeMorph[];
+    protected readonly _morphs: readonly IRuntimeMorph[];
     protected readonly _morphIndexMap: Map<string, number[]>;
     protected readonly _morphWeights: Float32Array;
     protected readonly _activeMorphs: Set<string>;
@@ -273,7 +273,7 @@ export abstract class MmdMorphControllerBase {
     /**
      * Gets the morph data
      */
-    public get morphs(): readonly ReadonlyRuntimeMorph[] {
+    public get morphs(): readonly IReadonlyRuntimeMorph[] {
         return this._morphs;
     }
 
@@ -281,14 +281,14 @@ export abstract class MmdMorphControllerBase {
         morphsMetadata: readonly MmdModelMetadata.Morph[],
         createBoneMorphs: boolean,
         createMaterialMorphs: boolean
-    ): RuntimeMorph[] {
-        const morphs: RuntimeMorph[] = [];
+    ): IRuntimeMorph[] {
+        const morphs: IRuntimeMorph[] = [];
 
         for (let i = 0; i < morphsMetadata.length; ++i) {
             const morphMetadata = morphsMetadata[i];
 
-            let runtimeMorphMaterialElements: Nullable<readonly RuntimeMaterialMorphElement[]> = null;
-            let runtimeMorphElements: RuntimeMorph["elements"] = null;
+            let runtimeMorphMaterialElements: Nullable<readonly IRuntimeMaterialMorphElement[]> = null;
+            let runtimeMorphElements: IRuntimeMorph["elements"] = null;
             let runtimeMorphElements2: Nullable<Float32Array> = null;
             let runtimeMorphElements3: Nullable<Float32Array> = null;
 
@@ -317,7 +317,7 @@ export abstract class MmdMorphControllerBase {
                     runtimeMorphMaterialElements = [];
                 } else {
                     const elements = morphMetadata.elements;
-                    const morphElements = new Array<RuntimeMaterialMorphElement>(elements.length);
+                    const morphElements = new Array<IRuntimeMaterialMorphElement>(elements.length);
 
                     for (let j = 0; j < elements.length; ++j) {
                         const element = elements[j];
@@ -367,7 +367,7 @@ export abstract class MmdMorphControllerBase {
                 break;
             }
 
-            const morph: RuntimeMorph = {
+            const morph: IRuntimeMorph = {
                 name: morphMetadata.name,
                 type: morphMetadata.type,
                 materialElements: runtimeMorphMaterialElements,
@@ -382,8 +382,8 @@ export abstract class MmdMorphControllerBase {
     }
 
     private _groupMorphForeach(
-        groupMorph: RuntimeMorph,
-        callback: (childMorph: RuntimeMorph, ratio: number) => void
+        groupMorph: IRuntimeMorph,
+        callback: (childMorph: IRuntimeMorph, ratio: number) => void
     ): void {
         const morphs = this._morphs;
 
@@ -400,7 +400,7 @@ export abstract class MmdMorphControllerBase {
         }
     }
 
-    private _resetMorph(morph: RuntimeMorph): void {
+    private _resetMorph(morph: IRuntimeMorph): void {
         switch (morph.type) {
         case PmxObject.Morph.Type.GroupMorph:
             this._groupMorphForeach(morph, (childMorph, _ratio) => this._resetMorph(childMorph));
@@ -412,7 +412,7 @@ export abstract class MmdMorphControllerBase {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.materialElements as readonly RuntimeMaterialMorphElement[];
+                const elements = morph.materialElements as readonly IRuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     const materials = this._materials;
@@ -441,9 +441,9 @@ export abstract class MmdMorphControllerBase {
         }
     }
 
-    protected abstract _resetBoneMorph(morph: RuntimeMorph): void;
+    protected abstract _resetBoneMorph(morph: IRuntimeMorph): void;
 
-    private _applyMorph(morph: RuntimeMorph, weight: number): void {
+    private _applyMorph(morph: IRuntimeMorph, weight: number): void {
         switch (morph.type) {
         case PmxObject.Morph.Type.GroupMorph:
             this._groupMorphForeach(morph, (childMorph, ratio) => this._applyMorph(childMorph, weight * ratio));
@@ -455,7 +455,7 @@ export abstract class MmdMorphControllerBase {
 
         case PmxObject.Morph.Type.MaterialMorph:
             {
-                const elements = morph.materialElements as readonly RuntimeMaterialMorphElement[];
+                const elements = morph.materialElements as readonly IRuntimeMaterialMorphElement[];
                 for (let i = 0; i < elements.length; ++i) {
                     const element = elements[i];
                     const materials = this._materials;
@@ -490,10 +490,10 @@ export abstract class MmdMorphControllerBase {
         }
     }
 
-    protected abstract _applyBoneMorph(morph: RuntimeMorph, weight: number): void;
+    protected abstract _applyBoneMorph(morph: IRuntimeMorph, weight: number): void;
 
     private _applyMaterialMorph(
-        materialMorph: RuntimeMaterialMorphElement,
+        materialMorph: IRuntimeMaterialMorphElement,
         material: IMmdMaterialProxy,
         weight: number
     ): void {

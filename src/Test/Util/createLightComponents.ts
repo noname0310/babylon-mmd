@@ -26,7 +26,7 @@ export interface ICreateLightComponentsResult {
     shadowGenerator: ShadowGenerator;
 }
 
-export function createLightComponents(scene: Scene, options: ICreateLightComponentOptions = {}): ICreateLightComponentsResult {
+export function CreateLightComponents(scene: Scene, options: ICreateLightComponentOptions = {}): ICreateLightComponentsResult {
     const {
         worldScale = 1,
         hemisphericLightIntensity = 0.5,
