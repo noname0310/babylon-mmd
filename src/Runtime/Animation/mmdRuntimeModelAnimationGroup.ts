@@ -12,8 +12,8 @@ import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
-import { createAnimationState } from "./Common/createAnimationState";
-import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
+import { CreateAnimationState } from "./Common/createAnimationState";
+import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 
@@ -87,25 +87,25 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
         const bonePositionAnimationStates = this._bonePositionAnimationStates = new Array(animation.bonePositionAnimations.length);
         for (let i = 0; i < bonePositionAnimationStates.length; ++i) {
-            bonePositionAnimationStates[i] = createAnimationState();
+            bonePositionAnimationStates[i] = CreateAnimationState();
         }
 
         const boneRotationAnimationStates = this._boneRotationAnimationStates = new Array(animation.boneRotationAnimations.length);
         for (let i = 0; i < boneRotationAnimationStates.length; ++i) {
-            boneRotationAnimationStates[i] = createAnimationState();
+            boneRotationAnimationStates[i] = CreateAnimationState();
         }
 
         const morphAnimationStates = this._morphAnimationStates = new Array(animation.morphAnimations.length);
         for (let i = 0; i < morphAnimationStates.length; ++i) {
-            morphAnimationStates[i] = createAnimationState();
+            morphAnimationStates[i] = CreateAnimationState();
         }
 
         const propertyAnimationStates = this._propertyAnimationStates = new Array(animation.propertyAnimations.length);
         for (let i = 0; i < propertyAnimationStates.length; ++i) {
-            propertyAnimationStates[i] = createAnimationState();
+            propertyAnimationStates[i] = CreateAnimationState();
         }
 
-        this._visibilityAnimationState = createAnimationState();
+        this._visibilityAnimationState = CreateAnimationState();
     }
 
     private static readonly _BonePosition = new Vector3();
@@ -197,7 +197,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             logger
         );
         if (updateMorphTarget) {
-            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+            SetMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
         }
         this._materialRecompileInduceInfo = null;
     }
@@ -320,7 +320,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
-    ) => void = induceMmdStandardMaterialRecompile as (
+    ) => void = InduceMmdStandardMaterialRecompile as (
         materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
@@ -329,6 +329,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 }
 
 declare module "../../Loader/Animation/mmdModelAnimationGroup" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MmdModelAnimationGroup extends IMmdBindableModelAnimation<MmdRuntimeModelAnimationGroup> { }
 }
 

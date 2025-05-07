@@ -9,7 +9,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMesh } from "../mmdMesh";
-import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "../mmdRuntime";
 
 /**
  * mmd model metadata representation in binary
@@ -132,14 +132,14 @@ import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
  */
 export class MmdMetadataEncoder {
     protected readonly _logger: ILogger;
-    protected _encodePhysicsOptions: MmdModelPhysicsCreationOptions | boolean;
+    protected _encodePhysicsOptions: IMmdModelPhysicsCreationOptions | boolean;
 
     public constructor(logger: ILogger) {
         this._logger = logger;
         this._encodePhysicsOptions = true;
     }
 
-    public setEncodePhysicsOptions(options: MmdModelPhysicsCreationOptions | boolean): void {
+    public setEncodePhysicsOptions(options: IMmdModelPhysicsCreationOptions | boolean): void {
         if (typeof options === "boolean") {
             this._encodePhysicsOptions = options;
         } else {

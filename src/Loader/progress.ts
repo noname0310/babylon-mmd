@@ -2,12 +2,12 @@ import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoa
 import type { Nullable } from "@babylonjs/core/types";
 
 /** @internal */
-export interface ProgressTask {
+export interface IProgressTask {
     readonly name: string;
     readonly cost: number;
 }
 
-interface ProgressTaskState extends ProgressTask {
+interface IProgressTaskState extends IProgressTask {
     progress: number;
 }
 
@@ -18,14 +18,14 @@ export class Progress {
 
     private readonly _onProgress: Nullable<(progress: ISceneLoaderProgressEvent) => void>;
 
-    private readonly _unprocessedTasks: Map<string, ProgressTask>;
-    private readonly _processingTasks: Map<string, ProgressTaskState>;
+    private readonly _unprocessedTasks: Map<string, IProgressTask>;
+    private readonly _processingTasks: Map<string, IProgressTaskState>;
     private readonly _endedTaskNames: Set<string>;
     private _endedTasksTotal: number;
 
     public constructor(
         lengthComputable: boolean,
-        tasks: ProgressTask[],
+        tasks: IProgressTask[],
         onProgress: Nullable<(progress: ISceneLoaderProgressEvent) => void>
     ) {
         this.lengthComputable = lengthComputable;
@@ -38,7 +38,7 @@ export class Progress {
 
         this._onProgress = onProgress;
 
-        const unprocessedTasks = this._unprocessedTasks = new Map<string, ProgressTask>();
+        const unprocessedTasks = this._unprocessedTasks = new Map<string, IProgressTask>();
         for (let i = 0; i < tasks.length; ++i) {
             if (unprocessedTasks.has(tasks[i].name)) {
                 throw new Error(`Duplicated task name: ${tasks[i].name}`);
@@ -46,12 +46,12 @@ export class Progress {
             unprocessedTasks.set(tasks[i].name, tasks[i]);
         }
 
-        this._processingTasks = new Map<string, ProgressTaskState>();
+        this._processingTasks = new Map<string, IProgressTaskState>();
         this._endedTaskNames = new Set<string>();
         this._endedTasksTotal = 0;
     }
 
-    private _getTaskState(taskName: string): Nullable<ProgressTaskState> {
+    private _getTaskState(taskName: string): Nullable<IProgressTaskState> {
         let taskState = this._processingTasks.get(taskName);
         if (taskState === undefined) {
             const task = this._unprocessedTasks.get(taskName);

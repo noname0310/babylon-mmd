@@ -2,16 +2,16 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
-import type { MmdWasmInstance } from "../mmdWasmInstance";
+import type { IMmdWasmInstance } from "../mmdWasmInstance";
 import type { MmdWasmModel } from "../mmdWasmModel";
-import { type MmdWasmRuntime, type PhysicsInitializeSet } from "../mmdWasmRuntime";
+import { type IPhysicsInitializeSet, type MmdWasmRuntime } from "../mmdWasmRuntime";
 import type { IMmdWasmPhysicsRuntime } from "./IMmdWasmPhysicsRuntime";
-import type { MmdWasmPhysicsRuntimeImpl, MmdWasmPhysicsRuntimeImplCreationOptions } from "./mmdWasmPhysicsRuntimeImpl";
+import type { IMmdWasmPhysicsRuntimeImplCreationOptions, MmdWasmPhysicsRuntimeImpl } from "./mmdWasmPhysicsRuntimeImpl";
 
-class PhysicsInitializer implements PhysicsInitializeSet {
-    private readonly _wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>;
+class PhysicsInitializer implements IPhysicsInitializeSet {
+    private readonly _wasmInternal: ReturnType<IMmdWasmInstance["createMmdRuntime"]>;
 
-    public constructor(wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>) {
+    public constructor(wasmInternal: ReturnType<IMmdWasmInstance["createMmdRuntime"]>) {
         this._wasmInternal = wasmInternal;
     }
 
@@ -136,7 +136,7 @@ export class MmdWasmPhysicsRuntime implements IMmdWasmPhysicsRuntime {
         }
     }
 
-    public getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl, options: MmdWasmPhysicsRuntimeImplCreationOptions = {}): MmdWasmPhysicsRuntimeImpl {
+    public getImpl(implCtor: typeof MmdWasmPhysicsRuntimeImpl, options: IMmdWasmPhysicsRuntimeImplCreationOptions = {}): MmdWasmPhysicsRuntimeImpl {
         if (this._impl === null) {
             this._impl = new implCtor(this._mmdRuntime, this._gravity, options);
         }

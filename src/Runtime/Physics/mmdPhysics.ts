@@ -17,7 +17,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
-import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 
 class MmdPhysicsTransformNode extends TransformNode {
@@ -329,8 +329,8 @@ export class MmdPhysics implements IMmdPhysics {
         joints: PmxObject["joints"],
         bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
-        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
-    ): IMmdPhysicsModel {
+        physicsOptions: Nullable<IMmdModelPhysicsCreationOptions>
+    ): MmdPhysicsModel {
         if (physicsOptions !== null) {
             logger.warn("Havok physics does not support physics options");
         }

@@ -1,14 +1,14 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 
 class PhysicsShapeInner {
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private _referenceCount: number;
 
-    public constructor(wasmInstance: WeakRef<BulletWasmInstance>, ptr: number) {
+    public constructor(wasmInstance: WeakRef<IBulletWasmInstance>, ptr: number) {
         this._wasmInstance = wasmInstance;
         this._ptr = ptr;
         this._referenceCount = 0;
@@ -42,11 +42,11 @@ class PhysicsShapeInner {
     }
 }
 
-function physicsShapeFinalizer(inner: PhysicsShapeInner): void {
+function PhysicsShapeFinalizer(inner: PhysicsShapeInner): void {
     inner.dispose();
 }
 
-const physicsShapeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsShapeInner>>();
+const PhysicsShapeRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<PhysicsShapeInner>>();
 
 /**
  * Base class for all bullet physics shapes
@@ -60,10 +60,10 @@ export abstract class PhysicsShape {
         this.runtime = runtime;
         this._inner = new PhysicsShapeInner(new WeakRef(runtime.wasmInstance), ptr);
 
-        let registry = physicsShapeRegistryMap.get(runtime.wasmInstance);
+        let registry = PhysicsShapeRegistryMap.get(runtime.wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(physicsShapeFinalizer);
-            physicsShapeRegistryMap.set(runtime.wasmInstance, registry);
+            registry = new FinalizationRegistry(PhysicsShapeFinalizer);
+            PhysicsShapeRegistryMap.set(runtime.wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -76,7 +76,7 @@ export abstract class PhysicsShape {
 
         this._inner.dispose();
 
-        const registry = physicsShapeRegistryMap.get(this.runtime.wasmInstance);
+        const registry = PhysicsShapeRegistryMap.get(this.runtime.wasmInstance);
         registry?.unregister(this);
     }
 

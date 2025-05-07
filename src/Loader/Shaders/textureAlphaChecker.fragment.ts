@@ -1,7 +1,7 @@
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "textureAlphaCheckerPixelShader";
-const shader = /* glsl */`
+const Name = "textureAlphaCheckerPixelShader";
+const Shader = /* glsl */`
 precision highp float;
 uniform sampler2D textureSampler;
 varying vec2 vUv;
@@ -11,6 +11,6 @@ void main() {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[name] = shader;
+ShaderStore.ShadersStore[Name] = Shader;
 /** @internal */
-export const textureAlphaCheckerPixelShader = { name, shader };
+export const TextureAlphaCheckerPixelShader = { name: Name, shader: Shader };

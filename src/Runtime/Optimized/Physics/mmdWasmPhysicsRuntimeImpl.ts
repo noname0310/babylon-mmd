@@ -5,7 +5,7 @@ import type { DeepImmutable } from "@babylonjs/core/types";
 import type { IWasmSpinLock } from "../Misc/IWasmSpinLock";
 import type { MmdWasmRuntime} from "../mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "../mmdWasmRuntime";
-import type { BulletWasmInstance } from "./Bind/bulletWasmInstance";
+import type { IBulletWasmInstance } from "./Bind/bulletWasmInstance";
 import type { Constraint } from "./Bind/constraint";
 import { BufferedRigidBodyBundleImpl } from "./Bind/Impl/Buffered/bufferedRigidBodyBundleImpl";
 import { BufferedRigidBodyImpl } from "./Bind/Impl/Buffered/bufferedRigidBodyImpl";
@@ -21,7 +21,7 @@ import type { RigidBodyBundle } from "./Bind/rigidBodyBundle";
 /**
  * Options for creating a MmdWasmPhysicsRuntimeImpl
  */
-export interface MmdWasmPhysicsRuntimeImplCreationOptions {
+export interface IMmdWasmPhysicsRuntimeImplCreationOptions {
     /**
      * Whether to preserve the back buffer for the motion state (default: false)
      */
@@ -47,7 +47,7 @@ export class MmdWasmPhysicsRuntimeImpl implements IPhysicsRuntime {
     /**
      * The Bullet WASM instance
      */
-    public readonly wasmInstance: BulletWasmInstance;
+    public readonly wasmInstance: IBulletWasmInstance;
 
     /**
      * Spinlock for the runtime to synchronize access to the state
@@ -75,7 +75,7 @@ export class MmdWasmPhysicsRuntimeImpl implements IPhysicsRuntime {
      * @param initialGravity The initial gravity vector
      * @param options The options for creating the impl object
      */
-    public constructor(runtime: MmdWasmRuntime, initialGravity: DeepImmutable<Vector3>, options: MmdWasmPhysicsRuntimeImplCreationOptions = {}) {
+    public constructor(runtime: MmdWasmRuntime, initialGravity: DeepImmutable<Vector3>, options: IMmdWasmPhysicsRuntimeImplCreationOptions = {}) {
         const {
             preserveBackBuffer = false
         } = options;

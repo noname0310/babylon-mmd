@@ -6,7 +6,7 @@ import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
  * @param animation animation to copy
  * @returns copied animation
  */
-export function deepCopyAnimation(animation: Animation): Animation {
+export function DeepCopyAnimation(animation: Animation): Animation {
     const newAnimation = new Animation(animation.name, animation.targetProperty, animation.framePerSecond, animation.dataType, animation.loopMode);
 
     newAnimation.enableBlending = animation.enableBlending;
@@ -53,12 +53,12 @@ export function deepCopyAnimation(animation: Animation): Animation {
  * @param newName defines the name of the new group
  * @returns copied animation group
  */
-export function deepCopyAnimationGroup(animationGroup: AnimationGroup, newName: string): AnimationGroup {
+export function DeepCopyAnimationGroup(animationGroup: AnimationGroup, newName: string): AnimationGroup {
     const newGroup = new AnimationGroup(newName || animationGroup.name, (animationGroup as any)._scene);
 
     for (const targetAnimation of animationGroup.targetedAnimations) {
         newGroup.addTargetedAnimation(
-            deepCopyAnimation(targetAnimation.animation),
+            DeepCopyAnimation(targetAnimation.animation),
             targetAnimation.target
         );
     }

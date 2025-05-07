@@ -14,25 +14,25 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StandardMaterialBuilder } from "@/Loader/standardMaterialBuilder";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
-        createDefaultArcRotateCamera(scene);
-        const { shadowGenerator } = createLightComponents(scene, {
+        CreateDefaultArcRotateCamera(scene);
+        const { shadowGenerator } = CreateLightComponents(scene, {
             orthoLeftOffset: -10,
             orthoRightOffset: 10,
             orthoTopOffset: 2,
             shadowMaxZOffset: 5
         });
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         await Promise.all([
             (async(): Promise<void> => {

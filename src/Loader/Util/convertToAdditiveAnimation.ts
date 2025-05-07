@@ -8,7 +8,7 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 
 import type { ILogger } from "../Parser/ILogger";
 
-function convertToAdditiveAnimationInternal(animation: Animation, bone: Bone, logger?: ILogger): void {
+function ConvertToAdditiveAnimationInternal(animation: Animation, bone: Bone, logger?: ILogger): void {
     const target = bone as { [key: string]: any };
 
     if (target[animation.targetProperty] === undefined) {
@@ -61,7 +61,7 @@ function convertToAdditiveAnimationInternal(animation: Animation, bone: Bone, lo
  * @param skeleton target skeleton
  * @param logger logger
  */
-export function convertToAdditiveAnimation(animationGroup: AnimationGroup, skeleton: Skeleton, logger?: ILogger): void {
+export function ConvertToAdditiveAnimation(animationGroup: AnimationGroup, skeleton: Skeleton, logger?: ILogger): void {
     if (animationGroup.isAdditive) {
         logger?.warn("Animation group is already additive");
         return;
@@ -90,7 +90,7 @@ export function convertToAdditiveAnimation(animationGroup: AnimationGroup, skele
         }
 
         if (bone !== undefined) {
-            convertToAdditiveAnimationInternal(animation, bone);
+            ConvertToAdditiveAnimationInternal(animation, bone);
         } else {
             logger?.warn(`Failed to find rest pose for ${animation.name}`);
         }

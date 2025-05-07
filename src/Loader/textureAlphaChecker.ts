@@ -11,6 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 declare module "@babylonjs/core/scene" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Scene {
         /** @internal */
         _textureAlphaCheckerShader: Nullable<ShaderMaterial>;
@@ -18,6 +19,7 @@ declare module "@babylonjs/core/scene" {
 }
 
 declare module "@babylonjs/core/Materials/Textures/renderTargetTexture" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface RenderTargetTexture {
         /**
          * Gets or sets a boolean indicating that the prepass renderer should not be used with this render target
@@ -79,7 +81,7 @@ export class TextureAlphaChecker {
         this._resultPixelsBuffer = new Uint8Array(resolution * resolution * 4);
     }
 
-    private async _renderTexture(
+    private async _renderTextureAsync(
         texture: BaseTexture,
         mesh: Mesh,
         subMeshIndex: number | null
@@ -186,7 +188,7 @@ export class TextureAlphaChecker {
      * @returns Transparency mode
      * @throws If the texture is not ready
      */
-    public async hasTranslucentFragmentsOnGeometry(
+    public async hasTranslucentFragmentsOnGeometryAsync(
         texture: BaseTexture,
         mesh: Mesh,
         subMeshIndex: number | null,
@@ -202,7 +204,7 @@ export class TextureAlphaChecker {
         }
 
         this._blockRendering = true;
-        const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
+        const resultPixelsBuffer = await this._renderTextureAsync(texture, mesh, subMeshIndex);
 
         let maxValue = 0;
         let averageMidddleAlpha = 0;
@@ -243,7 +245,7 @@ export class TextureAlphaChecker {
      * @param subMeshIndices Sub mesh index to check (if null, all sub meshes are checked)
      * @returns If the texture fragments are completely opaque in geometry
      */
-    public async hasFragmentsOnlyOpaqueOnGeometry(
+    public async hasFragmentsOnlyOpaqueOnGeometryAsync(
         texture: BaseTexture,
         mesh: Mesh,
         subMeshIndex: number | null
@@ -257,7 +259,7 @@ export class TextureAlphaChecker {
         }
 
         this._blockRendering = true;
-        const resultPixelsBuffer = await this._renderTexture(texture, mesh, subMeshIndex);
+        const resultPixelsBuffer = await this._renderTextureAsync(texture, mesh, subMeshIndex);
 
         for (let index = 0; index < resultPixelsBuffer.length; index += 4) {
             if (resultPixelsBuffer[index] !== 0) {

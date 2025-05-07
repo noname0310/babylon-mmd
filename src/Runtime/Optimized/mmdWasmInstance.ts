@@ -20,13 +20,13 @@ export type MmdWasmType =
  *
  * entry point of the MMD WASM
  */
-export interface MmdWasmInstance extends MmdWasmType {
+export interface IMmdWasmInstance extends MmdWasmType {
     memory: WebAssembly.Memory;
 
     createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T>;
 }
 
-export interface MmdWasmInstanceType {
+export interface IMmdWasmInstanceType {
     /**
      * Get MMD wasm-bindgen instance
      * @returns MMD wasm-bindgen instance
@@ -34,7 +34,7 @@ export interface MmdWasmInstanceType {
     getWasmInstanceInner(): MmdWasmType;
 }
 
-const wasmInstanceMap = new WeakMap<MmdWasmType, Promise<MmdWasmInstance>>();
+const WasmInstanceMap = new WeakMap<MmdWasmType, Promise<IMmdWasmInstance>>();
 
 /**
  * Load MMD WASM instance
@@ -46,21 +46,21 @@ const wasmInstanceMap = new WeakMap<MmdWasmType, Promise<MmdWasmInstance>>();
  * @param threadCount Thread count for WASM threading (default: navigator.hardwareConcurrency). threadCount must be greater than 0
  * @returns MMD WASM instance
  */
-export async function getMmdWasmInstance(
-    instanceType: MmdWasmInstanceType,
+export async function GetMmdWasmInstance(
+    instanceType: IMmdWasmInstanceType,
     threadCount = navigator.hardwareConcurrency
-): Promise<MmdWasmInstance> {
+): Promise<IMmdWasmInstance> {
     const wasmBindgen = instanceType.getWasmInstanceInner();
 
     {
-        const instance = wasmInstanceMap.get(wasmBindgen);
+        const instance = WasmInstanceMap.get(wasmBindgen);
         if (instance !== undefined) return instance;
     }
 
-    let resolvePromise: (instance: MmdWasmInstance | PromiseLike<MmdWasmInstance>) => void = null!;
-    wasmInstanceMap.set(wasmBindgen, new Promise<MmdWasmInstance>(resolve => resolvePromise = resolve));
+    let resolvePromise: (instance: IMmdWasmInstance | PromiseLike<IMmdWasmInstance>) => void = null!;
+    WasmInstanceMap.set(wasmBindgen, new Promise<IMmdWasmInstance>(resolve => resolvePromise = resolve));
 
-    const mmdWasmInstance = {...wasmBindgen} as MmdWasmInstance;
+    const mmdWasmInstance = {...wasmBindgen} as IMmdWasmInstance;
 
     const initOutput = await mmdWasmInstance.default();
 

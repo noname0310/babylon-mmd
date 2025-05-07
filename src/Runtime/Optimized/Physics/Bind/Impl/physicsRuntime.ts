@@ -5,7 +5,7 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 import type { Constraint } from "../constraint";
 import { PhysicsWorld } from "../physicsWorld";
 import type { RigidBody } from "../rigidBody";
@@ -21,11 +21,11 @@ import { PhysicsRuntimeEvaluationType } from "./physicsRuntimeEvaluationType";
 
 class PhysicsRuntimeInner {
     private readonly _lock: WasmSpinlock;
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private _worldReference: Nullable<PhysicsWorld>;
 
-    public constructor(lock: WasmSpinlock, wasmInstance: WeakRef<BulletWasmInstance>, ptr: number, worldReference: PhysicsWorld) {
+    public constructor(lock: WasmSpinlock, wasmInstance: WeakRef<IBulletWasmInstance>, ptr: number, worldReference: PhysicsWorld) {
         this._lock = lock;
         this._wasmInstance = wasmInstance;
         this._ptr = ptr;
@@ -51,11 +51,11 @@ class PhysicsRuntimeInner {
     }
 }
 
-function physicsRuntimeFinalizer(inner: PhysicsRuntimeInner): void {
+function PhysicsRuntimeFinalizer(inner: PhysicsRuntimeInner): void {
     inner.dispose();
 }
 
-const physicsRuntimeRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<PhysicsRuntimeInner>>();
+const PhysicsRuntimeRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<PhysicsRuntimeInner>>();
 
 /**
  * PhysicsRuntime handles the physics simulation and provides an interface for managing rigid bodies and constraints
@@ -78,7 +78,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
     /**
      * @internal
      */
-    public readonly wasmInstance: BulletWasmInstance;
+    public readonly wasmInstance: IBulletWasmInstance;
 
     /**
      * Spinlock for the physics runtime to synchronize access to the physics world state
@@ -130,7 +130,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
      * Creates a new physics runtime
      * @param wasmInstance The Bullet WASM instance
      */
-    public constructor(wasmInstance: BulletWasmInstance) {
+    public constructor(wasmInstance: IBulletWasmInstance) {
         this.onSyncObservable = new Observable<void>();
         this.onTickObservable = new Observable<void>();
 
@@ -145,10 +145,10 @@ export class PhysicsRuntime implements IPhysicsRuntime {
         this._inner = new PhysicsRuntimeInner(this.lock, new WeakRef(wasmInstance), ptr, physicsWorld);
         this._physicsWorld = physicsWorld;
 
-        let registry = physicsRuntimeRegistryMap.get(wasmInstance);
+        let registry = PhysicsRuntimeRegistryMap.get(wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(physicsRuntimeFinalizer);
-            physicsRuntimeRegistryMap.set(wasmInstance, registry);
+            registry = new FinalizationRegistry(PhysicsRuntimeFinalizer);
+            PhysicsRuntimeRegistryMap.set(wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -179,7 +179,7 @@ export class PhysicsRuntime implements IPhysicsRuntime {
         this._inner.dispose();
         this._physicsWorld.dispose();
 
-        const registry = physicsRuntimeRegistryMap.get(this.wasmInstance);
+        const registry = PhysicsRuntimeRegistryMap.get(this.wasmInstance);
         registry?.unregister(this);
     }
 

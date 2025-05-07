@@ -8,17 +8,17 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 import { BaseRuntime } from "./baseRuntime";
 import { SceneBuilder } from "./Scene/physicsToggleTestScene";
 
-const canvas = document.createElement("canvas");
-canvas.style.width = "100%";
-canvas.style.height = "100%";
-canvas.style.display = "block";
-document.body.appendChild(canvas);
+const Canvas = document.createElement("canvas");
+Canvas.style.width = "100%";
+Canvas.style.height = "100%";
+Canvas.style.display = "block";
+document.body.appendChild(Canvas);
 
-let engine;
+let Engine;
 
-const useWebGPU = false;
-if (useWebGPU) {
-    engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(canvas, {
+const UseWebGPU = false;
+if (UseWebGPU) {
+    Engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(Canvas, {
         stencil: false,
         antialias: true,
         doNotHandleTouchAction: true,
@@ -33,9 +33,9 @@ if (useWebGPU) {
             wasmPath: new URL("@babylonjs/core/assets/twgsl/twgsl.wasm", import.meta.url).href
         }
     });
-    await engine.initAsync();
+    await Engine.initAsync();
 } else {
-    engine = new (await import("@babylonjs/core/Engines/engine")).Engine(canvas, false, {
+    Engine = new (await import("@babylonjs/core/Engines/engine")).Engine(Canvas, false, {
         preserveDrawingBuffer: false,
         stencil: false,
         antialias: true,
@@ -49,8 +49,8 @@ if (useWebGPU) {
     }, true);
 }
 
-BaseRuntime.Create({
-    canvas,
-    engine,
+BaseRuntime.CreateAsync({
+    canvas: Canvas,
+    engine: Engine,
     sceneBuilder: new SceneBuilder()
 }).then(runtime => runtime.run());

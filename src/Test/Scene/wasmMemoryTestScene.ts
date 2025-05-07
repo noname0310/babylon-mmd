@@ -18,24 +18,24 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdWasmInstanceTypeMD } from "@/Runtime/Optimized/InstanceType/multiDebug";
-import type { MmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import type { IMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createLightComponents } from "../Util/createLightComponents";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateLightComponents } from "../Util/createLightComponents";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         const mmdRoot = new TransformNode("mmdRoot", scene);
-        createDefaultArcRotateCamera(scene);
-        const { shadowGenerator } = createLightComponents(scene);
+        CreateDefaultArcRotateCamera(scene);
+        const { shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
 
         const audioPlayer = new StreamAudioPlayer(scene);
@@ -49,10 +49,10 @@ export class SceneBuilder implements ISceneBuilder {
             mmdWasmInstance,
             mmdAnimation,
             modelMesh
-        ] = await parallelLoadAsync(scene, [
-            ["runtime", async(updateProgress): Promise<MmdWasmInstance> => {
+        ] = await ParallelLoadAsync(scene, [
+            ["runtime", async(updateProgress): Promise<IMmdWasmInstance> => {
                 updateProgress({ lengthComputable: true, loaded: 0, total: 1 });
-                const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMD());
+                const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMD());
                 updateProgress({ lengthComputable: true, loaded: 1, total: 1 });
                 return mmdWasmInstance;
             }],

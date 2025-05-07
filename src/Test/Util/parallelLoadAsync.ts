@@ -7,7 +7,7 @@ type LoadResult<T extends Task<any>[]> = {
     [K in keyof T]: T[K] extends Task<infer R> ? R : never;
 };
 
-export async function parallelLoadAsync<const T extends Task<any>[]>(
+export async function ParallelLoadAsync<const T extends Task<any>[]>(
     scene: Scene,
     tasks: [...T]
 ): Promise<LoadResult<T>> {

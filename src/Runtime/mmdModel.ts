@@ -24,7 +24,7 @@ import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
-import type { MmdModelPhysicsCreationOptions } from "./mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "./mmdRuntime";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./Physics/IMmdPhysics";
 
@@ -33,9 +33,9 @@ type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimation
 /**
  * Physics options for construct MmdModel
  */
-export interface MmdModelCtorPhysicsOptions {
+export interface IMmdModelCtorPhysicsOptions {
     physicsImpl: IMmdPhysics;
-    physicsOptions: Nullable<MmdModelPhysicsCreationOptions>;
+    physicsOptions: Nullable<IMmdModelPhysicsCreationOptions>;
 }
 
 
@@ -126,7 +126,7 @@ export class MmdModel implements IMmdModel {
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
-        physicsParams: Nullable<MmdModelCtorPhysicsOptions>,
+        physicsParams: Nullable<IMmdModelCtorPhysicsOptions>,
         logger: ILogger
     ) {
         this._logger = logger;

@@ -3,13 +3,13 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
-import type { BulletWasmInstance } from "../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../bulletWasmInstance";
 
 export interface IRigidBodyBundleImpl {
     readonly shouldSync: boolean;
     readonly needToCommit?: boolean;
     commitToWasm?(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         motionStatesPtr: IWasmTypedArray<Float32Array>,
         temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
@@ -35,22 +35,22 @@ export interface IRigidBodyBundleImpl {
         offset: number
     ): void;
     setDamping(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         index: number,
         linearDamping: number,
         angularDamping: number
     ): void;
-    getLinearDamping(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number;
-    getAngularDamping(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number;
+    getLinearDamping(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number;
+    getAngularDamping(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number;
     setMassProps(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         index: number,
         mass: number,
         localInertia: DeepImmutable<Vector3>
     ): void;
-    getMass(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number;
-    getLocalInertia(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): Vector3;
-    translate(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number, translation: DeepImmutable<Vector3>): void;
+    getMass(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number;
+    getLocalInertia(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): Vector3;
+    translate(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number, translation: DeepImmutable<Vector3>): void;
 }

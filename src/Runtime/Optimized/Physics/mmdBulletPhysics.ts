@@ -9,7 +9,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../../ILogger";
 import type { IMmdRuntimeBone } from "../../IMmdRuntimeBone";
-import type { MmdModelPhysicsCreationOptions } from "../../mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "../../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "../../Physics/IMmdPhysics";
 import type { Constraint } from "./Bind/constraint";
 import { ConstraintParams, Generic6DofSpringConstraint, MmdGeneric6DofSpringConstraint } from "./Bind/constraint";
@@ -302,7 +302,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
         joints: PmxObject["joints"],
         bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
-        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
+        physicsOptions: Nullable<IMmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel {
         let validatedWorldId = physicsOptions?.worldId;
         if (validatedWorldId !== undefined) {

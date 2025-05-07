@@ -22,15 +22,15 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { AttachToBone } from "../Util/attachToBone";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
         engine.snapshotRendering = true;
@@ -43,11 +43,11 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdRoot = new TransformNode("mmdRoot", scene);
         mmdRoot.scaling.scaleInPlace(worldScale);
-        const camera = createDefaultArcRotateCamera(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
         camera.parent = mmdRoot;
-        const { directionalLight, shadowGenerator } = createLightComponents(scene, { worldScale });
+        const { directionalLight, shadowGenerator } = CreateLightComponents(scene, { worldScale });
         shadowGenerator.transparencyShadow = true;
-        const ground = createDefaultGround(scene);
+        const ground = CreateDefaultGround(scene);
         ground.parent = mmdRoot;
 
         const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
@@ -62,7 +62,7 @@ export class SceneBuilder implements ISceneBuilder {
             mmdAnimation,
             modelMesh,
             havokPlugin
-        ] = await parallelLoadAsync(scene, [
+        ] = await ParallelLoadAsync(scene, [
             ["motion", (updateProgress): Promise<MmdAnimation> => {
                 const vpdLoader = new VpdLoader(scene);
                 vpdLoader.loggingEnabled = true;
@@ -108,11 +108,11 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.currentAnimation!.animate(0);
         mmdRuntime.initializeMmdModelPhysics(mmdModel);
 
-        attachToBone(scene, mmdModel, {
+        AttachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
             cameraTargetPosition: camera.target
         });
-        scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+        scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 
         let computedFrames = 0;
         const delayedDispose = (): void => {

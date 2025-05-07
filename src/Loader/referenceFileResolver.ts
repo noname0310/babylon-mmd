@@ -1,4 +1,4 @@
-import { pathNormalize } from "./Util/pathNormalize";
+import { PathNormalize } from "./Util/pathNormalize";
 
 /**
  * This is a wrapper to treat the arraybuffer as a file
@@ -50,21 +50,21 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      */
     public constructor(files: readonly T[], rootUrl: string, fileRootId: string) {
         this.files = files;
-        this._rootUrl = pathNormalize(rootUrl);
+        this._rootUrl = PathNormalize(rootUrl);
         this._fileRootId = fileRootId;
 
         if (files.length === 0) return;
 
         if (files[0] instanceof File) {
             for (const file of files) {
-                const fileRelativePath = pathNormalize((file as File).webkitRelativePath);
-                const relativePath = fileRootId + pathNormalize(fileRelativePath);
-                this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
+                const fileRelativePath = PathNormalize((file as File).webkitRelativePath);
+                const relativePath = fileRootId + PathNormalize(fileRelativePath);
+                this._fileMap.set(PathNormalize(relativePath).toUpperCase(), file);
             }
         } else {
             for (const file of files) {
-                const relativePath = fileRootId + pathNormalize(this._rootUrl + (file as IArrayBufferFile).relativePath);
-                this._fileMap.set(pathNormalize(relativePath).toUpperCase(), file);
+                const relativePath = fileRootId + PathNormalize(this._rootUrl + (file as IArrayBufferFile).relativePath);
+                this._fileMap.set(PathNormalize(relativePath).toUpperCase(), file);
             }
         }
     }
@@ -75,7 +75,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @returns Full path
      */
     public createFullPath(relativePath: string): string {
-        return this._fileRootId + pathNormalize(this._rootUrl + relativePath);
+        return this._fileRootId + PathNormalize(this._rootUrl + relativePath);
     }
 
     /**
@@ -84,7 +84,7 @@ export class ReferenceFileResolver<T extends File | IArrayBufferFile = File | IA
      * @returns File
      */
     public resolve(path: string): T | undefined {
-        const finalPath = pathNormalize(path);
+        const finalPath = PathNormalize(path);
         return this._fileMap.get(finalPath.toUpperCase());
     }
 }

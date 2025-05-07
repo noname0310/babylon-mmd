@@ -1,6 +1,6 @@
 import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 
-import type { RuntimeMorph } from "./mmdMorphControllerBase";
+import type { IRuntimeMorph } from "./mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 
 /**
@@ -47,7 +47,7 @@ export class MmdMorphController extends MmdMorphControllerBase {
         }
     }
 
-    protected override _resetBoneMorph(morph: RuntimeMorph): void {
+    protected override _resetBoneMorph(morph: IRuntimeMorph): void {
         const bones = this._runtimeBones;
         const indices = morph.elements as Int32Array;
 
@@ -64,7 +64,7 @@ export class MmdMorphController extends MmdMorphControllerBase {
 
     private readonly _tempQuaternion = new Quaternion();
 
-    protected override _applyBoneMorph(morph: RuntimeMorph, weight: number): void {
+    protected override _applyBoneMorph(morph: IRuntimeMorph, weight: number): void {
         const bones = this._runtimeBones;
 
         const indices = morph.elements as Int32Array;

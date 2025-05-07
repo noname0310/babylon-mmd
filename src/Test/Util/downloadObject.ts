@@ -1,4 +1,4 @@
-export function downloadObject(filename: string, object: any): void {
+export function DownloadObject(filename: string, object: any): void {
     const jsonString = JSON.stringify(object);
     const blob = new Blob([jsonString], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);

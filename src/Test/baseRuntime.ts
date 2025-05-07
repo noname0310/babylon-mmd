@@ -2,10 +2,10 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { Scene } from "@babylonjs/core/scene";
 
 export interface ISceneBuilder {
-    build(canvas: HTMLCanvasElement, engine: AbstractEngine): Scene | Promise<Scene>;
+    buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Scene | Promise<Scene>;
 }
 
-export interface BaseRuntimeInitParams {
+export interface IBaseRuntimeInitParams {
     canvas: HTMLCanvasElement;
     engine: AbstractEngine;
     sceneBuilder: ISceneBuilder;
@@ -17,7 +17,7 @@ export class BaseRuntime {
     private _scene: Scene;
     private _onTick: () => void;
 
-    private constructor(params: BaseRuntimeInitParams) {
+    private constructor(params: IBaseRuntimeInitParams) {
         this._canvas = params.canvas;
         this._engine = params.engine;
 
@@ -25,9 +25,9 @@ export class BaseRuntime {
         this._onTick = null!;
     }
 
-    public static async Create(params: BaseRuntimeInitParams): Promise<BaseRuntime> {
+    public static async CreateAsync(params: IBaseRuntimeInitParams): Promise<BaseRuntime> {
         const runtime = new BaseRuntime(params);
-        runtime._scene = await runtime._initialize(params.sceneBuilder);
+        runtime._scene = await runtime._initializeAsync(params.sceneBuilder);
         runtime._onTick = runtime._makeOnTick();
         return runtime;
     }
@@ -48,8 +48,8 @@ export class BaseRuntime {
         this._engine.resize();
     };
 
-    private async _initialize(sceneBuilder: ISceneBuilder): Promise<Scene> {
-        return await sceneBuilder.build(this._canvas, this._engine);
+    private async _initializeAsync(sceneBuilder: ISceneBuilder): Promise<Scene> {
+        return await sceneBuilder.buildAsync(this._canvas, this._engine);
     }
 
     private _makeOnTick(): () => void {

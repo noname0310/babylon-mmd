@@ -2,9 +2,9 @@ import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdPluginMaterial as MmdPluginMaterialBase } from "../mmdPluginMaterial";
-import { escapeRegExp } from "./escapeRegExp";
-import { sdefDeclaration } from "./sdefDeclaration";
-import { sdefVertex } from "./sdefVertex";
+import { EscapeRegExp } from "./escapeRegExp";
+import { SdefDeclaration } from "./sdefDeclaration";
+import { SdefVertex } from "./sdefVertex";
 
 export class MmdPluginMaterial extends MmdPluginMaterialBase {
     /**
@@ -25,10 +25,10 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};
 
-            codes["CUSTOM_VERTEX_DEFINITIONS"] = sdefDeclaration;
+            codes["CUSTOM_VERTEX_DEFINITIONS"] = SdefDeclaration;
 
-            codes[`!${escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
-                ${sdefVertex}
+            codes[`!${EscapeRegExp("finalWorld=finalWorld*influence;")}`] = /* glsl */`
+                ${SdefVertex}
                 
                 finalWorld = (finalWorld * influence);
             `;
@@ -48,7 +48,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("#if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)\nuniform mat4 view;\n#endif")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("#if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)\nuniform mat4 view;\n#endif")}`] = /* glsl */`
                 #if defined(REFLECTIONMAP_SPHERICAL) || defined(REFLECTIONMAP_PROJECTION) || defined(REFRACTION) || defined(PREPASS)
                     uniform mat4 view;
                 #elif defined(NORMAL) && defined(SPHERE_TEXTURE)
@@ -62,7 +62,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("vec3 diffuseColor=vDiffuseColor.rgb;")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("vec3 diffuseColor=vDiffuseColor.rgb;")}`] = /* glsl */`
                 #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
                     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
                 #else
@@ -70,7 +70,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("float alpha=vDiffuseColor.a;")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("float alpha=vDiffuseColor.a;")}`] = /* glsl */`
                 #ifdef CLAMP_ALPHA
                     float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
                 #else
@@ -78,7 +78,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("baseColor=texture2D(diffuseSampler,vDiffuseUV+uvOffset);")}`] = /* glsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
                     baseColor = texture2D(diffuseSampler, (vDiffuseUV + uvOffset));
                     baseColor.rgb = mix(
@@ -96,7 +96,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("struct lightingInfo\n{")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("struct lightingInfo\n{")}`] = /* glsl */`
                 struct lightingInfo {
                 #ifdef TOON_TEXTURE
                     #ifndef NDOTL
@@ -107,7 +107,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
             `;
 
             // ndl might be clamped to 1.0
-            codes[`!${escapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
                     result.diffuse = diffuseColor * attenuation;
                     result.ndl = ndl;
@@ -119,7 +119,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
+            codes[`!${EscapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* glsl */`
                 #ifdef TOON_TEXTURE
                     toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
                     toonNdl.r = texture2D(toonSampler, vec2(0.5, toonNdl.r)).r;
@@ -159,7 +159,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp(finalDiffuse)}`] = /* glsl */`
+            codes[`!${EscapeRegExp(finalDiffuse)}`] = /* glsl */`
                 #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
                     #ifdef EMISSIVEASILLUMINATION
                         vec3 finalDiffuse = clamp(diffuseBase * diffuseColor, 0.0, 1.0) * baseColor.rgb;

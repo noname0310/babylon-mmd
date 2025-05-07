@@ -15,8 +15,8 @@ import "@babylonjs/core/Shaders/ShadersInclude/logDepthVertex";
 
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "mmdOutlineVertexShader";
-const shader = /* glsl */`
+const Name = "mmdOutlineVertexShader";
+const Shader = /* glsl */`
 // Attribute
 attribute vec3 position;
 attribute vec3 normal;
@@ -96,6 +96,6 @@ void main(void)
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[name] = shader;
+ShaderStore.ShadersStore[Name] = Shader;
 /** @internal */
-export const mmdOutlineVertexShader = { name, shader };
+export const MmdOutlineVertexShader = { name: Name, shader: Shader };

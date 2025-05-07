@@ -7,7 +7,7 @@
  * @param x Weight
  * @returns Interpolated value
  */
-export function bezierInterpolate(x1: number, x2: number, y1: number, y2: number, x: number): number {
+export function BezierInterpolate(x1: number, x2: number, y1: number, y2: number, x: number): number {
     /*
     Cubic Bezier curves
     https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Cubic_B.C3.A9zier_curves

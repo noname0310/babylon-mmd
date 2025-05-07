@@ -72,7 +72,7 @@ export class AudioElementPool implements IAudioElementPool {
 /**
  * Stream audio player options
  */
-export interface StreamAudioPlayerOptions {
+export interface IStreamAudioPlayerOptions {
     /**
      * Whether to pooling the audio element
      *
@@ -171,7 +171,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * @param disposeObservable Objects that limit the lifetime of this instance
      * @param options Options
      */
-    public constructor(disposeObservable: Nullable<IDisposeObservable>, options: StreamAudioPlayerOptions = {}) {
+    public constructor(disposeObservable: Nullable<IDisposeObservable>, options: IStreamAudioPlayerOptions = {}) {
         const poolOption = options.pool ?? false;
 
         this.onLoadErrorObservable = new Observable<void>();
@@ -378,6 +378,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
      * Unmute is possible failed if user interaction is not performed
      * @returns Whether the audio is unmuted
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async unmute(): Promise<boolean> {
         if (this._audio === null) return false;
         if (!this._isVirtualPlay) return true;
@@ -494,7 +495,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
         return this._metadataLoaded;
     }
 
-    private async _virtualPlay(): Promise<void> {
+    private async _virtualPlayAsync(): Promise<void> {
         if (this._metadataLoaded) {
             if (this._virtualPaused) {
                 this._virtualStartTime = performance.now() / 1000 - this._virtualPauseCurrentTime / this._playbackRate;
@@ -543,11 +544,12 @@ export class StreamAudioPlayer implements IAudioPlayer {
      *
      * If context don't have permission to play the audio, play audio in a mute state
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async play(): Promise<void> {
         if (this._isVirtualPlay && !this._virtualPaused) return;
 
         if (this._isVirtualPlay) {
-            await this._virtualPlay();
+            await this._virtualPlayAsync();
             return;
         }
 
@@ -558,7 +560,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
             await this._audio?.play();
         } catch (e) {
             if (e instanceof DOMException && e.name === "NotAllowedError") {
-                await this._virtualPlay();
+                await this._virtualPlayAsync();
             } else {
                 throw e;
             }

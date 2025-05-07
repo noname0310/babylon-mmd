@@ -21,7 +21,7 @@ import type { IMmdPhysics } from "./Physics/IMmdPhysics";
 /**
  * Options for constructing MMD model physics
  */
-export interface MmdModelPhysicsCreationOptions {
+export interface IMmdModelPhysicsCreationOptions {
     /**
      * Physics world ID (default: MmdWasmRuntime.physics.nextWorldId or MmdBulletPhysics.nextWorldId)
      *
@@ -63,7 +63,7 @@ export interface MmdModelPhysicsCreationOptions {
  *
  * Generic type `TMaterial` is used to specify the material type of the model
  */
-export interface MmdModelCreationOptions<TMaterial extends Material = Material> {
+export interface IMmdModelCreationOptions<TMaterial extends Material = Material> {
     /**
      * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
      */
@@ -72,7 +72,7 @@ export interface MmdModelCreationOptions<TMaterial extends Material = Material> 
     /**
      * Whether to build physics (default: true)
      */
-    buildPhysics?: MmdModelPhysicsCreationOptions | boolean;
+    buildPhysics?: IMmdModelPhysicsCreationOptions | boolean;
 }
 
 /**
@@ -237,7 +237,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      */
     public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: MmdModelCreationOptions<TMaterial> = {}
+        options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -254,7 +254,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdSkinnedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: MmdModelCreationOptions<TMaterial> = {}
+        options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -365,6 +365,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @param audioPlayer Audio player
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async setAudioPlayer(audioPlayer: Nullable<IPlayer>): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
 
@@ -633,6 +634,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * It returns Promise because playing audio is asynchronous
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async playAnimation(): Promise<void> {
         if (this._audioPlayer !== null && this._currentFrameTime < this._audioPlayer.duration * 30) {
             try {
@@ -711,6 +713,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @param forceEvaluate Whether to force evaluate animation
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void> {
         frameTime = Math.max(0, Math.min(frameTime, this._animationFrameTimeDuration));
 

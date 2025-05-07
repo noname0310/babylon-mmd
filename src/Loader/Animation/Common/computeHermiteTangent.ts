@@ -6,7 +6,7 @@
  * @param valueDelta y distance between the value
  * @returns hermite tangent value
  */
-export function computeHermiteTangent(x: number, y: number, frameDelta: number, valueDelta: number): number {
+export function ComputeHermiteTangent(x: number, y: number, frameDelta: number, valueDelta: number): number {
     let tangent;
 
     if (valueDelta === 0) {

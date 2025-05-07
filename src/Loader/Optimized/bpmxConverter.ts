@@ -260,7 +260,7 @@ import { BpmxObject } from "./Parser/bpmxObject";
 /**
  * BPMX convert options
  */
-export interface BpmxConvertOptions {
+export interface IBpmxConvertOptions {
     /**
      * Include skinning data into BPMX data (default: true)
      */
@@ -318,7 +318,7 @@ export class BpmxConverter implements ILogger {
      * @returns BPMX data as ArrayBuffer
      * @throws {Error} Failed to convert BPMX
      */
-    public convert(mmdMesh: Mesh, options: BpmxConvertOptions = {}): ArrayBuffer {
+    public convert(mmdMesh: Mesh, options: IBpmxConvertOptions = {}): ArrayBuffer {
         if (!MmdMesh.isMmdMesh(mmdMesh)) {
             throw new Error(`${mmdMesh.name} is not MmdMesh`);
         }

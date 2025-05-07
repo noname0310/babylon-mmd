@@ -9,7 +9,7 @@ import { VmdLoader } from "@/Loader/vmdLoader";
 import type { ISceneBuilder } from "../baseRuntime";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);

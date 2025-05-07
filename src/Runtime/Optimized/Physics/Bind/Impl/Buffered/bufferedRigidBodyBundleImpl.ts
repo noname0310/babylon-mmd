@@ -3,7 +3,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
-import type { BulletWasmInstance } from "../../bulletWasmInstance";
+import type { IBulletWasmInstance } from "../../bulletWasmInstance";
 import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
 import type { IRigidBodyBundleImpl } from "../IRigidBodyBundleImpl";
 import { RigidBodyCommand } from "./rigidBodyCommand";
@@ -57,7 +57,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     }
 
     public commitToWasm(
-        wasmInstance: BulletWasmInstance,
+        wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         motionStatesPtr: IWasmTypedArray<Float32Array>,
         temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
@@ -265,7 +265,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     }
 
     public setDamping(
-        _wasmInstance: BulletWasmInstance,
+        _wasmInstance: IBulletWasmInstance,
         _bundlePtr: number,
         index: number,
         linearDamping: number,
@@ -276,17 +276,17 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     }
 
     // this member is not updated by wasm so no need to synchronization before read
-    public getLinearDamping(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number {
+    public getLinearDamping(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number {
         return wasmInstance.rigidBodyBundleGetLinearDamping(bundlePtr, index);
     }
 
     // this member is not updated by wasm so no need to synchronization before read
-    public getAngularDamping(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number {
+    public getAngularDamping(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number {
         return wasmInstance.rigidBodyBundleGetAngularDamping(bundlePtr, index);
     }
 
     public setMassProps(
-        _wasmInstance: BulletWasmInstance,
+        _wasmInstance: IBulletWasmInstance,
         _bundlePtr: number,
         index: number,
         mass: number,
@@ -297,12 +297,12 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     }
 
     // this member is not updated by wasm so no need to synchronization before read
-    public getMass(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): number {
+    public getMass(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number {
         return wasmInstance.rigidBodyBundleGetMass(bundlePtr, index);
     }
 
     // this member is not updated by wasm so no need to synchronization before read
-    public getLocalInertia(wasmInstance: BulletWasmInstance, bundlePtr: number, index: number): Vector3 {
+    public getLocalInertia(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): Vector3 {
         const outBufferPtr = wasmInstance.allocateBuffer(3 * Constants.A32BytesPerElement);
         const outBuffer = wasmInstance.createTypedArray(Float32Array, outBufferPtr, 3).array;
         wasmInstance.rigidBodyBundleGetLocalInertia(bundlePtr, index, outBufferPtr);
@@ -312,7 +312,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     }
 
     public translate(
-        _wasmInstance: BulletWasmInstance,
+        _wasmInstance: IBulletWasmInstance,
         _bundlePtr: number,
         index: number,
         translation: DeepImmutable<Vector3>

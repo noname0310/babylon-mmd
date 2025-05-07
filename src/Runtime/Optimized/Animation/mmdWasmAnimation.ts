@@ -6,7 +6,7 @@ import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import { MmdCameraAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
 import type { IDisposeObservable } from "@/Runtime/IDisposeObserable";
 
-import type { MmdWasmInstance } from "../mmdWasmInstance";
+import type { IMmdWasmInstance } from "../mmdWasmInstance";
 import { AnimationPoolWrapper } from "./animationPoolWrapper";
 import { MmdWasmBoneAnimationTrack, MmdWasmMorphAnimationTrack, MmdWasmMovableBoneAnimationTrack, MmdWasmPropertyAnimationTrack } from "./mmdWasmAnimationTrack";
 
@@ -49,7 +49,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
      */
     public constructor(
         mmdAnimation: MmdAnimation,
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         disposeObservable: Nullable<IDisposeObservable>
     ) {
         const animationPoolWrapper = AnimationPoolWrapper.Get(wasmInstance);

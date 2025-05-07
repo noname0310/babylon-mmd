@@ -3,7 +3,7 @@ import type { PhysicsImpostorJoint } from "@babylonjs/core/Physics/v1/IPhysicsEn
 import { PhysicsJoint, type PhysicsJointData } from "@babylonjs/core/Physics/v1/physicsJoint";
 import { AmmoJSPlugin } from "@babylonjs/core/Physics/v1/Plugins/ammoJSPlugin";
 
-export const generic6DofSpringJoint = 20;
+export const Generic6DofSpringJointKind = 20;
 
 /**
  * AmmoJS Physics plugin modified for MMD
@@ -107,8 +107,8 @@ export class MmdAmmoJSPlugin extends AmmoJSPlugin {
             return;
         }
 
-        if (impostorJoint.joint.type === generic6DofSpringJoint) {
-            const jointData = impostorJoint.joint.jointData as Generic6DofSpringJointData;
+        if (impostorJoint.joint.type === Generic6DofSpringJointKind) {
+            const jointData = impostorJoint.joint.jointData as IGeneric6DofSpringJointData;
             if (!jointData.mainFrame) {
                 jointData.mainFrame = Matrix.Identity();
             }
@@ -250,15 +250,15 @@ export class Generic6DofSpringJoint extends PhysicsJoint {
      * Initializes the Generic6DofSpringJoint
      * @param jointData The physical joint data for the joint
      */
-    public constructor(jointData: Generic6DofSpringJointData) {
-        super(generic6DofSpringJoint, jointData);
+    public constructor(jointData: IGeneric6DofSpringJointData) {
+        super(Generic6DofSpringJointKind, jointData);
     }
 }
 
 /**
  * Interface for a generic 6 DOF spring joint
  */
-export interface Generic6DofSpringJointData extends PhysicsJointData {
+export interface IGeneric6DofSpringJointData extends PhysicsJointData {
     /**
      * The main local axis of the joint in the first body's local space.
      */

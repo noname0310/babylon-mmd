@@ -4,18 +4,18 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import { Constants, RigidBodyConstructionInfoOffsets } from "./constants";
 import { ConstructionInfoDataMask } from "./constructionInfoDataMask";
 import { MotionType } from "./motionType";
 import type { PhysicsShape } from "./physicsShape";
 
 class RigidBodyConstructionInfoInner {
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private _shapeReference: Nullable<PhysicsShape>;
 
-    public constructor(wasmInstance: WeakRef<BulletWasmInstance>, ptr: number) {
+    public constructor(wasmInstance: WeakRef<IBulletWasmInstance>, ptr: number) {
         this._wasmInstance = wasmInstance;
         this._ptr = ptr;
         this._shapeReference = null;
@@ -55,11 +55,11 @@ class RigidBodyConstructionInfoInner {
     }
 }
 
-function rigidBodyConstructionInfoFinalizer(inner: RigidBodyConstructionInfoInner): void {
+function RigidBodyConstructionInfoFinalizer(inner: RigidBodyConstructionInfoInner): void {
     inner.dispose();
 }
 
-const rigidBodyConstructionInfoRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<RigidBodyConstructionInfoInner>>();
+const RigidBodyConstructionInfoRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<RigidBodyConstructionInfoInner>>();
 
 /**
  * RigidBodyConstructionInfo is used to create a rigid body in the physics engine
@@ -67,7 +67,7 @@ const rigidBodyConstructionInfoRegistryMap = new WeakMap<BulletWasmInstance, Fin
  * it contains all the information needed to create a rigid body, such as the shape, mass, inertia, damping, etc.
  */
 export class RigidBodyConstructionInfo {
-    private readonly _wasmInstance: BulletWasmInstance;
+    private readonly _wasmInstance: IBulletWasmInstance;
 
     private readonly _uint32Ptr: IWasmTypedArray<Uint32Array>;
     private readonly _float32Ptr: IWasmTypedArray<Float32Array>;
@@ -80,7 +80,7 @@ export class RigidBodyConstructionInfo {
      * Creates a new RigidBodyConstructionInfo
      * @param wasmInstance The BulletWasmInstance to use
      */
-    public constructor(wasmInstance: BulletWasmInstance) {
+    public constructor(wasmInstance: IBulletWasmInstance) {
         this._wasmInstance = wasmInstance;
 
         // Allocate buffer
@@ -171,10 +171,10 @@ export class RigidBodyConstructionInfo {
 
 
         // finalization registry
-        let registry = rigidBodyConstructionInfoRegistryMap.get(wasmInstance);
+        let registry = RigidBodyConstructionInfoRegistryMap.get(wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(rigidBodyConstructionInfoFinalizer);
-            rigidBodyConstructionInfoRegistryMap.set(wasmInstance, registry);
+            registry = new FinalizationRegistry(RigidBodyConstructionInfoFinalizer);
+            RigidBodyConstructionInfoRegistryMap.set(wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -190,7 +190,7 @@ export class RigidBodyConstructionInfo {
 
         this._inner.dispose();
 
-        const registry = rigidBodyConstructionInfoRegistryMap.get(this._wasmInstance);
+        const registry = RigidBodyConstructionInfoRegistryMap.get(this._wasmInstance);
         registry?.unregister(this);
     }
 

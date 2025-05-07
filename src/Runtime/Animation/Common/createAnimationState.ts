@@ -5,7 +5,7 @@ import { Animation } from "@babylonjs/core/Animations/animation";
  * Creates a new animation state
  * @returns A new animation state
  */
-export function createAnimationState(): _IAnimationState {
+export function CreateAnimationState(): _IAnimationState {
     return {
         key: 0,
         repeatCount: 0,

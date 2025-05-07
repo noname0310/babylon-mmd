@@ -5,9 +5,9 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 import type { IPhysicsRuntime } from "../Impl/IPhysicsRuntime";
 import { PhysicsBoxShape, PhysicsCapsuleShape, PhysicsSphereShape } from "../physicsShape";
 
-const tempVector3 = new Vector3();
+const TempVector3 = new Vector3();
 
-function localTransformMatrixFromTranslationRotationToRef(center?: Vector3, rotation?: Quaternion, matrix?: Matrix): Nullable<Matrix> {
+function LocalTransformMatrixFromTranslationRotationToRef(center?: Vector3, rotation?: Quaternion, matrix?: Matrix): Nullable<Matrix> {
     if (
         center?.equalsToFloats(0, 0, 0) === false ||
         rotation?.equalsToFloats(0, 0, 0, 1) === false
@@ -65,8 +65,8 @@ export class PluginBoxShape extends PhysicsBoxShape implements IPluginShape {
         rotation?: Quaternion,
         extents: Vector3 = new Vector3(1.0, 1.0, 1.0)
     ) {
-        super(runtime, extents.scaleToRef(0.5, tempVector3));
-        this.localTransform = localTransformMatrixFromTranslationRotationToRef(center, rotation);
+        super(runtime, extents.scaleToRef(0.5, TempVector3));
+        this.localTransform = LocalTransformMatrixFromTranslationRotationToRef(center, rotation);
     }
 
     public setMaterial(friction: number, restitution: number): void {
@@ -90,7 +90,7 @@ export class PluginSphereShape extends PhysicsSphereShape implements IPluginShap
         radius: number = 1.0
     ) {
         super(runtime, radius);
-        this.localTransform = localTransformMatrixFromTranslationRotationToRef(center);
+        this.localTransform = LocalTransformMatrixFromTranslationRotationToRef(center);
     }
 
     public setMaterial(friction: number, restitution: number): void {
@@ -120,7 +120,7 @@ export class PluginCapsuleShape extends PhysicsCapsuleShape implements IPluginSh
         const direction = pointB.subtract(pointA);
         direction.normalize();
         const quaternion = Quaternion.FromUnitVectorsToRef(Vector3.Up(), direction, new Quaternion());
-        this.localTransform = localTransformMatrixFromTranslationRotationToRef(pointA, quaternion);
+        this.localTransform = LocalTransformMatrixFromTranslationRotationToRef(pointA, quaternion);
     }
 
     public setMaterial(friction: number, restitution: number): void {

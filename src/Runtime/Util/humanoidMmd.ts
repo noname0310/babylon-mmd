@@ -242,7 +242,7 @@ class BoneContainer implements IMmdLinkedBoneContainer {
 /**
  * Options for creating MMD model from humanoid
  */
-export interface CreateMmdModelFromHumanoidOptions {
+export interface ICreateMmdModelFromHumanoidOptions {
     /**
      * Humanoid bone name to MMD bone name map (default: {})
      *
@@ -842,7 +842,7 @@ export class HumanoidMmd {
         mmdRuntime: IMmdRuntime<T>,
         humanoidMesh: Mesh,
         meshes: readonly Mesh[],
-        options: CreateMmdModelFromHumanoidOptions = {}
+        options: ICreateMmdModelFromHumanoidOptions = {}
     ): T {
         const {
             boneMap = {},

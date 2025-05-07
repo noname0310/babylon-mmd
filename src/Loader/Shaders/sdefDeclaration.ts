@@ -1,4 +1,4 @@
-export const sdefDeclaration = /* glsl */`
+export const SdefDeclaration = /* glsl */`
 #ifndef SDEFDECLARATION
 #define SDEFDECLARATION
 

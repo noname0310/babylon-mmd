@@ -8,7 +8,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { SharedToonTextures } from "./sharedToonTextures";
-import { pathNormalize } from "./Util/pathNormalize";
+import { PathNormalize } from "./Util/pathNormalize";
 
 /**
  * MMD texture load options
@@ -352,7 +352,7 @@ export class MmdAsyncTextureLoader {
             extension;
     }
 
-    private async _loadTextureAsyncInternal(
+    private async _loadTextureInternalAsync(
         uniqueId: number,
         urlOrTextureName: string,
         arrayBufferOrBlob: Nullable<ArrayBuffer | Blob>,
@@ -468,9 +468,9 @@ export class MmdAsyncTextureLoader {
 
         const requestString = isSharedToonTexture
             ? finalRelativeTexturePath
-            : pathNormalize(rootUrl + relativeTexturePathOrIndex);
+            : PathNormalize(rootUrl + relativeTexturePathOrIndex);
 
-        return await this._loadTextureAsyncInternal(
+        return await this._loadTextureInternalAsync(
             uniqueId,
             requestString,
             null,
@@ -507,10 +507,10 @@ export class MmdAsyncTextureLoader {
         applyPathNormalization = true
     ): Promise<Nullable<Texture>> {
         if (applyPathNormalization) {
-            textureName = pathNormalize(textureName);
+            textureName = PathNormalize(textureName);
         }
 
-        return await this._loadTextureAsyncInternal(
+        return await this._loadTextureInternalAsync(
             uniqueId,
             textureName,
             arrayBufferOrBlob,

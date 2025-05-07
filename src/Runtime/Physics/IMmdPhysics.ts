@@ -5,7 +5,7 @@ import type { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
-import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "../mmdRuntime";
 
 /**
  * Mmd physics builder implementation object
@@ -43,7 +43,7 @@ export interface IMmdPhysics {
         joints: PmxObject["joints"],
         bodyToBoneMap: Nullable<IMmdRuntimeBone>[],
         logger: ILogger,
-        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
+        physicsOptions: Nullable<IMmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel;
 }
 

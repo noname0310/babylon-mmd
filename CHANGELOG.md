@@ -5,6 +5,7 @@
 - introduce `StandardMaterialBuilder`/`PBRMaterialBuilder` for build mmd model with `StandardMaterial`/`PBRMaterial` instead of `MmdStandardMaterial`
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
 - align with Babylon.js 8.6.0 method name change, see [#16455](https://github.com/BabylonJS/Babylon.js/pull/16455)
+- apply new naming convention
 - support MMD physics toggle specification
 - BVMD format updated to 2.1.0. Files of version 2.0.0 is still compatible
   - physics toggle data is now stored in BVMD file

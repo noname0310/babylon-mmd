@@ -32,7 +32,7 @@ import { OiComputeTransformInjector } from "@/Runtime/Util/oiComputeTransformInj
 
 import type { ISceneBuilder } from "../baseRuntime";
 
-async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
+async function ReadDirectories(entries: FileSystemEntry[], path = ""): Promise<FileSystemFileEntry[]> {
     const result: FileSystemFileEntry[] = [];
 
     for (let i = 0; i < entries.length; ++i) {
@@ -42,7 +42,7 @@ async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<F
             const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
                 dirReader.readEntries(resolve, reject);
             });
-            result.push(...await readDirectories(entries, path + entry.name + "/"));
+            result.push(...await ReadDirectories(entries, path + entry.name + "/"));
         } else {
             result.push(entry as FileSystemFileEntry);
         }
@@ -51,9 +51,9 @@ async function readDirectories(entries: FileSystemEntry[], path = ""): Promise<F
     return result;
 }
 
-async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
+async function EntriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
     const files: File[] = [];
-    const directories = await readDirectories(entries);
+    const directories = await ReadDirectories(entries);
     for (let i = 0; i < directories.length; ++i) {
         const entry = directories[i];
         const file = await new Promise<File>((resolve, reject) => {
@@ -71,7 +71,7 @@ async function entriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
 }
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const materialBuilder = new MmdStandardMaterialBuilder();
@@ -191,7 +191,7 @@ export class SceneBuilder implements ISceneBuilder {
                         translucentMaterials[i] = true;
                         const referencedMeshes = meshes.filter(m => m.material === material);
                         for (const referencedMesh of referencedMeshes) {
-                            const isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometry(diffuseTexture, referencedMesh, null);
+                            const isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometryAsync(diffuseTexture, referencedMesh, null);
                             if (isOpaque) {
                                 translucentMaterials[i] = false;
                                 break;
@@ -424,8 +424,8 @@ export class SceneBuilder implements ISceneBuilder {
                 if (entry) entries.push(entry);
             }
 
-            const fileSystemEntries = await readDirectories(entries);
-            files = await entriesToFiles(fileSystemEntries);
+            const fileSystemEntries = await ReadDirectories(entries);
+            files = await EntriesToFiles(fileSystemEntries);
             renderLoadedFiles();
         };
         fileInput.onchange = (): void => {

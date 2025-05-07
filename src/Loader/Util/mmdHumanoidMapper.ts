@@ -188,7 +188,7 @@
 /**
  * Humanoid bone name map for interchanging assets between mmd and humanoid rig
  */
-export interface MmdHumanoidBoneMap {
+export interface IMmdHumanoidBoneMap {
     /**
      * maps to "センター"(center)
      */
@@ -515,7 +515,7 @@ export const MixamoMmdHumanoidBoneMap = {
     rightLittleProximal: "mixamorig:RightHandPinky1",
     rightLittleIntermediate: "mixamorig:RightHandPinky2",
     rightLittleDistal: "mixamorig:RightHandPinky3"
-} as const satisfies MmdHumanoidBoneMap;
+} as const satisfies IMmdHumanoidBoneMap;
 
 /**
  * vrm humanoid bone name map
@@ -577,7 +577,7 @@ export const VrmMmdHumanoidBoneMap = {
     rightLittleProximal: "rightLittleProximal",
     rightLittleIntermediate: "rightLittleIntermediate",
     rightLittleDistal: "rightLittleDistal"
-} as const satisfies MmdHumanoidBoneMap;
+} as const satisfies IMmdHumanoidBoneMap;
 
 /**
  * bone name map generator for interchanging assets between mmd and humanoid rig
@@ -640,9 +640,9 @@ export class MmdHumanoidMapper {
         rightLittleProximal: "右小指１",
         rightLittleIntermediate: "右小指２",
         rightLittleDistal: "右小指３"
-    } as const satisfies MmdHumanoidBoneMap;
+    } as const satisfies IMmdHumanoidBoneMap;
 
-    private static readonly _PropertyKeys: readonly (keyof MmdHumanoidBoneMap)[] = Object.keys(MmdHumanoidMapper._PropertyMap) as (keyof MmdHumanoidBoneMap)[];
+    private static readonly _PropertyKeys: readonly (keyof IMmdHumanoidBoneMap)[] = Object.keys(MmdHumanoidMapper._PropertyMap) as (keyof IMmdHumanoidBoneMap)[];
 
     /**
      * Humanoid bone to mmd bone name map
@@ -653,7 +653,7 @@ export class MmdHumanoidMapper {
      * Create a new `MmdHumanoidMapper` instance
      * @param mmdHumanoidBoneMap humanoid bone name map
      */
-    public constructor(mmdHumanoidBoneMap: MmdHumanoidBoneMap) {
+    public constructor(mmdHumanoidBoneMap: IMmdHumanoidBoneMap) {
         const boneMap = this.boneMap = {} as { [key: string]: string };
 
         const propertyMap = MmdHumanoidMapper._PropertyMap;

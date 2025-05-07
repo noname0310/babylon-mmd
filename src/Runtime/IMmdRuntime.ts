@@ -10,7 +10,7 @@ import type { IMmdModel } from "./IMmdModel";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "./mmdCamera";
 import type { MmdSkinnedMesh } from "./mmdMesh";
-import type { MmdModelCreationOptions } from "./mmdRuntime";
+import type { IMmdModelCreationOptions } from "./mmdRuntime";
 
 /**
  * MMD runtime orchestrates several MMD components (models, camera, audio)
@@ -73,7 +73,7 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
      */
     createMmdModel<TMaterial extends Material>(
         mmdSkinedMesh: Mesh,
-        options?: MmdModelCreationOptions<TMaterial>
+        options?: IMmdModelCreationOptions<TMaterial>
     ): TMmdModel;
 
     /**
@@ -87,7 +87,7 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
     createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdSkinedMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options?: MmdModelCreationOptions<TMaterial>
+        options?: IMmdModelCreationOptions<TMaterial>
     ): TMmdModel;
 
     /**
