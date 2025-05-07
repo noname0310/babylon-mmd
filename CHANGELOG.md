@@ -4,6 +4,7 @@
 
 - introduce `StandardMaterialBuilder` for build mmd model with `StandardMaterial` instead of `MmdStandardMaterial`
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
+- apply new naming convention
 
 ## 0.64.1 (2025-04-16)
 
