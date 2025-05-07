@@ -1,5 +1,5 @@
 import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import { _staticOffsetValueColor3, _staticOffsetValueColor4, _staticOffsetValueQuaternion, _staticOffsetValueSize, _staticOffsetValueVector2, _staticOffsetValueVector3, Animation } from "@babylonjs/core/Animations/animation";
+import { _StaticOffsetValueColor3, _StaticOffsetValueColor4, _StaticOffsetValueQuaternion, _StaticOffsetValueSize, _StaticOffsetValueVector2, _StaticOffsetValueVector3, Animation } from "@babylonjs/core/Animations/animation";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -113,7 +113,7 @@ export class BezierAnimation extends Animation {
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
+                    return quatValue.addInPlace((state.offsetValue || _StaticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -130,7 +130,7 @@ export class BezierAnimation extends Animation {
                     return vec3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return vec3Value.add((state.offsetValue || _staticOffsetValueVector3).scale(state.repeatCount));
+                    return vec3Value.add((state.offsetValue || _StaticOffsetValueVector3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -146,7 +146,7 @@ export class BezierAnimation extends Animation {
                     return vec2Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return vec2Value.add((state.offsetValue || _staticOffsetValueVector2).scale(state.repeatCount));
+                    return vec2Value.add((state.offsetValue || _StaticOffsetValueVector2).scale(state.repeatCount));
                 }
                 break;
             }
@@ -159,7 +159,7 @@ export class BezierAnimation extends Animation {
                     return this.sizeInterpolateFunction(startValue, endValue, gradient);
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _staticOffsetValueSize).scale(state.repeatCount));
+                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _StaticOffsetValueSize).scale(state.repeatCount));
                 }
                 break;
             }
@@ -175,7 +175,7 @@ export class BezierAnimation extends Animation {
                     return color3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return color3Value.add((state.offsetValue || _staticOffsetValueColor3).scale(state.repeatCount));
+                    return color3Value.add((state.offsetValue || _StaticOffsetValueColor3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -191,7 +191,7 @@ export class BezierAnimation extends Animation {
                     return color4Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return color4Value.add((state.offsetValue || _staticOffsetValueColor4).scale(state.repeatCount));
+                    return color4Value.add((state.offsetValue || _StaticOffsetValueColor4).scale(state.repeatCount));
                 }
                 break;
             }
@@ -244,7 +244,7 @@ export class BezierAnimation extends Animation {
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
+                    return quatValue.addInPlace((state.offsetValue || _StaticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -261,7 +261,7 @@ export class BezierAnimation extends Animation {
                     return quatValue;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return quatValue.addInPlace((state.offsetValue || _staticOffsetValueQuaternion).scale(state.repeatCount));
+                    return quatValue.addInPlace((state.offsetValue || _StaticOffsetValueQuaternion).scale(state.repeatCount));
                 }
 
                 return quatValue;
@@ -278,7 +278,7 @@ export class BezierAnimation extends Animation {
                     return vec3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return vec3Value.add((state.offsetValue || _staticOffsetValueVector3).scale(state.repeatCount));
+                    return vec3Value.add((state.offsetValue || _StaticOffsetValueVector3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -294,7 +294,7 @@ export class BezierAnimation extends Animation {
                     return vec2Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return vec2Value.add((state.offsetValue || _staticOffsetValueVector2).scale(state.repeatCount));
+                    return vec2Value.add((state.offsetValue || _StaticOffsetValueVector2).scale(state.repeatCount));
                 }
                 break;
             }
@@ -307,7 +307,7 @@ export class BezierAnimation extends Animation {
                     return this.sizeInterpolateFunction(startValue, endValue, gradient);
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _staticOffsetValueSize).scale(state.repeatCount));
+                    return this.sizeInterpolateFunction(startValue, endValue, gradient).add((state.offsetValue || _StaticOffsetValueSize).scale(state.repeatCount));
                 }
                 break;
             }
@@ -323,7 +323,7 @@ export class BezierAnimation extends Animation {
                     return color3Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return color3Value.add((state.offsetValue || _staticOffsetValueColor3).scale(state.repeatCount));
+                    return color3Value.add((state.offsetValue || _StaticOffsetValueColor3).scale(state.repeatCount));
                 }
                 break;
             }
@@ -339,7 +339,7 @@ export class BezierAnimation extends Animation {
                     return color4Value;
                 case Animation.ANIMATIONLOOPMODE_RELATIVE:
                 case Animation.ANIMATIONLOOPMODE_RELATIVE_FROM_CURRENT:
-                    return color4Value.add((state.offsetValue || _staticOffsetValueColor4).scale(state.repeatCount));
+                    return color4Value.add((state.offsetValue || _StaticOffsetValueColor4).scale(state.repeatCount));
                 }
                 break;
             }
