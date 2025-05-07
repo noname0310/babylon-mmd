@@ -7,7 +7,7 @@ import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 import type { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 
-type IMmdBindableAnimation = IMmdBindableCameraAnimation | IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>;
+type MmdBindableAnimation = IMmdBindableCameraAnimation | IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>;
 
 /**
  * Represents a slice of an MMD animation
@@ -16,7 +16,7 @@ export class MmdAnimationSpan {
     /**
      * The animation that this span uses
      */
-    public readonly animation: IMmdBindableAnimation;
+    public readonly animation: MmdBindableAnimation;
 
     /**
      * Start frame of the span (default: animation.startFrame)
@@ -69,7 +69,7 @@ export class MmdAnimationSpan {
      * @param offset Offset of the span (default: 0)
      * @param weight Animation weight (default: 1)
      */
-    public constructor(animation: IMmdBindableAnimation, startFrame?: number, endFrame?: number, offset?: number, weight?: number) {
+    public constructor(animation: MmdBindableAnimation, startFrame?: number, endFrame?: number, offset?: number, weight?: number) {
         this.animation = animation;
         this.startFrame = startFrame ?? animation.startFrame;
         this.endFrame = endFrame ?? animation.endFrame;

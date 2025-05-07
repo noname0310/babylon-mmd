@@ -1,4 +1,4 @@
-export const standardBoneObject = [
+export const StandardBoneObject = [
     {
         "name": "全ての親",
         "parentBoneIndex": -1,

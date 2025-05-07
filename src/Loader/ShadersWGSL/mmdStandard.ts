@@ -2,9 +2,9 @@ import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { MmdPluginMaterial as MmdPluginMaterialBase } from "../mmdPluginMaterial";
-import { escapeRegExp } from "./escapeRegExp";
-import { sdefDeclaration } from "./sdefDeclaration";
-import { sdefVertex } from "./sdefVertex";
+import { EscapeRegExp } from "./escapeRegExp";
+import { SdefDeclaration } from "./sdefDeclaration";
+import { SdefVertex } from "./sdefVertex";
 
 export class MmdPluginMaterial extends MmdPluginMaterialBase {
     /**
@@ -25,10 +25,10 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
         if (shaderType === "vertex") {
             const codes: { [pointName: string]: string; } = {};
 
-            codes["CUSTOM_VERTEX_DEFINITIONS"] = sdefDeclaration;
+            codes["CUSTOM_VERTEX_DEFINITIONS"] = SdefDeclaration;
 
-            codes[`!${escapeRegExp("finalWorld=finalWorld*influence;")}`] = /* wgsl */`
-                ${sdefVertex}
+            codes[`!${EscapeRegExp("finalWorld=finalWorld*influence;")}`] = /* wgsl */`
+                ${SdefVertex}
                 
                 finalWorld = (finalWorld * influence);
             `;
@@ -56,7 +56,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("var diffuseColor: vec3f=uniforms.vDiffuseColor.rgb;")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("var diffuseColor: vec3f=uniforms.vDiffuseColor.rgb;")}`] = /* wgsl */`
                 #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
                     var diffuseColor: vec3f = clamp(uniforms.vDiffuseColor.rgb + uniforms.vAmbientColor, vec3f(0.0), vec3f(1.0));
                 #else
@@ -64,7 +64,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("var alpha: f32=uniforms.vDiffuseColor.a;")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("var alpha: f32=uniforms.vDiffuseColor.a;")}`] = /* wgsl */`
                 #ifdef CLAMP_ALPHA
                     var alpha: f32 = clamp(uniforms.vDiffuseColor.a, 0.0, 1.0);
                 #else
@@ -72,7 +72,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("baseColor=textureSample(diffuseSampler,diffuseSamplerSampler,fragmentInputs.vDiffuseUV+uvOffset);")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("baseColor=textureSample(diffuseSampler,diffuseSamplerSampler,fragmentInputs.vDiffuseUV+uvOffset);")}`] = /* wgsl */`
                 #if defined(DIFFUSE) && defined(TEXTURE_COLOR)
                     baseColor = textureSample(diffuseSampler, diffuseSamplerSampler, (fragmentInputs.vDiffuseUV + uvOffset));
                     baseColor = vec4f(
@@ -96,7 +96,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("struct lightingInfo\n{")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("struct lightingInfo\n{")}`] = /* wgsl */`
                 struct lightingInfo {
                 #ifdef TOON_TEXTURE
                     #ifndef NDOTL
@@ -107,7 +107,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
             `;
 
             // ndl might be clamped to 1.0
-            codes[`!${escapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("result.diffuse=ndl*diffuseColor*attenuation;")}`] = /* wgsl */`
                 #ifdef TOON_TEXTURE
                     result.diffuse = diffuseColor * attenuation;
                     result.ndl = ndl;
@@ -119,7 +119,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* wgsl */`
+            codes[`!${EscapeRegExp("diffuseBase+=info.diffuse*shadow;")}`] = /* wgsl */`
                 #ifdef TOON_TEXTURE
                     toonNdl = vec3f(clamp(info.ndl * shadow, 0.02, 0.98));
                     toonNdl.r = textureSample(toonSampler, toonSamplerSampler, vec2f(0.5, toonNdl.r)).r;
@@ -159,7 +159,7 @@ export class MmdPluginMaterial extends MmdPluginMaterialBase {
                 #endif
             `;
 
-            codes[`!${escapeRegExp(finalDiffuse)}`] = /* wgsl */`
+            codes[`!${EscapeRegExp(finalDiffuse)}`] = /* wgsl */`
                 #ifdef APPLY_AMBIENT_COLOR_TO_DIFFUSE
                     #ifdef EMISSIVEASILLUMINATION
                         var finalDiffuse: vec3f = clamp(diffuseBase * diffuseColor, vec3f(0.0), vec3f(1.0)) * baseColor.rgb;

@@ -1,19 +1,19 @@
 import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import { Constants } from "./constants";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
 import type { RigidBodyBundle } from "./rigidBodyBundle";
 
 class ConstraintInner {
-    private readonly _wasmInstance: WeakRef<BulletWasmInstance>;
+    private readonly _wasmInstance: WeakRef<IBulletWasmInstance>;
     private _ptr: number;
     private _bodyReference: Nullable<readonly [RigidBody, RigidBody] | RigidBodyBundle>;
     private _referenceCount: number;
 
-    public constructor(wasmInstance: WeakRef<BulletWasmInstance>, ptr: number, bodyReference: readonly [RigidBody, RigidBody] | RigidBodyBundle) {
+    public constructor(wasmInstance: WeakRef<IBulletWasmInstance>, ptr: number, bodyReference: readonly [RigidBody, RigidBody] | RigidBodyBundle) {
         this._wasmInstance = wasmInstance;
         this._ptr = ptr;
         this._bodyReference = bodyReference;
@@ -65,11 +65,11 @@ class ConstraintInner {
     }
 }
 
-function constraintFinalizer(inner: ConstraintInner): void {
+function ConstraintFinalizer(inner: ConstraintInner): void {
     inner.dispose();
 }
 
-const constraintRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<ConstraintInner>>();
+const ConstraintRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<ConstraintInner>>();
 
 /**
  * Base class for all bullet physics constraints
@@ -95,10 +95,10 @@ export abstract class Constraint {
         this._inner = new ConstraintInner(new WeakRef(runtime.wasmInstance), ptr, bodyReference);
         this._worldReference = null;
 
-        let registry = constraintRegistryMap.get(runtime.wasmInstance);
+        let registry = ConstraintRegistryMap.get(runtime.wasmInstance);
         if (registry === undefined) {
-            registry = new FinalizationRegistry(constraintFinalizer);
-            constraintRegistryMap.set(runtime.wasmInstance, registry);
+            registry = new FinalizationRegistry(ConstraintFinalizer);
+            ConstraintRegistryMap.set(runtime.wasmInstance, registry);
         }
 
         registry.register(this, this._inner, this);
@@ -114,7 +114,7 @@ export abstract class Constraint {
 
         this._inner.dispose();
 
-        const registry = constraintRegistryMap.get(this.runtime.wasmInstance);
+        const registry = ConstraintRegistryMap.get(this.runtime.wasmInstance);
         registry?.unregister(this);
     }
 
@@ -158,7 +158,7 @@ export abstract class Constraint {
     }
 }
 
-const matrixBufferSize = 16 * Constants.A32BytesPerElement;
+const MatrixBufferSize = 16 * Constants.A32BytesPerElement;
 
 export const enum ConstraintParams {
     ConstraintERP = 1,
@@ -290,12 +290,12 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
         useLinearReferenceFrameA: boolean
     ) {
         const wasmInstance = runtime.wasmInstance;
-        const frameABufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameABufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameA.copyToArray(frameABuffer.array);
 
-        const frameBBufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameBBufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameB.copyToArray(frameBBuffer.array);
 
         const isBundleParam = Array.isArray(bodyBOrIndices);
@@ -317,8 +317,8 @@ export class Generic6DofConstraint extends Generic6DofConstraintBase {
                 useLinearReferenceFrameA
             );
 
-        wasmInstance.deallocateBuffer(frameABufferPtr, matrixBufferSize);
-        wasmInstance.deallocateBuffer(frameBBufferPtr, matrixBufferSize);
+        wasmInstance.deallocateBuffer(frameABufferPtr, MatrixBufferSize);
+        wasmInstance.deallocateBuffer(frameBBufferPtr, MatrixBufferSize);
 
         const bodyReference = isBundleParam
             ? (bodyAOrBundle as RigidBodyBundle)
@@ -419,12 +419,12 @@ export class Generic6DofSpringConstraint extends Generic6DofSpringConstraintBase
         useLinearReferenceFrameA: boolean
     ) {
         const wasmInstance = runtime.wasmInstance;
-        const frameABufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameABufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameA.copyToArray(frameABuffer.array);
 
-        const frameBBufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameBBufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameB.copyToArray(frameBBuffer.array);
 
         const isBundleParam = Array.isArray(bodyBOrIndices);
@@ -446,8 +446,8 @@ export class Generic6DofSpringConstraint extends Generic6DofSpringConstraintBase
                 useLinearReferenceFrameA
             );
 
-        wasmInstance.deallocateBuffer(frameABufferPtr, matrixBufferSize);
-        wasmInstance.deallocateBuffer(frameBBufferPtr, matrixBufferSize);
+        wasmInstance.deallocateBuffer(frameABufferPtr, MatrixBufferSize);
+        wasmInstance.deallocateBuffer(frameBBufferPtr, MatrixBufferSize);
 
         const bodyReference = isBundleParam
             ? (bodyAOrBundle as RigidBodyBundle)
@@ -512,12 +512,12 @@ export class MmdGeneric6DofSpringConstraint extends Generic6DofSpringConstraintB
         useLinearReferenceFrameA: boolean
     ) {
         const wasmInstance = runtime.wasmInstance;
-        const frameABufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameABufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameABuffer = wasmInstance.createTypedArray(Float32Array, frameABufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameA.copyToArray(frameABuffer.array);
 
-        const frameBBufferPtr = wasmInstance.allocateBuffer(matrixBufferSize);
-        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, matrixBufferSize / Constants.A32BytesPerElement);
+        const frameBBufferPtr = wasmInstance.allocateBuffer(MatrixBufferSize);
+        const frameBBuffer = wasmInstance.createTypedArray(Float32Array, frameBBufferPtr, MatrixBufferSize / Constants.A32BytesPerElement);
         frameB.copyToArray(frameBBuffer.array);
 
         const isBundleParam = Array.isArray(bodyBOrIndices);
@@ -539,8 +539,8 @@ export class MmdGeneric6DofSpringConstraint extends Generic6DofSpringConstraintB
                 useLinearReferenceFrameA
             );
 
-        wasmInstance.deallocateBuffer(frameABufferPtr, matrixBufferSize);
-        wasmInstance.deallocateBuffer(frameBBufferPtr, matrixBufferSize);
+        wasmInstance.deallocateBuffer(frameABufferPtr, MatrixBufferSize);
+        wasmInstance.deallocateBuffer(frameBBufferPtr, MatrixBufferSize);
 
         const bodyReference = isBundleParam
             ? (bodyAOrBundle as RigidBodyBundle)

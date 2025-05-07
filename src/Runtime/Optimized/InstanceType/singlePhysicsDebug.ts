@@ -1,4 +1,4 @@
-import type { MmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
+import type { IMmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
 import * as wasmBindgen from "../wasm/spd";
 
 /**
@@ -8,7 +8,7 @@ import * as wasmBindgen from "../wasm/spd";
  *
  * - Browser that supports WebAssembly
  */
-export class MmdWasmInstanceTypeSPD implements MmdWasmInstanceType {
+export class MmdWasmInstanceTypeSPD implements IMmdWasmInstanceType {
     public getWasmInstanceInner(): MmdWasmType {
         return wasmBindgen as MmdWasmType;
     }

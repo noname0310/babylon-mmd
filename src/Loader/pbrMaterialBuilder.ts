@@ -81,6 +81,7 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
         material.roughness = materialInfo.shininess / 100.0;
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async loadDiffuseTexture(
         uniqueId: number,
         material: PBRMaterial,
@@ -146,6 +147,7 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async setAlphaBlendMode(
         material: PBRMaterial,
         materialInfo: MaterialInfo,
@@ -180,7 +182,7 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
         const diffuseTexture = material.albedoTexture;
         const evaluatedTransparency = (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1;
         if (diffuseTexture !== null) {
-            const transparencyMode = await this._evaluateDiffuseTextureTransparencyMode(
+            const transparencyMode = await this._evaluateDiffuseTextureTransparencyModeAsync(
                 diffuseTexture,
                 evaluatedTransparency,
                 meshes,

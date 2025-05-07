@@ -1,4 +1,4 @@
-export const sdefVertex = /* wgsl */`
+export const SdefVertex = /* wgsl */`
 #ifndef SDEFVERTEX
 #define SDEFVERTEX
 

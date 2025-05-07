@@ -4,7 +4,7 @@ import type { Scene } from "@babylonjs/core/scene";
 
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 
-export interface AttachToBoneOptions {
+export interface IAttachToBoneOptions {
     directionalLightPosition?: Vector3;
     cameraTargetPosition?: Vector3;
     cameraTargetYpositionOffset?: number;
@@ -13,10 +13,10 @@ export interface AttachToBoneOptions {
     worldMatrix?: Matrix;
 }
 
-export function attachToBone(
+export function AttachToBone(
     scene: Scene,
     mmdModel: IMmdModel,
-    options: AttachToBoneOptions = {}
+    options: IAttachToBoneOptions = {}
 ): void {
     const {
         directionalLightPosition,

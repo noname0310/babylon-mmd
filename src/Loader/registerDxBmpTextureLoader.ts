@@ -1,6 +1,6 @@
 import { registerTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
 
-let registered = false;
+let Registered = false;
 
 /**
  * Register the bmp texture loader that behaves like the directx bmp texture loader
@@ -9,10 +9,10 @@ let registered = false;
  *
  * if the loader is already registered, this function does nothing
  */
-export function registerDxBmpTextureLoader(): void {
-    if (registered) {
+export function RegisterDxBmpTextureLoader(): void {
+    if (Registered) {
         return;
     }
-    registered = true;
+    Registered = true;
     registerTextureLoader(".dxbmp", () => import("./dxBmpTextureLoader").then(((module) => new module._DxBmpTextureLoader())));
 }

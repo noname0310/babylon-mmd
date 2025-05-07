@@ -15,7 +15,7 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
-import type { MmdModelPhysicsCreationOptions } from "../mmdRuntime";
+import type { IMmdModelPhysicsCreationOptions } from "../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./IMmdPhysics";
 import { Generic6DofSpringJoint, type MmdAmmoJSPlugin } from "./mmdAmmoJSPlugin";
 
@@ -83,7 +83,7 @@ class MmdPhysicsMesh extends AbstractMesh {
     }
 }
 
-interface AmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
+interface IAmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
     group: number;
     mask: number;
 }
@@ -94,7 +94,7 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
     public constructor(
         mesh: MmdPhysicsMesh,
         type: number,
-        options: AmmoPhysicsImpostorParameters,
+        options: IAmmoPhysicsImpostorParameters,
         linkedBone: IMmdRuntimeBone,
         scene: Scene
     ) {
@@ -359,7 +359,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         rigidBodies: PmxObject["rigidBodies"],
         joints: PmxObject["joints"],
         logger: ILogger,
-        physicsOptions: Nullable<MmdModelPhysicsCreationOptions>
+        physicsOptions: Nullable<IMmdModelPhysicsCreationOptions>
     ): IMmdPhysicsModel {
         if (physicsOptions?.worldId !== undefined) {
             logger.warn("Ammo physics does not support multiple physics world");
@@ -502,7 +502,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 : rigidBody.mass * scalingFactor;
             // if mass is 0, the object will be constructed as a kinematic object by babylon.js physics plugin
 
-            const physicsImpostorParameters: AmmoPhysicsImpostorParameters =  {
+            const physicsImpostorParameters: IAmmoPhysicsImpostorParameters =  {
                 mass: mass,
                 friction: rigidBody.friction,
                 restitution: rigidBody.repulsion,
@@ -700,7 +700,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
     /** @internal */
     public _makeKinematicOnce(impostor: PhysicsImpostor): void {
-        if (!((impostor as any)._options as AmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
             return;
         }
 

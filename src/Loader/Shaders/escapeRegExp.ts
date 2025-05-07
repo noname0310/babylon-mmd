@@ -3,6 +3,6 @@
  * @param str string to escape
  * @returns escaped string
  */
-export function escapeRegExp(str: string): string {
+export function EscapeRegExp(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

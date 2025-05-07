@@ -8,6 +8,126 @@ import tsParser from "@typescript-eslint/parser";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import globals from "globals";
 
+const abbreviations = [
+    "[XYZ][A-Z][a-z]",
+    "HTML",
+    "UI",
+    "LOD",
+    "XR",
+    "PBR",
+    "IBL",
+    "HDR",
+    "FFT",
+    "CB",
+    "RTW",
+    "SSR",
+    "RHS",
+    "LHS",
+    "LTC",
+    "CDN",
+    "ARIA",
+    "IES",
+    "RLE",
+    "SSAO",
+    "NME",
+    "NGE",
+    "SMAA",
+    "RT",
+    "TAA",
+    "PT",
+    "PP",
+    "GI",
+    "GBuffer",
+    "[Bb]lur[XY]",
+    "upsampling[XY]",
+    "RSM",
+    "DoF",
+    "MSAA",
+    "FXAA",
+    "TBN",
+    "GPU",
+    "CPU",
+    "FPS",
+    "CSS",
+    "MP3",
+    "OGG",
+    "HRTF",
+    "JSON",
+    "ZOffset",
+    "IK",
+    "UV",
+    "[XYZ]Axis",
+    "VR",
+    "axis[XYZ]",
+    "UBO",
+    "URL",
+    "RGB",
+    "RGBD",
+    "GL",
+    "[23]D",
+    "MRT",
+    "RTT",
+    "WGSL",
+    "GLSL",
+    "OS",
+    "NDCH",
+    "CSM",
+    "POT",
+    "DOM",
+    "WASM",
+    "BRDF",
+    "wheel[XYZ]",
+    "PLY",
+    "STL",
+    "[AB]Texture",
+    "CSG",
+    "DoN",
+    "RAW",
+    "ZIP",
+    "PIZ",
+    "VAO",
+    "JS",
+    "DB",
+    "XHR",
+    "POV",
+    "BABYLON",
+    "HSV",
+    "[VUW](Offset|Rotation|Scale|Ang)",
+    "DDS",
+    "NaN",
+    "SVG",
+    "MRDL",
+    "MTL",
+    "OBJ",
+    "SPLAT",
+    "PLY",
+    "glTF",
+    "GLTF",
+    "MSFT",
+    "MSC",
+    "QR",
+    "BGR",
+    "SFE",
+    "BVH",
+
+    "SDEF",
+    "MD",
+    "MR",
+    "SD",
+    "SR",
+    "MPD",
+    "MPR",
+    "SPD",
+    "SPR",
+    "CKind",
+    "RW[0-1]Kind",
+    "VTable",
+    "ERP",
+    "CFM"
+];
+// Join them into a single regex string
+const allowedNonStrictAbbreviations = abbreviations.join("|");
+
 export default tseslint.config(
     {
         ignores: [
@@ -92,73 +212,235 @@ export default tseslint.config(
                 }
             }],
 
-            "@typescript-eslint/naming-convention": ["warn", {
-                selector: "default",
-                format: ["camelCase"]
-            }, {
-                selector: "variable",
-                format: ["camelCase", "UPPER_CASE", "snake_case"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "parameter",
-                format: ["camelCase"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "enumMember",
-                format: ["PascalCase", "UPPER_CASE"]
-            }, {
-                selector: "memberLike",
-                modifiers: ["public", "static"],
-                format: ["PascalCase", "UPPER_CASE"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "memberLike",
-                modifiers: ["private", "static"],
-                format: ["PascalCase", "UPPER_CASE"],
-                leadingUnderscore: "require"
-            }, {
-                selector: "memberLike",
-                modifiers: ["public"],
-                format: ["camelCase"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "memberLike",
-                modifiers: ["private"],
-                format: ["camelCase"],
-                leadingUnderscore: "require"
-            }, {
-                selector: "memberLike",
-                modifiers: ["protected"],
-                format: ["camelCase"],
-                leadingUnderscore: "require"
-            }, {
-                selector: "typeLike",
-                format: ["PascalCase"]
-            }, {
-                selector: "variable",
-                format: ["camelCase", "UPPER_CASE"]
-            }, {
-                selector: "variable",
-                modifiers: ["const", "global"],
-                format: ["PascalCase", "camelCase"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "function",
-                format: ["PascalCase", "camelCase"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "function",
-                modifiers: ["exported", "global"],
-                format: ["PascalCase", "camelCase"],
-                leadingUnderscore: "allow"
-            }, {
-                selector: "interface",
-                format: ["PascalCase"]
-            }, {
-                selector: "class",
-                format: ["PascalCase"],
-                leadingUnderscore: "allow"
-            }],
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "default",
+                    format: ["strictCamelCase"]
+                },
+                {
+                    selector: "import",
+                    format: ["strictCamelCase", "StrictPascalCase"]
+                },
+                {
+                    selector: "variable",
+                    format: ["StrictPascalCase", "UPPER_CASE"],
+                    modifiers: ["global"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "variable",
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "parameter",
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "objectLiteralProperty",
+                    format: ["strictCamelCase", "snake_case", "UPPER_CASE"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "enumMember",
+                    format: ["StrictPascalCase", "UPPER_CASE"]
+                },
+                // public static members of classes, including constants
+                {
+                    selector: "memberLike",
+                    modifiers: ["public", "static"],
+                    format: ["StrictPascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow"
+                },
+                // private static members of classes
+                {
+                    selector: "memberLike",
+                    modifiers: ["private", "static"],
+                    format: ["StrictPascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "require"
+                },
+                // protected static members of classes
+                {
+                    selector: "memberLike",
+                    modifiers: ["protected", "static"],
+                    format: ["StrictPascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "require"
+                },
+                // public instance members of classes, including constants
+                {
+                    selector: "memberLike",
+                    modifiers: ["public"],
+                    format: ["strictCamelCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow"
+                },
+                // private instance members of classes
+                {
+                    selector: "memberLike",
+                    modifiers: ["private"],
+                    format: ["strictCamelCase"],
+                    leadingUnderscore: "require"
+                },
+                // protected instance members of classes
+                {
+                    selector: "memberLike",
+                    modifiers: ["protected"],
+                    format: ["strictCamelCase"],
+                    leadingUnderscore: "require"
+                },
+                // async suffix
+                {
+                    selector: "memberLike",
+                    modifiers: ["async"],
+                    suffix: ["Async"],
+                    format: ["strictCamelCase", "StrictPascalCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "typeLike", // class, interface, enum, type alias
+                    format: ["StrictPascalCase"]
+                },
+                // exported variables and functions, module-level
+                {
+                    selector: "variable",
+                    modifiers: ["const", "global", "exported"],
+                    format: ["StrictPascalCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "function",
+                    modifiers: [/*"exported", */ "global"],
+                    format: ["StrictPascalCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "interface",
+                    format: ["StrictPascalCase"],
+                    leadingUnderscore: "allow",
+                    prefix: ["I"]
+                },
+                {
+                    selector: "class",
+                    format: ["StrictPascalCase"],
+                    leadingUnderscore: "allow"
+                },
+                // Remove the strict requirement for abbreviations like HTML, GUI, BRDF, etc.
+                {
+                    selector: "default",
+                    format: ["camelCase"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: ["memberLike", "property", "parameter"],
+                    format: ["camelCase", "UPPER_CASE"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    },
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: ["memberLike", "variable", "property", "class"],
+                    format: ["PascalCase", "UPPER_CASE"],
+                    modifiers: ["static"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    },
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "class",
+                    format: ["PascalCase"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    },
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "interface",
+                    format: ["PascalCase"],
+                    prefix: ["I"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    },
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: "import",
+                    format: ["camelCase", "PascalCase"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "objectLiteralProperty",
+                    format: ["camelCase", "snake_case", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "variable",
+                    format: ["PascalCase"],
+                    modifiers: ["global"],
+                    leadingUnderscore: "allow",
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "function",
+                    modifiers: [/*"exported", */ "global"],
+                    format: ["PascalCase"],
+                    leadingUnderscore: "allow",
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "enumMember",
+                    format: ["PascalCase", "UPPER_CASE"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "typeLike", // class, interface, enum, type alias
+                    format: ["PascalCase"],
+                    filter: {
+                        // you can expand this regex to add more allowed names
+                        regex: allowedNonStrictAbbreviations,
+                        match: true
+                    }
+                },
+                {
+                    selector: "typeParameter",
+                    format: ["PascalCase"]
+                }
+            ],
 
             "comma-dangle": ["error", "never"],
             "comma-spacing": ["error"],

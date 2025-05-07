@@ -6,7 +6,7 @@ import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 
-import { bezierInterpolate } from "./bezierInterpolate";
+import { BezierInterpolate } from "./bezierInterpolate";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type AnimationKeyInterpolationBezier<PhantomType = 2> = AnimationKeyInterpolation & { readonly __type: PhantomType };
@@ -377,7 +377,7 @@ export class BezierAnimation extends Animation {
      * @returns Interpolated scalar value
      */
     public floatInterpolateFunctionWithControlPoints(startValue: number, outTangent: Vector2, endValue: number, inTangent: Vector2, gradient: number): number {
-        const weight = bezierInterpolate(outTangent.x, inTangent.x, outTangent.y, inTangent.y, gradient);
+        const weight = BezierInterpolate(outTangent.x, inTangent.x, outTangent.y, inTangent.y, gradient);
         return startValue * (1 - weight) + endValue * weight;
     }
 
@@ -391,10 +391,10 @@ export class BezierAnimation extends Animation {
      * @returns Interpolated quaternion value
      */
     public quaternionInterpolateFunctionWithControlPoints(startValue: Quaternion, outTangent: [Vector2, Vector2, Vector2, Vector2], endValue: Quaternion, inTangent: [Vector2, Vector2, Vector2, Vector2], gradient: number): Quaternion {
-        const weightX = bezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
-        const weightY = bezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
-        const weightZ = bezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
-        const weightW = bezierInterpolate(outTangent[3].x, inTangent[3].x, outTangent[3].y, inTangent[3].y, gradient);
+        const weightX = BezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightY = BezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
+        const weightZ = BezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
+        const weightW = BezierInterpolate(outTangent[3].x, inTangent[3].x, outTangent[3].y, inTangent[3].y, gradient);
         return new Quaternion(
             startValue.x * (1 - weightX) + endValue.x * weightX,
             startValue.y * (1 - weightY) + endValue.y * weightY,
@@ -413,7 +413,7 @@ export class BezierAnimation extends Animation {
      * @returns Interpolated quaternion value
      */
     public quaternionInterpolateFunctionWithSlerpControlPoints(startValue: Quaternion, outTangent: Vector2, endValue: Quaternion, inTangent: Vector2, gradient: number): Quaternion {
-        const weight = bezierInterpolate(outTangent.x, inTangent.x, outTangent.y, inTangent.y, gradient);
+        const weight = BezierInterpolate(outTangent.x, inTangent.x, outTangent.y, inTangent.y, gradient);
         return Quaternion.Slerp(startValue, endValue, weight);
     }
 
@@ -427,9 +427,9 @@ export class BezierAnimation extends Animation {
      * @returns InterpolatedVector3 value
      */
     public vector3InterpolateFunctionWithControlPoints(startValue: Vector3, outTangent: [Vector2, Vector2, Vector2], endValue: Vector3, inTangent: [Vector2, Vector2, Vector2], gradient: number): Vector3 {
-        const weightX = bezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
-        const weightY = bezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
-        const weightZ = bezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
+        const weightX = BezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightY = BezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
+        const weightZ = BezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
         return new Vector3(
             startValue.x * (1 - weightX) + endValue.x * weightX,
             startValue.y * (1 - weightY) + endValue.y * weightY,
@@ -447,8 +447,8 @@ export class BezierAnimation extends Animation {
      * @returns Interpolated Vector2 value
      */
     public vector2InterpolateFunctionWithControlPoints(startValue: Vector2, outTangent: [Vector2, Vector2], endValue: Vector2, inTangent: [Vector2, Vector2], gradient: number): Vector2 {
-        const weightX = bezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
-        const weightY = bezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
+        const weightX = BezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightY = BezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
         return new Vector2(
             startValue.x * (1 - weightX) + endValue.x * weightX,
             startValue.y * (1 - weightY) + endValue.y * weightY
@@ -465,9 +465,9 @@ export class BezierAnimation extends Animation {
      * @returns interpolated value
      */
     public color3InterpolateFunctionWithControlPoints(startValue: Color3, outTangent: [Vector2, Vector2, Vector2], endValue: Color3, inTangent: [Vector2, Vector2, Vector2], gradient: number): Color3 {
-        const weightR = bezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
-        const weightG = bezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
-        const weightB = bezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
+        const weightR = BezierInterpolate(outTangent[0].x, inTangent[0].x, outTangent[0].y, inTangent[0].y, gradient);
+        const weightG = BezierInterpolate(outTangent[1].x, inTangent[1].x, outTangent[1].y, inTangent[1].y, gradient);
+        const weightB = BezierInterpolate(outTangent[2].x, inTangent[2].x, outTangent[2].y, inTangent[2].y, gradient);
         return new Color3(
             startValue.r * (1 - weightR) + endValue.r * weightR,
             startValue.g * (1 - weightG) + endValue.g * weightG,
@@ -485,10 +485,10 @@ export class BezierAnimation extends Animation {
      * @returns interpolated value
      */
     public color4InterpolateFunctionWithControlPoints(startValue: Color4, outTangent: Color4, endValue: Color4, inTangent: Color4, gradient: number): Color4 {
-        const weightR = bezierInterpolate(outTangent.r, inTangent.r, outTangent.g, inTangent.g, gradient);
-        const weightG = bezierInterpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
-        const weightB = bezierInterpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
-        const weightA = bezierInterpolate(outTangent.a, inTangent.a, outTangent.g, inTangent.g, gradient);
+        const weightR = BezierInterpolate(outTangent.r, inTangent.r, outTangent.g, inTangent.g, gradient);
+        const weightG = BezierInterpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
+        const weightB = BezierInterpolate(outTangent.b, inTangent.b, outTangent.g, inTangent.g, gradient);
+        const weightA = BezierInterpolate(outTangent.a, inTangent.a, outTangent.g, inTangent.g, gradient);
         return new Color4(
             startValue.r * (1 - weightR) + endValue.r * weightR,
             startValue.g * (1 - weightG) + endValue.g * weightG,

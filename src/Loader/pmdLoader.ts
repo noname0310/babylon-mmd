@@ -5,7 +5,7 @@ import type { ILogger } from "./Parser/ILogger";
 import { PmdReader } from "./Parser/pmdReader";
 import type { PmxObject } from "./Parser/pmxObject";
 import { PmdLoaderMetadata } from "./pmdLoader.metadata";
-import type { PmLoaderOptions } from "./pmLoader";
+import type { IPmLoaderOptions } from "./pmLoader";
 import { PmLoader } from "./pmLoader";
 
 /**
@@ -17,7 +17,7 @@ export class PmdLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
     /**
      * Create a new PmdLoader
      */
-    public constructor(options?: Partial<PmLoaderOptions>, loaderOptions?: PmLoaderOptions) {
+    public constructor(options?: Partial<IPmLoaderOptions>, loaderOptions?: IPmLoaderOptions) {
         super(
             PmdLoaderMetadata.name,
             PmdLoaderMetadata.extensions,

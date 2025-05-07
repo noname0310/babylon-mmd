@@ -83,7 +83,6 @@ export interface IMmdPluginMaterial {
 // https://learn.microsoft.com/en-us/windows/win32/direct3d9/spherical-environment-mapping
 
 export class MmdPluginMererialDefines extends MaterialDefines {
-    /* eslint-disable @typescript-eslint/naming-convention */
     public SPHERE_TEXTURE = false;
     public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
@@ -95,7 +94,6 @@ export class MmdPluginMererialDefines extends MaterialDefines {
     public SPHERE_TEXTURE_COLOR = false;
     public TOON_TEXTURE_COLOR = false;
     public SDEF = false;
-    /* eslint-enable @typescript-eslint/naming-convention */
 }
 
 export enum MmdPluginMaterialSphereTextureBlendMode {

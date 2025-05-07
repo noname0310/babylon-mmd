@@ -15,6 +15,7 @@ const enum BmpConstants {
     CompressionOffset = 0x1E,
     RedMaskOffset = 0x36,
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     BITMAPINFOHEADERSize = 0x28,
     AppendHeaderSize = 0x44,
 }

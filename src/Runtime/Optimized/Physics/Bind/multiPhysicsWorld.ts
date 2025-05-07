@@ -1,7 +1,7 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable } from "@babylonjs/core/types";
 
-import type { BulletWasmInstance } from "./bulletWasmInstance";
+import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import type { Constraint } from "./constraint";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";
 import type { RigidBody } from "./rigidBody";
@@ -309,11 +309,11 @@ class MultiPhysicsWorldInner {
     }
 }
 
-function multiPhysicsWorldFinalizer(inner: MultiPhysicsWorldInner): void {
+function MultiPhysicsWorldFinalizer(inner: MultiPhysicsWorldInner): void {
     inner.dispose(false);
 }
 
-const multiPhysicsWorldRegistryMap = new WeakMap<BulletWasmInstance, FinalizationRegistry<MultiPhysicsWorldInner>>();
+const MultiPhysicsWorldRegistryMap = new WeakMap<IBulletWasmInstance, FinalizationRegistry<MultiPhysicsWorldInner>>();
 
 /**
  * MultiPhysicsWorld handles multiple physics worlds and allows to add rigid bodies and constraints to them
@@ -353,10 +353,10 @@ export class MultiPhysicsWorld {
 
             this._inner = new MultiPhysicsWorldInner(new WeakRef(runtime), ptr);
 
-            let registry = multiPhysicsWorldRegistryMap.get(runtime.wasmInstance);
+            let registry = MultiPhysicsWorldRegistryMap.get(runtime.wasmInstance);
             if (registry === undefined) {
-                registry = new FinalizationRegistry(multiPhysicsWorldFinalizer);
-                multiPhysicsWorldRegistryMap.set(runtime.wasmInstance, registry);
+                registry = new FinalizationRegistry(MultiPhysicsWorldFinalizer);
+                MultiPhysicsWorldRegistryMap.set(runtime.wasmInstance, registry);
             }
 
             registry.register(this, this._inner, this);
@@ -379,7 +379,7 @@ export class MultiPhysicsWorld {
         this._inner.dispose(this._fromPointer);
 
         if (!this._fromPointer) {
-            const registry = multiPhysicsWorldRegistryMap.get(this._runtime.wasmInstance);
+            const registry = MultiPhysicsWorldRegistryMap.get(this._runtime.wasmInstance);
             registry?.unregister(this);
         }
     }

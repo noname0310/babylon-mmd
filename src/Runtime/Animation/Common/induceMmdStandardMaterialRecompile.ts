@@ -4,7 +4,7 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "@/Runtime/ILogger";
-import type { MmdMorphControllerBase, ReadonlyRuntimeMorph } from "@/Runtime/mmdMorphControllerBase";
+import type { IReadonlyRuntimeMorph, MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 import type { MorphIndices } from "../IMmdRuntimeAnimation";
 
@@ -18,7 +18,7 @@ import type { MorphIndices } from "../IMmdRuntimeAnimation";
  * @param morphIndices Morph indices to induce recompile
  * @param logger Logger
  */
-export function induceMmdStandardMaterialRecompile(
+export function InduceMmdStandardMaterialRecompile(
     materials: readonly MmdStandardMaterial[],
     morphController: MmdMorphControllerBase,
     morphIndices: readonly Nullable<MorphIndices>[],
@@ -29,7 +29,7 @@ export function induceMmdStandardMaterialRecompile(
     let allToonTextureColorPropertiesAreRecompiled = false;
     const recompiledMaterials = new Set<string>();
 
-    const recompileMaterialMorph = (morph: ReadonlyRuntimeMorph): void => {
+    const recompileMaterialMorph = (morph: IReadonlyRuntimeMorph): void => {
         const elements = morph.materialElements!;
         for (let k = 0; k < elements.length; ++k) {
             const element = elements[k];
@@ -135,7 +135,7 @@ export function induceMmdStandardMaterialRecompile(
  * @param morphController Morph controller
  * @param morphIndices Morph indices to induce recompile
  */
-export function setMorphTargetManagersNumMaxInfluencers(
+export function SetMorphTargetManagersNumMaxInfluencers(
     morphController: MmdMorphControllerBase,
     morphIndices: readonly Nullable<MorphIndices>[]
 ): void {
@@ -179,7 +179,7 @@ export function setMorphTargetManagersNumMaxInfluencers(
         }
     }
 
-    const f = (morph: ReadonlyRuntimeMorph): void => {
+    const f = (morph: IReadonlyRuntimeMorph): void => {
         const elements = morph.elements as readonly MorphTarget[];
         for (let k = 0; k < elements.length; ++k) {
             const morphTarget = elements[k];

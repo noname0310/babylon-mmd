@@ -73,6 +73,7 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
         material.specularPower = materialInfo.shininess;
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async loadDiffuseTexture(
         uniqueId: number,
         material: TMaterial,
@@ -138,6 +139,7 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async setAlphaBlendMode(
         material: TMaterial,
         materialInfo: MaterialInfo,
@@ -172,7 +174,7 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
         const diffuseTexture = material.diffuseTexture;
         const evaluatedTransparency = (materialInfo as Partial<BpmxObject.Material>).evaluatedTransparency ?? -1;
         if (diffuseTexture !== null) {
-            const transparencyMode = await this._evaluateDiffuseTextureTransparencyMode(
+            const transparencyMode = await this._evaluateDiffuseTextureTransparencyModeAsync(
                 diffuseTexture,
                 evaluatedTransparency,
                 meshes,

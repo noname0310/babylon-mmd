@@ -24,21 +24,21 @@ import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
 
-        createDefaultArcRotateCamera(scene);
-        const { hemisphericLight, directionalLight, shadowGenerator } = createLightComponents(scene);
+        CreateDefaultArcRotateCamera(scene);
+        const { hemisphericLight, directionalLight, shadowGenerator } = CreateLightComponents(scene);
         hemisphericLight.intensity = 0.3;
         directionalLight.intensity = 0.7;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const modelLoadResult = await LoadAssetContainerAsync(
             "res/private_test/model/Moe.glb",

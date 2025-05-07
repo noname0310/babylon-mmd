@@ -1,4 +1,4 @@
-import type { MmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
+import type { IMmdWasmInstanceType, MmdWasmType } from "../mmdWasmInstance";
 import * as wasmBindgen from "../wasm/mpd";
 
 /**
@@ -16,7 +16,7 @@ import * as wasmBindgen from "../wasm/mpd";
  *     Cross-Origin-Embedder-Policy: require-corp
  *     ```
  */
-export class MmdWasmInstanceTypeMPD implements MmdWasmInstanceType {
+export class MmdWasmInstanceTypeMPD implements IMmdWasmInstanceType {
     public getWasmInstanceInner(): MmdWasmType {
         return wasmBindgen as MmdWasmType;
     }

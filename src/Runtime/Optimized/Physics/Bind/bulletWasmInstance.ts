@@ -14,13 +14,13 @@ export type BulletWasmType =
  *
  * entry point of the Bullet WASM
  */
-export interface BulletWasmInstance extends BulletWasmType {
+export interface IBulletWasmInstance extends BulletWasmType {
     memory: WebAssembly.Memory;
 
     createTypedArray<T extends TypedArray>(typedArrayConstructor: TypedArrayConstructor<T>, byteOffset: number, length: number): IWasmTypedArray<T>;
 }
 
-export interface BulletWasmInstanceType {
+export interface IBulletWasmInstanceType {
     /**
      * Get Bullet wasm-bindgen instance
      * @returns Bullet wasm-bindgen instance

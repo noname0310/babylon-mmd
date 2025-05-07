@@ -7,7 +7,7 @@ import type { ILogger } from "../ILogger";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
-import { setMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
+import { SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
@@ -425,7 +425,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     mergedMorphIndices.push(...morphBindIndexMap);
                 }
             }
-            setMorphTargetManagersNumMaxInfluencers(this._morphController, mergedMorphIndices);
+            SetMorphTargetManagersNumMaxInfluencers(this._morphController, mergedMorphIndices);
         }
     }
 
@@ -484,6 +484,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 }
 
 declare module "./mmdCompositeAnimation" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MmdCompositeAnimation extends IMmdBindableModelAnimation<MmdCompositeRuntimeModelAnimation> { }
 }
 

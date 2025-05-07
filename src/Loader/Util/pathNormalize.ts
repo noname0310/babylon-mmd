@@ -3,7 +3,7 @@
  * @param path Path
  * @returns Normalized path
  */
-export function pathNormalize(path: string): string {
+export function PathNormalize(path: string): string {
     path = path.replace(/\\/g, "/");
     const pathArray = path.split("/");
     const resultArray = [];

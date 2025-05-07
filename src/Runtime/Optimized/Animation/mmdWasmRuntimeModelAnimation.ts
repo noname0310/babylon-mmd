@@ -2,7 +2,7 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { induceMmdStandardMaterialRecompile, setMorphTargetManagersNumMaxInfluencers } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
+import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
 import type { MorphIndices } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
@@ -218,7 +218,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             logger
         );
         if (updateMorphTarget) {
-            setMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
+            SetMorphTargetManagersNumMaxInfluencers(this._morphController, this.morphBindIndexMap);
         }
         this._materialRecompileInduceInfo = null;
     }
@@ -404,7 +404,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
         logger?: ILogger
-    ) => void = induceMmdStandardMaterialRecompile as (
+    ) => void = InduceMmdStandardMaterialRecompile as (
         materials: readonly Material[],
         morphController: MmdMorphControllerBase,
         morphIndices: readonly Nullable<MorphIndices>[],
@@ -413,6 +413,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
 }
 
 declare module "./mmdWasmAnimation" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface MmdWasmAnimation {
         /**
          * @internal
@@ -457,7 +458,7 @@ MmdWasmAnimation.prototype.createWasmRuntimeModelAnimation = function(
     return runtimeAnimation;
 };
 
-const mmdWasmAnimationDispose = MmdWasmAnimation.prototype.dispose;
+const MmdWasmAnimationDispose = MmdWasmAnimation.prototype.dispose;
 
 MmdWasmAnimation.prototype.dispose = function(): void {
     if (this.isDisposed) return;
@@ -470,5 +471,5 @@ MmdWasmAnimation.prototype.dispose = function(): void {
         this._runtimeModelAnimations = undefined!;
     }
 
-    mmdWasmAnimationDispose.call(this);
+    MmdWasmAnimationDispose.call(this);
 };

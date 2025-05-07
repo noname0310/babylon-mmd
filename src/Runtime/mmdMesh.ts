@@ -7,6 +7,7 @@ import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 /**
  * Mesh type that has MMD model metadata
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MmdMesh extends Mesh {
     _mmdMeshPhantomProperty: true;
     metadata: MmdModelMetadata;
@@ -15,6 +16,7 @@ export interface MmdMesh extends Mesh {
 /**
  * Mesh type that able to create `MmdModel` instance
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MmdSkinnedMesh extends MmdMesh {
     _mmdSkinnedMeshPhantomProperty: true;
     metadata: MmdSkinedModelMetadata;
@@ -23,6 +25,7 @@ export interface MmdSkinnedMesh extends MmdMesh {
 /**
  * Metadata for `MmdModel`
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MmdSkinedModelMetadata extends MmdModelMetadata {
     /**
      * Mmd model skeleton
@@ -33,6 +36,7 @@ export interface MmdSkinedModelMetadata extends MmdModelMetadata {
 /**
  * Mesh type that after create `MmdModel` instance
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface RuntimeMmdMesh extends Mesh {
     metadata: RuntimeMmdModelMetadata;
 }
@@ -40,6 +44,7 @@ export interface RuntimeMmdMesh extends Mesh {
 /**
  * Metadata for `RuntimeMmdModel`
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface RuntimeMmdModelMetadata {
     readonly isRuntimeMmdModel: true;
     readonly header: MmdModelMetadata.Header;

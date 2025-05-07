@@ -19,24 +19,24 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        const arcRotateCamera = createDefaultArcRotateCamera(scene);
+        const arcRotateCamera = CreateDefaultArcRotateCamera(scene);
         arcRotateCamera.setPosition(new Vector3(2, 19, -10));
         arcRotateCamera.setTarget(new Vector3(0, 17, 0));
         arcRotateCamera.fov = 0.4;
-        const { shadowGenerator } = createLightComponents(scene);
+        const { shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.forceDisableAlphaEvaluation = true;

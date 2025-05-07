@@ -1,7 +1,7 @@
 import type { IMmdAnimationTrack, IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
 
 import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
-import type { MmdWasmInstance } from "../mmdWasmInstance";
+import type { IMmdWasmInstance } from "../mmdWasmInstance";
 
 /**
  * MMD WASM animation track base class
@@ -44,7 +44,7 @@ export abstract class MmdWasmAnimationTrack implements IMmdAnimationTrack {
         trackType: string,
         trackName: string,
         frameCount: number,
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         byteOffset: number
     ) {
         this.trackType = trackType;
@@ -123,7 +123,7 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
     public constructor(
         trackName: string,
         frameCount: number,
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         frameNumberByteOffset: number,
         rotationByteOffset: number,
         rotationInterpolationByteOffset: number
@@ -215,7 +215,7 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
     public constructor(
         trackName: string,
         frameCount: number,
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         frameNumberByteOffset: number,
         positionByteOffset: number,
         positionInterpolationByteOffset: number,
@@ -266,7 +266,7 @@ export class MmdWasmMorphAnimationTrack extends MmdWasmAnimationTrack implements
     public constructor(
         trackName: string,
         frameCount: number,
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         frameNumberByteOffset: number,
         weightByteOffset: number
     ) {
@@ -316,7 +316,7 @@ export class MmdWasmPropertyAnimationTrack extends MmdWasmAnimationTrack impleme
     public constructor(
         frameCount: number,
         ikBoneNames: readonly string[],
-        wasmInstance: MmdWasmInstance,
+        wasmInstance: IMmdWasmInstance,
         frameNumberByteOffset: number,
         visibles: Uint8Array,
         ikStateByteOffsets: number[]

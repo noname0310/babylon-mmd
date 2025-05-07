@@ -17,25 +17,26 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import type { MmdModelMetadata, MmdModelSerializationMetadata } from "./mmdModelMetadata";
 import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
-import type { BpmxLoaderOptions } from "./Optimized/bpmxLoader";
+import type { IBpmxLoaderOptions } from "./Optimized/bpmxLoader";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
 import type { PmxObject } from "./Parser/pmxObject";
-import type { PmLoaderOptions } from "./pmLoader";
-import type { ProgressTask } from "./progress";
+import type { IPmLoaderOptions } from "./pmLoader";
+import type { IProgressTask } from "./progress";
 import { Progress } from "./progress";
 
 declare module "@babylonjs/core/Loading/sceneLoader" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface SceneLoaderPluginOptions {
         /**
          * Defines options for the pmx/pmd/bpmx loader.
          */
-        mmdmodel?: Partial<PmLoaderOptions & BpmxLoaderOptions>;
+        mmdmodel?: Partial<IPmLoaderOptions & IBpmxLoaderOptions>;
     }
 }
 
 /** @internal */
-export interface MmdModelLoaderOptions {
+export interface IMmdModelLoaderOptions {
     /**
      * Material builder used by loader
      *
@@ -99,7 +100,7 @@ export interface MmdModelLoaderOptions {
 }
 
 /** @internal */
-export interface MmdModelLoadState {
+export interface IMmdModelLoadState {
     readonly arrayBuffer: ArrayBuffer;
     readonly pmFileId: string;
     readonly materialBuilder: IMmdMaterialBuilder;
@@ -111,13 +112,13 @@ export interface MmdModelLoadState {
 }
 
 /** @internal */
-export interface MmdModelBuildGeometryResult {
+export interface IMmdModelBuildGeometryResult {
     readonly meshes: Mesh[];
     readonly geometries: Geometry[];
 }
 
 /** @internal */
-export interface BuildMaterialResult {
+export interface IBuildMaterialResult {
     readonly materials: Material[];
     readonly multiMaterials: MultiMaterial[];
     readonly textureLoadPromise: Promise<void>;
@@ -128,10 +129,10 @@ export interface BuildMaterialResult {
  * Base class of loader for MMD model (pmx / pmd / bpmx)
  */
 export abstract class MmdModelLoader<
-    LoadState extends MmdModelLoadState,
+    LoadState extends IMmdModelLoadState,
     ModelObject extends PmxObject | BpmxObject,
-    BuildGeometryResult extends MmdModelBuildGeometryResult
-> implements MmdModelLoaderOptions, ISceneLoaderPluginAsync, ISceneLoaderPluginFactory, ILogger {
+    BuildGeometryResult extends IMmdModelBuildGeometryResult
+> implements IMmdModelLoaderOptions, ISceneLoaderPluginAsync, ISceneLoaderPluginFactory, ILogger {
     /**
      * Name of the loader
      */
@@ -163,7 +164,7 @@ export abstract class MmdModelLoader<
     /**
      * Create a new MMD model loader
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<MmdModelLoaderOptions> = {}, loaderOptions?: PmLoaderOptions | BpmxLoaderOptions) {
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions | IBpmxLoaderOptions) {
         this.name = name;
         this.extensions = extensions;
 
@@ -204,7 +205,7 @@ export abstract class MmdModelLoader<
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         _fileName?: string
     ): Promise<ISceneLoaderAsyncResult> {
-        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress);
+        return this._loadInternalAsync(scene, null, data, rootUrl, onProgress);
     }
 
     public loadAsync(
@@ -214,7 +215,7 @@ export abstract class MmdModelLoader<
         onProgress?: (event: ISceneLoaderProgressEvent) => void,
         _fileName?: string
     ): Promise<void> {
-        return this._loadAsyncInternal(scene, null, data, rootUrl, onProgress).then(() => {
+        return this._loadInternalAsync(scene, null, data, rootUrl, onProgress).then(() => {
             return;
         });
     }
@@ -228,14 +229,14 @@ export abstract class MmdModelLoader<
     ): Promise<AssetContainer> {
         const assetContainer = new AssetContainer(scene);
 
-        return this._loadAsyncInternal(scene, assetContainer, data, rootUrl, onProgress).then(() => {
+        return this._loadInternalAsync(scene, assetContainer, data, rootUrl, onProgress).then(() => {
             return assetContainer;
         });
     }
 
     public abstract createPlugin(options: SceneLoaderPluginOptions): ISceneLoaderPluginAsync;
 
-    private async _loadAsyncInternal(
+    private async _loadInternalAsync(
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         state: LoadState,
@@ -383,7 +384,7 @@ export abstract class MmdModelLoader<
 
     protected abstract _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<ModelObject>;
 
-    protected _getProgressTaskCosts(state: LoadState, modelObject: ModelObject): ProgressTask[] {
+    protected _getProgressTaskCosts(state: LoadState, modelObject: ModelObject): IProgressTask[] {
         return [
             { name: "Parse", cost: Math.floor(state.arrayBuffer.byteLength / 100) },
             { name: "Build Material", cost: 100 * modelObject.materials.length },
@@ -411,7 +412,7 @@ export abstract class MmdModelLoader<
         assetContainer: Nullable<AssetContainer>,
         rootUrl: string,
         progress: Progress
-    ): Promise<BuildMaterialResult>;
+    ): Promise<IBuildMaterialResult>;
 
     protected async _buildSkeletonAsync(
         state: LoadState,

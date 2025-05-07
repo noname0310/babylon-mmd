@@ -5,8 +5,8 @@ import "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthFragment";
 
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
 
-const name = "mmdOutlinePixelShader";
-const shader = /* wgsl */`
+const Name = "mmdOutlinePixelShader";
+const Shader = /* wgsl */`
 uniform color: vec4f;
 
 #ifdef ALPHATEST
@@ -39,6 +39,6 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[name] = shader;
+ShaderStore.ShadersStoreWGSL[Name] = Shader;
 /** @internal */
-export const mmdOutlinePixelShader = { name, shader };
+export const MmdOutlinePixelShader = { name: Name, shader: Shader };

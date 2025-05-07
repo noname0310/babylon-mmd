@@ -8,13 +8,13 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import { convertToAdditiveAnimation } from "./convertToAdditiveAnimation";
-import { deepCopyAnimationGroup } from "./deepCopyAnimation";
+import { ConvertToAdditiveAnimation } from "./convertToAdditiveAnimation";
+import { DeepCopyAnimationGroup } from "./deepCopyAnimation";
 
 /**
  * Options for AnimationRetargeter.retargetAnimation
  */
-export interface RetargetOptions {
+export interface IRetargetOptions {
     /**
      * Clone animation group before retargeting (default: true)
      */
@@ -133,7 +133,7 @@ export class AnimationRetargeter {
      * @param options rtetarget options
      * @returns retargeted animation group
      */
-    public retargetAnimation(animationGroup: AnimationGroup, options: RetargetOptions = {}): Nullable<AnimationGroup> {
+    public retargetAnimation(animationGroup: AnimationGroup, options: IRetargetOptions = {}): Nullable<AnimationGroup> {
         if (!this._isSkeletonAnimation(animationGroup)) {
             this.warn("Animation is not skeleton animation. animation retargeting is aborted.");
             return null;
@@ -165,7 +165,7 @@ export class AnimationRetargeter {
         }
 
         if (options.cloneAnimation) {
-            animationGroup = deepCopyAnimationGroup(animationGroup, animationGroup.name + "_retargeted");
+            animationGroup = DeepCopyAnimationGroup(animationGroup, animationGroup.name + "_retargeted");
         }
 
         this._removeScaleAnimation(animationGroup);
@@ -175,7 +175,7 @@ export class AnimationRetargeter {
         }
 
         if (!animationGroup.isAdditive) {
-            convertToAdditiveAnimation(animationGroup, this._sourceSkeleton);
+            ConvertToAdditiveAnimation(animationGroup, this._sourceSkeleton);
         }
 
         if (options.rotationOffsets !== undefined) {

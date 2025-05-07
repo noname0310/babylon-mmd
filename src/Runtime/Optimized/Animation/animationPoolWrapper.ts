@@ -1,16 +1,16 @@
-import type { MmdWasmInstance } from "../mmdWasmInstance";
+import type { IMmdWasmInstance } from "../mmdWasmInstance";
 
 /**
  * Animation pool singleton
  */
 export class AnimationPoolWrapper {
-    private static readonly _Map = new Map<MmdWasmInstance, AnimationPoolWrapper>();
+    private static readonly _Map = new Map<IMmdWasmInstance, AnimationPoolWrapper>();
 
-    public readonly instance: MmdWasmInstance;
-    public readonly pool: ReturnType<MmdWasmInstance["createAnimationPool"]>;
+    public readonly instance: IMmdWasmInstance;
+    public readonly pool: ReturnType<IMmdWasmInstance["createAnimationPool"]>;
     private _referenceCount: number;
 
-    private constructor(instance: MmdWasmInstance, pool: ReturnType<MmdWasmInstance["createAnimationPool"]>) {
+    private constructor(instance: IMmdWasmInstance, pool: ReturnType<IMmdWasmInstance["createAnimationPool"]>) {
         this.instance = instance;
         this.pool = pool;
         this._referenceCount = 0;
@@ -39,7 +39,7 @@ export class AnimationPoolWrapper {
      * @param instance MMD WASM instance
      * @returns Animation pool for the WASM instance
      */
-    public static Get(instance: MmdWasmInstance): AnimationPoolWrapper {
+    public static Get(instance: IMmdWasmInstance): AnimationPoolWrapper {
         let poolWrapper = this._Map.get(instance);
         if (!poolWrapper) {
             const pool = instance.createAnimationPool();

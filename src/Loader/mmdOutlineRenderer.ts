@@ -20,6 +20,7 @@ import type { MmdStandardMaterial } from "./mmdStandardMaterial";
 import { SdefInjector } from "./sdefInjector";
 
 declare module "@babylonjs/core/scene" {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Scene {
         /** @internal */
         _mmdOutlineRenderer: MmdOutlineRenderer;

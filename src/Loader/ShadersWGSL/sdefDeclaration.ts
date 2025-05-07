@@ -1,4 +1,4 @@
-export const sdefDeclaration = /* wgsl */`
+export const SdefDeclaration = /* wgsl */`
 #ifndef SDEFDECLARATION
 #define SDEFDECLARATION
 

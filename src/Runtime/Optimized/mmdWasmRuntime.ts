@@ -14,13 +14,13 @@ import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdCamera } from "../mmdCamera";
 import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
-import type { MmdModelCreationOptions } from "../mmdRuntime";
+import type { IMmdModelCreationOptions } from "../mmdRuntime";
 import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
 import type { IMmdPhysics } from "../Physics/IMmdPhysics";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import { WasmSpinlock } from "./Misc/wasmSpinlock";
 import { MmdMetadataEncoder } from "./mmdMetadataEncoder";
-import type { MmdWasmInstance } from "./mmdWasmInstance";
+import type { IMmdWasmInstance } from "./mmdWasmInstance";
 import { MmdWasmModel } from "./mmdWasmModel";
 import type { IMmdWasmPhysicsRuntime } from "./Physics/IMmdWasmPhysicsRuntime";
 import type { IPhysicsClock } from "./Physics/IPhysicsClock";
@@ -50,7 +50,7 @@ export enum MmdWasmRuntimeAnimationEvaluationType {
 /**
  * @internal
  */
-export interface PhysicsInitializeSet {
+export interface IPhysicsInitializeSet {
     add(model: MmdWasmModel): void;
 }
 
@@ -65,12 +65,12 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     /**
      * @internal
      */
-    public readonly wasmInstance: MmdWasmInstance;
+    public readonly wasmInstance: IMmdWasmInstance;
 
     /**
      * @internal
      */
-    public readonly wasmInternal: ReturnType<MmdWasmInstance["createMmdRuntime"]>;
+    public readonly wasmInternal: ReturnType<IMmdWasmInstance["createMmdRuntime"]>;
 
     /**
      * Spinlock for MMD WASM runtime to synchronize animation evaluation
@@ -163,7 +163,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param scene Objects that limit the lifetime of this instance
      * @param physics IMmdPhysics instance or MmdWasmPhysics instance
      */
-    public constructor(wasmInstance: MmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics | MmdWasmPhysics> = null) {
+    public constructor(wasmInstance: IMmdWasmInstance, scene: Nullable<Scene> = null, physics: Nullable<IMmdPhysics | MmdWasmPhysics> = null) {
         this.wasmInstance = wasmInstance;
         this.wasmInternal = wasmInstance.createMmdRuntime();
 
@@ -305,9 +305,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.wasmInternal.releaseDiagnosticResult();
     }
 
-    private static readonly _NullPhysicsInitializeSet: PhysicsInitializeSet = { add(_model: MmdWasmModel): void { } };
+    private static readonly _NullPhysicsInitializeSet: IPhysicsInitializeSet = { add(_model: MmdWasmModel): void { } };
 
-    private _getPhysicsInitializeSet(): PhysicsInitializeSet {
+    private _getPhysicsInitializeSet(): IPhysicsInitializeSet {
         if (this._externalPhysics === null) {
             return this._physicsRuntime?.initializer ?? MmdWasmRuntime._NullPhysicsInitializeSet;
         } else {
@@ -326,7 +326,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public createMmdModel<TMaterial extends Material>(
         mmdSkinnedMesh: Mesh,
-        options: MmdModelCreationOptions<TMaterial> = {}
+        options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (!MmdMesh.isMmdSkinnedMesh(mmdSkinnedMesh)) throw new Error("Mesh validation failed.");
         return this.createMmdModelFromSkeleton(mmdSkinnedMesh, mmdSkinnedMesh.metadata.skeleton, options);
@@ -343,7 +343,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     public createMmdModelFromSkeleton<TMaterial extends Material>(
         mmdMesh: MmdSkinnedMesh,
         skeleton: IMmdLinkedBoneContainer,
-        options: MmdModelCreationOptions<TMaterial> = {}
+        options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
@@ -495,6 +495,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param audioPlayer Audio player
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async setAudioPlayer(audioPlayer: Nullable<IPlayer>): Promise<void> {
         if (this._audioPlayer === audioPlayer) return;
 
@@ -940,6 +941,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * It returns Promise because playing audio is asynchronous
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async playAnimation(): Promise<void> {
         if (this._audioPlayer !== null && this._currentFrameTime < this._audioPlayer.duration * 30) {
             try {
@@ -1030,6 +1032,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      * @param forceEvaluate Whether to force evaluate animation
      * @returns Promise
      */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public async seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void> {
         frameTime = Math.max(0, Math.min(frameTime, this._animationFrameTimeDuration));
 

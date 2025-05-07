@@ -13,11 +13,11 @@ import "@/Loader/sdefMesh";
 import "@/Runtime/Animation/bezierAnimation";
 import "@/Runtime/mmdCamera";
 
-import { registerMmdModelLoaders } from "./Loader/dynamic";
-import { registerDxBmpTextureLoader } from "./Loader/registerDxBmpTextureLoader";
+import { RegisterMmdModelLoaders } from "./Loader/dynamic";
+import { RegisterDxBmpTextureLoader } from "./Loader/registerDxBmpTextureLoader";
 
-registerMmdModelLoaders();
-registerDxBmpTextureLoader();
+RegisterMmdModelLoaders();
+RegisterDxBmpTextureLoader();
 
 // Loader/Animation
 export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
@@ -33,7 +33,7 @@ export { BpmxReader } from "@/Loader/Optimized/Parser/bpmxReader";
 
 // Loader/Optimized
 export { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
-export { BpmxLoader, BpmxLoaderOptions } from "@/Loader/Optimized/bpmxLoader";
+export { BpmxLoader, IBpmxLoaderOptions } from "@/Loader/Optimized/bpmxLoader";
 export { BpmxLoaderMetadata } from "@/Loader/Optimized/bpmxLoader.metadata";
 export { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
 export { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
@@ -48,11 +48,11 @@ export { VpdObject } from "@/Loader/Parser/vpdObject";
 export { VpdReader } from "@/Loader/Parser/vpdReader";
 
 // Loader/Util
-export { AnimationRetargeter, RetargetOptions } from "@/Loader/Util/animationRetargeter";
-export { MixamoMmdHumanoidBoneMap, MmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
+export { AnimationRetargeter, IRetargetOptions } from "@/Loader/Util/animationRetargeter";
+export { IMmdHumanoidBoneMap, MixamoMmdHumanoidBoneMap, MmdHumanoidMapper, VrmMmdHumanoidBoneMap } from "@/Loader/Util/mmdHumanoidMapper";
 
 // Loader
-export { registerMmdModelLoaders } from "@/Loader/dynamic";
+export { RegisterMmdModelLoaders } from "@/Loader/dynamic";
 export { IMmdMaterialBuilder, MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
 export { MaterialBuilderBase, MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsyncTextureLoader";
@@ -61,11 +61,11 @@ export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
 export { PmdLoaderMetadata } from "@/Loader/pmdLoader.metadata";
-export { PmLoaderOptions } from "@/Loader/pmLoader";
+export { IPmLoaderOptions } from "@/Loader/pmLoader";
 export { PmxLoader } from "@/Loader/pmxLoader";
 export { PmxLoaderMetadata } from "@/Loader/pmxLoader.metadata";
 export { IArrayBufferFile, ReferenceFileResolver } from "@/Loader/referenceFileResolver";
-export { registerDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
+export { RegisterDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 export { SdefInjector } from "@/Loader/sdefInjector";
 export { SharedToonTextures } from "@/Loader/sharedToonTextures";
 export { StandardMaterialBuilder, StandardMaterialBuilderBase } from "@/Loader/standardMaterialBuilder";
@@ -87,7 +87,7 @@ export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeMod
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";
-export { AudioElementPool, IAudioElementPool, StreamAudioPlayer, StreamAudioPlayerOptions } from "@/Runtime/Audio/streamAudioPlayer";
+export { AudioElementPool, IAudioElementPool, IStreamAudioPlayerOptions, StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 
 // Runtime/Optimized/Animation
 export { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
@@ -115,7 +115,7 @@ export { PhysicsRuntimeEvaluationType } from "@/Runtime/Optimized/Physics/Bind/I
 export { BulletPlugin } from "@/Runtime/Optimized/Physics/Bind/Plugin/bulletPlugin";
 
 // Runtime/Optimized/Physics/Bind
-export { BulletWasmInstance } from "@/Runtime/Optimized/Physics/Bind/bulletWasmInstance";
+export { IBulletWasmInstance } from "@/Runtime/Optimized/Physics/Bind/bulletWasmInstance";
 export { Constraint, Generic6DofConstraint, Generic6DofSpringConstraint } from "@/Runtime/Optimized/Physics/Bind/constraint";
 export { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
 export { MultiPhysicsWorld } from "@/Runtime/Optimized/Physics/Bind/multiPhysicsWorld";
@@ -133,7 +133,7 @@ export { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 export { MmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntime";
 
 // Runtime/Optimized
-export { getMmdWasmInstance, MmdWasmInstance, MmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
+export { GetMmdWasmInstance, IMmdWasmInstance, IMmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
 export { MmdWasmModel } from "@/Runtime/Optimized/mmdWasmModel";
 export { MmdWasmMorphController } from "@/Runtime/Optimized/mmdWasmMorphController";
 export { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -161,6 +161,6 @@ export { MmdCamera } from "@/Runtime/mmdCamera";
 export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
 export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController } from "@/Runtime/mmdMorphController";
-export { MmdMorphControllerBase, ReadonlyRuntimeMorph, RuntimeMaterialMorphElement } from "@/Runtime/mmdMorphControllerBase";
-export { MmdModelCreationOptions, MmdModelPhysicsCreationOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
+export { IReadonlyRuntimeMorph, IRuntimeMaterialMorphElement, MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
+export { IMmdModelCreationOptions, IMmdModelPhysicsCreationOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";

@@ -27,23 +27,23 @@ import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { attachToBone } from "../Util/attachToBone";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
-import { optimizeScene } from "../Util/optimizeScene";
-import { parallelLoadAsync } from "../Util/parallelLoadAsync";
+import { AttachToBone } from "../Util/attachToBone";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
+import { OptimizeScene } from "../Util/optimizeScene";
+import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
-        const camera = createDefaultArcRotateCamera(scene);
-        const { directionalLight, shadowGenerator } = createLightComponents(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
+        const { directionalLight, shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
@@ -52,7 +52,7 @@ export class SceneBuilder implements ISceneBuilder {
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
 
-        const [modelMesh] = await parallelLoadAsync(scene, [
+        const [modelMesh] = await ParallelLoadAsync(scene, [
             ["model", (updateProgress): Promise<MmdMesh> => LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
                 scene,
@@ -97,11 +97,11 @@ export class SceneBuilder implements ISceneBuilder {
             });
             mmdModel.ikSolverStates.fill(0); // disable ik
 
-            attachToBone(scene, mmdModel, {
+            AttachToBone(scene, mmdModel, {
                 directionalLightPosition: directionalLight.position,
                 cameraTargetPosition: camera.target
             });
-            scene.onAfterRenderObservable.addOnce(() => optimizeScene(scene));
+            scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 
             const viewer = new SkeletonViewer(modelMesh.metadata.skeleton!, modelMesh, scene, false, 3, {
                 displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS

@@ -5,10 +5,10 @@ import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationK
 import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
-import { bezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
+import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { MmdCamera } from "@/Runtime/mmdCamera";
 
-import { computeHermiteTangent } from "./Common/computeHermiteTangent";
+import { ComputeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
 import type { MmdAnimationBase } from "./mmdAnimationBase";
 import type { MmdCameraAnimationTrack } from "./mmdAnimationTrack";
@@ -160,16 +160,16 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
                 value: new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? new Vector3(
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 1] / 127, 1 - positionInterpolations[i * 12 + 3] / 127, inFrameDelta, positions[i * 3] - positions[(i - 1) * 3]),
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 5] / 127, 1 - positionInterpolations[i * 12 + 7] / 127, inFrameDelta, positions[i * 3 + 1] - positions[(i - 1) * 3 + 1]),
-                        computeHermiteTangent(1 - positionInterpolations[i * 12 + 9] / 127, 1 - positionInterpolations[i * 12 + 11] / 127, inFrameDelta, positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 1] / 127, 1 - positionInterpolations[i * 12 + 3] / 127, inFrameDelta, positions[i * 3] - positions[(i - 1) * 3]),
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 5] / 127, 1 - positionInterpolations[i * 12 + 7] / 127, inFrameDelta, positions[i * 3 + 1] - positions[(i - 1) * 3 + 1]),
+                        ComputeHermiteTangent(1 - positionInterpolations[i * 12 + 9] / 127, 1 - positionInterpolations[i * 12 + 11] / 127, inFrameDelta, positions[i * 3 + 2] - positions[(i - 1) * 3 + 2])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Vector3(
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127, outFrameDelta, positions[(i + 1) * 3] - positions[i * 3]),
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127, outFrameDelta, positions[(i + 1) * 3 + 1] - positions[i * 3 + 1]),
-                        computeHermiteTangent(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127, outFrameDelta, positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 0] / 127, positionInterpolations[(i + 1) * 12 + 2] / 127, outFrameDelta, positions[(i + 1) * 3] - positions[i * 3]),
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 4] / 127, positionInterpolations[(i + 1) * 12 + 6] / 127, outFrameDelta, positions[(i + 1) * 3 + 1] - positions[i * 3 + 1]),
+                        ComputeHermiteTangent(positionInterpolations[(i + 1) * 12 + 8] / 127, positionInterpolations[(i + 1) * 12 + 10] / 127, outFrameDelta, positions[(i + 1) * 3 + 2] - positions[i * 3 + 2])
                     )
                     : undefined,
                 interpolation: interpolationKind,
@@ -208,16 +208,16 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
                 value: new Vector3(rotations[i * 3], rotations[i * 3 + 1], rotations[i * 3 + 2]),
                 inTangent: hasPreviousFrame
                     ? new Vector3(
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3] - rotations[(i - 1) * 3]),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1]),
-                        computeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2])
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3] - rotations[(i - 1) * 3]),
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 1] - rotations[(i - 1) * 3 + 1]),
+                        ComputeHermiteTangent(1 - rotationInterpolations[i * 4 + 1] / 127, 1 - rotationInterpolations[i * 4 + 3] / 127, inFrameDelta, rotations[i * 3 + 2] - rotations[(i - 1) * 3 + 2])
                     )
                     : undefined,
                 outTangent: nextFrame < Infinity
                     ? new Vector3(
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3] - rotations[i * 3]),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1]),
-                        computeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2])
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3] - rotations[i * 3]),
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 1] - rotations[i * 3 + 1]),
+                        ComputeHermiteTangent(rotationInterpolations[(i + 1) * 4 + 0] / 127, rotationInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, rotations[(i + 1) * 3 + 2] - rotations[i * 3 + 2])
                     )
                     : undefined,
                 interpolation: interpolationKind,
@@ -255,10 +255,10 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
                 frame: frame,
                 value: distances[i],
                 inTangent: hasPreviousFrame
-                    ? computeHermiteTangent(1 - distanceInterpolations[i * 4 + 1] / 127, 1 - distanceInterpolations[i * 4 + 3] / 127, inFrameDelta, distances[i] - distances[i - 1])
+                    ? ComputeHermiteTangent(1 - distanceInterpolations[i * 4 + 1] / 127, 1 - distanceInterpolations[i * 4 + 3] / 127, inFrameDelta, distances[i] - distances[i - 1])
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? computeHermiteTangent(distanceInterpolations[(i + 1) * 4 + 0] / 127, distanceInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, distances[i + 1] - distances[i])
+                    ? ComputeHermiteTangent(distanceInterpolations[(i + 1) * 4 + 0] / 127, distanceInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, distances[i + 1] - distances[i])
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false
@@ -297,10 +297,10 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
                 frame: frame,
                 value: fovs[i] * degToRad,
                 inTangent: hasPreviousFrame
-                    ? computeHermiteTangent(1 - fovInterpolations[i * 4 + 1] / 127, 1 - fovInterpolations[i * 4 + 3] / 127, inFrameDelta, fovs[i] * degToRad - fovs[i - 1] * degToRad)
+                    ? ComputeHermiteTangent(1 - fovInterpolations[i * 4 + 1] / 127, 1 - fovInterpolations[i * 4 + 3] / 127, inFrameDelta, fovs[i] * degToRad - fovs[i - 1] * degToRad)
                     : undefined,
                 outTangent: nextFrame < Infinity
-                    ? computeHermiteTangent(fovInterpolations[(i + 1) * 4 + 0] / 127, fovInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, fovs[i + 1] * degToRad - fovs[i] * degToRad)
+                    ? ComputeHermiteTangent(fovInterpolations[(i + 1) * 4 + 0] / 127, fovInterpolations[(i + 1) * 4 + 2] / 127, outFrameDelta, fovs[i + 1] * degToRad - fovs[i] * degToRad)
                     : undefined,
                 interpolation: interpolationKind,
                 lockedTangent: false
@@ -361,9 +361,9 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const xWeight = bezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
-                const yWeight = bezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
-                const zWeight = bezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
+                const xWeight = BezierInterpolate(positionInterpolationXx1, positionInterpolationXx2, positionInterpolationXy1, positionInterpolationXy2, gradient);
+                const yWeight = BezierInterpolate(positionInterpolationYx1, positionInterpolationYx2, positionInterpolationYy1, positionInterpolationYy2, gradient);
+                const zWeight = BezierInterpolate(positionInterpolationZx1, positionInterpolationZx2, positionInterpolationZy1, positionInterpolationZy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -417,7 +417,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const rotationWeight = bezierInterpolate(rotationInterpolationXx1, rotationInterpolationXx2, rotationInterpolationXy1, rotationInterpolationXy2, gradient);
+                const rotationWeight = BezierInterpolate(rotationInterpolationXx1, rotationInterpolationXx2, rotationInterpolationXy1, rotationInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -471,7 +471,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const distanceWeight = bezierInterpolate(distanceInterpolationXx1, distanceInterpolationXx2, distanceInterpolationXy1, distanceInterpolationXy2, gradient);
+                const distanceWeight = BezierInterpolate(distanceInterpolationXx1, distanceInterpolationXx2, distanceInterpolationXy1, distanceInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,
@@ -523,7 +523,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
             for (let j = previousFrame + 1; j < frame; ++j) {
                 const gradient = (j - previousFrame) / (frame - previousFrame);
 
-                const fovWeight = bezierInterpolate(fovInterpolationXx1, fovInterpolationXx2, fovInterpolationXy1, fovInterpolationXy2, gradient);
+                const fovWeight = BezierInterpolate(fovInterpolationXx1, fovInterpolationXx2, fovInterpolationXy1, fovInterpolationXy2, gradient);
 
                 keys[j] = {
                     frame: j,
