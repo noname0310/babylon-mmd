@@ -20,9 +20,9 @@ Camera: https://www.nicovideo.jp/watch/sm36273873
 
 ### [JavaScript Runtime Demo (stable)](https://playground.babylonjs.com/#028YR6#81)
 
-### [Web Assembly Runtime Demo (experimental)](https://playground.babylonjs.com/#MY96ZK#13)
+### [Web Assembly Runtime Demo (experimental)](https://playground.babylonjs.com/#MY96ZK#14)
 
-### [Web Assembly Runtime With Integrated Physics Demo (experimental)](https://www.babylonjs-playground.com/#8CYL1V#7) - most advanced method
+### [Web Assembly Runtime With Integrated Physics Demo (experimental)](https://www.babylonjs-playground.com/#8CYL1V#10) - most advanced method
 
 Music: [メランコリ・ナイト](https://youtu.be/y__uZETTuL8)
 

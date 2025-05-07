@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.65.0 (scheduled)
+## 0.65.0 (2025-05-08)
 
 - introduce `StandardMaterialBuilder`/`PBRMaterialBuilder` for build mmd model with `StandardMaterial`/`PBRMaterial` instead of `MmdStandardMaterial`
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
