@@ -1,7 +1,7 @@
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { addClipPlaneUniforms, bindClipPlane, prepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
+import { AddClipPlaneUniforms, BindClipPlane, PrepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
 import { type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
@@ -203,7 +203,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
         }
 
         // Clip plane
-        bindClipPlane(effect, material, scene);
+        BindClipPlane(effect, material, scene);
 
         // Clip plane support
         if (effect.defines.includes("WORLDPOS_REQUIRED")) {
@@ -266,7 +266,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             defines.push("#define LOGARITHMICDEPTH");
         }
         // Clip planes
-        prepareStringDefinesForClipPlanes(material, scene, defines);
+        PrepareStringDefinesForClipPlanes(material, scene, defines);
 
         // Clip planes support
         let useClipPlane = false;
@@ -370,7 +370,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
             ];
             const samplers = ["diffuseSampler", "boneSampler", "morphTargets", "bakedVertexAnimationTexture"];
 
-            addClipPlaneUniforms(uniforms);
+            AddClipPlaneUniforms(uniforms);
             if (useClipPlane) uniforms.push("inverseViewProjection");
 
             const shaderLanguage = scene.getEngine().isWebGPU ? ShaderLanguage.WGSL : ShaderLanguage.GLSL;
