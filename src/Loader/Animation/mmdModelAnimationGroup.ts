@@ -36,15 +36,15 @@ class MorphProxy {
     }
 }
 
-class IkSolverProxy {
+class BooleanArrayViewPropertyProxy {
     private _enabled: number;
 
-    private readonly _ikSolverState: Uint8Array;
+    private readonly _value: Uint8Array;
 
-    public constructor(ikSolverStates: Uint8Array, ikSolverIndex: number) {
-        this._enabled = ikSolverStates[ikSolverIndex];
+    public constructor(states: Uint8Array, index: number) {
+        this._enabled = states[index];
 
-        this._ikSolverState = new Uint8Array(ikSolverStates.buffer, ikSolverStates.byteOffset + ikSolverIndex, 1);
+        this._value = new Uint8Array(states.buffer, states.byteOffset + index, 1);
     }
 
     public get enabled(): number {
@@ -53,7 +53,7 @@ class IkSolverProxy {
 
     public set enabled(value: number) {
         this._enabled = value;
-        this._ikSolverState[0] = 0.5 < value ? 1 : 0;
+        this._value[0] = 0.5 < value ? 1 : 0;
     }
 }
 
@@ -105,6 +105,16 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      * Bone rotation animation track bind map for one `mesh.skeleton`
      */
     public readonly boneRotationAnimationBindMap: readonly string[];
+
+    /**
+     * Bone physics toggle animation tracks for one `mesh.skeleton`
+     */
+    public readonly bonePhysicsToggleAnimations: readonly Animation[];
+
+    /**
+     * Bone physics toggle animation track bind map for one `mesh.skeleton`
+     */
+    public readonly bonePhysicsToggleAnimationBindMap: readonly string[];
 
     /**
      * Morph animation tracks for one `mmdModel.morph`
@@ -172,6 +182,17 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             boneRotationAnimationBindMap[boneTracks.length + i] = movableBoneTracks[i].name;
         }
 
+        const bonePhysicsToggleAnimations: Animation[] = this.bonePhysicsToggleAnimations = new Array(boneTracks.length);
+        const bonePhysicsToggleAnimationBindMap: string[] = this.bonePhysicsToggleAnimationBindMap = new Array(boneTracks.length);
+        for (let i = 0; i < boneTracks.length; ++i) {
+            bonePhysicsToggleAnimations[i] = builder.createBonePhysicsToggleAnimation(name, boneTracks[i]);
+            bonePhysicsToggleAnimationBindMap[i] = boneTracks[i].name;
+        }
+        for (let i = 0; i < movableBoneTracks.length; ++i) {
+            bonePhysicsToggleAnimations[boneTracks.length + i] = builder.createBonePhysicsToggleAnimation(name, movableBoneTracks[i]);
+            bonePhysicsToggleAnimationBindMap[boneTracks.length + i] = movableBoneTracks[i].name;
+        }
+
         const morphTracks = mmdAnimation.morphTracks;
         const morphAnimations: Animation[] = this.morphAnimations = new Array(morphTracks.length);
         const morphAnimationBindMap: string[] = this.morphAnimationBindMap = new Array(morphTracks.length);
@@ -221,6 +242,15 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             }
         }
 
+        // const bonePhysicsToggleAnimations = this.bonePhysicsToggleAnimations;
+        // const bonePhysicsToggleAnimationBindMap = this.bonePhysicsToggleAnimationBindMap;
+        // for (let i = 0; i < bonePhysicsToggleAnimations.length; ++i) {
+        //     const boneIndex = skeletonBoneMap.get(bonePhysicsToggleAnimationBindMap[i]);
+        //     if (boneIndex !== undefined) {
+        //         animationGroup.addTargetedAnimation(bonePhysicsToggleAnimations[i], skeletonBones[boneIndex]);
+        //     }
+        // }
+
         const morphAnimations = this.morphAnimations;
         const morphAnimationBindMap = this.morphAnimationBindMap;
         const morphController = mmdModel.morph;
@@ -240,7 +270,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
             if (boneIndex !== undefined) {
                 const ikSolverIndex = runtimeBones[boneIndex].ikSolverIndex;
                 if (ikSolverIndex !== -1) {
-                    animationGroup.addTargetedAnimation(propertyAnimations[i], new IkSolverProxy(ikSolverStates, ikSolverIndex));
+                    animationGroup.addTargetedAnimation(propertyAnimations[i], new BooleanArrayViewPropertyProxy(ikSolverStates, ikSolverIndex));
                 }
             }
         }
@@ -272,7 +302,15 @@ export interface IMmdModelAnimationGroupBuilder {
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack | IMmdMovableBoneAnimationTrack): Animation;
+    createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation;
+
+    /**
+     * Create mmd model bone physics toggle animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    createBonePhysicsToggleAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation;
 
     /**
      * Create mmd model morph animation
@@ -321,7 +359,32 @@ export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnim
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    public abstract createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack | IMmdMovableBoneAnimationTrack): Animation;
+    public abstract createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation;
+
+    /**
+     * Create mmd model bone physics toggle animation
+     * @param rootName root animation name
+     * @param mmdAnimationTrack mmd bone animation track
+     * @returns babylon.js animation
+     */
+    public createBonePhysicsToggleAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation {
+        const animation = new Animation(rootName + "_bone_physics_" + mmdAnimationTrack.name, "enabled", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const frameNumbers = mmdAnimationTrack.frameNumbers;
+        const physicsToggles = mmdAnimationTrack.physicsToggles;
+
+        const keys = new Array<IAnimationKey>(frameNumbers.length);
+        for (let i = 0; i < frameNumbers.length; ++i) {
+            keys[i] = {
+                frame: frameNumbers[i],
+                value: physicsToggles[i] - 1,
+                interpolation: AnimationKeyInterpolation.STEP
+            };
+        }
+        animation.setKeys(keys);
+
+        return animation;
+    }
 
     /**
      * Create mmd model morph animation
@@ -477,7 +540,7 @@ export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroup
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack | IMmdMovableBoneAnimationTrack): Animation {
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation {
         const animation = new Animation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
@@ -608,7 +671,7 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack | IMmdMovableBoneAnimationTrack): Animation {
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation {
         const animation = new Animation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
@@ -711,7 +774,7 @@ export class MmdModelAnimationGroupBezierBuilder extends MmdModelAnimationGroupB
      * @param mmdAnimationTrack mmd bone animation track
      * @returns babylon.js animation
      */
-    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack | IMmdMovableBoneAnimationTrack): Animation {
+    public createBoneRotationAnimation(rootName: string, mmdAnimationTrack: IMmdBoneAnimationTrack): Animation {
         const animation = new BezierAnimation(rootName + "_bone_rotation_" + mmdAnimationTrack.name, "rotationQuaternion", 30, BezierAnimation.ANIMATIONTYPE_SLERP_TANGENT_QUATERNION, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;

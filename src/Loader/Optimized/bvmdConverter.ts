@@ -13,6 +13,7 @@
  *  frameNumbers: uint32[frameCount]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
+ *  physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
  * }[boneTrackCount]
  *
  * movableBoneTrackCount: uint32
@@ -24,6 +25,7 @@
  *  positionInterpolations: uint8[frameCount * 12] - [..., x_x1, x_x2, x_y1, x_y2, y_x1, y_x2, y_y1, y_y2, z_x1, z_x2, z_y1, z_y2, ...]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
+ *  physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
  * }[movableBoneTrackCount]
  *
  * morphTrackCount: uint32
@@ -88,6 +90,7 @@ export class BvmdConverter {
                 dataLength += 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // frameNumbers
                 dataLength += 4 * 4 * boneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * boneTrack.frameNumbers.length; // rotationInterpolations
+                dataLength += 1 * boneTrack.frameNumbers.length; // physicsToggles
             }
 
             dataLength += 4; // movableBoneTrackCount
@@ -103,6 +106,7 @@ export class BvmdConverter {
                 dataLength += 1 * 12 * movableBoneTrack.frameNumbers.length; // positionInterpolations
                 dataLength += 4 * 4 * movableBoneTrack.frameNumbers.length + MmdDataSerializer.Padding(dataLength, 4); // rotations
                 dataLength += 1 * 4 * movableBoneTrack.frameNumbers.length; // rotationInterpolations
+                dataLength += 1 * movableBoneTrack.frameNumbers.length; // physicsToggles
             }
 
             dataLength += 4; // morphTrackCount
@@ -146,7 +150,7 @@ export class BvmdConverter {
         const serializer = new MmdDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BVMD")); // signature
-        serializer.setInt8Array([2, 0, 0]); // version
+        serializer.setInt8Array([2, 1, 0]); // version
 
         const boneTracks = animation.boneTracks;
         serializer.setUint32(boneTracks.length); // boneTrackCount
@@ -163,6 +167,8 @@ export class BvmdConverter {
             serializer.setFloat32Array(boneTrack.rotations); // rotations
 
             serializer.setUint8Array(boneTrack.rotationInterpolations); // rotationInterpolations
+
+            serializer.setUint8Array(boneTrack.physicsToggles); // physicsToggles
         }
 
         const movableBoneTracks = animation.movableBoneTracks;
@@ -185,6 +191,8 @@ export class BvmdConverter {
             serializer.setFloat32Array(movableBoneTrack.rotations); // rotations
 
             serializer.setUint8Array(movableBoneTrack.rotationInterpolations); // rotationInterpolations
+
+            serializer.setUint8Array(movableBoneTrack.physicsToggles); // physicsToggles
         }
 
         const morphTracks = animation.morphTracks;

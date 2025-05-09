@@ -39,6 +39,9 @@ export class BvmdLoader {
         this._scene = scene;
     }
 
+    private readonly _v200Int = 2 << 16 | 0 << 8 | 0;
+    private readonly _v210Int = 2 << 16 | 1 << 8 | 0;
+
     /**
      * Load MMD animation data from BVMD array buffer
      * @param name Animation name
@@ -58,8 +61,13 @@ export class BvmdLoader {
             throw new LoadFileError("BVMD signature is not valid.");
         }
 
-        const version = [deserializer.getInt8(), deserializer.getInt8(), deserializer.getInt8()];
-        if (version[0] !== 2 || version[1] !== 0 || version[2] !== 0) {
+        const version = [
+            deserializer.getInt8(),
+            deserializer.getInt8(),
+            deserializer.getInt8()
+        ] as const;
+        const versionInt = version[0] << 16 | version[1] << 8 | version[2];
+        if (versionInt < this._v200Int || this._v210Int < versionInt) {
             throw new LoadFileError(`BVMD version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
 
@@ -71,6 +79,9 @@ export class BvmdLoader {
             const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
+            const physicsToggleByteOffset = this._v210Int <= versionInt
+                ? deserializer.getPaddedArrayOffset(1, frameCount)
+                : undefined;
 
             const boneTrack = boneTracks[i] = new MmdBoneAnimationTrack(
                 trackName,
@@ -78,7 +89,8 @@ export class BvmdLoader {
                 buffer,
                 frameNumberByteOffset,
                 rotationByteOffset,
-                rotationInterpolationByteOffset
+                rotationInterpolationByteOffset,
+                physicsToggleByteOffset
             );
             if (!deserializer.isDeviceLittleEndian) {
                 deserializer.swap32Array(boneTrack.frameNumbers);
@@ -96,6 +108,9 @@ export class BvmdLoader {
             const positionInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 12);
             const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
             const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
+            const physicsToggleByteOffset = this._v210Int <= versionInt
+                ? deserializer.getPaddedArrayOffset(1, frameCount)
+                : undefined;
 
             const movableBoneTrack = movableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
                 trackName,
@@ -105,7 +120,8 @@ export class BvmdLoader {
                 positionByteOffset,
                 positionInterpolationByteOffset,
                 rotationByteOffset,
-                rotationInterpolationByteOffset
+                rotationInterpolationByteOffset,
+                physicsToggleByteOffset
             );
             if (!deserializer.isDeviceLittleEndian) {
                 deserializer.swap32Array(movableBoneTrack.frameNumbers);
