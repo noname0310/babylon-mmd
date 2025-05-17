@@ -3,6 +3,7 @@ import "@/Loader/pmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { PBRBRDFConfiguration } from "@babylonjs/core/Materials/PBR/pbrBRDFConfiguration";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
@@ -96,6 +97,7 @@ export class SceneBuilder implements ISceneBuilder {
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
 
+                PBRBRDFConfiguration.DEFAULT_USE_LEGACY_SPECULAR_ENERGY_CONSERVATION = false;
                 const mmdMesh = await LoadAssetContainerAsync(
                     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
                     scene,
@@ -116,6 +118,28 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = 13;
+
+                PBRBRDFConfiguration.DEFAULT_USE_LEGACY_SPECULAR_ENERGY_CONSERVATION = true;
+                const mmdMesh2 = await LoadAssetContainerAsync(
+                    "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    scene,
+                    {
+                        pluginOptions: {
+                            mmdmodel: {
+                                materialBuilder: materialBuilder,
+                                loggingEnabled: true
+                            }
+                        }
+                    }
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as Mesh;
+                });
+                for (const mesh of mmdMesh2.metadata.meshes) {
+                    mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
+                }
+                mmdMesh2.position.x = 13 * 2;
             })()
         ]);
 
