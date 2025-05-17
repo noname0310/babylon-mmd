@@ -16,7 +16,7 @@ document.body.appendChild(Canvas);
 
 let Engine;
 
-const UseWebGPU = true;
+const UseWebGPU = false;
 if (UseWebGPU) {
     Engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(Canvas, {
         stencil: false,

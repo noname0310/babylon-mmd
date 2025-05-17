@@ -2,8 +2,8 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { Constants } from "@babylonjs/core/Engines/constants";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { PBRBRDFConfiguration } from "@babylonjs/core/Materials/PBR/pbrBRDFConfiguration";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
@@ -96,8 +96,12 @@ export class SceneBuilder implements ISceneBuilder {
             })(),
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
+                materialBuilder.afterBuildSingleMaterial = (material): void => {
+                    material.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_GLTF;
+                    material.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_GLTF;
+                    material.brdf.useLegacySpecularEnergyConservation = true;
+                };
 
-                PBRBRDFConfiguration.DEFAULT_USE_LEGACY_SPECULAR_ENERGY_CONSERVATION = false;
                 const mmdMesh = await LoadAssetContainerAsync(
                     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
                     scene,
@@ -118,9 +122,16 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = 13;
+            })(),
+            (async(): Promise<void> => {
+                const materialBuilder = new PBRMaterialBuilder();
+                materialBuilder.afterBuildSingleMaterial = (material): void => {
+                    material.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_OPENPBR;
+                    material.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_OPENPBR;
+                    material.brdf.useLegacySpecularEnergyConservation = false;
+                };
 
-                PBRBRDFConfiguration.DEFAULT_USE_LEGACY_SPECULAR_ENERGY_CONSERVATION = true;
-                const mmdMesh2 = await LoadAssetContainerAsync(
+                const mmdMesh = await LoadAssetContainerAsync(
                     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
                     scene,
                     {
@@ -135,11 +146,11 @@ export class SceneBuilder implements ISceneBuilder {
                     result.addAllToScene();
                     return result.meshes[0] as Mesh;
                 });
-                for (const mesh of mmdMesh2.metadata.meshes) {
+                for (const mesh of mmdMesh.metadata.meshes) {
                     mesh.receiveShadows = true;
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
-                mmdMesh2.position.x = 13 * 2;
+                mmdMesh.position.x = 13 * 2;
             })()
         ]);
 
