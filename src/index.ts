@@ -131,6 +131,7 @@ export { IMmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/IMmdWasmPhys
 export { MmdBulletPhysics, MmdBulletPhysicsModel } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 export { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 export { MmdWasmPhysicsRuntime } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntime";
+export { MmdWasmPhysicsRuntimeImpl } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl";
 
 // Runtime/Optimized
 export { GetMmdWasmInstance, IMmdWasmInstance, IMmdWasmInstanceType } from "@/Runtime/Optimized/mmdWasmInstance";
