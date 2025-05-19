@@ -97,6 +97,13 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
     public ikChainInfo: Nullable<IkChainInfo>;
 
     /**
+     * Rigid body index
+     *
+     * If the bone does not have a rigid body, it will -1
+     */
+    public rigidBodyIndex: number;
+
+    /**
      * World matrix of this bone
      *
      * Slice of `MmdModel.worldTransformMatrices` that corresponds to this bone
@@ -156,6 +163,7 @@ export class MmdRuntimeBone implements IMmdRuntimeBone {
         this.morphRotationOffset = Quaternion.Identity();
 
         this.ikChainInfo = null;
+        this.rigidBodyIndex = -1;
 
         this.worldMatrix = new Float32Array(worldTransformMatrices.buffer, worldTransformMatrices.byteOffset + boneIndex * 16 * 4, 16);
 
