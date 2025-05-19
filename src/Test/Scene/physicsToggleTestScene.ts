@@ -22,9 +22,9 @@ import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
-import { createDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
-import { createDefaultGround } from "../Util/createDefaultGround";
-import { createLightComponents } from "../Util/createLightComponents";
+import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
+import { CreateDefaultGround } from "../Util/createDefaultGround";
+import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
@@ -32,14 +32,14 @@ export class SceneBuilder implements ISceneBuilder {
 
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
-        const camera = createDefaultArcRotateCamera(scene);
+        const camera = CreateDefaultArcRotateCamera(scene);
         camera.setTarget(new Vector3(-1.3261749447410947, 11.691760759222726, -0.31660869989471035));
         camera.alpha = -0.9561;
         camera.beta = 1.0432;
         camera.radius = 12.3586;
-        const { shadowGenerator } = createLightComponents(scene);
+        const { shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
-        createDefaultGround(scene);
+        CreateDefaultGround(scene);
 
         const mmdMesh = await LoadAssetContainerAsync(
             "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
