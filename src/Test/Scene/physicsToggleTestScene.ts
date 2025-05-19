@@ -15,7 +15,7 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
-import { getMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
@@ -27,7 +27,7 @@ import { CreateDefaultGround } from "../Util/createDefaultGround";
 import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
-    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+    public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
@@ -64,7 +64,7 @@ export class SceneBuilder implements ISceneBuilder {
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
         scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
-        const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPD());
+        const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
         const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
