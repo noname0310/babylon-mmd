@@ -190,20 +190,14 @@ export class MmdModel implements IMmdModel {
         );
 
         if (physicsParams !== null) {
-            const bodyToBoneMap: Nullable<MmdRuntimeBone>[] = new Array(mmdMetadata.rigidBodies.length).fill(null);
             this._physicsModel = physicsParams.physicsImpl.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
                 mmdMetadata.rigidBodies,
                 mmdMetadata.joints,
-                bodyToBoneMap,
                 logger,
                 physicsParams.physicsOptions
             );
-            for (let i = 0; i < bodyToBoneMap.length; ++i) {
-                const bone = bodyToBoneMap[i];
-                if (bone !== null) bone.rigidBodyIndex = i;
-            }
             this.rigidBodyStates = new Uint8Array(mmdMetadata.rigidBodies.length).fill(1);
         } else {
             this._physicsModel = null;

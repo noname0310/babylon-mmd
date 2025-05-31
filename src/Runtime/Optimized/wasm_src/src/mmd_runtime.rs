@@ -100,6 +100,15 @@ impl MmdRuntime {
         animation_arena.iksolver_state_arena_mut().as_mut_ptr()
     }
 
+    #[wasm_bindgen(js_name = "getAnimationRigidBodyStateArena")]
+    pub fn get_animation_rigid_body_state_arena(&mut self, ptr: *mut usize) -> *mut u8 {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena_mut();
+        animation_arena.rigid_body_state_arena_mut().as_mut_ptr()
+    }
+
     #[wasm_bindgen(js_name = "getAnimationMorphArena")]
     pub fn get_animation_morph_arena(&mut self, ptr: *mut usize) -> *mut f32 {
         let ptr = ptr as *mut MmdModel;

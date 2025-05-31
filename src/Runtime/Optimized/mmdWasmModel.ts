@@ -98,13 +98,30 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * Uint8Array that stores the state of IK solvers
      *
-     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and if it is 1, IK solver is enabled
      *
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
      */
     public get ikSolverStates(): Uint8Array {
         this._runtime.lock.wait();
         return this._ikSolverStates.array;
+    }
+
+    private readonly _rigidBodyStates: IWasmTypedArray<Uint8Array>;
+
+    /**
+     * Uint8Array that stores the state of RigidBody
+     *
+     * - If bone position is driven by physics, the value is 1
+     * - If bone position is driven by only animation, the value is 0
+     *
+     * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
+     *
+     * This array reference should not be copied elsewhere and must be read and written with minimal scope
+     */
+    public get rigidBodyStates(): Uint8Array {
+        this._runtime.lock.wait();
+        return this._rigidBodyStates.array;
     }
 
     /**
@@ -177,6 +194,7 @@ export class MmdWasmModel implements IMmdModel {
         const worldTransformMatricesPtr = wasmRuntimeInternal.getBoneWorldMatrixArena(ptr);
         const boneAnimationStatesPtr = wasmRuntimeInternal.getAnimationArena(ptr);
         const ikSolverStatesPtr = wasmRuntimeInternal.getAnimationIkSolverStateArena(ptr);
+        const rigidBodyStatesPtr = wasmRuntimeInternal.getAnimationRigidBodyStateArena(ptr);
         const morphWeightsPtr = wasmRuntimeInternal.getAnimationMorphArena(ptr);
 
         const worldTransformMatricesFrontBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
@@ -191,6 +209,8 @@ export class MmdWasmModel implements IMmdModel {
         let ikCount = 0;
         for (let i = 0; i < mmdMetadata.bones.length; ++i) if (mmdMetadata.bones[i].ik) ikCount += 1;
         this._ikSolverStates = wasmInstance.createTypedArray(Uint8Array, ikSolverStatesPtr, ikCount);
+
+        this._rigidBodyStates = wasmInstance.createTypedArray(Uint8Array, rigidBodyStatesPtr, mmdMetadata.rigidBodies.length);
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
         skeleton.prepare();
