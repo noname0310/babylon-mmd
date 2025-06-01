@@ -83,4 +83,14 @@ export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeMod
      * IK solver bind index map
      */
     readonly ikSolverBindIndexMap: Int32Array;
+
+    /**
+     * Bone to rigid body bind index map
+     */
+    readonly boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[];
+
+    /**
+     * Movable bone to rigid body bind index map
+     */
+    readonly movableBoneToBodyBindIndexMap: readonly Nullable<readonly number[]>[];
 }
