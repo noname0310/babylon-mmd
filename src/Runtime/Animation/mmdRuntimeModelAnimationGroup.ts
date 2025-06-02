@@ -167,6 +167,19 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             bone.position = MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(movableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
         }
 
+        const bonephysicsToggleTracks = animation.bonePhysicsToggleAnimations;
+        const boneToBodyBindIndexMap = this.boneToBodyBindIndexMap;
+        const rigidBodyStates = this._rigidBodyStates.rigidBodyStates;
+        for (let i = 0; i < bonephysicsToggleTracks.length; ++i) {
+            const bonephysicsToggleTrack = bonephysicsToggleTracks[i];
+            const bodyIndices = boneToBodyBindIndexMap[i];
+            if (bodyIndices === null) continue;
+            const physicsEnabled = 0 < 1 + bonephysicsToggleTrack._interpolate(frameTime, this._bonephysicsToggleAnimationStates[i]) ? 1 : 0;
+            for (let j = 0; j < bodyIndices.length; ++j) {
+                rigidBodyStates[bodyIndices[j]] = physicsEnabled;
+            }
+        }
+
         const morphTracks = animation.morphAnimations;
         const morphBindIndexMap = this.morphBindIndexMap;
         const morphController = this._morphController;
@@ -194,19 +207,6 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             const ikSolverIndex = ikSolverBindIndexMap[i];
             if (ikSolverIndex === -1) continue;
             ikSolverStates[ikSolverIndex] = (0 < 1 + propertyTrack._interpolate(frameTime, this._propertyAnimationStates[i])) ? 1 : 0;
-        }
-
-        const bonephysicsToggleTracks = animation.bonePhysicsToggleAnimations;
-        const boneToBodyBindIndexMap = this.boneToBodyBindIndexMap;
-        const rigidBodyStates = this._rigidBodyStates.rigidBodyStates;
-        for (let i = 0; i < bonephysicsToggleTracks.length; ++i) {
-            const bonephysicsToggleTrack = bonephysicsToggleTracks[i];
-            const bodyIndices = boneToBodyBindIndexMap[i];
-            if (bodyIndices === null) continue;
-            const physicsEnabled = 0 < 1 + bonephysicsToggleTrack._interpolate(frameTime, this._bonephysicsToggleAnimationStates[i]) ? 1 : 0;
-            for (let j = 0; j < bodyIndices.length; ++j) {
-                rigidBodyStates[bodyIndices[j]] = physicsEnabled;
-            }
         }
     }
 
