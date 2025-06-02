@@ -15,12 +15,19 @@ pub(crate) struct AnimatedBoneData {
 pub(crate) struct AnimationArena {
     bone_arena: Box<[AnimatedBoneData]>,
     iksolver_state_arena: Box<[u8]>,
+    #[cfg(feature = "physics")]
     rigidbody_state_arena: Box<[u8]>,
     morph_arena: Box<[f32]>,
 }
 
 impl AnimationArena {
-    pub(super) fn new(runtime_bones: &[MmdRuntimeBone], ik_count: u32, rigidbody_count: u32, morph_count: u32) -> Self {
+    pub(super) fn new(
+        runtime_bones: &[MmdRuntimeBone],
+        ik_count: u32,
+        #[cfg(feature = "physics")]
+        rigidbody_count: u32,
+        morph_count: u32,
+    ) -> Self {
         let mut bone_arena = Vec::with_capacity(runtime_bones.len());
         for runtime_bone in runtime_bones {
             bone_arena.push(AnimatedBoneData {
@@ -33,6 +40,7 @@ impl AnimationArena {
         AnimationArena {
             bone_arena: bone_arena.into_boxed_slice(),
             iksolver_state_arena: vec![1; ik_count as usize].into_boxed_slice(),
+            #[cfg(feature = "physics")]
             rigidbody_state_arena: vec![1; rigidbody_count as usize].into_boxed_slice(),
             morph_arena: vec![0.0; morph_count as usize].into_boxed_slice(),
         }
@@ -58,11 +66,13 @@ impl AnimationArena {
         UncheckedSliceMut::new(&mut self.iksolver_state_arena)
     }
 
+    #[cfg(feature = "physics")]
     #[inline]
     pub(crate) fn rigidbody_state_arena(&self) -> UncheckedSlice<u8> {
         UncheckedSlice::new(&self.rigidbody_state_arena)
     }
 
+    #[cfg(feature = "physics")]
     #[inline]
     pub(crate) fn rigidbody_state_arena_mut(&mut self) -> UncheckedSliceMut<u8> {
         UncheckedSliceMut::new(&mut self.rigidbody_state_arena)
