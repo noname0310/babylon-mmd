@@ -369,6 +369,7 @@ export class MmdModel implements IMmdModel {
 
                 this.morph.resetMorphWeights();
                 this.ikSolverStates.fill(1);
+                this.rigidBodyStates.fill(1);
             }
 
             if (this._currentAnimation !== null) {
@@ -420,10 +421,19 @@ export class MmdModel implements IMmdModel {
         rigidBodiesMetadata: MmdModelMetadata["rigidBodies"],
         worldTransformMatrices: Float32Array
     ): readonly MmdRuntimeBone[] {
+        const boneToRigidBodiesIndexMap: number[][] = new Array(bonesMetadata.length);
+        for (let i = 0; i < boneToRigidBodiesIndexMap.length; ++i) boneToRigidBodiesIndexMap[i] = [];
+
+        for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
+            const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
+            boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+        }
+
         const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
             const boneMetadata = bonesMetadata[i];
-            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i));
+            const rigidBodyIndices = boneToRigidBodiesIndexMap[i];
+            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i, rigidBodyIndices));
         }
 
         const physicsBoneSet = new Set<MmdRuntimeBone>();
