@@ -36,11 +36,10 @@
     "homepage": "https://github.com/noname0310/babylon-mmd#readme",
     "devDependencies": {
         "@babylonjs/havok": "^1.3.10",
-        "@babylonjs/inspector": "8.8.5",
-        "@babylonjs/loaders": "8.8.5",
-        "@babylonjs/materials": "8.8.5",
-        "@stylistic/eslint-plugin-js": "^4.2.0",
-        "@stylistic/eslint-plugin-ts": "^4.2.0",
+        "@babylonjs/inspector": "8.10.0",
+        "@babylonjs/loaders": "8.10.0",
+        "@babylonjs/materials": "8.10.0",
+        "@stylistic/eslint-plugin": "^4.4.0",
         "@typescript-eslint/eslint-plugin": "^8.32.1",
         "@typescript-eslint/parser": "^8.32.1",
         "@wasm-tool/wasm-pack-plugin": "^1.7.0",
@@ -65,7 +64,7 @@
         "typescript-glslminify-transformer": "^0.0.3",
         "typescript-transform-paths": "^3.5.5",
         "wasm-pack": "^0.13.1",
-        "webpack": "^5.99.8",
+        "webpack": "^5.99.9",
         "webpack-cli": "^6.0.1",
         "webpack-dev-server": "^5.2.1"
     },
@@ -99,6 +98,6 @@
         "**/index.*"
     ],
     "peerDependencies": {
-        "@babylonjs/core": "^8.8.5"
+        "@babylonjs/core": "^8.10.0"
     }
 }
