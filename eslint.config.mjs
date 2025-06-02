@@ -1,8 +1,7 @@
  
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import stylisticJs from "@stylistic/eslint-plugin-js";
-import stylisticTs from "@stylistic/eslint-plugin-ts";
+import stylistic from "@stylistic/eslint-plugin";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
@@ -151,8 +150,7 @@ export default tseslint.config(
         plugins: {
             "@typescript-eslint": typescriptEslint,
             "simple-import-sort": simpleImportSort,
-            "@stylistic/js": stylisticJs,
-            "@stylistic/ts": stylisticTs
+            "@stylistic": stylistic,
         },
 
         languageOptions: {
@@ -197,10 +195,10 @@ export default tseslint.config(
             "@typescript-eslint/explicit-function-return-type": ["error"],
             "@typescript-eslint/array-type": ["error"],
             "@typescript-eslint/prefer-includes": ["error"],
-            "@stylistic/js/brace-style": ["error", "1tbs"],
-            "@stylistic/ts/space-before-blocks": ["error"],
+            "@stylistic/brace-style": ["error", "1tbs"],
+            "@stylistic/space-before-blocks": ["error"],
 
-            "@stylistic/ts/type-annotation-spacing": ["error", {
+            "@stylistic/type-annotation-spacing": ["error", {
                 before: false,
                 after: true,
 
