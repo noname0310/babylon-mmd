@@ -97,8 +97,8 @@ export class SceneBuilder implements ISceneBuilder {
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
                 materialBuilder.afterBuildSingleMaterial = (material): void => {
-                    material.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_GLTF;
-                    material.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_GLTF;
+                    material.brdf.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_GLTF;
+                    material.brdf.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_GLTF;
                     material.brdf.useLegacySpecularEnergyConservation = true;
                 };
 
@@ -126,8 +126,8 @@ export class SceneBuilder implements ISceneBuilder {
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
                 materialBuilder.afterBuildSingleMaterial = (material): void => {
-                    material.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_OPENPBR;
-                    material.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_OPENPBR;
+                    material.brdf.dielectricSpecularModel = Constants.MATERIAL_DIELECTRIC_SPECULAR_MODEL_OPENPBR;
+                    material.brdf.conductorSpecularModel = Constants.MATERIAL_CONDUCTOR_SPECULAR_MODEL_OPENPBR;
                     material.brdf.useLegacySpecularEnergyConservation = false;
                 };
 
