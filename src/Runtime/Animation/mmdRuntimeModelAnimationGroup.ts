@@ -255,7 +255,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             if (retargetingMap === undefined) {
                 for (let i = 0; i < bones.length; ++i) {
                     const linkedBone = bones[i];
-                    linkedBoneMap.set(bones[i].name, linkedBone);
+                    linkedBoneMap.set(linkedBone.name, linkedBone);
                 }
             } else {
                 for (let i = 0; i < bones.length; ++i) {
@@ -348,9 +348,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
                 if (runtimeBone === undefined) {
                     logger?.warn(`Binding failed: runtime bone ${boneNameMap[i]} not found`);
                     boneToBodyBindIndexMap[i] = null;
-                    continue;
+                } else {
+                    boneToBodyBindIndexMap[i] = runtimeBone.rigidBodyIndices;
                 }
-                boneToBodyBindIndexMap[i] = runtimeBone.rigidBodyIndices;
             }
         }
 

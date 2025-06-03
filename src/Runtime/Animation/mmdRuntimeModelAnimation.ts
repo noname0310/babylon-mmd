@@ -461,7 +461,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             if (retargetingMap === undefined) {
                 for (let i = 0; i < bones.length; ++i) {
                     const linkedBone = bones[i];
-                    linkedBoneMap.set(bones[i].name, linkedBone);
+                    linkedBoneMap.set(linkedBone.name, linkedBone);
                 }
             } else {
                 for (let i = 0; i < bones.length; ++i) {
@@ -556,9 +556,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 if (runtimeBone === undefined) {
                     logger?.warn(`Binding failed: runtime bone ${boneTrack.name} not found`);
                     boneToBodyBindIndexMap[i] = null;
-                    continue;
+                } else {
+                    boneToBodyBindIndexMap[i] = runtimeBone.rigidBodyIndices;
                 }
-                boneToBodyBindIndexMap[i] = runtimeBone.rigidBodyIndices;
             }
             const offset = boneTracks.length;
             for (let i = 0; i < movableBoneTracks.length; ++i) {
@@ -567,9 +567,9 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                 if (runtimeBone === undefined) {
                     logger?.warn(`Binding failed: runtime bone ${movableBoneTrack.name} not found`);
                     boneToBodyBindIndexMap[i + offset] = null;
-                    continue;
+                } else {
+                    boneToBodyBindIndexMap[i + offset] = runtimeBone.rigidBodyIndices;
                 }
-                boneToBodyBindIndexMap[i + offset] = runtimeBone.rigidBodyIndices;
             }
         }
 

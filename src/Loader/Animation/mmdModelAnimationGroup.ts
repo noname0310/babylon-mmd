@@ -9,8 +9,11 @@ import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
+import type { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
+import type { IMmdRuntimeLinkedBone } from "@/Runtime/IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
+import type { ILogger } from "../Parser/ILogger";
 import { ComputeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
 import type { IMmdBoneAnimationTrack, IMmdMorphAnimationTrack, IMmdMovableBoneAnimationTrack, IMmdPropertyAnimationTrack } from "./IMmdAnimationTrack";
@@ -212,65 +215,98 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
     /**
      * Create a binded mmd model animation group for the given `MmdModel`
      * @param mmdModel The mmd model to bind
+     * @param logger Logger
      * @returns The binded mmd model animation group
      */
-    public createAnimationGroup(mmdModel: IMmdModel): AnimationGroup {
+    public createAnimationGroup(mmdModel: IMmdModel, logger?: ILogger): AnimationGroup {
         const animationGroup = new AnimationGroup(this.name, mmdModel.mesh.getScene(), 1);
         animationGroup.isAdditive = true;
 
-        const skeletonBoneMap = new Map<string, number>();
-        const skeletonBones = mmdModel.skeleton.bones;
-        for (let i = 0; i < skeletonBones.length; ++i) {
-            skeletonBoneMap.set(skeletonBones[i].name, i);
+        const linkedBoneMap = new Map<string, IMmdRuntimeLinkedBone>();
+        {
+            const bones = mmdModel.skeleton.bones;
+            for (let i = 0; i < bones.length; ++i) {
+                const linkedBone = bones[i];
+                linkedBoneMap.set(linkedBone.name, linkedBone);
+            }
+        }
+        const runtimeBoneMap = new Map<string, IMmdRuntimeBone>();
+        {
+            const runtimeBones = mmdModel.runtimeBones;
+            const linkedBoneToRuntimeBoneMap = new Map<IMmdRuntimeLinkedBone, IMmdRuntimeBone>();
+            for (let i = 0; i < runtimeBones.length; ++i) {
+                const runtimeBone = runtimeBones[i];
+                linkedBoneToRuntimeBoneMap.set(runtimeBone.linkedBone, runtimeBone);
+            }
+            for (const [name, linkedBone] of linkedBoneMap) {
+                const runtimeBone = linkedBoneToRuntimeBoneMap.get(linkedBone);
+                if (runtimeBone === undefined) {
+                    logger?.warn(`Binding warning: bone ${name} not found in runtime bones`);
+                    continue;
+                }
+                runtimeBoneMap.set(name, runtimeBone);
+            }
         }
 
         const bonePositionAnimations = this.bonePositionAnimations;
         const bonePositionAnimationBindMap = this.bonePositionAnimationBindMap;
         for (let i = 0; i < bonePositionAnimations.length; ++i) {
-            const boneIndex = skeletonBoneMap.get(bonePositionAnimationBindMap[i]);
-            if (boneIndex !== undefined) {
-                animationGroup.addTargetedAnimation(bonePositionAnimations[i], skeletonBones[boneIndex]);
+            const linkedBone = linkedBoneMap.get(bonePositionAnimationBindMap[i]);
+            if (linkedBone === undefined) {
+                logger?.warn(`Binding failed: bone ${bonePositionAnimationBindMap[i]} not found`);
+            } else {
+                animationGroup.addTargetedAnimation(bonePositionAnimations[i], linkedBone);
             }
         }
 
         const boneRotationAnimations = this.boneRotationAnimations;
         const boneRotationAnimationBindMap = this.boneRotationAnimationBindMap;
         for (let i = 0; i < boneRotationAnimations.length; ++i) {
-            const boneIndex = skeletonBoneMap.get(boneRotationAnimationBindMap[i]);
-            if (boneIndex !== undefined) {
-                animationGroup.addTargetedAnimation(boneRotationAnimations[i], skeletonBones[boneIndex]);
+            const linkedBone = linkedBoneMap.get(boneRotationAnimationBindMap[i]);
+            if (linkedBone === undefined) {
+                logger?.warn(`Binding failed: bone ${boneRotationAnimationBindMap[i]} not found`);
+            } else {
+                animationGroup.addTargetedAnimation(boneRotationAnimations[i], linkedBone);
             }
         }
 
-        // const bonePhysicsToggleAnimations = this.bonePhysicsToggleAnimations;
-        // const bonePhysicsToggleAnimationBindMap = this.bonePhysicsToggleAnimationBindMap;
-        // for (let i = 0; i < bonePhysicsToggleAnimations.length; ++i) {
-        //     const boneIndex = skeletonBoneMap.get(bonePhysicsToggleAnimationBindMap[i]);
-        //     if (boneIndex !== undefined) {
-        //         animationGroup.addTargetedAnimation(bonePhysicsToggleAnimations[i], skeletonBones[boneIndex]);
-        //     }
-        // }
+        const bonePhysicsToggleAnimations = this.bonePhysicsToggleAnimations;
+        const bonePhysicsToggleAnimationBindMap = this.bonePhysicsToggleAnimationBindMap;
+        const rigidBodyStates = mmdModel.rigidBodyStates;
+        for (let i = 0; i < bonePhysicsToggleAnimations.length; ++i) {
+            const bone = runtimeBoneMap.get(bonePhysicsToggleAnimationBindMap[i]);
+            if (bone === undefined) {
+                logger?.warn(`Binding failed: runtime bone ${bonePhysicsToggleAnimationBindMap[i]} not found`);
+            } else {
+                for (let bodyIndex = 0; bodyIndex < bone.rigidBodyIndices.length; ++bodyIndex) {
+                    const rigidBodyIndex = bone.rigidBodyIndices[bodyIndex];
+                    animationGroup.addTargetedAnimation(bonePhysicsToggleAnimations[i], new BooleanArrayViewPropertyProxy(rigidBodyStates, rigidBodyIndex));
+                }
+            }
+        }
 
         const morphAnimations = this.morphAnimations;
         const morphAnimationBindMap = this.morphAnimationBindMap;
         const morphController = mmdModel.morph;
         for (let i = 0; i < morphAnimations.length; ++i) {
             const morphIndices = morphController.getMorphIndices(morphAnimationBindMap[i]);
-            if (morphIndices !== undefined) {
+            if (morphIndices === undefined) {
+                logger?.warn(`Binding failed: morph ${morphAnimationBindMap[i]} not found`);
+            } else {
                 animationGroup.addTargetedAnimation(morphAnimations[i], new MorphProxy(morphController, morphIndices));
             }
         }
 
-        const runtimeBones = mmdModel.runtimeBones;
         const propertyAnimations = this.propertyAnimations;
         const propertyAnimationBindMap = this.propertyAnimationBindMap;
         const ikSolverStates = mmdModel.ikSolverStates;
         for (let i = 0; i < propertyAnimations.length; ++i) {
-            const boneIndex = skeletonBoneMap.get(propertyAnimationBindMap[i]);
-            if (boneIndex !== undefined) {
-                const ikSolverIndex = runtimeBones[boneIndex].ikSolverIndex;
-                if (ikSolverIndex !== -1) {
-                    animationGroup.addTargetedAnimation(propertyAnimations[i], new BooleanArrayViewPropertyProxy(ikSolverStates, ikSolverIndex));
+            const ikBone = runtimeBoneMap.get(propertyAnimationBindMap[i]);
+            if (ikBone === undefined) {
+                logger?.warn(`Binding failed: runtime bone ${propertyAnimationBindMap[i]} not found`);
+            } else {
+                if (ikBone.ikSolverIndex !== -1) {
+                    animationGroup.addTargetedAnimation(propertyAnimations[i], new BooleanArrayViewPropertyProxy(ikSolverStates, ikBone.ikSolverIndex));
                 }
             }
         }
