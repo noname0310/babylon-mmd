@@ -24,6 +24,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
      */
     public animation: MmdCompositeAnimation;
 
+    private readonly _rigidBodyStates: Uint8Array;
     private readonly _ikSolverStates: Uint8Array;
     private readonly _morphController: MmdMorphControllerBase;
     private readonly _meshes: readonly Mesh[];
@@ -34,6 +35,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
     private constructor(
         animation: MmdCompositeAnimation,
+        rigidBodyStates: Uint8Array,
         ikSolverStates: Uint8Array,
         morphController: MmdMorphControllerBase,
         meshes: readonly Mesh[],
@@ -43,6 +45,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
     ) {
         this.animation = animation;
 
+        this._rigidBodyStates = rigidBodyStates;
         this._ikSolverStates = ikSolverStates;
         this._morphController = morphController;
         this._meshes = meshes;
@@ -68,6 +71,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
 
     private readonly _boneResultMap = new Map<IMmdRuntimeLinkedBone, [Quaternion, number, number]>(); // [result, accWeight, accCount]
     private readonly _movableBoneResultMap = new Map<IMmdRuntimeLinkedBone, [Vector3, Quaternion, number, number]>(); // [positionResult, rotationResult, accWeight, accCount]
+    private readonly _rigidBodyResultMap = new Map<readonly number[], boolean[]>();
     private readonly _morphResultMap = new Map<number, number>();
     private readonly _ikSolverResultMap = new Map<number, boolean>();
 
@@ -109,10 +113,12 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
         }
 
         const meshes = this._meshes;
+        const rigidBodyStates = this._rigidBodyStates;
         const ikSolverStates = this._ikSolverStates;
 
         const boneResultMap = this._boneResultMap;
         const movableBoneResultMap = this._movableBoneResultMap;
+        const rigidBodyResultMap = this._rigidBodyResultMap;
         const morphResultMap = this._morphResultMap;
         const ikSolverResultMap = this._ikSolverResultMap;
 
@@ -150,6 +156,12 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     result[2] = 0;
                     result[3] = 0;
                 }
+                for (const [rigidBodyIndices, result] of rigidBodyResultMap) {
+                    for (let i = 0; i < rigidBodyIndices.length; ++i) {
+                        rigidBodyStates[rigidBodyIndices[i]] = 1;
+                        result[i] = true;
+                    }
+                }
                 for (const [morphIndex, _result] of morphResultMap) {
                     morphController.setMorphWeightFromIndex(morphIndex, 0);
                     morphResultMap.set(morphIndex, 0);
@@ -158,7 +170,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     meshes[i].visibility = 1;
                 }
                 for (const [ikSolverIndex, _result] of ikSolverResultMap) {
-                    ikSolverStates[ikSolverIndex] = 0;
+                    ikSolverStates[ikSolverIndex] = 1;
                     ikSolverResultMap.set(ikSolverIndex, true);
                 }
             } else {
@@ -170,6 +182,11 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     result[0].copyFromFloats(0, 0, 0);
                     result[2] = 0;
                     result[3] = 0;
+                }
+                for (const [_rigidBodyIndices, result] of rigidBodyResultMap) {
+                    for (let i = 0; i < result.length; ++i) {
+                        result[i] = true;
+                    }
                 }
                 for (const [morphIndex, _result] of morphResultMap) {
                     morphResultMap.set(morphIndex, 0);
@@ -186,6 +203,11 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 bone.rotationQuaternion.copyFromFloats(0, 0, 0, 1);
                 bone.getRestMatrix().getTranslationToRef(this._boneRestPosition);
             }
+            for (const [rigidBodyIndices, _result] of rigidBodyResultMap) {
+                for (let i = 0; i < rigidBodyIndices.length; ++i) {
+                    rigidBodyStates[rigidBodyIndices[i]] = 1;
+                }
+            }
             for (const [morphIndex, _result] of morphResultMap) {
                 morphController.setMorphWeightFromIndex(morphIndex, 0);
             }
@@ -197,6 +219,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             }
             boneResultMap.clear();
             movableBoneResultMap.clear();
+            rigidBodyResultMap.clear();
             morphResultMap.clear();
             ikSolverResultMap.clear();
         }
@@ -229,6 +252,16 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                     const result = movableBoneResultMap.get(bone);
                     if (result === undefined) {
                         movableBoneResultMap.set(bone, [new Vector3(), new Quaternion(), 0, 0]);
+                    }
+                }
+            }
+            const boneToBodyBindIndexMap = runtimeAnimation.boneToBodyBindIndexMap;
+            for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+                const bodyIndices = boneToBodyBindIndexMap[i];
+                if (bodyIndices !== null) {
+                    const result = rigidBodyResultMap.get(bodyIndices);
+                    if (result === undefined) {
+                        rigidBodyResultMap.set(bodyIndices, new Array(bodyIndices.length).fill(true));
                     }
                 }
             }
@@ -329,6 +362,21 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 }
             }
 
+            const boneToBodyBindIndexMap = runtimeAnimation.boneToBodyBindIndexMap;
+            for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+                const bodyIndices = boneToBodyBindIndexMap[i];
+                if (bodyIndices !== null) {
+                    let result = rigidBodyResultMap.get(bodyIndices);
+                    if (result === undefined) {
+                        result = new Array(bodyIndices.length).fill(true);
+                        rigidBodyResultMap.set(bodyIndices, result);
+                    }
+                    for (let j = 0; j < bodyIndices.length; ++j) {
+                        result[j] = rigidBodyStates[bodyIndices[j]] !== 0;
+                    }
+                }
+            }
+
             const morphBindIndexMap = runtimeAnimation.morphBindIndexMap;
             for (let i = 0; i < morphBindIndexMap.length; ++i) {
                 const morphIndices = morphBindIndexMap[i];
@@ -377,6 +425,12 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 Quaternion.SlerpToRef(MmdCompositeRuntimeModelAnimation._IdentityQuaternion, result[1], result[2], bone.rotationQuaternion);
             } else {
                 bone.rotationQuaternion.copyFrom(result[1]);
+            }
+        }
+
+        for (const [rigidBodyIndices, result] of rigidBodyResultMap) {
+            for (let i = 0; i < rigidBodyIndices.length; ++i) {
+                rigidBodyStates[rigidBodyIndices[i]] = result ? 1 : 0;
             }
         }
 
@@ -479,7 +533,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             runtimeAnimations.splice(removeIndex, 1);
         };
 
-        return new MmdCompositeRuntimeModelAnimation(animation, model.ikSolverStates, model.morph, model.mesh.metadata.meshes, runtimeAnimations, onSpanAdded, onSpanRemoved);
+        return new MmdCompositeRuntimeModelAnimation(animation, model.rigidBodyStates, model.ikSolverStates, model.morph, model.mesh.metadata.meshes, runtimeAnimations, onSpanAdded, onSpanRemoved);
     }
 }
 
