@@ -16,7 +16,7 @@ import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { BezierInterpolate } from "./bezierInterpolate";
 import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
+import type { BodyIndices, IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
 /**
@@ -63,7 +63,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      *
      * first `boneBindIndexMap.length` elements are for bone tracks, and the rest are for movable bone tracks
      */
-    public readonly boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[];
+    public readonly boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[];
 
     private readonly _rigidBodyStates: IRigidBodyStateContainer;
 
@@ -78,7 +78,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
         ikSolverStates: IIkStateContainer,
-        boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[],
+        boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[],
         rigidBodyStates: IRigidBodyStateContainer,
         materialRecompileInduceInfo: readonly Material[]
     ) {
@@ -548,7 +548,7 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             }
         }
 
-        const boneToBodyBindIndexMap: Nullable<readonly number[]>[] = new Array(animation.boneTracks.length + animation.movableBoneTracks.length);
+        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animation.boneTracks.length + animation.movableBoneTracks.length);
         {
             for (let i = 0; i < boneTracks.length; ++i) {
                 const boneTrack = boneTracks[i];

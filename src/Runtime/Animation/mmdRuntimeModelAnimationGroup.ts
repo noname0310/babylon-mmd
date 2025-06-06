@@ -17,7 +17,7 @@ import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { CreateAnimationState } from "./Common/createAnimationState";
 import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
+import type { BodyIndices, IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 
 /**
  * Mmd runtime model animation that use animation container of babylon.js
@@ -59,7 +59,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     /**
      * Bone to body bind index map
      */
-    public readonly boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[];
+    public readonly boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[];
 
     private readonly _rigidBodyStates: IRigidBodyStateContainer;
 
@@ -81,7 +81,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
         ikSolverStates: IIkStateContainer,
-        boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[],
+        boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[],
         rigidBodyStates: IRigidBodyStateContainer,
         materialRecompileInduceInfo: readonly Material[]
     ) {
@@ -340,7 +340,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const boneToBodyBindIndexMap: Nullable<readonly number[]>[] = new Array(animationGroup.bonePhysicsToggleAnimations.length);
+        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animationGroup.bonePhysicsToggleAnimations.length);
         {
             const boneNameMap = animationGroup.bonePhysicsToggleAnimationBindMap;
             for (let i = 0; i < boneNameMap.length; ++i) {

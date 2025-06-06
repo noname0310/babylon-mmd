@@ -9,7 +9,7 @@ import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo } from "./IMmdRuntimeAnimation";
+import type { IMmdRuntimeModelAnimation, IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
 import { MmdCompositeAnimation } from "./mmdCompositeAnimation";
 
@@ -471,7 +471,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
             runtimeAnimations[i]?.induceMaterialRecompile(false, logger);
         }
         if (updateMorphTarget) {
-            const mergedMorphIndices: Nullable<readonly number[]>[] = [];
+            const mergedMorphIndices: Nullable<MorphIndices>[] = [];
             for (let i = 0; i < runtimeAnimations.length; ++i) {
                 const runtimeAnimation = runtimeAnimations[i];
                 if (runtimeAnimation !== null) {

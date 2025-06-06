@@ -61,6 +61,11 @@ export interface IMmdRuntimeModelAnimation {
 export type MorphIndices = readonly number[];
 
 /**
+ * Body indices for bone to rigid body bind index map
+ */
+export type BodyIndices = readonly number[];
+
+/**
  * MMD Runtime Model Animation with bind index map
  */
 export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeModelAnimation {
@@ -87,5 +92,5 @@ export interface IMmdRuntimeModelAnimationWithBindingInfo extends IMmdRuntimeMod
     /**
      * Bone to rigid body bind index map
      */
-    readonly boneToBodyBindIndexMap: readonly Nullable<readonly number[]>[];
+    readonly boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[];
 }
