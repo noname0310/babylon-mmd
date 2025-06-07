@@ -383,7 +383,7 @@ export class MmdModel implements IMmdModel {
             this._sortedRuntimeBones[i].resetTransformState();
         }
         this._update(false);
-        this._physicsModel?.syncBodies();
+        this._physicsModel?.syncBodies(this.rigidBodyStates);
     }
 
     /**

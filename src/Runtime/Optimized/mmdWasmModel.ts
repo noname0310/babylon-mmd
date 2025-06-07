@@ -526,7 +526,7 @@ export class MmdWasmModel implements IMmdModel {
      * Before the "physics stage" and after the "wasm before solver" stage
      */
     public beforePhysics(): void {
-        this._physicsModel?.syncBodies();
+        this._physicsModel?.syncBodies(this.rigidBodyStates);
     }
 
     /**
