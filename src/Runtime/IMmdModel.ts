@@ -1,13 +1,14 @@
 import type { IIkStateContainer } from "./IIkStateContainer";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
+import type { IRigidBodyStateContainer } from "./IRIgidBodyStateContainer";
 import type { RuntimeMmdMesh } from "./mmdMesh";
 import type { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 
 /**
  * IMmdModel is a model that can bind animation.
  */
-export interface IMmdModel extends IIkStateContainer {
+export interface IMmdModel extends IIkStateContainer, IRigidBodyStateContainer {
     /**
      * The root mesh of this model
      */
@@ -33,6 +34,16 @@ export interface IMmdModel extends IIkStateContainer {
      * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
      */
     readonly ikSolverStates: Uint8Array;
+
+    /**
+     * Uint8Array that stores the state of RigidBody
+     *
+     * - If bone position is driven by physics, the value is 1
+     * - If bone position is driven by only animation, the value is 0
+     *
+     * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
+     */
+    readonly rigidBodyStates: Uint8Array;
 
     /**
      * Runtime bones of this model

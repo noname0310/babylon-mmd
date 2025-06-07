@@ -71,9 +71,19 @@ export class MmdModel implements IMmdModel {
     /**
      * Uint8Array that stores the state of IK solvers
      *
-     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and vice versa
+     * If `ikSolverState[MmdModel.runtimeBones[i].ikSolverIndex]` is 0, IK solver of `MmdModel.runtimeBones[i]` is disabled and if it is 1, IK solver is enabled
      */
     public readonly ikSolverStates: Uint8Array;
+
+    /**
+     * Uint8Array that stores the state of RigidBody
+     *
+     * - If bone position is driven by physics, the value is 1
+     * - If bone position is driven by only animation, the value is 0
+     *
+     * You can get the state of the rigid body by `rigidBodyStates[MmdModel.runtimeBones[i].rigidBodyIndex]`
+     */
+    public readonly rigidBodyStates: Uint8Array;
 
     /**
      * Runtime bones of this model
@@ -188,8 +198,10 @@ export class MmdModel implements IMmdModel {
                 logger,
                 physicsParams.physicsOptions
             );
+            this.rigidBodyStates = new Uint8Array(mmdMetadata.rigidBodies.length).fill(1);
         } else {
             this._physicsModel = null;
+            this.rigidBodyStates = new Uint8Array(0);
         }
 
         this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
@@ -357,6 +369,7 @@ export class MmdModel implements IMmdModel {
 
                 this.morph.resetMorphWeights();
                 this.ikSolverStates.fill(1);
+                this.rigidBodyStates.fill(1);
             }
 
             if (this._currentAnimation !== null) {
@@ -370,7 +383,7 @@ export class MmdModel implements IMmdModel {
             this._sortedRuntimeBones[i].resetTransformState();
         }
         this._update(false);
-        this._physicsModel?.syncBodies();
+        this._physicsModel?.syncBodies(this.rigidBodyStates);
     }
 
     /**
@@ -408,10 +421,19 @@ export class MmdModel implements IMmdModel {
         rigidBodiesMetadata: MmdModelMetadata["rigidBodies"],
         worldTransformMatrices: Float32Array
     ): readonly MmdRuntimeBone[] {
+        const boneToRigidBodiesIndexMap: number[][] = new Array(bonesMetadata.length);
+        for (let i = 0; i < boneToRigidBodiesIndexMap.length; ++i) boneToRigidBodiesIndexMap[i] = [];
+
+        for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
+            const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
+            boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+        }
+
         const runtimeBones: MmdRuntimeBone[] = [];
         for (let i = 0; i < bonesMetadata.length; ++i) {
             const boneMetadata = bonesMetadata[i];
-            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i));
+            const rigidBodyIndices = boneToRigidBodiesIndexMap[i];
+            runtimeBones.push(new MmdRuntimeBone(bones[i], boneMetadata, worldTransformMatrices, i, rigidBodyIndices));
         }
 
         const physicsBoneSet = new Set<MmdRuntimeBone>();

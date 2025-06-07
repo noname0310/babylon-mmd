@@ -1,23 +1,24 @@
 import "@babylonjs/core/Loading/loadingScreen";
-import "@/Loader/pmxLoader";
+import "@/Loader/Optimized/bpmxLoader";
 import "@/Loader/mmdOutlineRenderer";
+import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
-import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
-import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { VmdLoader } from "@/Loader/vmdLoader";
+import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
@@ -31,27 +32,23 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SdefInjector.OverrideEngineCreateEffect(engine);
 
-        // materialBuilder.alphaEvaluationResolution = 2048;
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         const camera = CreateDefaultArcRotateCamera(scene);
-        camera.target.set(-0.817, 15.373, -0.859);
-        camera.alpha = -0.0552;
-        camera.beta = 1.3703;
-        camera.radius = 11.7531;
+        camera.setTarget(new Vector3(-1.3261749447410947, 11.691760759222726, -0.31660869989471035));
+        camera.alpha = -0.9561;
+        camera.beta = 1.0432;
+        camera.radius = 12.3586;
         const { shadowGenerator } = CreateLightComponents(scene);
+        shadowGenerator.transparencyShadow = true;
         CreateDefaultGround(scene);
 
-        const materialBuilder = new MmdStandardMaterialBuilder();
-        materialBuilder.forceDisableAlphaEvaluation = false;
-
         const mmdMesh = await LoadAssetContainerAsync(
-            "res/private_test/model/Hades/Hades.pmx",
+            "res/private_test/model/YYB Hatsune Miku_10th.bpmx",
             scene,
             {
                 pluginOptions: {
                     mmdmodel: {
-                        materialBuilder: materialBuilder,
                         loggingEnabled: true
                     }
                 }
@@ -60,59 +57,45 @@ export class SceneBuilder implements ISceneBuilder {
             result.addAllToScene();
             return result.meshes[0] as Mesh;
         });
-        // mmdMesh.scaling.scaleInPlace(5);
         for (const mesh of mmdMesh.metadata.meshes) {
-            mesh.receiveShadows = true;
-            shadowGenerator.addShadowCaster(mesh, false);
-        }
-
-        const mmdMesh2 = await LoadAssetContainerAsync(
-            "res/private_test/model/yyb_deep_canyons_miku/yyb_deep_canyons_miku_face_forward_bakebone.pmx",
-            scene,
-            {
-                pluginOptions: {
-                    mmdmodel: {
-                        materialBuilder: materialBuilder,
-                        loggingEnabled: true
-                    }
-                }
-            }
-        ).then(result => {
-            result.addAllToScene();
-            return result.meshes[0] as Mesh;
-        });
-        mmdMesh2.position.set(10, 0, 0);
-        for (const mesh of mmdMesh2.metadata.meshes) {
             mesh.receiveShadows = true;
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
         const physicsInstance = await ammo();
         const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
-        scene.enablePhysics(new Vector3(0, -98, 0), physicsPlugin);
+        scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
+        const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
-        mmdRuntime.createMmdModel(mmdMesh, { buildPhysics: { disableOffsetForConstraintFrame: true } });
-        mmdRuntime.createMmdModel(mmdMesh2, { buildPhysics: { disableOffsetForConstraintFrame: true } });
+        // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
+
+        const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
+            buildPhysics: true
+        });
+
+        const vmdLoader = new VmdLoader(scene);
+        vmdLoader.loggingEnabled = true;
+        const animation = await vmdLoader.loadAsync("motion", [
+            "res/motion/physics_toggle_test_yyb10th.vmd"
+        ]);
+        const wasmAnimation = new MmdWasmAnimation(animation, mmdWasmInstance, scene);
+        mmdModel.addAnimation(wasmAnimation);
+        mmdModel.setAnimation("motion");
+
+        mmdRuntime.playAnimation();
+        mmdRuntime.onPauseAnimationObservable.add(() => {
+            if (mmdRuntime.animationFrameTimeDuration === mmdRuntime.currentFrameTime) {
+                mmdRuntime.seekAnimation(0);
+                mmdRuntime.playAnimation().then(() => {
+                    mmdRuntime.initializeAllMmdModelsPhysics(true);
+                });
+            }
+        });
 
         Inspector.Show(scene, { });
-
-        {
-            const physicsViewer = new PhysicsViewer(scene);
-            for (const node of mmdMesh.getChildren()) {
-                if ((node as TransformNode).physicsBody) {
-                    physicsViewer.showBody((node as TransformNode).physicsBody!);
-                }
-            }
-        }
-
-        const skeletionViewer = new SkeletonViewer(mmdMesh.metadata.skeleton, mmdMesh, scene, false, 3, {
-            displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS
-        });
-        skeletionViewer.isEnabled = false;
 
         return scene;
     }

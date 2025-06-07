@@ -27,6 +27,8 @@ pub(crate) struct MmdRuntimeAnimation {
     movable_bone_bind_index_map: Box<[i32]>,
     morph_bind_index_map: Box<[Box<[i32]>]>,
     ik_solver_bind_index_map: Box<[i32]>,
+    #[cfg(feature = "physics")]
+    bone_to_body_bind_index_map: Box<[Box<[i32]>]>,
 }
 
 impl MmdRuntimeAnimation {
@@ -36,6 +38,8 @@ impl MmdRuntimeAnimation {
         movable_bone_bind_index_map: Box<[i32]>,
         morph_bind_index_map: Box<[Box<[i32]>]>,
         ik_solver_bind_index_map: Box<[i32]>,
+        #[cfg(feature = "physics")]
+        bone_to_body_bind_index_map: Box<[Box<[i32]>]>,
     ) -> Self {
         let bone_track_states = vec![
             AnimationTrackState {
@@ -80,6 +84,8 @@ impl MmdRuntimeAnimation {
             movable_bone_bind_index_map,
             morph_bind_index_map,
             ik_solver_bind_index_map,
+            #[cfg(feature = "physics")]
+            bone_to_body_bind_index_map,
         }
     }
 
@@ -131,6 +137,9 @@ impl MmdRuntimeAnimation {
     }
 
     pub(crate) fn animate(&mut self, frame_time: f32, mmd_model: &mut MmdModel) {
+        #[cfg(feature = "physics")]
+        assert!(self.animation.bone_tracks().len() + self.animation.movable_bone_tracks().len() == self.bone_to_body_bind_index_map.len());
+        
         if !self.animation.bone_tracks().is_empty() {
             let animation_arena = mmd_model.animation_arena_mut();
 
@@ -177,6 +186,16 @@ impl MmdRuntimeAnimation {
                 } else {
                     bone.rotation = track.rotations()[frame_index_a];
                 }
+
+                #[cfg(feature = "physics")]
+                {
+                    let mut rigidbody_state_arena = animation_arena.rigidbody_state_arena_mut();
+                    let rigidbody_state = track.physics_toggles()[frame_index_a];
+                    let rigidbody_indices = &self.bone_to_body_bind_index_map[i];
+                    for rigidbody_index in rigidbody_indices.iter() {
+                        rigidbody_state_arena[*rigidbody_index as u32] = rigidbody_state;
+                    }
+                }
             }
         }
 
@@ -189,7 +208,8 @@ impl MmdRuntimeAnimation {
                     Some(bone) => bone.rest_position(),
                     None => continue,
                 };
-                let bone = &mut mmd_model.animation_arena_mut().bone_arena_mut()[bone_index as u32];
+                let animation_arena = mmd_model.animation_arena_mut();
+                let bone = &mut animation_arena.bone_arena_mut()[bone_index as u32];
 
                 let track = &self.animation.movable_bone_tracks()[i];
                 if track.frame_numbers.is_empty() {
@@ -259,6 +279,16 @@ impl MmdRuntimeAnimation {
                 } else {
                     bone.position = bone_rest_position + Vec3A::from(track.positions()[frame_index_a]);
                     bone.rotation = track.rotations()[frame_index_a];
+                }
+
+                #[cfg(feature = "physics")]
+                {
+                    let mut rigidbody_state_arena = animation_arena.rigidbody_state_arena_mut();
+                    let rigidbody_state = track.physics_toggles()[frame_index_a];
+                    let rigidbody_indices = &self.bone_to_body_bind_index_map[i + self.animation.bone_tracks().len()];
+                    for rigidbody_index in rigidbody_indices.iter() {
+                        rigidbody_state_arena[*rigidbody_index as u32] = rigidbody_state;
+                    }
                 }
             }
         }

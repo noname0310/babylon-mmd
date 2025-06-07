@@ -162,7 +162,7 @@ impl<'a> DiagnosticWriter<'a> {
     }
 }
 
-impl<'a> Drop for DiagnosticWriter<'a> {
+impl Drop for DiagnosticWriter<'_> {
     fn drop(&mut self) {
         self.diagnostic.release_lock();
     }

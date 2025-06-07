@@ -57,8 +57,10 @@ export interface IMmdPhysicsModel {
 
     /**
      * Set the rigid bodies transform to the bones transform
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    syncBodies(): void;
+    syncBodies(rigidBodyStates: Uint8Array): void;
 
     /**
      * Set the bones transform to the rigid bodies transform

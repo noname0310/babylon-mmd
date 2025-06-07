@@ -171,8 +171,10 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
 
     /**
      * Set the rigid bodies transform to the bones transform
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    public syncBodies(): void {
+    public syncBodies(rigidBodyStates: Uint8Array): void {
         const rigidBodyIndexMap = this._rigidBodyIndexMap;
         const bundle = this._bundle;
         if (bundle === null) return;

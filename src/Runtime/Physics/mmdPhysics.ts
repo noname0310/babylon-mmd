@@ -165,8 +165,10 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
 
     /**
      * Set the rigid bodies transform to the bones transform
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    public syncBodies(): void {
+    public syncBodies(rigidBodyStates: Uint8Array): void {
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
             const node = nodes[i];
