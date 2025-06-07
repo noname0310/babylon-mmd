@@ -142,7 +142,7 @@ impl MmdPhysicsRuntime {
         }
     }
 
-    fn create_shape<'a>(
+    fn create_shape(
         diagnostic: &mut DiagnosticWriter,
         scaling_factor: f32,
         rigidbody_index: u32,
@@ -174,6 +174,7 @@ impl MmdPhysicsRuntime {
         Some((shape, is_zero_volume))
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_rb_info(
         bones: &[MmdRuntimeBone],
         world_matrix: Mat4,
