@@ -6,13 +6,13 @@ import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluen
 import type { BodyIndices, MorphIndices } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
+import type { IMmdRuntimeLinkedBone } from "@/Runtime/IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
 import type { MmdWasmModel } from "../mmdWasmModel";
 import type { MmdWasmMorphController } from "../mmdWasmMorphController";
 import { MmdWasmAnimation } from "./mmdWasmAnimation";
-import { IMmdRuntimeLinkedBone } from "@/Runtime/IMmdRuntimeLinkedBone";
 
 /**
  * Mmd WASM runtime model animation
@@ -254,7 +254,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
                     linkedBoneMap.set(retargetingMap[linkedBone.name] ?? linkedBone.name, linkedBone);
                 }
             }
-            
+
             const runtimeBones = model.runtimeBones;
             const linkedBoneToRuntimeBoneIndexMap = new Map<IMmdRuntimeLinkedBone, number>();
             for (let i = 0; i < runtimeBones.length; ++i) {
@@ -414,12 +414,43 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
+        let boneToBodyBindIndexMapPtr: number = 0;
+        if (animationPool.createBoneToBodyBindIndexMap !== undefined) { // if wasm runtime built without physics support, this method is not available
+            const bodyLengthBufferPtr = animationPool.allocateLengthsBuffer(boneToBodyBindIndexMap.length);
+            const bodyLengthBuffer = wasmInstance.createTypedArray(Uint32Array, bodyLengthBufferPtr, boneToBodyBindIndexMap.length);
+            {
+                const bodyLengthBufferArray = bodyLengthBuffer.array;
+                for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+                    const bodyIndices = boneToBodyBindIndexMap[i];
+                    if (bodyIndices === null) {
+                        bodyLengthBufferArray[i] = 0;
+                    } else {
+                        bodyLengthBufferArray[i] = bodyIndices.length;
+                    }
+                }
+            }
+            boneToBodyBindIndexMapPtr = animationPool.createBoneToBodyBindIndexMap(animation.ptr, bodyLengthBufferPtr);
+            for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+                const nthBodyIndicesPtr = animationPool.getNthBoneToBodyBindIndexMap(boneToBodyBindIndexMapPtr, i);
+                const nthBodyIndices = wasmInstance.createTypedArray(Int32Array, nthBodyIndicesPtr, bodyLengthBuffer.array[i]).array;
+
+                const bodyIndices = boneToBodyBindIndexMap[i];
+                if (bodyIndices === null) continue;
+
+                for (let j = 0; j < bodyIndices.length; ++j) {
+                    nthBodyIndices[j] = bodyIndices[j];
+                }
+            }
+            animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, morphTracks.length);
+        }
+
         const runtimeAnimationPtr = animationPool.createRuntimeAnimation(
             animation.ptr,
             boneBindIndexMapPtr,
             movableBoneBindIndexMapPtr,
             morphBindIndexMapPtr,
-            ikSolverBindIndexMapPtr
+            ikSolverBindIndexMapPtr,
+            boneToBodyBindIndexMapPtr
         );
 
         return new MmdWasmRuntimeModelAnimation(

@@ -326,14 +326,46 @@ impl AnimationPool {
         Box::into_raw(ik_solver_bind_index_map) as *mut i32
     }
 
-    #[wasm_bindgen(js_name = "createRuntimeAnimation")]
-    pub fn create_runtime_animation(
+    #[cfg(feature = "physics")]    
+    #[wasm_bindgen(js_name = "createBoneToBodyBindIndexMap")]
+    pub fn create_bone_to_body_bind_index_map(&mut self, animation_ptr: *const usize, body_lengths: *const u32) -> *mut Box<[i32]> {
+        let animation_ptr = animation_ptr as *const MmdAnimation;
+        self.check_animation_ptr(animation_ptr);
+        let animation = unsafe {
+            &*animation_ptr
+        };
+
+        let index_map_length = animation.bone_tracks().len() + animation.movable_bone_tracks().len();
+        let mut bone_to_body_bind_index_map = Vec::with_capacity(index_map_length);
+        for i in 0..index_map_length {
+            bone_to_body_bind_index_map.push(
+                vec![-1; unsafe{
+                    *body_lengths.add(i)
+                } as usize].into_boxed_slice()
+            );
+        }
+        let bone_to_body_bind_index_map = bone_to_body_bind_index_map.into_boxed_slice();
+        Box::into_raw(bone_to_body_bind_index_map) as *mut Box<[i32]>
+    }
+
+    #[cfg(feature = "physics")]
+    #[wasm_bindgen(js_name = "getNthBoneToBodyBindIndexMap")]
+    pub fn get_nth_bone_to_body_bind_index_map(&mut self, bone_to_body_bind_index_map: *mut Box<[i32]>, index: usize) -> *mut i32 {
+        let nth_bone_to_body_bind_index_map = unsafe {
+            &mut *bone_to_body_bind_index_map.add(index)
+        };
+        nth_bone_to_body_bind_index_map.as_mut_ptr()
+    }
+
+    fn create_runtime_animation_internal(
         &mut self,
         animation_ptr: *const usize,
         bone_bind_index_map: *mut i32,
         movable_bone_bind_index_map: *mut i32,
         morph_bind_index_map: *mut Box<[i32]>,
         ik_solver_bind_index_map: *mut i32,
+        #[cfg(feature = "physics")]
+        bone_to_body_bind_index_map: *mut Box<[i32]>,
     ) -> *mut usize {
         let animation_ptr = animation_ptr as *const MmdAnimation;
         self.check_animation_ptr(animation_ptr);
@@ -353,6 +385,10 @@ impl AnimationPool {
         let ik_solver_bind_index_map = unsafe {
             Box::from_raw(std::slice::from_raw_parts_mut(ik_solver_bind_index_map, animation.property_track().ik_count()))
         };
+        #[cfg(feature = "physics")]
+        let bone_to_body_bind_index_map = unsafe {
+            Box::from_raw(std::slice::from_raw_parts_mut(bone_to_body_bind_index_map, animation.bone_tracks().len() + animation.movable_bone_tracks().len()))
+        };
 
         let runtime_animation = Box::new(MmdRuntimeAnimation::new(
             animation,
@@ -360,10 +396,52 @@ impl AnimationPool {
             movable_bone_bind_index_map,
             morph_bind_index_map,
             ik_solver_bind_index_map,
+            #[cfg(feature = "physics")]
+            bone_to_body_bind_index_map,
         ));
         let ptr = &*runtime_animation as *const MmdRuntimeAnimation as *mut usize;
         self.runtime_animations.push(runtime_animation);
         ptr
+    }
+
+    #[cfg(feature = "physics")]
+    #[wasm_bindgen(js_name = "createRuntimeAnimation")]
+    pub fn create_runtime_animation(
+        &mut self,
+        animation_ptr: *const usize,
+        bone_bind_index_map: *mut i32,
+        movable_bone_bind_index_map: *mut i32,
+        morph_bind_index_map: *mut Box<[i32]>,
+        ik_solver_bind_index_map: *mut i32,
+        bone_to_body_bind_index_map: *mut Box<[i32]>,
+    ) -> *mut usize {
+        self.create_runtime_animation_internal(
+            animation_ptr,
+            bone_bind_index_map,
+            movable_bone_bind_index_map,
+            morph_bind_index_map,
+            ik_solver_bind_index_map,
+            bone_to_body_bind_index_map,
+        )
+    }
+
+    #[cfg(not(feature = "physics"))]
+    #[wasm_bindgen(js_name = "createRuntimeAnimation")]
+    pub fn create_runtime_animation(
+        &mut self,
+        animation_ptr: *const usize,
+        bone_bind_index_map: *mut i32,
+        movable_bone_bind_index_map: *mut i32,
+        morph_bind_index_map: *mut Box<[i32]>,
+        ik_solver_bind_index_map: *mut i32,
+    ) -> *mut usize {
+        self.create_runtime_animation_internal(
+            animation_ptr,
+            bone_bind_index_map,
+            movable_bone_bind_index_map,
+            morph_bind_index_map,
+            ik_solver_bind_index_map,
+        )
     }
 
     #[wasm_bindgen(js_name = "destroyRuntimeAnimation")]
