@@ -280,6 +280,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     }
 
     private _makeKinematic(impostor: PhysicsImpostor): void {
+        // disableBidirectionalTransformation is true only for non follow bone impostors
         if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
             return;
         }
