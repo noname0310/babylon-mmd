@@ -114,6 +114,10 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     private readonly _impostors: Nullable<PhysicsImpostor>[];
 
     private readonly _rootMesh: Mesh;
+
+    private readonly _syncedRigidBodyStates: Uint8Array;
+    private _disabledRigidBodyCount: number;
+
     // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     private readonly _ammoInstance: typeof import("ammojs-typed").default;
 
@@ -145,6 +149,10 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         this._impostors = impostors;
 
         this._rootMesh = rootMesh;
+
+        this._syncedRigidBodyStates = new Uint8Array(impostors.length).fill(1);
+        this._disabledRigidBodyCount = 0;
+
         this._ammoInstance = ammoInstance;
 
         this._tmpBtVector3 = new ammoInstance.btVector3();
@@ -236,11 +244,74 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     }
 
     /**
-     * Set the rigid bodies transform to the bones transform
+     * Indicate whether all IK must be solved
+     */
+    public get needDeoptimize(): boolean {
+        return 0 < this._disabledRigidBodyCount;
+    }
+
+    /**
+     * commit rigid body states to physics model
      *
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    public syncBodies(rigidBodyStates: Uint8Array): void {
+    public commitBodyStates(rigidBodyStates: Uint8Array): void {
+        const nodes = this._nodes;
+        const syncedRigidBodyStates = this._syncedRigidBodyStates;
+        for (let i = 0; i < rigidBodyStates.length; ++i) {
+            const node = nodes[i];
+            if (node === null) {
+                continue;
+            }
+            if (node.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) {
+                continue;
+            }
+
+            const state = rigidBodyStates[i];
+            if (state !== syncedRigidBodyStates[i]) {
+                syncedRigidBodyStates[i] = state;
+                if (state !== 0) {
+                    this._disabledRigidBodyCount -= 1;
+                } else {
+                    this._disabledRigidBodyCount += 1;
+                }
+            }
+        }
+    }
+
+    private _makeKinematic(impostor: PhysicsImpostor): void {
+        if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+            return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+        body.setCollisionFlags(body.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
+    }
+
+    private _restoreDynamic(impostor: PhysicsImpostor): void {
+        if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+            return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+        body.setCollisionFlags(body.getCollisionFlags() & ~2); // CF_KINEMATIC_OBJECT
+    }
+
+    /**
+     * Set the rigid bodies transform to the bones transform
+     */
+    public syncBodies(): void {
+        const mmdPhysics = this._mmdPhysics;
+        const impostors = this._impostors;
+        for (let i = 0; i < impostors.length; ++i) {
+            const impostor = impostors[i];
+            if (impostor === null) continue;
+
+            mmdPhysics._makeKinematicOnce(impostor);
+        }
+
         const nodes = this._nodes;
         for (let i = 0; i < nodes.length; ++i) {
             const node = nodes[i];
@@ -711,6 +782,8 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         this._kinematicOnces.push(impostor);
-        impostor.physicsBody.setCollisionFlags(impostor.physicsBody.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+        body.setCollisionFlags(body.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
     }
 }

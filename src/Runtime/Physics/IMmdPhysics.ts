@@ -56,11 +56,21 @@ export interface IMmdPhysicsModel {
     initialize(): void;
 
     /**
-     * Set the rigid bodies transform to the bones transform
+     * Indicate whether all IK must be solved
+     */
+    get needDeoptimize(): boolean;
+
+    /**
+     * commit rigid body states to physics model
      *
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    syncBodies(rigidBodyStates: Uint8Array): void;
+    commitBodyStates(rigidBodyStates: Uint8Array): void;
+
+    /**
+     * Set the rigid bodies transform to the bones transform
+     */
+    syncBodies(): void;
 
     /**
      * Set the bones transform to the rigid bodies transform

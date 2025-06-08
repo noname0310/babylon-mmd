@@ -520,13 +520,15 @@ export class MmdWasmModel implements IMmdModel {
                 }
             }
         }
+
+        this._physicsModel?.commitBodyStates(this._rigidBodyStates.array);
     }
 
     /**
      * Before the "physics stage" and after the "wasm before solver" stage
      */
     public beforePhysics(): void {
-        this._physicsModel?.syncBodies(this.rigidBodyStates);
+        this._physicsModel?.syncBodies();
     }
 
     /**

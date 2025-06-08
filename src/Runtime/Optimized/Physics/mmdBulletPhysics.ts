@@ -67,6 +67,9 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
     private _bundle: Nullable<MmdRigidBodyBundle>;
     private readonly _constraints: Nullable<Constraint>[];
 
+    private readonly _syncedRigidBodyStates: Uint8Array;
+    private readonly _needDeoptimize: boolean;
+
     /**
      * Create a new MMD bullet physics model
      * @param physicsRuntime The physics runtime
@@ -90,6 +93,9 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
         this._rigidBodyIndexMap = rigidBodyIndexMap;
         this._bundle = bundle;
         this._constraints = constraints;
+
+        this._syncedRigidBodyStates = new Uint8Array(rigidBodyIndexMap.length);
+        this._needDeoptimize = false;
 
         physicsRuntime.addRigidBodyBundle(bundle, worldId);
         for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
@@ -170,11 +176,26 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
     }
 
     /**
-     * Set the rigid bodies transform to the bones transform
+     * Indicate whether all IK must be solved
+     */
+    public get needDeoptimize(): boolean {
+        return this._needDeoptimize;
+    }
+
+    /**
+     * commit rigid body states to physics model
      *
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
-    public syncBodies(rigidBodyStates: Uint8Array): void {
+    public commitBodyStates(rigidBodyStates: Uint8Array): void {
+        rigidBodyStates;
+        this._syncedRigidBodyStates;
+    }
+
+    /**
+     * Set the rigid bodies transform to the bones transform
+     */
+    public syncBodies(): void {
         const rigidBodyIndexMap = this._rigidBodyIndexMap;
         const bundle = this._bundle;
         if (bundle === null) return;

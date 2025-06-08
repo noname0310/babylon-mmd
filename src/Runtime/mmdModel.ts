@@ -382,8 +382,9 @@ export class MmdModel implements IMmdModel {
         for (let i = 0; i < this._sortedRuntimeBones.length; ++i) {
             this._sortedRuntimeBones[i].resetTransformState();
         }
+        this._physicsModel?.commitBodyStates(this.rigidBodyStates);
         this._update(false);
-        this._physicsModel?.syncBodies(this.rigidBodyStates);
+        this._physicsModel?.syncBodies();
     }
 
     /**
@@ -401,7 +402,7 @@ export class MmdModel implements IMmdModel {
     }
 
     private _update(afterPhysicsStage: boolean): void {
-        const usePhysics = this._physicsModel !== null;
+        const usePhysics = this._physicsModel !== null && !this._physicsModel.needDeoptimize;
 
         const sortedBones = this._sortedRuntimeBones;
         for (let i = 0; i < sortedBones.length; ++i) {
