@@ -139,12 +139,12 @@ impl RigidBody {
     pub(super) fn update_temporal_kinematic_state(&mut self, mut world: PhysicsWorldHandle) {
         match self.temporal_kinematic_state {
             TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
-            TemporalKinematicState::WaitForRestore => {
+            TemporalKinematicState::WaitForTemporalChange => {
                 let body = self.create_handle();
                 world.get_mut().make_body_kinematic(body);
-                self.temporal_kinematic_state = TemporalKinematicState::Restoring;
+                self.temporal_kinematic_state = TemporalKinematicState::WaitForRestore;
             }
-            TemporalKinematicState::Restoring => {
+            TemporalKinematicState::WaitForRestore => {
                 let body = self.create_handle();
                 world.get_mut().restore_body_dynamic(body);
                 self.temporal_kinematic_state = TemporalKinematicState::Idle;
@@ -155,7 +155,7 @@ impl RigidBody {
     pub(super) fn clear_temporal_kinematic_state(&mut self) {
         match self.temporal_kinematic_state {
             TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
-            TemporalKinematicState::WaitForRestore | TemporalKinematicState::Restoring => {
+            TemporalKinematicState::WaitForTemporalChange | TemporalKinematicState::WaitForRestore => {
                 self.temporal_kinematic_state = TemporalKinematicState::Idle;
             }
         }

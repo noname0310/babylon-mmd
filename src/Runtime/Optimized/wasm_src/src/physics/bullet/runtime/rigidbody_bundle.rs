@@ -165,12 +165,12 @@ impl RigidBodyBundle {
             let temporal_kinematic_state = &mut self.temporal_kinematic_states[i];
             match temporal_kinematic_state {
                 TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
-                TemporalKinematicState::WaitForRestore => {
+                TemporalKinematicState::WaitForTemporalChange => {
                     let body = &mut self.bodies[i];
                     world.get_mut().make_raw_body_kinematic(body);
-                    *temporal_kinematic_state = TemporalKinematicState::Restoring;
+                    *temporal_kinematic_state = TemporalKinematicState::WaitForRestore;
                 }
-                TemporalKinematicState::Restoring => {
+                TemporalKinematicState::WaitForRestore => {
                     let body = &mut self.bodies[i];
                     world.get_mut().restore_raw_body_dynamic(body);
                     *temporal_kinematic_state = TemporalKinematicState::Idle;
@@ -183,7 +183,7 @@ impl RigidBodyBundle {
         for temporal_kinematic_state in self.temporal_kinematic_states.iter_mut() {
             match temporal_kinematic_state {
                 TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
-                TemporalKinematicState::WaitForRestore | TemporalKinematicState::Restoring => {
+                TemporalKinematicState::WaitForTemporalChange | TemporalKinematicState::WaitForRestore => {
                     *temporal_kinematic_state = TemporalKinematicState::Idle;
                 }
             }
@@ -323,7 +323,7 @@ impl RigidBodyBundle {
     }
 
     pub(crate) fn make_temporal_kinematic(&mut self, index: usize) {
-        self.temporal_kinematic_states[index] = TemporalKinematicState::WaitForRestore;
+        self.temporal_kinematic_states[index] = TemporalKinematicState::WaitForTemporalChange;
     }
 
     pub(crate) fn create_handle(&mut self) -> RigidBodyBundleHandle {

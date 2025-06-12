@@ -78,7 +78,7 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
 
             const temporalKinematicState = temporalKinematicStatePtr.array;
             if (temporalKinematicState[0] !== TemporalKinematicState.Disabled) {
-                temporalKinematicState[0] = TemporalKinematicState.WaitForRestore;
+                temporalKinematicState[0] = TemporalKinematicState.WaitForTemporalChange;
             }
 
             this._isMotionStateMatrixBufferDirty = false;

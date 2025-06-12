@@ -45,7 +45,7 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
         const temporalKinematicStates = temporalKinematicStatesPtr.array;
         if (temporalKinematicStates[index] !== TemporalKinematicState.Disabled) {
-            temporalKinematicStates[index] = TemporalKinematicState.WaitForRestore;
+            temporalKinematicStates[index] = TemporalKinematicState.WaitForTemporalChange;
         }
     }
 
@@ -79,7 +79,7 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = array[aOffset + 14];
 
             if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                temporalKinematicStates[i] = TemporalKinematicState.WaitForRestore;
+                temporalKinematicStates[i] = TemporalKinematicState.WaitForTemporalChange;
             }
 
             mOffset += Constants.MotionStateSizeInFloat32Array;
