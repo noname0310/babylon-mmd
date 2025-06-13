@@ -2,7 +2,7 @@ import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 
 import { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
 
-import type { MmdCamera } from "../mmdCamera";
+import type { IMmdCamera } from "../IMmdCamera";
 import { CreateAnimationState } from "./Common/createAnimationState";
 import type { IMmdBindableCameraAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
@@ -23,11 +23,11 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
     private readonly _distanceAnimationState: _IAnimationState;
     private readonly _fovAnimationState: _IAnimationState;
 
-    private readonly _camera: MmdCamera;
+    private readonly _camera: IMmdCamera;
 
     private constructor(
         animation: MmdCameraAnimationGroup,
-        camera: MmdCamera
+        camera: IMmdCamera
     ) {
         this.animation = animation;
 
@@ -58,7 +58,7 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
      * @param camera Bind target
      * @returns MmdRuntimeCameraAnimationGroup instance
      */
-    public static Create(animation: MmdCameraAnimationGroup, camera: MmdCamera): MmdRuntimeCameraAnimationGroup {
+    public static Create(animation: MmdCameraAnimationGroup, camera: IMmdCamera): MmdRuntimeCameraAnimationGroup {
         return new MmdRuntimeCameraAnimationGroup(animation, camera);
     }
 }
@@ -73,6 +73,6 @@ declare module "../../Loader/Animation/mmdCameraAnimationGroup" {
  * @param camera Bind target
  * @returns MmdRuntimeCameraAnimationGroup instance
  */
-MmdCameraAnimationGroup.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdRuntimeCameraAnimationGroup {
+MmdCameraAnimationGroup.prototype.createRuntimeCameraAnimation = function(camera: IMmdCamera): MmdRuntimeCameraAnimationGroup {
     return MmdRuntimeCameraAnimationGroup.Create(this, camera);
 };
