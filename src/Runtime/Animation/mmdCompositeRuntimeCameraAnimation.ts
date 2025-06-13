@@ -1,7 +1,7 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdCamera } from "../mmdCamera";
+import type { IMmdCamera } from "../IMmdCamera";
 import type { IMmdBindableCameraAnimation, IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
 import type { MmdAnimationSpan } from "./mmdCompositeAnimation";
@@ -18,14 +18,14 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
      */
     public readonly animation: MmdCompositeAnimation;
 
-    private readonly _camera: MmdCamera;
+    private readonly _camera: IMmdCamera;
     private readonly _runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[];
     private _onSpanAdded: Nullable<(span: MmdAnimationSpan) => void>;
     private _onSpanRemoved: Nullable<(removeIndex: number) => void>;
 
     private constructor(
         animation: MmdCompositeAnimation,
-        camera: MmdCamera,
+        camera: IMmdCamera,
         runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[],
         onSpanAdded: (span: MmdAnimationSpan) => void,
         onSpanRemoved: (removeIndex: number) => void
@@ -146,7 +146,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
      * @param camera Bind target
      * @returns MmdCompositeRuntimeCameraAnimation instance
      */
-    public static Create(animation: MmdCompositeAnimation, camera: MmdCamera): MmdCompositeRuntimeCameraAnimation {
+    public static Create(animation: MmdCompositeAnimation, camera: IMmdCamera): MmdCompositeRuntimeCameraAnimation {
         const runtimeAnimations: Nullable<IMmdRuntimeCameraAnimation>[] = new Array(animation.spans.length).fill(null);
         const spans = animation.spans;
         for (let i = 0; i < spans.length; ++i) {
@@ -189,6 +189,6 @@ declare module "./mmdCompositeAnimation" {
  * @param camera Bind target
  * @returns MmdRuntimeCameraAnimation instance
  */
-MmdCompositeAnimation.prototype.createRuntimeCameraAnimation = function(camera: MmdCamera): MmdCompositeRuntimeCameraAnimation {
+MmdCompositeAnimation.prototype.createRuntimeCameraAnimation = function(camera: IMmdCamera): MmdCompositeRuntimeCameraAnimation {
     return MmdCompositeRuntimeCameraAnimation.Create(this, camera);
 };

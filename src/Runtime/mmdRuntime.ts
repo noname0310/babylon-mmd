@@ -8,10 +8,10 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { IDisposeObservable } from "./IDisposeObserable";
+import type { IMmdCamera } from "./IMmdCamera";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdRuntime } from "./IMmdRuntime";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
-import type { MmdCamera } from "./mmdCamera";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
 import { MmdModel } from "./mmdModel";
@@ -86,7 +86,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     private readonly _physics: Nullable<IMmdPhysics>;
 
     private readonly _models: MmdModel[];
-    private _camera: Nullable<MmdCamera>;
+    private _camera: Nullable<IMmdCamera>;
     private _audioPlayer: Nullable<IPlayer>;
 
     /**
@@ -343,7 +343,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * Set camera to animate
      * @param camera MMD camera
      */
-    public setCamera(camera: Nullable<MmdCamera>): void {
+    public setCamera(camera: Nullable<IMmdCamera>): void {
         if (this._camera !== null) {
             this._camera.onCurrentAnimationChangedObservable.removeCallback(this._onAnimationChanged);
         }
@@ -762,7 +762,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     /**
      * MMD camera
      */
-    public get camera(): Nullable<MmdCamera> {
+    public get camera(): Nullable<IMmdCamera> {
         return this._camera;
     }
 

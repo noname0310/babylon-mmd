@@ -1,8 +1,8 @@
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 
+import type { IMmdCamera } from "../IMmdCamera";
 import type { IMmdModel } from "../IMmdModel";
-import type { MmdCamera } from "../mmdCamera";
 import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./IMmdRuntimeAnimation";
 
 /**
@@ -14,7 +14,7 @@ export interface IMmdBindableCameraAnimation<T extends IMmdRuntimeCameraAnimatio
      * @param camera bind target
      * @returns Runtime camera animation instance
      */
-    createRuntimeCameraAnimation(camera: MmdCamera): T;
+    createRuntimeCameraAnimation(camera: IMmdCamera): T;
 }
 
 /**

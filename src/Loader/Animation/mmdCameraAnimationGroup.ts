@@ -6,7 +6,7 @@ import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
-import type { MmdCamera } from "@/Runtime/mmdCamera";
+import type { IMmdCamera } from "@/Runtime/IMmdCamera";
 
 import { ComputeHermiteTangent } from "./Common/computeHermiteTangent";
 import type { IMmdAnimation } from "./IMmdAnimation";
@@ -79,7 +79,7 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
      * @param mmdCamera The mmd camera
      * @returns The binded mmd camera animation group
      */
-    public createAnimationGroup(mmdCamera: MmdCamera): AnimationGroup {
+    public createAnimationGroup(mmdCamera: IMmdCamera): AnimationGroup {
         const animationGroup = new AnimationGroup(this.name, mmdCamera.getScene());
         animationGroup.addTargetedAnimation(this.positionAnimation, mmdCamera);
         animationGroup.addTargetedAnimation(this.rotationAnimation, mmdCamera);

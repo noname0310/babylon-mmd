@@ -6,9 +6,9 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
+import type { IMmdCamera } from "./IMmdCamera";
 import type { IMmdModel } from "./IMmdModel";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
-import type { MmdCamera } from "./mmdCamera";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import type { IMmdModelCreationOptions } from "./mmdRuntime";
 
@@ -122,7 +122,7 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
      * Set camera to animate
      * @param camera MMD camera
      */
-    setCamera(camera: Nullable<MmdCamera>): void;
+    setCamera(camera: Nullable<IMmdCamera>): void;
 
     /**
      * Set audio player to sync with animation
@@ -202,7 +202,7 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
     /**
      * MMD camera
      */
-    get camera(): Nullable<MmdCamera>;
+    get camera(): Nullable<IMmdCamera>;
 
     /**
      * Audio player
