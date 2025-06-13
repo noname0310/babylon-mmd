@@ -11,6 +11,7 @@ import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimatio
 import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
+import type { IMmdCamera } from "./IMmdCamera";
 
 Node.AddNodeConstructor("MmdCamera", (name, scene) => {
     return (): MmdCamera => new MmdCamera(name, undefined, scene);
@@ -23,7 +24,7 @@ type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimat
  *
  * The MMD camera is a type of Arc Rotate Camera that determines the transform of the camera by the center position, rotation(yaw pitch roll), and distance parameters
  */
-export class MmdCamera extends Camera {
+export class MmdCamera extends Camera implements IMmdCamera {
     /**
      * Gets or sets a boolean indicating that the scaling of the parent hierarchy will not be taken in account by the camera
      */
