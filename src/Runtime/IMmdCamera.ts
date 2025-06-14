@@ -1,5 +1,6 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Observable } from "@babylonjs/core/Misc/observable";
+import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";
@@ -85,4 +86,9 @@ export interface IMmdCamera {
      * @param frameTime The 30fps frame time
      */
     animate(frameTime: number): void;
+
+    /**
+     * Get the scene that the camera belongs to
+     */
+    getScene(): Nullable<Scene>;
 }
