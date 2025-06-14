@@ -85,15 +85,16 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(wasmAnimation);
         mmdModel.setAnimation("motion");
 
-        mmdRuntime.playAnimation();
-        mmdRuntime.onPauseAnimationObservable.add(() => {
-            if (mmdRuntime.animationFrameTimeDuration === mmdRuntime.currentFrameTime) {
-                mmdRuntime.seekAnimation(0);
-                mmdRuntime.playAnimation().then(() => {
-                    mmdRuntime.initializeAllMmdModelsPhysics(true);
-                });
-            }
-        });
+        // mmdRuntime.playAnimation();
+        // mmdRuntime.onPauseAnimationObservable.add(() => {
+        //     if (mmdRuntime.animationFrameTimeDuration === mmdRuntime.currentFrameTime) {
+        //         mmdRuntime.seekAnimation(0);
+        //         mmdRuntime.playAnimation().then(() => {
+        //             mmdRuntime.initializeAllMmdModelsPhysics(true);
+        //         });
+        //     }
+        // });
+        mmdRuntime.seekAnimation(80);
 
         Inspector.Show(scene, { });
 

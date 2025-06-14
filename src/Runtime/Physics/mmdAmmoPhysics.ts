@@ -132,7 +132,7 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
     public set temporalKinematic(value: boolean) {
         // disableBidirectionalTransformation is true only for non follow bone impostors
         if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            // if imposter is follow bone, it is always kinematic
+            // if impostor is follow bone, it is always kinematic
             return;
         }
 
@@ -160,7 +160,7 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
     public set kinematicToggle(value: boolean) {
         // disableBidirectionalTransformation is true only for non follow bone impostors
         if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            // if imposter is follow bone, it is always true
+            // if impostor is follow bone, it is always true
             return;
         }
 
@@ -209,7 +209,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
     private readonly _rootMesh: Mesh;
 
-    // private readonly _syncedRigidBodyStates: Uint8Array;
+    private readonly _syncedRigidBodyStates: Uint8Array;
     private _disabledRigidBodyCount: number;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -244,7 +244,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
         this._rootMesh = rootMesh;
 
-        // this._syncedRigidBodyStates = new Uint8Array(impostors.length).fill(1);
+        this._syncedRigidBodyStates = new Uint8Array(impostors.length).fill(1);
         this._disabledRigidBodyCount = 0;
 
         this._ammoInstance = ammoInstance;
@@ -347,12 +347,14 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     /**
      * commit rigid body states to physics model
      *
+     * if rigidBodyStates[i] is 0, the rigid body motion type is kinematic,
+     * if rigidBodyStates[i] is 1 and physicsMode is not FollowBone, the rigid body motion type is dynamic.
+     *
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
     public commitBodyStates(rigidBodyStates: Uint8Array): void {
         const nodes = this._nodes;
-        // const syncedRigidBodyStates = this._syncedRigidBodyStates;
-        this._disabledRigidBodyCount = 0;
+        const syncedRigidBodyStates = this._syncedRigidBodyStates;
         for (let i = 0; i < rigidBodyStates.length; ++i) {
             const node = nodes[i];
             if (node === null) {
@@ -363,19 +365,15 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
             }
 
             const state = rigidBodyStates[i];
-            // if (state !== syncedRigidBodyStates[i]) {
-            //     syncedRigidBodyStates[i] = state;
-            //     if (state !== 0) {
-            //         this._disabledRigidBodyCount -= 1;
-            //     } else {
-            //         this._disabledRigidBodyCount += 1;
-            //     }
-            // }
-            if (state === 0) {
-                this._disabledRigidBodyCount += 1;
-                node.physicsImpostor!.kinematicToggle = true;
-            } else {
-                node.physicsImpostor!.kinematicToggle = false;
+            if (state !== syncedRigidBodyStates[i]) {
+                syncedRigidBodyStates[i] = state;
+                if (state !== 0) {
+                    this._disabledRigidBodyCount -= 1;
+                    node.physicsImpostor!.kinematicToggle = false;
+                } else {
+                    this._disabledRigidBodyCount += 1;
+                    node.physicsImpostor!.kinematicToggle = true;
+                }
             }
         }
     }
@@ -405,6 +403,23 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
             case PmxObject.RigidBody.PhysicsMode.Physics:
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                {
+                    const impostor = node.physicsImpostor!;
+                    if (impostor.kinematicToggle) {
+                        // if dynamic physics body motion type is kinematic
+                        // update body with the parent body transform
+                        // parent body world matrix -> parent bone world matrix -> bone world matrix -> body world matrix
+                        // this operation is only required for bones with parent bone
+                        const parentRigidBodyIndices = node.linkedBone.parentBone?.rigidBodyIndices;
+                        if (parentRigidBodyIndices !== undefined && 0 < parentRigidBodyIndices.length) {
+                            const parentRigidBodyIndex = parentRigidBodyIndices[parentRigidBodyIndices.length - 1];
+                            const parentNode = nodes[parentRigidBodyIndex];
+                            if (parentNode !== null) {
+                                parentNode;
+                            }
+                        }
+                    }
+                }
                 break;
 
             default:
