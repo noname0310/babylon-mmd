@@ -100,7 +100,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
                 m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = n[nOffset + 14];
 
                 if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                    temporalKinematicStates[i] = TemporalKinematicState.WaitForTemporalChange;
+                    temporalKinematicStates[i] = TemporalKinematicState.WaitForChange;
                 }
 
                 motionStateMatrixDirtyFlags[i] = 0;
