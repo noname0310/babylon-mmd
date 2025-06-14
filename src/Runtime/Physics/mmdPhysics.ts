@@ -82,6 +82,9 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
     private readonly _bodies: Nullable<PhysicsBody>[];
     private readonly _constraints: Nullable<PhysicsConstraint>[];
 
+    private readonly _syncedRigidBodyStates: Uint8Array;
+    private readonly _needDeoptimize: boolean;
+
     /**
      * Create a new MMD physics model
      * @param mmdPhysics MMD physics
@@ -100,6 +103,9 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
         this._nodes = nodes;
         this._bodies = bodies;
         this._constraints = constraints;
+
+        this._syncedRigidBodyStates = new Uint8Array(bodies.length);
+        this._needDeoptimize = false;
     }
 
     /**
@@ -158,6 +164,23 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
 
             mmdPhysics._enablePreStepOnce(body);
         }
+    }
+
+    /**
+     * Indicate whether all IK must be solved
+     */
+    public get needDeoptimize(): boolean {
+        return this._needDeoptimize;
+    }
+
+    /**
+     * commit rigid body states to physics model
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
+     */
+    public commitBodyStates(rigidBodyStates: Uint8Array): void {
+        rigidBodyStates;
+        this._syncedRigidBodyStates;
     }
 
     private static readonly _NodeWorldPosition = new Vector3();

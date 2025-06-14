@@ -50,7 +50,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene,
             {
                 pluginOptions: {
-                    pmxmodel: {
+                    mmdmodel: {
                         materialBuilder: materialBuilder,
                         loggingEnabled: true
                     }
@@ -71,7 +71,7 @@ export class SceneBuilder implements ISceneBuilder {
             scene,
             {
                 pluginOptions: {
-                    pmxmodel: {
+                    mmdmodel: {
                         materialBuilder: materialBuilder,
                         loggingEnabled: true
                     }

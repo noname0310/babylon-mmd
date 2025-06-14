@@ -181,7 +181,9 @@ impl MultiPhysicsWorld {
             self.orphan_bodies.push(rigidbody.clone());
         }
 
-        self.get_world(world_id).map(|world| world.remove_rigidbody(rigidbody));
+        if let Some(world) = self.get_world(world_id) { 
+            world.remove_rigidbody(rigidbody)
+        }
         self.remove_world_if_empty(world_id);
     }
 
@@ -223,7 +225,9 @@ impl MultiPhysicsWorld {
             self.orphan_body_bundles.push(bundle.clone());
         }
 
-        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle(bundle));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_bundle(bundle);
+        }
         self.remove_world_if_empty(world_id);
     }
 
@@ -336,7 +340,9 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_shadow(rigidbody.clone(), false));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_shadow(rigidbody.clone(), false);
+        }
         self.remove_world_if_empty(world_id);
 
         if self.use_motion_state_buffer {
@@ -369,7 +375,9 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle_shadow(bundle.clone(), false));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_bundle_shadow(bundle.clone(), false);
+        }
         self.remove_world_if_empty(world_id);
 
         if self.use_motion_state_buffer {
@@ -389,7 +397,9 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_constraint(&mut self, world_id: PhysicsWorldId, constraint: ConstraintHandle) {
-        self.get_world(world_id).map(|world| world.remove_constraint(constraint));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_constraint(constraint);
+        }
         self.remove_world_if_empty(world_id);
     }
 

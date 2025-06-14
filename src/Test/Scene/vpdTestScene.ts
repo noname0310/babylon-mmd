@@ -74,7 +74,7 @@ export class SceneBuilder implements ISceneBuilder {
                 {
                     onProgress: updateProgress,
                     pluginOptions: {
-                        bpmxmodel: {
+                        mmdmodel: {
                             materialBuilder: materialBuilder,
                             loggingEnabled: true
                         }

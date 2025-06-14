@@ -105,6 +105,15 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
     public readonly rotationInterpolations: Uint8Array;
 
     /**
+     * Physics toggles data
+     *
+     * The physics toggles data must be sorted by frame number in ascending order
+     *
+     * Repr: [..., physicsToggle, ...]
+     */
+    public readonly physicsToggles: Uint8Array;
+
+    /**
      * Create a new `MmdBoneAnimationTrack` instance
      * @param trackName track name for bind to model's bone
      * @param frameCount frame count of this track
@@ -112,6 +121,7 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
      * @param frameNumberByteOffset Byte offset of frame numbers in arrayBuffer
      * @param rotationByteOffset Byte offset of rotations in arrayBuffer
      * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in arrayBuffer
+     * @param physicsToggleByteOffset Byte offset of physics toggles in arrayBuffer
      */
     public constructor(
         trackName: string,
@@ -119,16 +129,23 @@ export class MmdBoneAnimationTrack extends MmdAnimationTrack implements IMmdBone
         arrayBuffer?: ArrayBufferLike,
         frameNumberByteOffset?: number,
         rotationByteOffset?: number,
-        rotationInterpolationByteOffset?: number
+        rotationInterpolationByteOffset?: number,
+        physicsToggleByteOffset?: number
     ) {
         super("bone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
         if (arrayBuffer === undefined) {
             this.rotations = new Float32Array(frameCount * 4);
             this.rotationInterpolations = new Uint8Array(frameCount * 4);
+            this.physicsToggles = new Uint8Array(frameCount);
         } else {
             this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
+            if (physicsToggleByteOffset === undefined) { // for BPMX 2.0.0 support, will be removed in the future
+                this.physicsToggles = new Uint8Array(frameCount).fill(1);
+            } else {
+                this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
+            }
         }
     }
 }
@@ -175,6 +192,15 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
     public readonly rotationInterpolations: Uint8Array;
 
     /**
+     * Physics toggles data
+     *
+     * The physics toggles data must be sorted by frame number in ascending order
+     *
+     * Repr: [..., physicsToggle, ...]
+     */
+    public readonly physicsToggles: Uint8Array;
+
+    /**
      * Create a new `MmdMovableBoneAnimationTrack` instance
      * @param trackName Track name for bind to model's bone
      * @param frameCount Frame count of this track
@@ -184,6 +210,7 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
      * @param positionInterpolationByteOffset Byte offset of position interpolations in arrayBuffer
      * @param rotationByteOffset Byte offset of rotations in arrayBuffer
      * @param rotationInterpolationByteOffset Byte offset of rotation interpolations in arrayBuffer
+     * @param physicsToggleByteOffset Byte offset of physics toggles in arrayBuffer
      */
     public constructor(
         trackName: string,
@@ -193,7 +220,8 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
         positionByteOffset?: number,
         positionInterpolationByteOffset?: number,
         rotationByteOffset?: number,
-        rotationInterpolationByteOffset?: number
+        rotationInterpolationByteOffset?: number,
+        physicsToggleByteOffset?: number
     ) {
         super("movableBone", trackName, frameCount, arrayBuffer, frameNumberByteOffset);
 
@@ -203,12 +231,20 @@ export class MmdMovableBoneAnimationTrack extends MmdAnimationTrack implements I
 
             this.rotations = new Float32Array(frameCount * 4);
             this.rotationInterpolations = new Uint8Array(frameCount * 4);
+
+            this.physicsToggles = new Uint8Array(frameCount);
         } else {
             this.positions = new Float32Array(arrayBuffer, positionByteOffset, frameCount * 3);
             this.positionInterpolations = new Uint8Array(arrayBuffer, positionInterpolationByteOffset, frameCount * 12);
 
             this.rotations = new Float32Array(arrayBuffer, rotationByteOffset, frameCount * 4);
             this.rotationInterpolations = new Uint8Array(arrayBuffer, rotationInterpolationByteOffset, frameCount * 4);
+
+            if (physicsToggleByteOffset === undefined) { // for BPMX 2.0.0 support, will be removed in the future
+                this.physicsToggles = new Uint8Array(frameCount).fill(1);
+            } else {
+                this.physicsToggles = new Uint8Array(arrayBuffer, physicsToggleByteOffset, frameCount);
+            }
         }
     }
 }

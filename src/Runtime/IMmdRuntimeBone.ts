@@ -85,4 +85,11 @@ export interface IMmdRuntimeBone {
      * If the bone does not have an ik solver, it will return -1
      */
     get ikSolverIndex(): number;
+
+    /**
+     * Get rigid body indices
+     *
+     * If the bone does not have a rigid body, it's length is 0
+     */
+    get rigidBodyIndices(): readonly number[];
 }
