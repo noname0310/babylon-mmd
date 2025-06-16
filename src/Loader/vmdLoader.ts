@@ -17,6 +17,9 @@ import { VmdData, VmdObject } from "./Parser/vmdObject";
 export class VmdLoader {
     /**
      * Remove empty tracks for optimization when loading data
+     *
+     * Warning: If you optimize vmd with physics toggle, the physics toggle data is not guaranteed to be preserved,
+     * this is because the physics toggle data is not sure to be empty before bind animation to the model
      */
     public optimizeEmptyTracks: boolean;
 
@@ -36,7 +39,7 @@ export class VmdLoader {
      * @param scene Scene for loading file
      */
     public constructor(scene: Scene) {
-        this.optimizeEmptyTracks = true;
+        this.optimizeEmptyTracks = false;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;

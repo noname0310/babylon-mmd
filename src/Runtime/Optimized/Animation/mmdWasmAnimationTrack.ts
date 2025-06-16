@@ -118,6 +118,9 @@ export class MmdWasmBoneAnimationTrack extends MmdWasmAnimationTrack implements 
      *
      * The physics toggle data must be sorted by frame number in ascending order
      *
+     * If the value is 1, the bone will be driven by physics,
+     * if the value is 0, the bone will not be driven by animation
+     *
      * Repr: [..., physicsToggle, ...]
      *
      * This array reference should not be copied elsewhere and must be read and written with minimal scope
@@ -225,6 +228,9 @@ export class MmdWasmMovableBoneAnimationTrack extends MmdWasmAnimationTrack impl
      * Physics toggle data
      *
      * The physics toggle data must be sorted by frame number in ascending order
+     *
+     * If the value is 1, the bone will be driven by physics,
+     * if the value is 0, the bone will not be driven by animation
      *
      * Repr: [..., physicsToggle, ...]
      *
