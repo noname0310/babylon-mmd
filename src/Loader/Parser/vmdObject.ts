@@ -595,14 +595,14 @@ export namespace VmdObject {
          *
          * Rigid body position is driven by animation
          */
-        Off = 0,
+        Off = 0x630F,
 
         /**
          * Physics on
          *
-         * Rigid body position is driven by physics
+         * Rigid body position is driven by physics, only affected when the bone has a rigid body
          */
-        On = 0x630F
+        On = 0x0000
     }
 
     /**

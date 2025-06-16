@@ -2,7 +2,6 @@
 
 ## 0.66.0 (scheduled)
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
-- add more specific optimization options for `VmdLoader` to preserve physics toggle tracks
 
 ## 0.65.0 (2025-05-08)
 

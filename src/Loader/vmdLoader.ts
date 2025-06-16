@@ -16,22 +16,9 @@ import { VmdData, VmdObject } from "./Parser/vmdObject";
  */
 export class VmdLoader {
     /**
-     * Use MmdBoneAnimationTrack for non-movable bone tracks (default: true)
+     * Remove empty tracks for optimization when loading data (default: true)
      */
-    public optimizeNonmovableBoneTracks: boolean;
-
-    /**
-     * Remove empty bone tracks for optimization when loading data (default: false)
-     *
-     * Warning: If you optimize vmd with physics toggle, the physics toggle data is not guaranteed to be preserved,
-     * this is because the physics toggle data is not sure to be empty before bind animation to the model
-     */
-    public optimizeEmptyBoneTracks: boolean;
-
-    /**
-     * Remove empty morph tracks for optimization when loading data (default: true)
-     */
-    public optimizeEmptyMorphTracks: boolean;
+    public optimizeEmptyTracks: boolean;
 
     private readonly _scene: Scene;
 
@@ -49,9 +36,7 @@ export class VmdLoader {
      * @param scene Scene for loading file
      */
     public constructor(scene: Scene) {
-        this.optimizeNonmovableBoneTracks = true;
-        this.optimizeEmptyBoneTracks = false;
-        this.optimizeEmptyMorphTracks = true;
+        this.optimizeEmptyTracks = true;
 
         this._loggingEnabled = false;
         this.log = this._logDisabled;
@@ -97,9 +82,7 @@ export class VmdLoader {
         vmdObject: VmdObject | VmdObject[],
         onProgress?: (event: ISceneLoaderProgressEvent) => void
     ): Promise<MmdAnimation> {
-        const optimizeNonmovableBoneTracks = this.optimizeNonmovableBoneTracks;
-        const optimizeEmptyBoneTracks = this.optimizeEmptyBoneTracks;
-        const optimizeEmptyMorphTracks = this.optimizeEmptyMorphTracks;
+        const optimizeEmptyTracks = this.optimizeEmptyTracks;
 
         if (!Array.isArray(vmdObject)) {
             vmdObject = [vmdObject];
@@ -255,48 +238,48 @@ export class VmdLoader {
         }
         const filteredBoneTracks: MmdBoneAnimationTrack[] = [];
         const filteredMovableBoneTracks: MmdMovableBoneAnimationTrack[] = [];
-        if (optimizeNonmovableBoneTracks || optimizeEmptyBoneTracks) {
+        if (optimizeEmptyTracks) {
             for (let i = 0; i < boneTracks.length; ++i) {
                 const boneTrack = boneTracks[i];
 
-                if (optimizeEmptyBoneTracks) {
-                    let isEmptyTrack = true;
-                    for (let j = 0; j < boneTrack.frameNumbers.length; ++j) {
-                        const positions = boneTrack.positions;
-                        if (!(positions[j * 3 + 0] === 0 && positions[j * 3 + 1] === 0 && positions[j * 3 + 2] === 0)) {
-                            isEmptyTrack = false;
-                            break;
-                        }
-
-                        const rotations = boneTrack.rotations;
-                        if (!(rotations[j * 4 + 0] === 0 && rotations[j * 4 + 1] === 0 && rotations[j * 4 + 2] === 0 && rotations[j * 4 + 3] === 1)) {
-                            isEmptyTrack = false;
-                            break;
-                        }
+                let isEmptyTrack = true;
+                for (let j = 0; j < boneTrack.frameNumbers.length; ++j) {
+                    const positions = boneTrack.positions;
+                    if (!(positions[j * 3 + 0] === 0 && positions[j * 3 + 1] === 0 && positions[j * 3 + 2] === 0)) {
+                        isEmptyTrack = false;
+                        break;
                     }
-                    if (isEmptyTrack) continue;
+
+                    const rotations = boneTrack.rotations;
+                    if (!(rotations[j * 4 + 0] === 0 && rotations[j * 4 + 1] === 0 && rotations[j * 4 + 2] === 0 && rotations[j * 4 + 3] === 1)) {
+                        isEmptyTrack = false;
+                        break;
+                    }
+
+                    const physicsToggle = boneTrack.physicsToggles[j];
+                    if (physicsToggle === 0) {
+                        isEmptyTrack = false;
+                        break;
+                    }
                 }
+                if (isEmptyTrack) continue;
 
-                if (optimizeNonmovableBoneTracks) {
-                    let isMovableBone = false;
-                    for (let j = 0; j < boneTrack.positions.length; ++j) {
-                        if (boneTrack.positions[j] !== 0) {
-                            isMovableBone = true;
-                            break;
-                        }
+                let isMovableBone = false;
+                for (let j = 0; j < boneTrack.positions.length; ++j) {
+                    if (boneTrack.positions[j] !== 0) {
+                        isMovableBone = true;
+                        break;
                     }
-                    if (isMovableBone) {
-                        filteredMovableBoneTracks.push(boneTrack);
-                    } else {
-                        const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
-                        boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
-                        boneAnimationTrack.rotations.set(boneTrack.rotations);
-                        boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
-                        boneAnimationTrack.physicsToggles.set(boneTrack.physicsToggles);
-                        filteredBoneTracks.push(boneAnimationTrack);
-                    }
-                } else {
+                }
+                if (isMovableBone) {
                     filteredMovableBoneTracks.push(boneTrack);
+                } else {
+                    const boneAnimationTrack = new MmdBoneAnimationTrack(boneTrack.name, boneTrack.frameNumbers.length);
+                    boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
+                    boneAnimationTrack.rotations.set(boneTrack.rotations);
+                    boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
+                    boneAnimationTrack.physicsToggles.set(boneTrack.physicsToggles);
+                    filteredBoneTracks.push(boneAnimationTrack);
                 }
             }
         } else {
@@ -528,7 +511,7 @@ export class VmdLoader {
             }
         }
         const filteredMorphTracks: MmdMorphAnimationTrack[] = [];
-        if (optimizeEmptyMorphTracks) {
+        if (optimizeEmptyTracks) {
             for (let i = 0; i < morphTracks.length; ++i) {
                 const morphTrack = morphTracks[i];
                 let isZeroValues = true;
