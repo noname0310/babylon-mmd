@@ -2,7 +2,7 @@
 
 ## 0.66.0 (scheduled)
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
-- change default `VmdLoader.optimizeEmptyTracks` value to `false` for preserve physics toggle tracks
+- add more specific optimization options for `VmdLoader` to preserve physics toggle tracks
 
 ## 0.65.0 (2025-05-08)
 
