@@ -378,6 +378,9 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         }
     }
 
+    // private static readonly _ModelWorldMatrixInverse = new Matrix();
+    // private static readonly _OneVector: DeepImmutable<Vector3> = Vector3.One();
+
     /**
      * Set the rigid bodies transform to the bones transform
      */
@@ -403,29 +406,112 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
             case PmxObject.RigidBody.PhysicsMode.Physics:
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
-                {
-                    const impostor = node.physicsImpostor!;
-                    if (impostor.kinematicToggle) {
-                        // if dynamic physics body motion type is kinematic
-                        // update body with the parent body transform
-                        // parent body world matrix -> parent bone world matrix -> bone world matrix -> body world matrix
-                        // this operation is only required for bones with parent bone
-                        const parentRigidBodyIndices = node.linkedBone.parentBone?.rigidBodyIndices;
-                        if (parentRigidBodyIndices !== undefined && 0 < parentRigidBodyIndices.length) {
-                            const parentRigidBodyIndex = parentRigidBodyIndices[parentRigidBodyIndices.length - 1];
-                            const parentNode = nodes[parentRigidBodyIndex];
-                            if (parentNode !== null) {
-                                parentNode;
-                            }
-                        }
-                    }
-                }
                 break;
 
             default:
                 throw new Error(`Unknown physics mode: ${node.physicsMode}`);
             }
         }
+
+        // experimental code to update the physics toggle rigid bodies transform
+        // if (0 < this._disabledRigidBodyCount) {
+        //     // const modelWorldMatrix = this._rootMesh.computeWorldMatrix();
+        //     // const modelWorldMatrixInverse = modelWorldMatrix.invertToRef(MmdAmmoPhysicsModel._ModelWorldMatrixInverse);
+
+        //     const position = MmdAmmoPhysicsModel._Position;
+        //     const rotation = MmdAmmoPhysicsModel._Rotation;
+
+        //     const btVector3 = this._tmpBtVector3;
+        //     const btQuaternion = this._tmpBtQuaternion;
+        //     const btTransform = this._tmpBtTransform;
+
+        //     for (let i = 0; i < nodes.length; ++i) {
+        //         const node = nodes[i];
+        //         if (node === null) continue;
+        //         if (node.linkedBone === null) continue;
+
+        //         switch (node.physicsMode) {
+        //         case PmxObject.RigidBody.PhysicsMode.FollowBone:
+        //             break;
+
+        //         case PmxObject.RigidBody.PhysicsMode.Physics:
+        //         case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+        //             {
+        //                 const impostor = node.physicsImpostor!;
+        //                 if (impostor.kinematicToggle) {
+        //                     // if dynamic physics body motion type is kinematic
+        //                     // update body with the parent body transform
+        //                     // parent body world matrix -> parent bone world matrix -> bone world matrix -> body world matrix
+        //                     // this operation is only required for bones with parent bone
+        //                     const parentRigidBodyIndices = node.linkedBone.parentBone?.rigidBodyIndices;
+        //                     if (parentRigidBodyIndices !== undefined && 0 < parentRigidBodyIndices.length) {
+        //                         const parentRigidBodyIndex = parentRigidBodyIndices[parentRigidBodyIndices.length - 1];
+        //                         const parentNode = nodes[parentRigidBodyIndex];
+        //                         if (parentNode !== null && parentNode.linkedBone !== null) {
+        //                             const originalParentWorldMatrix = parentNode.linkedBone.getWorldMatrixToRef(new Matrix());
+
+        //                             {
+        //                                 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        //                                 const parentBody = parentNode.physicsImpostor!.physicsBody as import("ammojs-typed").default.btRigidBody;
+        //                                 parentBody.getMotionState().getWorldTransform(btTransform);
+        //                                 {
+        //                                     const btVector3 = btTransform.getOrigin();
+        //                                     position.set(btVector3.x(), btVector3.y(), btVector3.z());
+        //                                 }
+        //                                 {
+        //                                     const btQuaternion = btTransform.getRotation();
+        //                                     rotation.set(btQuaternion.x(), btQuaternion.y(), btQuaternion.z(), btQuaternion.w());
+        //                                 }
+
+        //                                 const parentWorldMatrix = Matrix.ComposeToRef(
+        //                                     MmdAmmoPhysicsModel._OneVector,
+        //                                     rotation,
+        //                                     position,
+        //                                     MmdAmmoPhysicsModel._NodeWorldMatrix
+        //                                 );
+        //                                 // solve in global space. skipping the space transform
+        //                                 // modelWorldMatrixInverse.multiplyToRef(
+        //                                 //     parentWorldMatrix,
+        //                                 //     parentWorldMatrix
+        //                                 // );
+        //                                 parentNode.bodyOffsetMatrixInverse.multiplyToArray(
+        //                                     parentWorldMatrix,
+        //                                     parentNode.linkedBone.worldMatrix,
+        //                                     0
+        //                                 );
+        //                             }
+
+        //                             (node.linkedBone as MmdRuntimeBone).updateWorldMatrix(false, false);
+        //                             const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
+        //                             node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
+        //                             // since parent node world matrix is already in global space, we can skip the multiplication
+        //                             // nodeWorldMatrix.multiplyToRef(modelWorldMatrix, nodeWorldMatrix);
+        //                             nodeWorldMatrix.decompose(
+        //                                 undefined,
+        //                                 rotation,
+        //                                 position
+        //                             );
+        //                             btVector3.setValue(position.x, position.y, position.z);
+        //                             btQuaternion.setValue(rotation.x, rotation.y, rotation.z, rotation.w);
+        //                             btTransform.setOrigin(btVector3);
+        //                             btTransform.setRotation(btQuaternion);
+        //                             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        //                             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
+        //                             body.getMotionState().setWorldTransform(btTransform);
+
+        //                             // restore the original parent world matrix
+        //                             parentNode.linkedBone.worldMatrix.set(originalParentWorldMatrix.m);
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //             break;
+
+        //         default:
+        //             throw new Error(`Unknown physics mode: ${node.physicsMode}`);
+        //         }
+        //     }
+        // }
     }
 
     private static readonly _BoneWorldPosition = new Vector3();

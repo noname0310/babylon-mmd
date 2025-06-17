@@ -4,11 +4,13 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { Inspector } from "@babylonjs/inspector";
 
@@ -35,10 +37,10 @@ export class SceneBuilder implements ISceneBuilder {
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
         const camera = CreateDefaultArcRotateCamera(scene);
-        camera.setTarget(new Vector3(-1.3261749447410947, 11.691760759222726, -0.31660869989471035));
-        camera.alpha = -0.9561;
-        camera.beta = 1.0432;
-        camera.radius = 12.3586;
+        camera.setTarget(new Vector3(-2.407, 12.693, -3.052));
+        camera.alpha = 0.1949;
+        camera.beta = 1.1959;
+        camera.radius = 8.1936;
         const { shadowGenerator } = CreateLightComponents(scene);
         shadowGenerator.transparencyShadow = true;
         CreateDefaultGround(scene);
@@ -96,6 +98,18 @@ export class SceneBuilder implements ISceneBuilder {
         //     }
         // });
         mmdRuntime.seekAnimation(80, true);
+
+        {
+            const physicsViewer = new PhysicsViewer(scene);
+            for (const node of mmdMesh.getChildren()) {
+                if ((node as TransformNode).physicsBody) {
+                    physicsViewer.showBody((node as TransformNode).physicsBody!);
+                }
+                if ((node as Mesh).physicsImpostor) {
+                    physicsViewer.showImpostor((node as Mesh).physicsImpostor!);
+                }
+            }
+        }
 
         Inspector.Show(scene, { });
 
