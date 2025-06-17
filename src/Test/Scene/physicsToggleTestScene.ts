@@ -82,7 +82,8 @@ export class SceneBuilder implements ISceneBuilder {
             "res/motion/physics_toggle_test_yyb10th.vmd"
         ]);
         const wasmAnimation = new MmdWasmAnimation(animation, mmdWasmInstance, scene);
-        mmdModel.addAnimation(wasmAnimation);
+        wasmAnimation;
+        mmdModel.addAnimation(animation);
         mmdModel.setAnimation("motion");
 
         // mmdRuntime.playAnimation();
@@ -94,7 +95,7 @@ export class SceneBuilder implements ISceneBuilder {
         //         });
         //     }
         // });
-        mmdRuntime.seekAnimation(80);
+        mmdRuntime.seekAnimation(80, true);
 
         Inspector.Show(scene, { });
 
