@@ -377,6 +377,9 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         }
     }
 
+    private static readonly _EulerAngles1 = new Vector3();
+    private static readonly _EulerAngles2 = new Vector3();
+
     /**
      * 0: unknown, 1: kinematic, 2: target transform
      */
@@ -503,9 +506,9 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 
                             {
                                 // Angular difference
-                                const targetAngles = rotation.toEulerAngles();
+                                const targetAngles = rotation.toEulerAnglesToRef(MmdAmmoPhysicsModel._EulerAngles1);
                                 rotation.set(currentRotation.x(), currentRotation.y(), currentRotation.z(), currentRotation.w());
-                                const currentAngles = rotation.toEulerAngles();
+                                const currentAngles = rotation.toEulerAnglesToRef(MmdAmmoPhysicsModel._EulerAngles2);
                                 const dx = (targetAngles.x - currentAngles.x + Math.PI) % (2 * Math.PI) - Math.PI;
                                 const dy = (targetAngles.y - currentAngles.y + Math.PI) % (2 * Math.PI) - Math.PI;
                                 const dz = (targetAngles.z - currentAngles.z + Math.PI) % (2 * Math.PI) - Math.PI;
