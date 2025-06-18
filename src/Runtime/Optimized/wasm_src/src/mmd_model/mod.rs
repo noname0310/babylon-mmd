@@ -130,14 +130,14 @@ impl MmdModel {
         
         #[cfg(feature = "physics")]
         let build_physics = matches!(reader.physics_info_kind(), PhysicsInfoKind::FullPhysics);
-
         #[cfg(feature = "physics")]
         let rigidbody_count = if build_physics { reader.count() } else { 0 };
+        #[cfg(not(feature = "physics"))]
+        let rigidbody_count = 0;
 
         let animation_arena = AnimationArena::new(
             &bone_arena,
             ik_solver_arena.len() as u32,
-            #[cfg(feature = "physics")]
             rigidbody_count,
             morphs.len() as u32,
         );
@@ -238,8 +238,9 @@ impl MmdModel {
     }
 
     #[inline]
-    pub(crate) fn external_physics_mut(&mut self) -> &mut bool {
-        &mut self.external_physics
+    pub(crate) fn use_external_physics(&mut self, rigidbody_state_size: u32) {
+        self.external_physics = true;
+        self.animation_arena.reallocate_rigidbody_state_arena(rigidbody_state_size);
     }
 
     #[inline]

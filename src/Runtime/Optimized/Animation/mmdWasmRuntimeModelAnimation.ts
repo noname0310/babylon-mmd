@@ -413,36 +413,32 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
                 }
             }
         }
-
-        let boneToBodyBindIndexMapPtr: number = 0;
-        if (animationPool.createBoneToBodyBindIndexMap !== undefined) { // if wasm runtime built without physics support, this method is not available
-            const bodyLengthBufferPtr = animationPool.allocateLengthsBuffer(boneToBodyBindIndexMap.length);
-            const bodyLengthBuffer = wasmInstance.createTypedArray(Uint32Array, bodyLengthBufferPtr, boneToBodyBindIndexMap.length);
-            {
-                const bodyLengthBufferArray = bodyLengthBuffer.array;
-                for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
-                    const bodyIndices = boneToBodyBindIndexMap[i];
-                    if (bodyIndices === null) {
-                        bodyLengthBufferArray[i] = 0;
-                    } else {
-                        bodyLengthBufferArray[i] = bodyIndices.length;
-                    }
-                }
-            }
-            boneToBodyBindIndexMapPtr = animationPool.createBoneToBodyBindIndexMap(animation.ptr, bodyLengthBufferPtr);
+        const bodyLengthBufferPtr = animationPool.allocateLengthsBuffer(boneToBodyBindIndexMap.length);
+        const bodyLengthBuffer = wasmInstance.createTypedArray(Uint32Array, bodyLengthBufferPtr, boneToBodyBindIndexMap.length);
+        {
+            const bodyLengthBufferArray = bodyLengthBuffer.array;
             for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
-                const nthBodyIndicesPtr = animationPool.getNthBoneToBodyBindIndexMap(boneToBodyBindIndexMapPtr, i);
-                const nthBodyIndices = wasmInstance.createTypedArray(Int32Array, nthBodyIndicesPtr, bodyLengthBuffer.array[i]).array;
-
                 const bodyIndices = boneToBodyBindIndexMap[i];
-                if (bodyIndices === null) continue;
-
-                for (let j = 0; j < bodyIndices.length; ++j) {
-                    nthBodyIndices[j] = bodyIndices[j];
+                if (bodyIndices === null) {
+                    bodyLengthBufferArray[i] = 0;
+                } else {
+                    bodyLengthBufferArray[i] = bodyIndices.length;
                 }
             }
-            animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, morphTracks.length);
         }
+        const boneToBodyBindIndexMapPtr = animationPool.createBoneToBodyBindIndexMap(animation.ptr, bodyLengthBufferPtr);
+        for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+            const nthBodyIndicesPtr = animationPool.getNthBoneToBodyBindIndexMap(boneToBodyBindIndexMapPtr, i);
+            const nthBodyIndices = wasmInstance.createTypedArray(Int32Array, nthBodyIndicesPtr, bodyLengthBuffer.array[i]).array;
+
+            const bodyIndices = boneToBodyBindIndexMap[i];
+            if (bodyIndices === null) continue;
+
+            for (let j = 0; j < bodyIndices.length; ++j) {
+                nthBodyIndices[j] = bodyIndices[j];
+            }
+        }
+        animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, morphTracks.length);
 
         const runtimeAnimationPtr = animationPool.createRuntimeAnimation(
             animation.ptr,

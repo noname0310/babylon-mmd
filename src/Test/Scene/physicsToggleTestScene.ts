@@ -16,10 +16,11 @@ import { Inspector } from "@babylonjs/inspector";
 
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
-import { MmdRuntime } from "@/Runtime/mmdRuntime";
+// import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
+import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
 import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
@@ -69,7 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
         scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
@@ -85,7 +86,7 @@ export class SceneBuilder implements ISceneBuilder {
         ]);
         const wasmAnimation = new MmdWasmAnimation(animation, mmdWasmInstance, scene);
         wasmAnimation;
-        mmdModel.addAnimation(animation);
+        mmdModel.addAnimation(wasmAnimation);
         mmdModel.setAnimation("motion");
 
         mmdRuntime.playAnimation();

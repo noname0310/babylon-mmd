@@ -26,7 +26,6 @@ import type { MmdWasmAnimation } from "./Animation/mmdWasmAnimation";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import type { IWasmTypedArray } from "./Misc/IWasmTypedArray";
 import { WasmBufferedArray } from "./Misc/wasmBufferedArray";
-import { WasmNullTypedArray } from "./Misc/wasmNullTypedArray";
 import { MmdWasmMorphController } from "./mmdWasmMorphController";
 import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
@@ -195,9 +194,7 @@ export class MmdWasmModel implements IMmdModel {
         const worldTransformMatricesPtr = wasmRuntimeInternal.getBoneWorldMatrixArena(ptr);
         const boneAnimationStatesPtr = wasmRuntimeInternal.getAnimationArena(ptr);
         const ikSolverStatesPtr = wasmRuntimeInternal.getAnimationIkSolverStateArena(ptr);
-        const rigidBodyStatesPtr = wasmRuntimeInternal.getAnimationRigidBodyStateArena !== undefined
-            ? wasmRuntimeInternal.getAnimationRigidBodyStateArena(ptr)
-            : 0;
+        const rigidBodyStatesPtr = wasmRuntimeInternal.getAnimationRigidBodyStateArena(ptr);
         const morphWeightsPtr = wasmRuntimeInternal.getAnimationMorphArena(ptr);
 
         const worldTransformMatricesFrontBuffer = wasmInstance.createTypedArray(Float32Array, worldTransformMatricesPtr, mmdMetadata.bones.length * 16);
@@ -213,9 +210,8 @@ export class MmdWasmModel implements IMmdModel {
         for (let i = 0; i < mmdMetadata.bones.length; ++i) if (mmdMetadata.bones[i].ik) ikCount += 1;
         this._ikSolverStates = wasmInstance.createTypedArray(Uint8Array, ikSolverStatesPtr, ikCount);
 
-        this._rigidBodyStates = rigidBodyStatesPtr !== 0
-            ? wasmInstance.createTypedArray(Uint8Array, rigidBodyStatesPtr, mmdMetadata.rigidBodies.length)
-            : new WasmNullTypedArray(new Uint8Array(0));
+        const rigidBodyStatesCount = wasmRuntimeInternal.getAnimationRigidBodyStateArenaSize(ptr);
+        this._rigidBodyStates = wasmInstance.createTypedArray(Uint8Array, rigidBodyStatesPtr, rigidBodyStatesCount);
 
         // If you are not using MMD Runtime, you need to update the world matrix once. it could be waste of performance
         skeleton.prepare();
@@ -227,6 +223,7 @@ export class MmdWasmModel implements IMmdModel {
             mmdMetadata.bones,
             mmdMetadata.rigidBodies,
             worldTransformMatrices,
+            rigidBodyStatesCount !== 0 || physicsParams !== null,
             wasmRuntime
         );
 
@@ -270,7 +267,10 @@ export class MmdWasmModel implements IMmdModel {
         );
 
         if (physicsParams !== null) {
-            wasmRuntimeInternal.setExternalPhysics(ptr, true);
+            wasmRuntimeInternal.useExternalPhysics(ptr, mmdMetadata.rigidBodies.length);
+            const newRigidBodyStatesPtr = wasmRuntimeInternal.getAnimationRigidBodyStateArena(ptr);
+            this._rigidBodyStates = wasmInstance.createTypedArray(Uint8Array, newRigidBodyStatesPtr, mmdMetadata.rigidBodies.length);
+
             this._physicsModel = physicsParams.physicsImpl.buildPhysics(
                 mmdSkinnedMesh,
                 runtimeBones,
@@ -557,14 +557,17 @@ export class MmdWasmModel implements IMmdModel {
         bonesMetadata: readonly MmdModelMetadata.Bone[],
         rigidBodiesMetadata: MmdModelMetadata["rigidBodies"],
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
+        buildRigidBodyIndices: boolean,
         runtime: MmdWasmRuntime
     ): readonly MmdWasmRuntimeBone[] {
         const boneToRigidBodiesIndexMap: number[][] = new Array(bonesMetadata.length);
         for (let i = 0; i < boneToRigidBodiesIndexMap.length; ++i) boneToRigidBodiesIndexMap[i] = [];
 
-        for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
-            const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
-            boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+        if (buildRigidBodyIndices) {
+            for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
+                const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
+                boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+            }
         }
 
         const runtimeBones: MmdWasmRuntimeBone[] = [];

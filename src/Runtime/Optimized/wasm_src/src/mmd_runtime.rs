@@ -100,7 +100,6 @@ impl MmdRuntime {
         animation_arena.iksolver_state_arena_mut().as_mut_ptr()
     }
 
-    #[cfg(feature = "physics")]
     #[wasm_bindgen(js_name = "getAnimationRigidBodyStateArena")]
     pub fn get_animation_rigidbody_state_arena(&mut self, ptr: *mut usize) -> *mut u8 {
         let ptr = ptr as *mut MmdModel;
@@ -108,6 +107,15 @@ impl MmdRuntime {
             &mut *ptr
         }.animation_arena_mut();
         animation_arena.rigidbody_state_arena_mut().as_mut_ptr()
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationRigidBodyStateArenaSize")]
+    pub fn get_animation_rigidbody_state_arena_size(&mut self, ptr: *mut usize) -> usize {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena_mut();
+        animation_arena.rigidbody_state_arena().len()
     }
 
     #[wasm_bindgen(js_name = "getAnimationMorphArena")]
@@ -149,14 +157,14 @@ impl MmdRuntime {
         *animation = runtime_animation;
     }
 
-    #[wasm_bindgen(js_name = "setExternalPhysics")]
-    pub fn set_external_physics(&mut self, ptr: *mut usize, external_physics: bool) {
+    #[wasm_bindgen(js_name = "useExternalPhysics")]
+    pub fn use_external_physics(&mut self, ptr: *mut usize, rigidbody_state_size: u32) {
         let ptr = ptr as *mut MmdModel;
 
-        let physics = unsafe {
+        let mmd_model = unsafe {
             &mut *ptr
-        }.external_physics_mut();
-        *physics = external_physics;
+        };
+        mmd_model.use_external_physics(rigidbody_state_size);
     }
 
     #[inline]

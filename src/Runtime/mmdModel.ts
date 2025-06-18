@@ -162,7 +162,8 @@ export class MmdModel implements IMmdModel {
             skeleton.bones,
             mmdMetadata.bones,
             mmdMetadata.rigidBodies,
-            worldTransformMatrices
+            worldTransformMatrices,
+            physicsParams !== null
         );
 
         const sortedBones = this._sortedRuntimeBones = [...runtimeBones];
@@ -420,14 +421,17 @@ export class MmdModel implements IMmdModel {
         bones: IMmdRuntimeLinkedBone[],
         bonesMetadata: readonly MmdModelMetadata.Bone[],
         rigidBodiesMetadata: MmdModelMetadata["rigidBodies"],
-        worldTransformMatrices: Float32Array
+        worldTransformMatrices: Float32Array,
+        buildRigidBodyIndices: boolean
     ): readonly MmdRuntimeBone[] {
         const boneToRigidBodiesIndexMap: number[][] = new Array(bonesMetadata.length);
         for (let i = 0; i < boneToRigidBodiesIndexMap.length; ++i) boneToRigidBodiesIndexMap[i] = [];
 
-        for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
-            const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
-            boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+        if (buildRigidBodyIndices) {
+            for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
+                const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
+                boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+            }
         }
 
         const runtimeBones: MmdRuntimeBone[] = [];
