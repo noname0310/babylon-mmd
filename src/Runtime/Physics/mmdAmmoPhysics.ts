@@ -130,11 +130,11 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
     }
 
     public set temporalKinematic(value: boolean) {
-        // disableBidirectionalTransformation is true only for non follow bone impostors
-        if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            // if impostor is follow bone, it is always kinematic
-            return;
-        }
+        // // disableBidirectionalTransformation is true only for non follow bone impostors
+        // if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     // if impostor is follow bone, it is always kinematic
+        //     return;
+        // }
 
         if (value === this._temporalKinematic) {
             return;
@@ -158,11 +158,11 @@ class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
     }
 
     public set kinematicToggle(value: boolean) {
-        // disableBidirectionalTransformation is true only for non follow bone impostors
-        if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            // if impostor is follow bone, it is always true
-            return;
-        }
+        // // disableBidirectionalTransformation is true only for non follow bone impostors
+        // if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     // if impostor is follow bone, it is always true
+        //     return;
+        // }
 
         if (value === this._kinematicToggle) {
             return;
@@ -986,9 +986,9 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
     /** @internal */
     public _makeKinematicOnce(impostor: MmdAmmoPhysicsImpostor): void {
-        if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            return;
-        }
+        // if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     return;
+        // }
 
         if (this._kinematicOnces.length === 0) {
             this._scene.onAfterPhysicsObservable.addOnce(this._onAfterPhysics);
