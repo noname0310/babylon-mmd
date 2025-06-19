@@ -11,7 +11,11 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene";
+// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+// import ammo from "@/Runtime/Physics/External/ammo.wasm";
+import havok from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -21,10 +25,9 @@ import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
-// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
-import ammo from "@/Runtime/Physics/External/ammo.wasm";
-import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
-import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
+// import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
+// import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
+import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -65,12 +68,12 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        const physicsInstance = await ammo();
-        const physicsPlugin = new MmdAmmoJSPlugin(true, physicsInstance);
+        const physicsInstance = await havok();
+        const physicsPlugin = new HavokPlugin(true, physicsInstance);
         scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;

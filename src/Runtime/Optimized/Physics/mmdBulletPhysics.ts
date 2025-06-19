@@ -185,6 +185,9 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
     /**
      * commit rigid body states to physics model
      *
+     * if rigidBodyStates[i] is 0, the rigid body motion type is kinematic,
+     * if rigidBodyStates[i] is 1 and physicsMode is not FollowBone, the rigid body motion type is dynamic.
+     *
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
     public commitBodyStates(rigidBodyStates: Uint8Array): void {

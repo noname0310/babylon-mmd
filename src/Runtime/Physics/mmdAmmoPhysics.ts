@@ -979,8 +979,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
     private readonly _onAfterPhysics = (): void => {
         const kinematicOnces = this._kinematicOnces;
         for (let i = 0; i < kinematicOnces.length; ++i) {
-            const impostor = kinematicOnces[i];
-            impostor.temporalKinematic = false;
+            kinematicOnces[i].temporalKinematic = false;
         }
         kinematicOnces.length = 0;
     };
