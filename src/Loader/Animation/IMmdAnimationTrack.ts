@@ -58,6 +58,18 @@ export interface IMmdBoneAnimationTrack extends IMmdAnimationTrack {
      * Repr: [..., x1, x2, y1, y2, ...]
      */
     readonly rotationInterpolations: Uint8Array;
+
+    /**
+     * Physics toggles data
+     *
+     * The physics toggles data must be sorted by frame number in ascending order
+     *
+     * If the value is 1, the bone will be driven by physics,
+     * if the value is 0, the bone will not be driven by animation
+     *
+     * Repr: [..., physicsToggle, ...]
+     */
+    readonly physicsToggles: Uint8Array;
 }
 
 /**

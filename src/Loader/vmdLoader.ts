@@ -16,7 +16,7 @@ import { VmdData, VmdObject } from "./Parser/vmdObject";
  */
 export class VmdLoader {
     /**
-     * Remove empty tracks for optimization when loading data
+     * Remove empty tracks for optimization when loading data (default: true)
      */
     public optimizeEmptyTracks: boolean;
 
@@ -161,9 +161,6 @@ export class VmdLoader {
                 time = performance.now();
             }
 
-            // todo: support physics toggle data
-            // ref: https://x.com/KuroNekoMeguMMD/status/1864306974856499520/
-
             const trackLengths = new Uint32Array(boneTrackIndexMap.size);
             for (let i = 0; i < margedBoneKeyFrameCount; ++i) {
                 const boneKeyFrame = margedBoneKeyFrames[i];
@@ -214,6 +211,18 @@ export class VmdLoader {
                 boneTrackRotationInterpolations[insertIndex * 4 + 2] = boneKeyFrameInterpolation[3 * 16 + 4];// y1
                 boneTrackRotationInterpolations[insertIndex * 4 + 3] = boneKeyFrameInterpolation[3 * 16 + 12];// y2
 
+                const physicsToggleInfo = (boneKeyFrameInterpolation[2] << 8) | boneKeyFrameInterpolation[3];
+                switch (physicsToggleInfo) {
+                case VmdObject.BoneKeyFramePhysicsInfoKind.On:
+                    boneTrack.physicsToggles[insertIndex] = 1;
+                    break;
+                case VmdObject.BoneKeyFramePhysicsInfoKind.Off:
+                    boneTrack.physicsToggles[insertIndex] = 0;
+                    break;
+                default:
+                    this.warn(`Unknown physics toggle info: ${physicsToggleInfo}`);
+                    break;
+                }
 
                 trackLengths[trackIndex] += 1;
 
@@ -246,6 +255,12 @@ export class VmdLoader {
                         isEmptyTrack = false;
                         break;
                     }
+
+                    const physicsToggle = boneTrack.physicsToggles[j];
+                    if (physicsToggle === 0) {
+                        isEmptyTrack = false;
+                        break;
+                    }
                 }
                 if (isEmptyTrack) continue;
 
@@ -263,6 +278,7 @@ export class VmdLoader {
                     boneAnimationTrack.frameNumbers.set(boneTrack.frameNumbers);
                     boneAnimationTrack.rotations.set(boneTrack.rotations);
                     boneAnimationTrack.rotationInterpolations.set(boneTrack.rotationInterpolations);
+                    boneAnimationTrack.physicsToggles.set(boneTrack.physicsToggles);
                     filteredBoneTracks.push(boneAnimationTrack);
                 }
             }
@@ -298,6 +314,7 @@ export class VmdLoader {
                 const frameNumbers = boneTrack.frameNumbers;
                 const rotations = boneTrack.rotations;
                 const rotationInterpolations = boneTrack.rotationInterpolations;
+                const physicsToggles = boneTrack.physicsToggles;
 
                 const newTrack = new MmdBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
 
@@ -321,6 +338,8 @@ export class VmdLoader {
                         newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
                         newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
                         newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        newTrack.physicsToggles[insertIndex] = physicsToggles[currentIndex];
 
                         insertIndex += 1;
                         currentFrameNumber = nextFrameNumber;
@@ -359,6 +378,7 @@ export class VmdLoader {
                 const positionInterpolations = boneTrack.positionInterpolations;
                 const rotations = boneTrack.rotations;
                 const rotationInterpolations = boneTrack.rotationInterpolations;
+                const physicsToggles = boneTrack.physicsToggles;
 
                 const newTrack = new MmdMovableBoneAnimationTrack(boneTrack.name, duplicateResolvedLength);
 
@@ -403,6 +423,8 @@ export class VmdLoader {
                         newRotationInterpolations[insertIndex * 4 + 1] = rotationInterpolations[currentIndex * 4 + 1];
                         newRotationInterpolations[insertIndex * 4 + 2] = rotationInterpolations[currentIndex * 4 + 2];
                         newRotationInterpolations[insertIndex * 4 + 3] = rotationInterpolations[currentIndex * 4 + 3];
+
+                        newTrack.physicsToggles[insertIndex] = physicsToggles[currentIndex];
 
                         insertIndex += 1;
                         currentFrameNumber = nextFrameNumber;

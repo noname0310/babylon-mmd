@@ -525,6 +525,7 @@ export namespace VmdObject {
          * Interpolation
          *
          * https://hariganep.seesaa.net/article/201103article_1.html
+         * https://x.com/KuroNekoMeguMMD/status/1864306974856499520/
          *
          * The interpolation parameters are four Bezier curves (0,0), (x1,y1), (x2,y2), and (127,127)
          *
@@ -535,9 +536,16 @@ export namespace VmdObject {
          * - Z-axis interpolation parameters (Z_x1, Z_y1), (Z_x2, Z_y2)
          * - Rotation interpolation parameters (R_x1, R_y1), (R_x2, R_y2)
          *
+         * And interpolation parameters also include physics toggle parameters
+         * - Physics toggle parameters (phy1, phy2)
+         *
+         * Physics toggle parameters has two varients
+         * - phy1: 0x00, phy2: 0x00 (physics off)
+         * - phy1: 0x63, phy2: 0x0f (physics on)
+         *
          * Then, the interpolation parameters are as follows
          *
-         * X_x1,Y_x1,Z_x1,R_x1,
+         * X_x1,Y_x1,phy1,phy2,
          * X_y1,Y_y1,Z_y1,R_y1,
          * X_x2,Y_x2,Z_x2,R_x2,
          * X_y2,Y_y2,Z_y2,R_y2,
@@ -545,17 +553,17 @@ export namespace VmdObject {
          * Y_x1,Z_x1,R_x1,X_y1,
          * Y_y1,Z_y1,R_y1,X_x2,
          * Y_x2,Z_x2,R_x2,X_y2,
-         * Y_y2,Z_y2,R_y2, 01,
+         * Y_y2,Z_y2,R_y2, 00,
          *
          * Z_x1,R_x1,X_y1,Y_y1,
          * Z_y1,R_y1,X_x2,Y_x2,
          * Z_x2,R_x2,X_y2,Y_y2,
-         * Z_y2,R_y2, 01, 00,
+         * Z_y2,R_y2, 00, 00,
          *
          * R_x1,X_y1,Y_y1,Z_y1,
          * R_y1,X_x2,Y_x2,Z_x2,
          * R_x2,X_y2,Y_y2,Z_y2,
-         * R_y2, 01, 00, 00
+         * R_y2, 00, 00, 00
          *
          * [4][4][4] = [64]
          */
@@ -579,6 +587,22 @@ export namespace VmdObject {
                 this.interpolation[i] = dataDeserializer.getUint8();
             }
         }
+    }
+
+    export enum BoneKeyFramePhysicsInfoKind {
+        /**
+         * Physics off
+         *
+         * Rigid body position is driven by animation
+         */
+        Off = 0x630F,
+
+        /**
+         * Physics on
+         *
+         * Rigid body position is driven by physics, only affected when the bone has a rigid body
+         */
+        On = 0x0000
     }
 
     /**

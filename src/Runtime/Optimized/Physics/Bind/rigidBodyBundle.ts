@@ -138,7 +138,7 @@ export class RigidBodyBundle {
     private _bufferedMotionStatesPtr: IWasmTypedArray<Float32Array>;
     // save only dynamic body ptr for temporal kinematic
     private readonly _worldTransformPtrArray: Nullable<IWasmTypedArray<Float32Array>>[];
-    private readonly _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>;
+    private readonly _kinematicStatesPtr: IWasmTypedArray<Uint8Array>;
 
     private readonly _inner: RigidBodyBundleInner;
     private readonly _count: number;
@@ -203,8 +203,8 @@ export class RigidBodyBundle {
             }
         }
         this._worldTransformPtrArray = worldTransformPtrArray;
-        const temporalKinematicStatesPtr = wasmInstance.rigidBodyBundleGetTemporalKinematicStatesPtr(ptr);
-        this._temporalKinematicStatesPtr = wasmInstance.createTypedArray(Uint8Array, temporalKinematicStatesPtr, count);
+        const kinematicStatesPtr = wasmInstance.rigidBodyBundleGetKinematicStatesPtr(ptr);
+        this._kinematicStatesPtr = wasmInstance.createTypedArray(Uint8Array, kinematicStatesPtr, count);
         this._inner = new RigidBodyBundleInner(runtime.wasmInstance, ptr, shapeReferences);
         this._count = count;
         this._worldReference = null;
@@ -485,7 +485,7 @@ export class RigidBodyBundle {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatrixFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, index, array, offset);
+        this.impl.setTransformMatrixFromArray(this._motionStatesPtr, this._kinematicStatesPtr, index, array, offset);
     }
 
     /**
@@ -506,7 +506,7 @@ export class RigidBodyBundle {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatricesFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, array, offset);
+        this.impl.setTransformMatricesFromArray(this._motionStatesPtr, this._kinematicStatesPtr, array, offset);
     }
 
     /**
@@ -706,7 +706,7 @@ export class RigidBodyBundle {
             this.runtime.wasmInstance,
             this._inner.ptr,
             this._motionStatesPtr,
-            this._temporalKinematicStatesPtr,
+            this._kinematicStatesPtr,
             this._worldTransformPtrArray
         );
     }
