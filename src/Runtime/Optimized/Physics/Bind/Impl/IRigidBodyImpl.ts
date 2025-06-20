@@ -12,12 +12,12 @@ export interface IRigidBodyImpl {
         wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         motionStatePtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatePtr: IWasmTypedArray<Uint8Array>,
         worldTransformPtr: Nullable<IWasmTypedArray<Float32Array>>
     ): void;
     setTransformMatrixFromArray(
         motionStatePtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatePtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;

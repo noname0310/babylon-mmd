@@ -16,7 +16,7 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
 
     public setTransformMatrixFromArray(
         motionStatePtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatePtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void {
@@ -38,9 +38,9 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
         m[MotionStateOffsetsInFloat32Array.Translation + 1] = array[offset + 13];
         m[MotionStateOffsetsInFloat32Array.Translation + 2] = array[offset + 14];
 
-        const temporalKinematicState = temporalKinematicStatePtr.array;
-        if (temporalKinematicState[0] !== TemporalKinematicState.Disabled) {
-            temporalKinematicState[0] = TemporalKinematicState.WaitForChange;
+        const kinematicState = kinematicStatePtr.array;
+        if ((kinematicState[0] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+            kinematicState[0] = (kinematicState[0] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
         }
     }
 

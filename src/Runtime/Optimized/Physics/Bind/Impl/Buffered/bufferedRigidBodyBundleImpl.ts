@@ -60,7 +60,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         worldTransformPtrArray: Nullable<IWasmTypedArray<Float32Array>>[]
     ): void {
         if (!this._isDirty) {
@@ -71,7 +71,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             const n = this._motionStateMatricesBuffer;
             const m = motionStatesPtr.array;
             const motionStateMatrixDirtyFlags = this._motionStateMatrixDirtyFlags;
-            const temporalKinematicStates = temporalKinematicStatesPtr.array;
+            const kinematicStates = kinematicStatesPtr.array;
 
             const count = this._count;
             let nOffset = 0;
@@ -99,8 +99,8 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
                 m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = n[nOffset + 13];
                 m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = n[nOffset + 14];
 
-                if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                    temporalKinematicStates[i] = TemporalKinematicState.WaitForChange;
+                if ((kinematicStates[i] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+                    kinematicStates[i] = (kinematicStates[i] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
                 }
 
                 motionStateMatrixDirtyFlags[i] = 0;
@@ -182,7 +182,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatrixFromArray(
         _motionStatesPtr: IWasmTypedArray<Float32Array>,
-        _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        _kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         index: number,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
@@ -215,7 +215,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatricesFromArray(
         _motionStatesPtr: IWasmTypedArray<Float32Array>,
-        _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        _kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<ArrayLike<number>>,
         offset: number
     ): void {

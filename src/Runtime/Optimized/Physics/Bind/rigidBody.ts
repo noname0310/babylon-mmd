@@ -131,7 +131,7 @@ export class RigidBody {
     private _bufferedMotionStatePtr: IWasmTypedArray<Float32Array>;
     // save only dynamic body ptr for temporal kinematic
     private readonly _worldTransformPtr: Nullable<IWasmTypedArray<Float32Array>>;
-    private readonly _temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>;
+    private readonly _kinematicStatePtr: IWasmTypedArray<Uint8Array>;
 
     private readonly _inner: RigidBodyInner;
 
@@ -199,8 +199,8 @@ export class RigidBody {
         } else {
             this._worldTransformPtr = null;
         }
-        const temporalKinematicStatePtr = wasmInstance.rigidBodyGetTemporalKinematicStatePtr(ptr);
-        this._temporalKinematicStatePtr = wasmInstance.createTypedArray(Uint8Array, temporalKinematicStatePtr, 1);
+        const kinematicStatePtr = wasmInstance.rigidBodyGetKinematicStatePtr(ptr);
+        this._kinematicStatePtr = wasmInstance.createTypedArray(Uint8Array, kinematicStatePtr, 1);
         this._inner = new RigidBodyInner(runtime.wasmInstance, ptr, shape);
         this._worldReference = null;
 
@@ -411,7 +411,7 @@ export class RigidBody {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatrixFromArray(this._motionStatePtr, this._temporalKinematicStatePtr, array, offset);
+        this.impl.setTransformMatrixFromArray(this._motionStatePtr, this._kinematicStatePtr, array, offset);
     }
 
     /**
@@ -558,7 +558,7 @@ export class RigidBody {
             this.runtime.wasmInstance,
             this._inner.ptr,
             this._motionStatePtr,
-            this._temporalKinematicStatePtr,
+            this._kinematicStatePtr,
             this._worldTransformPtr
         );
     }

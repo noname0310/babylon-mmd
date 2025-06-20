@@ -19,7 +19,7 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatrixFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         index: number,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
@@ -43,20 +43,20 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = array[offset + 13];
         m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = array[offset + 14];
 
-        const temporalKinematicStates = temporalKinematicStatesPtr.array;
-        if (temporalKinematicStates[index] !== TemporalKinematicState.Disabled) {
-            temporalKinematicStates[index] = TemporalKinematicState.WaitForChange;
+        const kinematicStates = kinematicStatesPtr.array;
+        if ((kinematicStates[index] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+            kinematicStates[index] = (kinematicStates[index] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
         }
     }
 
     public setTransformMatricesFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<ArrayLike<number>>,
         offset: number
     ): void {
         const m = motionStatesPtr.array;
-        const temporalKinematicStates = temporalKinematicStatesPtr.array;
+        const kinematicStates = kinematicStatesPtr.array;
 
         const count = this._count;
         let mOffset = 0;
@@ -78,8 +78,8 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = array[aOffset + 13];
             m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = array[aOffset + 14];
 
-            if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                temporalKinematicStates[i] = TemporalKinematicState.WaitForChange;
+            if ((kinematicStates[i] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+                kinematicStates[i] = (kinematicStates[i] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
             }
 
             mOffset += Constants.MotionStateSizeInFloat32Array;

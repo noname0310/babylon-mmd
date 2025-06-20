@@ -119,8 +119,10 @@ export const enum MotionStateOffsetsInFloat32Array {
 }
 
 export const enum TemporalKinematicState {
-    Disabled = 0,
-    Idle = 1,
-    WaitForChange = 2,
-    WaitForRestore = 3
+    Disabled = 0 << 4,
+    Idle = 1 << 4,
+    WaitForChange = 2 << 4,
+    WaitForRestore = 3 << 4,
+    ReadMask = 0xF0,
+    WriteMask = 0x0F
 }

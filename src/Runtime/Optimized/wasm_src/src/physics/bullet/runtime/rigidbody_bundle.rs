@@ -1,18 +1,20 @@
 use glam::Vec3;
 use wasm_bindgen::prelude::*;
 
+use crate::physics::bullet::runtime::kinematic_state::{KinematicToggleState, TemporalKinematicState};
+
 use super::super::bind;
 
 use super::collision_shape::{CollisionShape, CollisionShapeHandle};
 use super::physics_world::PhysicsWorldHandle;
 use super::rigidbody_construction_info::RigidBodyConstructionInfo;
-use super::temporal_kinematic_state::TemporalKinematicState;
+use super::kinematic_state::KinematicState;
 
 pub(crate) struct RigidBodyBundle {
     bodies: Box<[bind::rigidbody::RigidBody]>,
     motion_state_bundle: bind::motion_state::MotionStateBundle,
     buffered_motion_state_bundle: Option<bind::motion_state::MotionStateBundle>,
-    temporal_kinematic_states: Box<[TemporalKinematicState]>,
+    kinematic_states: Box<[KinematicState]>,
     managed_ref: bool,
     world_ref: u16,
     #[cfg(debug_assertions)]
@@ -26,7 +28,7 @@ impl RigidBodyBundle {
     pub(crate) fn new(info_list: &mut [RigidBodyConstructionInfo]) -> Self {
         let mut bodies = Vec::with_capacity(info_list.len());
         let mut motion_state_bundle = bind::motion_state::MotionStateBundle::new(info_list.len());
-        let mut temporal_kinematic_states = Vec::with_capacity(info_list.len());
+        let mut kinematic_states = Vec::with_capacity(info_list.len());
         
         #[cfg(debug_assertions)]
         let mut shape_handle_vec = Vec::with_capacity(info_list.len());
@@ -44,17 +46,23 @@ impl RigidBodyBundle {
             );
             let body = bind::rigidbody::RigidBody::new(&info);
             bodies.push(body);
-            temporal_kinematic_states.push(if info.get_motion_type() == bind::rigidbody::MotionType::Dynamic {
-                TemporalKinematicState::Idle
+            kinematic_states.push(if info.get_motion_type() == bind::rigidbody::MotionType::Dynamic {
+                KinematicState::new(
+                    TemporalKinematicState::Idle,
+                    KinematicToggleState::Disabled
+                )
             } else {
-                TemporalKinematicState::Disabled
+                KinematicState::new(
+                    TemporalKinematicState::Disabled,
+                    KinematicToggleState::Disabled
+                )
             });
         }
         Self {
             bodies: bodies.into_boxed_slice(),
             motion_state_bundle,
             buffered_motion_state_bundle: None,
-            temporal_kinematic_states: temporal_kinematic_states.into_boxed_slice(),
+            kinematic_states: kinematic_states.into_boxed_slice(),
             managed_ref: false,
             world_ref: 0,
             #[cfg(debug_assertions)]
@@ -162,29 +170,29 @@ impl RigidBodyBundle {
 
     pub(super) fn update_temporal_kinematic_states(&mut self, mut world: PhysicsWorldHandle) {
         for i in 0..self.bodies.len() {
-            let temporal_kinematic_state = &mut self.temporal_kinematic_states[i];
-            match temporal_kinematic_state {
+            let kinematic_state = &mut self.kinematic_states[i];
+            match kinematic_state.get_temporal_state() {
                 TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
                 TemporalKinematicState::WaitForChange => {
                     let body = &mut self.bodies[i];
                     world.get_mut().make_raw_body_kinematic(body);
-                    *temporal_kinematic_state = TemporalKinematicState::WaitForRestore;
+                    kinematic_state.set_temporal_state(TemporalKinematicState::WaitForRestore);
                 }
                 TemporalKinematicState::WaitForRestore => {
                     let body = &mut self.bodies[i];
                     world.get_mut().restore_raw_body_dynamic(body);
-                    *temporal_kinematic_state = TemporalKinematicState::Idle;
+                    kinematic_state.set_temporal_state(TemporalKinematicState::Idle);
                 }
             }
         }
     }
 
     pub(super) fn clear_temporal_kinematic_states(&mut self) {
-        for temporal_kinematic_state in self.temporal_kinematic_states.iter_mut() {
-            match temporal_kinematic_state {
+        for kinematic_state in self.kinematic_states.iter_mut() {
+            match kinematic_state.get_temporal_state() {
                 TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
                 TemporalKinematicState::WaitForChange | TemporalKinematicState::WaitForRestore => {
-                    *temporal_kinematic_state = TemporalKinematicState::Idle;
+                    kinematic_state.set_temporal_state(TemporalKinematicState::Idle);
                 }
             }
         }
@@ -318,12 +326,12 @@ impl RigidBodyBundle {
         self.bodies[index].get_world_transform_ptr_mut()
     }
 
-    pub(crate) fn get_temporal_kinematic_states_ptr_mut(&mut self) -> *mut TemporalKinematicState {
-        self.temporal_kinematic_states.as_mut_ptr()
+    pub(crate) fn get_kinematic_states_ptr_mut(&mut self) -> *mut KinematicState {
+        self.kinematic_states.as_mut_ptr()
     }
 
     pub(crate) fn make_temporal_kinematic(&mut self, index: usize) {
-        self.temporal_kinematic_states[index] = TemporalKinematicState::WaitForChange;
+        self.kinematic_states[index].set_temporal_state(TemporalKinematicState::WaitForChange);
     }
 
     pub(crate) fn create_handle(&mut self) -> RigidBodyBundleHandle {
@@ -733,8 +741,8 @@ pub fn rigidbody_bundle_get_world_transform_ptr(ptr: *mut usize, index: usize) -
     bundle.get_world_transform_ptr_mut(index) as *mut usize
 }
 
-#[wasm_bindgen(js_name = "rigidBodyBundleGetTemporalKinematicStatesPtr")]
-pub fn rigidbody_bundle_get_temporal_kinematic_states_ptr(ptr: *mut usize) -> *mut u8 {
+#[wasm_bindgen(js_name = "rigidBodyBundleGetKinematicStatesPtr")]
+pub fn rigidbody_bundle_get_kinematic_states_ptr(ptr: *mut usize) -> *mut u8 {
     let bundle = unsafe { &mut *(ptr as *mut RigidBodyBundle) };
-    bundle.get_temporal_kinematic_states_ptr_mut() as *mut u8
+    bundle.get_kinematic_states_ptr_mut() as *mut u8
 }

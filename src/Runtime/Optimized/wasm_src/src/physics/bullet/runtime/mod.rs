@@ -1,5 +1,6 @@
 pub(crate) mod collision_shape;
 pub(crate) mod constraint;
+pub(crate) mod kinematic_state;
 pub(crate) mod motion_type;
 pub(crate) mod multi_physics_runtime;
 pub(crate) mod multi_physics_world;
@@ -8,4 +9,3 @@ pub(crate) mod physics_world;
 pub(crate) mod rigidbody_bundle;
 pub(crate) mod rigidbody_construction_info;
 pub(crate) mod rigidbody;
-pub(crate) mod temporal_kinematic_state;

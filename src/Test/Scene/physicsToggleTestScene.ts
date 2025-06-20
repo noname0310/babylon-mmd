@@ -11,24 +11,27 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
+// import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 // import ammo from "@/Runtime/Physics/External/ammo.wasm";
-import havok from "@babylonjs/havok";
+// import havok from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
+import { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
+import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
+
 // import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 // import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
-import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
-
+// import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
 import type { ISceneBuilder } from "../baseRuntime";
 import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
 import { CreateDefaultGround } from "../Util/createDefaultGround";
@@ -68,12 +71,16 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        const physicsInstance = await havok();
-        const physicsPlugin = new HavokPlugin(true, physicsInstance);
-        scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
+        // const physicsInstance = await havok();
+        // const physicsPlugin = new HavokPlugin(true, physicsInstance);
+        // scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdPhysics(scene));
+        const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
+        physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
+        physicsRuntime.register(scene);
+        const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
+        // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
@@ -96,9 +103,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.onPauseAnimationObservable.add(() => {
             if (mmdRuntime.animationFrameTimeDuration === mmdRuntime.currentFrameTime) {
                 mmdRuntime.seekAnimation(0);
-                mmdRuntime.playAnimation().then(() => {
-                    mmdRuntime.initializeAllMmdModelsPhysics(true);
-                });
+                mmdRuntime.playAnimation();
             }
         });
         // mmdRuntime.seekAnimation(80, true);
