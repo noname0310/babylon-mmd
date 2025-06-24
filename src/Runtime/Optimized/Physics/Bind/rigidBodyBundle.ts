@@ -1156,7 +1156,7 @@ export class RigidBodyBundle {
             if (this._inner.hasReferences && this.impl.shouldSync) {
                 this.runtime.lock.wait();
             }
-            this.impl.setLinearVelocity(this.runtime.wasmInstance, this._inner.ptr, index, velocity);
+            this.impl.setLinearVelocity(index, velocity);
         }
     }
 
@@ -1185,7 +1185,7 @@ export class RigidBodyBundle {
             if (this._inner.hasReferences && this.impl.shouldSync) {
                 this.runtime.lock.wait();
             }
-            this.impl.setAngularVelocity(this.runtime.wasmInstance, this._inner.ptr, index, velocity);
+            this.impl.setAngularVelocity(index, velocity);
         }
     }
 
