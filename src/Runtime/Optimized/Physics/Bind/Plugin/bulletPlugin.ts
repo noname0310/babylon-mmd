@@ -1050,10 +1050,10 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
         if (pluginData) {
             if (pluginData instanceof PluginConstructionInfo) {
                 pluginData.commandsOnCreation.push((body) => {
-                    body.setLinearVelocity(linVel);
+                    body.setLinearVelocity(linVel, true);
                 });
             } else if (pluginData instanceof PluginBody) {
-                pluginData.setLinearVelocity(linVel);
+                pluginData.setLinearVelocity(linVel, true);
             }
         }
 
@@ -1064,12 +1064,12 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
             if (pluginDataInstances instanceof PluginConstructionInfoList) {
                 pluginDataInstances.commandsOnCreation.push((bundle) => {
                     for (let i = start; i < end; ++i) {
-                        bundle.setLinearVelocity(i, linVel);
+                        bundle.setLinearVelocity(i, linVel, true);
                     }
                 });
             } else if (pluginDataInstances instanceof PluginBodyBundle) {
                 for (let i = start; i < end; ++i) {
-                    pluginDataInstances.setLinearVelocity(i, linVel);
+                    pluginDataInstances.setLinearVelocity(i, linVel, true);
                 }
             }
         }
@@ -1237,10 +1237,10 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
         if (pluginData) {
             if (pluginData instanceof PluginConstructionInfo) {
                 pluginData.commandsOnCreation.push((body) => {
-                    body.setAngularVelocity(angVel);
+                    body.setAngularVelocity(angVel, true);
                 });
             } else if (pluginData instanceof PluginBody) {
-                pluginData.setAngularVelocity(angVel);
+                pluginData.setAngularVelocity(angVel, true);
             }
         }
 
@@ -1251,12 +1251,12 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
             if (pluginDataInstances instanceof PluginConstructionInfoList) {
                 pluginDataInstances.commandsOnCreation.push((bundle) => {
                     for (let i = start; i < end; ++i) {
-                        bundle.setAngularVelocity(i, angVel);
+                        bundle.setAngularVelocity(i, angVel, true);
                     }
                 });
             } else if (pluginDataInstances instanceof PluginBodyBundle) {
                 for (let i = start; i < end; ++i) {
-                    pluginDataInstances.setAngularVelocity(i, angVel);
+                    pluginDataInstances.setAngularVelocity(i, angVel, true);
                 }
             }
         }
