@@ -2,6 +2,7 @@
 
 ## 0.66.0 (scheduled)
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
+- fix `MmdBulletPhysics` model transform not applied to physics body
 
 ## 0.65.0 (2025-05-08)
 

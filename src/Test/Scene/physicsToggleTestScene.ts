@@ -27,6 +27,7 @@ import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPh
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 import { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
+import { PhysicsRuntimeEvaluationType } from "@/Runtime/Optimized/Physics/Bind/Impl/physicsRuntimeEvaluationType";
 import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 
 // import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
@@ -77,6 +78,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
         const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
+        physicsRuntime.evaluationType = PhysicsRuntimeEvaluationType.Immediate;
         physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
         physicsRuntime.register(scene);
         const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
@@ -85,6 +87,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.register(scene);
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
 
+        // mmdMesh.position.x = 10;
         const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
             buildPhysics: true
         });

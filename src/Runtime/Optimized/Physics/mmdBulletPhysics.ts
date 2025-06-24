@@ -67,8 +67,10 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
     private _bundle: Nullable<MmdRigidBodyBundle>;
     private readonly _constraints: Nullable<Constraint>[];
 
+    private readonly _rootMesh: Mesh;
+
     private readonly _syncedRigidBodyStates: Uint8Array;
-    private readonly _needDeoptimize: boolean;
+    private _disabledRigidBodyCount: number;
 
     /**
      * Create a new MMD bullet physics model
@@ -85,7 +87,8 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
         kinematicSharedWorldIds: readonly number[],
         rigidBodyIndexMap: Int32Array,
         bundle: MmdRigidBodyBundle,
-        constraints: Nullable<Constraint>[]
+        constraints: Nullable<Constraint>[],
+        rootMesh: Mesh
     ) {
         this._physicsRuntime = physicsRuntime;
         this._worldId = worldId;
@@ -94,8 +97,10 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
         this._bundle = bundle;
         this._constraints = constraints;
 
-        this._syncedRigidBodyStates = new Uint8Array(rigidBodyIndexMap.length);
-        this._needDeoptimize = false;
+        this._rootMesh = rootMesh;
+
+        this._syncedRigidBodyStates = new Uint8Array(rigidBodyIndexMap.length).fill(1);
+        this._disabledRigidBodyCount = 0;
 
         physicsRuntime.addRigidBodyBundle(bundle, worldId);
         for (let i = 0; i < kinematicSharedWorldIds.length; ++i) {
@@ -155,6 +160,8 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
      * Reset the rigid body positions and velocities
      */
     public initialize(): void {
+        const modelWorldMatrix = this._rootMesh.computeWorldMatrix();
+
         const rigidBodyIndexMap = this._rigidBodyIndexMap;
         const bundle = this._bundle;
         if (bundle === null) return;
@@ -168,6 +175,7 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
 
             const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
             data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
+            bodyWorldMatrix.multiplyToRef(modelWorldMatrix, bodyWorldMatrix);
             bundle.setTransformMatrix(index, bodyWorldMatrix);
 
             // bundle.setAngularVelocity(index, MmdBulletPhysicsModel._ZeroVector);
@@ -179,7 +187,7 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
      * Indicate whether all IK must be solved
      */
     public get needDeoptimize(): boolean {
-        return this._needDeoptimize;
+        return 0 < this._disabledRigidBodyCount;
     }
 
     /**
@@ -191,54 +199,230 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
      * @param rigidBodyStates state of rigid bodies for physics toggle
      */
     public commitBodyStates(rigidBodyStates: Uint8Array): void {
-        rigidBodyStates;
-        this._syncedRigidBodyStates;
+        const rigidBodyIndexMap = this._rigidBodyIndexMap;
+        const syncedRigidBodyStates = this._syncedRigidBodyStates;
+        for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
+            const index = rigidBodyIndexMap[i];
+            if (index === -1) continue;
+
+            const data = this._bundle!.rigidBodyData[index];
+            if (data.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) {
+                continue;
+            }
+
+            const state = rigidBodyStates[i];
+            if (state !== syncedRigidBodyStates[i]) {
+                syncedRigidBodyStates[i] = state;
+                if (state !== 0) {
+                    this._disabledRigidBodyCount -= 1;
+                    this._bundle!.setEffectiveKinematicState(index, false);
+                } else {
+                    this._disabledRigidBodyCount += 1;
+                }
+            }
+        }
     }
+
+    private static readonly _Position = new Vector3();
+    private static readonly _Rotation = new Quaternion();
+    private static readonly _CurrentPosition = new Vector3();
+    private static readonly _CurrentRotation = new Quaternion();
+    private static readonly _EulerAngles1 = new Vector3();
+    private static readonly _EulerAngles2 = new Vector3();
+    private static readonly _Velocity = new Vector3();
+
+    /**
+     * 0: unknown, 1: kinematic, 2: target transform
+     */
+    private _bodyKinematicToggleMap: Nullable<Uint8Array> = null;
 
     /**
      * Set the rigid bodies transform to the bones transform
      */
     public syncBodies(): void {
-        const rigidBodyIndexMap = this._rigidBodyIndexMap;
         const bundle = this._bundle;
         if (bundle === null) return;
+        const modelWorldMatrix = this._rootMesh.computeWorldMatrix();
 
-        for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
-            const index = rigidBodyIndexMap[i];
-            if (index === -1) continue;
+        if (0 < this._disabledRigidBodyCount) {
+            if (this._bodyKinematicToggleMap === null) {
+                this._bodyKinematicToggleMap = new Uint8Array(this._rigidBodyIndexMap.length);
+            } else {
+                this._bodyKinematicToggleMap.fill(0);
+            }
+            const bodyKinematicToggleMap = this._bodyKinematicToggleMap;
+            const syncedRigidBodyStates = this._syncedRigidBodyStates;
 
-            const data = bundle.rigidBodyData[index];
-            if (data.linkedBone === null) continue;
+            const position = MmdBulletPhysicsModel._Position;
+            const rotation = MmdBulletPhysicsModel._Rotation;
+            const currentPosition = MmdBulletPhysicsModel._CurrentPosition;
+            const currentRotation = MmdBulletPhysicsModel._CurrentRotation;
+            const velocity = MmdBulletPhysicsModel._Velocity;
 
-            switch (data.physicsMode) {
-            case PmxObject.RigidBody.PhysicsMode.FollowBone:
-                {
-                    const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
-                    data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
-                    bundle.setTransformMatrix(index, bodyWorldMatrix);
+            const rigidBodyIndexMap = this._rigidBodyIndexMap;
+            for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
+                const index = rigidBodyIndexMap[i];
+                if (index === -1) continue;
+
+                const data = bundle.rigidBodyData[index];
+                if (data.linkedBone === null) continue;
+
+                switch (data.physicsMode) {
+                case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                    {
+                        const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
+                        data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
+                        bodyWorldMatrix.multiplyToRef(modelWorldMatrix, bodyWorldMatrix);
+                        bundle.setTransformMatrix(index, bodyWorldMatrix);
+                    }
+                    break;
+
+                case PmxObject.RigidBody.PhysicsMode.Physics:
+                case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                    if (syncedRigidBodyStates[i] === 0) { // body need to be disabled
+                        let useTargetTransformMethod = true;
+                        for (let currentNode = data; ;) {
+                            const linkedBone = currentNode.linkedBone;
+                            if (linkedBone === null) { // orphan body
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            const parentBone = linkedBone.parentBone;
+                            if (parentBone === null) { // root bone
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            if (parentBone.rigidBodyIndices.length < 1) { // parent is animated bone
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            const parentNodeIndex = parentBone.rigidBodyIndices[0];
+                            const mappedParentNodeIndex = rigidBodyIndexMap[parentNodeIndex];
+                            if (mappedParentNodeIndex === -1) { // parent body is failed to create. treat as animated body
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            const parentNode = bundle.rigidBodyData[mappedParentNodeIndex];
+                            if (parentNode.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) { // parent is animated bone
+                                useTargetTransformMethod = false;
+                                break;
+                            } else { // Physics or PhysicsWithBone
+                                if (syncedRigidBodyStates[parentNodeIndex] === 0) { // parent body physics toggle is enabled
+                                    const parentKinematicToggleState = bodyKinematicToggleMap![parentNodeIndex];
+                                    if (parentKinematicToggleState === 0) { // unknown state
+                                        // we can't determine the method in this iteration stage
+                                    } else {
+                                        if (parentKinematicToggleState === 1) { // parent body is kinematic
+                                            useTargetTransformMethod = false;
+                                            break;
+                                        } else {
+                                            useTargetTransformMethod = true;
+                                            break;
+                                        }
+                                    }
+                                } else { // parent body is driven by physics so we need to use target transform method
+                                    useTargetTransformMethod = true;
+                                    break;
+                                }
+                            }
+                            currentNode = parentNode;
+                        }
+                        bodyKinematicToggleMap![i] = useTargetTransformMethod ? 2 : 1; // memo the result for fast computation next time
+
+                        const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
+                        data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
+                        bodyWorldMatrix.multiplyToRef(modelWorldMatrix, bodyWorldMatrix);
+                        bodyWorldMatrix.decompose(
+                            undefined,
+                            rotation,
+                            position
+                        );
+
+                        if (useTargetTransformMethod) {
+                            bundle.setEffectiveKinematicState(index, false);
+                            const forceFactor = 30;
+                            const torqueFactor = 30;
+
+                            const currentTransform = bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix);
+                            currentTransform.decompose(
+                                undefined,
+                                currentRotation,
+                                currentPosition
+                            );
+
+                            {
+                                // Linear difference
+                                const dx = position.x - currentPosition.x;
+                                const dy = position.y - currentPosition.y;
+                                const dz = position.z - currentPosition.z;
+                                velocity.set(dx * forceFactor, dy * forceFactor, dz * forceFactor);
+                                bundle.setLinearVelocity(index, velocity, false);
+                            }
+
+                            {
+                                // Angular difference
+                                const targetAngles = rotation.toEulerAnglesToRef(MmdBulletPhysicsModel._EulerAngles1);
+                                const currentAngles = currentRotation.toEulerAnglesToRef(MmdBulletPhysicsModel._EulerAngles2);
+                                const dx = (targetAngles.x - currentAngles.x + Math.PI) % (2 * Math.PI) - Math.PI;
+                                const dy = (targetAngles.y - currentAngles.y + Math.PI) % (2 * Math.PI) - Math.PI;
+                                const dz = (targetAngles.z - currentAngles.z + Math.PI) % (2 * Math.PI) - Math.PI;
+                                velocity.set(dx * torqueFactor, dy * torqueFactor, dz * torqueFactor);
+                                bundle.setAngularVelocity(index, velocity, false);
+                            }
+                        } else {
+                            bundle.setEffectiveKinematicState(index, true);
+                            bundle.setTransformMatrix(index, bodyWorldMatrix);
+                        }
+                    }
+                    break;
+
+                default:
+                    throw new Error(`Unknown physics mode: ${data.physicsMode}`);
                 }
-                break;
+            }
+        } else {
+            const rigidBodyIndexMap = this._rigidBodyIndexMap;
+            for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
+                const index = rigidBodyIndexMap[i];
+                if (index === -1) continue;
 
-            case PmxObject.RigidBody.PhysicsMode.Physics:
-            case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
-                break;
+                const data = bundle.rigidBodyData[index];
+                if (data.linkedBone === null) continue;
 
-            default:
-                throw new Error(`Unknown physics mode: ${data.physicsMode}`);
+                switch (data.physicsMode) {
+                case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                    {
+                        const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
+                        data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
+                        bodyWorldMatrix.multiplyToRef(modelWorldMatrix, bodyWorldMatrix);
+                        bundle.setTransformMatrix(index, bodyWorldMatrix);
+                    }
+                    break;
+
+                case PmxObject.RigidBody.PhysicsMode.Physics:
+                case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                    break;
+
+                default:
+                    throw new Error(`Unknown physics mode: ${data.physicsMode}`);
+                }
             }
         }
     }
 
+    private static readonly _ModelWorldMatrixInverse = new Matrix();
     private static readonly _BoneWorldPosition = new Vector3();
 
     /**
      * Set the bones transform to the rigid bodies transform
      */
     public syncBones(): void {
-        const rigidBodyIndexMap = this._rigidBodyIndexMap;
         const bundle = this._bundle;
         if (bundle === null) return;
+        const modelWorldMatrixInverse = this._rootMesh.computeWorldMatrix()
+            .invertToRef(MmdBulletPhysicsModel._ModelWorldMatrixInverse);
 
+        const rigidBodyIndexMap = this._rigidBodyIndexMap;
         for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
             const index = rigidBodyIndexMap[i];
             if (index === -1) continue;
@@ -251,8 +435,10 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
                 break;
             case PmxObject.RigidBody.PhysicsMode.Physics:
                 {
-                    data.bodyOffsetMatrixInverse.multiplyToArray(
-                        bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix),
+                    const boneWorldMatrix = bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix);
+                    data.bodyOffsetMatrixInverse.multiplyToRef(boneWorldMatrix, boneWorldMatrix);
+                    boneWorldMatrix.multiplyToArray(
+                        modelWorldMatrixInverse,
                         data.linkedBone.worldMatrix,
                         0
                     );
@@ -262,8 +448,10 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
             case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
                 {
                     data.linkedBone.getWorldTranslationToRef(MmdBulletPhysicsModel._BoneWorldPosition);
-                    data.bodyOffsetMatrixInverse.multiplyToArray(
-                        bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix),
+                    const boneWorldMatrix = bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix);
+                    data.bodyOffsetMatrixInverse.multiplyToRef(boneWorldMatrix, boneWorldMatrix);
+                    boneWorldMatrix.multiplyToArray(
+                        modelWorldMatrixInverse,
                         data.linkedBone.worldMatrix,
                         0
                     );
@@ -718,7 +906,8 @@ export class MmdBulletPhysics implements IMmdPhysics {
             validatedKinematicSharedWorldIds,
             rigidBodyIndexMap,
             bundle,
-            constraints
+            constraints,
+            rootMesh
         );
     }
 }
