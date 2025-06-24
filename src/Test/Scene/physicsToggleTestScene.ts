@@ -23,7 +23,7 @@ import { Inspector } from "@babylonjs/inspector";
 // import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
-import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
+// import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 // import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
