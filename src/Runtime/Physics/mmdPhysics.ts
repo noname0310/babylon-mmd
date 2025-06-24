@@ -407,9 +407,7 @@ export class MmdPhysicsModel implements IMmdPhysicsModel {
                             MmdPhysicsModel._NodeWorldRotation
                         );
 
-                        if (!solveAsDynamic) {
-                            node.physicsBody!.kinematicToggle = true;
-                        }
+                        node.physicsBody!.kinematicToggle = !solveAsDynamic;
                     }
                     break;
 

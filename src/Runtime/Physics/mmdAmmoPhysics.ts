@@ -488,6 +488,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
                         // eslint-disable-next-line @typescript-eslint/consistent-type-imports
                         const body = node.physicsImpostor!.physicsBody as import("ammojs-typed").default.btRigidBody;
                         if (useTargetTransformMethod) {
+                            node.physicsImpostor!.kinematicToggle = false;
                             const forceFactor = 30;
                             const torqueFactor = 30;
 
@@ -516,11 +517,11 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
                                 body.setAngularVelocity(btVector3);
                             }
                         } else {
+                            node.physicsImpostor!.kinematicToggle = true;
                             btVector3.setValue(position.x, position.y, position.z);
                             btQuaternion.setValue(rotation.x, rotation.y, rotation.z, rotation.w);
                             btTransform.setOrigin(btVector3);
                             btTransform.setRotation(btQuaternion);
-                            node.physicsImpostor!.kinematicToggle = true;
                             body.getMotionState().setWorldTransform(btTransform);
                         }
                     }
