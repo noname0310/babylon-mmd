@@ -197,6 +197,16 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
                     wasmInstance.rigidBodyBundleTranslate(bundlePtr, index, translation.x, translation.y, translation.z);
                     break;
                 }
+                case RigidBodyCommand.SetLinearVelocity: {
+                    const linearVelocity = args[0] as Vector3;
+                    wasmInstance.rigidBodyBundleSetLinearVelocity(bundlePtr, index, linearVelocity.x, linearVelocity.y, linearVelocity.z);
+                    break;
+                }
+                case RigidBodyCommand.SetAngularVelocity: {
+                    const angularVelocity = args[0] as Vector3;
+                    wasmInstance.rigidBodyBundleSetAngularVelocity(bundlePtr, index, angularVelocity.x, angularVelocity.y, angularVelocity.z);
+                    break;
+                }
                 }
             }
             commandBuffer[index].clear();
@@ -370,6 +380,16 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         translation: DeepImmutable<Vector3>
     ): void {
         this._commandBuffer[index].set(RigidBodyCommand.Translate, [translation.clone()]);
+        this._isDirty = true;
+    }
+
+    public setLinearVelocity(index: number, linearVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer[index].set(RigidBodyCommand.SetLinearVelocity, [linearVelocity.clone()]);
+        this._isDirty = true;
+    }
+
+    public setAngularVelocity(index: number, angularVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer[index].set(RigidBodyCommand.SetAngularVelocity, [angularVelocity.clone()]);
         this._isDirty = true;
     }
 }

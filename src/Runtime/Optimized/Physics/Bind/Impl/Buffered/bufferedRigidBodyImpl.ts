@@ -142,6 +142,16 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
                 wasmInstance.rigidBodyTranslate(bodyPtr, translation.x, translation.y, translation.z);
                 break;
             }
+            case RigidBodyCommand.SetLinearVelocity: {
+                const linearVelocity = args[0] as Vector3;
+                wasmInstance.rigidBodySetLinearVelocity(bodyPtr, linearVelocity.x, linearVelocity.y, linearVelocity.z);
+                break;
+            }
+            case RigidBodyCommand.SetAngularVelocity: {
+                const angularVelocity = args[0] as Vector3;
+                wasmInstance.rigidBodySetAngularVelocity(bodyPtr, angularVelocity.x, angularVelocity.y, angularVelocity.z);
+                break;
+            }
             }
         }
         this._commandBuffer.clear();
@@ -240,6 +250,16 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
         translation: DeepImmutable<Vector3>
     ): void {
         this._commandBuffer.set(RigidBodyCommand.Translate, [translation.clone()]);
+        this._isDirty = true;
+    }
+
+    public setLinearVelocity(linearVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer.set(RigidBodyCommand.SetLinearVelocity, [linearVelocity.clone()]);
+        this._isDirty = true;
+    }
+
+    public setAngularVelocity(angularVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer.set(RigidBodyCommand.SetAngularVelocity, [angularVelocity.clone()]);
         this._isDirty = true;
     }
 }

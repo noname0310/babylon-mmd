@@ -1,5 +1,7 @@
 export const enum RigidBodyCommand {
     SetDamping,
     SetMassProps,
-    Translate
+    Translate,
+    SetLinearVelocity,
+    SetAngularVelocity
 }

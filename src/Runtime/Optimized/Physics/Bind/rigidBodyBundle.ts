@@ -1134,37 +1134,59 @@ export class RigidBodyBundle {
     /**
      * Set the linear velocity of the rigid body at the given index
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` is false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluated.
      * @param index Index of the rigid body
      * @param velocity The linear velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setLinearVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
+    public setLinearVelocity(index: number, velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
             throw new RangeError("Index out of range");
         }
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setLinearVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodyBundleSetLinearVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setLinearVelocity(this.runtime.wasmInstance, this._inner.ptr, index, velocity);
         }
-        this.runtime.wasmInstance.rigidBodyBundleSetLinearVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
     /**
      * Set the angular velocity of the rigid body at the given index
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` isd false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluate.
      * @param index Index of the rigid body
      * @param velocity The angular velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setAngularVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
+    public setAngularVelocity(index: number, velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
             throw new RangeError("Index out of range");
         }
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setAngularVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodyBundleSetAngularVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setAngularVelocity(this.runtime.wasmInstance, this._inner.ptr, index, velocity);
         }
-        this.runtime.wasmInstance.rigidBodyBundleSetAngularVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
     /**

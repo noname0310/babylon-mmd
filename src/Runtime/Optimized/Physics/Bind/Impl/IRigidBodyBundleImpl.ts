@@ -60,4 +60,7 @@ export interface IRigidBodyBundleImpl {
     getMass(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number;
     getLocalInertia(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): Vector3;
     translate(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number, translation: DeepImmutable<Vector3>): void;
+    // only required for buffered implementation
+    setLinearVelocity?(index: number, linearVelocity: DeepImmutable<Vector3>): void;
+    setAngularVelocity?(index: number, angularVelocity: DeepImmutable<Vector3>): void;
 }

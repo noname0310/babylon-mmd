@@ -896,29 +896,51 @@ export class RigidBody {
     /**
      * Set the linear velocity of the rigid body
      *
-     * This operation is always synchronized
-     * @param velocity The velocity vector to set
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` is false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluated.
+     * @param velocity The linear velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setLinearVelocity(velocity: DeepImmutable<Vector3>): void {
+    public setLinearVelocity(velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setLinearVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodySetLinearVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setLinearVelocity(this.runtime.wasmInstance, this._inner.ptr, velocity);
         }
-        this.runtime.wasmInstance.rigidBodySetLinearVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
     /**
      * Set the angular velocity of the rigid body
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` isd false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluate.
      * @param velocity The velocity vector to set
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setAngularVelocity(velocity: DeepImmutable<Vector3>): void {
+    public setAngularVelocity(velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setAngularVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodySetAngularVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setAngularVelocity(this.runtime.wasmInstance, this._inner.ptr, velocity);
         }
-        this.runtime.wasmInstance.rigidBodySetAngularVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
     /**
