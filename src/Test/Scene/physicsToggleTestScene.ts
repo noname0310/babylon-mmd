@@ -3,6 +3,8 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -18,18 +20,21 @@ import { Scene } from "@babylonjs/core/scene";
 // import havok from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
+// import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
-import { MmdRuntime } from "@/Runtime/mmdRuntime";
+import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 // import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
-import { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
-import { PhysicsRuntimeEvaluationType } from "@/Runtime/Optimized/Physics/Bind/Impl/physicsRuntimeEvaluationType";
-import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
+import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 
+// import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+// import { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
+// import { PhysicsRuntimeEvaluationType } from "@/Runtime/Optimized/Physics/Bind/Impl/physicsRuntimeEvaluationType";
+// import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 // import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
 // import { MmdAmmoPhysics } from "@/Runtime/Physics/mmdAmmoPhysics";
 // import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -77,12 +82,13 @@ export class SceneBuilder implements ISceneBuilder {
         // scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
         const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPD());
-        const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
-        physicsRuntime.evaluationType = PhysicsRuntimeEvaluationType.Immediate;
-        physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
-        physicsRuntime.register(scene);
-        const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
+        // const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
+        // physicsRuntime.evaluationType = PhysicsRuntimeEvaluationType.Immediate;
+        // physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
+        // physicsRuntime.register(scene);
+        // const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
+        const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
         mmdRuntime.loggingEnabled = true;
         mmdRuntime.register(scene);
         // mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
@@ -101,6 +107,17 @@ export class SceneBuilder implements ISceneBuilder {
         wasmAnimation;
         mmdModel.addAnimation(wasmAnimation);
         mmdModel.setAnimation("motion");
+
+        // const animationGroup = new MmdModelAnimationGroup(animation, new MmdModelAnimationGroupBezierBuilder());
+        // animationGroup
+        // mmdModel.addAnimation(animationGroup);
+        // mmdModel.setAnimation("motion");
+        // animationGroup.createAnimationGroup(mmdModel).play();
+
+        // const compositeAnimation = new MmdCompositeAnimation("composite");
+        // compositeAnimation.addSpan(new MmdAnimationSpan(wasmAnimation));
+        // mmdModel.addAnimation(compositeAnimation);
+        // mmdModel.setAnimation("composite");
 
         mmdRuntime.playAnimation();
         mmdRuntime.onPauseAnimationObservable.add(() => {
