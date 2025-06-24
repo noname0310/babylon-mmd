@@ -126,3 +126,10 @@ export const enum TemporalKinematicState {
     ReadMask = 0xF0,
     WriteMask = 0x0F
 }
+
+export const enum KinematicToggleState {
+    Disabled = 0,
+    Enabled = 1,
+    ReadMask = 0x0F,
+    WriteMask = 0xF0
+}

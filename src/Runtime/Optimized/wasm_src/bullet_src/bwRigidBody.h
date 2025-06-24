@@ -91,12 +91,15 @@ class bwRigidBody final
 {
 private:
     btCollisionShape* m_shape;
-    bwMotionState* m_motionState;
+    bwMotionState* const m_motionState;
     bwPhysicsWorld* m_world;
     btRigidBody m_body;
-    uint16_t m_collisionGroup;
-    uint16_t m_collisionMask;
-    bwRigidBodyMotionType m_motionType;    
+    const uint16_t m_collisionGroup;
+    const uint16_t m_collisionMask;
+    const bwRigidBodyMotionType m_motionType;
+public:
+    bool m_temporalKinematic;
+    bool m_kinematicToggle;
 
 private:
     static btRigidBody::btRigidBodyConstructionInfo createRigidBodyConstructionInfo(bwRigidBodyConstructionInfo* info)
@@ -152,7 +155,9 @@ public:
         m_body(createRigidBodyConstructionInfo(info)),
         m_collisionGroup(info->m_collisionGroup),
         m_collisionMask(info->m_collisionMask),
-        m_motionType(static_cast<bwRigidBodyMotionType>(info->m_motionType))
+        m_motionType(static_cast<bwRigidBodyMotionType>(info->m_motionType)),
+        m_temporalKinematic(false),
+        m_kinematicToggle(info->m_motionType == static_cast<uint8_t>(bwRigidBodyMotionType::KINEMATIC))
     {
         m_body.setSleepingThresholds(info->m_linearSleepingThreshold, info->m_angularSleepingThreshold);
         if (info->m_disableDeactivation)

@@ -223,6 +223,12 @@ impl MmdModel {
     }
 
     #[inline]
+    #[allow(dead_code)] // this function only used in physics module
+    pub(crate) fn animation_arena(&self) -> &AnimationArena {
+        &self.animation_arena
+    }
+
+    #[inline]
     pub(crate) fn animation_arena_mut(&mut self) -> &mut AnimationArena {
         &mut self.animation_arena
     }

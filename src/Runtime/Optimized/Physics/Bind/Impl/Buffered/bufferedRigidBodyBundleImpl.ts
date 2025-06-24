@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
 import type { IBulletWasmInstance } from "../../bulletWasmInstance";
-import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
+import { BtTransformOffsets, Constants, KinematicToggleState, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
 import type { IRigidBodyBundleImpl } from "../IRigidBodyBundleImpl";
 import { RigidBodyCommand } from "./rigidBodyCommand";
 
@@ -27,6 +27,12 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     private _isDynamicTransformMatricesBufferDirty: boolean;
     private _dynamicTransformMatrixDirtyFlags: Nullable<Uint8Array>;
 
+    /**
+     * for effectiveKinematicState
+     */
+    private _kinematicStatesBuffer: Nullable<Uint8Array>;
+    private _isKinematicStatesBufferDirty: boolean;
+
     private readonly _commandBuffer: Map<RigidBodyCommand, any[]>[];
 
     private readonly _count: number;
@@ -43,6 +49,9 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         this._dynamicTransformMatricesBuffer = null;
         this._isDynamicTransformMatricesBufferDirty = false;
         this._dynamicTransformMatrixDirtyFlags = null;
+
+        this._kinematicStatesBuffer = null;
+        this._isKinematicStatesBufferDirty = false;
 
         const commandBuffer = this._commandBuffer = new Array(count);
         for (let i = 0; i < count; ++i) {
@@ -150,6 +159,22 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             }
 
             this._isDynamicTransformMatricesBufferDirty = false;
+        }
+
+        if (this._isKinematicStatesBufferDirty) {
+            const kinematicStatesBuffer = this._kinematicStatesBuffer!;
+            const kinematicStates = kinematicStatesPtr.array;
+
+            const count = this._count;
+            for (let i = 0; i < count; ++i) {
+                if (kinematicStatesBuffer[i] === 0) {
+                    kinematicStates[i] = (kinematicStates[i] & KinematicToggleState.WriteMask) | KinematicToggleState.Disabled;
+                } else {
+                    kinematicStates[i] = (kinematicStates[i] & KinematicToggleState.WriteMask) | KinematicToggleState.Enabled;
+                }
+            }
+
+            this._isKinematicStatesBufferDirty = false;
         }
 
         const commandBuffer = this._commandBuffer;
@@ -261,6 +286,33 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
         this._dynamicTransformMatrixDirtyFlags[index] = 1;
         this._isDynamicTransformMatricesBufferDirty = true;
+        this._isDirty = true;
+    }
+
+    public getEffectiveKinematicState(_kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number): boolean {
+        // we can't access _kinematicStatesPtr directly here
+        // because it accessed from wasm side for read/write temporal kinematic state
+        if (this._kinematicStatesBuffer === null) {
+            return false;
+        }
+        return this._kinematicStatesBuffer[index] !== 0;
+    }
+
+    public setEffectiveKinematicState(_kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number, value: boolean): void {
+        if (this._kinematicStatesBuffer === null) {
+            if (!value) {
+                return; // no change needed
+            }
+            this._kinematicStatesBuffer = new Uint8Array(this._count);
+        }
+
+        const kinematicStatesBuffer = this._kinematicStatesBuffer;
+        if (kinematicStatesBuffer[index] === +value) {
+            return; // no change needed
+        }
+        kinematicStatesBuffer[index] = +value;
+
+        this._isKinematicStatesBufferDirty = true;
         this._isDirty = true;
     }
 

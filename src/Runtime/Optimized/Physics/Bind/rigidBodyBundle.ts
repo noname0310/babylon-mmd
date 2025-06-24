@@ -555,6 +555,56 @@ export class RigidBodyBundle {
     }
 
     /**
+     * Get effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * @param index Index of the rigid body
+     */
+    public getEffectiveKinematicState(index: number): boolean {
+        if (this._worldTransformPtrArray[index] === null) {
+            return true; // non-dynamic body is always kinematic or static
+        }
+
+        this._nullCheck();
+        if (index < 0 || this._count <= index) {
+            throw new RangeError("Index out of range");
+        }
+
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        return this.impl.getEffectiveKinematicState(this._kinematicStatesPtr, index);
+    }
+
+    /**
+     * Set effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param value The effective kinematic state to set
+     */
+    public setEffectiveKinematicState(index: number, value: boolean): void {
+        if (this._worldTransformPtrArray[index] === null) {
+            throw new Error("Cannot set effective kinematic state of non-dynamic body");
+        }
+
+        this._nullCheck();
+        if (index < 0 || this._count <= index) {
+            throw new RangeError("Index out of range");
+        }
+
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        this.impl.setEffectiveKinematicState(this._kinematicStatesPtr, index, value);
+    }
+
+    /**
      * Set the linear and angular damping of the rigid body at the given index
      *
      * Application can be deferred to the next frame when world evaluating the bundle

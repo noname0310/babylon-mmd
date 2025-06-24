@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { DeepImmutable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
-import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "@/Runtime/Optimized/Physics/Bind/constants";
+import { BtTransformOffsets, Constants, KinematicToggleState, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "@/Runtime/Optimized/Physics/Bind/constants";
 
 import type { IBulletWasmInstance } from "../../bulletWasmInstance";
 import type { IRigidBodyImpl } from "../IRigidBodyImpl";
@@ -66,6 +66,19 @@ export class ImmediateRigidBodyImpl implements IRigidBodyImpl {
         m[BtTransformOffsets.Translation + 0] = array[offset + 12];
         m[BtTransformOffsets.Translation + 1] = array[offset + 13];
         m[BtTransformOffsets.Translation + 2] = array[offset + 14];
+    }
+
+    public getEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>): boolean {
+        return (kinematicStatePtr.array[0] & KinematicToggleState.ReadMask) !== KinematicToggleState.Disabled;
+    }
+
+    public setEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>, value: boolean): void {
+        const kinematicState = kinematicStatePtr.array;
+        if (value) {
+            kinematicState[0] = (kinematicState[0] & KinematicToggleState.WriteMask) | KinematicToggleState.Enabled;
+        } else {
+            kinematicState[0] = (kinematicState[0] & KinematicToggleState.WriteMask) | KinematicToggleState.Disabled;
+        }
     }
 
     public setDamping(

@@ -167,6 +167,25 @@ impl RigidBodyBundle {
             buffered_motion_state_bundle.copy_from(&self.motion_state_bundle);
         }
     }
+    
+    pub(super) fn commit_physics_toggle_states(&mut self, mut world: PhysicsWorldHandle) {
+        for i in 0..self.bodies.len() {
+            if self.bodies[i].is_static_or_kinematic() {
+                continue;
+            }
+            let kinematic_state = &mut self.kinematic_states[i];
+            match kinematic_state.get_toggle_state() {
+                KinematicToggleState::Disabled => {
+                    let body = &mut self.bodies[i];
+                    world.get_mut().set_raw_body_kinematic_toggle(body, false);
+                }
+                KinematicToggleState::Enabled => {
+                    let body = &mut self.bodies[i];
+                    world.get_mut().set_raw_body_kinematic_toggle(body, true);
+                }
+            }
+        }
+    }
 
     pub(super) fn update_temporal_kinematic_states(&mut self, mut world: PhysicsWorldHandle) {
         for i in 0..self.bodies.len() {
@@ -175,12 +194,12 @@ impl RigidBodyBundle {
                 TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
                 TemporalKinematicState::WaitForChange => {
                     let body = &mut self.bodies[i];
-                    world.get_mut().make_raw_body_kinematic(body);
+                    world.get_mut().set_raw_body_temporal_kinematic(body, true);
                     kinematic_state.set_temporal_state(TemporalKinematicState::WaitForRestore);
                 }
                 TemporalKinematicState::WaitForRestore => {
                     let body = &mut self.bodies[i];
-                    world.get_mut().restore_raw_body_dynamic(body);
+                    world.get_mut().set_raw_body_temporal_kinematic(body, false);
                     kinematic_state.set_temporal_state(TemporalKinematicState::Idle);
                 }
             }
@@ -332,6 +351,10 @@ impl RigidBodyBundle {
 
     pub(crate) fn make_temporal_kinematic(&mut self, index: usize) {
         self.kinematic_states[index].set_temporal_state(TemporalKinematicState::WaitForChange);
+    }
+
+    pub(crate) fn set_kinematic_toggle(&mut self, index: usize, toggle_state: KinematicToggleState) {
+        self.kinematic_states[index].set_toggle_state(toggle_state);
     }
 
     pub(crate) fn create_handle(&mut self) -> RigidBodyBundleHandle {

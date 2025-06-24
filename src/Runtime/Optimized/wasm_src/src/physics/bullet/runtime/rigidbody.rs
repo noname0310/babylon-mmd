@@ -144,17 +144,33 @@ impl RigidBody {
         }
     }
 
+    pub(super) fn commit_physics_toggle_state(&mut self, mut world: PhysicsWorldHandle) {
+        if self.get_inner().is_static_or_kinematic() {
+            return;
+        }
+        match self.kinematic_state.get_toggle_state() {
+            KinematicToggleState::Disabled => {
+                let body = self.create_handle();
+                world.get_mut().set_body_kinematic_toggle(body, false);
+            }
+            KinematicToggleState::Enabled => {
+                let body = self.create_handle();
+                world.get_mut().set_body_kinematic_toggle(body, true);
+            }
+        }
+    }
+
     pub(super) fn update_temporal_kinematic_state(&mut self, mut world: PhysicsWorldHandle) {
         match self.kinematic_state.get_temporal_state() {
             TemporalKinematicState::Disabled | TemporalKinematicState::Idle => { }
             TemporalKinematicState::WaitForChange => {
                 let body = self.create_handle();
-                world.get_mut().make_body_kinematic(body);
+                world.get_mut().set_body_temporal_kinematic(body, true);
                 self.kinematic_state.set_temporal_state(TemporalKinematicState::WaitForRestore);
             }
             TemporalKinematicState::WaitForRestore => {
                 let body = self.create_handle();
-                world.get_mut().restore_body_dynamic(body);
+                world.get_mut().set_body_temporal_kinematic(body, false);
                 self.kinematic_state.set_temporal_state(TemporalKinematicState::Idle);
             }
         }
@@ -300,6 +316,14 @@ impl RigidBody {
     pub(crate) fn get_kinematic_state_ptr_mut(&mut self) -> *mut KinematicState {
         &mut self.kinematic_state
     }
+
+    // pub(crate) fn make_temporal_kinematic(&mut self) {
+    //     self.kinematic_state.set_temporal_state(TemporalKinematicState::WaitForChange);
+    // }
+
+    // pub(crate) fn set_kinematic_toggle(&mut self, toggle_state: KinematicToggleState) {
+    //     self.kinematic_state.set_toggle_state(toggle_state);
+    // }
 
     pub(crate) fn create_handle(&mut self) -> RigidBodyHandle {
         RigidBodyHandle::new(self)

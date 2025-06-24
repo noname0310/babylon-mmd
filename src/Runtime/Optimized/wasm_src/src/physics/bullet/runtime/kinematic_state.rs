@@ -13,6 +13,7 @@ pub(crate) enum TemporalKinematicState {
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum KinematicToggleState {
     Disabled = 0,
+    #[allow(dead_code)]
     Enabled = 1,
 }
 
@@ -37,7 +38,7 @@ impl KinematicState {
     pub(crate) fn get_temporal_state(&self) -> TemporalKinematicState {
         let value = self.nibble_pair & 0xF0;
         unsafe {
-            std::mem::transmute(value)
+            std::mem::transmute::<u8, TemporalKinematicState>(value)
         }
     }
 
@@ -50,7 +51,7 @@ impl KinematicState {
     pub(crate) fn get_toggle_state(&self) -> KinematicToggleState {
         let value = self.nibble_pair & 0x0F;
         unsafe {
-            std::mem::transmute(value)
+            std::mem::transmute::<u8, KinematicToggleState>(value)
         }
     }
 }

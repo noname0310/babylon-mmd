@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
 import type { IBulletWasmInstance } from "../../bulletWasmInstance";
-import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
+import { BtTransformOffsets, Constants, KinematicToggleState, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
 import type { IRigidBodyImpl } from "../IRigidBodyImpl";
 import { RigidBodyCommand } from "./rigidBodyCommand";
 
@@ -25,6 +25,12 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
     private _dynamicTransformMatrixBuffer: Nullable<Float32Array>;
     private _isDynamicTransformMatrixBufferDirty: boolean;
 
+    /**
+     * for effectiveKinematicState
+     */
+    private _kinematicState: boolean;
+    private _isKinematicStateDirty: boolean;
+
     private readonly _commandBuffer: Map<RigidBodyCommand, any[]>;
 
     public constructor() {
@@ -37,6 +43,9 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
 
         this._dynamicTransformMatrixBuffer = null;
         this._isDynamicTransformMatrixBufferDirty = false;
+
+        this._kinematicState = false;
+        this._isKinematicStateDirty = false;
 
         this._commandBuffer = new Map();
     }
@@ -107,6 +116,17 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
             this._isDynamicTransformMatrixBufferDirty = false;
         }
 
+        if (this._isKinematicStateDirty) {
+            const kinematicState = kinematicStatePtr.array;
+            if (this._kinematicState) {
+                kinematicState[0] = (kinematicState[0] & KinematicToggleState.WriteMask) | KinematicToggleState.Enabled;
+            } else {
+                kinematicState[0] = (kinematicState[0] & KinematicToggleState.WriteMask) | KinematicToggleState.Disabled;
+            }
+
+            this._isKinematicStateDirty = false;
+        }
+
         for (const [command, args] of this._commandBuffer) {
             switch (command) {
             case RigidBodyCommand.SetDamping:
@@ -150,6 +170,22 @@ export class BufferedRigidBodyImpl implements IRigidBodyImpl {
         }
         this._dynamicTransformMatrixBuffer.set(array, offset);
         this._isDynamicTransformMatrixBufferDirty = true;
+        this._isDirty = true;
+    }
+
+    public getEffectiveKinematicState(_kinematicStatePtr: IWasmTypedArray<Uint8Array>): boolean {
+        // we can't access _kinematicStatesPtr directly here
+        // because it accessed from wasm side for read/write temporal kinematic state
+        return this._kinematicState;
+    }
+
+    public setEffectiveKinematicState(_kinematicStatePtr: IWasmTypedArray<Uint8Array>, value: boolean): void {
+        if (this._kinematicState === value) {
+            return;
+        }
+        this._kinematicState = value;
+
+        this._isKinematicStateDirty = true;
         this._isDirty = true;
     }
 

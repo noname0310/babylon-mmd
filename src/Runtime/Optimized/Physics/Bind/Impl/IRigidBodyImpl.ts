@@ -26,6 +26,12 @@ export interface IRigidBodyImpl {
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;
+    /**
+     * this method shoud not be called from non-dynamic bodies
+     * @param kinematicStatePtr
+     */
+    getEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>): boolean;
+    setEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>, value: boolean): void;
     setDamping(
         wasmInstance: IBulletWasmInstance,
         bodyPtr: number,

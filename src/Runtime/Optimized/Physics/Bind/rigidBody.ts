@@ -454,6 +454,38 @@ export class RigidBody {
     }
 
     /**
+     * The effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     */
+    public get effectiveKinematicState(): boolean {
+        if (this._worldTransformPtr === null) {
+            return true; // non-dynamic body is always kinematic or static
+        }
+
+        this._nullCheck();
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        return this.impl.getEffectiveKinematicState(this._kinematicStatePtr);
+    }
+
+    public set effectiveKinematicState(value: boolean) {
+        if (this._worldTransformPtr === null) {
+            throw new Error("Cannot set effective kinematic state of non-dynamic body");
+        }
+
+        this._nullCheck();
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        this.impl.setEffectiveKinematicState(this._kinematicStatePtr, value);
+    }
+
+    /**
      * Set the linear and angular damping of the rigid body
      *
      * Application can be deferred to the next frame when world evaluating the rigid body
