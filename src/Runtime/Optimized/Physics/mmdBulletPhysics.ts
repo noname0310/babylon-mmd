@@ -381,11 +381,13 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
                 }
             }
         } else {
-            const rigidBodyIndexMap = this._rigidBodyIndexMap;
-            for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
-                const index = rigidBodyIndexMap[i];
-                if (index === -1) continue;
-
+            // // we don't need to map the map rigid body index to effective rigid body index here
+            // // because `i` is not referenced
+            // const rigidBodyIndexMap = this._rigidBodyIndexMap;
+            // for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
+            //     const index = rigidBodyIndexMap[i];
+            //     if (index === -1) continue;
+            for (let index = 0; index < bundle.count; ++index) {
                 const data = bundle.rigidBodyData[index];
                 if (data.linkedBone === null) continue;
 
@@ -422,11 +424,13 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
         const modelWorldMatrixInverse = this._rootMesh.computeWorldMatrix()
             .invertToRef(MmdBulletPhysicsModel._ModelWorldMatrixInverse);
 
-        const rigidBodyIndexMap = this._rigidBodyIndexMap;
-        for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
-            const index = rigidBodyIndexMap[i];
-            if (index === -1) continue;
-
+        // // we don't need to map the map rigid body index to effective rigid body index here
+        // // because `i` is not referenced
+        // const rigidBodyIndexMap = this._rigidBodyIndexMap;
+        // for (let i = 0; i < rigidBodyIndexMap.length; ++i) {
+        //     const index = rigidBodyIndexMap[i];
+        //     if (index === -1) continue;
+        for (let index = 0; index < bundle.count; ++index) {
             const data = bundle.rigidBodyData[index];
             if (data.linkedBone === null) continue;
 
