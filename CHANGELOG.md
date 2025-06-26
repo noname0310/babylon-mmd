@@ -1,17 +1,24 @@
 # Changelog
 
 ## 0.66.0 (2025-06-27)
+
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
+
 - fix `MmdBulletPhysics` model transform not applied to physics body
+
 - support MMD physics toggle specification
+
 - BVMD format updated to 2.1.0. Files of version 2.0.0 is still compatible
   - physics toggle data is now stored in BVMD file
 
 ## 0.65.0 (2025-05-08)
 
 - introduce `StandardMaterialBuilder`/`PBRMaterialBuilder` for build mmd model with `StandardMaterial`/`PBRMaterial` instead of `MmdStandardMaterial`
+
 - rename `MmdStandardMaterialRenderMethod` to `MmdMaterialRenderMethod`
+
 - align with Babylon.js 8.6.0 method name change, see [#16455](https://github.com/BabylonJS/Babylon.js/pull/16455)
+
 - apply new naming convention
 
 ## 0.64.1 (2025-04-16)
