@@ -332,17 +332,17 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
                         const bodyWorldMatrix = data.linkedBone.getWorldMatrixToRef(MmdBulletPhysicsModel._BodyWorldMatrix);
                         data.bodyOffsetMatrix.multiplyToRef(bodyWorldMatrix, bodyWorldMatrix);
                         bodyWorldMatrix.multiplyToRef(modelWorldMatrix, bodyWorldMatrix);
-                        bodyWorldMatrix.decompose(
-                            undefined,
-                            rotation,
-                            position
-                        );
 
                         if (useTargetTransformMethod) {
                             bundle.setEffectiveKinematicState(index, false);
                             const forceFactor = 30;
                             const torqueFactor = 30;
 
+                            bodyWorldMatrix.decompose(
+                                undefined,
+                                rotation,
+                                position
+                            );
                             const currentTransform = bundle.getTransformMatrixToRef(index, MmdBulletPhysicsModel._BodyWorldMatrix);
                             currentTransform.decompose(
                                 undefined,
