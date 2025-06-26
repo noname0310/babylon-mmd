@@ -438,7 +438,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
                 nthBodyIndices[j] = bodyIndices[j];
             }
         }
-        animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, morphTracks.length);
+        animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, boneToBodyBindIndexMap.length);
 
         const runtimeAnimationPtr = animationPool.createRuntimeAnimation(
             animation.ptr,
