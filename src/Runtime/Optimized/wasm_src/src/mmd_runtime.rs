@@ -179,15 +179,24 @@ impl MmdRuntime {
         {
             if 1 < self.mmd_models.len() {
                 self.mmd_models.par_iter_mut().for_each(|mmd_model| {
+                    #[cfg(feature = "physics")]
+                    mmd_model.commit_physics_body_states();
+
                     mmd_model.before_physics(frame_time);
                 });
             } else if !self.mmd_models.is_empty() {
+                #[cfg(feature = "physics")]
+                self.mmd_models[0].commit_physics_body_states();
+
                 self.mmd_models[0].before_physics(frame_time);
             }
         }
 
         #[cfg(not(feature = "parallel"))]
         for mmd_model in &mut self.mmd_models {
+            #[cfg(feature = "physics")]
+            mmd_model.commit_physics_body_states();
+
             mmd_model.before_physics(frame_time);
         }
 

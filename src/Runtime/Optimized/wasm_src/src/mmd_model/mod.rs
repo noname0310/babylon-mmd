@@ -143,6 +143,21 @@ impl MmdModel {
         );
         let morph_controller = MmdMorphController::new(morphs.into_boxed_slice());
 
+        // build rigidbody indices map only if physics is processed on wasm side
+        // because it only referenced from physics module
+        if matches!(reader.physics_info_kind(), PhysicsInfoKind::FullPhysics) {
+            let mut bone_to_rigidbodies_index_map = vec![Vec::new(); bone_arena.len()];
+            reader.enumerate(|i, metadata| {
+                if 0 <= metadata.bone_index && metadata.bone_index < bone_arena.len() as i32 {
+                    bone_to_rigidbodies_index_map[metadata.bone_index as usize].push(i);
+                }
+            });
+
+            for (i, bone) in bone_arena.iter_mut().enumerate() {
+                bone.rigidbody_indices = std::mem::take(&mut bone_to_rigidbodies_index_map[i]).into_boxed_slice();
+            }
+        }
+        
         let mut is_physics_bone = vec![false; bone_arena.len()];
         
         reader.enumerate(|_, metadata| {
@@ -303,9 +318,19 @@ impl MmdModel {
 
     fn update(&mut self, after_physics_stage: bool) {
         #[cfg(not(feature = "physics"))]
-        let use_physics = self.external_physics;
+        let use_physics = self.external_physics &&
+            // check if any dynamic rigidbody disabled (roughly)
+            !self.animation_arena.rigidbody_state_arena().iter().any(|&state| state == 0);
         #[cfg(feature = "physics")]
-        let use_physics = self.external_physics || self.physics_model_context.is_some();
+        let use_physics = 
+            (self.external_physics &&
+                // check if any dynamic rigidbody disabled (roughly)
+                !self.animation_arena.rigidbody_state_arena().iter().any(|&state| state == 0)) ||
+            (if let Some(physics_model_context) = self.physics_model_context() {
+                !physics_model_context.need_deoptimize()
+            } else {
+                false
+            });
 
         for i in 0..self.sorted_runtime_bones.len() {
             let bone_index = self.sorted_runtime_bones[i];
@@ -321,6 +346,15 @@ impl MmdModel {
             };
 
             self.update_world_matrix(bone_index, use_physics, compute_ik);
+        }
+    }
+}
+
+#[cfg(feature = "physics")]
+impl MmdModel {
+    pub(crate) fn commit_physics_body_states(&mut self) {
+        if let Some(physics_model_context) = self.physics_model_context.as_mut() {
+            physics_model_context.commit_body_states(&*self.animation_arena.rigidbody_state_arena());
         }
     }
 }

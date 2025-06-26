@@ -81,6 +81,8 @@ pub(crate) struct MmdRuntimeBone {
     pub(super) morph_rotation_offset: Option<Quat>,
 
     pub(super) ik_chain_info: Option<IkChainInfo>,
+
+    pub(super) rigidbody_indices: Box<[u32]>,
 }
 
 impl MmdRuntimeBone {
@@ -103,6 +105,8 @@ impl MmdRuntimeBone {
             morph_rotation_offset: None,
 
             ik_chain_info: None,
+
+            rigidbody_indices: Box::new([]),
         }
     }
 
@@ -119,6 +123,12 @@ impl MmdRuntimeBone {
     #[inline]
     pub(crate) fn parent_bone(&self) -> Option<u32> {
         self.parent_bone
+    }
+
+    #[inline]
+    #[allow(dead_code)]
+    pub(crate) fn rigidbody_indices(&self) -> &[u32] {
+        &self.rigidbody_indices
     }
 
     pub(super) fn animated_position(&self, animation_arena: &AnimationArena) -> Vec3A {
