@@ -100,6 +100,24 @@ impl MmdRuntime {
         animation_arena.iksolver_state_arena_mut().as_mut_ptr()
     }
 
+    #[wasm_bindgen(js_name = "getAnimationRigidBodyStateArena")]
+    pub fn get_animation_rigidbody_state_arena(&mut self, ptr: *mut usize) -> *mut u8 {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena_mut();
+        animation_arena.rigidbody_state_arena_mut().as_mut_ptr()
+    }
+
+    #[wasm_bindgen(js_name = "getAnimationRigidBodyStateArenaSize")]
+    pub fn get_animation_rigidbody_state_arena_size(&mut self, ptr: *mut usize) -> usize {
+        let ptr = ptr as *mut MmdModel;
+        let animation_arena = unsafe {
+            &mut *ptr
+        }.animation_arena_mut();
+        animation_arena.rigidbody_state_arena().len()
+    }
+
     #[wasm_bindgen(js_name = "getAnimationMorphArena")]
     pub fn get_animation_morph_arena(&mut self, ptr: *mut usize) -> *mut f32 {
         let ptr = ptr as *mut MmdModel;
@@ -139,14 +157,14 @@ impl MmdRuntime {
         *animation = runtime_animation;
     }
 
-    #[wasm_bindgen(js_name = "setExternalPhysics")]
-    pub fn set_external_physics(&mut self, ptr: *mut usize, external_physics: bool) {
+    #[wasm_bindgen(js_name = "useExternalPhysics")]
+    pub fn use_external_physics(&mut self, ptr: *mut usize, rigidbody_state_size: u32) {
         let ptr = ptr as *mut MmdModel;
 
-        let physics = unsafe {
+        let mmd_model = unsafe {
             &mut *ptr
-        }.external_physics_mut();
-        *physics = external_physics;
+        };
+        mmd_model.use_external_physics(rigidbody_state_size);
     }
 
     #[inline]
@@ -161,15 +179,24 @@ impl MmdRuntime {
         {
             if 1 < self.mmd_models.len() {
                 self.mmd_models.par_iter_mut().for_each(|mmd_model| {
+                    #[cfg(feature = "physics")]
+                    mmd_model.commit_physics_body_states();
+
                     mmd_model.before_physics(frame_time);
                 });
             } else if !self.mmd_models.is_empty() {
+                #[cfg(feature = "physics")]
+                self.mmd_models[0].commit_physics_body_states();
+
                 self.mmd_models[0].before_physics(frame_time);
             }
         }
 
         #[cfg(not(feature = "parallel"))]
         for mmd_model in &mut self.mmd_models {
+            #[cfg(feature = "physics")]
+            mmd_model.commit_physics_body_states();
+
             mmd_model.before_physics(frame_time);
         }
 

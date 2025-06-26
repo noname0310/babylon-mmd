@@ -37,86 +37,7 @@ private:
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
 
-public:
-    bwPhysicsWorld() :
-        m_overlapFilterCallback(),
-        m_broadphasePairCache(),
-        m_broadphase(&m_broadphasePairCache),
-        m_collisionConfig(),
-        m_dispatcher(&m_collisionConfig),
-        m_solver(),
-        m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_collisionConfig)
-    {
-        m_broadphasePairCache.setOverlapFilterCallback(&m_overlapFilterCallback);
-    }
-
-    bwPhysicsWorld(bwPhysicsWorld const&) = delete;
-    bwPhysicsWorld& operator=(bwPhysicsWorld const&) = delete;
-
-    // ~bwPhysicsWorld()
-    // {
-    //     delete m_world;
-    //     delete m_solver;
-    //     delete m_dispatcher;
-    //     delete m_collisionConfig;
-    //     delete m_broadphase;
-    // }
-    
-    void setGravity(btScalar x, btScalar y, btScalar z)
-    {
-        m_world.setGravity(btVector3(x, y, z));
-    }
-
-    void stepSimulation(btScalar timeStep, int maxSubSteps, btScalar fixedTimeStep)
-    {
-        m_world.stepSimulation(timeStep, maxSubSteps, fixedTimeStep);
-    }
-
-    void addRigidBody(bwRigidBody* body)
-    {
-        int group = body->getCollisionGroup();
-        const bwRigidBodyMotionType motionType = body->getMotionType();
-        if (motionType == bwRigidBodyMotionType::KINEMATIC || motionType == bwRigidBodyMotionType::STATIC)
-        {
-            group |= (btBroadphaseProxy::StaticFilter << 16);
-        }
-
-        const int16_t mask = body->getCollisionMask();
-
-        m_world.addRigidBody(body->getBody(), group, mask);
-        body->setWorld(this);
-    }
-
-    void removeRigidBody(bwRigidBody* body)
-    {
-        m_world.removeRigidBody(body->getBody());
-        body->setWorld(nullptr);
-    }
-
-    void addRigidBodyShadow(bwRigidBodyShadow* shadow)
-    {
-        int group = shadow->getCollisionGroup();
-        group |= (btBroadphaseProxy::StaticFilter << 16);
-        const int16_t mask = shadow->getCollisionMask();
-
-        m_world.addRigidBody(shadow->getBody(), group, mask);
-    }
-
-    void removeRigidBodyShadow(bwRigidBodyShadow* shadow)
-    {
-        m_world.removeRigidBody(shadow->getBody());
-    }
-
-    void addConstraint(btTypedConstraint* constraint, bool disableCollisionsBetweenLinkedBodies)
-    {
-        m_world.addConstraint(constraint, disableCollisionsBetweenLinkedBodies);
-    }
-
-    void removeConstraint(btTypedConstraint* constraint)
-    {
-        m_world.removeConstraint(constraint);
-    }
-
+private:
     void makeBodyKinematic(bwRigidBody* body)
     {
         btRigidBody* btBody = body->getBody();
@@ -181,6 +102,142 @@ public:
         proxy->m_collisionFilterGroup &= ~(btBroadphaseProxy::StaticFilter << 16);
         m_broadphasePairCache.cleanProxyFromPairs(proxy, &m_dispatcher);
         m_world.refreshBroadphaseProxy(btBody);
+    }
+
+public:
+    bwPhysicsWorld() :
+        m_overlapFilterCallback(),
+        m_broadphasePairCache(),
+        m_broadphase(&m_broadphasePairCache),
+        m_collisionConfig(),
+        m_dispatcher(&m_collisionConfig),
+        m_solver(),
+        m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_collisionConfig)
+    {
+        m_broadphasePairCache.setOverlapFilterCallback(&m_overlapFilterCallback);
+    }
+
+    bwPhysicsWorld(bwPhysicsWorld const&) = delete;
+    bwPhysicsWorld& operator=(bwPhysicsWorld const&) = delete;
+
+    // ~bwPhysicsWorld()
+    // {
+    //     delete m_world;
+    //     delete m_solver;
+    //     delete m_dispatcher;
+    //     delete m_collisionConfig;
+    //     delete m_broadphase;
+    // }
+    
+    void setGravity(btScalar x, btScalar y, btScalar z)
+    {
+        m_world.setGravity(btVector3(x, y, z));
+    }
+
+    void stepSimulation(btScalar timeStep, int maxSubSteps, btScalar fixedTimeStep)
+    {
+        m_world.stepSimulation(timeStep, maxSubSteps, fixedTimeStep);
+    }
+
+    void addRigidBody(bwRigidBody* body)
+    {
+        int group = body->getCollisionGroup();
+        const bwRigidBodyMotionType motionType = body->getMotionType();
+        if (motionType == bwRigidBodyMotionType::KINEMATIC || motionType == bwRigidBodyMotionType::STATIC)
+        {
+            group |= (btBroadphaseProxy::StaticFilter << 16);
+        }
+
+        const int16_t mask = body->getCollisionMask();
+
+        m_world.addRigidBody(body->getBody(), group, mask);
+        body->setWorld(this);
+    }
+
+    void removeRigidBody(bwRigidBody* body)
+    {
+        m_world.removeRigidBody(body->getBody());
+        body->setWorld(nullptr);
+
+        if (body->m_temporalKinematic || !body->m_kinematicToggle)
+        {
+            btAssert(body->getMotionType() == bwRigidBodyMotionType::DYNAMIC);
+            // restore dynamic flags
+            btRigidBody* btBody = body->getBody();
+            btBody->setCollisionFlags(btBody->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+        }
+    }
+
+    void addRigidBodyShadow(bwRigidBodyShadow* shadow)
+    {
+        int group = shadow->getCollisionGroup();
+        group |= (btBroadphaseProxy::StaticFilter << 16);
+        const int16_t mask = shadow->getCollisionMask();
+
+        m_world.addRigidBody(shadow->getBody(), group, mask);
+    }
+
+    void removeRigidBodyShadow(bwRigidBodyShadow* shadow)
+    {
+        m_world.removeRigidBody(shadow->getBody());
+    }
+
+    void addConstraint(btTypedConstraint* constraint, bool disableCollisionsBetweenLinkedBodies)
+    {
+        m_world.addConstraint(constraint, disableCollisionsBetweenLinkedBodies);
+    }
+
+    void removeConstraint(btTypedConstraint* constraint)
+    {
+        m_world.removeConstraint(constraint);
+    }
+
+    void setBodyTemporalKinematic(bwRigidBody* body, bool value)
+    {
+        btAssert(body->getMotionType() == bwRigidBodyMotionType::DYNAMIC);
+
+        if (body->m_temporalKinematic == value) {
+            return; // no change
+        }
+
+        body->m_temporalKinematic = value;
+
+        if (body->m_kinematicToggle) {
+            return;
+        }
+
+        if (value)
+        {
+            makeBodyKinematic(body);
+        }
+        else
+        {
+            restoreBodyDynamic(body);
+        }
+    }
+
+    void setBodyKinematicToggle(bwRigidBody* body, bool value)
+    {
+        btAssert(body->getMotionType() == bwRigidBodyMotionType::DYNAMIC);
+
+        if (body->m_kinematicToggle == value) {
+            return; // no change
+        }
+
+        body->m_kinematicToggle = value;
+
+        if (body->m_temporalKinematic) {
+            return;
+        }
+
+        if (value)
+        {
+            makeBodyKinematic(body);
+        }
+        else
+        {
+            restoreBodyDynamic(body);
+        }
     }
 
     void cleanBodyProxyFromPairs(bwRigidBody* body)
@@ -267,16 +324,16 @@ extern "C" void bw_world_remove_constraint(void* world, void* constraint)
     w->removeConstraint(c);
 }
 
-extern "C" void bw_world_make_body_kinematic(void* world, void* body)
+extern "C" void bw_world_set_body_temporal_kinematic(void* world, void* body, uint8_t value)
 {
     bwPhysicsWorld* w = static_cast<bwPhysicsWorld*>(world);
     bwRigidBody* b = static_cast<bwRigidBody*>(body);
-    w->makeBodyKinematic(b);
+    w->setBodyTemporalKinematic(b, value != 0);
 }
 
-extern "C" void bw_world_restore_body_dynamic(void* world, void* body)
+extern "C" void bw_world_set_body_kinematic_toggle(void* world, void* body, uint8_t value)
 {
     bwPhysicsWorld* w = static_cast<bwPhysicsWorld*>(world);
     bwRigidBody* b = static_cast<bwRigidBody*>(body);
-    w->restoreBodyDynamic(b);
+    w->setBodyKinematicToggle(b, value != 0);
 }

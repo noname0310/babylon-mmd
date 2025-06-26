@@ -181,7 +181,9 @@ impl MultiPhysicsWorld {
             self.orphan_bodies.push(rigidbody.clone());
         }
 
-        self.get_world(world_id).map(|world| world.remove_rigidbody(rigidbody));
+        if let Some(world) = self.get_world(world_id) { 
+            world.remove_rigidbody(rigidbody)
+        }
         self.remove_world_if_empty(world_id);
     }
 
@@ -223,7 +225,9 @@ impl MultiPhysicsWorld {
             self.orphan_body_bundles.push(bundle.clone());
         }
 
-        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle(bundle));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_bundle(bundle);
+        }
         self.remove_world_if_empty(world_id);
     }
 
@@ -336,7 +340,9 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_rigidbody_shadow(&mut self, world_id: PhysicsWorldId, mut rigidbody: RigidBodyHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_shadow(rigidbody.clone(), false));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_shadow(rigidbody.clone(), false);
+        }
         self.remove_world_if_empty(world_id);
 
         if self.use_motion_state_buffer {
@@ -369,7 +375,9 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_rigidbody_bundle_shadow(&mut self, world_id: PhysicsWorldId, mut bundle: RigidBodyBundleHandle) {
-        self.get_world(world_id).map(|world| world.remove_rigidbody_bundle_shadow(bundle.clone(), false));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_rigidbody_bundle_shadow(bundle.clone(), false);
+        }
         self.remove_world_if_empty(world_id);
 
         if self.use_motion_state_buffer {
@@ -389,20 +397,10 @@ impl MultiPhysicsWorld {
     }
 
     pub(crate) fn remove_constraint(&mut self, world_id: PhysicsWorldId, constraint: ConstraintHandle) {
-        self.get_world(world_id).map(|world| world.remove_constraint(constraint));
+        if let Some(world) = self.get_world(world_id) {
+            world.remove_constraint(constraint);
+        }
         self.remove_world_if_empty(world_id);
-    }
-
-    pub(crate) fn make_body_kinematic(&mut self, mut rigidbody: RigidBodyHandle) {
-        for (_, world) in self.worlds.iter_mut() {
-            world.make_body_kinematic(rigidbody.clone());
-        }
-    }
-
-    pub(crate) fn restore_body_dynamic(&mut self, mut rigidbody: RigidBodyHandle) {
-        for (_, world) in self.worlds.iter_mut() {
-            world.restore_body_dynamic(rigidbody.clone());
-        }
     }
 
     pub(crate) fn use_motion_state_buffer(&mut self, use_buffer: bool) {
@@ -630,20 +628,6 @@ pub fn multi_physics_world_remove_constraint(world: *mut usize, world_id: Physic
     let world = unsafe { &mut *(world as *mut MultiPhysicsWorld) };
     let constraint = unsafe { &mut *(constraint as *mut Constraint) };
     world.remove_constraint(world_id, constraint.create_handle());
-}
-
-#[wasm_bindgen(js_name = "multiPhysicsWorldMakeBodyKinematic")]
-pub fn multi_physics_world_make_body_kinematic(world: *mut usize, rigidbody: *mut usize) {
-    let world = unsafe { &mut *(world as *mut MultiPhysicsWorld) };
-    let rigidbody = unsafe { &mut *(rigidbody as *mut RigidBody) };
-    world.make_body_kinematic(rigidbody.create_handle());
-}
-
-#[wasm_bindgen(js_name = "multiPhysicsWorldRestoreBodyDynamic")]
-pub fn multi_physics_world_restore_body_dynamic(world: *mut usize, rigidbody: *mut usize) {
-    let world = unsafe { &mut *(world as *mut MultiPhysicsWorld) };
-    let rigidbody = unsafe { &mut *(rigidbody as *mut RigidBody) };
-    world.restore_body_dynamic(rigidbody.create_handle());
 }
 
 #[wasm_bindgen(js_name = "multiPhysicsWorldUseMotionStateBuffer")]

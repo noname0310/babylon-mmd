@@ -2,6 +2,10 @@
 
 ## 0.66.0 (scheduled)
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
+- fix `MmdBulletPhysics` model transform not applied to physics body
+- support MMD physics toggle specification
+- BVMD format updated to 2.1.0. Files of version 2.0.0 is still compatible
+  - physics toggle data is now stored in BVMD file
 
 ## 0.65.0 (2025-05-08)
 

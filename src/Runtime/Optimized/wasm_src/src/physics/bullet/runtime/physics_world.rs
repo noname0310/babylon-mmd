@@ -67,10 +67,14 @@ impl PhysicsWorld {
     pub(crate) fn step_simulation(&mut self, time_step: f32, max_sub_steps: i32, fixed_time_step: f32) {
         let mut world_handle = self.create_handle();
         for body in self.bodies.iter_mut() {
-            body.get_mut().update_temporal_kinematic_state(world_handle.clone());
+            let body = body.get_mut();
+            body.commit_physics_toggle_state(world_handle.clone());
+            body.update_temporal_kinematic_state(world_handle.clone());
         }
         for bundle in self.body_bundles.iter_mut() {
-            bundle.get_mut().update_temporal_kinematic_states(world_handle.clone());
+            let bundle = bundle.get_mut();
+            bundle.commit_physics_toggle_states(world_handle.clone());
+            bundle.update_temporal_kinematic_states(world_handle.clone());
         }
         self.inner.step_simulation(time_step, max_sub_steps, fixed_time_step);
     }
@@ -291,20 +295,20 @@ impl PhysicsWorld {
         }
     }
 
-    pub(super) fn make_body_kinematic(&mut self, mut rigidbody: RigidBodyHandle) {
-        self.inner.make_body_kinematic(rigidbody.get_mut().get_inner_mut());
+    pub(super) fn set_body_temporal_kinematic(&mut self, mut rigidbody: RigidBodyHandle, value: bool) {
+        self.inner.set_body_temporal_kinematic(rigidbody.get_mut().get_inner_mut(), value);
     }
 
-    pub(super) fn restore_body_dynamic(&mut self, mut rigidbody: RigidBodyHandle) {
-        self.inner.restore_body_dynamic(rigidbody.get_mut().get_inner_mut());
+    pub(super) fn set_body_kinematic_toggle(&mut self, mut rigidbody: RigidBodyHandle, value: bool) {
+        self.inner.set_body_kinematic_toggle(rigidbody.get_mut().get_inner_mut(), value);
     }
 
-    pub(super) fn make_raw_body_kinematic(&mut self, rigidbody: &mut bind::rigidbody::RigidBody) {
-        self.inner.make_body_kinematic(rigidbody);
+    pub(super) fn set_raw_body_temporal_kinematic(&mut self, rigidbody: &mut bind::rigidbody::RigidBody, value: bool) {
+        self.inner.set_body_temporal_kinematic(rigidbody, value);
     }
 
-    pub(super) fn restore_raw_body_dynamic(&mut self, rigidbody: &mut bind::rigidbody::RigidBody) {
-        self.inner.restore_body_dynamic(rigidbody);
+    pub(super) fn set_raw_body_kinematic_toggle(&mut self, rigidbody: &mut bind::rigidbody::RigidBody, value: bool) {
+        self.inner.set_body_kinematic_toggle(rigidbody, value);
     }
 
     pub(crate) fn is_empty(&self) -> bool {

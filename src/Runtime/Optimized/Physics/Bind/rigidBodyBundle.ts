@@ -138,7 +138,7 @@ export class RigidBodyBundle {
     private _bufferedMotionStatesPtr: IWasmTypedArray<Float32Array>;
     // save only dynamic body ptr for temporal kinematic
     private readonly _worldTransformPtrArray: Nullable<IWasmTypedArray<Float32Array>>[];
-    private readonly _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>;
+    private readonly _kinematicStatesPtr: IWasmTypedArray<Uint8Array>;
 
     private readonly _inner: RigidBodyBundleInner;
     private readonly _count: number;
@@ -203,8 +203,8 @@ export class RigidBodyBundle {
             }
         }
         this._worldTransformPtrArray = worldTransformPtrArray;
-        const temporalKinematicStatesPtr = wasmInstance.rigidBodyBundleGetTemporalKinematicStatesPtr(ptr);
-        this._temporalKinematicStatesPtr = wasmInstance.createTypedArray(Uint8Array, temporalKinematicStatesPtr, count);
+        const kinematicStatesPtr = wasmInstance.rigidBodyBundleGetKinematicStatesPtr(ptr);
+        this._kinematicStatesPtr = wasmInstance.createTypedArray(Uint8Array, kinematicStatesPtr, count);
         this._inner = new RigidBodyBundleInner(runtime.wasmInstance, ptr, shapeReferences);
         this._count = count;
         this._worldReference = null;
@@ -485,7 +485,7 @@ export class RigidBodyBundle {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatrixFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, index, array, offset);
+        this.impl.setTransformMatrixFromArray(this._motionStatesPtr, this._kinematicStatesPtr, index, array, offset);
     }
 
     /**
@@ -506,7 +506,7 @@ export class RigidBodyBundle {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatricesFromArray(this._motionStatesPtr, this._temporalKinematicStatesPtr, array, offset);
+        this.impl.setTransformMatricesFromArray(this._motionStatesPtr, this._kinematicStatesPtr, array, offset);
     }
 
     /**
@@ -552,6 +552,56 @@ export class RigidBodyBundle {
             this.runtime.lock.wait();
         }
         this.impl.setDynamicTransformMatrixFromArray(this._worldTransformPtrArray, index, array, offset);
+    }
+
+    /**
+     * Get effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * @param index Index of the rigid body
+     */
+    public getEffectiveKinematicState(index: number): boolean {
+        if (this._worldTransformPtrArray[index] === null) {
+            return true; // non-dynamic body is always kinematic or static
+        }
+
+        this._nullCheck();
+        if (index < 0 || this._count <= index) {
+            throw new RangeError("Index out of range");
+        }
+
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        return this.impl.getEffectiveKinematicState(this._kinematicStatesPtr, index);
+    }
+
+    /**
+     * Set effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * Application can be deferred to the next frame when world evaluating the bundle
+     * @param index Index of the rigid body
+     * @param value The effective kinematic state to set
+     */
+    public setEffectiveKinematicState(index: number, value: boolean): void {
+        if (this._worldTransformPtrArray[index] === null) {
+            throw new Error("Cannot set effective kinematic state of non-dynamic body");
+        }
+
+        this._nullCheck();
+        if (index < 0 || this._count <= index) {
+            throw new RangeError("Index out of range");
+        }
+
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        this.impl.setEffectiveKinematicState(this._kinematicStatesPtr, index, value);
     }
 
     /**
@@ -706,7 +756,7 @@ export class RigidBodyBundle {
             this.runtime.wasmInstance,
             this._inner.ptr,
             this._motionStatesPtr,
-            this._temporalKinematicStatesPtr,
+            this._kinematicStatesPtr,
             this._worldTransformPtrArray
         );
     }
@@ -1084,37 +1134,59 @@ export class RigidBodyBundle {
     /**
      * Set the linear velocity of the rigid body at the given index
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` is false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluated.
      * @param index Index of the rigid body
      * @param velocity The linear velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setLinearVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
+    public setLinearVelocity(index: number, velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
             throw new RangeError("Index out of range");
         }
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setLinearVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodyBundleSetLinearVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setLinearVelocity(index, velocity);
         }
-        this.runtime.wasmInstance.rigidBodyBundleSetLinearVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
     /**
      * Set the angular velocity of the rigid body at the given index
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` isd false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluate.
      * @param index Index of the rigid body
      * @param velocity The angular velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setAngularVelocity(index: number, velocity: DeepImmutable<Vector3>): void {
+    public setAngularVelocity(index: number, velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
         if (index < 0 || this._count <= index) {
             throw new RangeError("Index out of range");
         }
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setAngularVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodyBundleSetAngularVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setAngularVelocity(index, velocity);
         }
-        this.runtime.wasmInstance.rigidBodyBundleSetAngularVelocity(this._inner.ptr, index, velocity.x, velocity.y, velocity.z);
     }
 
     /**

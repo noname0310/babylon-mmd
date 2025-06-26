@@ -38,7 +38,7 @@ impl<'a, T> UncheckedSlice<'a, T> {
     }
 }
 
-impl<'a, T> std::ops::Index<u32> for UncheckedSlice<'a, T> {
+impl<T> std::ops::Index<u32> for UncheckedSlice<'_, T> {
     type Output = T;
 
     #[inline]
@@ -47,7 +47,7 @@ impl<'a, T> std::ops::Index<u32> for UncheckedSlice<'a, T> {
     }
 }
 
-impl<'a, T> std::ops::Deref for UncheckedSlice<'a, T> {
+impl<T> std::ops::Deref for UncheckedSlice<'_, T> {
     type Target = [T];
 
     #[inline]
@@ -77,7 +77,7 @@ impl<'a, T> UncheckedSliceMut<'a, T> {
     }
 }
 
-impl<'a, T> std::ops::Index<u32> for UncheckedSliceMut<'a, T> {
+impl<T> std::ops::Index<u32> for UncheckedSliceMut<'_, T> {
     type Output = T;
 
     #[inline]
@@ -86,14 +86,14 @@ impl<'a, T> std::ops::Index<u32> for UncheckedSliceMut<'a, T> {
     }
 }
 
-impl<'a, T> std::ops::IndexMut<u32> for UncheckedSliceMut<'a, T> {
+impl<T> std::ops::IndexMut<u32> for UncheckedSliceMut<'_, T> {
     #[inline]
     fn index_mut(&mut self, index: u32) -> &mut Self::Output {
         get_unchecked_mut(self.slice, index)
     }
 }
 
-impl<'a, T> std::ops::Deref for UncheckedSliceMut<'a, T> {
+impl<T> std::ops::Deref for UncheckedSliceMut<'_, T> {
     type Target = [T];
 
     #[inline]
@@ -102,7 +102,7 @@ impl<'a, T> std::ops::Deref for UncheckedSliceMut<'a, T> {
     }
 }
 
-impl<'a, T> std::ops::DerefMut for UncheckedSliceMut<'a, T> {
+impl<T> std::ops::DerefMut for UncheckedSliceMut<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.slice

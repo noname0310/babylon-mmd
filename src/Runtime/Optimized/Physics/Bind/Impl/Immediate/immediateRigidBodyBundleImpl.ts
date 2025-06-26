@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
 import type { IBulletWasmInstance } from "../../bulletWasmInstance";
-import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
+import { BtTransformOffsets, Constants, KinematicToggleState, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
 import type { IRigidBodyBundleImpl } from "../IRigidBodyBundleImpl";
 
 export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
@@ -19,7 +19,7 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatrixFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         index: number,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
@@ -43,20 +43,20 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = array[offset + 13];
         m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = array[offset + 14];
 
-        const temporalKinematicStates = temporalKinematicStatesPtr.array;
-        if (temporalKinematicStates[index] !== TemporalKinematicState.Disabled) {
-            temporalKinematicStates[index] = TemporalKinematicState.WaitForRestore;
+        const kinematicStates = kinematicStatesPtr.array;
+        if ((kinematicStates[index] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+            kinematicStates[index] = (kinematicStates[index] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
         }
     }
 
     public setTransformMatricesFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<ArrayLike<number>>,
         offset: number
     ): void {
         const m = motionStatesPtr.array;
-        const temporalKinematicStates = temporalKinematicStatesPtr.array;
+        const kinematicStates = kinematicStatesPtr.array;
 
         const count = this._count;
         let mOffset = 0;
@@ -78,8 +78,8 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = array[aOffset + 13];
             m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = array[aOffset + 14];
 
-            if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                temporalKinematicStates[i] = TemporalKinematicState.WaitForRestore;
+            if ((kinematicStates[i] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+                kinematicStates[i] = (kinematicStates[i] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
             }
 
             mOffset += Constants.MotionStateSizeInFloat32Array;
@@ -110,6 +110,19 @@ export class ImmediateRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         m[BtTransformOffsets.Translation + 0] = array[offset + 12];
         m[BtTransformOffsets.Translation + 1] = array[offset + 13];
         m[BtTransformOffsets.Translation + 2] = array[offset + 14];
+    }
+
+    public getEffectiveKinematicState(kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number): boolean {
+        return (kinematicStatesPtr.array[index] & KinematicToggleState.ReadMask) !== KinematicToggleState.Disabled;
+    }
+
+    public setEffectiveKinematicState(kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number, value: boolean): void {
+        const kinematicStates = kinematicStatesPtr.array;
+        if (value) {
+            kinematicStates[index] = (kinematicStates[index] & KinematicToggleState.WriteMask) | KinematicToggleState.Enabled;
+        } else {
+            kinematicStates[index] = (kinematicStates[index] & KinematicToggleState.WriteMask) | KinematicToggleState.Disabled;
+        }
     }
 
     public setDamping(

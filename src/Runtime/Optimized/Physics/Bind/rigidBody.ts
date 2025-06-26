@@ -131,7 +131,7 @@ export class RigidBody {
     private _bufferedMotionStatePtr: IWasmTypedArray<Float32Array>;
     // save only dynamic body ptr for temporal kinematic
     private readonly _worldTransformPtr: Nullable<IWasmTypedArray<Float32Array>>;
-    private readonly _temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>;
+    private readonly _kinematicStatePtr: IWasmTypedArray<Uint8Array>;
 
     private readonly _inner: RigidBodyInner;
 
@@ -199,8 +199,8 @@ export class RigidBody {
         } else {
             this._worldTransformPtr = null;
         }
-        const temporalKinematicStatePtr = wasmInstance.rigidBodyGetTemporalKinematicStatePtr(ptr);
-        this._temporalKinematicStatePtr = wasmInstance.createTypedArray(Uint8Array, temporalKinematicStatePtr, 1);
+        const kinematicStatePtr = wasmInstance.rigidBodyGetKinematicStatePtr(ptr);
+        this._kinematicStatePtr = wasmInstance.createTypedArray(Uint8Array, kinematicStatePtr, 1);
         this._inner = new RigidBodyInner(runtime.wasmInstance, ptr, shape);
         this._worldReference = null;
 
@@ -411,7 +411,7 @@ export class RigidBody {
         if (this._inner.hasReferences && this.impl.shouldSync) {
             this.runtime.lock.wait();
         }
-        this.impl.setTransformMatrixFromArray(this._motionStatePtr, this._temporalKinematicStatePtr, array, offset);
+        this.impl.setTransformMatrixFromArray(this._motionStatePtr, this._kinematicStatePtr, array, offset);
     }
 
     /**
@@ -451,6 +451,38 @@ export class RigidBody {
             this.runtime.lock.wait();
         }
         this.impl.setDynamicTransformMatrixFromArray(this._worldTransformPtr, array, offset);
+    }
+
+    /**
+     * The effective kinematic state of the rigid body
+     *
+     * Even rigid body motion type is dynamic,
+     * You can set effective kinematic state to true to make it kinematic
+     *
+     * Application can be deferred to the next frame when world evaluating the rigid body
+     */
+    public get effectiveKinematicState(): boolean {
+        if (this._worldTransformPtr === null) {
+            return true; // non-dynamic body is always kinematic or static
+        }
+
+        this._nullCheck();
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        return this.impl.getEffectiveKinematicState(this._kinematicStatePtr);
+    }
+
+    public set effectiveKinematicState(value: boolean) {
+        if (this._worldTransformPtr === null) {
+            throw new Error("Cannot set effective kinematic state of non-dynamic body");
+        }
+
+        this._nullCheck();
+        if (this._inner.hasReferences && this.impl.shouldSync) {
+            this.runtime.lock.wait();
+        }
+        this.impl.setEffectiveKinematicState(this._kinematicStatePtr, value);
     }
 
     /**
@@ -558,7 +590,7 @@ export class RigidBody {
             this.runtime.wasmInstance,
             this._inner.ptr,
             this._motionStatePtr,
-            this._temporalKinematicStatePtr,
+            this._kinematicStatePtr,
             this._worldTransformPtr
         );
     }
@@ -864,29 +896,51 @@ export class RigidBody {
     /**
      * Set the linear velocity of the rigid body
      *
-     * This operation is always synchronized
-     * @param velocity The velocity vector to set
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` is false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluated.
+     * @param velocity The linear velocity vector
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setLinearVelocity(velocity: DeepImmutable<Vector3>): void {
+    public setLinearVelocity(velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setLinearVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodySetLinearVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setLinearVelocity(velocity);
         }
-        this.runtime.wasmInstance.rigidBodySetLinearVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
     /**
      * Set the angular velocity of the rigid body
      *
-     * This operation is always synchronized
+     * This operation is synchronized when `synced` is true.
+     *
+     * If `synced` isd false, the operation will not wait for the lock and
+     * will not be applied until the next frame when the world is evaluate.
      * @param velocity The velocity vector to set
+     * @param shouldSynced Whether to synchronize the operation
      */
-    public setAngularVelocity(velocity: DeepImmutable<Vector3>): void {
+    public setAngularVelocity(velocity: DeepImmutable<Vector3>, shouldSynced: boolean): void {
         this._nullCheck();
-        if (this._inner.hasReferences) {
-            this.runtime.lock.wait();
+        if (shouldSynced || this.impl.setAngularVelocity === undefined) {
+            if (this._inner.hasReferences) {
+                this.runtime.lock.wait();
+            }
+            this.runtime.wasmInstance.rigidBodySetAngularVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
+        } else {
+            if (this._inner.hasReferences && this.impl.shouldSync) {
+                this.runtime.lock.wait();
+            }
+            this.impl.setAngularVelocity(velocity);
         }
-        this.runtime.wasmInstance.rigidBodySetAngularVelocity(this._inner.ptr, velocity.x, velocity.y, velocity.z);
     }
 
     /**

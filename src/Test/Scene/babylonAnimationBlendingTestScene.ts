@@ -137,7 +137,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         // disable ik solver for motion captured assets
         const disableIkBones = [ "右足ＩＫ", "右つま先ＩＫ", "左足ＩＫ", "左つま先ＩＫ", "右ひじＩＫ", "左ひじＩＫ" ];
-        const runtimeBones = mmdModel.sortedRuntimeBones;
+        const runtimeBones = mmdModel.runtimeBones;
         const ikSolverStates = mmdModel.ikSolverStates;
         for (let i = 0; i < runtimeBones.length; ++i) {
             const runtimeBone = runtimeBones[i];

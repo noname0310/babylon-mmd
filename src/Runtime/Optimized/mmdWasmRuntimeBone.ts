@@ -69,6 +69,14 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
     }
 
     /**
+     * Rigid body indices
+     *
+     * If the bone does not have a rigid body, it's length is 0
+     */
+    public readonly rigidBodyIndices: readonly number[];
+
+
+    /**
      * Get ik solver index
      *
      * If the bone does not have an ik solver, it will return -1
@@ -81,6 +89,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
      * @param boneMetadata Bone metadata
      * @param worldTransformMatrices WASM buffered array of world transform matrices
      * @param boneIndex Bone index
+     * @param rigidBodyIndices Readonly linked RigidBody indices
      * @param ikSolverIndex IK solver index
      * @param mmdRuntime MMD WASM runtime
      * @param mmdModelPtr MMD WASM side model pointer
@@ -90,6 +99,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
         boneMetadata: MmdModelMetadata.Bone,
         worldTransformMatrices: WasmBufferedArray<Float32Array>,
         boneIndex: number,
+        rigidBodyIndices: readonly number[],
         ikSolverIndex: number,
         mmdRuntime: MmdWasmRuntime
     ) {
@@ -105,6 +115,7 @@ export class MmdWasmRuntimeBone implements IMmdRuntimeBone {
 
         this._worldMatrix = new WasmBufferedArraySpan(mmdRuntime.wasmInstance, worldTransformMatrices, boneIndex * 16 * 4, 16);
 
+        this.rigidBodyIndices = rigidBodyIndices;
         this.ikSolverIndex = ikSolverIndex;
     }
 

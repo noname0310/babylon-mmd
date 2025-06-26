@@ -9,12 +9,14 @@ import type { ILogger } from "@/Loader/Parser/ILogger";
 
 import type { IIkStateContainer } from "../IIkStateContainer";
 import type { IMmdModel } from "../IMmdModel";
+import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
+import type { IRigidBodyStateContainer } from "../IRIgidBodyStateContainer";
 import type { MmdMorphControllerBase } from "../mmdMorphControllerBase";
 import { BezierInterpolate } from "./bezierInterpolate";
 import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "./Common/induceMmdStandardMaterialRecompile";
 import type { IMmdBindableModelAnimation } from "./IMmdBindableAnimation";
-import type { IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
+import type { BodyIndices, IMmdRuntimeModelAnimationWithBindingInfo, MorphIndices } from "./IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "./mmdRuntimeAnimation";
 
 /**
@@ -54,6 +56,17 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
 
     private readonly _ikSolverStates: IIkStateContainer;
 
+    /**
+     * Bone to body bind index map
+     *
+     * the length of the array is `boneBindIndexMap.length + movableBoneBindIndexMap.length`
+     *
+     * first `boneBindIndexMap.length` elements are for bone tracks, and the rest are for movable bone tracks
+     */
+    public readonly boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[];
+
+    private readonly _rigidBodyStates: IRigidBodyStateContainer;
+
     private _materialRecompileInduceInfo: readonly Material[] | null;
 
     private constructor(
@@ -65,6 +78,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         meshes: readonly Mesh[],
         ikSolverBindIndexMap: Int32Array,
         ikSolverStates: IIkStateContainer,
+        boneToBodyBindIndexMap: readonly Nullable<BodyIndices>[],
+        rigidBodyStates: IRigidBodyStateContainer,
         materialRecompileInduceInfo: readonly Material[]
     ) {
         super();
@@ -78,6 +93,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         this._meshes = meshes;
         this.ikSolverBindIndexMap = ikSolverBindIndexMap;
         this._ikSolverStates = ikSolverStates;
+        this.boneToBodyBindIndexMap = boneToBodyBindIndexMap;
+        this._rigidBodyStates = rigidBodyStates;
 
         this._materialRecompileInduceInfo = materialRecompileInduceInfo;
     }
@@ -99,6 +116,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         const boneTracks = animation.boneTracks;
         if (0 < boneTracks.length) {
             const boneBindIndexMap = this.boneBindIndexMap;
+            const boneToBodyBindIndexMap = this.boneToBodyBindIndexMap;
+            const rigidBodyStates = this._rigidBodyStates.rigidBodyStates;
             for (let i = 0; i < boneTracks.length; ++i) {
                 const bone = boneBindIndexMap[i];
                 if (bone === null) continue;
@@ -179,12 +198,22 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                     // );
                     bone.setRotationQuaternion(rotationA, Space.LOCAL);
                 }
+
+                const rigidBodyIndices = boneToBodyBindIndexMap[i];
+                if (rigidBodyIndices !== null) {
+                    const bodyState = boneTrack.physicsToggles[upperBoundIndexMinusOne];
+                    for (let j = 0; j < rigidBodyIndices.length; ++j) {
+                        rigidBodyStates[rigidBodyIndices[j]] = bodyState;
+                    }
+                }
             }
         }
 
         const movableBoneTracks = animation.movableBoneTracks;
         if (0 < movableBoneTracks.length) {
             const boneBindIndexMap = this.movableBoneBindIndexMap;
+            const boneToBodyBindIndexMap = this.boneToBodyBindIndexMap;
+            const rigidBodyStates = this._rigidBodyStates.rigidBodyStates;
             for (let i = 0; i < movableBoneTracks.length; ++i) {
                 const bone = boneBindIndexMap[i];
                 if (bone === null) continue;
@@ -316,6 +345,14 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
                     // );
                     bone.setRotationQuaternion(rotationA, Space.LOCAL);
                 }
+
+                const rigidBodyIndices = boneToBodyBindIndexMap[i + boneTracks.length];
+                if (rigidBodyIndices !== null) {
+                    const bodyState = boneTrack.physicsToggles[upperBoundIndexMinusOne];
+                    for (let j = 0; j < rigidBodyIndices.length; ++j) {
+                        rigidBodyStates[rigidBodyIndices[j]] = bodyState;
+                    }
+                }
             }
         }
 
@@ -418,16 +455,36 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
      */
     public static Create(animation: MmdAnimationBase, model: IMmdModel, retargetingMap?: { [key: string]: string }, logger?: ILogger): MmdRuntimeModelAnimation {
         const skeleton = model.skeleton;
-        const bones = skeleton.bones;
-
-        const boneIndexMap = new Map<string, number>();
-        if (retargetingMap === undefined) {
-            for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(bones[i].name, i);
+        const linkedBoneMap = new Map<string, IMmdRuntimeLinkedBone>();
+        {
+            const bones = skeleton.bones;
+            if (retargetingMap === undefined) {
+                for (let i = 0; i < bones.length; ++i) {
+                    const linkedBone = bones[i];
+                    linkedBoneMap.set(linkedBone.name, linkedBone);
+                }
+            } else {
+                for (let i = 0; i < bones.length; ++i) {
+                    const linkedBone = bones[i];
+                    linkedBoneMap.set(retargetingMap[linkedBone.name] ?? linkedBone.name, linkedBone);
+                }
             }
-        } else {
-            for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(retargetingMap[bones[i].name] ?? bones[i].name, i);
+        }
+        const runtimeBoneMap = new Map<string, IMmdRuntimeBone>();
+        {
+            const runtimeBones = model.runtimeBones;
+            const linkedBoneToRuntimeBoneMap = new Map<IMmdRuntimeLinkedBone, IMmdRuntimeBone>();
+            for (let i = 0; i < runtimeBones.length; ++i) {
+                const runtimeBone = runtimeBones[i];
+                linkedBoneToRuntimeBoneMap.set(runtimeBone.linkedBone, runtimeBone);
+            }
+            for (const [name, linkedBone] of linkedBoneMap) {
+                const runtimeBone = linkedBoneToRuntimeBoneMap.get(linkedBone);
+                if (runtimeBone === undefined) {
+                    logger?.warn(`Binding warning: bone ${name} not found in runtime bones`);
+                    continue;
+                }
+                runtimeBoneMap.set(name, runtimeBone);
             }
         }
 
@@ -435,12 +492,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         const boneTracks = animation.boneTracks;
         for (let i = 0; i < boneTracks.length; ++i) {
             const boneTrack = boneTracks[i];
-            const boneIndex = boneIndexMap.get(boneTrack.name);
-            if (boneIndex === undefined) {
+            const linkedBone = linkedBoneMap.get(boneTrack.name);
+            if (linkedBone === undefined) {
                 logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
                 boneBindIndexMap[i] = null;
             } else {
-                boneBindIndexMap[i] = bones[boneIndex];
+                boneBindIndexMap[i] = linkedBone;
             }
         }
 
@@ -448,12 +505,12 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
         const movableBoneTracks = animation.movableBoneTracks;
         for (let i = 0; i < movableBoneTracks.length; ++i) {
             const movableBoneTrack = movableBoneTracks[i];
-            const boneIndex = boneIndexMap.get(movableBoneTrack.name);
-            if (boneIndex === undefined) {
+            const linkedBone = linkedBoneMap.get(movableBoneTrack.name);
+            if (linkedBone === undefined) {
                 logger?.warn(`Binding failed: bone ${movableBoneTrack.name} not found`);
                 movableBoneBindIndexMap[i] = null;
             } else {
-                movableBoneBindIndexMap[i] = bones[boneIndex];
+                movableBoneBindIndexMap[i] = linkedBone;
             }
         }
 
@@ -472,22 +529,46 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             }
         }
 
-        const runtimeBones = model.runtimeBones;
         const ikSolverBindIndexMap = new Int32Array(animation.propertyTrack.ikBoneNames.length);
         const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
-            const ikBoneIndex = boneIndexMap.get(ikBoneName);
-            if (ikBoneIndex === undefined) {
+            const ikBone = runtimeBoneMap.get(ikBoneName);
+            if (ikBone === undefined) {
                 logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
                 ikSolverBindIndexMap[i] = -1;
             } else {
-                const ikSolverIndex = runtimeBones[ikBoneIndex].ikSolverIndex;
+                const ikSolverIndex = ikBone.ikSolverIndex;
                 if (ikSolverIndex === -1) {
                     logger?.warn(`Binding failed: IK solver for bone ${ikBoneName} not found`);
                     ikSolverBindIndexMap[i] = -1;
                 } else {
                     ikSolverBindIndexMap[i] = ikSolverIndex;
+                }
+            }
+        }
+
+        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animation.boneTracks.length + animation.movableBoneTracks.length);
+        {
+            for (let i = 0; i < boneTracks.length; ++i) {
+                const boneTrack = boneTracks[i];
+                const runtimeBone = runtimeBoneMap.get(boneTrack.name);
+                if (runtimeBone === undefined) {
+                    logger?.warn(`Binding failed: runtime bone ${boneTrack.name} not found`);
+                    boneToBodyBindIndexMap[i] = null;
+                } else {
+                    boneToBodyBindIndexMap[i] = runtimeBone.rigidBodyIndices;
+                }
+            }
+            const offset = boneTracks.length;
+            for (let i = 0; i < movableBoneTracks.length; ++i) {
+                const movableBoneTrack = movableBoneTracks[i];
+                const runtimeBone = runtimeBoneMap.get(movableBoneTrack.name);
+                if (runtimeBone === undefined) {
+                    logger?.warn(`Binding failed: runtime bone ${movableBoneTrack.name} not found`);
+                    boneToBodyBindIndexMap[i + offset] = null;
+                } else {
+                    boneToBodyBindIndexMap[i + offset] = runtimeBone.rigidBodyIndices;
                 }
             }
         }
@@ -500,6 +581,8 @@ export class MmdRuntimeModelAnimation extends MmdRuntimeAnimation<MmdAnimationBa
             morphBindIndexMap,
             model.mesh.metadata.meshes,
             ikSolverBindIndexMap,
+            model,
+            boneToBodyBindIndexMap,
             model,
             model.mesh.metadata.materials
         );

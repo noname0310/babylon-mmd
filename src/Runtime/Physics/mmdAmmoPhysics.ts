@@ -27,6 +27,9 @@ class MmdPhysicsMesh extends AbstractMesh {
 
     private readonly _customBoundingInfo: Nullable<BoundingInfo>;
 
+    // narrowing physicsImpostor type to MmdAmmoPhysicsImpostor
+    declare public physicsImpostor: Nullable<MmdAmmoPhysicsImpostor | MmdAmmoPhysicsImpostorWithBone>;
+
     public constructor(
         name: string,
         scene: Scene,
@@ -89,13 +92,104 @@ interface IAmmoPhysicsImpostorParameters extends PhysicsImpostorParameters {
 }
 
 class MmdAmmoPhysicsImpostor extends PhysicsImpostor {
-    public readonly linkedBone: IMmdRuntimeBone;
+    private _temporalKinematic: boolean;
+    private _kinematicToggle: boolean;
 
     public constructor(
         mesh: MmdPhysicsMesh,
         type: number,
         options: IAmmoPhysicsImpostorParameters,
-        linkedBone: IMmdRuntimeBone,
+        scene: Scene
+    ) {
+        super(mesh, type, options, scene);
+
+        this._temporalKinematic = false;
+        this._kinematicToggle = mesh.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
+            ? true // if the physics mode is FollowBone, the impostor is always kinematic
+            : false;
+    }
+
+    private _makeKinematic(): void {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const body = this.physicsBody as import("ammojs-typed").default.btRigidBody;
+        body.setCollisionFlags(body.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
+    }
+
+    private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
+
+    private _restoreDynamic(): void {
+        this.setLinearVelocity(MmdAmmoPhysicsImpostor._ZeroVector);
+        this.setAngularVelocity(MmdAmmoPhysicsImpostor._ZeroVector);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const body = this.physicsBody as import("ammojs-typed").default.btRigidBody;
+        body.setCollisionFlags(body.getCollisionFlags() & ~2); // CF_KINEMATIC_OBJECT
+    }
+
+    public get temporalKinematic(): boolean {
+        return this._temporalKinematic;
+    }
+
+    public set temporalKinematic(value: boolean) {
+        // // disableBidirectionalTransformation is true only for non follow bone impostors
+        // if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     // if impostor is follow bone, it is always kinematic
+        //     return;
+        // }
+
+        if (value === this._temporalKinematic) {
+            return;
+        }
+
+        this._temporalKinematic = value;
+
+        if (this._kinematicToggle) {
+            return; // if kinematicToggle is true, the impostor is always kinematic
+        }
+
+        if (value) {
+            this._makeKinematic();
+        } else {
+            this._restoreDynamic();
+        }
+    }
+
+    public get kinematicToggle(): boolean {
+        return this._kinematicToggle;
+    }
+
+    public set kinematicToggle(value: boolean) {
+        // // disableBidirectionalTransformation is true only for non follow bone impostors
+        // if (!((this as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     // if impostor is follow bone, it is always true
+        //     return;
+        // }
+
+        if (value === this._kinematicToggle) {
+            return;
+        }
+
+        this._kinematicToggle = value;
+
+        if (this._temporalKinematic) {
+            return;
+        }
+
+        if (value) {
+            this._makeKinematic();
+        } else {
+            this._restoreDynamic();
+        }
+    }
+}
+
+class MmdAmmoPhysicsImpostorWithBone extends MmdAmmoPhysicsImpostor {
+    public readonly linkedBone: Nullable<IMmdRuntimeBone>;
+
+    public constructor(
+        mesh: MmdPhysicsMesh,
+        type: number,
+        options: IAmmoPhysicsImpostorParameters,
+        linkedBone: Nullable<IMmdRuntimeBone>,
         scene: Scene
     ) {
         super(mesh, type, options, scene);
@@ -111,9 +205,13 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     private readonly _mmdPhysics: MmdAmmoPhysics;
 
     private readonly _nodes: Nullable<MmdPhysicsMesh>[];
-    private readonly _impostors: Nullable<PhysicsImpostor>[];
+    private readonly _impostors: Nullable<MmdAmmoPhysicsImpostor>[];
 
     private readonly _rootMesh: Mesh;
+
+    private readonly _syncedRigidBodyStates: Uint8Array;
+    private _disabledRigidBodyCount: number;
+
     // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     private readonly _ammoInstance: typeof import("ammojs-typed").default;
 
@@ -135,7 +233,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     public constructor(
         mmdPhysics: MmdAmmoPhysics,
         nodes: Nullable<MmdPhysicsMesh>[],
-        impostors: Nullable<PhysicsImpostor>[],
+        impostors: Nullable<MmdAmmoPhysicsImpostor>[],
         rootMesh: Mesh,
         ammoInstance: any
     ) {
@@ -145,6 +243,10 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
         this._impostors = impostors;
 
         this._rootMesh = rootMesh;
+
+        this._syncedRigidBodyStates = new Uint8Array(impostors.length).fill(1);
+        this._disabledRigidBodyCount = 0;
+
         this._ammoInstance = ammoInstance;
 
         this._tmpBtVector3 = new ammoInstance.btVector3();
@@ -236,34 +338,226 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
     }
 
     /**
+     * Indicate whether all IK must be solved
+     */
+    public get needDeoptimize(): boolean {
+        return 0 < this._disabledRigidBodyCount;
+    }
+
+    /**
+     * commit rigid body states to physics model
+     *
+     * if rigidBodyStates[i] is 0, the rigid body motion type is kinematic,
+     * if rigidBodyStates[i] is 1 and physicsMode is not FollowBone, the rigid body motion type is dynamic.
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
+     */
+    public commitBodyStates(rigidBodyStates: Uint8Array): void {
+        const nodes = this._nodes;
+        const syncedRigidBodyStates = this._syncedRigidBodyStates;
+        for (let i = 0; i < rigidBodyStates.length; ++i) {
+            const node = nodes[i];
+            if (node === null) {
+                continue;
+            }
+            if (node.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) {
+                continue;
+            }
+
+            const state = rigidBodyStates[i];
+            if (state !== syncedRigidBodyStates[i]) {
+                syncedRigidBodyStates[i] = state;
+                if (state !== 0) {
+                    this._disabledRigidBodyCount -= 1;
+                    node.physicsImpostor!.kinematicToggle = false;
+                } else {
+                    this._disabledRigidBodyCount += 1;
+                }
+            }
+        }
+    }
+
+    private static readonly _EulerAngles1 = new Vector3();
+    private static readonly _EulerAngles2 = new Vector3();
+
+    /**
+     * 0: unknown, 1: kinematic, 2: target transform
+     */
+    private _bodyKinematicToggleMap: Nullable<Uint8Array> = null;
+
+    /**
      * Set the rigid bodies transform to the bones transform
      */
     public syncBodies(): void {
-        const nodes = this._nodes;
-        for (let i = 0; i < nodes.length; ++i) {
-            const node = nodes[i];
-            if (node === null) continue;
-            if (node.linkedBone === null) continue;
+        if (0 < this._disabledRigidBodyCount) {
+            if (this._bodyKinematicToggleMap === null) {
+                this._bodyKinematicToggleMap = new Uint8Array(this._nodes.length);
+            } else {
+                this._bodyKinematicToggleMap.fill(0);
+            }
+            const bodyKinematicToggleMap = this._bodyKinematicToggleMap;
+            const syncedRigidBodyStates = this._syncedRigidBodyStates;
+            const modelWorldMatrix = this._rootMesh.computeWorldMatrix();
 
-            switch (node.physicsMode) {
-            case PmxObject.RigidBody.PhysicsMode.FollowBone:
-                {
-                    const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
-                    node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
-                    nodeWorldMatrix.decompose(
-                        node.scaling,
-                        node.rotationQuaternion!,
-                        node.position
-                    );
+            const position = MmdAmmoPhysicsModel._Position;
+            const rotation = MmdAmmoPhysicsModel._Rotation;
+
+            const btVector3 = this._tmpBtVector3;
+            const btQuaternion = this._tmpBtQuaternion;
+            const btTransform = this._tmpBtTransform;
+
+            const nodes = this._nodes;
+            for (let i = 0; i < nodes.length; ++i) {
+                const node = nodes[i];
+                if (node === null) continue;
+                if (node.linkedBone === null) continue;
+
+                switch (node.physicsMode) {
+                case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                    {
+                        const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
+                        node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
+                        nodeWorldMatrix.decompose(
+                            node.scaling,
+                            node.rotationQuaternion!,
+                            node.position
+                        );
+                    }
+                    break;
+
+                case PmxObject.RigidBody.PhysicsMode.Physics:
+                case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                    if (syncedRigidBodyStates[i] === 0) { // body need to be disabled
+                        let useTargetTransformMethod = true;
+                        for (let currentNode = node; ;) {
+                            const linkedBone = currentNode.linkedBone;
+                            if (linkedBone === null) { // orphan body
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            const parentBone = linkedBone.parentBone;
+                            if (parentBone === null) { // root bone
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            if (parentBone.rigidBodyIndices.length < 1) { // parent is animated bone
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            const parentNodeIndex = parentBone.rigidBodyIndices[0];
+                            const parentNode = nodes[parentNodeIndex];
+                            if (parentNode === null) { // parent body is failed to create. treat as animated body
+                                useTargetTransformMethod = false;
+                                break;
+                            }
+                            if (parentNode.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone) { // parent is animated bone
+                                useTargetTransformMethod = false;
+                                break;
+                            } else { // Physics or PhysicsWithBone
+                                if (syncedRigidBodyStates[parentNodeIndex] === 0) { // parent body physics toggle is enabled
+                                    const parentKinematicToggleState = bodyKinematicToggleMap![parentNodeIndex];
+                                    if (parentKinematicToggleState === 0) { // unknown state
+                                        // we can't determine the method in this iteration stage
+                                    } else {
+                                        if (parentKinematicToggleState === 1) { // parent body is kinematic
+                                            useTargetTransformMethod = false;
+                                            break;
+                                        } else {
+                                            useTargetTransformMethod = true;
+                                            break;
+                                        }
+                                    }
+                                } else { // parent body is driven by physics so we need to use target transform method
+                                    useTargetTransformMethod = true;
+                                    break;
+                                }
+                            }
+                            currentNode = parentNode;
+                        }
+                        bodyKinematicToggleMap![i] = useTargetTransformMethod ? 2 : 1; // memo the result for fast computation next time
+
+                        const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
+                        node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
+                        nodeWorldMatrix.multiplyToRef(modelWorldMatrix, nodeWorldMatrix);
+                        nodeWorldMatrix.decompose(
+                            undefined,
+                            rotation,
+                            position
+                        );
+
+                        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+                        const body = node.physicsImpostor!.physicsBody as import("ammojs-typed").default.btRigidBody;
+                        if (useTargetTransformMethod) {
+                            node.physicsImpostor!.kinematicToggle = false;
+                            const forceFactor = 30;
+                            const torqueFactor = 30;
+
+                            const currentTransform = body.getWorldTransform();
+                            const currentOrigin = currentTransform.getOrigin();
+                            const currentRotation = currentTransform.getRotation();
+
+                            {
+                                // Linear difference
+                                const dx = position.x - currentOrigin.x();
+                                const dy = position.y - currentOrigin.y();
+                                const dz = position.z - currentOrigin.z();
+                                btVector3.setValue(dx * forceFactor, dy * forceFactor, dz * forceFactor);
+                                body.setLinearVelocity(btVector3);
+                            }
+
+                            {
+                                // Angular difference
+                                const targetAngles = rotation.toEulerAnglesToRef(MmdAmmoPhysicsModel._EulerAngles1);
+                                rotation.set(currentRotation.x(), currentRotation.y(), currentRotation.z(), currentRotation.w());
+                                const currentAngles = rotation.toEulerAnglesToRef(MmdAmmoPhysicsModel._EulerAngles2);
+                                const dx = (targetAngles.x - currentAngles.x + Math.PI) % (2 * Math.PI) - Math.PI;
+                                const dy = (targetAngles.y - currentAngles.y + Math.PI) % (2 * Math.PI) - Math.PI;
+                                const dz = (targetAngles.z - currentAngles.z + Math.PI) % (2 * Math.PI) - Math.PI;
+                                btVector3.setValue(dx * torqueFactor, dy * torqueFactor, dz * torqueFactor);
+                                body.setAngularVelocity(btVector3);
+                            }
+                        } else {
+                            node.physicsImpostor!.kinematicToggle = true;
+                            btVector3.setValue(position.x, position.y, position.z);
+                            btQuaternion.setValue(rotation.x, rotation.y, rotation.z, rotation.w);
+                            btTransform.setOrigin(btVector3);
+                            btTransform.setRotation(btQuaternion);
+                            body.getMotionState().setWorldTransform(btTransform);
+                        }
+                    }
+                    break;
+
+                default:
+                    throw new Error(`Unknown physics mode: ${node.physicsMode}`);
                 }
-                break;
+            }
+        } else {
+            const nodes = this._nodes;
+            for (let i = 0; i < nodes.length; ++i) {
+                const node = nodes[i];
+                if (node === null) continue;
+                if (node.linkedBone === null) continue;
 
-            case PmxObject.RigidBody.PhysicsMode.Physics:
-            case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
-                break;
+                switch (node.physicsMode) {
+                case PmxObject.RigidBody.PhysicsMode.FollowBone:
+                    {
+                        const nodeWorldMatrix = node.linkedBone.getWorldMatrixToRef(MmdAmmoPhysicsModel._NodeWorldMatrix);
+                        node.bodyOffsetMatrix.multiplyToRef(nodeWorldMatrix, nodeWorldMatrix);
+                        nodeWorldMatrix.decompose(
+                            node.scaling,
+                            node.rotationQuaternion!,
+                            node.position
+                        );
+                    }
+                    break;
 
-            default:
-                throw new Error(`Unknown physics mode: ${node.physicsMode}`);
+                case PmxObject.RigidBody.PhysicsMode.Physics:
+                case PmxObject.RigidBody.PhysicsMode.PhysicsWithBone:
+                    break;
+
+                default:
+                    throw new Error(`Unknown physics mode: ${node.physicsMode}`);
+                }
             }
         }
     }
@@ -330,7 +624,7 @@ export class MmdAmmoPhysicsModel implements IMmdPhysicsModel {
 export class MmdAmmoPhysics implements IMmdPhysics {
     private readonly _scene: Scene;
 
-    private readonly _kinematicOnces: PhysicsImpostor[] = [];
+    private readonly _kinematicOnces: MmdAmmoPhysicsImpostor[] = [];
 
     /**
      * Create a new MMD ammo.js physics
@@ -402,7 +696,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         }
 
         const nodes: Nullable<MmdPhysicsMesh>[] = new Array(rigidBodies.length);
-        const impostors: Nullable<MmdAmmoPhysicsImpostor | PhysicsImpostor>[] = new Array(rigidBodies.length);
+        const impostors: Nullable<MmdAmmoPhysicsImpostorWithBone | MmdAmmoPhysicsImpostor>[] = new Array(rigidBodies.length);
 
         const boneNameMap = new Map<string, IMmdRuntimeBone>();
         for (let i = 0; i < bones.length; ++i) {
@@ -512,8 +806,8 @@ export class MmdAmmoPhysics implements IMmdPhysics {
                 mask: rigidBody.collisionMask
             };
             const impostor = node.physicsImpostor = bone !== undefined
-                ? new MmdAmmoPhysicsImpostor(node, impostorType, physicsImpostorParameters, bone, scene)
-                : new PhysicsImpostor(node, impostorType, physicsImpostorParameters, scene);
+                ? new MmdAmmoPhysicsImpostorWithBone(node, impostorType, physicsImpostorParameters, bone, scene)
+                : new MmdAmmoPhysicsImpostor(node, impostorType, physicsImpostorParameters, scene);
 
             impostor.setDeltaPosition(new Vector3(0, 0, 0));
 
@@ -683,32 +977,27 @@ export class MmdAmmoPhysics implements IMmdPhysics {
         return new MmdAmmoPhysicsModel(this, nodes, impostors, rootMesh, physicsPlugin.bjsAMMO);
     }
 
-    private static readonly _ZeroVector: DeepImmutable<Vector3> = Vector3.Zero();
-
     private readonly _onAfterPhysics = (): void => {
         const kinematicOnces = this._kinematicOnces;
         for (let i = 0; i < kinematicOnces.length; ++i) {
-            const impostor = kinematicOnces[i];
-            impostor.setLinearVelocity(MmdAmmoPhysics._ZeroVector);
-            impostor.setAngularVelocity(MmdAmmoPhysics._ZeroVector);
-            // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-            const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;
-            body.setCollisionFlags(body.getCollisionFlags() & ~2); // CF_KINEMATIC_OBJECT
+            kinematicOnces[i].temporalKinematic = false;
         }
         kinematicOnces.length = 0;
     };
 
     /** @internal */
-    public _makeKinematicOnce(impostor: PhysicsImpostor): void {
-        if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
-            return;
-        }
+    public _makeKinematicOnce(impostor: MmdAmmoPhysicsImpostor): void {
+        // if (!((impostor as any)._options as IAmmoPhysicsImpostorParameters).disableBidirectionalTransformation) {
+        //     return;
+        // }
 
         if (this._kinematicOnces.length === 0) {
             this._scene.onAfterPhysicsObservable.addOnce(this._onAfterPhysics);
         }
 
-        this._kinematicOnces.push(impostor);
-        impostor.physicsBody.setCollisionFlags(impostor.physicsBody.getCollisionFlags() | 2); // CF_KINEMATIC_OBJECT
+        if (!impostor.temporalKinematic) {
+            this._kinematicOnces.push(impostor);
+            impostor.temporalKinematic = true;
+        }
     }
 }

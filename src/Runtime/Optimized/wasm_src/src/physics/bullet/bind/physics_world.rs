@@ -22,9 +22,9 @@ extern "C" {
 
     fn bw_world_remove_constraint(world: *mut std::ffi::c_void, constraint: *mut std::ffi::c_void);
 
-    fn bw_world_make_body_kinematic(world: *mut std::ffi::c_void, rigidbody: *mut std::ffi::c_void);
+    fn bw_world_set_body_temporal_kinematic(world: *mut std::ffi::c_void, rigidbody: *mut std::ffi::c_void, value: u8);
 
-    fn bw_world_restore_body_dynamic(world: *mut std::ffi::c_void, rigidbody: *mut std::ffi::c_void);
+    fn bw_world_set_body_kinematic_toggle(world: *mut std::ffi::c_void, rigidbody: *mut std::ffi::c_void, value: u8);
 }
 
 pub(crate) struct PhysicsWorld {
@@ -70,12 +70,12 @@ impl PhysicsWorld {
         unsafe { bw_world_remove_constraint(self.ptr, constraint) };
     }
 
-    pub(crate) fn make_body_kinematic(&mut self, rigidbody: &mut RigidBody) {
-        unsafe { bw_world_make_body_kinematic(self.ptr, rigidbody.ptr_mut()) };
+    pub(crate) fn set_body_temporal_kinematic(&mut self, rigidbody: &mut RigidBody, value: bool) {
+        unsafe { bw_world_set_body_temporal_kinematic(self.ptr, rigidbody.ptr_mut(), value as u8) };
     }
 
-    pub(crate) fn restore_body_dynamic(&mut self, rigidbody: &mut RigidBody) {
-        unsafe { bw_world_restore_body_dynamic(self.ptr, rigidbody.ptr_mut()) };
+    pub(crate) fn set_body_kinematic_toggle(&mut self, rigidbody: &mut RigidBody, value: bool) {
+        unsafe { bw_world_set_body_kinematic_toggle(self.ptr, rigidbody.ptr_mut(), value as u8) };
     }
 }
 

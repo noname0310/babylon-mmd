@@ -4,7 +4,7 @@ import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";
 
 import type { IBulletWasmInstance } from "../../bulletWasmInstance";
-import { BtTransformOffsets, Constants, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
+import { BtTransformOffsets, Constants, KinematicToggleState, MotionStateOffsetsInFloat32Array, TemporalKinematicState } from "../../constants";
 import type { IRigidBodyBundleImpl } from "../IRigidBodyBundleImpl";
 import { RigidBodyCommand } from "./rigidBodyCommand";
 
@@ -27,6 +27,12 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
     private _isDynamicTransformMatricesBufferDirty: boolean;
     private _dynamicTransformMatrixDirtyFlags: Nullable<Uint8Array>;
 
+    /**
+     * for effectiveKinematicState
+     */
+    private _kinematicStatesBuffer: Nullable<Uint8Array>;
+    private _isKinematicStatesBufferDirty: boolean;
+
     private readonly _commandBuffer: Map<RigidBodyCommand, any[]>[];
 
     private readonly _count: number;
@@ -44,6 +50,9 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         this._isDynamicTransformMatricesBufferDirty = false;
         this._dynamicTransformMatrixDirtyFlags = null;
 
+        this._kinematicStatesBuffer = null;
+        this._isKinematicStatesBufferDirty = false;
+
         const commandBuffer = this._commandBuffer = new Array(count);
         for (let i = 0; i < count; ++i) {
             commandBuffer[i] = new Map();
@@ -60,7 +69,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         worldTransformPtrArray: Nullable<IWasmTypedArray<Float32Array>>[]
     ): void {
         if (!this._isDirty) {
@@ -71,7 +80,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             const n = this._motionStateMatricesBuffer;
             const m = motionStatesPtr.array;
             const motionStateMatrixDirtyFlags = this._motionStateMatrixDirtyFlags;
-            const temporalKinematicStates = temporalKinematicStatesPtr.array;
+            const kinematicStates = kinematicStatesPtr.array;
 
             const count = this._count;
             let nOffset = 0;
@@ -99,8 +108,8 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
                 m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 1] = n[nOffset + 13];
                 m[mOffset + MotionStateOffsetsInFloat32Array.Translation + 2] = n[nOffset + 14];
 
-                if (temporalKinematicStates[i] !== TemporalKinematicState.Disabled) {
-                    temporalKinematicStates[i] = TemporalKinematicState.WaitForRestore;
+                if ((kinematicStates[i] & TemporalKinematicState.ReadMask) !== TemporalKinematicState.Disabled) {
+                    kinematicStates[i] = (kinematicStates[i] & TemporalKinematicState.WriteMask) | TemporalKinematicState.WaitForChange;
                 }
 
                 motionStateMatrixDirtyFlags[i] = 0;
@@ -152,6 +161,22 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
             this._isDynamicTransformMatricesBufferDirty = false;
         }
 
+        if (this._isKinematicStatesBufferDirty) {
+            const kinematicStatesBuffer = this._kinematicStatesBuffer!;
+            const kinematicStates = kinematicStatesPtr.array;
+
+            const count = this._count;
+            for (let i = 0; i < count; ++i) {
+                if (kinematicStatesBuffer[i] === 0) {
+                    kinematicStates[i] = (kinematicStates[i] & KinematicToggleState.WriteMask) | KinematicToggleState.Disabled;
+                } else {
+                    kinematicStates[i] = (kinematicStates[i] & KinematicToggleState.WriteMask) | KinematicToggleState.Enabled;
+                }
+            }
+
+            this._isKinematicStatesBufferDirty = false;
+        }
+
         const commandBuffer = this._commandBuffer;
         for (let index = 0; index < this._count; ++index) {
             if (commandBuffer[index].size === 0) {
@@ -172,6 +197,16 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
                     wasmInstance.rigidBodyBundleTranslate(bundlePtr, index, translation.x, translation.y, translation.z);
                     break;
                 }
+                case RigidBodyCommand.SetLinearVelocity: {
+                    const linearVelocity = args[0] as Vector3;
+                    wasmInstance.rigidBodyBundleSetLinearVelocity(bundlePtr, index, linearVelocity.x, linearVelocity.y, linearVelocity.z);
+                    break;
+                }
+                case RigidBodyCommand.SetAngularVelocity: {
+                    const angularVelocity = args[0] as Vector3;
+                    wasmInstance.rigidBodyBundleSetAngularVelocity(bundlePtr, index, angularVelocity.x, angularVelocity.y, angularVelocity.z);
+                    break;
+                }
                 }
             }
             commandBuffer[index].clear();
@@ -182,7 +217,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatrixFromArray(
         _motionStatesPtr: IWasmTypedArray<Float32Array>,
-        _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        _kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         index: number,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
@@ -215,7 +250,7 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
     public setTransformMatricesFromArray(
         _motionStatesPtr: IWasmTypedArray<Float32Array>,
-        _temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        _kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<ArrayLike<number>>,
         offset: number
     ): void {
@@ -261,6 +296,33 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
 
         this._dynamicTransformMatrixDirtyFlags[index] = 1;
         this._isDynamicTransformMatricesBufferDirty = true;
+        this._isDirty = true;
+    }
+
+    public getEffectiveKinematicState(_kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number): boolean {
+        // we can't access _kinematicStatesPtr directly here
+        // because it accessed from wasm side for read/write temporal kinematic state
+        if (this._kinematicStatesBuffer === null) {
+            return false;
+        }
+        return this._kinematicStatesBuffer[index] !== 0;
+    }
+
+    public setEffectiveKinematicState(_kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number, value: boolean): void {
+        if (this._kinematicStatesBuffer === null) {
+            if (!value) {
+                return; // no change needed
+            }
+            this._kinematicStatesBuffer = new Uint8Array(this._count);
+        }
+
+        const kinematicStatesBuffer = this._kinematicStatesBuffer;
+        if (kinematicStatesBuffer[index] === +value) {
+            return; // no change needed
+        }
+        kinematicStatesBuffer[index] = +value;
+
+        this._isKinematicStatesBufferDirty = true;
         this._isDirty = true;
     }
 
@@ -318,6 +380,16 @@ export class BufferedRigidBodyBundleImpl implements IRigidBodyBundleImpl {
         translation: DeepImmutable<Vector3>
     ): void {
         this._commandBuffer[index].set(RigidBodyCommand.Translate, [translation.clone()]);
+        this._isDirty = true;
+    }
+
+    public setLinearVelocity(index: number, linearVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer[index].set(RigidBodyCommand.SetLinearVelocity, [linearVelocity.clone()]);
+        this._isDirty = true;
+    }
+
+    public setAngularVelocity(index: number, angularVelocity: DeepImmutable<Vector3>): void {
+        this._commandBuffer[index].set(RigidBodyCommand.SetAngularVelocity, [angularVelocity.clone()]);
         this._isDirty = true;
     }
 }

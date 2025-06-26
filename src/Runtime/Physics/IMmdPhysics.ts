@@ -56,6 +56,21 @@ export interface IMmdPhysicsModel {
     initialize(): void;
 
     /**
+     * Indicate whether all IK must be solved
+     */
+    get needDeoptimize(): boolean;
+
+    /**
+     * commit rigid body states to physics model
+     *
+     * if rigidBodyStates[i] is 0, the rigid body motion type is kinematic,
+     * if rigidBodyStates[i] is 1 and physicsMode is not FollowBone, the rigid body motion type is dynamic.
+     *
+     * @param rigidBodyStates state of rigid bodies for physics toggle
+     */
+    commitBodyStates(rigidBodyStates: Uint8Array): void;
+
+    /**
      * Set the rigid bodies transform to the bones transform
      */
     syncBodies(): void;

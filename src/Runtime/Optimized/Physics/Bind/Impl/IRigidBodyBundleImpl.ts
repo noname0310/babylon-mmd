@@ -12,19 +12,19 @@ export interface IRigidBodyBundleImpl {
         wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         worldTransformPtrArray: Nullable<IWasmTypedArray<Float32Array>>[]
     ): void;
     setTransformMatrixFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         index: number,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;
     setTransformMatricesFromArray(
         motionStatesPtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatesPtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatesPtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<ArrayLike<number>>,
         offset: number
     ): void;
@@ -34,6 +34,13 @@ export interface IRigidBodyBundleImpl {
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;
+    /**
+     * this method shoud not be called from non-dynamic bodies
+     * @param kinematicStatesPtr
+     * @param index
+     */
+    getEffectiveKinematicState(kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number): boolean;
+    setEffectiveKinematicState(kinematicStatesPtr: IWasmTypedArray<Uint8Array>, index: number, value: boolean): void;
     setDamping(
         wasmInstance: IBulletWasmInstance,
         bundlePtr: number,
@@ -53,4 +60,7 @@ export interface IRigidBodyBundleImpl {
     getMass(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): number;
     getLocalInertia(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number): Vector3;
     translate(wasmInstance: IBulletWasmInstance, bundlePtr: number, index: number, translation: DeepImmutable<Vector3>): void;
+    // only required for buffered implementation
+    setLinearVelocity?(index: number, linearVelocity: DeepImmutable<Vector3>): void;
+    setAngularVelocity?(index: number, angularVelocity: DeepImmutable<Vector3>): void;
 }

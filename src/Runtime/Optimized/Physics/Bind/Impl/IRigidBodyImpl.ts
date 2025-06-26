@@ -12,12 +12,12 @@ export interface IRigidBodyImpl {
         wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
         motionStatePtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatePtr: IWasmTypedArray<Uint8Array>,
         worldTransformPtr: Nullable<IWasmTypedArray<Float32Array>>
     ): void;
     setTransformMatrixFromArray(
         motionStatePtr: IWasmTypedArray<Float32Array>,
-        temporalKinematicStatePtr: IWasmTypedArray<Uint8Array>,
+        kinematicStatePtr: IWasmTypedArray<Uint8Array>,
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;
@@ -26,6 +26,12 @@ export interface IRigidBodyImpl {
         array: DeepImmutable<Tuple<number, 16>>,
         offset: number
     ): void;
+    /**
+     * this method shoud not be called from non-dynamic bodies
+     * @param kinematicStatePtr
+     */
+    getEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>): boolean;
+    setEffectiveKinematicState(kinematicStatePtr: IWasmTypedArray<Uint8Array>, value: boolean): void;
     setDamping(
         wasmInstance: IBulletWasmInstance,
         bodyPtr: number,
@@ -43,4 +49,7 @@ export interface IRigidBodyImpl {
     getMass(wasmInstance: IBulletWasmInstance, bodyPtr: number): number;
     getLocalInertia(wasmInstance: IBulletWasmInstance, bodyPtr: number): Vector3;
     translate(wasmInstance: IBulletWasmInstance, bodyPtr: number, translation: DeepImmutable<Vector3>): void;
+    // only required for buffered implementation
+    setLinearVelocity?(linearVelocity: DeepImmutable<Vector3>): void;
+    setAngularVelocity?(angularVelocity: DeepImmutable<Vector3>): void;
 }

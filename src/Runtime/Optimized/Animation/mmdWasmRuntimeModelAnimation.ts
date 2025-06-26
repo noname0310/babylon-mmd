@@ -3,9 +3,10 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { InduceMmdStandardMaterialRecompile, SetMorphTargetManagersNumMaxInfluencers } from "@/Runtime/Animation/Common/induceMmdStandardMaterialRecompile";
-import type { MorphIndices } from "@/Runtime/Animation/IMmdRuntimeAnimation";
+import type { BodyIndices, MorphIndices } from "@/Runtime/Animation/IMmdRuntimeAnimation";
 import { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 import type { ILogger } from "@/Runtime/ILogger";
+import type { IMmdRuntimeLinkedBone } from "@/Runtime/IMmdRuntimeLinkedBone";
 import type { MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 
 import type { IWasmTypedArray } from "../Misc/IWasmTypedArray";
@@ -238,16 +239,34 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
         const animationPool = animation._poolWrapper.pool;
 
         const skeleton = model.skeleton;
-        const bones = skeleton.bones;
-
-        const boneIndexMap = new Map<string, number>();
-        if (retargetingMap === undefined) {
-            for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(bones[i].name, i);
+        const runtimeBoneIndexMap = new Map<string, number>();
+        {
+            const bones = skeleton.bones;
+            const linkedBoneMap = new Map<string, IMmdRuntimeLinkedBone>();
+            if (retargetingMap === undefined) {
+                for (let i = 0; i < bones.length; ++i) {
+                    const linkedBone = bones[i];
+                    linkedBoneMap.set(linkedBone.name, linkedBone);
+                }
+            } else {
+                for (let i = 0; i < bones.length; ++i) {
+                    const linkedBone = bones[i];
+                    linkedBoneMap.set(retargetingMap[linkedBone.name] ?? linkedBone.name, linkedBone);
+                }
             }
-        } else {
-            for (let i = 0; i < bones.length; ++i) {
-                boneIndexMap.set(retargetingMap[bones[i].name] ?? bones[i].name, i);
+
+            const runtimeBones = model.runtimeBones;
+            const linkedBoneToRuntimeBoneIndexMap = new Map<IMmdRuntimeLinkedBone, number>();
+            for (let i = 0; i < runtimeBones.length; ++i) {
+                linkedBoneToRuntimeBoneIndexMap.set(runtimeBones[i].linkedBone, i);
+            }
+            for (const [name, linkedBone] of linkedBoneMap) {
+                const runtimeBoneIndex = linkedBoneToRuntimeBoneIndexMap.get(linkedBone);
+                if (runtimeBoneIndex === undefined) {
+                    logger?.warn(`Binding warning: bone ${name} not found in runtime bones`);
+                    continue;
+                }
+                runtimeBoneIndexMap.set(name, runtimeBoneIndex);
             }
         }
 
@@ -258,7 +277,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             const boneBindIndexMapArray = boneBindIndexMap.array;
             for (let i = 0; i < boneTracks.length; ++i) {
                 const boneTrack = boneTracks[i];
-                const boneIndex = boneIndexMap.get(boneTrack.name);
+                const boneIndex = runtimeBoneIndexMap.get(boneTrack.name);
                 if (boneIndex === undefined) {
                     logger?.warn(`Binding failed: bone ${boneTrack.name} not found`);
                     boneBindIndexMapArray[i] = -1;
@@ -275,7 +294,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             const movableBoneTracks = animation.movableBoneTracks;
             for (let i = 0; i < movableBoneTracks.length; ++i) {
                 const movableBoneTrack = movableBoneTracks[i];
-                const boneIndex = boneIndexMap.get(movableBoneTrack.name);
+                const boneIndex = runtimeBoneIndexMap.get(movableBoneTrack.name);
                 if (boneIndex === undefined) {
                     logger?.warn(`Binding failed: bone ${movableBoneTrack.name} not found`);
                     movableBoneBindIndexMapArray[i] = -1;
@@ -285,8 +304,8 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
-        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animation.morphTracks.length);
         const morphController = model.morph;
+        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animation.morphTracks.length);
         const morphTracks = animation.morphTracks;
         for (let i = 0; i < morphTracks.length; ++i) {
             const morphTrack = morphTracks[i];
@@ -347,7 +366,7 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             const propertyTrackIkBoneNames = animation.propertyTrack.ikBoneNames;
             for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
                 const ikBoneName = propertyTrackIkBoneNames[i];
-                const ikBoneIndex = boneIndexMap.get(ikBoneName);
+                const ikBoneIndex = runtimeBoneIndexMap.get(ikBoneName);
                 if (ikBoneIndex === undefined) {
                     logger?.warn(`Binding failed: IK bone ${ikBoneName} not found`);
                     ikSolverBindIndexMapArray[i] = -1;
@@ -363,12 +382,71 @@ export class MmdWasmRuntimeModelAnimation extends MmdRuntimeAnimation<MmdWasmAni
             }
         }
 
+        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animation.boneTracks.length + animation.movableBoneTracks.length);
+        {
+            const runtimeBones = model.runtimeBones;
+            {
+                const boneTracks = animation.boneTracks;
+                for (let i = 0; i < boneTracks.length; ++i) {
+                    const boneTrack = boneTracks[i];
+                    const runtimeBoneIndex = runtimeBoneIndexMap.get(boneTrack.name);
+                    if (runtimeBoneIndex === undefined) {
+                        logger?.warn(`Binding failed: runtime bone ${boneTrack.name} not found`);
+                        boneToBodyBindIndexMap[i] = null;
+                    } else {
+                        boneToBodyBindIndexMap[i] = runtimeBones[runtimeBoneIndex].rigidBodyIndices;
+                    }
+                }
+            }
+            {
+                const movableBoneTracks = animation.movableBoneTracks;
+                const offset = animation.boneTracks.length;
+                for (let i = 0; i < movableBoneTracks.length; ++i) {
+                    const movableBoneTrack = movableBoneTracks[i];
+                    const runtimeBoneIndex = runtimeBoneIndexMap.get(movableBoneTrack.name);
+                    if (runtimeBoneIndex === undefined) {
+                        logger?.warn(`Binding failed: runtime bone ${movableBoneTrack.name} not found`);
+                        boneToBodyBindIndexMap[i + offset] = null;
+                    } else {
+                        boneToBodyBindIndexMap[i + offset] = runtimeBones[runtimeBoneIndex].rigidBodyIndices;
+                    }
+                }
+            }
+        }
+        const bodyLengthBufferPtr = animationPool.allocateLengthsBuffer(boneToBodyBindIndexMap.length);
+        const bodyLengthBuffer = wasmInstance.createTypedArray(Uint32Array, bodyLengthBufferPtr, boneToBodyBindIndexMap.length);
+        {
+            const bodyLengthBufferArray = bodyLengthBuffer.array;
+            for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+                const bodyIndices = boneToBodyBindIndexMap[i];
+                if (bodyIndices === null) {
+                    bodyLengthBufferArray[i] = 0;
+                } else {
+                    bodyLengthBufferArray[i] = bodyIndices.length;
+                }
+            }
+        }
+        const boneToBodyBindIndexMapPtr = animationPool.createBoneToBodyBindIndexMap(animation.ptr, bodyLengthBufferPtr);
+        for (let i = 0; i < boneToBodyBindIndexMap.length; ++i) {
+            const nthBodyIndicesPtr = animationPool.getNthBoneToBodyBindIndexMap(boneToBodyBindIndexMapPtr, i);
+            const nthBodyIndices = wasmInstance.createTypedArray(Int32Array, nthBodyIndicesPtr, bodyLengthBuffer.array[i]).array;
+
+            const bodyIndices = boneToBodyBindIndexMap[i];
+            if (bodyIndices === null) continue;
+
+            for (let j = 0; j < bodyIndices.length; ++j) {
+                nthBodyIndices[j] = bodyIndices[j];
+            }
+        }
+        animationPool.deallocateLengthsBuffer(bodyLengthBufferPtr, morphTracks.length);
+
         const runtimeAnimationPtr = animationPool.createRuntimeAnimation(
             animation.ptr,
             boneBindIndexMapPtr,
             movableBoneBindIndexMapPtr,
             morphBindIndexMapPtr,
-            ikSolverBindIndexMapPtr
+            ikSolverBindIndexMapPtr,
+            boneToBodyBindIndexMapPtr
         );
 
         return new MmdWasmRuntimeModelAnimation(
