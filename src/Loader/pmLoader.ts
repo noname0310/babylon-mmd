@@ -161,7 +161,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
         let indices: Uint16Array | Uint32Array;
-        const indexToSubmehIndexMaps: IPmBuildGeometryResult["indexToSubmeshIndexMaps"] = [];
+        const indexToSubmeshIndexMaps: IPmBuildGeometryResult["indexToSubmeshIndexMaps"] = [];
         {
             if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.indices.length);
@@ -453,7 +453,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 geometry.applyToMesh(mesh);
                 geometries.push(geometry);
 
-                indexToSubmehIndexMaps.push({
+                indexToSubmeshIndexMaps.push({
                     map: indexToSubMeshIndexMap,
                     isReferencedVertex
                 });
@@ -469,7 +469,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             meshes,
             geometries,
             indices,
-            indexToSubmeshIndexMaps: indexToSubmehIndexMaps
+            indexToSubmeshIndexMaps: indexToSubmeshIndexMaps
         };
     }
 
