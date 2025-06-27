@@ -48,7 +48,7 @@ interface IPmLoadState extends IMmdModelLoadState {
 
 interface IPmBuildGeometryResult extends IMmdModelBuildGeometryResult {
     readonly indices: Uint16Array | Uint32Array;
-    readonly indexToSubmehIndexMaps: {
+    readonly indexToSubmeshIndexMaps: {
         map: Uint8Array | Uint16Array | Int32Array;
         isReferencedVertex: Uint8Array;
     }[];
@@ -161,7 +161,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
         let indices: Uint16Array | Uint32Array;
-        const indexToSubmehIndexMaps: IPmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
+        const indexToSubmehIndexMaps: IPmBuildGeometryResult["indexToSubmeshIndexMaps"] = [];
         {
             if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.indices.length);
@@ -469,7 +469,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             meshes,
             geometries,
             indices,
-            indexToSubmehIndexMaps
+            indexToSubmeshIndexMaps: indexToSubmehIndexMaps
         };
     }
 
@@ -586,7 +586,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             }
         }
 
-        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
+        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmeshIndexMaps;
         const morphsInfo = modelObject.morphs;
         const geometries = buildGeometryResult.geometries;
         const subMeshesMorphTargets: MorphTarget[][] = new Array(geometries.length); // morphTargets[subMeshIndex][morphIndex]
