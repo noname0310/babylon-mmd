@@ -84,7 +84,7 @@ export class TextureAlphaChecker {
     private async _renderTextureAsync(
         texture: BaseTexture,
         mesh: Mesh,
-        subMeshIndex: number | null
+        subMeshIndex: Nullable<number>
     ): Promise<Uint8Array> {
         const shader = TextureAlphaChecker._GetShader(this._scene);
         shader.setTexture("textureSampler", texture);
@@ -191,7 +191,7 @@ export class TextureAlphaChecker {
     public async hasTranslucentFragmentsOnGeometryAsync(
         texture: BaseTexture,
         mesh: Mesh,
-        subMeshIndex: number | null,
+        subMeshIndex: Nullable<number>,
         alphaThreshold: number,
         alphaBlendThreshold: number
     ): Promise<TransparencyMode> {
@@ -248,7 +248,7 @@ export class TextureAlphaChecker {
     public async hasFragmentsOnlyOpaqueOnGeometryAsync(
         texture: BaseTexture,
         mesh: Mesh,
-        subMeshIndex: number | null
+        subMeshIndex: Nullable<number>
     ): Promise<boolean> {
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
