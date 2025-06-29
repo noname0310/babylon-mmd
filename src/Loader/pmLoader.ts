@@ -40,6 +40,17 @@ export interface IPmLoaderOptions extends IMmdModelLoaderOptions {
      * Therefore, in order to load it as a file, you need to put information about these files separately
      */
     readonly referenceFiles: readonly File[];
+
+    /**
+     * Optimize submeshes (default: true)
+     *
+     * This property is used to optimize submeshes during loading
+     *
+     * If set to true, the loader will split submeshes into multiple meshes based on the material
+     *
+     * If you want preserve vertex order, set this to false
+     */
+    readonly optimizeSubmeshes: boolean;
 }
 
 interface IPmLoadState extends IMmdModelLoadState {
@@ -71,12 +82,24 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
     public referenceFiles: readonly File[];
 
     /**
+     * Optimize submeshes (default: true)
+     *
+     * This property is used to optimize submeshes during loading
+     *
+     * If set to true, the loader will split submeshes into multiple meshes based on the material
+     *
+     * If you want preserve vertex order, set this to false
+     */
+    public optimizeSubmeshes: boolean;
+
+    /**
      * Create a new PmLoader
      */
     public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IPmLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions) {
         super(name, extensions, options, loaderOptions);
 
         this.referenceFiles = options.referenceFiles ?? loaderOptions?.referenceFiles ?? [];
+        this.optimizeSubmeshes = options.optimizeSubmeshes ?? loaderOptions?.optimizeSubmeshes ?? true;
     }
 
     public loadFile(

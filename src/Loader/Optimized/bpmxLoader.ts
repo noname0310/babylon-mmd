@@ -2,7 +2,7 @@ import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, registerSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
+import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, RegisterSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -615,4 +615,4 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
     }
 }
 
-registerSceneLoaderPlugin(new BpmxLoader());
+RegisterSceneLoaderPlugin(new BpmxLoader());
