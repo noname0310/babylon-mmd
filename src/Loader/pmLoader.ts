@@ -40,6 +40,17 @@ export interface IPmLoaderOptions extends IMmdModelLoaderOptions {
      * Therefore, in order to load it as a file, you need to put information about these files separately
      */
     readonly referenceFiles: readonly File[];
+
+    /**
+     * Optimize submeshes (default: true)
+     *
+     * This property is used to optimize submeshes during loading
+     *
+     * If set to true, the loader will split submeshes into multiple meshes based on the material
+     *
+     * If you want preserve vertex order, set this to false
+     */
+    readonly optimizeSubmeshes: boolean;
 }
 
 interface IPmLoadState extends IMmdModelLoadState {
@@ -48,7 +59,7 @@ interface IPmLoadState extends IMmdModelLoadState {
 
 interface IPmBuildGeometryResult extends IMmdModelBuildGeometryResult {
     readonly indices: Uint16Array | Uint32Array;
-    readonly indexToSubmehIndexMaps: {
+    readonly indexToSubmeshIndexMaps: {
         map: Uint8Array | Uint16Array | Int32Array;
         isReferencedVertex: Uint8Array;
     }[];
@@ -71,12 +82,29 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
     public referenceFiles: readonly File[];
 
     /**
+     * Optimize submeshes (default: true)
+     *
+     * This property is used to optimize submeshes during loading
+     *
+     * If set to true, the loader will split submeshes into multiple meshes based on the material
+     *
+     * If you want preserve vertex order, set this to false
+     */
+    public optimizeSubmeshes: boolean;
+
+    /**
      * Create a new PmLoader
+     *
+     * @param name Name of the loader
+     * @param extensions Extensions of the loader
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global mmd model Loader instance as loaderOptions
      */
     public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IPmLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions) {
         super(name, extensions, options, loaderOptions);
 
         this.referenceFiles = options.referenceFiles ?? loaderOptions?.referenceFiles ?? [];
+        this.optimizeSubmeshes = options.optimizeSubmeshes ?? loaderOptions?.optimizeSubmeshes ?? true;
     }
 
     public loadFile(
@@ -161,7 +189,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
         let indices: Uint16Array | Uint32Array;
-        const indexToSubmehIndexMaps: IPmBuildGeometryResult["indexToSubmehIndexMaps"] = [];
+        const indexToSubmeshIndexMaps: IPmBuildGeometryResult["indexToSubmeshIndexMaps"] = [];
         {
             if (modelObject.indices instanceof Uint8Array || modelObject.indices instanceof Uint16Array) {
                 indices = new Uint16Array(modelObject.indices.length);
@@ -453,7 +481,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 geometry.applyToMesh(mesh);
                 geometries.push(geometry);
 
-                indexToSubmehIndexMaps.push({
+                indexToSubmeshIndexMaps.push({
                     map: indexToSubMeshIndexMap,
                     isReferencedVertex
                 });
@@ -469,7 +497,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             meshes,
             geometries,
             indices,
-            indexToSubmehIndexMaps
+            indexToSubmeshIndexMaps: indexToSubmeshIndexMaps
         };
     }
 
@@ -586,7 +614,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             }
         }
 
-        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmehIndexMaps;
+        const indexToSubmeshIndexMaps = buildGeometryResult.indexToSubmeshIndexMaps;
         const morphsInfo = modelObject.morphs;
         const geometries = buildGeometryResult.geometries;
         const subMeshesMorphTargets: MorphTarget[][] = new Array(geometries.length); // morphTargets[subMeshIndex][morphIndex]

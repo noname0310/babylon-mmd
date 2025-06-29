@@ -163,6 +163,11 @@ export abstract class MmdModelLoader<
 
     /**
      * Create a new MMD model loader
+     *
+     * @param name Name of the loader
+     * @param extensions Extensions supported by this loader
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global mmd model loader instance as loaderOptions
      */
     public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions | IBpmxLoaderOptions) {
         this.name = name;
