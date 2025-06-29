@@ -16,6 +16,9 @@ import { PmxLoaderMetadata } from "./pmxLoader.metadata";
 export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new PmdLoader
+     *
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global PmxLoader instance as loaderOptions
      */
     public constructor(options?: Partial<IPmLoaderOptions>, loaderOptions?: IPmLoaderOptions) {
         super(

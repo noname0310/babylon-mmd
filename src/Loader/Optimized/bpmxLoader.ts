@@ -50,6 +50,9 @@ interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
 export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmxBuildGeometryResult> implements IBpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
     /**
      * Create a new BpmxLoader
+     *
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global BpmxLoader instance as loaderOptions
      */
     public constructor(options?: Partial<IBpmxLoaderOptions>, loaderOptions?: IBpmxLoaderOptions) {
         super(

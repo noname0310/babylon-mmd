@@ -94,6 +94,11 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
     /**
      * Create a new PmLoader
+     *
+     * @param name Name of the loader
+     * @param extensions Extensions of the loader
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global mmd model Loader instance as loaderOptions
      */
     public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IPmLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions) {
         super(name, extensions, options, loaderOptions);
