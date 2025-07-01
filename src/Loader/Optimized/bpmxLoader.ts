@@ -393,7 +393,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                     mesh.material = null;
                 } else if (subGeometries.length === 1) {
                     const subGeometry = subGeometries[0];
-                    new SubMesh(0, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                    new SubMesh(
+                        0, // materialIndex
+                        subGeometry.verticesStart, // verticesStart
+                        subGeometry.verticesCount, // verticesCount
+                        subGeometry.indexStart, // indexStart
+                        subGeometry.indexCount, // indexCount
+                        mesh, // mesh
+                        undefined, // renderingMesh
+                        false // createBoundingBox
+                    );
                     mesh.material = materials[subGeometries[0].materialIndex];
                 } else {
                     scene._blockEntityCollection = !!assetContainer;
@@ -405,7 +414,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
 
                     for (let geometryIndex = 0; geometryIndex < subGeometries.length; ++geometryIndex) {
                         const subGeometry = subGeometries[geometryIndex];
-                        new SubMesh(geometryIndex, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                        new SubMesh(
+                            geometryIndex, // materialIndex
+                            subGeometry.verticesStart, // verticesStart
+                            subGeometry.verticesCount, // verticesCount
+                            subGeometry.indexStart, // indexStart
+                            subGeometry.indexCount, // indexCount
+                            mesh, // mesh
+                            undefined, // renderingMesh
+                            false // createBoundingBox
+                        );
                         subMaterials.push(materials[subGeometry.materialIndex]);
                     }
 

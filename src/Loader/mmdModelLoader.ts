@@ -308,9 +308,7 @@ export abstract class MmdModelLoader<
             );
         }
 
-        if (state.boundingBoxMargin !== 0) {
-            this._applyBoundingBoxMargin(buildGeometryResult.meshes, state.boundingBoxMargin);
-        }
+        this._applyBoundingBoxToSubmeshes(buildGeometryResult.meshes, state.boundingBoxMargin);
 
         (rootMesh.metadata as MmdModelMetadata) = {
             isMmdModel: true,
@@ -535,32 +533,39 @@ export abstract class MmdModelLoader<
         progress: Progress
     ): Promise<MorphTargetManager[]>;
 
-    private _applyBoundingBoxMargin(meshes: Mesh[], boundingBoxMargin: number): void {
+    private _applyBoundingBoxToSubmeshes(meshes: Mesh[], boundingBoxMargin: number): void {
+        // we created SubMesh without bounding box, for setBoundingInfo manually
+
+        // We assign the same bounding box to all submeshes
+        // because this ensures that the order of the submeshes is preserved when the engine sorts the transparent draw order.
         for (let i = 0; i < meshes.length; ++i) {
             const mesh = meshes[i];
             if (mesh.subMeshes === undefined) continue;
 
             if (1 < mesh.subMeshes.length || !mesh.subMeshes[0].IsGlobal) {
+                const boundingInfo = mesh.getBoundingInfo();
+                const minimum = boundingBoxMargin !== 0
+                    ? new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum)
+                    : boundingInfo.minimum;
+                const maximum = boundingBoxMargin !== 0
+                    ? new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
+                    : boundingInfo.maximum;
+
                 const subMeshes = mesh.subMeshes;
                 for (let i = 0; i < subMeshes.length; ++i) {
-                    const subMesh = subMeshes[i];
-                    const subMeshBoundingInfo = subMesh.getBoundingInfo();
-                    subMesh.setBoundingInfo(
-                        new BoundingInfo(
-                            new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                            new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
-                        )
-                    );
+                    subMeshes[i].setBoundingInfo(new BoundingInfo(minimum, maximum));
                 }
             }
 
-            const boundingInfo = mesh.getBoundingInfo();
-            mesh.setBoundingInfo(
-                new BoundingInfo(
-                    new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
-                    new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
-                )
-            );
+            if (boundingBoxMargin !== 0) {
+                const boundingInfo = mesh.getBoundingInfo();
+                mesh.setBoundingInfo(
+                    new BoundingInfo(
+                        new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
+                        new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
+                    )
+                );
+            }
         }
     }
 

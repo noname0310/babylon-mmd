@@ -799,7 +799,9 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                         Math.floor(modelObject.vertices.length), // verticesCount
                         offset, // indexStart
                         materialInfo.indexCount, // indexCount
-                        rootMesh
+                        rootMesh, // mesh
+                        undefined, // renderingMesh
+                        false // createBoundingBox
                     );
 
                     offset += materialInfo.indexCount;
