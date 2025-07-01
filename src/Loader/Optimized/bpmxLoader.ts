@@ -149,11 +149,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
     protected override async _buildGeometryAsync(
         state: IBpmxLoadState,
         modelObject: BpmxObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
     ): Promise<IBpmxBuildGeometryResult> {
+        scene._blockEntityCollection = !!assetContainer;
+        const rootMesh = new Mesh(modelObject.header.modelName, scene);
+        rootMesh._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+        rootMesh.setEnabled(false);
+
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
 
@@ -280,6 +285,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         progress.invokeProgressEvent();
 
         return {
+            rootMesh,
             meshes,
             geometries
         };

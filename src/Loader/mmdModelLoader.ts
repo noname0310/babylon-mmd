@@ -8,7 +8,7 @@ import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
@@ -113,6 +113,7 @@ export interface IMmdModelLoadState {
 
 /** @internal */
 export interface IMmdModelBuildGeometryResult {
+    readonly rootMesh: Mesh;
     readonly meshes: Mesh[];
     readonly geometries: Geometry[];
 }
@@ -254,20 +255,14 @@ export abstract class MmdModelLoader<
         progress.endTask("Parse");
         progress.invokeProgressEvent();
 
-        scene._blockEntityCollection = !!assetContainer;
-        const rootMesh = new Mesh(modelObject.header.modelName, scene);
-        rootMesh._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
-        rootMesh.setEnabled(false);
-
         const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
-            rootMesh,
             scene,
             assetContainer,
             progress
         );
+        const rootMesh = buildGeometryResult.rootMesh;
 
         const textureNameMap = state.preserveSerializationData ? new Map<BaseTexture, string>() : null;
 
@@ -365,9 +360,11 @@ export abstract class MmdModelLoader<
 
         rootMesh.setEnabled(true);
 
+        const uniqueMeshes = [...new Set([rootMesh, ...buildGeometryResult.meshes])];
+
         if (assetContainer !== null) {
             assetContainer.rootNodes.push(rootMesh);
-            assetContainer.meshes.push(rootMesh, ...buildGeometryResult.meshes);
+            assetContainer.meshes.push(...uniqueMeshes);
             assetContainer.geometries.push(...buildGeometryResult.geometries);
             assetContainer.materials.push(...materials);
             assetContainer.multiMaterials.push(...multiMaterials);
@@ -376,7 +373,7 @@ export abstract class MmdModelLoader<
         }
 
         return {
-            meshes: [rootMesh, ...buildGeometryResult.meshes],
+            meshes: uniqueMeshes,
             particleSystems: [],
             skeletons: skeleton !== null ? [skeleton] : [],
             animationGroups: [],
@@ -401,7 +398,6 @@ export abstract class MmdModelLoader<
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
