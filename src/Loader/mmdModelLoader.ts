@@ -539,16 +539,19 @@ export abstract class MmdModelLoader<
         for (let i = 0; i < meshes.length; ++i) {
             const mesh = meshes[i];
             if (mesh.subMeshes === undefined) continue;
-            const subMeshes = mesh.subMeshes;
-            for (let i = 0; i < subMeshes.length; ++i) {
-                const subMesh = subMeshes[i];
-                const subMeshBoundingInfo = subMesh.getBoundingInfo();
-                subMesh.setBoundingInfo(
-                    new BoundingInfo(
-                        new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                        new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
-                    )
-                );
+
+            if (1 < mesh.subMeshes.length || !mesh.subMeshes[0].IsGlobal) {
+                const subMeshes = mesh.subMeshes;
+                for (let i = 0; i < subMeshes.length; ++i) {
+                    const subMesh = subMeshes[i];
+                    const subMeshBoundingInfo = subMesh.getBoundingInfo();
+                    subMesh.setBoundingInfo(
+                        new BoundingInfo(
+                            new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
+                            new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                        )
+                    );
+                }
             }
 
             const boundingInfo = mesh.getBoundingInfo();
@@ -558,8 +561,6 @@ export abstract class MmdModelLoader<
                     new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
                 )
             );
-
-            mesh._updateBoundingInfo();
         }
     }
 
