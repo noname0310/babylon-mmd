@@ -53,11 +53,19 @@ export interface IPmLoaderOptions extends IMmdModelLoaderOptions {
      * If you want preserve vertex order, set this to false
      */
     readonly optimizeSubmeshes: boolean;
+
+    /**
+     * Optimize single material model (default: true)
+     *
+     * This property is used to optimize single material model during loading
+     */
+    readonly optimizeSingleMaterialModel: boolean;
 }
 
 interface IPmLoadState extends IMmdModelLoadState {
     readonly referenceFiles: readonly File[];
     readonly optimizeSubmeshes: boolean;
+    readonly optimizeSingleMaterialModel: boolean;
 }
 
 interface IPmBuildGeometryResult extends IMmdModelBuildGeometryResult {
@@ -96,6 +104,13 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
     public optimizeSubmeshes: boolean;
 
     /**
+     * Optimize single material model (default: true)
+     *
+     * This property is used to optimize single material model during loading
+     */
+    public optimizeSingleMaterialModel: boolean;
+
+    /**
      * Create a new PmLoader
      *
      * @param name Name of the loader
@@ -108,6 +123,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
         this.referenceFiles = options.referenceFiles ?? loaderOptions?.referenceFiles ?? [];
         this.optimizeSubmeshes = options.optimizeSubmeshes ?? loaderOptions?.optimizeSubmeshes ?? true;
+        this.optimizeSingleMaterialModel = options.optimizeSingleMaterialModel ?? loaderOptions?.optimizeSingleMaterialModel ?? true;
     }
 
     public loadFile(
@@ -127,6 +143,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const preserveSerializationData = this.preserveSerializationData;
         const referenceFiles = this.referenceFiles;
         const optimizeSubmeshes = this.optimizeSubmeshes;
+        const optimizeSingleMaterialModel = this.optimizeSingleMaterialModel;
 
         const request = scene._loadFile(
             fileOrUrl,
@@ -141,7 +158,8 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                     boundingBoxMargin,
                     preserveSerializationData,
                     referenceFiles,
-                    optimizeSubmeshes
+                    optimizeSubmeshes,
+                    optimizeSingleMaterialModel
                 };
                 onSuccess(loadState, responseURL);
             },
@@ -151,6 +169,10 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             onError
         );
         return request;
+    }
+
+    protected _effectiveOptimizeSubmeshes(state: IPmLoadState, modelObject: PmxObject): boolean {
+        return state.optimizeSubmeshes && !(modelObject.materials.length <= 1 && state.optimizeSingleMaterialModel);
     }
 
     protected override _getProgressTaskCosts(state: IPmLoadState, modelObject: PmxObject): IProgressTask[] {
@@ -212,7 +234,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
         const indexToSubmeshIndexMaps: IPmBuildGeometryResult["indexToSubmeshIndexMaps"] = [];
 
-        if (state.optimizeSubmeshes) {
+        if (this._effectiveOptimizeSubmeshes(state, modelObject)) {
             scene._blockEntityCollection = !!assetContainer;
             rootMesh = new Mesh(modelObject.header.modelName, scene);
             rootMesh._parentContainer = assetContainer;
@@ -781,7 +803,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         }
 
         const referencedMeshList: (readonly ReferencedMesh[])[] = [];
-        if (state.optimizeSubmeshes) {
+        if (this._effectiveOptimizeSubmeshes(state, modelObject)) {
             for (let i = 0; i < meshes.length; ++i) {
                 referencedMeshList.push([meshes[i]]);
             }
@@ -851,7 +873,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
         // apply materials to meshes
         const multiMaterials: MultiMaterial[] = [];
-        if (state.optimizeSubmeshes) {
+        if (this._effectiveOptimizeSubmeshes(state, modelObject)) {
             for (let i = 0; i < materials.length; ++i) meshes[i].material = materials[i];
         } else {
             scene._blockEntityCollection = !!assetContainer;

@@ -57,7 +57,7 @@ export class SceneBuilder implements ISceneBuilder {
                             mmdmodel: {
                                 materialBuilder: materialBuilder,
                                 optimizeSubmeshes: false,
-                                buildMorph: false,
+                                buildMorph: true,
                                 loggingEnabled: true
                             }
                         }
