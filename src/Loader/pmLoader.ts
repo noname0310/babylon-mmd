@@ -19,7 +19,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdBufferKind } from "./mmdBufferKind";
-import type { IBuildMaterialResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions, IMmdModelLoadState } from "./mmdModelLoader";
+import type { IBuildMaterialResult, IBuildMorphResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions, IMmdModelLoadState } from "./mmdModelLoader";
 import { MmdModelLoader } from "./mmdModelLoader";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
@@ -767,6 +767,19 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             geometry.applyToMesh(rootMesh);
             geometries.push(geometry);
             meshes.push(rootMesh);
+
+            // just precess as 1 submesh
+            const identityVertexIndexMap = vertexCount < 256
+                ? new Uint8Array(vertexCount)
+                : vertexCount < 65536
+                    ? new Uint16Array(vertexCount)
+                    : new Int32Array(vertexCount);
+            for (let i = 0; i < identityVertexIndexMap.length; ++i) identityVertexIndexMap[i] = i;
+            const isReferencedVertex = new Uint8Array(vertexCount).fill(1);
+            indexToSubmeshIndexMaps.push({
+                map: identityVertexIndexMap,
+                isReferencedVertex
+            });
         }
 
         progress.endTask("Build Geometry");
@@ -900,18 +913,19 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         buildGeometryResult: IPmBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]> {
+    ): Promise<IBuildMorphResult> {
         const preserveSerializationData = state.preserveSerializationData;
+        const effectiveOptimizeSubmeshes = this._effectiveOptimizeSubmeshes(state, modelObject);
 
-        const vertexToSubMeshMap = new Int32Array(modelObject.vertices.length).fill(-1);
+        const vertexToSubMeshMap = effectiveOptimizeSubmeshes
+            ? new Int32Array(modelObject.vertices.length).fill(-1)
+            : new Int32Array(0);
         // if vertexToSubMeshMap[i] === -2, vertex i has multiple submeshes references
         // if vertexToSubMeshMap[i] === -1, vertex i has no submeshes references
         const vertexToSubMeshSlowMap = new Map<number, number[]>();
-
-        const indices = buildGeometryResult.indices;
-        {
+        if (effectiveOptimizeSubmeshes) {
+            const indices = buildGeometryResult.indices;
             const materials = modelObject.materials;
             let indexOffset = 0;
             for (let subMeshIndex = 0; subMeshIndex < materials.length; ++subMeshIndex) {
@@ -945,6 +959,8 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
         let buildMorphProgress = 0;
         let time = performance.now();
+
+        const morphsMetadata: MmdModelMetadata.Morph[] = [];
         for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
             const morphInfo = morphsInfo[morphIndex];
 
@@ -998,24 +1014,29 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
             const referencedSubMeshes: number[] = [];
             {
-                const morphIndices = morphInfo.indices;
-                for (let i = 0; i < morphIndices.length; ++i) {
-                    const elementIndex = morphIndices[i];
-                    const subMeshIndex = vertexToSubMeshMap[elementIndex];
-                    if (subMeshIndex === -1) continue;
+                if (effectiveOptimizeSubmeshes) {
+                    const morphIndices = morphInfo.indices;
+                    for (let i = 0; i < morphIndices.length; ++i) {
+                        const elementIndex = morphIndices[i];
+                        const subMeshIndex = vertexToSubMeshMap[elementIndex];
+                        if (subMeshIndex === -1) continue;
 
-                    if (subMeshIndex === -2) {
-                        const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
-                        for (let j = 0; j < subMeshIndices.length; ++j) {
-                            const subMeshIndex = subMeshIndices[j];
-                            if (!referencedSubMeshes.includes(subMeshIndex)) {
-                                referencedSubMeshes.push(subMeshIndex);
+                        if (subMeshIndex === -2) {
+                            const subMeshIndices = vertexToSubMeshSlowMap.get(elementIndex)!;
+                            for (let j = 0; j < subMeshIndices.length; ++j) {
+                                const subMeshIndex = subMeshIndices[j];
+                                if (!referencedSubMeshes.includes(subMeshIndex)) {
+                                    referencedSubMeshes.push(subMeshIndex);
+                                }
                             }
+                        } else if (!referencedSubMeshes.includes(subMeshIndex)) {
+                            referencedSubMeshes.push(subMeshIndex);
                         }
-                    } else if (!referencedSubMeshes.includes(subMeshIndex)) {
-                        referencedSubMeshes.push(subMeshIndex);
                     }
+                } else {
+                    referencedSubMeshes.push(0);
                 }
+
                 if (morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph1 &&
                     morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph2 &&
                     morphInfo.type !== PmxObject.Morph.Type.AdditionalUvMorph3 &&
@@ -1232,6 +1253,9 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             morphTargetManagers.push(morphTargetManager);
             meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
-        return morphTargetManagers;
+        return {
+            morphsMetadata,
+            morphTargetManagers
+        };
     }
 }

@@ -134,6 +134,12 @@ export interface IBuildMaterialResult {
     readonly textureLoadPromise: Promise<void>;
 }
 
+/** @internal */
+export interface IBuildMorphResult {
+    readonly morphsMetadata: MmdModelMetadata.Morph[];
+    readonly morphTargetManagers: MorphTargetManager[];
+}
+
 /**
  * @internal
  * Base class of loader for MMD model (pmx / pmd / bpmx)
@@ -306,19 +312,16 @@ export abstract class MmdModelLoader<
             progress.endTask("Build Skeleton");
         }
 
-        const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManagers: MorphTargetManager[] | null = null;
-        if (state.buildMorph) {
-            morphTargetManagers = await this._buildMorphAsync(
+        const buildMorphResult = state.buildMorph
+            ? await this._buildMorphAsync(
                 state,
                 modelObject,
                 buildGeometryResult,
                 scene,
                 assetContainer,
-                morphsMetadata,
                 progress
-            );
-        }
+            )
+            : null;
 
         this._applyBoundingBoxToSubmeshes(buildGeometryResult.meshes, state.boundingBoxMargin);
 
@@ -331,7 +334,7 @@ export abstract class MmdModelLoader<
                 englishComment: modelObject.header.englishComment
             },
             bones: bonesMetadata,
-            morphs: morphsMetadata,
+            morphs: buildMorphResult?.morphsMetadata ?? [],
             rigidBodies: modelObject.rigidBodies,
             joints: modelObject.joints,
             meshes: buildGeometryResult.meshes,
@@ -379,7 +382,7 @@ export abstract class MmdModelLoader<
             assetContainer.materials.push(...materials);
             assetContainer.multiMaterials.push(...multiMaterials);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
-            if (morphTargetManagers !== null) assetContainer.morphTargetManagers.push(...morphTargetManagers);
+            if (buildMorphResult !== null) assetContainer.morphTargetManagers.push(...buildMorphResult.morphTargetManagers);
         }
 
         return {
@@ -541,9 +544,8 @@ export abstract class MmdModelLoader<
         buildGeometryResult: BuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]>;
+    ): Promise<IBuildMorphResult>;
 
     private _applyBoundingBoxToSubmeshes(meshes: Mesh[], boundingBoxMargin: number): void {
         // we created SubMesh without bounding box, for setBoundingInfo manually

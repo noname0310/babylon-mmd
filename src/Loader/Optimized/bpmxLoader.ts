@@ -21,7 +21,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
-import type { IBuildMaterialResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions } from "../mmdModelLoader";
+import type { IBuildMaterialResult, IBuildMorphResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions } from "../mmdModelLoader";
 import { type IMmdModelLoadState, MmdModelLoader } from "../mmdModelLoader";
 import type { MmdModelMetadata } from "../mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "../objectUniqueIdProvider";
@@ -465,9 +465,8 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         buildGeometryResult: IBpmxBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]> {
+    ): Promise<IBuildMorphResult> {
         const preserveSerializationData = state.preserveSerializationData;
         const morphsInfo = modelObject.morphs;
 
@@ -478,6 +477,8 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
 
         let buildMorphProgress = 0;
         let time = performance.now();
+
+        const morphsMetadata: MmdModelMetadata.Morph[] = [];
         for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
             const morphInfo = morphsInfo[morphIndex];
 
@@ -640,7 +641,10 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
             morphTargetManagers.push(morphTargetManager);
             meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
-        return morphTargetManagers;
+        return {
+            morphsMetadata,
+            morphTargetManagers
+        };
     }
 }
 
