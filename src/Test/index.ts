@@ -6,7 +6,7 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/pmxConverterScene";
+import { SceneBuilder } from "./Scene/shadingTestScene";
 
 const Canvas = document.createElement("canvas");
 Canvas.style.width = "100%";

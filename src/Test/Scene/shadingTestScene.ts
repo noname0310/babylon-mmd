@@ -1,5 +1,6 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
+import "@/Loader/Optimized/bpmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -51,6 +52,7 @@ export class SceneBuilder implements ISceneBuilder {
                 const mmdMesh = await LoadAssetContainerAsync(
                     // "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx", // uv morph test model
                     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    // "res/private_test/model/YYB Hatsune Miku_10th_v1.02 - npsd nos.bpmx",
                     scene,
                     {
                         pluginOptions: {
@@ -67,7 +69,6 @@ export class SceneBuilder implements ISceneBuilder {
                     return result.meshes[0] as Mesh;
                 });
                 for (const mesh of mmdMesh.metadata.meshes) {
-                    console.log(mesh.name);
                     mesh.receiveShadows = true;
                     shadowGenerator.addShadowCaster(mesh, false);
                 }

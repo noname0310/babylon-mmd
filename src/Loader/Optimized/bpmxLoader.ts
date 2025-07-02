@@ -36,9 +36,20 @@ import { BpmxReader } from "./Parser/bpmxReader";
 /**
  * Options for loading BPMX model
  */
-export interface IBpmxLoaderOptions extends IMmdModelLoaderOptions { }
+export interface IBpmxLoaderOptions extends IMmdModelLoaderOptions {
+    /**
+     * Use single mesh for single geometry model (defalut: true)
+     *
+     * If there is only one geometry in the model, we don't need to create root node for create mesh
+     *
+     * Instead, we use root node as render
+     */
+    readonly useSingleMeshForSingleGeometryModel: boolean;
+}
 
-interface IBpmxLoadState extends IMmdModelLoadState { }
+interface IBpmxLoadState extends IMmdModelLoadState {
+    readonly useSingleMeshForSingleGeometryModel: boolean;
+}
 
 interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
 
@@ -48,19 +59,30 @@ interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
  * BPMX is a single binary file format that contains all the data of a model
  */
 export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmxBuildGeometryResult> implements IBpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
-    /**
+    /*/**
+     * Use single mesh for single geometry model (defalut: true)
+     *
+     * If there is only one geometry in the model, we don't need to create root node for create mesh
+     *
+     * Instead, we use root node as render
+     */
+    public useSingleMeshForSingleGeometryModel: boolean;
+
+    /*
      * Create a new BpmxLoader
      *
      * @param options babylon.js scene loader options
      * @param loaderOptions Overriding options, typically pass global BpmxLoader instance as loaderOptions
      */
-    public constructor(options?: Partial<IBpmxLoaderOptions>, loaderOptions?: IBpmxLoaderOptions) {
+    public constructor(options: Partial<IBpmxLoaderOptions> = {}, loaderOptions?: IBpmxLoaderOptions) {
         super(
             BpmxLoaderMetadata.name,
             BpmxLoaderMetadata.extensions,
             options,
             loaderOptions
         );
+
+        this.useSingleMeshForSingleGeometryModel = options.useSingleMeshForSingleGeometryModel ?? loaderOptions?.useSingleMeshForSingleGeometryModel ?? true;
     }
 
     public loadFile(
@@ -79,6 +101,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         const boundingBoxMargin = this.boundingBoxMargin;
         const alwaysSetSubMeshesBoundingInfo = this.alwaysSetSubMeshesBoundingInfo;
         const preserveSerializationData = this.preserveSerializationData;
+        const useSingleMeshForSingleGeometryModel = this.useSingleMeshForSingleGeometryModel;
 
         const request = scene._loadFile(
             fileOrUrl,
@@ -92,7 +115,8 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                     buildMorph,
                     boundingBoxMargin,
                     alwaysSetSubMeshesBoundingInfo,
-                    preserveSerializationData
+                    preserveSerializationData,
+                    useSingleMeshForSingleGeometryModel
                 };
                 onSuccess(loadState, responseURL);
             },
@@ -242,12 +266,17 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                 }
             }
 
-            scene._blockEntityCollection = !!assetContainer;
-            const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
-            mesh._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
+            let mesh: Mesh;
+            if (state.useSingleMeshForSingleGeometryModel && geometriesInfo.length === 1) {
+                mesh = rootMesh;
+            } else {
+                scene._blockEntityCollection = !!assetContainer;
+                mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
+                mesh._parentContainer = assetContainer;
+                scene._blockEntityCollection = false;
+                mesh.setParent(rootMesh);
+            }
             if (geometryInfo.indices === undefined) mesh.isUnIndexed = true;
-            mesh.setParent(rootMesh);
             meshes.push(mesh);
 
             scene._blockEntityCollection = !!assetContainer;

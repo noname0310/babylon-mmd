@@ -186,7 +186,7 @@ export abstract class MmdModelLoader<
      * @param options babylon.js scene loader options
      * @param loaderOptions Overriding options, typically pass global mmd model loader instance as loaderOptions
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions | IBpmxLoaderOptions) {
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IMmdModelLoaderOptions) {
         this.name = name;
         this.extensions = extensions;
 
