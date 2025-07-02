@@ -497,7 +497,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;
-                const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
+                const geometry = new Geometry(materialInfo.name, scene, vertexData, false);
                 geometry._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
                 if (state.preserveSerializationData) {

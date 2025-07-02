@@ -251,7 +251,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
             meshes.push(mesh);
 
             scene._blockEntityCollection = !!assetContainer;
-            const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
+            const geometry = new Geometry(geometryInfo.name, scene, vertexData, false);
             geometry._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
             if (state.preserveSerializationData && geometryInfo.additionalUvs !== undefined) {
