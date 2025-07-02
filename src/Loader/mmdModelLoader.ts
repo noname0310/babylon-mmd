@@ -85,6 +85,14 @@ export interface IMmdModelLoaderOptions {
     readonly boundingBoxMargin: number;
 
     /**
+     * Whether to always set bounding info for submeshes (default: true)
+     *
+     * If this property is true, the loader will always set bounding info for submeshes
+     * Otherwise, it will only set bounding info for submeshes if the mesh has more than one submesh
+     */
+    readonly alwaysSetSubMeshesBoundingInfo: boolean;
+
+    /**
      * Whether to preserve the data used for serialization (default: false)
      *
      * If you want to serialize the model, you need to set this property to true
@@ -108,6 +116,7 @@ export interface IMmdModelLoadState {
     readonly buildSkeleton: boolean;
     readonly buildMorph: boolean;
     readonly boundingBoxMargin: number;
+    readonly alwaysSetSubMeshesBoundingInfo: boolean;
     readonly preserveSerializationData: boolean;
 }
 
@@ -149,6 +158,7 @@ export abstract class MmdModelLoader<
     public buildSkeleton: boolean;
     public buildMorph: boolean;
     public boundingBoxMargin: number;
+    public alwaysSetSubMeshesBoundingInfo: boolean;
     public preserveSerializationData: boolean;
 
     private _loggingEnabled: boolean;
@@ -180,6 +190,7 @@ export abstract class MmdModelLoader<
             buildSkeleton: true,
             buildMorph: true,
             boundingBoxMargin: 10,
+            alwaysSetSubMeshesBoundingInfo: true,
             preserveSerializationData: false,
             loggingEnabled: false
         };
@@ -189,6 +200,7 @@ export abstract class MmdModelLoader<
         this.buildSkeleton = options.buildSkeleton ?? loaderOptions.buildSkeleton;
         this.buildMorph = options.buildMorph ?? loaderOptions.buildMorph;
         this.boundingBoxMargin = options.boundingBoxMargin ?? loaderOptions.boundingBoxMargin;
+        this.alwaysSetSubMeshesBoundingInfo = options.alwaysSetSubMeshesBoundingInfo ?? loaderOptions.alwaysSetSubMeshesBoundingInfo;
         this.preserveSerializationData = options.preserveSerializationData ?? loaderOptions.preserveSerializationData;
 
         this._loggingEnabled = options.loggingEnabled ?? loaderOptions.loggingEnabled;
@@ -542,7 +554,7 @@ export abstract class MmdModelLoader<
             const mesh = meshes[i];
             if (mesh.subMeshes === undefined) continue;
 
-            if (1 < mesh.subMeshes.length || !mesh.subMeshes[0].IsGlobal) {
+            if (1 < mesh.subMeshes.length || !mesh.subMeshes[0].IsGlobal || this.alwaysSetSubMeshesBoundingInfo) {
                 const boundingInfo = mesh.getBoundingInfo();
                 const minimum = boundingBoxMargin !== 0
                     ? new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum)

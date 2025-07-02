@@ -140,6 +140,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const buildSkeleton = this.buildSkeleton;
         const buildMorph = this.buildMorph;
         const boundingBoxMargin = this.boundingBoxMargin;
+        const alwaysSetSubMeshesBoundingInfo = this.alwaysSetSubMeshesBoundingInfo;
         const preserveSerializationData = this.preserveSerializationData;
         const referenceFiles = this.referenceFiles;
         const optimizeSubmeshes = this.optimizeSubmeshes;
@@ -156,6 +157,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                     buildSkeleton,
                     buildMorph,
                     boundingBoxMargin,
+                    alwaysSetSubMeshesBoundingInfo,
                     preserveSerializationData,
                     referenceFiles,
                     optimizeSubmeshes,

@@ -77,6 +77,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         const buildSkeleton = this.buildSkeleton;
         const buildMorph = this.buildMorph;
         const boundingBoxMargin = this.boundingBoxMargin;
+        const alwaysSetSubMeshesBoundingInfo = this.alwaysSetSubMeshesBoundingInfo;
         const preserveSerializationData = this.preserveSerializationData;
 
         const request = scene._loadFile(
@@ -90,6 +91,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                     buildSkeleton,
                     buildMorph,
                     boundingBoxMargin,
+                    alwaysSetSubMeshesBoundingInfo,
                     preserveSerializationData
                 };
                 onSuccess(loadState, responseURL);
