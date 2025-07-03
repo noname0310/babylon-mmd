@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.67.0 (scheduled)
+
+- add `MultiMaterial` support
+  - see new loader options `PmLoader.optimizeSubmeshes`, `PmLoader.optimizeSingleMaterialModel` and `BpmxLoader.useSingleMeshForSingleGeometryModel`
+
+- introduce `StandardMaterialProxy` for support `StandardMaterial` in mmd runtime
+
+- introduce `NullMaterialProxy` for support any material in mmd runtime
+
 ## 0.66.0 (2025-06-27)
 
 - introduce `IMmdCamera` interface for allowing custom camera implementation in MMD runtime
