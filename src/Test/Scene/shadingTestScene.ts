@@ -1,5 +1,6 @@
 import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
+import "@/Loader/Optimized/bpmxLoader";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -51,6 +52,37 @@ export class SceneBuilder implements ISceneBuilder {
                 const mmdMesh = await LoadAssetContainerAsync(
                     // "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx", // uv morph test model
                     "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
+                    // "res/private_test/model/YYB Hatsune Miku_10th_v1.02 - npsd nos.bpmx",
+                    scene,
+                    {
+                        pluginOptions: {
+                            mmdmodel: {
+                                materialBuilder: materialBuilder,
+                                optimizeSubmeshes: false,
+                                buildMorph: true,
+                                loggingEnabled: true
+                            }
+                        }
+                    }
+                ).then(result => {
+                    result.addAllToScene();
+                    return result.meshes[0] as Mesh;
+                });
+                for (const mesh of mmdMesh.metadata.meshes) {
+                    mesh.receiveShadows = true;
+                    shadowGenerator.addShadowCaster(mesh, false);
+                }
+                mmdMesh.position.x = -13 * 2;
+                mmdMesh.name = "submesh test model";
+            })(),
+            (async(): Promise<void> => {
+                const materialBuilder = new MmdStandardMaterialBuilder();
+                materialBuilder.forceDisableAlphaEvaluation = false;
+                materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
+
+                const mmdMesh = await LoadAssetContainerAsync(
+                    // "res/private_test/model/YYB Delta_M Miku_2.1/delta_M2.0.pmx", // uv morph test model
+                    "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02 - faceforward.pmx",
                     scene,
                     {
                         pluginOptions: {
@@ -69,6 +101,7 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = -13;
+                mmdMesh.name = "mmd standard material test model";
             })(),
             (async(): Promise<void> => {
                 const materialBuilder = new StandardMaterialBuilder();
@@ -93,6 +126,7 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = 0;
+                mmdMesh.name = "standard material test model";
             })(),
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
@@ -122,6 +156,7 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = 13;
+                mmdMesh.name = "pbr material test model";
             })(),
             (async(): Promise<void> => {
                 const materialBuilder = new PBRMaterialBuilder();
@@ -151,6 +186,7 @@ export class SceneBuilder implements ISceneBuilder {
                     shadowGenerator.addShadowCaster(mesh, false);
                 }
                 mmdMesh.position.x = 13 * 2;
+                mmdMesh.name = "pbr openpbr material test model";
             })()
         ]);
 

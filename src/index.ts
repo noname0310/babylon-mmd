@@ -59,6 +59,7 @@ export { IMmdTextureLoadOptions, MmdAsyncTextureLoader } from "@/Loader/mmdAsync
 export { MmdModelMetadata, MmdModelSerializationMetadata } from "@/Loader/mmdModelMetadata";
 export { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 export { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+export { PBRMaterialBuilder } from "@/Loader/pbrMaterialBuilder";
 export { PmdLoader } from "@/Loader/pmdLoader";
 export { PmdLoaderMetadata } from "@/Loader/pmdLoader.metadata";
 export { IPmLoaderOptions } from "@/Loader/pmLoader";

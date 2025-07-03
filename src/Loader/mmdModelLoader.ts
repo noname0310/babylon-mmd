@@ -8,7 +8,7 @@ import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Scene } from "@babylonjs/core/scene";
@@ -85,6 +85,14 @@ export interface IMmdModelLoaderOptions {
     readonly boundingBoxMargin: number;
 
     /**
+     * Whether to always set bounding info for submeshes (default: true)
+     *
+     * If this property is true, the loader will always set bounding info for submeshes
+     * Otherwise, it will only set bounding info for submeshes if the mesh has more than one submesh
+     */
+    readonly alwaysSetSubMeshesBoundingInfo: boolean;
+
+    /**
      * Whether to preserve the data used for serialization (default: false)
      *
      * If you want to serialize the model, you need to set this property to true
@@ -108,11 +116,13 @@ export interface IMmdModelLoadState {
     readonly buildSkeleton: boolean;
     readonly buildMorph: boolean;
     readonly boundingBoxMargin: number;
+    readonly alwaysSetSubMeshesBoundingInfo: boolean;
     readonly preserveSerializationData: boolean;
 }
 
 /** @internal */
 export interface IMmdModelBuildGeometryResult {
+    readonly rootMesh: Mesh;
     readonly meshes: Mesh[];
     readonly geometries: Geometry[];
 }
@@ -122,6 +132,12 @@ export interface IBuildMaterialResult {
     readonly materials: Material[];
     readonly multiMaterials: MultiMaterial[];
     readonly textureLoadPromise: Promise<void>;
+}
+
+/** @internal */
+export interface IBuildMorphResult {
+    readonly morphsMetadata: MmdModelMetadata.Morph[];
+    readonly morphTargetManagers: MorphTargetManager[];
 }
 
 /**
@@ -148,6 +164,7 @@ export abstract class MmdModelLoader<
     public buildSkeleton: boolean;
     public buildMorph: boolean;
     public boundingBoxMargin: number;
+    public alwaysSetSubMeshesBoundingInfo: boolean;
     public preserveSerializationData: boolean;
 
     private _loggingEnabled: boolean;
@@ -163,8 +180,13 @@ export abstract class MmdModelLoader<
 
     /**
      * Create a new MMD model loader
+     *
+     * @param name Name of the loader
+     * @param extensions Extensions supported by this loader
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global mmd model loader instance as loaderOptions
      */
-    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IPmLoaderOptions | IBpmxLoaderOptions) {
+    public constructor(name: string, extensions: ISceneLoaderPluginExtensions, options: Partial<IMmdModelLoaderOptions> = {}, loaderOptions?: IMmdModelLoaderOptions) {
         this.name = name;
         this.extensions = extensions;
 
@@ -174,6 +196,7 @@ export abstract class MmdModelLoader<
             buildSkeleton: true,
             buildMorph: true,
             boundingBoxMargin: 10,
+            alwaysSetSubMeshesBoundingInfo: true,
             preserveSerializationData: false,
             loggingEnabled: false
         };
@@ -183,6 +206,7 @@ export abstract class MmdModelLoader<
         this.buildSkeleton = options.buildSkeleton ?? loaderOptions.buildSkeleton;
         this.buildMorph = options.buildMorph ?? loaderOptions.buildMorph;
         this.boundingBoxMargin = options.boundingBoxMargin ?? loaderOptions.boundingBoxMargin;
+        this.alwaysSetSubMeshesBoundingInfo = options.alwaysSetSubMeshesBoundingInfo ?? loaderOptions.alwaysSetSubMeshesBoundingInfo;
         this.preserveSerializationData = options.preserveSerializationData ?? loaderOptions.preserveSerializationData;
 
         this._loggingEnabled = options.loggingEnabled ?? loaderOptions.loggingEnabled;
@@ -249,20 +273,14 @@ export abstract class MmdModelLoader<
         progress.endTask("Parse");
         progress.invokeProgressEvent();
 
-        scene._blockEntityCollection = !!assetContainer;
-        const rootMesh = new Mesh(modelObject.header.modelName, scene);
-        rootMesh._parentContainer = assetContainer;
-        scene._blockEntityCollection = false;
-        rootMesh.setEnabled(false);
-
         const buildGeometryResult = await this._buildGeometryAsync(
             state,
             modelObject,
-            rootMesh,
             scene,
             assetContainer,
             progress
         );
+        const rootMesh = buildGeometryResult.rootMesh;
 
         const textureNameMap = state.preserveSerializationData ? new Map<BaseTexture, string>() : null;
 
@@ -294,23 +312,18 @@ export abstract class MmdModelLoader<
             progress.endTask("Build Skeleton");
         }
 
-        const morphsMetadata: MmdModelMetadata.Morph[] = [];
-        let morphTargetManagers: MorphTargetManager[] | null = null;
-        if (state.buildMorph) {
-            morphTargetManagers = await this._buildMorphAsync(
+        const buildMorphResult = state.buildMorph
+            ? await this._buildMorphAsync(
                 state,
                 modelObject,
                 buildGeometryResult,
                 scene,
                 assetContainer,
-                morphsMetadata,
                 progress
-            );
-        }
+            )
+            : null;
 
-        if (state.boundingBoxMargin !== 0) {
-            this._applyBoundingBoxMargin(buildGeometryResult.meshes, state.boundingBoxMargin);
-        }
+        this._applyBoundingBoxToSubmeshes(buildGeometryResult.meshes, state.boundingBoxMargin);
 
         (rootMesh.metadata as MmdModelMetadata) = {
             isMmdModel: true,
@@ -321,7 +334,7 @@ export abstract class MmdModelLoader<
                 englishComment: modelObject.header.englishComment
             },
             bones: bonesMetadata,
-            morphs: morphsMetadata,
+            morphs: buildMorphResult?.morphsMetadata ?? [],
             rigidBodies: modelObject.rigidBodies,
             joints: modelObject.joints,
             meshes: buildGeometryResult.meshes,
@@ -360,18 +373,20 @@ export abstract class MmdModelLoader<
 
         rootMesh.setEnabled(true);
 
+        const uniqueMeshes = [...new Set([rootMesh, ...buildGeometryResult.meshes])];
+
         if (assetContainer !== null) {
             assetContainer.rootNodes.push(rootMesh);
-            assetContainer.meshes.push(rootMesh, ...buildGeometryResult.meshes);
+            assetContainer.meshes.push(...uniqueMeshes);
             assetContainer.geometries.push(...buildGeometryResult.geometries);
             assetContainer.materials.push(...materials);
             assetContainer.multiMaterials.push(...multiMaterials);
             if (skeleton !== null) assetContainer.skeletons.push(skeleton);
-            if (morphTargetManagers !== null) assetContainer.morphTargetManagers.push(...morphTargetManagers);
+            if (buildMorphResult !== null) assetContainer.morphTargetManagers.push(...buildMorphResult.morphTargetManagers);
         }
 
         return {
-            meshes: [rootMesh, ...buildGeometryResult.meshes],
+            meshes: uniqueMeshes,
             particleSystems: [],
             skeletons: skeleton !== null ? [skeleton] : [],
             animationGroups: [],
@@ -396,7 +411,6 @@ export abstract class MmdModelLoader<
     protected abstract _buildGeometryAsync(
         state: LoadState,
         modelObject: ModelObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
@@ -530,35 +544,42 @@ export abstract class MmdModelLoader<
         buildGeometryResult: BuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]>;
+    ): Promise<IBuildMorphResult>;
 
-    private _applyBoundingBoxMargin(meshes: Mesh[], boundingBoxMargin: number): void {
+    private _applyBoundingBoxToSubmeshes(meshes: Mesh[], boundingBoxMargin: number): void {
+        // we created SubMesh without bounding box, for setBoundingInfo manually
+
+        // We assign the same bounding box to all submeshes
+        // because this ensures that the order of the submeshes is preserved when the engine sorts the transparent draw order.
         for (let i = 0; i < meshes.length; ++i) {
             const mesh = meshes[i];
             if (mesh.subMeshes === undefined) continue;
-            const subMeshes = mesh.subMeshes;
-            for (let i = 0; i < subMeshes.length; ++i) {
-                const subMesh = subMeshes[i];
-                const subMeshBoundingInfo = subMesh.getBoundingInfo();
-                subMesh.setBoundingInfo(
+
+            if (1 < mesh.subMeshes.length || !mesh.subMeshes[0].IsGlobal || this.alwaysSetSubMeshesBoundingInfo) {
+                const boundingInfo = mesh.getBoundingInfo();
+                const minimum = boundingBoxMargin !== 0
+                    ? new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum)
+                    : boundingInfo.minimum;
+                const maximum = boundingBoxMargin !== 0
+                    ? new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
+                    : boundingInfo.maximum;
+
+                const subMeshes = mesh.subMeshes;
+                for (let i = 0; i < subMeshes.length; ++i) {
+                    subMeshes[i].setBoundingInfo(new BoundingInfo(minimum, maximum));
+                }
+            }
+
+            if (boundingBoxMargin !== 0) {
+                const boundingInfo = mesh.getBoundingInfo();
+                mesh.setBoundingInfo(
                     new BoundingInfo(
-                        new Vector3().setAll(-boundingBoxMargin).addInPlace(subMeshBoundingInfo.minimum),
-                        new Vector3().setAll(boundingBoxMargin).addInPlace(subMeshBoundingInfo.maximum)
+                        new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
+                        new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
                     )
                 );
             }
-
-            const boundingInfo = mesh.getBoundingInfo();
-            mesh.setBoundingInfo(
-                new BoundingInfo(
-                    new Vector3().setAll(-boundingBoxMargin).addInPlace(boundingInfo.minimum),
-                    new Vector3().setAll(boundingBoxMargin).addInPlace(boundingInfo.maximum)
-                )
-            );
-
-            mesh._updateBoundingInfo();
         }
     }
 

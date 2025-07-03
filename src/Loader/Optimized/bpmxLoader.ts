@@ -2,7 +2,7 @@ import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, registerSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
+import { type ISceneLoaderPluginAsync, type ISceneLoaderProgressEvent, RegisterSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
@@ -21,7 +21,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "../IMmdMaterialBuilder";
 import { MmdBufferKind } from "../mmdBufferKind";
-import type { IBuildMaterialResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions } from "../mmdModelLoader";
+import type { IBuildMaterialResult, IBuildMorphResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions } from "../mmdModelLoader";
 import { type IMmdModelLoadState, MmdModelLoader } from "../mmdModelLoader";
 import type { MmdModelMetadata } from "../mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "../objectUniqueIdProvider";
@@ -36,9 +36,20 @@ import { BpmxReader } from "./Parser/bpmxReader";
 /**
  * Options for loading BPMX model
  */
-export interface IBpmxLoaderOptions extends IMmdModelLoaderOptions { }
+export interface IBpmxLoaderOptions extends IMmdModelLoaderOptions {
+    /**
+     * Use single mesh for single geometry model (defalut: true)
+     *
+     * If there is only one geometry in the model, we don't need to create root node for create mesh
+     *
+     * Instead, we use root node as render
+     */
+    readonly useSingleMeshForSingleGeometryModel: boolean;
+}
 
-interface IBpmxLoadState extends IMmdModelLoadState { }
+interface IBpmxLoadState extends IMmdModelLoadState {
+    readonly useSingleMeshForSingleGeometryModel: boolean;
+}
 
 interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
 
@@ -48,16 +59,30 @@ interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
  * BPMX is a single binary file format that contains all the data of a model
  */
 export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmxBuildGeometryResult> implements IBpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
-    /**
-     * Create a new BpmxLoader
+    /*/**
+     * Use single mesh for single geometry model (defalut: true)
+     *
+     * If there is only one geometry in the model, we don't need to create root node for create mesh
+     *
+     * Instead, we use root node as render
      */
-    public constructor(options?: Partial<IBpmxLoaderOptions>, loaderOptions?: IBpmxLoaderOptions) {
+    public useSingleMeshForSingleGeometryModel: boolean;
+
+    /*
+     * Create a new BpmxLoader
+     *
+     * @param options babylon.js scene loader options
+     * @param loaderOptions Overriding options, typically pass global BpmxLoader instance as loaderOptions
+     */
+    public constructor(options: Partial<IBpmxLoaderOptions> = {}, loaderOptions?: IBpmxLoaderOptions) {
         super(
             BpmxLoaderMetadata.name,
             BpmxLoaderMetadata.extensions,
             options,
             loaderOptions
         );
+
+        this.useSingleMeshForSingleGeometryModel = options.useSingleMeshForSingleGeometryModel ?? loaderOptions?.useSingleMeshForSingleGeometryModel ?? true;
     }
 
     public loadFile(
@@ -74,7 +99,9 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         const buildSkeleton = this.buildSkeleton;
         const buildMorph = this.buildMorph;
         const boundingBoxMargin = this.boundingBoxMargin;
+        const alwaysSetSubMeshesBoundingInfo = this.alwaysSetSubMeshesBoundingInfo;
         const preserveSerializationData = this.preserveSerializationData;
+        const useSingleMeshForSingleGeometryModel = this.useSingleMeshForSingleGeometryModel;
 
         const request = scene._loadFile(
             fileOrUrl,
@@ -87,7 +114,9 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                     buildSkeleton,
                     buildMorph,
                     boundingBoxMargin,
-                    preserveSerializationData
+                    alwaysSetSubMeshesBoundingInfo,
+                    preserveSerializationData,
+                    useSingleMeshForSingleGeometryModel
                 };
                 onSuccess(loadState, responseURL);
             },
@@ -146,11 +175,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
     protected override async _buildGeometryAsync(
         state: IBpmxLoadState,
         modelObject: BpmxObject,
-        rootMesh: Mesh,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
         progress: Progress
     ): Promise<IBpmxBuildGeometryResult> {
+        scene._blockEntityCollection = !!assetContainer;
+        const rootMesh = new Mesh(modelObject.header.modelName, scene);
+        rootMesh._parentContainer = assetContainer;
+        scene._blockEntityCollection = false;
+        rootMesh.setEnabled(false);
+
         const meshes: Mesh[] = [];
         const geometries: Geometry[] = [];
 
@@ -232,16 +266,21 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                 }
             }
 
-            scene._blockEntityCollection = !!assetContainer;
-            const mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
-            mesh._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
+            let mesh: Mesh;
+            if (state.useSingleMeshForSingleGeometryModel && geometriesInfo.length === 1) {
+                mesh = rootMesh;
+            } else {
+                scene._blockEntityCollection = !!assetContainer;
+                mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
+                mesh._parentContainer = assetContainer;
+                scene._blockEntityCollection = false;
+                mesh.setParent(rootMesh);
+            }
             if (geometryInfo.indices === undefined) mesh.isUnIndexed = true;
-            mesh.setParent(rootMesh);
             meshes.push(mesh);
 
             scene._blockEntityCollection = !!assetContainer;
-            const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
+            const geometry = new Geometry(geometryInfo.name, scene, vertexData, false);
             geometry._parentContainer = assetContainer;
             scene._blockEntityCollection = false;
             if (state.preserveSerializationData && geometryInfo.additionalUvs !== undefined) {
@@ -277,6 +316,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         progress.invokeProgressEvent();
 
         return {
+            rootMesh,
             meshes,
             geometries
         };
@@ -384,7 +424,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                     mesh.material = null;
                 } else if (subGeometries.length === 1) {
                     const subGeometry = subGeometries[0];
-                    new SubMesh(0, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                    new SubMesh(
+                        0, // materialIndex
+                        subGeometry.verticesStart, // verticesStart
+                        subGeometry.verticesCount, // verticesCount
+                        subGeometry.indexStart, // indexStart
+                        subGeometry.indexCount, // indexCount
+                        mesh, // mesh
+                        undefined, // renderingMesh
+                        false // createBoundingBox
+                    );
                     mesh.material = materials[subGeometries[0].materialIndex];
                 } else {
                     scene._blockEntityCollection = !!assetContainer;
@@ -396,7 +445,16 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
 
                     for (let geometryIndex = 0; geometryIndex < subGeometries.length; ++geometryIndex) {
                         const subGeometry = subGeometries[geometryIndex];
-                        new SubMesh(geometryIndex, subGeometry.verticesStart, subGeometry.verticesCount, subGeometry.indexStart, subGeometry.indexCount, mesh);
+                        new SubMesh(
+                            geometryIndex, // materialIndex
+                            subGeometry.verticesStart, // verticesStart
+                            subGeometry.verticesCount, // verticesCount
+                            subGeometry.indexStart, // indexStart
+                            subGeometry.indexCount, // indexCount
+                            mesh, // mesh
+                            undefined, // renderingMesh
+                            false // createBoundingBox
+                        );
                         subMaterials.push(materials[subGeometry.materialIndex]);
                     }
 
@@ -436,9 +494,8 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         buildGeometryResult: IBpmxBuildGeometryResult,
         scene: Scene,
         assetContainer: Nullable<AssetContainer>,
-        morphsMetadata: MmdModelMetadata.Morph[],
         progress: Progress
-    ): Promise<MorphTargetManager[]> {
+    ): Promise<IBuildMorphResult> {
         const preserveSerializationData = state.preserveSerializationData;
         const morphsInfo = modelObject.morphs;
 
@@ -449,6 +506,8 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
 
         let buildMorphProgress = 0;
         let time = performance.now();
+
+        const morphsMetadata: MmdModelMetadata.Morph[] = [];
         for (let morphIndex = 0; morphIndex < morphsInfo.length; ++morphIndex) {
             const morphInfo = morphsInfo[morphIndex];
 
@@ -611,8 +670,11 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
             morphTargetManagers.push(morphTargetManager);
             meshes[subMeshIndex].morphTargetManager = morphTargetManager;
         }
-        return morphTargetManagers;
+        return {
+            morphsMetadata,
+            morphTargetManagers
+        };
     }
 }
 
-registerSceneLoaderPlugin(new BpmxLoader());
+RegisterSceneLoaderPlugin(new BpmxLoader());

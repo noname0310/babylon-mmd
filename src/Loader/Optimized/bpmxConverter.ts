@@ -979,7 +979,7 @@ export class BpmxConverter implements ILogger {
             meshIndex: number;
             indices: Int32Array;
             offsets: Float32Array;
-        }[]>[] = new Array(mmdModelMetadata.morphs.length).fill(null); // vertexUvMorphs[morphIndex][meshIndex]
+        }[]>[] = new Array(mmdModelMetadata.morphs.length); // vertexUvMorphs[morphIndex][meshIndex]
         for (let i = 0; i < vertexUvMorphs.length; ++i) vertexUvMorphs[i] = [];
         if (includeMorphData) {
             if (containsSerializationData) {

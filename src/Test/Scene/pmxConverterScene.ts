@@ -151,6 +151,7 @@ export class SceneBuilder implements ISceneBuilder {
                             buildMorph: true,
                             boundingBoxMargin: 0,
                             preserveSerializationData: preserveSerializationDataInput.checked,
+                            optimizeSubmeshes: optimizeSubmeshesInput.checked,
                             loggingEnabled: true,
                             referenceFiles: files
                         }
@@ -625,6 +626,47 @@ export class SceneBuilder implements ISceneBuilder {
         preserveSerializationDataInput.checked = true;
         preserveSerializationDataDiv.appendChild(preserveSerializationDataInput);
         preserveSerializationDataInput.onclick = (event): void => {
+            if (isLoading) {
+                event.preventDefault();
+                return;
+            }
+
+            if (selectedFile === null) return;
+            loadModelAsync(selectedFile);
+        };
+
+        const optimizeSubmeshesDiv = document.createElement("div");
+        optimizeSubmeshesDiv.style.width = "100%";
+        optimizeSubmeshesDiv.style.height = "30px";
+        optimizeSubmeshesDiv.style.display = "flex";
+        optimizeSubmeshesDiv.style.flexDirection = "row";
+        optimizeSubmeshesDiv.style.justifyContent = "space-between";
+        optimizeSubmeshesDiv.style.alignItems = "center";
+        optimizeSubmeshesDiv.style.marginBottom = "10px";
+        convertOptions.appendChild(optimizeSubmeshesDiv);
+
+        const optimizeSubmeshesLabel = document.createElement("label");
+        optimizeSubmeshesLabel.textContent = "Optimize Submeshes";
+        optimizeSubmeshesLabel.title = "If disabled, The model will be loaded as single mesh with multiple submeshes, it not good as performance wise but it's exactly same method to render like MMD";
+        optimizeSubmeshesLabel.style.textAlign = "left";
+        optimizeSubmeshesLabel.style.marginRight = "10px";
+        optimizeSubmeshesLabel.style.fontSize = "16px";
+        optimizeSubmeshesDiv.appendChild(optimizeSubmeshesLabel);
+
+        const optimizeSubmeshesSmallLabel = document.createElement("label");
+        optimizeSubmeshesSmallLabel.textContent = "(reload required)";
+        optimizeSubmeshesSmallLabel.style.fontSize = "11px";
+        optimizeSubmeshesSmallLabel.style.color = "gray";
+        optimizeSubmeshesSmallLabel.style.flexGrow = "1";
+        optimizeSubmeshesDiv.appendChild(optimizeSubmeshesSmallLabel);
+
+        const optimizeSubmeshesInput = document.createElement("input");
+        optimizeSubmeshesInput.style.width = "16px";
+        optimizeSubmeshesInput.style.height = "16px";
+        optimizeSubmeshesInput.type = "checkbox";
+        optimizeSubmeshesInput.checked = true;
+        optimizeSubmeshesDiv.appendChild(optimizeSubmeshesInput);
+        optimizeSubmeshesInput.onclick = (event): void => {
             if (isLoading) {
                 event.preventDefault();
                 return;
