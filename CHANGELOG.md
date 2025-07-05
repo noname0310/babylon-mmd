@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.67.0 (scheduled)
+## 0.67.0 (2025-07-06)
 
 - add `MultiMaterial` support
   - see new loader options `PmLoader.optimizeSubmeshes`, `PmLoader.optimizeSingleMaterialModel` and `BpmxLoader.useSingleMeshForSingleGeometryModel`
