@@ -1,10 +1,19 @@
 /**
  * BabylonVMD(BVMD) representation
  * prerequisite: frames are sorted by frameNumber
- * condition: padding is inserted between data for create zero-copy typed array
+ * condition: all strings are 4 byte aligned
  *
  * signature: uint8[4] "BVMD"
  * version: int8[3] - major, minor, patch
+ * padding: uint8 - for align to 4 byte
+ * sizeofheader: uint32 - size of header = 20(4 * 5)
+ * { - if position is 0 then there is no data
+ *  positionToBoneTrack: uint32 - position(ptr) to boneTrackCount
+ *  positionToMovableBoneTrack: uint32 - position(ptr) to movableBoneTrackCount
+ *  positionToMorphTrack: uint32 - position(ptr) to morphTrackCount
+ *  positionToPropertyTrack: uint32 - position(ptr) to propertyFrameCount
+ *  positionToCameraTrack: uint32 - position(ptr) to cameraFrameCount
+ * }
  *
  * boneTrackCount: uint32
  * {
@@ -14,6 +23,7 @@
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  *  physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
+ *  dynamicPadding: uint8[0-3] - for align physicsToggle to 4 byte
  * }[boneTrackCount]
  *
  * movableBoneTrackCount: uint32
@@ -26,6 +36,7 @@
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
  *  rotationInterpolations: uint8[frameCount * 4] - [..., x1, x2, y1, y2, ...]
  *  physicsToggle: uint8[frameCount] - [..., physicsTogle, ...]
+ *  dynamicPadding: uint8[0-3] - for align physicsToggle to 4 byte
  * }[movableBoneTrackCount]
  *
  * morphTrackCount: uint32
@@ -40,9 +51,11 @@
  * ikBoneNameCount: uint32
  * frameNumbers: uint32[frameCount]
  * visibles: uint8[frameCount] - [..., visible, ...]
+ * dynamicPadding: uint8[0-3] - for align visibles to 4 byte
  * {
  *  ikBoneName: uint32 - uint8[] - length, string
  *  ikState: uint8[frameCount] - [..., ikState, ...]
+ *  dynamicPadding: uint8[0-3] - for align ikState to 4 byte
  * }[ikBoneNameCount]
  *
  * cameraFrameCount: uint32
