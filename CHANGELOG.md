@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.67.1 (2025-07-09)
+
+- fix crash when load model with orphan rigidbody
+
 ## 0.67.0 (2025-07-06)
 
 - add `MultiMaterial` support

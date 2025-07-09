@@ -566,7 +566,9 @@ export class MmdWasmModel implements IMmdModel {
         if (buildRigidBodyIndices) {
             for (let rbIndex = 0; rbIndex < rigidBodiesMetadata.length; ++rbIndex) {
                 const rigidBodyMetadata = rigidBodiesMetadata[rbIndex];
-                boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+                if (0 <= rigidBodyMetadata.boneIndex && rigidBodyMetadata.boneIndex < bonesMetadata.length) {
+                    boneToRigidBodiesIndexMap[rigidBodyMetadata.boneIndex].push(rbIndex);
+                }
             }
         }
 
