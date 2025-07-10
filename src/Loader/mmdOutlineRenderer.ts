@@ -425,7 +425,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
 
             engine.setAlphaMode(savedAlphaMode, true);
             engine.setDepthWrite(savedDepthWrite);
-            engine.alphaState.alphaBlend = savedAlphaBlendState;
+            engine.alphaState.setAlphaBlend(savedAlphaBlendState);
         }
     }
 }
