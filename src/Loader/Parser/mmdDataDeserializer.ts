@@ -1,3 +1,5 @@
+import { Endianness } from "./endianness";
+
 type TupleOf<T, N extends number, R extends unknown[]> =
     R["length"] extends N ? R : TupleOf<T, N, [T, ...R]>;
 
@@ -8,12 +10,7 @@ type Tuple<T, N extends number> = N extends N
 /**
  * DataView wrapper for deserializing MMD data
  */
-export class MmdDataDeserializer {
-    /**
-     * Whether the device is little endian
-     */
-    public readonly isDeviceLittleEndian: boolean;
-
+export class MmdDataDeserializer extends Endianness {
     private readonly _dataView: DataView;
     private _decoder: TextDecoder | null;
     private _offset: number;
@@ -23,7 +20,7 @@ export class MmdDataDeserializer {
      * @param arrayBuffer ArrayBuffer to deserialize
      */
     public constructor(arrayBuffer: ArrayBufferLike) {
-        this.isDeviceLittleEndian = this._getIsDeviceLittleEndian();
+        super();
         this._dataView = new DataView(arrayBuffer);
         this._decoder = null;
         this._offset = 0;
@@ -38,33 +35,6 @@ export class MmdDataDeserializer {
 
     public set offset(value: number) {
         this._offset = value;
-    }
-
-    private _getIsDeviceLittleEndian(): boolean {
-        const array = new Int16Array([256]);
-        return new Int8Array(array.buffer)[1] === 1;
-    }
-
-    /**
-     * Changes the byte order of the array
-     * @param array Array to swap
-     */
-    public swap16Array(array: Int16Array | Uint16Array): void {
-        for (let i = 0; i < array.length; ++i) {
-            const value = array[i];
-            array[i] = ((value & 0xFF) << 8) | ((value >> 8) & 0xFF);
-        }
-    }
-
-    /**
-     * Changes the byte order of the array
-     * @param array Array to swap
-     */
-    public swap32Array(array: Int32Array | Uint32Array | Float32Array): void {
-        for (let i = 0; i < array.length; ++i) {
-            const value = array[i];
-            array[i] = ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
-        }
     }
 
     /**
