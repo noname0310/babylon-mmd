@@ -2,7 +2,7 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
-import type { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
+import type { AlignedDataSerializer } from "@/Loader/Optimized/alignedDataSerializer";
 import type { ILogger } from "@/Runtime/ILogger";
 
 import type { IMmdModelPhysicsCreationOptions } from "../../mmdRuntime";
@@ -86,7 +86,7 @@ export class MmdWasmPhysicsMetadataEncoder extends MmdMetadataEncoder {
         return dataLength;
     }
 
-    protected override _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>, rootTransform: TransformNode): void {
+    protected override _encodePhysics(serializer: AlignedDataSerializer, metadata: Nullable<MmdModelMetadata>, rootTransform: TransformNode): void {
         if (metadata === null) {
             serializer.setUint8(0); // physicsInfoKind
             serializer.offset += 3; // padding
