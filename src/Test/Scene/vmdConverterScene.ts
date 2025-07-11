@@ -47,7 +47,16 @@ export class SceneBuilder implements ISceneBuilder {
         title.style.width = "350px";
         title.style.fontSize = "24px";
         title.style.textAlign = "center";
+        title.style.marginBottom = "0";
         innerFormDiv.appendChild(title);
+
+        const version = document.createElement("p");
+        version.textContent = `BVMD Version: ${BvmdConverter.Version.join(".")}`;
+        version.style.width = "350px";
+        version.style.fontSize = "16px";
+        version.style.textAlign = "center";
+        version.style.marginTop = "0";
+        innerFormDiv.appendChild(version);
 
         const loadedFileList = document.createElement("ul");
         innerFormDiv.appendChild(loadedFileList);
