@@ -5,23 +5,23 @@ const enum Constants {
 }
 
 const enum Uint8 {
-    ElementSize = 1
+    Shift = 0
 }
 
 const enum Uint16 {
-    ElementSize = 2
+    Shift = 1
 }
 
 const enum Uint32 {
-    ElementSize = 4
+    Shift = 2
 }
 
 const enum Int32 {
-    ElementSize = 4
+    Shift = 2
 }
 
 const enum Float32 {
-    ElementSize = 4
+    Shift = 2
 }
 
 /**
@@ -71,8 +71,8 @@ export class AlignedDataSerializer extends Endianness {
      * @param value Uint8 value to write
      */
     public setUint8(value: number): void {
-        this._uint8Ptr[this._offset / Uint8.ElementSize] = value;
-        this._offset += Uint8.ElementSize;
+        this._uint8Ptr[this._offset >> Uint8.Shift] = value;
+        this._offset += 1 << Uint8.Shift;
     }
 
     /**
@@ -80,8 +80,8 @@ export class AlignedDataSerializer extends Endianness {
      * @param values Uint8 array to write
      */
     public setUint8Array(values: ArrayLike<number>): void {
-        this._uint8Ptr.set(values, this._offset / Uint8.ElementSize);
-        this._offset += values.length * Uint8.ElementSize;
+        this._uint8Ptr.set(values, this._offset >> Uint8.Shift);
+        this._offset += values.length * (1 << Uint8.Shift);
     }
 
     /**
@@ -89,10 +89,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param value Uint16 value to write
      */
     public setUint16(value: number): void {
-        const uint16Offset = this._offset / Uint16.ElementSize;
+        const uint16Offset = this._offset >> Uint16.Shift;
         this._uint16Ptr[uint16Offset] = value;
         if (!this.isDeviceLittleEndian) this.swap16Array(this._uint16Ptr, uint16Offset, 1);
-        this._offset += Uint16.ElementSize;
+        this._offset += 1 << Uint16.Shift;
     }
 
     /**
@@ -100,10 +100,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param value Uint32 value to write
      */
     public setUint32(value: number): void {
-        const uint32Offset = this._offset / Uint32.ElementSize;
+        const uint32Offset = this._offset >> Uint32.Shift;
         this._uint32Ptr[uint32Offset] = value;
         if (!this.isDeviceLittleEndian) this.swap32Array(this._uint32Ptr, uint32Offset, 1);
-        this._offset += Uint32.ElementSize;
+        this._offset += 1 << Uint32.Shift;
     }
 
     /**
@@ -111,10 +111,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param values Uint32 array to write
      */
     public setUint32Array(values: ArrayLike<number>): void {
-        const uint32Offset = this._offset / Uint32.ElementSize;
+        const uint32Offset = this._offset >> Uint32.Shift;
         this._uint32Ptr.set(values, uint32Offset);
         if (!this.isDeviceLittleEndian) this.swap32Array(this._uint32Ptr, uint32Offset, values.length);
-        this._offset += values.length * Uint32.ElementSize;
+        this._offset += values.length * (1 << Uint32.Shift);
     }
 
     /**
@@ -122,10 +122,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param value Int32 value to write
      */
     public setInt32(value: number): void {
-        const int32Offset = this._offset / Int32.ElementSize;
+        const int32Offset = this._offset >> Int32.Shift;
         this._int32Ptr[int32Offset] = value;
         if (!this.isDeviceLittleEndian) this.swap32Array(this._int32Ptr, int32Offset, 1);
-        this._offset += Int32.ElementSize;
+        this._offset += 1 << Int32.Shift;
     }
 
     /**
@@ -133,10 +133,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param values Int32 array to write
      */
     public setInt32Array(values: ArrayLike<number>): void {
-        const int32Offset = this._offset / Int32.ElementSize;
+        const int32Offset = this._offset >> Int32.Shift;
         this._int32Ptr.set(values, int32Offset);
         if (!this.isDeviceLittleEndian) this.swap32Array(this._int32Ptr, int32Offset, values.length);
-        this._offset += values.length * Int32.ElementSize;
+        this._offset += values.length * (1 << Int32.Shift);
     }
 
     /**
@@ -144,10 +144,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param value Float32 value to write
      */
     public setFloat32(value: number): void {
-        const float32Offset = this._offset / Float32.ElementSize;
+        const float32Offset = this._offset >> Float32.Shift;
         this._float32Ptr[float32Offset] = value;
         if (!this.isDeviceLittleEndian) this.swap32Array(this._float32Ptr, float32Offset, 1);
-        this._offset += Float32.ElementSize;
+        this._offset += 1 << Float32.Shift;
     }
 
     /**
@@ -155,10 +155,10 @@ export class AlignedDataSerializer extends Endianness {
      * @param values Float32 array to write
      */
     public setFloat32Array(values: ArrayLike<number>): void {
-        const float32Offset = this._offset / Float32.ElementSize;
+        const float32Offset = this._offset >> Float32.Shift;
         this._float32Ptr.set(values, float32Offset);
         if (!this.isDeviceLittleEndian) this.swap32Array(this._float32Ptr, float32Offset, values.length);
-        this._offset += values.length * Float32.ElementSize;
+        this._offset += values.length * (1 << Float32.Shift);
     }
 
     /**
