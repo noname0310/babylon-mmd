@@ -80,6 +80,12 @@ export class BvmdConverter {
     private constructor() { /* block constructor */ }
 
     /**
+     * BVMD format version
+     * [major, minor, patch]
+     */
+    public static readonly Version = [3, 0, 0] as const satisfies readonly [number, number, number];
+
+    /**
      * Convert mmd animation to BVMD
      * @param animation mmd animation from VMD/BVMD
      * @returns converted BVMD
@@ -190,7 +196,7 @@ export class BvmdConverter {
         const serializer = new AlignedDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BVMD")); // signature
-        serializer.setUint8Array([3, 0, 0]); // version
+        serializer.setUint8Array(BvmdConverter.Version); // version
         serializer.offset += 1; // for 4byte align
 
         serializer.setUint32(4 * 5); // size of header
