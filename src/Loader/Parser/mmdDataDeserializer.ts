@@ -100,8 +100,8 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a int32 value
-     * @returns Int32 value
+     * Read a uint32 value
+     * @returns Uint32 value
      */
     public getUint32(): number {
         const value = this._dataView.getUint32(this._offset, true);
@@ -224,20 +224,6 @@ export class MmdDataDeserializer extends Endianness {
         this._offset += length;
 
         return decoder.decode(bytes);
-    }
-
-    /**
-     * Calculate byte alignment for finding the offset of the next element
-     * @param elementSize Element size
-     * @param length Element count
-     * @returns Offset of the next element
-     */
-    public getPaddedArrayOffset(elementSize: number, length: number): number {
-        this._offset += this._offset % elementSize === 0 ? 0 : elementSize - this._offset % elementSize;
-        const offset = this._offset;
-        this._offset += elementSize * length;
-
-        return offset;
     }
 
     /**
