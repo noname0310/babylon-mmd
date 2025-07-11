@@ -168,7 +168,7 @@ export class AlignedDataSerializer extends Endianness {
     public setString(value: string): void {
         const bytes = this._encoder.encode(value);
         const padding = AlignedDataSerializer.Padding(bytes.length);
-        this.setUint32(bytes.length + padding);
+        this.setUint32(bytes.length);
         this.setUint8Array(bytes);
         this._offset += padding;
     }

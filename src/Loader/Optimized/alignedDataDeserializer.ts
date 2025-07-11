@@ -81,13 +81,13 @@ export class AlignedDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a utf-8 string
+     * Read a utf-8 string and advance the offset with 4 byte alignment
      * @param length Length of the string in bytes
      * @returns Utf-8 string
      */
     public getString(length: number): string {
         const bytes = new Uint8Array(this.arrayBuffer, this._offset, length);
-        this._offset += length;
+        this._offset += length + AlignedDataDeserializer.Padding(length);
         return this._decoder.decode(bytes);
     }
 

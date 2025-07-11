@@ -68,6 +68,7 @@ export class BvmdLoader {
         if (versionInt < this._v300Int) {
             throw new LoadFileError(`BVMD version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
+        deserializer.offset += 1; // padding byte
 
         const sizeOfHeader = deserializer.getUint32();
         let leftHeaderBytes = sizeOfHeader;

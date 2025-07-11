@@ -17,7 +17,7 @@
  *
  * boneTrackCount: uint32
  * {
- *  trackName: uint32, uint8[] - length, string
+ *  trackName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  rotations: float32[frameCount * 4] - [..., x, y, z, w, ...]
@@ -28,7 +28,7 @@
  *
  * movableBoneTrackCount: uint32
  * {
- *  trackName: uint32, uint8[] - length, string
+ *  trackName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  positions: float32[frameCount * 3] - [..., x, y, z, ...]
@@ -41,7 +41,7 @@
  *
  * morphTrackCount: uint32
  * {
- *  trackName: uint32, uint8[] - length, string
+ *  trackName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  frameCount: uint32
  *  frameNumbers: uint32[frameCount]
  *  weights: float32[frameCount] - [..., weight, ...]
@@ -53,7 +53,7 @@
  * dynamicPadding: uint8[0-3] - for align visibles to 4 byte
  * ikBoneNameCount: uint32
  * {
- *  ikBoneName: uint32 - uint8[] - length, string
+ *  ikBoneName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  ikState: uint8[frameCount] - [..., ikState, ...]
  *  dynamicPadding: uint8[0-3] - for align ikState to 4 byte
  * }[ikBoneNameCount]
