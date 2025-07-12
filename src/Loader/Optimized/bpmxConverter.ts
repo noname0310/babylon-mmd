@@ -1,18 +1,35 @@
 /**
  * BabylonPMX(BPMX) representation
+ * condition: all strings are 4 byte aligned
  *
  * signature: uint8[4] "BPMX"
- * version: int8[3] - major, minor, patch
+ * version: uint8[3] - major, minor, patch
+ * padding: uint8 - for align to 4 byte
  *
- * modelName: uint32, uint8[] - length, string
- * englishModelName: uint32, uint8[] - length, string
- * comment: uint32, uint8[] - length, string
- * englishComment: uint32, uint8[] - length, string
+ * sizeofHeader: uint32 - size of header
+ * { - if position is 0 then there is no data
+ *  positionToModelInfo: uint32 - position to model info data
+ *  positionToMesh: uint32 - position to mesh data
+ *  positionToImage: uint32 - position to image data
+ *  positionToTexture: uint32 - position to texture data
+ *  positionToMaterial: uint32 - position to material data
+ *  positionToBone: uint32 - position to bone data
+ *  positionToMorph: uint32 - position to morph data
+ *  positionToDisplayFrame: uint32 - position to display frame data
+ *  positionToRigidBody: uint32 - position to rigid body data
+ *  positionToJoint: uint32 - position to joint data
+ * }
  *
- * meshFlag: uint8 // 0x01: isSkinnedMesh
+ * modelInfo: {
+ *  modelName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishModelName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  comment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishComment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ * }
+ *
  * meshCount: uint32
  * {
- *  meshName: uint32, uint8[] - length, string
+ *  meshName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  materialIndex: int32 - -1: no material -2: multi material(since BPMX 2.1.0)
  *  { // if materialIndex is -2
  *   subMeshCount: uint32
@@ -29,16 +46,20 @@
  *  normals: float32[vertexCount * 3]
  *  uvs: float32[vertexCount * 2]
  *  additionalUvCount: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  {
  *   uvs: float32[vertexCount * 4]
  *  }[additionalUvCount]
  *  flag: uint8 // 0x01: hasSdef, 0x02: isIndexedMesh, 0x04: hasEdgeScale
+ *  padding: uint8[3] - for align to 4 byte
  *  { // if isIndexedMesh
  *   indexElementType: uint8 // 0: int32, 1: uint32, 2: uint16
+ *   padding: uint8[3] - for align to 4 byte
  *   indicesCount: uint32
  *   indices: uint16[indicesCount] or int32[indicesCount] or uint32[indicesCount]
+ *   dynamicPadding: uint8[0-3] - for align to 4 byte
  *  }
- *  { // if meshType is skinned
+ *  { // if positionToBone is non null
  *   matricesIndices: float32[vertexCount * 4]
  *   matricesWeights: float32[vertexCount * 4]
  *   { // if hasSdef
@@ -54,26 +75,29 @@
  *
  * imageCount: uint32
  * images: {
- *  relativePath: uint32, uint8[] - length, string
+ *  relativePath: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  flag: uint8 // 0x01: hasMimeType
+ *  padding: uint8[3] - for align to 4 byte
  *  { // if hasMimeType
- *   mimeType: uint32, uint8[] - length, string
+ *   mimeType: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  }
  *  byteLength: uint32
  *  arrayBuffer: uint8[texturesCount]
+ *  dynamicPadding: uint8[0-3] - for align to 4 byte
  * }[imageCount]
  *
  * textureCount: uint32
  * textures: {
  *  flag: uint8 // 0x01: noMipmap, 0x02: invertY
  *  samplingMode: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *  imageIndex: int32
  * }[textureCount]
  *
  * materialCount: uint32
  * {
- *  materialName: uint32, uint8[] - length, string
- *  englishMaterialName: uint32, uint8[] - length, string
+ *  materialName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishMaterialName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  diffuse: float32[4];
  *  specular: float32[3]
  *  shininess: float32
@@ -85,25 +109,28 @@
  *                                 is complete opaque(since BPMX 2.1.0): 11: not evaluated, 00: opaque, 01: translucent
  *                                 alpha evaluate result: 1111: not evaluated, 0000: opaque, 0001: alphatest, 0010: alphablend, 0011: alphatest and blend
  *  flag: uint8 - 0x01: isDoubleSided, 0x10: EnabledToonEdge
+ *  padding: uint8[2] - for align to 4 byte
  *  edgeColor: float32[4]
  *  edgeSize: float32
  *  textureIndex: int32
  *  sphereTextureIndex: int32
  *  sphereTextureMode: uint8
  *  isSharedToontexture: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *  toonTextureIndex: int32
- *  comment: uint32, uint8[] - length, string
+ *  comment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  * }[materialCount]
  *
  * { // if hasBone
  *  boneCount: uint32
  *  {
- *   boneName: uint32, uint8[] - length, string
- *   englishBoneName: uint32, uint8[] - length, string
+ *   boneName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *   englishBoneName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *   position: float32[3]
  *   parentBoneIndex: int32
  *   transformOrder: int32
  *   flag: uint16
+ *   padding: uint8[2] - for align to 4 byte
  *   tailPosition: float32[3] | int32
  *   appendTransform: { // if has appendTransform
  *     parentIndex: int32
@@ -121,6 +148,7 @@
  *    links: {
  *     target: int32
  *     hasLimit: uint8
+ *     padding: uint8[3] - for align to 4 byte
  *     minimumAngle: float32[3] // if hasLimit
  *     maximumAngle: float32[3] // if hasLimit
  *    }[linkCount]
@@ -130,16 +158,18 @@
  *
  * morphCount: uint32
  * {
- *  morphName: uint32, uint8[] - length, string
- *  englishMorphName: uint32, uint8[] - length, string
+ *  morphName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishMorphName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  category: uint8
  *  type: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *
  *  { // if type is material
  *   elementCount: uint32
  *   {
  *    materialIndex: int32
  *    type: uint8
+ *    padding: uint8[3] - for align to 4 byte
  *    diffuse: float32[4]
  *    specular: float32[3]
  *    shininess: float32
@@ -188,23 +218,25 @@
  *
  * displayFrameCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  isSpecialFrame: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  elementCount: uint32
  *  elements: {
  *   frameType: uint8
+ *   padding: uint8[3] - for align to 4 byte
  *   frameIndex: int32
  *  }[elementCount]
  * }[displayFrameCount]
  *
  * rigidBodyCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  boneIndex: int32
- *  collisionGroup: uint8
  *  collisionMask: uint16
+ *  collisionGroup: uint8
  *  shapeType: uint8
  *  shapeSize: float32[3]
  *  shapePosition: float32[3]
@@ -215,13 +247,15 @@
  *  repulsion: float32
  *  friction: float32
  *  physicsMode: uint8
+ *  padding: uint8[3] - for align to 4 byte
  * }[rigidBodyCount]
  *
  * jointCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  type: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  rigidBodyIndexA: int32
  *  rigidBodyIndexB: int32
  *  position: float32[3]
