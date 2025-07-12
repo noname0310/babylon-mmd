@@ -5,11 +5,14 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import type { Scene } from "@babylonjs/core/scene";
 
-import { MmdAnimation } from "../Animation/mmdAnimation";
-import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "../Animation/mmdAnimationTrack";
-import { AlignedDataDeserializer } from "./alignedDataDeserializer";
+import { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
+
+import { MmdDataDeserializer } from "./mmdDataDeserializer";
 
 /**
+ * 2.x legacy BVMD loader
+ *
  * BvmdLoader is a loader that loads MMD animation data in BVMD format
  *
  * BVMD format is a optimized binary format for MMD animation data
@@ -39,8 +42,8 @@ export class BvmdLoader {
         this._scene = scene;
     }
 
-    private readonly _v300Int = 3 << 16 | 0 << 8 | 0;
-    private readonly _v310Int = 3 << 16 | 1 << 8 | 0;
+    private readonly _v200Int = 2 << 16 | 0 << 8 | 0;
+    private readonly _v210Int = 2 << 16 | 1 << 8 | 0;
 
     /**
      * Load MMD animation data from BVMD array buffer
@@ -53,97 +56,35 @@ export class BvmdLoader {
         name: string,
         buffer: ArrayBufferLike
     ): MmdAnimation {
-        const deserializer = new AlignedDataDeserializer(buffer);
+        const deserializer = new MmdDataDeserializer(buffer);
+        deserializer.initializeTextDecoder("utf-8");
 
-        const signature = deserializer.getString(4);
+        const signature = deserializer.getDecoderString(4, false);
         if (signature !== "BVMD") {
             throw new LoadFileError("BVMD signature is not valid.");
         }
 
         const version = [
-            deserializer.getUint8(),
-            deserializer.getUint8(),
-            deserializer.getUint8()
+            deserializer.getInt8(),
+            deserializer.getInt8(),
+            deserializer.getInt8()
         ] as const;
         const versionInt = version[0] << 16 | version[1] << 8 | version[2];
-        if (versionInt < this._v300Int || this._v310Int <= versionInt) {
+        if (versionInt < this._v200Int || this._v210Int < versionInt) {
             throw new LoadFileError(`BVMD version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
-        deserializer.offset += 1; // padding byte
 
-        const sizeOfHeader = deserializer.getUint32();
-        let leftHeaderBytes = sizeOfHeader;
-
-        let positionToBoneTrack = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToBoneTrack = deserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToMovableBoneTrack = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToMovableBoneTrack = deserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToMorphTrack = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToMorphTrack = deserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToPropertyTrack = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToPropertyTrack = deserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToCameraTrack = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToCameraTrack = deserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        if (leftHeaderBytes !== 0) {
-            this.warn(`Left ${leftHeaderBytes} bytes in BVMD header, which is not used.`);
-        }
-
-        const boneTracks = positionToBoneTrack !== 0
-            ? this._parseBoneTracks(deserializer, positionToBoneTrack)
-            : [];
-        const movableBoneTracks = positionToMovableBoneTrack !== 0
-            ? this._parseMovableBoneTracks(deserializer, positionToMovableBoneTrack)
-            : [];
-        const morphTracks = positionToMorphTrack !== 0
-            ? this._parseMorphTracks(deserializer, positionToMorphTrack)
-            : [];
-        const propertyTrack = positionToPropertyTrack !== 0
-            ? this._parsePropertyTrack(deserializer, positionToPropertyTrack)
-            : new MmdPropertyAnimationTrack(0, []);
-        const cameraTrack = positionToCameraTrack !== 0
-            ? this._parseCameraTrack(deserializer, positionToCameraTrack)
-            : new MmdCameraAnimationTrack(0);
-
-        return new MmdAnimation(name, boneTracks, movableBoneTracks, morphTracks, propertyTrack, cameraTrack);
-    }
-
-    private _parseBoneTracks(deserializer: AlignedDataDeserializer, positionToBoneTrack: number): MmdBoneAnimationTrack[] {
-        deserializer.offset = positionToBoneTrack;
-        const buffer = deserializer.arrayBuffer;
         const boneTrackCount = deserializer.getUint32();
         const boneTracks: MmdBoneAnimationTrack[] = new Array(boneTrackCount);
         for (let i = 0; i < boneTrackCount; ++i) {
-            const trackName = deserializer.getString(deserializer.getUint32());
+            const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
             const frameCount = deserializer.getUint32();
-            const frameNumberByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // uint32
-            const rotationByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4 * 4; // float32 * 4
-            const rotationInterpolationByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // uint8 * 4
-            const physicsToggleByteOffset = deserializer.offset;
-            deserializer.offset += frameCount; // uint8
-            deserializer.offset += AlignedDataDeserializer.Padding(deserializer.offset);
+            const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
+            const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
+            const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
+            const physicsToggleByteOffset = this._v210Int <= versionInt
+                ? deserializer.getPaddedArrayOffset(1, frameCount)
+                : undefined;
 
             const boneTrack = boneTracks[i] = new MmdBoneAnimationTrack(
                 trackName,
@@ -154,36 +95,28 @@ export class BvmdLoader {
                 rotationInterpolationByteOffset,
                 physicsToggleByteOffset
             );
+            if (physicsToggleByteOffset === undefined) {
+                (boneTrack as { physicsToggles: Uint8Array }).physicsToggles = new Uint8Array(frameCount).fill(1);
+            }
             if (!deserializer.isDeviceLittleEndian) {
                 deserializer.swap32Array(boneTrack.frameNumbers);
                 deserializer.swap32Array(boneTrack.rotations);
             }
         }
 
-        return boneTracks;
-    }
-
-    private _parseMovableBoneTracks(deserializer: AlignedDataDeserializer, positionToMovableBoneTrack: number): MmdMovableBoneAnimationTrack[] {
-        deserializer.offset = positionToMovableBoneTrack;
-        const buffer = deserializer.arrayBuffer;
         const movableBoneTrackCount = deserializer.getUint32();
         const movableBoneTracks: MmdMovableBoneAnimationTrack[] = new Array(movableBoneTrackCount);
         for (let i = 0; i < movableBoneTrackCount; ++i) {
-            const trackName = deserializer.getString(deserializer.getUint32());
+            const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
             const frameCount = deserializer.getUint32();
-            const frameNumberByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // uint32
-            const positionByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4 * 3; // float32 * 3
-            const positionInterpolationByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 12; // uint8 * 12
-            const rotationByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4 * 4; // float32 * 4
-            const rotationInterpolationByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // uint8 * 4
-            const physicsToggleByteOffset = deserializer.offset;
-            deserializer.offset += frameCount; // uint8
-            deserializer.offset += AlignedDataDeserializer.Padding(deserializer.offset);
+            const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
+            const positionByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 3);
+            const positionInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 12);
+            const rotationByteOffset = deserializer.getPaddedArrayOffset(4, frameCount * 4);
+            const rotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, frameCount * 4);
+            const physicsToggleByteOffset = this._v210Int <= versionInt
+                ? deserializer.getPaddedArrayOffset(1, frameCount)
+                : undefined;
 
             const movableBoneTrack = movableBoneTracks[i] = new MmdMovableBoneAnimationTrack(
                 trackName,
@@ -196,6 +129,9 @@ export class BvmdLoader {
                 rotationInterpolationByteOffset,
                 physicsToggleByteOffset
             );
+            if (physicsToggleByteOffset === undefined) {
+                (movableBoneTrack as { physicsToggles: Uint8Array }).physicsToggles = new Uint8Array(frameCount).fill(1);
+            }
             if (!deserializer.isDeviceLittleEndian) {
                 deserializer.swap32Array(movableBoneTrack.frameNumbers);
                 deserializer.swap32Array(movableBoneTrack.positions);
@@ -203,21 +139,13 @@ export class BvmdLoader {
             }
         }
 
-        return movableBoneTracks;
-    }
-
-    private _parseMorphTracks(deserializer: AlignedDataDeserializer, positionToMorphTrack: number): MmdMorphAnimationTrack[] {
-        deserializer.offset = positionToMorphTrack;
-        const buffer = deserializer.arrayBuffer;
         const morphTrackCount = deserializer.getUint32();
         const morphTracks: MmdMorphAnimationTrack[] = new Array(morphTrackCount);
         for (let i = 0; i < morphTrackCount; ++i) {
-            const trackName = deserializer.getString(deserializer.getUint32());
+            const trackName = deserializer.getDecoderString(deserializer.getUint32(), true);
             const frameCount = deserializer.getUint32();
-            const frameNumberByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // uint32
-            const weightByteOffset = deserializer.offset;
-            deserializer.offset += frameCount * 4; // float32
+            const frameNumberByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
+            const weightByteOffset = deserializer.getPaddedArrayOffset(4, frameCount);
 
             const morphTrack = morphTracks[i] = new MmdMorphAnimationTrack(
                 trackName,
@@ -232,27 +160,16 @@ export class BvmdLoader {
             }
         }
 
-        return morphTracks;
-    }
-
-    private _parsePropertyTrack(deserializer: AlignedDataDeserializer, positionToPropertyTrack: number): MmdPropertyAnimationTrack {
-        deserializer.offset = positionToPropertyTrack;
-        const buffer = deserializer.arrayBuffer;
         const propertyFrameCount = deserializer.getUint32();
-        const propertyFrameNumberByteOffset = deserializer.offset;
-        deserializer.offset += propertyFrameCount * 4; // uint32
-        const propertyVisibleByteOffset = deserializer.offset;
-        deserializer.offset += propertyFrameCount; // uint8
-        deserializer.offset += AlignedDataDeserializer.Padding(deserializer.offset);
-
         const ikBoneNameCount = deserializer.getUint32();
+        const propertyFrameNumberByteOffset = deserializer.getPaddedArrayOffset(4, propertyFrameCount);
+        const propertyVisibleByteOffset = deserializer.getPaddedArrayOffset(1, propertyFrameCount);
+
         const propertyIkBoneNames: string[] = new Array(ikBoneNameCount);
         const propertyIkStateByteOffsets: number[] = new Array(ikBoneNameCount);
         for (let i = 0; i < ikBoneNameCount; ++i) {
-            propertyIkBoneNames[i] = deserializer.getString(deserializer.getUint32());
-            propertyIkStateByteOffsets[i] = deserializer.offset;
-            deserializer.offset += propertyFrameCount; // uint8
-            deserializer.offset += AlignedDataDeserializer.Padding(deserializer.offset);
+            propertyIkBoneNames[i] = deserializer.getDecoderString(deserializer.getUint32(), true);
+            propertyIkStateByteOffsets[i] = deserializer.getPaddedArrayOffset(1, propertyFrameCount);
         }
 
         const propertyTrack = new MmdPropertyAnimationTrack(
@@ -267,31 +184,16 @@ export class BvmdLoader {
             deserializer.swap32Array(propertyTrack.frameNumbers);
         }
 
-        return propertyTrack;
-    }
-
-    private _parseCameraTrack(deserializer: AlignedDataDeserializer, positionToCameraTrack: number): MmdCameraAnimationTrack {
-        deserializer.offset = positionToCameraTrack;
-        const buffer = deserializer.arrayBuffer;
         const cameraFrameCount = deserializer.getUint32();
-        const cameraFrameNumberByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // uint32
-        const cameraPositionByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4 * 3; // float32 * 3
-        const cameraPositionInterpolationByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 12; // uint8 * 12
-        const cameraRotationByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4 * 3; // float32 * 3
-        const cameraRotationInterpolationByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // uint8 * 4
-        const cameraDistanceByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // float32
-        const cameraDistanceInterpolationByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // uint8 * 4
-        const cameraFovByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // float32
-        const cameraFovInterpolationByteOffset = deserializer.offset;
-        deserializer.offset += cameraFrameCount * 4; // uint8 * 4
+        const cameraFrameNumberByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount);
+        const cameraPositionByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount * 3);
+        const cameraPositionInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, cameraFrameCount * 12);
+        const cameraRotationByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount * 3);
+        const cameraRotationInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, cameraFrameCount * 4);
+        const cameraDistanceByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount);
+        const cameraDistanceInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, cameraFrameCount * 4);
+        const cameraFovByteOffset = deserializer.getPaddedArrayOffset(4, cameraFrameCount);
+        const cameraFovInterpolationByteOffset = deserializer.getPaddedArrayOffset(1, cameraFrameCount * 4);
 
         const cameraTrack = new MmdCameraAnimationTrack(
             cameraFrameCount,
@@ -314,7 +216,7 @@ export class BvmdLoader {
             deserializer.swap32Array(cameraTrack.fovs);
         }
 
-        return cameraTrack;
+        return new MmdAnimation(name, boneTracks, movableBoneTracks, morphTracks, propertyTrack, cameraTrack);
     }
 
     /**

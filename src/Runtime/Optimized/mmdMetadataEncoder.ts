@@ -3,7 +3,7 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
-import { MmdDataSerializer } from "@/Loader/Optimized/mmdDataSerializer";
+import { AlignedDataSerializer } from "@/Loader/Optimized/alignedDataSerializer";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { ILogger } from "../ILogger";
@@ -280,7 +280,7 @@ export class MmdMetadataEncoder {
         return dataLength;
     }
 
-    protected _encodeBones(serializer: MmdDataSerializer, metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[]): void {
+    protected _encodeBones(serializer: AlignedDataSerializer, metadata: MmdModelMetadata, linkedBones: IMmdRuntimeLinkedBone[]): void {
         const restPosition = new Vector3();
 
         const bones = metadata.bones;
@@ -354,7 +354,7 @@ export class MmdMetadataEncoder {
         }
     }
 
-    protected _encodeMorphs(serializer: MmdDataSerializer, metadata: MmdModelMetadata): Int32Array {
+    protected _encodeMorphs(serializer: AlignedDataSerializer, metadata: MmdModelMetadata): Int32Array {
         const morphs = metadata.morphs;
         let morphCount = 0;
         for (let i = 0; i < morphs.length; ++i) {
@@ -419,7 +419,7 @@ export class MmdMetadataEncoder {
         return wasmMorphMap;
     }
 
-    protected _encodePhysics(serializer: MmdDataSerializer, metadata: Nullable<MmdModelMetadata>, _rootTransform: TransformNode): void {
+    protected _encodePhysics(serializer: AlignedDataSerializer, metadata: Nullable<MmdModelMetadata>, _rootTransform: TransformNode): void {
         if (metadata === null) {
             serializer.setUint8(0); // physicsInfoKind
             serializer.offset += 3; // padding
@@ -453,7 +453,7 @@ export class MmdMetadataEncoder {
     public encode(mmdMesh: MmdMesh, linkedBones: IMmdRuntimeLinkedBone[], buffer: Uint8Array): Int32Array {
         const metadata = mmdMesh.metadata;
 
-        const serializer = new MmdDataSerializer(buffer.buffer);
+        const serializer = new AlignedDataSerializer(buffer.buffer);
         serializer.offset = buffer.byteOffset;
 
         this._encodeBones(serializer, metadata, linkedBones);
