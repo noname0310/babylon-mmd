@@ -4,7 +4,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
 
 import { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
-import { VmdLoader } from "@/Loader/vmdLoader";
+import { BvmdLoader } from "@/Loader/Optimized/Legacy/bvmdLoader";
 
 import type { ISceneBuilder } from "../baseRuntime";
 
@@ -37,13 +37,13 @@ export class SceneBuilder implements ISceneBuilder {
         innerFormDiv.style.alignItems = "start";
         formDiv.appendChild(innerFormDiv);
 
-        const vmdLoader = new VmdLoader(scene);
-        vmdLoader.loggingEnabled = true;
+        const legacyBvmdLoader = new BvmdLoader(scene);
+        legacyBvmdLoader.loggingEnabled = true;
 
         const files: File[] = [];
 
         const title = document.createElement("h1");
-        title.textContent = "VMD to BVMD Converter";
+        title.textContent = "BVMD 2.X to 3.X Migration Tool";
         title.style.width = "100%";
         title.style.fontSize = "24px";
         title.style.textAlign = "center";
@@ -84,12 +84,12 @@ export class SceneBuilder implements ISceneBuilder {
         fileInput.style.fontSize = "20px";
 
         fileInput.type = "file";
-        fileInput.accept = ".vmd";
+        fileInput.accept = ".bvmd";
         fileInput.multiple = true;
         fileInput.onchange = (): void => {
             if (fileInput.files === null) return;
             for (const file of fileInput.files) {
-                if (!file.name.endsWith(".vmd")) continue;
+                if (!file.name.endsWith(".bvmd")) continue;
                 files.push(file);
             }
             renderLoadedFiles();
@@ -105,21 +105,23 @@ export class SceneBuilder implements ISceneBuilder {
 
         convertButton.onclick = async(): Promise<void> => {
             if (files.length === 0) {
-                alert("Please select a VMD file");
+                alert("Please select a BVMD file");
                 return;
             }
 
             convertButton.textContent = "Converting...";
-            const animation = await vmdLoader.loadAsync(files[0].name, files);
-            const arrayBuffer = BvmdConverter.Convert(animation);
-            const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}.bvmd`;
-            a.click();
-            URL.revokeObjectURL(url);
-            a.remove();
+            for (const file of files) {
+                const animation = await legacyBvmdLoader.loadAsync(files[0].name, file);
+                const arrayBuffer = BvmdConverter.Convert(animation);
+                const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}_migrated.bvmd`;
+                a.click();
+                URL.revokeObjectURL(url);
+                a.remove();
+            }
 
             files.length = 0;
             renderLoadedFiles();
