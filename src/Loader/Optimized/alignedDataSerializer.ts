@@ -96,6 +96,17 @@ export class AlignedDataSerializer extends Endianness {
     }
 
     /**
+     * Writes a uint16 array
+     * @param values Uint16 array to write
+     */
+    public setUint16Array(values: ArrayLike<number>): void {
+        const uint16Offset = this._offset >> Uint16.Shift;
+        this._uint16Ptr.set(values, uint16Offset);
+        if (!this.isDeviceLittleEndian) this.swap16Array(this._uint16Ptr, uint16Offset, values.length);
+        this._offset += values.length * (1 << Uint16.Shift);
+    }
+
+    /**
      * Writes a uint32 value
      * @param value Uint32 value to write
      */

@@ -58,16 +58,6 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a uint8 array
-     * @param dest Destination array
-     */
-    public getUint8Array(dest: Uint8Array): void {
-        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
-        dest.set(source);
-        this._offset += dest.byteLength;
-    }
-
-    /**
      * Read a uint16 value
      * @returns Uint16 value
      */
@@ -110,18 +100,6 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a uint32 array
-     * @param dest Destination array
-     */
-    public getUint32Array(dest: Uint32Array): void {
-        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
-        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
-        this._offset += dest.byteLength;
-
-        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
-    }
-
-    /**
      * Read a int32 value
      * @returns Int32 value
      */
@@ -132,18 +110,6 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a int32 array
-     * @param dest Destination array
-     */
-    public getInt32Array(dest: Int32Array): void {
-        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
-        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
-        this._offset += dest.byteLength;
-
-        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
-    }
-
-    /**
      * Read a float32 value
      * @returns Float32 value
      */
@@ -151,18 +117,6 @@ export class MmdDataDeserializer extends Endianness {
         const value = this._dataView.getFloat32(this._offset, true);
         this._offset += 4;
         return value;
-    }
-
-    /**
-     * Read a float32 array
-     * @param dest Destination array
-     */
-    public getFloat32Array(dest: Float32Array): void {
-        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
-        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
-        this._offset += dest.byteLength;
-
-        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     /**
