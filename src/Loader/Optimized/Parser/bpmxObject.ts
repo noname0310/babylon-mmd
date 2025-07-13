@@ -72,6 +72,19 @@ export namespace BpmxObject {
          */
         version: readonly [number, number, number];
 
+        dataPositions: {
+            positionToModelInfo: number;
+            positionToMesh: number;
+            positionToImage: number;
+            positionToTexture: number;
+            positionToMaterial: number;
+            positionToBone: number;
+            positionToMorph: number;
+            positionToDisplayFrame: number;
+            positionToRigidBody: number;
+            positionToJoint: number;
+        }
+
         /**
          * Model name
          */
@@ -160,16 +173,6 @@ export namespace BpmxObject {
     }>;
 
     export namespace Geometry {
-        /**
-         * Attributes for all geometries
-         */
-        export enum MeshType {
-            /**
-             * Mesh is skinned (has bone weights and indices)
-             */
-            IsSkinnedMesh = 1 << 0
-        }
-
         /**
          * Attributes for each geometry
          */
