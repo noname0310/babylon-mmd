@@ -334,6 +334,12 @@ export class BpmxConverter implements ILogger {
     public error: (message: string) => void;
 
     /**
+     * BPMX format version
+     * [major, minor, patch]
+     */
+    public static readonly Version = [3, 0, 0] as const satisfies readonly [number, number, number];
+
+    /**
      * Create a BPMX converter
      */
     public constructor() {
@@ -1593,7 +1599,7 @@ export class BpmxConverter implements ILogger {
         const serializer = new AlignedDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setUint8Array([3, 0, 0]); // version
+        serializer.setUint8Array(BpmxConverter.Version); // version
         serializer.offset += 1; // padding
 
         serializer.setUint32(4 * 10); // sizeofheader

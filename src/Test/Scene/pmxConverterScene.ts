@@ -280,7 +280,16 @@ export class SceneBuilder implements ISceneBuilder {
         title.style.textAlign = "center";
         title.style.fontSize = "24px";
         title.style.marginTop = "0";
+        title.style.marginBottom = "0";
         innerFormDiv.appendChild(title);
+
+        const version = document.createElement("p");
+        version.textContent = `BPMX Version: ${BpmxConverter.Version.join(".")}`;
+        version.style.width = "100%";
+        version.style.fontSize = "16px";
+        version.style.textAlign = "center";
+        version.style.marginTop = "0";
+        innerFormDiv.appendChild(version);
 
         // #region Tab
 
