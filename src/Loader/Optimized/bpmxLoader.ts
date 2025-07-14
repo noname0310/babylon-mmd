@@ -59,7 +59,7 @@ interface IBpmxBuildGeometryResult extends IMmdModelBuildGeometryResult { }
  * BPMX is a single binary file format that contains all the data of a model
  */
 export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmxBuildGeometryResult> implements IBpmxLoaderOptions, ISceneLoaderPluginAsync, ILogger {
-    /*/**
+    /**
      * Use single mesh for single geometry model (defalut: true)
      *
      * If there is only one geometry in the model, we don't need to create root node for create mesh
@@ -68,7 +68,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
      */
     public useSingleMeshForSingleGeometryModel: boolean;
 
-    /*
+    /**
      * Create a new BpmxLoader
      *
      * @param options babylon.js scene loader options
