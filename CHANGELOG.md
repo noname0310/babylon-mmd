@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (scheduled)
+## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported
   - use `"babylon-mmd/esm/Loader/Optimized/Legacy/bpmxLoader"` to load 2.X files
