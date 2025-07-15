@@ -111,13 +111,13 @@ export class SceneBuilder implements ISceneBuilder {
 
             convertButton.textContent = "Converting...";
             for (const file of files) {
-                const animation = await legacyBvmdLoader.loadAsync(files[0].name, file);
+                const animation = await legacyBvmdLoader.loadAsync(file.name, file);
                 const arrayBuffer = BvmdConverter.Convert(animation);
                 const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `${files[0].name.substring(0, files[0].name.lastIndexOf("."))}_migrated.bvmd`;
+                a.download = `${file.name.substring(0, file.name.lastIndexOf("."))}_migrated.bvmd`;
                 a.click();
                 URL.revokeObjectURL(url);
                 a.remove();
