@@ -308,7 +308,7 @@ export interface IBpmxConvertOptions {
     /**
      * Array that stores weather the material is rendered as translucent in order of mmd materials metadata (default: [])
      */
-    translucentMaterials?: boolean[];
+    translucentMaterials?: Nullable<boolean>[];
 
     /**
      * Array that stores material alpha evaluation result in order of mmd materials metadata (default: [])
