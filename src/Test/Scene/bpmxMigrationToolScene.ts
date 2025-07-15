@@ -131,7 +131,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         convertButton.onclick = async(): Promise<void> => {
             if (files.length === 0) {
-                alert("Please select a BVMD file");
+                alert("Please select a BPMX file");
                 return;
             }
 

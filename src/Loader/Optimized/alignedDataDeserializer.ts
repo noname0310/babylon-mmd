@@ -115,7 +115,7 @@ export class AlignedDataDeserializer extends Endianness {
 
     /**
      * Read a uint32 value
-     * @returns Uunt32 value
+     * @returns Uint32 value
      */
     public getUint32(): number {
         const uint32Offset = this._offset >> Uint32.Shift;
