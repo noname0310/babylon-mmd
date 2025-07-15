@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 (scheduled)
+
+- BPMX format updated to 3.0.0. 2.X files are no longer supported
+  - use `"babylon-mmd/esm/Loader/Optimized/Legacy/bpmxLoader"` to load 2.X files
+  - you can use [bpmx migration tool](https://noname0310.github.io/babylon-mmd/bpmx_migration_tool) to convert 2.X files to 3.0.0 format
+
+- BVMD format updated to 3.0.0. 2.X files are no longer supported
+  - use `"babylon-mmd/esm/Loader/Optimized/Legacy/bvmdLoader"` to load 2.X files
+  - you can use [bvmd migration tool](https://noname0310.github.io/babylon-mmd/bvmd_migration_tool) to convert 2.X files to 3.0.0 format
+
 ## 0.67.2 (2025-07-10)
 
 - fix `MmdOutlineRenderer` not working on babylon.js 8.16.0
