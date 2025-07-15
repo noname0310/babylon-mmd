@@ -1,14 +1,16 @@
 import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
 
+import type { ILogger } from "@/Loader/Parser/ILogger";
+import { ConsoleLogger } from "@/Loader/Parser/ILogger";
 import type { Vec3 } from "@/Loader/Parser/mmdTypes";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 
-import type { ILogger } from "../../Parser/ILogger";
-import { ConsoleLogger } from "../../Parser/ILogger";
-import { AlignedDataDeserializer } from "../alignedDataDeserializer";
-import { BpmxObject } from "./bpmxObject";
+import { BpmxObject } from "../../Parser/bpmxObject";
+import { MmdDataDeserializer } from "../mmdDataDeserializer";
 
 /**
+ * 2.x legacy BPMX loader
+ *
  * BpmxReader is a static class that parses BPMX data
  */
 export class BpmxReader {
@@ -23,38 +25,36 @@ export class BpmxReader {
      * @throws {LoadFileError} If the BPMX version is not supported
      */
     public static async ParseAsync(data: ArrayBufferLike, logger: ILogger = new ConsoleLogger()): Promise<BpmxObject> {
-        const dataDeserializer = new AlignedDataDeserializer(data);
+        const dataDeserializer = new MmdDataDeserializer(data);
+        dataDeserializer.initializeTextDecoder("utf-8");
 
         const header = this._ParseHeader(dataDeserializer);
-        const dataPositions = header.dataPositions;
-        const isSkinnedMesh = dataPositions.positionToBone !== 0;
-        const geometries = dataPositions.positionToMesh !== 0
-            ? await this._ParseGeometriesAsync(dataDeserializer, dataPositions.positionToMesh, isSkinnedMesh)
-            : [];
-        const images = dataPositions.positionToImage !== 0
-            ? await this._ParseImagesAsync(dataDeserializer, dataPositions.positionToImage)
-            : [];
-        const textures = dataPositions.positionToTexture !== 0
-            ? this._ParseTexturesAsync(dataDeserializer, dataPositions.positionToTexture)
-            : [];
-        const materials = dataPositions.positionToMaterial !== 0
-            ? this._ParseMaterials(dataDeserializer, dataPositions.positionToMaterial)
-            : [];
-        const bones = isSkinnedMesh
-            ? this._ParseBones(dataDeserializer, dataPositions.positionToBone)
-            : [];
-        const morphs = dataPositions.positionToMorph !== 0
-            ? this._ParseMorphs(dataDeserializer, dataPositions.positionToMorph)
-            : [];
-        const displayFrames = dataPositions.positionToDisplayFrame !== 0
-            ? this._ParseDisplayFrames(dataDeserializer, dataPositions.positionToDisplayFrame)
-            : [];
-        const rigidBodies = dataPositions.positionToRigidBody !== 0
-            ? this._ParseRigidBodies(dataDeserializer, dataPositions.positionToRigidBody)
-            : [];
-        const joints = dataPositions.positionToJoint !== 0
-            ? this._ParseJoints(dataDeserializer, dataPositions.positionToJoint)
-            : [];
+        const isSkinnedMesh = dataDeserializer.getUint8() === 1;
+        const geometries = await this._ParseGeometriesAsync(dataDeserializer, isSkinnedMesh);
+
+        const versionInt = header.version[0] << 16 | header.version[1] << 8 | header.version[2];
+        if (versionInt < this._V221Int) {
+            let hasSdef = false;
+            for (let i = 0; i < geometries.length; ++i) {
+                if (geometries[i].skinning?.sdef) {
+                    hasSdef = true;
+                    break;
+                }
+            }
+
+            if (hasSdef) {
+                logger.warn("Sdef parameters in this file are incorrect. sdef deformation may have some problems.");
+            }
+        }
+
+        const images = await this._ParseImagesAsync(dataDeserializer);
+        const textures = this._ParseTexturesAsync(dataDeserializer);
+        const materials = this._ParseMaterials(dataDeserializer, header.version);
+        const bones = isSkinnedMesh ? this._ParseBones(dataDeserializer) : [];
+        const morphs = this._ParseMorphs(dataDeserializer);
+        const displayFrames = this._ParseDisplayFrames(dataDeserializer);
+        const rigidBodies = this._ParseRigidBodies(dataDeserializer);
+        const joints = this._ParseJoints(dataDeserializer);
 
         if (dataDeserializer.bytesAvailable > 0) {
             logger.warn(`There are ${dataDeserializer.bytesAvailable} bytes left after parsing`);
@@ -76,122 +76,53 @@ export class BpmxReader {
         return bpmxObject;
     }
 
-    private static readonly _V300Int = 3 << 16 | 0 << 8 | 0;
-    private static readonly _V310Int = 3 << 16 | 1 << 8 | 0;
+    private static readonly _V200Int = 2 << 16 | 0 << 8 | 0;
+    // private static readonly _V210Int = 2 << 16 | 1 << 8 | 0;
+    // private static readonly _V220Int = 2 << 16 | 2 << 8 | 0;
+    private static readonly _V221Int = 2 << 16 | 2 << 8 | 1;
 
-    private static _ParseHeader(dataDeserializer: AlignedDataDeserializer): BpmxObject.Header {
+    private static _ParseHeader(dataDeserializer: MmdDataDeserializer): BpmxObject.Header {
         if (dataDeserializer.bytesAvailable < (
             4 + // signature
             3 // version
         )) {
             throw new RangeError("is not bpmx file");
         }
-        const signature = dataDeserializer.getString(4);
+        const signature = dataDeserializer.getDecoderString(4, false);
         if (signature !== "BPMX") {
             throw new RangeError("is not bpmx file");
         }
 
         const version = [
-            dataDeserializer.getUint8(),
-            dataDeserializer.getUint8(),
-            dataDeserializer.getUint8()
+            dataDeserializer.getInt8(),
+            dataDeserializer.getInt8(),
+            dataDeserializer.getInt8()
         ] as const;
         const versionInt = version[0] << 16 | version[1] << 8 | version[2];
 
-        if (versionInt < this._V300Int || this._V310Int <= versionInt) {
+        if (versionInt < this._V200Int || this._V221Int < versionInt) {
             throw new LoadFileError(`BPMX version ${version[0]}.${version[1]}.${version[2]} is not supported.`);
         }
-        dataDeserializer.offset += 1; // padding
 
-        const sizeOfHeader = dataDeserializer.getUint32();
-        let leftHeaderBytes = sizeOfHeader;
-
-        let positionToModelInfo = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToModelInfo = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToMesh = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToMesh = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToImage = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToImage = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToTexture = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToTexture = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToMaterial = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToMaterial = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToBone = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToBone = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToMorph = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToMorph = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToDisplayFrame = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToDisplayFrame = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToRigidBody = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToRigidBody = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let positionToJoint = 0;
-        if (4 <= leftHeaderBytes) {
-            positionToJoint = dataDeserializer.getUint32();
-            leftHeaderBytes -= 4;
-        }
-
-        let modelName = "";
-        let englishModelName = "";
-        let comment = "";
-        let englishComment = "";
-        if (positionToModelInfo !== 0) {
-            dataDeserializer.offset = positionToModelInfo;
-            modelName = dataDeserializer.getString(dataDeserializer.getUint32());
-            englishModelName = dataDeserializer.getString(dataDeserializer.getUint32());
-            comment = dataDeserializer.getString(dataDeserializer.getUint32());
-            englishComment = dataDeserializer.getString(dataDeserializer.getUint32());
-        }
+        const modelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+        const englishModelName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+        const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+        const englishComment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
         const header: BpmxObject.Header = {
             signature,
             version,
             dataPositions: {
-                positionToModelInfo,
-                positionToMesh,
-                positionToImage,
-                positionToTexture,
-                positionToMaterial,
-                positionToBone,
-                positionToMorph,
-                positionToDisplayFrame,
-                positionToRigidBody,
-                positionToJoint
+                positionToModelInfo: 0,
+                positionToMesh: 0,
+                positionToImage: 0,
+                positionToTexture: 0,
+                positionToMaterial: 0,
+                positionToBone: 0,
+                positionToMorph: 0,
+                positionToDisplayFrame: 0,
+                positionToRigidBody: 0,
+                positionToJoint: 0
             },
             modelName,
             englishModelName,
@@ -201,15 +132,14 @@ export class BpmxReader {
         return header;
     }
 
-    private static async _ParseGeometriesAsync(dataDeserializer: AlignedDataDeserializer, positionToMesh: number, isSkinnedMesh: boolean): Promise<BpmxObject.Geometry[]> {
-        dataDeserializer.offset = positionToMesh;
+    private static async _ParseGeometriesAsync(dataDeserializer: MmdDataDeserializer, isSkinnedMesh: boolean): Promise<BpmxObject.Geometry[]> {
         let time = performance.now();
 
-        const meshCount = dataDeserializer.getUint32();
-
         const geometries: BpmxObject.Geometry[] = [];
+
+        const meshCount = dataDeserializer.getUint32();
         for (let i = 0; i < meshCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
             let materialIndex: number | BpmxObject.Geometry.SubGeometry[] = dataDeserializer.getInt32();
             if (materialIndex === -2) { // since bpmx 2.1.0
                 const subMeshCount = dataDeserializer.getUint32();
@@ -256,7 +186,6 @@ export class BpmxReader {
             const additionalUvs: Float32Array[] = [];
 
             const additionalUvCount = dataDeserializer.getUint8();
-            dataDeserializer.offset += 3; // padding
             for (let i = 0; i < additionalUvCount; ++i) {
                 const additionalUv = new Float32Array(vertexCount * 4);
                 dataDeserializer.getFloat32Array(additionalUv);
@@ -269,12 +198,10 @@ export class BpmxReader {
             }
 
             const flag = dataDeserializer.getUint8();
-            dataDeserializer.offset += 3; // padding
 
             let indices: Int32Array | Uint32Array | Uint16Array | undefined = undefined;
             if ((flag & BpmxObject.Geometry.GeometryType.IsIndexed) !== 0) {
                 const indexElementType = dataDeserializer.getUint8() as BpmxObject.Geometry.IndexElementType;
-                dataDeserializer.offset += 3; // padding
                 const indicesCount = dataDeserializer.getUint32();
 
                 if (indexElementType === BpmxObject.Geometry.IndexElementType.Int32) {
@@ -287,7 +214,6 @@ export class BpmxReader {
                     indices = new Uint16Array(indicesCount);
                     dataDeserializer.getUint16Array(indices as Uint16Array);
                 }
-                dataDeserializer.offset += AlignedDataDeserializer.Padding(dataDeserializer.offset); // dynamic padding
 
                 if (100 < performance.now() - time) {
                     await new Promise(resolve => setTimeout(resolve, 0));
@@ -355,27 +281,24 @@ export class BpmxReader {
         return geometries;
     }
 
-    private static async _ParseImagesAsync(dataDeserializer: AlignedDataDeserializer, positionToImage: number): Promise<BpmxObject.Image[]> {
-        dataDeserializer.offset = positionToImage;
-        let time = performance.now();
-
+    private static async _ParseImagesAsync(dataDeserializer: MmdDataDeserializer): Promise<BpmxObject.Image[]> {
         const imageCount = dataDeserializer.getUint32();
+
+        let time = performance.now();
 
         const images: BpmxObject.Image[] = [];
         for (let i = 0; i < imageCount; ++i) {
-            const relativePath = dataDeserializer.getString(dataDeserializer.getUint32());
+            const relativePath = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const flag = dataDeserializer.getUint8();
-            dataDeserializer.offset += 3; // padding
 
             const mimeType = ((flag & BpmxObject.Image.Flag.HasMimeType) !== 0)
-                ? dataDeserializer.getString(dataDeserializer.getUint32())
+                ? dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false)
                 : undefined;
 
             const byteLength = dataDeserializer.getUint32();
             const data = new ArrayBuffer(byteLength);
             dataDeserializer.getUint8Array(new Uint8Array(data));
-            dataDeserializer.offset += AlignedDataDeserializer.Padding(dataDeserializer.offset); // dynamic padding
 
             images.push({
                 relativePath,
@@ -391,16 +314,13 @@ export class BpmxReader {
         return images;
     }
 
-    private static _ParseTexturesAsync(dataDeserializer: AlignedDataDeserializer, positionToTexture: number): BpmxObject.Texture[] {
-        dataDeserializer.offset = positionToTexture;
-
+    private static _ParseTexturesAsync(dataDeserializer: MmdDataDeserializer): BpmxObject.Texture[] {
         const textureCount = dataDeserializer.getUint32();
 
         const textures: BpmxObject.Texture[] = [];
         for (let i = 0; i < textureCount; ++i) {
             const flag = dataDeserializer.getUint8();
             const samplingMode = dataDeserializer.getUint8();
-            dataDeserializer.offset += 2; // padding
             const imageIndex = dataDeserializer.getInt32();
 
             textures.push({
@@ -412,24 +332,23 @@ export class BpmxReader {
         return textures;
     }
 
-    private static _ParseMaterials(dataDeserializer: AlignedDataDeserializer, positionToMaterial: number): BpmxObject.Material[] {
-        dataDeserializer.offset = positionToMaterial;
-
+    private static _ParseMaterials(dataDeserializer: MmdDataDeserializer, version: readonly [number, number, number]): BpmxObject.Material[] {
         const materialCount = dataDeserializer.getUint32();
 
         const materials: BpmxObject.Material[] = [];
         for (let i = 0; i < materialCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const diffuse = dataDeserializer.getFloat32Tuple(4);
             const specular = dataDeserializer.getFloat32Tuple(3);
             const shininess = dataDeserializer.getFloat32();
             const ambient = dataDeserializer.getFloat32Tuple(3);
-            const evaluatedTransparency = dataDeserializer.getUint8();
+            const evaluatedTransparency = (version[0] === 2 && version[1] === 0)
+                ? (dataDeserializer.getUint8() | 0xF0) // mark bits as not-evaluated
+                : dataDeserializer.getUint8();
 
             const flag = dataDeserializer.getUint8();
-            dataDeserializer.offset += 2; // padding
 
             const edgeColor = dataDeserializer.getFloat32Tuple(4);
             const edgeSize = dataDeserializer.getFloat32();
@@ -439,10 +358,9 @@ export class BpmxReader {
             const sphereTextureMode = dataDeserializer.getUint8();
 
             const isSharedToonTexture = dataDeserializer.getUint8() === 1;
-            dataDeserializer.offset += 2; // padding
             const toonTextureIndex = dataDeserializer.getInt32();
 
-            const comment = dataDeserializer.getString(dataDeserializer.getUint32());
+            const comment = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const material: BpmxObject.Material = {
                 name,
@@ -474,22 +392,19 @@ export class BpmxReader {
         return materials;
     }
 
-    private static _ParseBones(dataDeserializer: AlignedDataDeserializer, positionToBone: number): PmxObject.Bone[] {
-        dataDeserializer.offset = positionToBone;
-
+    private static _ParseBones(dataDeserializer: MmdDataDeserializer): PmxObject.Bone[] {
         const bonesCount = dataDeserializer.getUint32();
 
         const bones: PmxObject.Bone[] = [];
         for (let i = 0; i < bonesCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const position = dataDeserializer.getFloat32Tuple(3);
             const parentBoneIndex = dataDeserializer.getInt32();
             const transformOrder = dataDeserializer.getInt32();
 
             const flag = dataDeserializer.getUint16();
-            dataDeserializer.offset += 2; // padding
 
             let tailPosition: number | Vec3;
 
@@ -543,7 +458,6 @@ export class BpmxReader {
                 for (let i = 0; i < linksCount; ++i) {
                     const ikLinkTarget = dataDeserializer.getInt32();
                     const hasLimit = dataDeserializer.getUint8() === 1;
-                    dataDeserializer.offset += 3; // padding
 
                     const link: PmxObject.Bone.IKLink = {
                         target: ikLinkTarget,
@@ -588,19 +502,16 @@ export class BpmxReader {
         return bones;
     }
 
-    private static _ParseMorphs(dataDeserializer: AlignedDataDeserializer, positionToMorph: number): BpmxObject.Morph[] {
-        dataDeserializer.offset = positionToMorph;
-
+    private static _ParseMorphs(dataDeserializer: MmdDataDeserializer): BpmxObject.Morph[] {
         const morphsCount = dataDeserializer.getUint32();
 
         const morphs: BpmxObject.Morph[] = [];
         for (let i = 0; i < morphsCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const category: PmxObject.Morph.Category = dataDeserializer.getUint8();
             const type: BpmxObject.Morph.Type = dataDeserializer.getUint8();
-            dataDeserializer.offset += 2; // padding
 
             let morph: Partial<BpmxObject.Morph> = {
                 name,
@@ -724,7 +635,6 @@ export class BpmxReader {
                     for (let i = 0; i < elementCount; ++i) {
                         const materialIndex = dataDeserializer.getInt32();
                         const type = dataDeserializer.getUint8();
-                        dataDeserializer.offset += 3; // padding
                         const diffuse = dataDeserializer.getFloat32Tuple(4);
                         const specular = dataDeserializer.getFloat32Tuple(3);
                         const shininess = dataDeserializer.getFloat32();
@@ -768,24 +678,20 @@ export class BpmxReader {
         return morphs;
     }
 
-    private static _ParseDisplayFrames(dataDeserializer: AlignedDataDeserializer, positionToDisplayFrame: number): PmxObject.DisplayFrame[] {
-        dataDeserializer.offset = positionToDisplayFrame;
-
+    private static _ParseDisplayFrames(dataDeserializer: MmdDataDeserializer): PmxObject.DisplayFrame[] {
         const displayFramesCount = dataDeserializer.getUint32();
 
         const displayFrames: PmxObject.DisplayFrame[] = [];
         for (let i = 0; i < displayFramesCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const isSpecialFrame = dataDeserializer.getUint8() === 1;
-            dataDeserializer.offset += 3; // padding
 
             const elementsCount = dataDeserializer.getUint32();
             const frames: PmxObject.DisplayFrame.FrameData[] = [];
             for (let i = 0; i < elementsCount; ++i) {
                 const frameType = dataDeserializer.getUint8();
-                dataDeserializer.offset += 3; // padding
                 const frameIndex = dataDeserializer.getInt32();
 
                 const frame: PmxObject.DisplayFrame.FrameData = {
@@ -807,20 +713,18 @@ export class BpmxReader {
         return displayFrames;
     }
 
-    private static _ParseRigidBodies(dataDeserializer: AlignedDataDeserializer, positionToRigidBody: number): PmxObject.RigidBody[] {
-        dataDeserializer.offset = positionToRigidBody;
-
+    private static _ParseRigidBodies(dataDeserializer: MmdDataDeserializer): PmxObject.RigidBody[] {
         const rigidBodiesCount = dataDeserializer.getUint32();
 
         const rigidBodies: PmxObject.RigidBody[] = [];
         for (let i = 0; i < rigidBodiesCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const boneIndex = dataDeserializer.getInt32();
 
-            const collisionMask = dataDeserializer.getUint16();
             const collisionGroup = dataDeserializer.getUint8();
+            const collisionMask = dataDeserializer.getUint16();
 
             const shapeType: PmxObject.RigidBody.ShapeType = dataDeserializer.getUint8();
             const shapeSize = dataDeserializer.getFloat32Tuple(3);
@@ -834,7 +738,6 @@ export class BpmxReader {
             const friction = dataDeserializer.getFloat32();
 
             const physicsMode: PmxObject.RigidBody.PhysicsMode = dataDeserializer.getUint8();
-            dataDeserializer.offset += 3; // padding
 
             const rigidBody: PmxObject.RigidBody = {
                 name,
@@ -859,18 +762,15 @@ export class BpmxReader {
         return rigidBodies;
     }
 
-    private static _ParseJoints(dataDeserializer: AlignedDataDeserializer, positionToJoint: number): PmxObject.Joint[] {
-        dataDeserializer.offset = positionToJoint;
-
+    private static _ParseJoints(dataDeserializer: MmdDataDeserializer): PmxObject.Joint[] {
         const jointsCount = dataDeserializer.getUint32();
 
         const joints: PmxObject.Joint[] = [];
         for (let i = 0; i < jointsCount; ++i) {
-            const name = dataDeserializer.getString(dataDeserializer.getUint32());
-            const englishName = dataDeserializer.getString(dataDeserializer.getUint32());
+            const name = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
+            const englishName = dataDeserializer.getDecoderString(dataDeserializer.getUint32(), false);
 
             const type: PmxObject.Joint.Type = dataDeserializer.getUint8();
-            dataDeserializer.offset += 3; // padding
             const rigidbodyIndexA = dataDeserializer.getInt32();
             const rigidbodyIndexB = dataDeserializer.getInt32();
             const position = dataDeserializer.getFloat32Tuple(3);

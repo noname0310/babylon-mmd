@@ -1,18 +1,35 @@
 /**
  * BabylonPMX(BPMX) representation
+ * condition: all strings are 4 byte aligned
  *
  * signature: uint8[4] "BPMX"
- * version: int8[3] - major, minor, patch
+ * version: uint8[3] - major, minor, patch
+ * padding: uint8 - for align to 4 byte
  *
- * modelName: uint32, uint8[] - length, string
- * englishModelName: uint32, uint8[] - length, string
- * comment: uint32, uint8[] - length, string
- * englishComment: uint32, uint8[] - length, string
+ * sizeofHeader: uint32 - size of header
+ * { - if position is 0 then there is no data
+ *  positionToModelInfo: uint32 - position to model info data
+ *  positionToMesh: uint32 - position to mesh data
+ *  positionToImage: uint32 - position to image data
+ *  positionToTexture: uint32 - position to texture data
+ *  positionToMaterial: uint32 - position to material data
+ *  positionToBone: uint32 - position to bone data
+ *  positionToMorph: uint32 - position to morph data
+ *  positionToDisplayFrame: uint32 - position to display frame data
+ *  positionToRigidBody: uint32 - position to rigid body data
+ *  positionToJoint: uint32 - position to joint data
+ * }
  *
- * meshFlag: uint8 // 0x01: isSkinnedMesh
+ * modelInfo: {
+ *  modelName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishModelName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  comment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishComment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ * }
+ *
  * meshCount: uint32
  * {
- *  meshName: uint32, uint8[] - length, string
+ *  meshName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  materialIndex: int32 - -1: no material -2: multi material(since BPMX 2.1.0)
  *  { // if materialIndex is -2
  *   subMeshCount: uint32
@@ -29,16 +46,20 @@
  *  normals: float32[vertexCount * 3]
  *  uvs: float32[vertexCount * 2]
  *  additionalUvCount: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  {
  *   uvs: float32[vertexCount * 4]
  *  }[additionalUvCount]
  *  flag: uint8 // 0x01: hasSdef, 0x02: isIndexedMesh, 0x04: hasEdgeScale
+ *  padding: uint8[3] - for align to 4 byte
  *  { // if isIndexedMesh
  *   indexElementType: uint8 // 0: int32, 1: uint32, 2: uint16
+ *   padding: uint8[3] - for align to 4 byte
  *   indicesCount: uint32
  *   indices: uint16[indicesCount] or int32[indicesCount] or uint32[indicesCount]
+ *   dynamicPadding: uint8[0-3] - for align to 4 byte
  *  }
- *  { // if meshType is skinned
+ *  { // if positionToBone is non null
  *   matricesIndices: float32[vertexCount * 4]
  *   matricesWeights: float32[vertexCount * 4]
  *   { // if hasSdef
@@ -54,26 +75,29 @@
  *
  * imageCount: uint32
  * images: {
- *  relativePath: uint32, uint8[] - length, string
+ *  relativePath: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  flag: uint8 // 0x01: hasMimeType
+ *  padding: uint8[3] - for align to 4 byte
  *  { // if hasMimeType
- *   mimeType: uint32, uint8[] - length, string
+ *   mimeType: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  }
  *  byteLength: uint32
  *  arrayBuffer: uint8[texturesCount]
+ *  dynamicPadding: uint8[0-3] - for align to 4 byte
  * }[imageCount]
  *
  * textureCount: uint32
  * textures: {
  *  flag: uint8 // 0x01: noMipmap, 0x02: invertY
  *  samplingMode: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *  imageIndex: int32
  * }[textureCount]
  *
  * materialCount: uint32
  * {
- *  materialName: uint32, uint8[] - length, string
- *  englishMaterialName: uint32, uint8[] - length, string
+ *  materialName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishMaterialName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  diffuse: float32[4];
  *  specular: float32[3]
  *  shininess: float32
@@ -85,25 +109,28 @@
  *                                 is complete opaque(since BPMX 2.1.0): 11: not evaluated, 00: opaque, 01: translucent
  *                                 alpha evaluate result: 1111: not evaluated, 0000: opaque, 0001: alphatest, 0010: alphablend, 0011: alphatest and blend
  *  flag: uint8 - 0x01: isDoubleSided, 0x10: EnabledToonEdge
+ *  padding: uint8[2] - for align to 4 byte
  *  edgeColor: float32[4]
  *  edgeSize: float32
  *  textureIndex: int32
  *  sphereTextureIndex: int32
  *  sphereTextureMode: uint8
  *  isSharedToontexture: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *  toonTextureIndex: int32
- *  comment: uint32, uint8[] - length, string
+ *  comment: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  * }[materialCount]
  *
  * { // if hasBone
  *  boneCount: uint32
  *  {
- *   boneName: uint32, uint8[] - length, string
- *   englishBoneName: uint32, uint8[] - length, string
+ *   boneName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *   englishBoneName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *   position: float32[3]
  *   parentBoneIndex: int32
  *   transformOrder: int32
  *   flag: uint16
+ *   padding: uint8[2] - for align to 4 byte
  *   tailPosition: float32[3] | int32
  *   appendTransform: { // if has appendTransform
  *     parentIndex: int32
@@ -121,6 +148,7 @@
  *    links: {
  *     target: int32
  *     hasLimit: uint8
+ *     padding: uint8[3] - for align to 4 byte
  *     minimumAngle: float32[3] // if hasLimit
  *     maximumAngle: float32[3] // if hasLimit
  *    }[linkCount]
@@ -130,16 +158,18 @@
  *
  * morphCount: uint32
  * {
- *  morphName: uint32, uint8[] - length, string
- *  englishMorphName: uint32, uint8[] - length, string
+ *  morphName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishMorphName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  category: uint8
  *  type: uint8
+ *  padding: uint8[2] - for align to 4 byte
  *
  *  { // if type is material
  *   elementCount: uint32
  *   {
  *    materialIndex: int32
  *    type: uint8
+ *    padding: uint8[3] - for align to 4 byte
  *    diffuse: float32[4]
  *    specular: float32[3]
  *    shininess: float32
@@ -188,23 +218,25 @@
  *
  * displayFrameCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  isSpecialFrame: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  elementCount: uint32
  *  elements: {
  *   frameType: uint8
+ *   padding: uint8[3] - for align to 4 byte
  *   frameIndex: int32
  *  }[elementCount]
  * }[displayFrameCount]
  *
  * rigidBodyCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  boneIndex: int32
- *  collisionGroup: uint8
  *  collisionMask: uint16
+ *  collisionGroup: uint8
  *  shapeType: uint8
  *  shapeSize: float32[3]
  *  shapePosition: float32[3]
@@ -215,13 +247,15 @@
  *  repulsion: float32
  *  friction: float32
  *  physicsMode: uint8
+ *  padding: uint8[3] - for align to 4 byte
  * }[rigidBodyCount]
  *
  * jointCount: uint32
  * {
- *  name: uint32, uint8[] - length, string
- *  englishName: uint32, uint8[] - length, string
+ *  name: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
+ *  englishName: uint32, uint8[], uint8[0-3] - length, string, dynamicPadding
  *  type: uint8
+ *  padding: uint8[3] - for align to 4 byte
  *  rigidBodyIndexA: int32
  *  rigidBodyIndexB: int32
  *  position: float32[3]
@@ -254,7 +288,7 @@ import type { MmdStandardMaterial } from "../mmdStandardMaterial";
 import type { ILogger } from "../Parser/ILogger";
 import type { Vec3, Vec4 } from "../Parser/mmdTypes";
 import { PmxObject } from "../Parser/pmxObject";
-import { MmdDataSerializer } from "./mmdDataSerializer";
+import { AlignedDataSerializer } from "./alignedDataSerializer";
 import { BpmxObject } from "./Parser/bpmxObject";
 
 /**
@@ -274,7 +308,7 @@ export interface IBpmxConvertOptions {
     /**
      * Array that stores weather the material is rendered as translucent in order of mmd materials metadata (default: [])
      */
-    translucentMaterials?: boolean[];
+    translucentMaterials?: Nullable<boolean>[];
 
     /**
      * Array that stores material alpha evaluation result in order of mmd materials metadata (default: [])
@@ -298,6 +332,12 @@ export class BpmxConverter implements ILogger {
     public warn: (message: string) => void;
     /** @internal */
     public error: (message: string) => void;
+
+    /**
+     * BPMX format version
+     * [major, minor, patch]
+     */
+    public static readonly Version = [3, 0, 0] as const satisfies readonly [number, number, number];
 
     /**
      * Create a BPMX converter
@@ -1149,24 +1189,52 @@ export class BpmxConverter implements ILogger {
 
         const encoder = new TextEncoder();
 
+        const header = {
+            positionToModelInfo: 0,
+            positionToMesh: 0,
+            positionToImage: 0,
+            positionToTexture: 0,
+            positionToMaterial: 0,
+            positionToBone: 0,
+            positionToMorph: 0,
+            positionToDisplayFrame: 0,
+            positionToRigidBody: 0,
+            positionToJoint: 0
+        };
+
         let dataLength =
             4 + // signature
-            3; // version
+            3 + // version
+            1; // padding
+
+        dataLength +=
+            4 + // sizeofheader
+            4 * 10; // header (10 ptr)
 
         { // compute dataLength
-            const header = mmdModelMetadata.header;
-            dataLength += 4 + encoder.encode(header.modelName).length; // modelName
-            dataLength += 4 + encoder.encode(header.englishModelName).length; // englishModelName
-            dataLength += 4 + encoder.encode(header.comment).length; // comment
-            dataLength += 4 + encoder.encode(header.englishComment).length; // englishComment
+            header.positionToModelInfo = dataLength;
 
-            dataLength += 1; // meshFlag
+            const modelInfo = mmdModelMetadata.header;
+            {
+                const modelNameBytes = encoder.encode(modelInfo.modelName);
+                dataLength += 4 + modelNameBytes.length + AlignedDataSerializer.Padding(modelNameBytes.length); // modelName
+                const englishModelNameBytes = encoder.encode(modelInfo.englishModelName);
+                dataLength += 4 + englishModelNameBytes.length + AlignedDataSerializer.Padding(englishModelNameBytes.length); // englishModelName
+                const commentBytes = encoder.encode(modelInfo.comment);
+                dataLength += 4 + commentBytes.length + AlignedDataSerializer.Padding(commentBytes.length); // comment
+                const englishCommentBytes = encoder.encode(modelInfo.englishComment);
+                dataLength += 4 + englishCommentBytes.length + AlignedDataSerializer.Padding(englishCommentBytes.length); // englishComment
+            }
+
+            header.positionToMesh = dataLength;
+
             dataLength += 4; // meshCount
             for (let i = 0; i < meshesToSerialize.length; ++i) {
                 const mesh = meshesToSerialize[i];
                 const geometry = mesh.geometry!;
 
-                dataLength += 4 + encoder.encode(mesh.name).length; // meshName
+                const meshNameBytes = encoder.encode(mesh.name);
+                dataLength += 4 + meshNameBytes.length + AlignedDataSerializer.Padding(meshNameBytes.length); // meshName
                 dataLength += 4; // materialIndex
                 const meshMaterial = mesh.material as Nullable<MultiMaterial>;
                 if (meshMaterial?.subMaterials !== undefined) {
@@ -1190,21 +1258,25 @@ export class BpmxConverter implements ILogger {
                 dataLength += vertexCount * 2 * 4; // uvs
 
                 dataLength += 1; // additionalUvCount
+                dataLength += 3; // padding
                 if (geometry.getVerticesData(MmdBufferKind.AdditionalUV1Kind) !== null) dataLength += vertexCount * 4 * 4; // additionalUv1
                 if (geometry.getVerticesData(MmdBufferKind.AdditionalUV2Kind) !== null) dataLength += vertexCount * 4 * 4; // additionalUv2
                 if (geometry.getVerticesData(MmdBufferKind.AdditionalUV3Kind) !== null) dataLength += vertexCount * 4 * 4; // additionalUv3
                 if (geometry.getVerticesData(MmdBufferKind.AdditionalUV4Kind) !== null) dataLength += vertexCount * 4 * 4; // additionalUv4
 
                 dataLength += 1; // flag
+                dataLength += 3; // padding
 
                 if (!mesh.isUnIndexed) {
                     dataLength += 1; // indexElementType
+                    dataLength += 3; // padding
                     dataLength += 4; // indicesCount
 
                     const indices = geometry.getIndices()!;
                     dataLength += Array.isArray(indices)
                         ? indices.length * 4
                         : indices.byteLength; // indices
+                    dataLength += AlignedDataSerializer.Padding(dataLength); // dynamic padding
                 }
 
                 if (bonesMetadataToSerialize.length !== 0) {
@@ -1216,17 +1288,17 @@ export class BpmxConverter implements ILogger {
                         this.warn(`mesh ${mesh.name} has no matricesWeights data. falling back to zero matricesWeights`);
                     }
                     dataLength += vertexCount * 4 * 4; // boneWeights
-                }
 
-                const sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
-                const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
-                const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
-                if (sdefC !== null && sdefR0 !== null && sdefR1 !== null) {
-                    dataLength += vertexCount * 3 * 4; // sdefC
-                    dataLength += vertexCount * 3 * 4; // sdefR0
-                    dataLength += vertexCount * 3 * 4; // sdefR1
-                } else if ((sdefC === null || sdefR0 === null || sdefR1 === null) && (sdefC !== null || sdefR0 !== null || sdefR1 !== null)) {
-                    this.warn(`mesh ${mesh.name} has incomplete sdef data. sdefC, sdefR0, sdefR1 must be all defined or all undefined. falling back to linear blend skinning`);
+                    const sdefC = geometry.getVerticesData(MmdBufferKind.MatricesSdefCKind);
+                    const sdefR0 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR0Kind);
+                    const sdefR1 = geometry.getVerticesData(MmdBufferKind.MatricesSdefR1Kind);
+                    if (sdefC !== null && sdefR0 !== null && sdefR1 !== null) {
+                        dataLength += vertexCount * 3 * 4; // sdefC
+                        dataLength += vertexCount * 3 * 4; // sdefR0
+                        dataLength += vertexCount * 3 * 4; // sdefR1
+                    } else if ((sdefC === null || sdefR0 === null || sdefR1 === null) && (sdefC !== null || sdefR0 !== null || sdefR1 !== null)) {
+                        this.warn(`mesh ${mesh.name} has incomplete sdef data. sdefC, sdefR0, sdefR1 must be all defined or all undefined. falling back to linear blend skinning`);
+                    }
                 }
 
                 // edgeScale will be implemented in the future
@@ -1236,49 +1308,67 @@ export class BpmxConverter implements ILogger {
                 }
             }
 
+            header.positionToImage = dataLength;
+
             dataLength += 4; // imageCount
             for (let i = 0; i < imagesToSerialize.length; ++i) {
                 const image = imagesToSerialize[i];
 
-                dataLength += 4 + encoder.encode(image.relativePath).length; // relativePath
+                const relativePathBytes = encoder.encode(image.relativePath);
+                dataLength += 4 + relativePathBytes.length + AlignedDataSerializer.Padding(relativePathBytes.length); // relativePath
                 dataLength += 1; // flag
+                dataLength += 3; // padding
                 if (image.mimeType !== undefined) {
-                    dataLength += 4 + encoder.encode(image.mimeType).length; // mimeType
+                    const mimeTypeBytes = encoder.encode(image.mimeType);
+                    dataLength += 4 + mimeTypeBytes.length + AlignedDataSerializer.Padding(mimeTypeBytes.length); // mimeType
                 }
                 dataLength += 4; // byteLength
                 dataLength += image.buffer.byteLength; // arrayBuffer
+                dataLength += AlignedDataSerializer.Padding(dataLength); // dynamic padding
             }
+
+            header.positionToTexture = dataLength;
 
             dataLength += 4; // textureCount
             for (let i = 0; i < texturesToSerialize.length; ++i) {
                 dataLength += 1 // flag
                     + 1 // samplingMode
+                    + 2 // padding
                     + 4; // imageIndex
             }
+
+            header.positionToMaterial = dataLength;
 
             dataLength += 4; // materialCount
             for (let i = 0; i < materialsMetadataToSerialize.length; ++i) { // material count must be equal to mesh count
                 const material = materialsMetadataToSerialize[i];
 
-                dataLength += 4 + encoder.encode(material.name).length; // materialName
-                dataLength += 4 + encoder.encode(material.englishName).length; // englishMaterialName
+                const materialNameBytes = encoder.encode(material.name);
+                dataLength += 4 + materialNameBytes.length + AlignedDataSerializer.Padding(materialNameBytes.length); // materialName
+                const englishMaterialNameBytes = encoder.encode(material.englishName);
+                dataLength += 4 + englishMaterialNameBytes.length + AlignedDataSerializer.Padding(englishMaterialNameBytes.length); // englishMaterialName
                 dataLength += 4 * 4; // diffuse
                 dataLength += 3 * 4; // specular
                 dataLength += 4; // shininess
                 dataLength += 3 * 4; // ambient
                 dataLength += 1; // evaluatedTransparency
                 dataLength += 1; // flag
+                dataLength += 2; // padding
                 dataLength += 4 * 4; // edgeColor
                 dataLength += 4; // edgeSize
                 dataLength += 4; // textureIndex
                 dataLength += 4; // sphereTextureIndex
                 dataLength += 1; // sphereTextureMode
                 dataLength += 1; // isSharedToontexture
+                dataLength += 2; // padding
                 dataLength += 4; // toonTextureIndex
-                dataLength += 4 + encoder.encode(material.comment).length; // comment
+                const commentBytes = encoder.encode(material.comment);
+                dataLength += 4 + commentBytes.length + AlignedDataSerializer.Padding(commentBytes.length); // comment
             }
 
             if (bonesMetadataToSerialize.length !== 0) {
+                header.positionToBone = dataLength;
+
                 dataLength += 4; // boneCount
                 if (!containsSerializationData) {
                     this.warn("metadata.bones has following missing properties: tailPosition, axisLimit, localVector, externalParentTransform. lossy conversion will be applied");
@@ -1286,12 +1376,15 @@ export class BpmxConverter implements ILogger {
                 for (let i = 0; i < bonesMetadataToSerialize.length; ++i) {
                     const bone = bonesMetadataToSerialize[i];
 
-                    dataLength += 4 + encoder.encode(bone.name).length; // boneName
-                    dataLength += 4 + encoder.encode(bone.englishName).length; // englishBoneName
+                    const boneNameBytes = encoder.encode(bone.name);
+                    dataLength += 4 + boneNameBytes.length + AlignedDataSerializer.Padding(boneNameBytes.length); // boneName
+                    const englishBoneNameBytes = encoder.encode(bone.englishName);
+                    dataLength += 4 + englishBoneNameBytes.length + AlignedDataSerializer.Padding(englishBoneNameBytes.length); // englishBoneName
                     dataLength += 3 * 4; // position
                     dataLength += 4; // parentBoneIndex
                     dataLength += 4; // transformOrder
                     dataLength += 2; // flag
+                    dataLength += 2; // padding
                     if (containsSerializationData) {
                         if (typeof bone.tailPosition === "number") {
                             dataLength += 4; // tailPosition
@@ -1327,6 +1420,7 @@ export class BpmxConverter implements ILogger {
 
                             dataLength += 4; // ik.link.target
                             dataLength += 1; // ik.link.hasLimit
+                            dataLength += 3; // padding
                             if (ikLink.limitation !== undefined) {
                                 dataLength += 3 * 4; // ik.link.minimumAngle
                                 dataLength += 3 * 4; // ik.link.maximumAngle
@@ -1336,15 +1430,20 @@ export class BpmxConverter implements ILogger {
                 }
             }
 
+            header.positionToMorph = dataLength;
+
             dataLength += 4; // morphCount
             const mmdModelMetadataMorphs = mmdModelMetadata.morphs;
             for (let i = 0; i < mmdModelMetadataMorphs.length; ++i) {
                 const morphInfo = mmdModelMetadataMorphs[i];
 
-                dataLength += 4 + encoder.encode(morphInfo.name).length; // morphName
-                dataLength += 4 + encoder.encode(morphInfo.englishName).length; // englishMorphName
+                const morphNameBytes = encoder.encode(morphInfo.name);
+                dataLength += 4 + morphNameBytes.length + AlignedDataSerializer.Padding(morphNameBytes.length); // morphName
+                const morphEnglishNameBytes = encoder.encode(morphInfo.englishName);
+                dataLength += 4 + morphEnglishNameBytes.length + AlignedDataSerializer.Padding(morphEnglishNameBytes.length); // englishMorphName
                 dataLength += 1; // category
                 dataLength += 1; // type
+                dataLength += 2; // padding
                 switch (morphInfo.type) {
                 case PmxObject.Morph.Type.GroupMorph:
                     dataLength +=
@@ -1405,6 +1504,7 @@ export class BpmxConverter implements ILogger {
                         (
                             4 + // material.index
                             1 + // material.type
+                            3 + // padding
                             4 * 4 + // material.diffuse
                             3 * 4 + // material.specular
                             4 + // material.shininess
@@ -1419,33 +1519,43 @@ export class BpmxConverter implements ILogger {
                 }
             }
 
+            header.positionToDisplayFrame = dataLength;
+
             dataLength += 4; // displayFrameCount
             if (containsSerializationData && mmdModelMetadata.displayFrames !== null) {
                 const mmdModelMetadataDisplayFrames = mmdModelMetadata.displayFrames;
                 for (let i = 0; i < mmdModelMetadataDisplayFrames.length; ++i) {
                     const displayFrameInfo = mmdModelMetadataDisplayFrames[i];
 
-                    dataLength += 4 + encoder.encode(displayFrameInfo.name).length; // name
-                    dataLength += 4 + encoder.encode(displayFrameInfo.englishName).length; // englishName
+                    const displayFrameNameBytes = encoder.encode(displayFrameInfo.name);
+                    dataLength += 4 + displayFrameNameBytes.length + AlignedDataSerializer.Padding(displayFrameNameBytes.length); // name
+                    const displayFrameEnglishNameBytes = encoder.encode(displayFrameInfo.englishName);
+                    dataLength += 4 + displayFrameEnglishNameBytes.length + AlignedDataSerializer.Padding(displayFrameEnglishNameBytes.length); // englishName
                     dataLength += 1; // isSpecialFrame
+                    dataLength += 3; // padding
                     dataLength += 4; // elementCount
                     dataLength += (
                         1 + // element.frameType
+                        3 + // padding
                         4 // element.frameIndex
                     ) * displayFrameInfo.frames.length;
                 }
             }
+
+            header.positionToRigidBody = dataLength;
 
             dataLength += 4; // rigidBodyCount
             const mmdModelMetadataRigidBodies = mmdModelMetadata.rigidBodies;
             for (let i = 0; i < mmdModelMetadataRigidBodies.length; ++i) {
                 const rigidBodyInfo = mmdModelMetadataRigidBodies[i];
 
-                dataLength += 4 + encoder.encode(rigidBodyInfo.name).length; // name
-                dataLength += 4 + encoder.encode(rigidBodyInfo.englishName).length; // englishName
+                const rigidBodyNameBytes = encoder.encode(rigidBodyInfo.name);
+                dataLength += 4 + rigidBodyNameBytes.length + AlignedDataSerializer.Padding(rigidBodyNameBytes.length); // name
+                const rigidBodyEnglishNameBytes = encoder.encode(rigidBodyInfo.englishName);
+                dataLength += 4 + rigidBodyEnglishNameBytes.length + AlignedDataSerializer.Padding(rigidBodyEnglishNameBytes.length); // englishName
                 dataLength += 4; // boneIndex
-                dataLength += 1; // collisionGroup
                 dataLength += 2; // collisionMask
+                dataLength += 1; // collisionGroup
                 dataLength += 1; // shapeType
                 dataLength += 3 * 4; // shapeSize
                 dataLength += 3 * 4; // shapePosition
@@ -1456,16 +1566,22 @@ export class BpmxConverter implements ILogger {
                 dataLength += 4; // repulsion
                 dataLength += 4; // friction
                 dataLength += 1; // physicsMode
+                dataLength += 3; // padding
             }
+
+            header.positionToJoint = dataLength;
 
             dataLength += 4; // jointCount
             const mmdModelMetadataJoints = mmdModelMetadata.joints;
             for (let i = 0; i < mmdModelMetadataJoints.length; ++i) {
                 const jointInfo = mmdModelMetadataJoints[i];
 
-                dataLength += 4 + encoder.encode(jointInfo.name).length; // name
-                dataLength += 4 + encoder.encode(jointInfo.englishName).length; // englishName
+                const jointNameBytes = encoder.encode(jointInfo.name);
+                dataLength += 4 + jointNameBytes.length + AlignedDataSerializer.Padding(jointNameBytes.length); // name
+                const jointEnglishNameBytes = encoder.encode(jointInfo.englishName);
+                dataLength += 4 + jointEnglishNameBytes.length + AlignedDataSerializer.Padding(jointEnglishNameBytes.length); // englishName
                 dataLength += 1; // type
+                dataLength += 3; // padding
                 dataLength += 4; // rigidBodyIndexA
                 dataLength += 4; // rigidBodyIndexB
                 dataLength += 3 * 4; // position
@@ -1480,21 +1596,32 @@ export class BpmxConverter implements ILogger {
         }
 
         const data = new ArrayBuffer(dataLength);
-        const serializer = new MmdDataSerializer(data);
+        const serializer = new AlignedDataSerializer(data);
 
         serializer.setUint8Array(encoder.encode("BPMX")); // signature
-        serializer.setInt8Array([2, 2, 1]); // version
+        serializer.setUint8Array(BpmxConverter.Version); // version
+        serializer.offset += 1; // padding
+
+        serializer.setUint32(4 * 10); // sizeofheader
+        serializer.setUint32(header.positionToModelInfo); // positionToModelInfo
+        serializer.setUint32(header.positionToMesh); // positionToMesh
+        serializer.setUint32(header.positionToImage); // positionToImage
+        serializer.setUint32(header.positionToTexture); // positionToTexture
+        serializer.setUint32(header.positionToMaterial); // positionToMaterial
+        serializer.setUint32(header.positionToBone); // positionToBone
+        serializer.setUint32(header.positionToMorph); // positionToMorph
+        serializer.setUint32(header.positionToDisplayFrame); // positionToDisplayFrame
+        serializer.setUint32(header.positionToRigidBody); // positionToRigidBody
+        serializer.setUint32(header.positionToJoint); // positionToJoint
 
         {
-            const header = mmdModelMetadata.header;
-            serializer.setString(header.modelName); // modelName
-            serializer.setString(header.englishModelName); // englishModelName
-            serializer.setString(header.comment); // comment
-            serializer.setString(header.englishComment); // englishComment
+            const modelInfo = mmdModelMetadata.header;
+            serializer.setString(modelInfo.modelName); // modelName
+            serializer.setString(modelInfo.englishModelName); // englishModelName
+            serializer.setString(modelInfo.comment); // comment
+            serializer.setString(modelInfo.englishComment); // englishComment
         }
 
-        const meshFlag = (bonesMetadataToSerialize.length !== 0 ? BpmxObject.Geometry.MeshType.IsSkinnedMesh : 0);
-        serializer.setUint8(meshFlag); // meshFlag
         serializer.setUint32(meshesToSerialize.length); // meshCount
         for (let i = 0; i < meshesToSerialize.length; ++i) {
             const mesh = meshesToSerialize[i];
@@ -1571,6 +1698,7 @@ export class BpmxConverter implements ILogger {
                 if (additionalUv4 !== null) additionalUvs.push(additionalUv4);
             }
             serializer.setUint8(additionalUvs.length); // additionalUvCount
+            serializer.offset += 3; // padding
 
             for (let j = 0; j < additionalUvs.length; ++j) {
                 const additionalUv = additionalUvs[j];
@@ -1591,10 +1719,12 @@ export class BpmxConverter implements ILogger {
 
             let edgeScale = geometry.getVerticesData(MmdBufferKind.EdgeScaleKind);
 
-            const geometryType = (hasSdef ? BpmxObject.Geometry.GeometryType.HasSdef : 0) |
+            const geometryType =
+                ((hasSdef && bonesMetadataToSerialize.length !== 0) ? BpmxObject.Geometry.GeometryType.HasSdef : 0) |
                 (!mesh.isUnIndexed ? BpmxObject.Geometry.GeometryType.IsIndexed : 0) |
                 (edgeScale !== null ? BpmxObject.Geometry.GeometryType.HasEdgeScale : 0);
             serializer.setUint8(geometryType); // flag
+            serializer.offset += 3; // padding
 
             if (!mesh.isUnIndexed) {
                 const indices = geometry.getIndices()!;
@@ -1603,6 +1733,7 @@ export class BpmxConverter implements ILogger {
                         indices instanceof Uint16Array ? BpmxObject.Geometry.IndexElementType.Uint16 :
                             BpmxObject.Geometry.IndexElementType.Int32
                 ); // indexElementType
+                serializer.offset += 3; // padding
                 serializer.setUint32(indices.length); // indicesCount
                 if (indices instanceof Uint16Array) {
                     serializer.setUint16Array(indices); // indices
@@ -1611,6 +1742,7 @@ export class BpmxConverter implements ILogger {
                 } else {
                     serializer.setInt32Array(indices); // indices
                 }
+                serializer.offset += AlignedDataSerializer.Padding(serializer.offset); // dynamic padding
             }
 
             if (bonesMetadataToSerialize.length !== 0) {
@@ -1680,12 +1812,14 @@ export class BpmxConverter implements ILogger {
 
             const flag = (image.mimeType !== undefined ? BpmxObject.Image.Flag.HasMimeType : 0);
             serializer.setUint8(flag); // flag
+            serializer.offset += 3; // padding
 
             if (image.mimeType !== undefined) {
                 serializer.setString(image.mimeType); // mimeType
             }
             serializer.setUint32(image.buffer.byteLength); // byteLength
             serializer.setUint8Array(image.buffer); // arrayBuffer
+            serializer.offset += AlignedDataSerializer.Padding(serializer.offset); // dynamic padding
         }
 
         serializer.setUint32(texturesToSerialize.length); // textureCount
@@ -1694,6 +1828,7 @@ export class BpmxConverter implements ILogger {
 
             serializer.setUint8(texture.flag); // flag
             serializer.setUint8(texture.samplingMode); // samplingMode
+            serializer.offset += 2; // padding
             serializer.setInt32(texture.imageIndex); // imageIndex
         }
 
@@ -1710,12 +1845,14 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32Array(material.ambient); // ambient
             serializer.setUint8(material.evaluatedTransparency); // evaluatedTransparency
             serializer.setUint8(material.flag); // flag
+            serializer.offset += 2; // padding
             serializer.setFloat32Array(material.edgeColor); // edgeColor
             serializer.setFloat32(material.edgeSize); // edgeSize
             serializer.setInt32(material.textureIndex); // textureIndex
             serializer.setInt32(material.sphereTextureIndex); // sphereTextureIndex
             serializer.setUint8(material.sphereTextureMode); // sphereTextureMode
             serializer.setUint8(material.isSharedToonTexture ? 1 : 0); // isSharedToontexture
+            serializer.offset += 2; // padding
             serializer.setInt32(material.toonTextureIndex); // toonTextureIndex
             serializer.setString(material.comment); // comment
         }
@@ -1733,6 +1870,7 @@ export class BpmxConverter implements ILogger {
                 serializer.setInt32(bone.transformOrder); // transformOrder
 
                 serializer.setUint16(bone.flag); // flag
+                serializer.offset += 2; // padding
 
                 if (typeof bone.tailPosition === "number") {
                     serializer.setInt32(bone.tailPosition); // tailPosition
@@ -1766,6 +1904,7 @@ export class BpmxConverter implements ILogger {
 
                         serializer.setInt32(link.target); // ik.links.target
                         serializer.setUint8(link.limitation !== undefined ? 1 : 0); // ik.links.hasLimit
+                        serializer.offset += 3; // padding
                         if (link.limitation !== undefined) {
                             serializer.setFloat32Array(link.limitation.minimumAngle); // ik.links.minimumAngle
                             serializer.setFloat32Array(link.limitation.maximumAngle); // ik.links.maximumAngle
@@ -1784,6 +1923,7 @@ export class BpmxConverter implements ILogger {
             serializer.setString(morphInfo.englishName); // englishMorphName
             serializer.setUint8(morphInfo.category); // category
             serializer.setUint8(morphInfo.type); // type
+            serializer.offset += 2; // padding
             switch (morphInfo.type) {
             case PmxObject.Morph.Type.GroupMorph:
                 {
@@ -1869,6 +2009,7 @@ export class BpmxConverter implements ILogger {
                         const index = materialIndexRemapper.get(element.index) ?? element.index; // remap material indices
                         serializer.setInt32(index); // material.index
                         serializer.setUint8(element.type); // material.type
+                        serializer.offset += 3; // padding
 
                         serializer.setFloat32Array(element.diffuse); // material.diffuse
                         serializer.setFloat32Array(element.specular); // material.specular
@@ -1899,11 +2040,13 @@ export class BpmxConverter implements ILogger {
                 serializer.setString(displayFrameInfo.name); // name
                 serializer.setString(displayFrameInfo.englishName); // englishName
                 serializer.setUint8(displayFrameInfo.isSpecialFrame ? 1 : 0); // isSpecialFrame
+                serializer.offset += 3; // padding
                 serializer.setUint32(displayFrameInfo.frames.length); // elementCount
                 const frames = displayFrameInfo.frames;
                 for (let j = 0; j < frames.length; ++j) {
                     const frame = frames[j];
                     serializer.setUint8(frame.type); // element.frameType
+                    serializer.offset += 3; // padding
                     const index = frame.type === PmxObject.DisplayFrame.FrameData.FrameType.Bone
                         ? (boneMetadataIndexRemapper[frame.index] ?? frame.index) // remap bone indices
                         : frame.index;
@@ -1922,8 +2065,8 @@ export class BpmxConverter implements ILogger {
             serializer.setString(rigidBodyInfo.name); // name
             serializer.setString(rigidBodyInfo.englishName); // englishName
             serializer.setInt32(boneMetadataIndexRemapper[rigidBodyInfo.boneIndex] ?? rigidBodyInfo.boneIndex); // boneIndex - remap bone indices
-            serializer.setUint8(rigidBodyInfo.collisionGroup); // collisionGroup
             serializer.setUint16(rigidBodyInfo.collisionMask); // collisionMask
+            serializer.setUint8(rigidBodyInfo.collisionGroup); // collisionGroup
             serializer.setUint8(rigidBodyInfo.shapeType); // shapeType
             serializer.setFloat32Array(rigidBodyInfo.shapeSize); // shapeSize
             serializer.setFloat32Array(rigidBodyInfo.shapePosition); // shapePosition
@@ -1934,6 +2077,7 @@ export class BpmxConverter implements ILogger {
             serializer.setFloat32(rigidBodyInfo.repulsion); // repulsion
             serializer.setFloat32(rigidBodyInfo.friction); // friction
             serializer.setUint8(rigidBodyInfo.physicsMode); // physicsMode
+            serializer.offset += 3; // padding
         }
 
         serializer.setUint32(mmdModelMetadata.joints.length); // jointCount
@@ -1944,6 +2088,7 @@ export class BpmxConverter implements ILogger {
             serializer.setString(jointInfo.name); // name
             serializer.setString(jointInfo.englishName); // englishName
             serializer.setUint8(jointInfo.type); // type
+            serializer.offset += 3; // padding
             serializer.setInt32(jointInfo.rigidbodyIndexA); // rigidBodyIndexA
             serializer.setInt32(jointInfo.rigidbodyIndexB); // rigidBodyIndexB
             serializer.setFloat32Array(jointInfo.position); // position

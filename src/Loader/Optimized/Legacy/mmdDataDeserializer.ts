@@ -1,5 +1,3 @@
-import { Endianness } from "./endianness";
-
 type TupleOf<T, N extends number, R extends unknown[]> =
     R["length"] extends N ? R : TupleOf<T, N, [T, ...R]>;
 
@@ -8,9 +6,16 @@ type Tuple<T, N extends number> = N extends N
     : never;
 
 /**
+ * babylon-mmd 0.67.2 implementation
+ *
  * DataView wrapper for deserializing MMD data
  */
-export class MmdDataDeserializer extends Endianness {
+export class MmdDataDeserializer {
+    /**
+     * Whether the device is little endian
+     */
+    public readonly isDeviceLittleEndian: boolean;
+
     private readonly _dataView: DataView;
     private _decoder: TextDecoder | null;
     private _offset: number;
@@ -20,7 +25,7 @@ export class MmdDataDeserializer extends Endianness {
      * @param arrayBuffer ArrayBuffer to deserialize
      */
     public constructor(arrayBuffer: ArrayBufferLike) {
-        super();
+        this.isDeviceLittleEndian = this._getIsDeviceLittleEndian();
         this._dataView = new DataView(arrayBuffer);
         this._decoder = null;
         this._offset = 0;
@@ -35,6 +40,33 @@ export class MmdDataDeserializer extends Endianness {
 
     public set offset(value: number) {
         this._offset = value;
+    }
+
+    private _getIsDeviceLittleEndian(): boolean {
+        const array = new Int16Array([256]);
+        return new Int8Array(array.buffer)[1] === 1;
+    }
+
+    /**
+     * Changes the byte order of the array
+     * @param array Array to swap
+     */
+    public swap16Array(array: Int16Array | Uint16Array): void {
+        for (let i = 0; i < array.length; ++i) {
+            const value = array[i];
+            array[i] = ((value & 0xFF) << 8) | ((value >> 8) & 0xFF);
+        }
+    }
+
+    /**
+     * Changes the byte order of the array
+     * @param array Array to swap
+     */
+    public swap32Array(array: Int32Array | Uint32Array | Float32Array): void {
+        for (let i = 0; i < array.length; ++i) {
+            const value = array[i];
+            array[i] = ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+        }
     }
 
     /**
@@ -55,6 +87,16 @@ export class MmdDataDeserializer extends Endianness {
         const value = this._dataView.getInt8(this._offset);
         this._offset += 1;
         return value;
+    }
+
+    /**
+     * Read a uint8 array
+     * @param dest Destination array
+     */
+    public getUint8Array(dest: Uint8Array): void {
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        dest.set(source);
+        this._offset += dest.byteLength;
     }
 
     /**
@@ -90,13 +132,25 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
-     * Read a uint32 value
-     * @returns Uint32 value
+     * Read a int32 value
+     * @returns Int32 value
      */
     public getUint32(): number {
         const value = this._dataView.getUint32(this._offset, true);
         this._offset += 4;
         return value;
+    }
+
+    /**
+     * Read a uint32 array
+     * @param dest Destination array
+     */
+    public getUint32Array(dest: Uint32Array): void {
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     /**
@@ -110,6 +164,18 @@ export class MmdDataDeserializer extends Endianness {
     }
 
     /**
+     * Read a int32 array
+     * @param dest Destination array
+     */
+    public getInt32Array(dest: Int32Array): void {
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
+    }
+
+    /**
      * Read a float32 value
      * @returns Float32 value
      */
@@ -117,6 +183,18 @@ export class MmdDataDeserializer extends Endianness {
         const value = this._dataView.getFloat32(this._offset, true);
         this._offset += 4;
         return value;
+    }
+
+    /**
+     * Read a float32 array
+     * @param dest Destination array
+     */
+    public getFloat32Array(dest: Float32Array): void {
+        const source = new Uint8Array(this._dataView.buffer, this._offset, dest.byteLength);
+        new Uint8Array(dest.buffer, dest.byteOffset, dest.byteLength).set(source);
+        this._offset += dest.byteLength;
+
+        if (!this.isDeviceLittleEndian) this.swap32Array(dest);
     }
 
     /**
@@ -178,6 +256,20 @@ export class MmdDataDeserializer extends Endianness {
         this._offset += length;
 
         return decoder.decode(bytes);
+    }
+
+    /**
+     * Calculate byte alignment for finding the offset of the next element
+     * @param elementSize Element size
+     * @param length Element count
+     * @returns Offset of the next element
+     */
+    public getPaddedArrayOffset(elementSize: number, length: number): number {
+        this._offset += this._offset % elementSize === 0 ? 0 : elementSize - this._offset % elementSize;
+        const offset = this._offset;
+        this._offset += elementSize * length;
+
+        return offset;
     }
 
     /**
