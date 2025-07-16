@@ -2,9 +2,9 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 // for serialization
 import "@/Loader/mmdPluginMaterial";
@@ -24,8 +24,8 @@ export { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";
 export { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 export { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 export { MmdAnimationTrack, MmdBoneAnimationTrack, MmdCameraAnimationTrack, MmdMorphAnimationTrack, MmdMovableBoneAnimationTrack, MmdPropertyAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";
-export { IMmdCameraAnimationGroupBuilder, MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder, MmdCameraAnimationGroupHermiteBuilder, MmdCameraAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-export { IMmdModelAnimationGroupBuilder, MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder, MmdModelAnimationGroupHermiteBuilder, MmdModelAnimationGroupSampleBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+export { IMmdCameraAnimationContainerBuilder, MmdCameraAnimationContainer, MmdCameraAnimationContainerBezierBuilder, MmdCameraAnimationContainerHermiteBuilder, MmdCameraAnimationContainerSampleBuilder } from "@/Loader/Animation/mmdCameraAnimationContainer";
+export { IMmdModelAnimationContainerBuilder, MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder, MmdModelAnimationContainerHermiteBuilder, MmdModelAnimationContainerSampleBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 
 // Loader/Optimized/Parser
 export { BpmxObject } from "@/Loader/Optimized/Parser/bpmxObject";
@@ -82,9 +82,9 @@ export { MmdCompositeRuntimeCameraAnimation } from "@/Runtime/Animation/mmdCompo
 export { MmdCompositeRuntimeModelAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 export { MmdRuntimeAnimation } from "@/Runtime/Animation/mmdRuntimeAnimation";
 export { MmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-export { MmdRuntimeCameraAnimationGroup } from "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
+export { MmdRuntimeCameraAnimationContainer } from "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
 export { MmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation";
-export { MmdRuntimeModelAnimationGroup } from "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+export { MmdRuntimeModelAnimationContainer } from "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 
 // Runtime/Audio
 export { IPlayer } from "@/Runtime/Audio/IAudioPlayer";

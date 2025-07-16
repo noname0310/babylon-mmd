@@ -7,9 +7,9 @@ import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimat
 import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
-import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
+import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
 
-type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
+type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationContainer | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
 /**
  * Interface for MMD camera

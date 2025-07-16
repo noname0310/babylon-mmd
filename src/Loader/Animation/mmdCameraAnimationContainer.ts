@@ -18,7 +18,7 @@ import type { MmdCameraAnimationTrack } from "./mmdAnimationTrack";
  *
  * It aims to utilize the animation runtime of babylon.js
  */
-export class MmdCameraAnimationGroup implements IMmdAnimation {
+export class MmdCameraAnimationContainer implements IMmdAnimation {
     /**
      * Animation name for identification
      */
@@ -61,7 +61,7 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
      */
     public constructor(
         mmdAnimation: MmdAnimationBase,
-        builder: IMmdCameraAnimationGroupBuilder
+        builder: IMmdCameraAnimationContainerBuilder
     ) {
         const name = this.name = mmdAnimation.name;
 
@@ -93,7 +93,7 @@ export class MmdCameraAnimationGroup implements IMmdAnimation {
 /**
  * Mmd camera animation builder for constructing mmd camera animation group
  */
-export interface IMmdCameraAnimationGroupBuilder {
+export interface IMmdCameraAnimationContainerBuilder {
     /**
      * Create mmd camera position animation
      * @param rootName root animation name
@@ -132,7 +132,7 @@ export interface IMmdCameraAnimationGroupBuilder {
  *
  * This has some loss of curve shape, but it converts animations reliably while maintaining a small amount of keyframes
  */
-export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimationGroupBuilder {
+export class MmdCameraAnimationContainerHermiteBuilder implements IMmdCameraAnimationContainerBuilder {
     /**
      * Create mmd camera position animation
      * @param rootName root animation name
@@ -317,7 +317,7 @@ export class MmdCameraAnimationGroupHermiteBuilder implements IMmdCameraAnimatio
  *
  * This method samples the bezier curve with 30 frames to preserve the shape of the curve as much as possible. However, it will use a lot of memory
  */
-export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimationGroupBuilder {
+export class MmdCameraAnimationContainerSampleBuilder implements IMmdCameraAnimationContainerBuilder {
     /**
      * Create mmd camera position animation
      * @param rootName root animation name
@@ -548,7 +548,7 @@ export class MmdCameraAnimationGroupSampleBuilder implements IMmdCameraAnimation
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-export class MmdCameraAnimationGroupBezierBuilder implements IMmdCameraAnimationGroupBuilder {
+export class MmdCameraAnimationContainerBezierBuilder implements IMmdCameraAnimationContainerBuilder {
     /**
      * Create mmd camera position animation
      * @param rootName root animation name

@@ -3,7 +3,7 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
@@ -20,7 +20,7 @@ import { Scene } from "@babylonjs/core/scene";
 // import havok from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
-// import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+// import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
 // import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
@@ -108,11 +108,11 @@ export class SceneBuilder implements ISceneBuilder {
         mmdModel.addAnimation(wasmAnimation);
         mmdModel.setAnimation("motion");
 
-        // const animationGroup = new MmdModelAnimationGroup(animation, new MmdModelAnimationGroupBezierBuilder());
-        // animationGroup
-        // mmdModel.addAnimation(animationGroup);
+        // const animationContainer = new MmdModelAnimationContainer(animation, new MmdModelAnimationContainerBezierBuilder());
+        // animationContainer
+        // mmdModel.addAnimation(animationContainer);
         // mmdModel.setAnimation("motion");
-        // animationGroup.createAnimationGroup(mmdModel).play();
+        // animationContainer.createAnimationGroup(mmdModel).play();
 
         // const compositeAnimation = new MmdCompositeAnimation("composite");
         // compositeAnimation.addSpan(new MmdAnimationSpan(wasmAnimation));

@@ -513,7 +513,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 const runtimeAnimation = (animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation(model, retargetingMap, logger);
                 runtimeAnimations[i] = runtimeAnimation;
             } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation === undefined) {
-                throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup"?`);
+                throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer"?`);
             }
         }
 
@@ -523,7 +523,7 @@ export class MmdCompositeRuntimeModelAnimation implements IMmdRuntimeModelAnimat
                 const runtimeAnimation = (animation as IMmdBindableModelAnimation<IMmdRuntimeModelAnimationWithBindingInfo>).createRuntimeModelAnimation(model, retargetingMap, logger);
                 runtimeAnimations.push(runtimeAnimation);
             } else if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation === undefined) {
-                throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup"?`);
+                throw new Error(`animation ${animation.name} is not bindable. are you missing import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation" or "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer"?`);
             } else {
                 runtimeAnimations.push(null);
             }

@@ -10,14 +10,14 @@ import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimat
 import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
-import type { MmdRuntimeCameraAnimationGroup } from "./Animation/mmdRuntimeCameraAnimationGroup";
+import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
 import type { IMmdCamera } from "./IMmdCamera";
 
 Node.AddNodeConstructor("MmdCamera", (name, scene) => {
     return (): MmdCamera => new MmdCamera(name, undefined, scene);
 });
 
-type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationGroup | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
+type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationContainer | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
 /**
  * MMD camera
@@ -84,7 +84,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
         if ((animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation) {
             runtimeAnimation = animation.createRuntimeCameraAnimation(this);
         } else {
-            throw new Error("animation is not MmdAnimation or MmdCameraAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
+            throw new Error("animation is not MmdAnimation or MmdCameraAnimationContainer or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
         }
 
         const existingAnimation = this._animationNameMap.get(animation.name);
