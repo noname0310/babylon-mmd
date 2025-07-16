@@ -2,10 +2,13 @@
 
 ## 0.69.0 (2025-07-17)
 
-- rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
-- rename `MmdModelAnimationGroup` to `MmdModelAnimationContainer`
-- rename `MmdRuntimeCameraAnimationGroup` to `MmdRuntimeCameraAnimationContainer`
-- rename `MmdRuntimeModelAnimationGroup` to `MmdRuntimeModelAnimationContainer`
+- rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
+  - rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
+  - rename `MmdModelAnimationGroup` to `MmdModelAnimationContainer`
+  - rename `MmdRuntimeCameraAnimationGroup` to `MmdRuntimeCameraAnimationContainer`
+  - rename `MmdRuntimeModelAnimationGroup` to `MmdRuntimeModelAnimationContainer`
+
+
 
 ## 0.68.0 (2025-07-16)
 
