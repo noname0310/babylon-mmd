@@ -2,10 +2,15 @@
 
 ## 0.69.0 (2025-07-17)
 
-- rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
-- rename `MmdModelAnimationGroup` to `MmdModelAnimationContainer`
-- rename `MmdRuntimeCameraAnimationGroup` to `MmdRuntimeCameraAnimationContainer`
-- rename `MmdRuntimeModelAnimationGroup` to `MmdRuntimeModelAnimationContainer`
+- rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
+  - rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
+  - rename `MmdModelAnimationGroup` to `MmdModelAnimationContainer`
+  - rename `MmdRuntimeCameraAnimationGroup` to `MmdRuntimeCameraAnimationContainer`
+  - rename `MmdRuntimeModelAnimationGroup` to `MmdRuntimeModelAnimationContainer`
+
+- change `MmdModelLoader` default material builder to null for better tree shaking
+  - you can pass `IMmdMaterialBuilder` implementation to mmdModel model loader options to build materials
+  - or you can import `babylon-mmd/esm/Loader/mmdModelLoader.default.ts` to register default `MmdStandardMaterialBuilder` as shared material builder
 
 ## 0.68.0 (2025-07-16)
 

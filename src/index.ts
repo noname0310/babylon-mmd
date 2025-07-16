@@ -1,4 +1,5 @@
 import "@/Loader/mmdOutlineRenderer";
+import "@/Loader/mmdModelLoader.default";
 import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
