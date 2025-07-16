@@ -14,7 +14,7 @@ import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimati
 import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { MmdCompositeRuntimeModelAnimation } from "./Animation/mmdCompositeRuntimeModelAnimation";
 import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimationGroup } from "./Animation/mmdRuntimeModelAnimationGroup";
+import type { MmdRuntimeModelAnimationContainer } from "./Animation/mmdRuntimeModelAnimationContainer";
 import { AppendTransformSolver } from "./appendTransformSolver";
 import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";
@@ -28,7 +28,7 @@ import type { IMmdModelPhysicsCreationOptions } from "./mmdRuntime";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./Physics/IMmdPhysics";
 
-type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
+type RuntimeModelAnimation = MmdRuntimeModelAnimation | MmdRuntimeModelAnimationContainer | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
  * Physics options for construct MmdModel
@@ -265,7 +265,7 @@ export class MmdModel implements IMmdModel {
         if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
             runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
         } else {
-            throw new Error("animation is not MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
+            throw new Error("animation is not MmdAnimation or MmdModelAnimationContainer or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
 
         const index = this._animations.findIndex(a => a.animation.name === animation.name);

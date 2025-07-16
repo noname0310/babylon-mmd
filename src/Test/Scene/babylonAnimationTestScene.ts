@@ -2,8 +2,8 @@ import "@babylonjs/core/Animations/animatable";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -20,8 +20,8 @@ import havokPhysics from "@babylonjs/havok";
 import { Inspector } from "@babylonjs/inspector";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdCameraAnimationContainer, MmdCameraAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationContainer";
+import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -135,11 +135,11 @@ export class SceneBuilder implements ISceneBuilder {
             buildPhysics: true
         });
 
-        const mmdModelAnimationGroup = new MmdModelAnimationGroup(mmdAnimation, new MmdModelAnimationGroupBezierBuilder());
-        const mmdCameraAnimationGroup = new MmdCameraAnimationGroup(mmdAnimation, new MmdCameraAnimationGroupBezierBuilder());
+        const mmdModelAnimationContainer = new MmdModelAnimationContainer(mmdAnimation, new MmdModelAnimationContainerBezierBuilder());
+        const mmdCameraAnimationContainer = new MmdCameraAnimationContainer(mmdAnimation, new MmdCameraAnimationContainerBezierBuilder());
 
-        mmdModelAnimationGroup.createAnimationGroup(mmdModel).play();
-        mmdCameraAnimationGroup.createAnimationGroup(mmdCamera).play();
+        mmdModelAnimationContainer.createAnimationGroup(mmdModel).play();
+        mmdCameraAnimationContainer.createAnimationGroup(mmdCamera).play();
         audioPlayer.play();
 
         Inspector.Show(scene, { });

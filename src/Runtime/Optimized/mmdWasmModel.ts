@@ -14,7 +14,7 @@ import type { IMmdBindableModelAnimation } from "../Animation/IMmdBindableAnimat
 import type { IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
 import type { MmdCompositeRuntimeModelAnimation } from "../Animation/mmdCompositeRuntimeModelAnimation";
 import type { MmdRuntimeModelAnimation } from "../Animation/mmdRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimationGroup } from "../Animation/mmdRuntimeModelAnimationGroup";
+import type { MmdRuntimeModelAnimationContainer } from "../Animation/mmdRuntimeModelAnimationContainer";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
@@ -31,7 +31,7 @@ import type { MmdWasmRuntime } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeAnimationEvaluationType } from "./mmdWasmRuntime";
 import { MmdWasmRuntimeBone } from "./mmdWasmRuntimeBone";
 
-type RuntimeModelAnimation = MmdWasmRuntimeModelAnimation | MmdRuntimeModelAnimation | MmdRuntimeModelAnimationGroup | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
+type RuntimeModelAnimation = MmdWasmRuntimeModelAnimation | MmdRuntimeModelAnimation | MmdRuntimeModelAnimationContainer | MmdCompositeRuntimeModelAnimation | IMmdRuntimeModelAnimation;
 
 /**
  * MmdWasmModel is a class that controls the `MmdSkinnedMesh` to animate the Mesh with MMD Wasm Runtime
@@ -351,7 +351,7 @@ export class MmdWasmModel implements IMmdModel {
                 this._runtime.warn("MmdWasmAnimation has better performance in the wasm animation runtime. consider importing \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" instead of \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\"");
             }
         } else {
-            throw new Error("animation is not MmdWasmAnimation or MmdAnimation or MmdModelAnimationGroup or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationGroup\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
+            throw new Error("animation is not MmdWasmAnimation or MmdAnimation or MmdModelAnimationContainer or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
 
         const index = this._animations.findIndex((a) => a.animation.name === animation.name);

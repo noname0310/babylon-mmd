@@ -1,6 +1,6 @@
 import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
 
-import { MmdCameraAnimationGroup } from "@/Loader/Animation/mmdCameraAnimationGroup";
+import { MmdCameraAnimationContainer } from "@/Loader/Animation/mmdCameraAnimationContainer";
 
 import type { IMmdCamera } from "../IMmdCamera";
 import { CreateAnimationState } from "./Common/createAnimationState";
@@ -12,11 +12,11 @@ import type { IMmdRuntimeCameraAnimation } from "./IMmdRuntimeAnimation";
  *
  * An object with mmd animation group and camera binding information
  */
-export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimation {
+export class MmdRuntimeCameraAnimationContainer implements IMmdRuntimeCameraAnimation {
     /**
      * The animation data
      */
-    public readonly animation: MmdCameraAnimationGroup;
+    public readonly animation: MmdCameraAnimationContainer;
 
     private readonly _positionAnimationState: _IAnimationState;
     private readonly _rotationAnimationState: _IAnimationState;
@@ -26,7 +26,7 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
     private readonly _camera: IMmdCamera;
 
     private constructor(
-        animation: MmdCameraAnimationGroup,
+        animation: MmdCameraAnimationContainer,
         camera: IMmdCamera
     ) {
         this.animation = animation;
@@ -56,23 +56,23 @@ export class MmdRuntimeCameraAnimationGroup implements IMmdRuntimeCameraAnimatio
      * Bind animation to camera
      * @param animation Animation to bind
      * @param camera Bind target
-     * @returns MmdRuntimeCameraAnimationGroup instance
+     * @returns MmdRuntimeCameraAnimationContainer instance
      */
-    public static Create(animation: MmdCameraAnimationGroup, camera: IMmdCamera): MmdRuntimeCameraAnimationGroup {
-        return new MmdRuntimeCameraAnimationGroup(animation, camera);
+    public static Create(animation: MmdCameraAnimationContainer, camera: IMmdCamera): MmdRuntimeCameraAnimationContainer {
+        return new MmdRuntimeCameraAnimationContainer(animation, camera);
     }
 }
 
-declare module "../../Loader/Animation/mmdCameraAnimationGroup" {
+declare module "../../Loader/Animation/mmdCameraAnimationContainer" {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    export interface MmdCameraAnimationGroup extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimationGroup> { }
+    export interface MmdCameraAnimationContainer extends IMmdBindableCameraAnimation<MmdRuntimeCameraAnimationContainer> { }
 }
 
 /**
  * Create runtime camera animation
  * @param camera Bind target
- * @returns MmdRuntimeCameraAnimationGroup instance
+ * @returns MmdRuntimeCameraAnimationContainer instance
  */
-MmdCameraAnimationGroup.prototype.createRuntimeCameraAnimation = function(camera: IMmdCamera): MmdRuntimeCameraAnimationGroup {
-    return MmdRuntimeCameraAnimationGroup.Create(this, camera);
+MmdCameraAnimationContainer.prototype.createRuntimeCameraAnimation = function(camera: IMmdCamera): MmdRuntimeCameraAnimationContainer {
+    return MmdRuntimeCameraAnimationContainer.Create(this, camera);
 };

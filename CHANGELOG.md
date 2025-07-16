@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.69.0 (2025-07-17)
+
+- rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
+- rename `MmdModelAnimationGroup` to `MmdModelAnimationContainer`
+- rename `MmdRuntimeCameraAnimationGroup` to `MmdRuntimeCameraAnimationContainer`
+- rename `MmdRuntimeModelAnimationGroup` to `MmdRuntimeModelAnimationContainer`
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported

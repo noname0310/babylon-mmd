@@ -83,7 +83,7 @@ class VisibilityProxy {
  *
  * It aims to utilize the animation runtime of babylon.js
  */
-export class MmdModelAnimationGroup implements IMmdAnimation {
+export class MmdModelAnimationContainer implements IMmdAnimation {
     /**
      * Animation name for identification
      */
@@ -161,7 +161,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
      */
     public constructor(
         mmdAnimation: MmdAnimationBase,
-        builder: IMmdModelAnimationGroupBuilder
+        builder: IMmdModelAnimationContainerBuilder
     ) {
         const name = this.name = mmdAnimation.name;
 
@@ -323,7 +323,7 @@ export class MmdModelAnimationGroup implements IMmdAnimation {
 /**
  * Mmd model animation builder for constructing mmd model animation group
  */
-export interface IMmdModelAnimationGroupBuilder {
+export interface IMmdModelAnimationContainerBuilder {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -380,7 +380,7 @@ export interface IMmdModelAnimationGroupBuilder {
  *
  * For reduce duplication of code
  */
-export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnimationGroupBuilder {
+export abstract class MmdModelAnimationContainerBuilderBase implements IMmdModelAnimationContainerBuilder {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -511,7 +511,7 @@ export abstract class MmdModelAnimationGroupBuilderBase implements IMmdModelAnim
  *
  * This has some loss of curve shape, but it converts animations reliably while maintaining a small amount of keyframes
  */
-export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroupBuilderBase {
+export class MmdModelAnimationContainerHermiteBuilder extends MmdModelAnimationContainerBuilderBase {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -636,7 +636,7 @@ export class MmdModelAnimationGroupHermiteBuilder extends MmdModelAnimationGroup
  *
  * This method samples the bezier curve with 30 frames to preserve the shape of the curve as much as possible. However, it will use a lot of memory
  */
-export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupBuilderBase {
+export class MmdModelAnimationContainerSampleBuilder extends MmdModelAnimationContainerBuilderBase {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name
@@ -758,7 +758,7 @@ export class MmdModelAnimationGroupSampleBuilder extends MmdModelAnimationGroupB
  *
  * This method is not compatible with the Animation Curve Editor, but it allows you to import animation data completely lossless
  */
-export class MmdModelAnimationGroupBezierBuilder extends MmdModelAnimationGroupBuilderBase {
+export class MmdModelAnimationContainerBezierBuilder extends MmdModelAnimationContainerBuilderBase {
     /**
      * Create mmd model bone position animation
      * @param rootName root animation name

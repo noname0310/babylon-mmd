@@ -5,7 +5,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Nullable } from "@babylonjs/core/types";
 
-import { MmdModelAnimationGroup } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdModelAnimationContainer } from "@/Loader/Animation/mmdModelAnimationContainer";
 
 import type { IIkStateContainer } from "../IIkStateContainer";
 import type { ILogger } from "../ILogger";
@@ -24,11 +24,11 @@ import type { BodyIndices, IMmdRuntimeModelAnimationWithBindingInfo, MorphIndice
  *
  * An object with mmd animation group and model binding information
  */
-export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationWithBindingInfo {
+export class MmdRuntimeModelAnimationContainer implements IMmdRuntimeModelAnimationWithBindingInfo {
     /**
      * The animation data
      */
-    public readonly animation: MmdModelAnimationGroup;
+    public readonly animation: MmdModelAnimationContainer;
 
     /**
      * Bone bind index map
@@ -73,7 +73,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     private readonly _bonephysicsToggleAnimationStates: _IAnimationState[];
 
     private constructor(
-        animation: MmdModelAnimationGroup,
+        animation: MmdModelAnimationContainer,
         boneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         movableBoneBindIndexMap: readonly Nullable<IMmdRuntimeLinkedBone>[],
         morphController: MmdMorphControllerBase,
@@ -145,9 +145,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             if (bone === null) continue;
             // Since mmd bones all have identity quaternions, we abandon the compatibility for skeletons that don't and improve performance
 
-            // Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationGroup._BoneRotation);
+            // Quaternion.FromRotationMatrixToRef(bone.getRestMatrix(), MmdRuntimeModelAnimationContainer._BoneRotation);
             // bone.setRotationQuaternion(
-            //     MmdRuntimeModelAnimationGroup._BoneRotation.multiplyInPlace(boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i])),
+            //     MmdRuntimeModelAnimationContainer._BoneRotation.multiplyInPlace(boneTrack._interpolate(frameTime, this._boneRotationAnimationStates[i])),
             //     Space.LOCAL
             // );
 
@@ -163,8 +163,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             const movableBoneTrack = movableBoneTracks[i];
             const bone = movableBoneBindIndexMap[i];
             if (bone === null) continue;
-            bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationGroup._BonePosition);
-            bone.position = MmdRuntimeModelAnimationGroup._BonePosition.addInPlace(movableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
+            bone.getRestMatrix().getTranslationToRef(MmdRuntimeModelAnimationContainer._BonePosition);
+            bone.position = MmdRuntimeModelAnimationContainer._BonePosition.addInPlace(movableBoneTrack._interpolate(frameTime, this._bonePositionAnimationStates[i]));
         }
 
         const bonephysicsToggleTracks = animation.bonePhysicsToggleAnimations;
@@ -222,7 +222,7 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     public induceMaterialRecompile(updateMorphTarget: boolean, logger?: ILogger | undefined): void {
         if (this._materialRecompileInduceInfo === null) return;
 
-        MmdRuntimeModelAnimationGroup.InduceMaterialRecompile(
+        MmdRuntimeModelAnimationContainer.InduceMaterialRecompile(
             this._materialRecompileInduceInfo,
             this._morphController,
             this.morphBindIndexMap,
@@ -236,18 +236,18 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
 
     /**
      * Bind animation to model and prepare material for morph animation
-     * @param animationGroup Animation to bind
+     * @param animationContainer Animation to bind
      * @param model Bind target
      * @param retargetingMap Animation bone name to model bone name map
      * @param logger Logger
-     * @return MmdRuntimeModelAnimationGroup instance
+     * @return MmdRuntimeModelAnimationContainer instance
      */
     public static Create(
-        animationGroup: MmdModelAnimationGroup,
+        animationContainer: MmdModelAnimationContainer,
         model: IMmdModel,
         retargetingMap?: { [key: string]: string },
         logger?: ILogger
-    ): MmdRuntimeModelAnimationGroup {
+    ): MmdRuntimeModelAnimationContainer {
         const skeleton = model.skeleton;
         const linkedBoneMap = new Map<string, IMmdRuntimeLinkedBone>();
         {
@@ -282,8 +282,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.boneRotationAnimations.length);
-        const boneNameMap = animationGroup.boneRotationAnimationBindMap;
+        const boneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationContainer.boneRotationAnimations.length);
+        const boneNameMap = animationContainer.boneRotationAnimationBindMap;
         for (let i = 0; i < boneNameMap.length; ++i) {
             const linkedBone = linkedBoneMap.get(boneNameMap[i]);
             if (linkedBone === undefined) {
@@ -294,8 +294,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const movableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationGroup.bonePositionAnimations.length);
-        const movableBoneNameMap = animationGroup.bonePositionAnimationBindMap;
+        const movableBoneBindIndexMap: Nullable<IMmdRuntimeLinkedBone>[] = new Array(animationContainer.bonePositionAnimations.length);
+        const movableBoneNameMap = animationContainer.bonePositionAnimationBindMap;
         for (let i = 0; i < movableBoneNameMap.length; ++i) {
             const linkedBone = linkedBoneMap.get(movableBoneNameMap[i]);
             if (linkedBone === undefined) {
@@ -307,8 +307,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
         }
 
         const morphController = model.morph;
-        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animationGroup.morphAnimations.length);
-        const morphNameMap = animationGroup.morphAnimationBindMap;
+        const morphBindIndexMap: Nullable<MorphIndices>[] = new Array(animationContainer.morphAnimations.length);
+        const morphNameMap = animationContainer.morphAnimationBindMap;
         for (let i = 0; i < morphNameMap.length; ++i) {
             const morphName = morphNameMap[i];
             const mappedName = retargetingMap?.[morphName] ?? morphName;
@@ -321,8 +321,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const ikSolverBindIndexMap = new Int32Array(animationGroup.propertyAnimations.length);
-        const propertyTrackIkBoneNames = animationGroup.propertyAnimationBindMap;
+        const ikSolverBindIndexMap = new Int32Array(animationContainer.propertyAnimations.length);
+        const propertyTrackIkBoneNames = animationContainer.propertyAnimationBindMap;
         for (let i = 0; i < propertyTrackIkBoneNames.length; ++i) {
             const ikBoneName = propertyTrackIkBoneNames[i];
             const ikBone = runtimeBoneMap.get(ikBoneName);
@@ -340,9 +340,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animationGroup.bonePhysicsToggleAnimations.length);
+        const boneToBodyBindIndexMap: Nullable<BodyIndices>[] = new Array(animationContainer.bonePhysicsToggleAnimations.length);
         {
-            const boneNameMap = animationGroup.bonePhysicsToggleAnimationBindMap;
+            const boneNameMap = animationContainer.bonePhysicsToggleAnimationBindMap;
             for (let i = 0; i < boneNameMap.length; ++i) {
                 const runtimeBone = runtimeBoneMap.get(boneNameMap[i]);
                 if (runtimeBone === undefined) {
@@ -354,8 +354,8 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
             }
         }
 
-        return new MmdRuntimeModelAnimationGroup(
-            animationGroup,
+        return new MmdRuntimeModelAnimationContainer(
+            animationContainer,
             boneBindIndexMap,
             movableBoneBindIndexMap,
             morphController,
@@ -395,9 +395,9 @@ export class MmdRuntimeModelAnimationGroup implements IMmdRuntimeModelAnimationW
     ) => void;
 }
 
-declare module "../../Loader/Animation/mmdModelAnimationGroup" {
+declare module "../../Loader/Animation/mmdModelAnimationContainer" {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    export interface MmdModelAnimationGroup extends IMmdBindableModelAnimation<MmdRuntimeModelAnimationGroup> { }
+    export interface MmdModelAnimationContainer extends IMmdBindableModelAnimation<MmdRuntimeModelAnimationContainer> { }
 }
 
 /**
@@ -405,12 +405,12 @@ declare module "../../Loader/Animation/mmdModelAnimationGroup" {
  * @param model Bind target
  * @param retargetingMap Animation bone name to model bone name map
  * @param logger Logger
- * @returns MmdRuntimeModelAnimationGroup instance
+ * @returns MmdRuntimeModelAnimationContainer instance
  */
-MmdModelAnimationGroup.prototype.createRuntimeModelAnimation = function(
+MmdModelAnimationContainer.prototype.createRuntimeModelAnimation = function(
     model: IMmdModel,
     retargetingMap?: { [key: string]: string },
     logger?: ILogger
-): MmdRuntimeModelAnimationGroup {
-    return MmdRuntimeModelAnimationGroup.Create(this, model, retargetingMap, logger);
+): MmdRuntimeModelAnimationContainer {
+    return MmdRuntimeModelAnimationContainer.Create(this, model, retargetingMap, logger);
 };

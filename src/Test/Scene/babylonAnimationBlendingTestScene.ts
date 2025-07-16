@@ -2,8 +2,8 @@ import "@babylonjs/core/Animations/animatable";
 import "@babylonjs/core/Loading/loadingScreen";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimationGroup";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationGroup";
+import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
+import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -20,8 +20,8 @@ import { Scene } from "@babylonjs/core/scene";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
-import { MmdCameraAnimationGroup, MmdCameraAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationGroup";
-import { MmdModelAnimationGroup, MmdModelAnimationGroupBezierBuilder } from "@/Loader/Animation/mmdModelAnimationGroup";
+import { MmdCameraAnimationContainer, MmdCameraAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationContainer";
+import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -152,28 +152,28 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer2 = new StreamAudioPlayer(scene);
         audioPlayer2.source = "res/private_test/motion/conqueror/MMDConquerorIA.mp3";
 
-        const mmdModelAnimationGroup1 = new MmdModelAnimationGroup(mmdAnimation1, new MmdModelAnimationGroupBezierBuilder());
-        const mmdCameraAnimationGroup1 = new MmdCameraAnimationGroup(mmdAnimation1, new MmdCameraAnimationGroupBezierBuilder());
+        const mmdModelAnimationContainer1 = new MmdModelAnimationContainer(mmdAnimation1, new MmdModelAnimationContainerBezierBuilder());
+        const mmdCameraAnimationContainer1 = new MmdCameraAnimationContainer(mmdAnimation1, new MmdCameraAnimationContainerBezierBuilder());
 
-        const mmdModelAnimationGroup2 = new MmdModelAnimationGroup(mmdAnimation2, new MmdModelAnimationGroupBezierBuilder());
-        const mmdCameraAnimationGroup2 = new MmdCameraAnimationGroup(mmdAnimation2, new MmdCameraAnimationGroupBezierBuilder());
+        const mmdModelAnimationContainer2 = new MmdModelAnimationContainer(mmdAnimation2, new MmdModelAnimationContainerBezierBuilder());
+        const mmdCameraAnimationContainer2 = new MmdCameraAnimationContainer(mmdAnimation2, new MmdCameraAnimationContainerBezierBuilder());
 
-        const bindedModelAnimationGroup1 = mmdModelAnimationGroup1.createAnimationGroup(mmdModel);
-        for (const animation of mmdModelAnimationGroup1.propertyAnimations) {
+        const bindedModelAnimationGroup1 = mmdModelAnimationContainer1.createAnimationGroup(mmdModel);
+        for (const animation of mmdModelAnimationContainer1.propertyAnimations) {
             bindedModelAnimationGroup1.removeTargetedAnimation(animation);
         }
-        const bindedCameraAnimationGroup1 = mmdCameraAnimationGroup1.createAnimationGroup(mmdCamera);
+        const bindedCameraAnimationGroup1 = mmdCameraAnimationContainer1.createAnimationGroup(mmdCamera);
 
         // for match animation duration
         bindedModelAnimationGroup1.normalize(mmdAnimation1.startFrame, mmdAnimation1.endFrame);
         bindedCameraAnimationGroup1.normalize(mmdAnimation1.startFrame, mmdAnimation1.endFrame);
 
 
-        const bindedModelAnimationGroup2 = mmdModelAnimationGroup2.createAnimationGroup(mmdModel);
-        for (const animation of mmdModelAnimationGroup2.propertyAnimations) {
+        const bindedModelAnimationGroup2 = mmdModelAnimationContainer2.createAnimationGroup(mmdModel);
+        for (const animation of mmdModelAnimationContainer2.propertyAnimations) {
             bindedModelAnimationGroup2.removeTargetedAnimation(animation);
         }
-        const bindedCameraAnimationGroup2 = mmdCameraAnimationGroup2.createAnimationGroup(mmdCamera);
+        const bindedCameraAnimationGroup2 = mmdCameraAnimationContainer2.createAnimationGroup(mmdCamera);
 
         // for match animation duration
         bindedModelAnimationGroup2.normalize(mmdAnimation2.startFrame, mmdAnimation2.endFrame);
