@@ -807,7 +807,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
     ): Promise<IBuildMaterialResult> {
         const materialBuilder = state.materialBuilder;
         if (materialBuilder === null) {
-            this.warn("No material builder available. if you want to build materials, try pass IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.default.ts\" for register default MmdStandardMaterialBuilder.");
+            this.warn("No material builder available. If you want to build materials, try passing an IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.default.ts\" to register the default MmdStandardMaterialBuilder.");
             progress.endTask("Build Material");
             progress.endTask("Texture Load");
             return { materials: [], multiMaterials: [], textureLoadPromise: Promise.resolve() };
