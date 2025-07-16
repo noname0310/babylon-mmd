@@ -79,6 +79,7 @@
     "sideEffects": [
         "**/Shaders/**",
         "**/ShadersWGSL/**",
+        "**/mmdModelLoader.default.*",
         "**/mmdOutlineRenderer.*",
         "**/pmdLoader.*",
         "**/pmxLoader.*",

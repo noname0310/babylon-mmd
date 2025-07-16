@@ -333,6 +333,14 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         rootUrl: string,
         progress: Progress
     ): Promise<IBuildMaterialResult> {
+        const materialBuilder = state.materialBuilder;
+        if (materialBuilder === null) {
+            this.warn("No material builder available. if you want to build materials, try pass IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.default.ts\" for register default MmdStandardMaterialBuilder.");
+            progress.endTask("Build Material");
+            progress.endTask("Texture Load");
+            return { materials: [], multiMaterials: [], textureLoadPromise: Promise.resolve() };
+        }
+
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
         const imagePathTable: string[] = new Array(modelObject.images.length);
@@ -374,7 +382,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         }
 
         const textureLoadPromise = new Promise<void>((resolve) => {
-            buildMaterialsPromise = state.materialBuilder.buildMaterials(
+            buildMaterialsPromise = materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
 
                 modelObject.materials, // materialsInfo

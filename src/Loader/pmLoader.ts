@@ -805,6 +805,14 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         rootUrl: string,
         progress: Progress
     ): Promise<IBuildMaterialResult> {
+        const materialBuilder = state.materialBuilder;
+        if (materialBuilder === null) {
+            this.warn("No material builder available. if you want to build materials, try pass IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.default.ts\" for register default MmdStandardMaterialBuilder.");
+            progress.endTask("Build Material");
+            progress.endTask("Texture Load");
+            return { materials: [], multiMaterials: [], textureLoadPromise: Promise.resolve() };
+        }
+
         let buildMaterialsPromise: Material[] | Promise<Material[]> | undefined = undefined;
 
         const texturesInfo: TextureInfo[] = new Array(modelObject.textures.length);
@@ -851,7 +859,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         }
 
         const textureLoadPromise = new Promise<void>((resolve) => {
-            buildMaterialsPromise = state.materialBuilder.buildMaterials(
+            buildMaterialsPromise = materialBuilder.buildMaterials(
                 rootMesh.uniqueId, // uniqueId
 
                 modelObject.materials, // materialsInfo

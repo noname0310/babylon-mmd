@@ -16,7 +16,6 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";
 import type { MmdModelMetadata, MmdModelSerializationMetadata } from "./mmdModelMetadata";
-import { MmdStandardMaterialBuilder } from "./mmdStandardMaterialBuilder";
 import type { IBpmxLoaderOptions } from "./Optimized/bpmxLoader";
 import type { BpmxObject } from "./Optimized/Parser/bpmxObject";
 import type { ILogger } from "./Parser/ILogger";
@@ -42,7 +41,7 @@ export interface IMmdModelLoaderOptions {
      *
      * This property can be overwritten to customize the material of the loaded model
      */
-    readonly materialBuilder: IMmdMaterialBuilder;
+    readonly materialBuilder: Nullable<IMmdMaterialBuilder>;
 
     /**
      * Whether to use SDEF (default: true)
@@ -111,7 +110,7 @@ export interface IMmdModelLoaderOptions {
 export interface IMmdModelLoadState {
     readonly arrayBuffer: ArrayBuffer;
     readonly pmFileId: string;
-    readonly materialBuilder: IMmdMaterialBuilder;
+    readonly materialBuilder: Nullable<IMmdMaterialBuilder>;
     readonly useSdef: boolean;
     readonly buildSkeleton: boolean;
     readonly buildMorph: boolean;
@@ -159,7 +158,7 @@ export abstract class MmdModelLoader<
      */
     public extensions: ISceneLoaderPluginExtensions;
 
-    public materialBuilder: IMmdMaterialBuilder;
+    public materialBuilder: Nullable<IMmdMaterialBuilder>;
     public useSdef: boolean;
     public buildSkeleton: boolean;
     public buildMorph: boolean;
@@ -176,7 +175,10 @@ export abstract class MmdModelLoader<
     /** @internal */
     public error: (message: string) => void;
 
-    private static readonly _SharedStandardMaterialBuilder = new MmdStandardMaterialBuilder();
+    /**
+     * Shared material builder instance
+     */
+    public static SharedMaterialBuilder: Nullable<IMmdMaterialBuilder> = null;
 
     /**
      * Create a new MMD model loader
@@ -191,7 +193,7 @@ export abstract class MmdModelLoader<
         this.extensions = extensions;
 
         loaderOptions = loaderOptions ?? {
-            materialBuilder: MmdModelLoader._SharedStandardMaterialBuilder,
+            materialBuilder: MmdModelLoader.SharedMaterialBuilder,
             useSdef: true,
             buildSkeleton: true,
             buildMorph: true,
