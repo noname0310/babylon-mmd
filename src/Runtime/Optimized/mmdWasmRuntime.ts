@@ -814,8 +814,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             if (elapsedFrameTime !== null) {
                 const animatables = this._animatables;
                 for (let i = 0; i < animatables.length; ++i) {
-                    const camera = animatables[i];
-                    camera.animate(elapsedFrameTime);
+                    const animatable = animatables[i];
+                    animatable.animate(elapsedFrameTime);
                 }
             }
         }
