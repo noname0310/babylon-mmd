@@ -205,7 +205,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @param scene Scene
      */
     public dispose(scene: Scene): void {
-        for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
+        for (let i = 0; i < this._models.length; ++i) this._models[i]._dispose();
         this._models.length = 0;
         this._animatables.length = 0;
         this.setAudioPlayer(null);
@@ -296,7 +296,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * @throws {Error} if model is not found
      */
     public destroyMmdModel(mmdModel: MmdModel): void {
-        mmdModel.dispose();
+        mmdModel._dispose();
 
         const models = this._models;
         const index = models.indexOf(mmdModel);
