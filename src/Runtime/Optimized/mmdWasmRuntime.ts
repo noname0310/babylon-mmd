@@ -664,9 +664,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 }
 
                 if (lastRequestAnimationFrameTime !== null) {
-                    const cameras = this._animatables;
-                    for (let i = 0; i < cameras.length; ++i) {
-                        cameras[i].animate(lastRequestAnimationFrameTime);
+                    const animatables = this._animatables;
+                    for (let i = 0; i < animatables.length; ++i) {
+                        animatables[i].animate(lastRequestAnimationFrameTime);
                     }
                 }
             }
@@ -812,9 +812,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             }
 
             if (elapsedFrameTime !== null) {
-                const cameras = this._animatables;
-                for (let i = 0; i < cameras.length; ++i) {
-                    const camera = cameras[i];
+                const animatables = this._animatables;
+                for (let i = 0; i < animatables.length; ++i) {
+                    const camera = animatables[i];
                     camera.animate(elapsedFrameTime);
                 }
             }
@@ -1034,9 +1034,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                 }
             }
 
-            const cameras = this._animatables;
-            for (let i = 0; i < cameras.length; ++i) {
-                cameras[i].animate(frameTime);
+            const animatables = this._animatables;
+            for (let i = 0; i < animatables.length; ++i) {
+                animatables[i].animate(frameTime);
             }
 
             this.onAnimationTickObservable.notifyObservers();
