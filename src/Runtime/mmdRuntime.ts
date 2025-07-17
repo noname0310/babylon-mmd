@@ -5,12 +5,11 @@ import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdRuntimeCameraAnimation, IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { IDisposeObservable } from "./IDisposeObserable";
-import type { IMmdCamera } from "./IMmdCamera";
 import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdRuntime } from "./IMmdRuntime";
+import type { IMmdRuntimeAnimatable } from "./IMmdRuntimeAnimatable";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
@@ -86,7 +85,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     private readonly _physics: Nullable<IMmdPhysics>;
 
     private readonly _models: MmdModel[];
-    private _camera: Nullable<IMmdCamera>;
+    private readonly _animatables: IMmdRuntimeAnimatable[];
     private _audioPlayer: Nullable<IPlayer>;
 
     /**
@@ -158,7 +157,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         this._physics = physics;
 
         this._models = [];
-        this._camera = null;
+        this._animatables = [];
         this._audioPlayer = null;
 
         this.autoPhysicsInitialization = true;
@@ -208,7 +207,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     public dispose(scene: Scene): void {
         for (let i = 0; i < this._models.length; ++i) this._models[i].dispose();
         this._models.length = 0;
-        this.setCamera(null);
+        this._animatables.length = 0;
         this.setAudioPlayer(null);
 
         this.onAnimationDurationChangedObservable.clear();
@@ -282,7 +281,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         this._models.push(model);
         this._needToInitializePhysicsModels.add(model);
 
-        model.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
+        model.onAnimationDurationChangedObservable.add(this._onAnimationDurationChanged);
 
         return model;
     }
@@ -340,19 +339,38 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     }
 
     /**
-     * Set camera to animate
-     * @param camera MMD camera
+     * Add Animatable object to the runtime
+     *
+     * Usually this is MMD camera, but you can add any object that implements `IMmdRuntimeAnimatable`
+     * @param animatable Animatable object
+     * @return true if the animatable is added, false if the animatable is already added
      */
-    public setCamera(camera: Nullable<IMmdCamera>): void {
-        if (this._camera !== null) {
-            this._camera.onCurrentAnimationChangedObservable.removeCallback(this._onAnimationChanged);
+    public addAnimatable(animatable: IMmdRuntimeAnimatable): boolean {
+        if (this._animatables.includes(animatable)) {
+            return false;
         }
 
-        if (camera !== null) {
-            camera.onCurrentAnimationChangedObservable.add(this._onAnimationChanged);
+        animatable.onAnimationDurationChangedObservable?.add(this._onAnimationDurationChanged);
+        this._animatables.push(animatable);
+        this._onAnimationDurationChanged(animatable.animationFrameTimeDuration);
+        return true;
+    }
+
+    /**
+     * Remove Animatable object from the runtime
+     * @param animatable Animatable object
+     * @return true if the animatable is removed, false if the animatable is not found
+     */
+    public removeAnimatable(animatable: IMmdRuntimeAnimatable): boolean {
+        const index = this._animatables.indexOf(animatable);
+        if (index === -1) {
+            return false;
         }
-        this._camera = camera;
-        this._onAnimationChanged(camera?.currentAnimation ?? null);
+
+        animatable.onAnimationDurationChangedObservable?.removeCallback(this._onAnimationDurationChanged);
+        this._animatables.splice(index, 1);
+        this._onAnimationDurationChanged(0);
+        return true;
     }
 
     private _setAudioPlayerLastValue: Nullable<IPlayer> = null;
@@ -497,8 +515,9 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
                 models[i].beforePhysics(elapsedFrameTime);
             }
 
-            if (this._camera !== null) {
-                this._camera.animate(elapsedFrameTime);
+            const animatables = this._animatables;
+            for (let i = 0; i < animatables.length; ++i) {
+                animatables[i].animate(elapsedFrameTime);
             }
 
             this.onAnimationTickObservable.notifyObservers();
@@ -526,14 +545,12 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         }
     }
 
-    private readonly _onAnimationChanged = (newAnimation: Nullable<IMmdRuntimeCameraAnimation | IMmdRuntimeModelAnimation>): void => {
+    private readonly _onAnimationDurationChanged = (newAnimationFrameTimeDuration: number): void => {
         if (this._useManualAnimationDuration) return;
 
-        const newAnimationDuration = newAnimation?.animation.endFrame ?? 0;
-
-        if (this._animationFrameTimeDuration < newAnimationDuration) {
-            this._animationFrameTimeDuration = newAnimationDuration;
-        } else if (newAnimationDuration < this._animationFrameTimeDuration) {
+        if (this._animationFrameTimeDuration < newAnimationFrameTimeDuration) {
+            this._animationFrameTimeDuration = newAnimationFrameTimeDuration;
+        } else if (newAnimationFrameTimeDuration < this._animationFrameTimeDuration) {
             this._animationFrameTimeDuration = this._computeAnimationDuration();
         }
 
@@ -550,8 +567,10 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
             }
         }
 
-        if (this._camera !== null && this._camera.currentAnimation !== null) {
-            duration = Math.max(duration, this._camera.currentAnimation.animation.endFrame);
+        const animatables = this._animatables;
+        for (let i = 0; i < animatables.length; ++i) {
+            const animatable = animatables[i];
+            duration = Math.max(duration, animatable.animationFrameTimeDuration);
         }
 
         if (this._audioPlayer !== null) {
@@ -693,8 +712,9 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
                 }
             }
 
-            if (this._camera !== null && this._camera.currentAnimation !== null) {
-                this._camera.animate(frameTime);
+            const animatables = this._animatables;
+            for (let i = 0; i < animatables.length; ++i) {
+                animatables[i].animate(frameTime);
             }
 
             this.onAnimationTickObservable.notifyObservers();
@@ -760,10 +780,10 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
     }
 
     /**
-     * MMD camera
+     * Animatable objects that added to this runtime
      */
-    public get camera(): Nullable<IMmdCamera> {
-        return this._camera;
+    public get animatables(): readonly IMmdRuntimeAnimatable[] {
+        return this._animatables;
     }
 
     /**

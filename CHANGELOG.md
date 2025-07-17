@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.69.0 (2025-07-17)
+## 0.69.0 (2025-07-18)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
   - rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
@@ -11,6 +11,10 @@
 - change `MmdModelLoader` default material builder to null for better tree shaking
   - you can pass `IMmdMaterialBuilder` implementation to mmdModel model loader options to build materials
   - or you can import `babylon-mmd/esm/Loader/mmdModelLoader.default.ts` to register default `MmdStandardMaterialBuilder` as shared material builder
+
+- add multiple MMD camera support
+  - you can add multiple `IMmdCamera` to `MmdRuntime`
+  - `MmdRuntime.setCamera` is no longer available, instead use `MmdRuntime.addAnimatable` to add a new camera
 
 ## 0.68.0 (2025-07-16)
 

@@ -158,7 +158,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
-        mmdRuntime.setCamera(mmdCamera);
+        mmdRuntime.addAnimatable(mmdCamera);
         mmdCamera.addAnimation(mmdWasmAnimation);
         mmdCamera.setAnimation("motion");
 

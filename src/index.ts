@@ -159,6 +159,7 @@ export { IIkStateContainer } from "@/Runtime/IIkStateContainer";
 export { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "@/Runtime/IMmdMaterialProxy";
 export { IMmdModel } from "@/Runtime/IMmdModel";
 export { IMmdRuntime } from "@/Runtime/IMmdRuntime";
+export { IMmdRuntimeAnimatable } from "@/Runtime/IMmdRuntimeAnimatable";
 export { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
 export { MmdCamera } from "@/Runtime/mmdCamera";
 export { MmdMesh, MmdSkinedModelMetadata, MmdSkinnedMesh, RuntimeMmdMesh, RuntimeMmdModelMetadata } from "@/Runtime/mmdMesh";
