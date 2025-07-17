@@ -106,9 +106,11 @@ export class MmdModel implements IMmdModel {
     private readonly _sortedRuntimeBones: readonly MmdRuntimeBone[];
 
     /**
-     * Observable triggered when the current animation is changed
+     * Observable triggered when the animation duration is changed
+     *
+     * Value is 30fps frame time duration of the animation
      */
-    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeModelAnimation>>;
+    public readonly onAnimationDurationChangedObservable: Observable<number>;
     private readonly _animations: RuntimeModelAnimation[];
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
@@ -205,7 +207,7 @@ export class MmdModel implements IMmdModel {
             this.rigidBodyStates = new Uint8Array(0);
         }
 
-        this.onCurrentAnimationChangedObservable = new Observable<Nullable<IMmdRuntimeModelAnimation>>();
+        this.onAnimationDurationChangedObservable = new Observable<number>();
         this._animations = [];
 
         this._currentAnimation = null;
@@ -226,7 +228,7 @@ export class MmdModel implements IMmdModel {
     public dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this._physicsModel?.dispose();
-        this.onCurrentAnimationChangedObservable.clear();
+        this.onAnimationDurationChangedObservable.clear();
 
         const animations = this._animations;
         for (let i = 0; i < animations.length; ++i) {
@@ -277,7 +279,9 @@ export class MmdModel implements IMmdModel {
                 this._resetPose();
                 this._needStateReset = true;
                 runtimeAnimation.induceMaterialRecompile(updateMorphTarget, this._logger);
-                this.onCurrentAnimationChangedObservable.notifyObservers(runtimeAnimation);
+                if (oldAnimation.animation.endFrame !== runtimeAnimation.animation.endFrame) {
+                    this.onAnimationDurationChangedObservable.notifyObservers(runtimeAnimation.animation.endFrame);
+                }
             }
         } else {
             this._animations.push(runtimeAnimation);
@@ -297,7 +301,9 @@ export class MmdModel implements IMmdModel {
         if (this._currentAnimation === animation) {
             this._currentAnimation = null;
             this._resetPose();
-            this.onCurrentAnimationChangedObservable.notifyObservers(null);
+            if (animation.animation.endFrame !== 0) {
+                this.onAnimationDurationChangedObservable.notifyObservers(0);
+            }
         }
 
         this._animations.splice(index, 1);
@@ -313,9 +319,12 @@ export class MmdModel implements IMmdModel {
     public setAnimation(name: Nullable<string>, updateMorphTarget = true): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
+                const endFrame = this._currentAnimation.animation.endFrame;
                 this._currentAnimation = null;
                 this._resetPose();
-                this.onCurrentAnimationChangedObservable.notifyObservers(null);
+                if (endFrame !== 0) {
+                    this.onAnimationDurationChangedObservable.notifyObservers(0);
+                }
             }
             return;
         }
@@ -329,9 +338,12 @@ export class MmdModel implements IMmdModel {
             this._resetPose();
             this._needStateReset = true;
         }
+        const oldAnimationEndFrame = this._currentAnimation?.animation.endFrame ?? 0;
         const animation = this._currentAnimation = this._animations[index];
         animation.induceMaterialRecompile(updateMorphTarget, this._logger);
-        this.onCurrentAnimationChangedObservable.notifyObservers(animation);
+        if (oldAnimationEndFrame !== animation.animation.endFrame) {
+            this.onAnimationDurationChangedObservable.notifyObservers(animation.animation.endFrame);
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimatio
 import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
+import type { IMmdRuntimeAnimatable } from "./IMmdRuntimeAnimatable";
 
 type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationContainer | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
@@ -16,11 +17,13 @@ type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimat
  *
  * You can implement this interface to create your own MMD camera implementation
  */
-export interface IMmdCamera {
+export interface IMmdCamera extends IMmdRuntimeAnimatable {
     /**
-     * Observable triggered when the current animation is changed
+     * Observable triggered when the animation duration is changed
+     *
+     * Value is 30fps frame time duration of the animation
      */
-    readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeCameraAnimation>>;
+    readonly onAnimationDurationChangedObservable: Observable<number>;
 
     /**
      * Orbit center position

@@ -6,8 +6,8 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IPlayer } from "./Audio/IAudioPlayer";
 import type { ILogger } from "./ILogger";
-import type { IMmdCamera } from "./IMmdCamera";
 import type { IMmdModel } from "./IMmdModel";
+import type { IMmdRuntimeAnimatable } from "./IMmdRuntimeAnimatable";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import type { IMmdModelCreationOptions } from "./mmdRuntime";
@@ -119,10 +119,20 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
     initializeAllMmdModelsPhysics(onlyAnimated: boolean): void;
 
     /**
-     * Set camera to animate
-     * @param camera MMD camera
+     * Add Animatable object to the runtime
+     *
+     * Usually this is MMD camera, but you can add any object that implements `IMmdRuntimeAnimatable`
+     * @param animatable Animatable object
+     * @return true if the animatable is added, false if the animatable is already added
      */
-    setCamera(camera: Nullable<IMmdCamera>): void;
+    addAnimatable(animatable: IMmdRuntimeAnimatable): boolean;
+
+    /**
+     * Remove Animatable object from the runtime
+     * @param animatable Animatable object
+     * @return true if the animatable is removed, false if the animatable is not found
+     */
+    removeAnimatable(animatable: IMmdRuntimeAnimatable): boolean;
 
     /**
      * Set audio player to sync with animation
@@ -200,9 +210,9 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
     get models(): readonly TMmdModel[];
 
     /**
-     * MMD camera
+     * Animatable objects that added to this runtime
      */
-    get camera(): Nullable<IMmdCamera>;
+    get animatables(): readonly IMmdRuntimeAnimatable[];
 
     /**
      * Audio player

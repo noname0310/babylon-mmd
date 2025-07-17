@@ -48,8 +48,10 @@ export class MmdCamera extends Camera implements IMmdCamera {
 
     /**
      * Observable triggered when the current animation is changed
+     *
+     * Value is 30fps frame time duration of the animation
      */
-    public readonly onCurrentAnimationChangedObservable: Observable<Nullable<RuntimeCameraAnimation>>;
+    public readonly onAnimationDurationChangedObservable: Observable<number>;
     private readonly _animations: RuntimeCameraAnimation[];
     private readonly _animationNameMap = new Map<string, RuntimeCameraAnimation>();
 
@@ -68,7 +70,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
         // mmd default fov
         this.fov = 30 * (Math.PI / 180);
 
-        this.onCurrentAnimationChangedObservable = new Observable<Nullable<RuntimeCameraAnimation>>();
+        this.onAnimationDurationChangedObservable = new Observable<number>();
         this._animations = [];
         this._animationNameMap = new Map();
 
@@ -94,7 +96,9 @@ export class MmdCamera extends Camera implements IMmdCamera {
             this._animations[index] = runtimeAnimation;
             if (this._currentAnimation === oldAnimation) {
                 this._currentAnimation = runtimeAnimation;
-                this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
+                if (oldAnimation.animation.endFrame !== runtimeAnimation.animation.endFrame) {
+                    this.onAnimationDurationChangedObservable.notifyObservers(runtimeAnimation.animation.endFrame);
+                }
             }
         } else {
             this._animations.push(runtimeAnimation);
@@ -114,7 +118,9 @@ export class MmdCamera extends Camera implements IMmdCamera {
 
         if (this._currentAnimation === animation) {
             this._currentAnimation = null;
-            this.onCurrentAnimationChangedObservable.notifyObservers(null);
+            if (animation.animation.endFrame !== 0) {
+                this.onAnimationDurationChangedObservable.notifyObservers(0);
+            }
         }
 
         for (const [key, value] of this._animationNameMap) {
@@ -137,8 +143,11 @@ export class MmdCamera extends Camera implements IMmdCamera {
     public setAnimation(name: Nullable<string>): void {
         if (name === null) {
             if (this._currentAnimation !== null) {
+                const endFrame = this._currentAnimation.animation.endFrame;
                 this._currentAnimation = null;
-                this.onCurrentAnimationChangedObservable.notifyObservers(null);
+                if (endFrame !== 0) {
+                    this.onAnimationDurationChangedObservable.notifyObservers(0);
+                }
             }
             return;
         }
@@ -148,8 +157,11 @@ export class MmdCamera extends Camera implements IMmdCamera {
             throw new Error(`Animation ${name} is not found`);
         }
 
+        const oldAnimationEndFrame = this._currentAnimation?.animation.endFrame ?? 0;
         this._currentAnimation = animation;
-        this.onCurrentAnimationChangedObservable.notifyObservers(this._currentAnimation);
+        if (oldAnimationEndFrame !== animation.animation.endFrame) {
+            this.onAnimationDurationChangedObservable.notifyObservers(animation.animation.endFrame);
+        }
     }
 
     /**
@@ -164,6 +176,16 @@ export class MmdCamera extends Camera implements IMmdCamera {
      */
     public get currentAnimation(): Nullable<RuntimeCameraAnimation> {
         return this._currentAnimation;
+    }
+
+    /**
+     * Duration of the animation in 30fps frame time
+     */
+    public get animationFrameTimeDuration(): number {
+        if (this._currentAnimation === null) {
+            return 0;
+        }
+        return this._currentAnimation.animation.endFrame;
     }
 
     /**

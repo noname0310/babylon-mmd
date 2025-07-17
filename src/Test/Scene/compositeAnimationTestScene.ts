@@ -166,7 +166,7 @@ export class SceneBuilder implements ISceneBuilder {
             }]
         ]);
 
-        mmdRuntime.setCamera(mmdCamera);
+        mmdRuntime.addAnimatable(mmdCamera);
         mmdCamera.addAnimation(cameraAnimation);
         mmdCamera.setAnimation("camera");
 
