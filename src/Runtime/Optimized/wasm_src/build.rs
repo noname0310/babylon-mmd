@@ -152,5 +152,7 @@ fn main() {
         println!("cargo:rerun-if-changed=bullet_src/bwPhysicsWorld.h");
         println!("cargo:rerun-if-changed=bullet_src/bwRigidBody.h");
         println!("cargo:rerun-if-changed=bullet_src/lib.cpp");
+        // for apply constraint fix patch
+        println!("cargo:rerun-if-changed=bullet_src/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.cpp");
     }
 }
