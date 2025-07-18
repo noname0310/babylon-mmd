@@ -306,7 +306,7 @@ export class MmdWasmModel implements IMmdModel {
      *
      * @internal
      */
-    public dispose(): void {
+    public _dispose(): void {
         this._enableSkeletonWorldMatrixUpdate();
         this._physicsModel?.dispose();
         this.onAnimationDurationChangedObservable.clear();
