@@ -123,6 +123,10 @@ impl Generic6DofConstraint {
     pub(crate) fn set_param(&mut self, num: ConstraintParams, value: f32, axis: i32) {
         self.inner.set_param(num as i32, value, axis);
     }
+
+    pub(crate) fn use_frame_offset(&mut self, frame_offset_on_off: bool) {
+        self.inner.use_frame_offset(frame_offset_on_off);
+    }
 }
 
 #[cfg(debug_assertions)]
@@ -226,6 +230,10 @@ impl Generic6DofSpringConstraint {
         self.inner.set_param(num as i32, value, axis);
     }
 
+    pub(crate) fn use_frame_offset(&mut self, frame_offset_on_off: bool) {
+        self.inner.use_frame_offset(frame_offset_on_off);
+    }
+
     pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {
         self.inner.enable_spring(index, on_off);
     }
@@ -248,124 +256,9 @@ impl Drop for Generic6DofSpringConstraint {
     }
 }
 
-pub(crate) struct MmdGeneric6DofSpringConstraint {
-    inner: bind::constraint::MmdGeneric6DofSpringConstraint,
-    #[cfg(debug_assertions)]
-    ref_count: u32,
-    #[allow(dead_code)]
-    #[cfg(debug_assertions)]
-    body_handle: ConstraintRigidBodyHandleInfo,
-}
-
-impl MmdGeneric6DofSpringConstraint {
-    fn new_raw(
-        body_a: &bind::rigidbody::RigidBody,
-        body_b: &bind::rigidbody::RigidBody,
-        #[cfg(debug_assertions)]
-        body_handle: ConstraintRigidBodyHandleInfo,
-        frame_a: &Mat4,
-        frame_b: &Mat4,
-        use_linear_reference_frame_a: bool,
-    ) -> Self {
-        let inner = bind::constraint::MmdGeneric6DofSpringConstraint::new(
-            body_a,
-            body_b,
-            frame_a,
-            frame_b,
-            use_linear_reference_frame_a
-        );
-        Self {
-            inner,
-            #[cfg(debug_assertions)]
-            ref_count: 0,
-            #[cfg(debug_assertions)]
-            body_handle,
-        }
-    }
-
-    pub(crate) fn new(mut body_a: RigidBodyHandle, mut body_b: RigidBodyHandle, frame_a: &Mat4, frame_b: &Mat4, use_linear_reference_frame_a: bool) -> Self {
-        let body_a_binding: RigidBodyHandle = body_a.clone();
-        let body_inner_a = body_a_binding.get().get_inner();
-
-        let body_b_binding: RigidBodyHandle = body_b.clone();
-        let body_inner_b = body_b_binding.get().get_inner();
-
-        Self::new_raw(
-            body_inner_a,
-            body_inner_b,
-            #[cfg(debug_assertions)]
-            ConstraintRigidBodyHandleInfo::RigidBody((body_a, body_b)),
-            frame_a,
-            frame_b,
-            use_linear_reference_frame_a
-        )
-    }
-
-    pub(crate) fn from_bundle(mut body_bundle: RigidBodyBundleHandle, body_a_index: u32, body_b_index: u32, frame_a: &Mat4, frame_b: &Mat4, use_linear_reference_frame_a: bool) -> Self {
-        let cloned_handle = body_bundle.clone();
-        let body_inner_a = &cloned_handle.get().bodies()[body_a_index as usize];
-        let body_inner_b = &cloned_handle.get().bodies()[body_b_index as usize];
-        Self::new_raw(
-            body_inner_a,
-            body_inner_b,
-            #[cfg(debug_assertions)]
-            ConstraintRigidBodyHandleInfo::RigidBodyBundle(body_bundle),
-            frame_a,
-            frame_b,
-            use_linear_reference_frame_a
-        )
-    }
-
-    pub(super) fn ptr_mut(&self) -> *mut std::ffi::c_void {
-        self.inner.ptr_mut()
-    }
-
-    pub(crate) fn set_linear_lower_limit(&mut self, limit: Vec3) {
-        self.inner.set_linear_lower_limit(limit);
-    }
-
-    pub(crate) fn set_linear_upper_limit(&mut self, limit: Vec3) {
-        self.inner.set_linear_upper_limit(limit);
-    }
-
-    pub(crate) fn set_angular_lower_limit(&mut self, limit: Vec3) {
-        self.inner.set_angular_lower_limit(limit);
-    }
-
-    pub(crate) fn set_angular_upper_limit(&mut self, limit: Vec3) {
-        self.inner.set_angular_upper_limit(limit);
-    }
-
-    pub(crate) fn set_param(&mut self, num: ConstraintParams, value: f32, axis: i32) {
-        self.inner.set_param(num as i32, value, axis);
-    }
-
-    pub(crate) fn enable_spring(&mut self, index: u8, on_off: bool) {
-        self.inner.enable_spring(index, on_off);
-    }
-
-    pub(crate) fn set_stiffness(&mut self, index: u8, stiffness: f32) {
-        self.inner.set_stiffness(index, stiffness);
-    }
-
-    pub(crate) fn set_damping(&mut self, index: u8, damping: f32) {
-        self.inner.set_damping(index, damping);
-    }
-}
-
-#[cfg(debug_assertions)]
-impl Drop for MmdGeneric6DofSpringConstraint {
-    fn drop(&mut self) {
-        if 0 < self.ref_count {
-            panic!("MmdGeneric6DofSpringConstraint still has references");
-        }
-    }
-}
-
 pub(crate) enum Constraint {
     Generic6Dof(Generic6DofConstraint),
     Generic6DofSpring(Generic6DofSpringConstraint),
-    MmdGeneric6DofSpring(MmdGeneric6DofSpringConstraint),
     #[allow(dead_code)]
     Unknown,
 }
@@ -375,7 +268,6 @@ impl Constraint {
         match self {
             Constraint::Generic6Dof(constraint) => constraint.ptr_mut(),
             Constraint::Generic6DofSpring(constraint) => constraint.ptr_mut(),
-            Constraint::MmdGeneric6DofSpring(constraint) => constraint.ptr_mut(),
             Constraint::Unknown => panic!("Unknown constraint"),
         }
     }
@@ -385,7 +277,6 @@ impl Constraint {
         match self {
             Constraint::Generic6Dof(constraint) => &mut constraint.ref_count,
             Constraint::Generic6DofSpring(constraint) => &mut constraint.ref_count,
-            Constraint::MmdGeneric6DofSpring(constraint) => &mut constraint.ref_count,
             Constraint::Unknown => panic!("Unknown constraint"),
         }
     }
@@ -527,48 +418,6 @@ pub fn create_generic6dof_spring_constraint_from_bundle(
     Box::into_raw(constraint) as *mut usize
 }
 
-#[wasm_bindgen(js_name = "createMmdGeneric6DofSpringConstraint")]
-pub fn create_mmd_generic6dof_spring_constraint(
-    body_a: *mut usize,
-    body_b: *mut usize,
-    frame_a: *const f32,
-    frame_b: *const f32,
-    use_linear_reference_frame_a: bool,
-) -> *mut usize {
-    let body_a = unsafe { &mut *(body_a as *mut RigidBody) };
-    let body_b = unsafe { &mut *(body_b as *mut RigidBody) };
-
-    let frame_a = unsafe { std::slice::from_raw_parts(frame_a, 16) };
-    let frame_b = unsafe { std::slice::from_raw_parts(frame_b, 16) };
-    let frame_a = Mat4::from_cols_slice(frame_a);
-    let frame_b = Mat4::from_cols_slice(frame_b);
-
-    let constraint = MmdGeneric6DofSpringConstraint::new(body_a.create_handle(), body_b.create_handle(), &frame_a, &frame_b, use_linear_reference_frame_a);
-    let constraint = Box::new(Constraint::MmdGeneric6DofSpring(constraint));
-    Box::into_raw(constraint) as *mut usize
-}
-
-#[wasm_bindgen(js_name = "createMmdGeneric6DofSpringConstraintFromBundle")]
-pub fn create_mmd_generic6dof_spring_constraint_from_bundle(
-    body_bundle: *mut usize,
-    body_a_index: u32,
-    body_b_index: u32,
-    frame_a: *const f32,
-    frame_b: *const f32,
-    use_linear_reference_frame_a: bool,
-) -> *mut usize {
-    let body_bundle = unsafe { &mut *(body_bundle as *mut RigidBodyBundle) };
-
-    let frame_a = unsafe { std::slice::from_raw_parts(frame_a, 16) };
-    let frame_b = unsafe { std::slice::from_raw_parts(frame_b, 16) };
-    let frame_a = Mat4::from_cols_slice(frame_a);
-    let frame_b = Mat4::from_cols_slice(frame_b);
-
-    let constraint = MmdGeneric6DofSpringConstraint::from_bundle(body_bundle.create_handle(), body_a_index, body_b_index, &frame_a, &frame_b, use_linear_reference_frame_a);
-    let constraint = Box::new(Constraint::MmdGeneric6DofSpring(constraint));
-    Box::into_raw(constraint) as *mut usize
-}
-
 #[wasm_bindgen(js_name = "destroyConstraint")]
 pub fn destroy_constraint(ptr: *mut usize) {
     unsafe {
@@ -585,9 +434,6 @@ pub fn constraint_set_linear_lower_limit(ptr: *mut usize, x: f32, y: f32, z: f32
             constraint.set_linear_lower_limit(Vec3::new(x, y, z));
         },
         Constraint::Generic6DofSpring(constraint) => {
-            constraint.set_linear_lower_limit(Vec3::new(x, y, z));
-        },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
             constraint.set_linear_lower_limit(Vec3::new(x, y, z));
         },
         _ => {
@@ -607,9 +453,6 @@ pub fn constraint_set_linear_upper_limit(ptr: *mut usize, x: f32, y: f32, z: f32
         Constraint::Generic6DofSpring(constraint) => {
             constraint.set_linear_upper_limit(Vec3::new(x, y, z));
         },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
-            constraint.set_linear_upper_limit(Vec3::new(x, y, z));
-        },
         _ => {
             panic!("constraintSetLinearUpperLimit: set_linear_upper_limit is not supported for this constraint type");
         }
@@ -625,9 +468,6 @@ pub fn constraint_set_angular_lower_limit(ptr: *mut usize, x: f32, y: f32, z: f3
             constraint.set_angular_lower_limit(Vec3::new(x, y, z));
         },
         Constraint::Generic6DofSpring(constraint) => {
-            constraint.set_angular_lower_limit(Vec3::new(x, y, z));
-        },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
             constraint.set_angular_lower_limit(Vec3::new(x, y, z));
         },
         _ => {
@@ -647,9 +487,6 @@ pub fn constraint_set_angular_upper_limit(ptr: *mut usize, x: f32, y: f32, z: f3
         Constraint::Generic6DofSpring(constraint) => {
             constraint.set_angular_upper_limit(Vec3::new(x, y, z));
         },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
-            constraint.set_angular_upper_limit(Vec3::new(x, y, z));
-        },
         _ => {
             panic!("constraintSetAngularUpperLimit: set_angular_upper_limit is not supported for this constraint type");
         }
@@ -667,11 +504,25 @@ pub fn constraint_set_param(ptr: *mut usize, num: u8, value: f32, axis: i32) {
         Constraint::Generic6DofSpring(constraint) => {
             constraint.set_param(ConstraintParams::from(num), value, axis);
         },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
-            constraint.set_param(ConstraintParams::from(num), value, axis);
-        },
         _ => {
             panic!("constraintSetParam: set_param is not supported for this constraint type");
+        }
+    }
+}
+
+#[wasm_bindgen(js_name = "constraintUseFrameOffset")]
+pub fn constraint_use_frame_offset(ptr: *mut usize, frame_offset_on_off: bool) {
+    let constraint = unsafe { &mut *(ptr as *mut Constraint) };
+
+    match constraint {
+        Constraint::Generic6Dof(constraint) => {
+            constraint.use_frame_offset(frame_offset_on_off);
+        },
+        Constraint::Generic6DofSpring(constraint) => {
+            constraint.use_frame_offset(frame_offset_on_off);
+        },
+        _ => {
+            panic!("constraintUseFrameOffset: use_frame_offset is not supported for this constraint type");
         }
     }
 }
@@ -682,9 +533,6 @@ pub fn constraint_enable_spring(ptr: *mut usize, index: u8, on_off: bool) {
     
     match constraint {
         Constraint::Generic6DofSpring(constraint) => {
-            constraint.enable_spring(index, on_off);
-        },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
             constraint.enable_spring(index, on_off);
         },
         _ => {
@@ -701,9 +549,6 @@ pub fn constraint_set_stiffness(ptr: *mut usize, index: u8, stiffness: f32) {
         Constraint::Generic6DofSpring(constraint) => {
             constraint.set_stiffness(index, stiffness);
         },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
-            constraint.set_stiffness(index, stiffness);
-        },
         _ => {
             panic!("constraintSetStiffness: set_stiffness is not supported for this constraint type");
         }
@@ -716,9 +561,6 @@ pub fn constraint_set_damping(ptr: *mut usize, index: u8, damping: f32) {
     
     match constraint {
         Constraint::Generic6DofSpring(constraint) => {
-            constraint.set_damping(index, damping);
-        },
-        Constraint::MmdGeneric6DofSpring(constraint) => {
             constraint.set_damping(index, damping);
         },
         _ => {

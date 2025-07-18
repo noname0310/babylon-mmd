@@ -12,7 +12,7 @@ import type { IMmdRuntimeBone } from "../../IMmdRuntimeBone";
 import type { IMmdModelPhysicsCreationOptions } from "../../mmdRuntime";
 import type { IMmdPhysics, IMmdPhysicsModel } from "../../Physics/IMmdPhysics";
 import type { Constraint } from "./Bind/constraint";
-import { ConstraintParams, Generic6DofSpringConstraint, MmdGeneric6DofSpringConstraint } from "./Bind/constraint";
+import { ConstraintParams, Generic6DofSpringConstraint } from "./Bind/constraint";
 import type { IPhysicsRuntime } from "./Bind/Impl/IPhysicsRuntime";
 import type { MultiPhysicsRuntime } from "./Bind/Impl/multiPhysicsRuntime";
 import { MotionType } from "./Bind/motionType";
@@ -819,10 +819,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
             jointTransform.multiplyToRef(rigidBodyAInverse, jointFinalTransformA);
             jointTransform.multiplyToRef(rigidBodyBInverse, jointFinalTransformB);
 
-            const constraintCtor = disableOffsetForConstraintFrame
-                ? MmdGeneric6DofSpringConstraint
-                : Generic6DofSpringConstraint;
-            const constraint = new constraintCtor(
+            const constraint = new Generic6DofSpringConstraint(
                 physicsRuntime,
                 bundle,
                 [bodyAIndex, bodyBIndex],
@@ -830,6 +827,9 @@ export class MmdBulletPhysics implements IMmdPhysics {
                 jointFinalTransformB,
                 true
             );
+            if (disableOffsetForConstraintFrame) {
+                constraint.useFrameOffset(false);
+            }
             for (let i = 0; i < 6; ++i) {
                 constraint.setParam(ConstraintParams.ConstraintStopERP, 0.475, i);
             }
