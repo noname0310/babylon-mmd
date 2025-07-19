@@ -21,6 +21,10 @@
 - change default value of `IMmdModelCreationOptions.materialProxyConstructor` to null
   - you must pass `MmdStandardMaterialProxy` or `StandardMaterialProxy` to `IMmdModelCreationOptions.materialProxyConstructor` to use material morphing features
 
+- change camera animation binding api
+  - `MmdCamera.addAnimation`, `MmdCamera.removeAnimation`, `MmdCamera.setAnimation` are removed
+  - use `MmdCamera.createRuntimeAnimation` to create a new animation and `MmdCamera.setRuntimeAnimation` to set the animation
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported

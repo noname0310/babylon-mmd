@@ -115,8 +115,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimation);
-        mmdCamera.setAnimation("motion");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimation);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         const modelRoot = modelLoadResult.meshes[0] as Mesh;
         modelRoot.rotationQuaternion!.set(0, 0, 0, 1);

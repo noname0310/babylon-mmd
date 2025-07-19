@@ -137,8 +137,8 @@ export class SceneBuilder implements ISceneBuilder {
         ]);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimations[5]);
-        mmdCamera.setAnimation("motion");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimations[5]);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         const modelMeshes = [modelMesh];
 

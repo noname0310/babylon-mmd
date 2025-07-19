@@ -160,8 +160,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimation);
-        mmdCamera.setAnimation("motion");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimation);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         mmdMesh.scaling.scaleInPlace(14.3);
         mmdMesh.scaling.z *= -1;
