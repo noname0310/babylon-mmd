@@ -16,6 +16,8 @@
   - you can add multiple `IMmdCamera` to `MmdRuntime`
   - `MmdRuntime.setCamera` is no longer available, instead use `MmdRuntime.addAnimatable` to add a new camera
 
+- remove `NullMaterialProxy`
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported
