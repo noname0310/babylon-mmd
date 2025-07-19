@@ -2,7 +2,7 @@ import type { IIkStateContainer } from "./IIkStateContainer";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { IRigidBodyStateContainer } from "./IRIgidBodyStateContainer";
-import type { RuntimeMmdMesh } from "./mmdMesh";
+import type { MmdSkinnedMesh, TrimmedMmdSkinnedMesh } from "./mmdMesh";
 import type { MmdMorphControllerBase } from "./mmdMorphControllerBase";
 
 /**
@@ -12,7 +12,7 @@ export interface IMmdModel extends IIkStateContainer, IRigidBodyStateContainer {
     /**
      * The root mesh of this model
      */
-    readonly mesh: RuntimeMmdMesh;
+    readonly mesh: MmdSkinnedMesh | TrimmedMmdSkinnedMesh;
 
     /**
      * The skeleton of this model

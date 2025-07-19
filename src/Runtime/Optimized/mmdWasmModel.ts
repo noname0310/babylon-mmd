@@ -19,7 +19,7 @@ import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdModel } from "../IMmdModel";
 import type { IMmdRuntimeBone } from "../IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "../IMmdRuntimeLinkedBone";
-import type { MmdSkinnedMesh, RuntimeMmdMesh } from "../mmdMesh";
+import type { MmdSkinnedMesh, TrimmedMmdSkinnedMesh } from "../mmdMesh";
 import type { IMmdModelCtorPhysicsOptions } from "../mmdModel";
 import { CreateMmdRuntimeAnimationHandle, type MmdRuntimeAnimationHandle } from "../mmdRuntimeAnimationHandle";
 import type { IMmdPhysicsModel } from "../Physics/IMmdPhysics";
@@ -57,7 +57,7 @@ export class MmdWasmModel implements IMmdModel {
     /**
      * The root mesh of this model
      */
-    public readonly mesh: RuntimeMmdMesh;
+    public readonly mesh: MmdSkinnedMesh | TrimmedMmdSkinnedMesh;
 
     /**
      * The skeleton of this model
@@ -168,6 +168,7 @@ export class MmdWasmModel implements IMmdModel {
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param wasmMorphIndexMap Mmd morph to WASM morph index map
      * @param physicsParams Physics options
+     * @param trimMetadata Whether to trim the metadata of the model
      */
     public constructor(
         wasmRuntime: MmdWasmRuntime,
@@ -176,7 +177,8 @@ export class MmdWasmModel implements IMmdModel {
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         wasmMorphIndexMap: Int32Array,
-        physicsParams: Nullable<IMmdModelCtorPhysicsOptions>
+        physicsParams: Nullable<IMmdModelCtorPhysicsOptions>,
+        trimMetadata: boolean
     ) {
         const wasmInstance = wasmRuntime.wasmInstance;
         const wasmRuntimeInternal = wasmRuntime.wasmInternal;
@@ -184,17 +186,18 @@ export class MmdWasmModel implements IMmdModel {
         this._runtime = wasmRuntime;
 
         const mmdMetadata = mmdSkinnedMesh.metadata;
-
-        const runtimeModelNode = mmdSkinnedMesh as unknown as RuntimeMmdMesh;
-        runtimeModelNode.metadata = {
-            isRuntimeMmdModel: true,
-            header: mmdMetadata.header,
-            meshes: mmdMetadata.meshes,
-            materials: mmdMetadata.materials,
-            skeleton: mmdMetadata.skeleton
-        };
+        if (trimMetadata) {
+            const runtimeMesh = mmdSkinnedMesh as unknown as TrimmedMmdSkinnedMesh;
+            runtimeMesh.metadata = {
+                isTrimmedMmdSkinedModel: true,
+                header: mmdMetadata.header,
+                meshes: mmdMetadata.meshes,
+                materials: mmdMetadata.materials,
+                skeleton: mmdMetadata.skeleton
+            };
+        }
         this.ptr = ptr;
-        this.mesh = runtimeModelNode;
+        this.mesh = mmdSkinnedMesh;
         this.skeleton = skeleton;
 
         const worldTransformMatricesPtr = wasmRuntimeInternal.getBoneWorldMatrixArena(ptr);
@@ -317,7 +320,9 @@ export class MmdWasmModel implements IMmdModel {
         }
         this._animationHandleMap.clear();
 
-        (this.mesh as any).metadata = null;
+        if ((this.mesh as TrimmedMmdSkinnedMesh).metadata.isTrimmedMmdSkinedModel) {
+            (this.mesh as any).metadata = null;
+        }
     }
 
     /**
