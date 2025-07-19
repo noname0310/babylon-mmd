@@ -36,6 +36,8 @@
 - introduce `IMmdModelCreationOptions.trimMetadata` option to disable metadata trimming
   - this is useful when you want to re initialize the model with the same metadata
 
+- fix crash when destroying `MmdModel` instances initialized with `MmdBulletPhysics`
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported

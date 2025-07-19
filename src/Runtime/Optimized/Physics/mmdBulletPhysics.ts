@@ -144,12 +144,17 @@ export class MmdBulletPhysicsModel implements IMmdPhysicsModel {
             }
             physicsRuntime.removeRigidBodyBundle(bundle, worldId);
 
+            const shapes: PhysicsShape[] = [];
             for (let i = 0; i < bundle.count; ++i) {
                 const shape = bundle.getShape(i);
-                shape.dispose();
+                shapes.push(shape);
             }
             bundle.dispose();
             this._bundle = null;
+
+            for (let i = 0; i < shapes.length; ++i) {
+                shapes[i].dispose();
+            }
         }
     }
 
@@ -713,6 +718,7 @@ export class MmdBulletPhysics implements IMmdPhysics {
         }
 
         const bundle = new MmdRigidBodyBundle(physicsRuntime, rbInfoList, rbDataList, rbDataList.length);
+        rbInfoList.dispose();
 
         const constraints: Nullable<Constraint>[] = new Array(joints.length);
 
