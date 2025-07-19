@@ -7,7 +7,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
-import "@/Runtime/MmdRuntimeShared.default";
+import "@/Runtime/mmdRuntimeShared.default";
 // for serialization
 import "@/Loader/mmdPluginMaterial";
 import "@/Loader/mmdStandardMaterial";
