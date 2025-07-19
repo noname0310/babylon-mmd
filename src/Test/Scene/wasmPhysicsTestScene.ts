@@ -173,8 +173,8 @@ export class SceneBuilder implements ISceneBuilder {
                 disableOffsetForConstraintFrame: false
             }
         });
-        mmdModel.addAnimation(mmdWasmAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdWasmAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         const physicsRuntime = mmdRuntime.physics?.getImpl(MmdWasmPhysicsRuntimeImpl);
         if (physicsRuntime !== undefined) {

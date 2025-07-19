@@ -105,8 +105,8 @@ export class SceneBuilder implements ISceneBuilder {
         ]);
         const wasmAnimation = new MmdWasmAnimation(animation, mmdWasmInstance, scene);
         wasmAnimation;
-        mmdModel.addAnimation(wasmAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(wasmAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         // const animationContainer = new MmdModelAnimationContainer(animation, new MmdModelAnimationContainerBezierBuilder());
         // animationContainer
