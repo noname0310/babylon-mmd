@@ -354,6 +354,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (options.buildPhysics === undefined) {
             options.buildPhysics = true;
         }
+        if (options.trimMetadata === undefined) {
+            options.trimMetadata = true;
+        }
 
         this.lock.wait(); // ensure that the runtime is not evaluating animations
 
@@ -394,7 +397,8 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                             : options.buildPhysics
                     }
                     : null
-                : null
+                : null,
+            options.trimMetadata
         );
         this._models.push(model);
 

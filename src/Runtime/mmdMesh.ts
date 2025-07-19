@@ -34,19 +34,19 @@ export interface MmdSkinedModelMetadata extends MmdModelMetadata {
 }
 
 /**
- * Mesh type that after create `MmdModel` instance
+ * Mesh type that has trimmed MMD model metadata
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface RuntimeMmdMesh extends Mesh {
-    metadata: RuntimeMmdModelMetadata;
+export interface TrimmedMmdSkinnedMesh extends Mesh {
+    metadata: TrimmedMmdSkinedModelMetadata;
 }
 
 /**
  * Metadata for `RuntimeMmdModel`
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface RuntimeMmdModelMetadata {
-    readonly isRuntimeMmdModel: true;
+export interface TrimmedMmdSkinedModelMetadata {
+    readonly isTrimmedMmdSkinedModel: true;
     readonly header: MmdModelMetadata.Header;
 
     /**

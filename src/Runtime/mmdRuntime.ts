@@ -72,6 +72,17 @@ export interface IMmdModelCreationOptions<TMaterial extends Material = Material>
      * Whether to build physics (default: true)
      */
     buildPhysics?: IMmdModelPhysicsCreationOptions | boolean;
+
+    /**
+     * Whether to trim metadata (default: true)
+     *
+     * If true, bone, morph, rigidbody and joint metadata are trimmed when you create `MmdModel` instance from `MmdSkinnedMesh`
+     *
+     * This is useful for reducing memory usage
+     *
+     * You can't recreate `MmdModel` instance from `MmdSkinnedMesh` if you set this to true
+     */
+    trimMetadata?: boolean;
 }
 
 /**
@@ -264,6 +275,9 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         if (options.buildPhysics === undefined) {
             options.buildPhysics = true;
         }
+        if (options.trimMetadata === undefined) {
+            options.trimMetadata = true;
+        }
 
         const model = new MmdModel(
             mmdSkinnedMesh,
@@ -279,6 +293,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
                     }
                     : null
                 : null,
+            options.trimMetadata,
             this
         );
         this._models.push(model);

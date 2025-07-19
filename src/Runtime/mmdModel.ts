@@ -22,7 +22,7 @@ import type { IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
 import type { IMmdModel } from "./IMmdModel";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRuntimeLinkedBone";
-import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
+import type { MmdSkinnedMesh, TrimmedMmdSkinnedMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
 import type { IMmdModelPhysicsCreationOptions } from "./mmdRuntime";
 import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
@@ -54,7 +54,7 @@ export class MmdModel implements IMmdModel {
     /**
      * The root mesh of this model
      */
-    public readonly mesh: RuntimeMmdMesh;
+    public readonly mesh: MmdSkinnedMesh | TrimmedMmdSkinnedMesh;
 
     /**
      * The skeleton of this model
@@ -124,6 +124,7 @@ export class MmdModel implements IMmdModel {
      * @param skeleton The virtualized bone container of the mesh
      * @param materialProxyConstructor The constructor of `IMmdMaterialProxy`
      * @param physicsParams Physics options
+     * @param trimMetadata Whether to trim the metadata of the model
      * @param logger Logger
      */
     public constructor(
@@ -131,21 +132,23 @@ export class MmdModel implements IMmdModel {
         skeleton: IMmdLinkedBoneContainer,
         materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<Material>>,
         physicsParams: Nullable<IMmdModelCtorPhysicsOptions>,
+        trimMetadata: boolean,
         logger: ILogger
     ) {
         this._logger = logger;
 
         const mmdMetadata = mmdSkinnedMesh.metadata;
-
-        const runtimeMesh = mmdSkinnedMesh as unknown as RuntimeMmdMesh;
-        runtimeMesh.metadata = {
-            isRuntimeMmdModel: true,
-            header: mmdMetadata.header,
-            meshes: mmdMetadata.meshes,
-            materials: mmdMetadata.materials,
-            skeleton: mmdMetadata.skeleton
-        };
-        this.mesh = runtimeMesh;
+        if (trimMetadata) {
+            const runtimeMesh = mmdSkinnedMesh as unknown as TrimmedMmdSkinnedMesh;
+            runtimeMesh.metadata = {
+                isTrimmedMmdSkinedModel: true,
+                header: mmdMetadata.header,
+                meshes: mmdMetadata.meshes,
+                materials: mmdMetadata.materials,
+                skeleton: mmdMetadata.skeleton
+            };
+        }
+        this.mesh = mmdSkinnedMesh;
         this.skeleton = skeleton;
         const worldTransformMatrices = this.worldTransformMatrices = new Float32Array(skeleton.bones.length * 16);
         {
@@ -237,7 +240,9 @@ export class MmdModel implements IMmdModel {
         }
         this._animationHandleMap.clear();
 
-        (this.mesh as any).metadata = null;
+        if ((this.mesh as TrimmedMmdSkinnedMesh).metadata.isTrimmedMmdSkinedModel) {
+            (this.mesh as any).metadata = null;
+        }
     }
 
     /**
