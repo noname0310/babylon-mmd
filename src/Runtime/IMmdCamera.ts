@@ -61,7 +61,7 @@ export interface IMmdCamera extends IMmdRuntimeAnimatable {
 
     /**
      * Destroy a runtime animation by its handle
-     * * @param handle The handle of the runtime animation to destroy
+     * @param handle The handle of the runtime animation to destroy
      * @returns True if the animation was destroyed, false if it was not found
      */
     destroyRuntimeAnimation(handle: MmdRuntimeAnimationHandle): boolean;

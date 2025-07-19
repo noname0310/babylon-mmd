@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.69.0 (2025-07-18)
+## 1.0.0 (scheduled)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
   - rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
