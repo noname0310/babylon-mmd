@@ -9,6 +9,7 @@ import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdComposit
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
 import type { IMmdRuntimeAnimatable } from "./IMmdRuntimeAnimatable";
+import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 
 type RuntimeCameraAnimation = MmdRuntimeCameraAnimation | MmdRuntimeCameraAnimationContainer | MmdCompositeRuntimeCameraAnimation | IMmdRuntimeCameraAnimation;
 
@@ -52,32 +53,33 @@ export interface IMmdCamera extends IMmdRuntimeAnimatable {
     fov: number;
 
     /**
-     * Add an animation to the camera
+     * Bind the animation to the camera and return a handle to the runtime animation
      * @param animation  MMD animation or MMD camera animation group to add
+     * @returns A handle to the runtime animation
      */
-    addAnimation(animation: IMmdBindableCameraAnimation): void;
+    createRuntimeAnimation(animation: IMmdBindableCameraAnimation): MmdRuntimeAnimationHandle;
 
     /**
-     * Remove an animation from the camera
-     *
-     * If index is out of range, this method does nothing
-     * @param index The index of the animation to remove
+     * Destroy a runtime animation by its handle
+     * @param handle The handle of the runtime animation to destroy
+     * @returns True if the animation was destroyed, false if it was not found
      */
-    removeAnimation(index: number): void;
+    destroyRuntimeAnimation(handle: MmdRuntimeAnimationHandle): boolean;
 
     /**
      * Set the current animation of the camera
      *
-     * If name is null, the current animation is set to null
-     * @param name The name of the animation to set
-     * @throws {Error} if the animation is not found
+     * If handle is null, the current animation will be cleared
+     *
+     * @param handle The handle of the animation to set as current
+     * @throws {Error} if the animation with the handle is not found
      */
-    setAnimation(name: Nullable<string>): void;
+    setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): void;
 
     /**
-     * Get the animations of the camera
+     * Get the runtime animation map of the camera
      */
-    get runtimeAnimations(): readonly RuntimeCameraAnimation[];
+    get runtimeAnimations(): ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeCameraAnimation>;
 
     /**
      * Get the current animation of the camera

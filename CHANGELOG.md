@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.69.0 (2025-07-18)
+## 1.0.0 (scheduled)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
   - rename `MmdCameraAnimationGroup` to `MmdCameraAnimationContainer`
@@ -20,6 +20,18 @@
 
 - change default value of `IMmdModelCreationOptions.materialProxyConstructor` to null
   - you must pass `MmdStandardMaterialProxy` or `StandardMaterialProxy` to `IMmdModelCreationOptions.materialProxyConstructor` to use material morphing features
+
+- change camera animation binding api (applied to `MmdCamera` and `IMmdCamera`)
+  - `MmdCamera.addAnimation`, `MmdCamera.removeAnimation`, `MmdCamera.setAnimation` are removed
+  - use `MmdCamera.createRuntimeAnimation` to create a new animation and `MmdCamera.setRuntimeAnimation` to set the animation
+  - `MmdCamera.createRuntimeAnimation` returns `MmdRuntimeAnimationHandle` which can be used to manage the animation
+  - `MmdCamera.runtimeAnimations` is now a `ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeModelAnimation>` instead of an array
+
+- change model animation binding api (applied to `MmdModel` and `MmdWasmModel`)
+  - `MmdModel.addAnimation`, `MmdModel.removeAnimation`, `MmdModel.setAnimation` are removed
+  - use `MmdModel.createRuntimeAnimation` to create a new animation and `MmdModel.setRuntimeAnimation` to set the animation
+  - `MmdModel.createRuntimeAnimation` returns `MmdRuntimeAnimationHandle` which can be used to manage the animation
+  - `MmdModel.runtimeAnimations` is now a `ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeModelAnimation>` instead of an array
 
 ## 0.68.0 (2025-07-16)
 

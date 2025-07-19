@@ -12,6 +12,8 @@ import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdComposit
 import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
 import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
 import type { IMmdCamera } from "./IMmdCamera";
+import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
+import { CreateMmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 
 Node.AddNodeConstructor("MmdCamera", (name, scene) => {
     return (): MmdCamera => new MmdCamera(name, undefined, scene);
@@ -52,8 +54,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
      * Value is 30fps frame time duration of the animation
      */
     public readonly onAnimationDurationChangedObservable: Observable<number>;
-    private readonly _animations: RuntimeCameraAnimation[];
-    private readonly _animationNameMap = new Map<string, RuntimeCameraAnimation>();
+    private readonly _animationHandleMap: Map<MmdRuntimeAnimationHandle, RuntimeCameraAnimation>;
 
     private _currentAnimation: Nullable<RuntimeCameraAnimation>;
 
@@ -71,17 +72,17 @@ export class MmdCamera extends Camera implements IMmdCamera {
         this.fov = 30 * (Math.PI / 180);
 
         this.onAnimationDurationChangedObservable = new Observable<number>();
-        this._animations = [];
-        this._animationNameMap = new Map();
+        this._animationHandleMap = new Map();
 
         this._currentAnimation = null;
     }
 
     /**
-     * Add an animation to the camera
+     * Bind the animation to the camera and return a handle to the runtime animation
      * @param animation  MMD animation or MMD camera animation group to add
+     * @returns A handle to the runtime animation
      */
-    public addAnimation(animation: IMmdBindableCameraAnimation): void {
+    public createRuntimeAnimation(animation: IMmdBindableCameraAnimation): MmdRuntimeAnimationHandle {
         let runtimeAnimation: RuntimeCameraAnimation;
         if ((animation as IMmdBindableCameraAnimation).createRuntimeCameraAnimation) {
             runtimeAnimation = animation.createRuntimeCameraAnimation(this);
@@ -89,32 +90,19 @@ export class MmdCamera extends Camera implements IMmdCamera {
             throw new Error("animation is not MmdAnimation or MmdCameraAnimationContainer or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation\"?");
         }
 
-        const existingAnimation = this._animationNameMap.get(animation.name);
-        if (existingAnimation) {
-            const index = this._animations.indexOf(existingAnimation);
-            const oldAnimation = this._animations[index];
-            this._animations[index] = runtimeAnimation;
-            if (this._currentAnimation === oldAnimation) {
-                this._currentAnimation = runtimeAnimation;
-                if (oldAnimation.animation.endFrame !== runtimeAnimation.animation.endFrame) {
-                    this.onAnimationDurationChangedObservable.notifyObservers(runtimeAnimation.animation.endFrame);
-                }
-            }
-        } else {
-            this._animations.push(runtimeAnimation);
-        }
-        this._animationNameMap.set(animation.name, runtimeAnimation);
+        const handle = CreateMmdRuntimeAnimationHandle();
+        this._animationHandleMap.set(handle, runtimeAnimation);
+        return handle;
     }
 
     /**
-     * Remove an animation from the camera
-     *
-     * If index is out of range, this method does nothing
-     * @param index The index of the animation to remove
+     * Destroy a runtime animation by its handle
+     * @param handle The handle of the runtime animation to destroy
+     * @returns True if the animation was destroyed, false if it was not found
      */
-    public removeAnimation(index: number): void {
-        const animation = this._animations[index];
-        if (animation === undefined) return;
+    public destroyRuntimeAnimation(handle: MmdRuntimeAnimationHandle): boolean {
+        const animation = this._animationHandleMap.get(handle);
+        if (animation === undefined) return false;
 
         if (this._currentAnimation === animation) {
             this._currentAnimation = null;
@@ -123,25 +111,21 @@ export class MmdCamera extends Camera implements IMmdCamera {
             }
         }
 
-        for (const [key, value] of this._animationNameMap) {
-            if (value === animation) {
-                this._animationNameMap.delete(key);
-                break;
-            }
-        }
-        this._animations.splice(index, 1);
+        this._animationHandleMap.delete(handle);
         (animation as IMmdRuntimeCameraAnimation).dispose?.();
+        return true;
     }
 
     /**
      * Set the current animation of the camera
      *
-     * If name is null, the current animation is set to null
-     * @param name The name of the animation to set
-     * @throws {Error} if the animation is not found
+     * If handle is null, the current animation will be cleared
+     *
+     * @param handle The handle of the animation to set as current
+     * @throws {Error} if the animation with the handle is not found
      */
-    public setAnimation(name: Nullable<string>): void {
-        if (name === null) {
+    public setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): void {
+        if (handle === null) {
             if (this._currentAnimation !== null) {
                 const endFrame = this._currentAnimation.animation.endFrame;
                 this._currentAnimation = null;
@@ -152,9 +136,9 @@ export class MmdCamera extends Camera implements IMmdCamera {
             return;
         }
 
-        const animation = this._animationNameMap.get(name);
+        const animation = this._animationHandleMap.get(handle);
         if (animation === undefined) {
-            throw new Error(`Animation ${name} is not found`);
+            throw new Error(`Animation with handle ${handle} not found`);
         }
 
         const oldAnimationEndFrame = this._currentAnimation?.animation.endFrame ?? 0;
@@ -165,10 +149,10 @@ export class MmdCamera extends Camera implements IMmdCamera {
     }
 
     /**
-     * Get the animations of the camera
+     * Get the runtime animation map of the camera
      */
-    public get runtimeAnimations(): readonly RuntimeCameraAnimation[] {
-        return this._animations;
+    public get runtimeAnimations(): ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeCameraAnimation> {
+        return this._animationHandleMap;
     }
 
     /**

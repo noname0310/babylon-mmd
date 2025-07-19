@@ -159,8 +159,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdWasmAnimation);
-        mmdCamera.setAnimation("motion");
+        const animationHandle = mmdCamera.createRuntimeAnimation(mmdWasmAnimation);
+        mmdCamera.setRuntimeAnimation(animationHandle);
 
         for (const mesh of modelMesh.metadata.meshes) {
             mesh.receiveShadows = true;
@@ -173,8 +173,8 @@ export class SceneBuilder implements ISceneBuilder {
                 disableOffsetForConstraintFrame: false
             }
         });
-        mmdModel.addAnimation(mmdWasmAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdWasmAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         const physicsRuntime = mmdRuntime.physics?.getImpl(MmdWasmPhysicsRuntimeImpl);
         if (physicsRuntime !== undefined) {

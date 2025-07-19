@@ -620,6 +620,7 @@ declare module "../../Loader/Animation/mmdAnimationBase" {
 }
 
 /**
+ * @internal
  * Create runtime model animation
  * @param model Bind target
  * @param retargetingMap Animation bone name to model bone name map

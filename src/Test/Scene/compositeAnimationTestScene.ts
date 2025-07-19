@@ -167,8 +167,8 @@ export class SceneBuilder implements ISceneBuilder {
         ]);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(cameraAnimation);
-        mmdCamera.setAnimation("camera");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(cameraAnimation);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         for (const mesh of modelMesh.metadata.meshes) {
             mesh.receiveShadows = true;
@@ -200,8 +200,8 @@ export class SceneBuilder implements ISceneBuilder {
             lastTransitionPoint = transitionPoints[i];
         }
 
-        mmdModel.addAnimation(compositeAnimation);
-        mmdModel.setAnimation("composite");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(compositeAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         for (const mesh of modelMeshA.metadata.meshes) {
             mesh.receiveShadows = true;
@@ -212,8 +212,8 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModelA = mmdRuntime.createMmdModel(modelMeshA, {
             buildPhysics: true
         });
-        mmdModelA.addAnimation(mmdAnimation1);
-        mmdModelA.setAnimation("motion1");
+        const modelARuntimeAnimationHandle = mmdModelA.createRuntimeAnimation(mmdAnimation1);
+        mmdModelA.setRuntimeAnimation(modelARuntimeAnimationHandle);
 
         for (const mesh of modelMeshB.metadata.meshes) {
             mesh.receiveShadows = true;
@@ -224,8 +224,8 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModelB = mmdRuntime.createMmdModel(modelMeshB, {
             buildPhysics: true
         });
-        mmdModelB.addAnimation(mmdAnimation2);
-        mmdModelB.setAnimation("motion2");
+        const modelBRuntimeAnimationHandle = mmdModelB.createRuntimeAnimation(mmdAnimation2);
+        mmdModelB.setRuntimeAnimation(modelBRuntimeAnimationHandle);
 
         scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
 

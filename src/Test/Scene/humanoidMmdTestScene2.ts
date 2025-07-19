@@ -113,8 +113,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimation);
-        mmdCamera.setAnimation("motion");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimation);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         const modelRoot = modelLoadResult.meshes[0] as Mesh;
         modelRoot.rotationQuaternion!.set(0, 0, 0, 1);
@@ -217,8 +217,8 @@ export class SceneBuilder implements ISceneBuilder {
             }
         );
         mmdModel.morph.setMorphWeight("口_真顔", 0.2);
-        mmdModel.addAnimation(mmdAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         const translationMatrix = modelMesh.getWorldMatrix().clone();
         translationMatrix.removeRotationAndScaling();

@@ -224,8 +224,8 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.setManualAnimationDuration(mmdAnimation.endFrame);
 
         mmdRuntime.addAnimatable(mmdCamera);
-        mmdCamera.addAnimation(mmdAnimation);
-        mmdCamera.setAnimation("motion");
+        const cameraAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimation);
+        mmdCamera.setRuntimeAnimation(cameraAnimationHandle);
 
         for (const mesh of modelMesh1.metadata.meshes) {
             mesh.receiveShadows = true;
@@ -236,8 +236,8 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh1, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(mmdWasmAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdWasmAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         {
             for (const mesh of modelMesh2.metadata.meshes) {
@@ -250,8 +250,8 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel2 = mmdRuntime.createMmdModel(modelMesh2, {
                 buildPhysics: true
             });
-            mmdModel2.addAnimation(mmdWasmAnimation);
-            mmdModel2.setAnimation("motion");
+            const model2RuntimeAnimationHandle = mmdModel2.createRuntimeAnimation(mmdWasmAnimation);
+            mmdModel2.setRuntimeAnimation(model2RuntimeAnimationHandle);
 
             for (const mesh of modelMesh3.metadata.meshes) {
                 mesh.receiveShadows = true;
@@ -263,8 +263,8 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel3 = mmdRuntime.createMmdModel(modelMesh3, {
                 buildPhysics: true
             });
-            mmdModel3.addAnimation(mmdWasmAnimation);
-            mmdModel3.setAnimation("motion");
+            const model3RuntimeAnimationHandle = mmdModel3.createRuntimeAnimation(mmdWasmAnimation);
+            mmdModel3.setRuntimeAnimation(model3RuntimeAnimationHandle);
 
             for (const mesh of modelMesh4.metadata.meshes) {
                 mesh.receiveShadows = true;
@@ -276,8 +276,8 @@ export class SceneBuilder implements ISceneBuilder {
             const mmdModel4 = mmdRuntime.createMmdModel(modelMesh4, {
                 buildPhysics: true
             });
-            mmdModel4.addAnimation(mmdAnimation);
-            mmdModel4.setAnimation("motion");
+            const model4RuntimeAnimationHandle = mmdModel4.createRuntimeAnimation(mmdWasmAnimation);
+            mmdModel4.setRuntimeAnimation(model4RuntimeAnimationHandle);
 
             for (const mesh of modelMesh5.metadata.meshes) {
                 mesh.receiveShadows = true;
@@ -290,8 +290,8 @@ export class SceneBuilder implements ISceneBuilder {
                 const mmdModel5 = mmdRuntime.createMmdModel(modelMesh5, {
                     buildPhysics: true
                 });
-                mmdModel5.addAnimation(mmdWasmAnimation);
-                mmdModel5.setAnimation("motion");
+                const model5RuntimeAnimationHandle = mmdModel5.createRuntimeAnimation(mmdWasmAnimation);
+                mmdModel5.setRuntimeAnimation(model5RuntimeAnimationHandle);
                 scene.onAfterRenderObservable.addOnce(() => OptimizeScene(scene));
             });
         }

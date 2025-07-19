@@ -22,6 +22,7 @@ export interface IMmdBindableCameraAnimation<T extends IMmdRuntimeCameraAnimatio
  */
 export interface IMmdBindableModelAnimation<T extends IMmdRuntimeModelAnimation = IMmdRuntimeModelAnimation> extends IMmdAnimation {
     /**
+     * @internal
      * Create runtime model animation
      * @param model Bind target
      * @param retargetingMap Animation bone name to model bone name map
