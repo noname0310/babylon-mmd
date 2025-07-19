@@ -33,6 +33,9 @@
   - `MmdModel.createRuntimeAnimation` returns `MmdRuntimeAnimationHandle` which can be used to manage the animation
   - `MmdModel.runtimeAnimations` is now a `ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeModelAnimation>` instead of an array
 
+- introduce `IMmdModelCreationOptions.trimMetadata` option to disable metadata trimming
+  - this is useful when you want to re initialize the model with the same metadata
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported

@@ -315,6 +315,7 @@ export class MmdWasmModel implements IMmdModel {
         this._physicsModel?.dispose();
         this.onAnimationDurationChangedObservable.clear();
 
+        this.setRuntimeAnimation(null, false);
         for (const animation of this._animationHandleMap.values()) {
             (animation as IMmdRuntimeModelAnimation).dispose?.();
         }
