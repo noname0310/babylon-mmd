@@ -168,3 +168,4 @@ export { MmdMorphController } from "@/Runtime/mmdMorphController";
 export { IReadonlyRuntimeMorph, IRuntimeMaterialMorphElement, MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 export { IMmdModelCreationOptions, IMmdModelPhysicsCreationOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";
+export { StandardMaterialProxy } from "@/Runtime/standardMaterialProxy";
