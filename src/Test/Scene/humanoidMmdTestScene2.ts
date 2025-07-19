@@ -217,7 +217,7 @@ export class SceneBuilder implements ISceneBuilder {
             }
         );
         mmdModel.morph.setMorphWeight("口_真顔", 0.2);
-        const modelRuntimeAnimationHandle =  mmdModel.createRuntimeAnimation(mmdAnimation);
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdAnimation);
         mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         const translationMatrix = modelMesh.getWorldMatrix().clone();
