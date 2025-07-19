@@ -7,6 +7,7 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
+// import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -18,6 +19,7 @@ import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depth
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
+import type { Nullable } from "@babylonjs/core/types";
 
 // import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
@@ -27,18 +29,21 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
 import { MmdCamera } from "@/Runtime/mmdCamera";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
+// import type { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import type { IMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
-import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
+import { MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
+// import { MultiPhysicsRuntime } from "@/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
 import { MotionType } from "@/Runtime/Optimized/Physics/Bind/motionType";
 import { PhysicsStaticPlaneShape } from "@/Runtime/Optimized/Physics/Bind/physicsShape";
 import { RigidBody } from "@/Runtime/Optimized/Physics/Bind/rigidBody";
 import { RigidBodyConstructionInfo } from "@/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfo";
+// import { MmdBulletPhysics } from "@/Runtime/Optimized/Physics/mmdBulletPhysics";
 import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
-// import { MmdWasmPhysics } from "@/Runtime/Optimized/Physics/mmdWasmPhysics";
 import { MmdWasmPhysicsRuntimeImpl } from "@/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl";
 // import ammo from "@/Runtime/Physics/External/ammo.wasm";
 // import { MmdAmmoJSPlugin } from "@/Runtime/Physics/mmdAmmoJSPlugin";
@@ -104,6 +109,9 @@ export class SceneBuilder implements ISceneBuilder {
                 // scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 
                 // const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdAmmoPhysics(scene));
+                // const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
+                // physicsRuntime.register(scene);
+                // const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
                 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
                 mmdRuntime.loggingEnabled = true;
                 mmdRuntime.evaluationType = MmdWasmRuntimeAnimationEvaluationType.Buffered;
@@ -167,16 +175,18 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+        const mmdModel: Nullable<ReturnType<typeof mmdRuntime.createMmdModel>> = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: {
                 worldId: 0,
                 disableOffsetForConstraintFrame: false
-            }
+            },
+            trimMetadata: false
         });
         const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdWasmAnimation);
         mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
         const physicsRuntime = mmdRuntime.physics?.getImpl(MmdWasmPhysicsRuntimeImpl);
+        // const physicsRuntime = undefined! as any;
         if (physicsRuntime !== undefined) {
             const info = new RigidBodyConstructionInfo(mmdRuntime.wasmInstance);
             info.motionType = MotionType.Static;
@@ -184,6 +194,29 @@ export class SceneBuilder implements ISceneBuilder {
             const groundBody = new RigidBody(physicsRuntime, info);
             physicsRuntime.addRigidBodyToGlobal(groundBody);
         }
+
+        // AttachToBone;
+        // directionalLight;
+        // document.onkeydown = (event: KeyboardEvent): void => {
+        //     if (event.key === "a") {
+        //         if (mmdModel) {
+        //             mmdModel.morph.resetMorphWeights();
+        //             mmdModel.morph.update();
+        //             mmdRuntime.destroyMmdModel(mmdModel);
+        //             mmdModel = null;
+        //         } else {
+        //             mmdModel = mmdRuntime.createMmdModel(modelMesh, {
+        //                 buildPhysics: {
+        //                     worldId: 0,
+        //                     disableOffsetForConstraintFrame: false
+        //                 },
+        //                 trimMetadata: false
+        //             });
+        //             const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdWasmAnimation);
+        //             mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
+        //         }
+        //     }
+        // };
 
         AttachToBone(scene, mmdModel, {
             directionalLightPosition: directionalLight.position,
