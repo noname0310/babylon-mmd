@@ -15,7 +15,7 @@ import type { IMmdLinkedBoneContainer } from "../IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh } from "../mmdMesh";
 import { MmdMesh } from "../mmdMesh";
 import type { IMmdModelCreationOptions } from "../mmdRuntime";
-import { MmdStandardMaterialProxy } from "../mmdStandardMaterialProxy";
+import { MmdRuntimeShared } from "../mmdRuntimeShared";
 import type { IMmdPhysics } from "../Physics/IMmdPhysics";
 import type { MmdWasmRuntimeModelAnimation } from "./Animation/mmdWasmRuntimeModelAnimation";
 import { WasmSpinlock } from "./Misc/wasmSpinlock";
@@ -346,7 +346,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
-            options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
+            options.materialProxyConstructor = MmdRuntimeShared.MaterialProxyConstructor;
         }
         if (options.buildPhysics === undefined) {
             options.buildPhysics = true;

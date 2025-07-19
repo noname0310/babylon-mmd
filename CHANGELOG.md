@@ -18,6 +18,9 @@
 
 - remove `NullMaterialProxy`
 
+- change default value of `IMmdModelCreationOptions.materialProxyConstructor` to null
+  - you must pass `MmdStandardMaterialProxy` or `StandardMaterialProxy` to `IMmdModelCreationOptions.materialProxyConstructor` to use material morphing features
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported
