@@ -347,6 +347,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     ): MmdWasmModel {
         if (options.materialProxyConstructor === undefined) {
             options.materialProxyConstructor = MmdRuntimeShared.MaterialProxyConstructor;
+            if (options.materialProxyConstructor === null) {
+                this.log("Material proxy constructor is null. Material morphing features will be disabled for this model. Please provide a valid materialProxyConstructor in IMmdModelCreationOptions if you require material morphing support.");
+            }
         }
         if (options.buildPhysics === undefined) {
             options.buildPhysics = true;
