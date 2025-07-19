@@ -7,6 +7,7 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import "@/Runtime/mmdRuntimeShared.default";
 // for serialization
 import "@/Loader/mmdPluginMaterial";
 import "@/Loader/mmdStandardMaterial";
@@ -167,5 +168,6 @@ export { MmdModel } from "@/Runtime/mmdModel";
 export { MmdMorphController } from "@/Runtime/mmdMorphController";
 export { IReadonlyRuntimeMorph, IRuntimeMaterialMorphElement, MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";
 export { IMmdModelCreationOptions, IMmdModelPhysicsCreationOptions, MmdRuntime } from "@/Runtime/mmdRuntime";
+export { MmdRuntimeShared } from "@/Runtime/mmdRuntimeShared";
 export { MmdStandardMaterialProxy } from "@/Runtime/mmdStandardMaterialProxy";
 export { StandardMaterialProxy } from "@/Runtime/standardMaterialProxy";

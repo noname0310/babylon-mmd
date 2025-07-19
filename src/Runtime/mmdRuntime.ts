@@ -14,7 +14,7 @@ import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
 import { MmdModel } from "./mmdModel";
-import { MmdStandardMaterialProxy } from "./mmdStandardMaterialProxy";
+import { MmdRuntimeShared } from "./mmdRuntimeShared";
 import type { IMmdPhysics } from "./Physics/IMmdPhysics";
 
 /**
@@ -64,7 +64,7 @@ export interface IMmdModelPhysicsCreationOptions {
  */
 export interface IMmdModelCreationOptions<TMaterial extends Material = Material> {
     /**
-     * Material proxy constructor is required if you other than `MmdStandardMaterial` (default: `MmdStandardMaterialProxy`)
+     * Material proxy constructor is required if you want to use material morphing (default: null)
      */
     materialProxyConstructor?: Nullable<IMmdMaterialProxyConstructor<TMaterial>>;
 
@@ -256,7 +256,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         options: IMmdModelCreationOptions<TMaterial> = {}
     ): MmdModel {
         if (options.materialProxyConstructor === undefined) {
-            options.materialProxyConstructor = MmdStandardMaterialProxy as unknown as IMmdMaterialProxyConstructor<Material>;
+            options.materialProxyConstructor = MmdRuntimeShared.MaterialProxyConstructor;
         }
         if (options.buildPhysics === undefined) {
             options.buildPhysics = true;

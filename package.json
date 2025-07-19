@@ -90,6 +90,7 @@
         "**/mmdRuntimeCameraAnimationContainer.*",
         "**/mmdRuntimeModelAnimation.*",
         "**/mmdRuntimeModelAnimationContainer.*",
+        "**/mmdRuntimeShared.default.*",
         "**/mmdWasmRuntimeModelAnimation.*",
         "**/mmdPluginMaterial.*",
         "**/mmdStandardMaterial.*",
