@@ -103,8 +103,8 @@ export class SceneBuilder implements ISceneBuilder {
         const mmdModel = mmdRuntime.createMmdModel(modelMesh, {
             buildPhysics: true
         });
-        mmdModel.addAnimation(mmdAnimation);
-        mmdModel.setAnimation("motion");
+        const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(mmdAnimation);
+        mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
         mmdModel.currentAnimation!.animate(0);
         mmdRuntime.initializeMmdModelPhysics(mmdModel);
 

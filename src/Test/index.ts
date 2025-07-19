@@ -6,7 +6,7 @@ import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
 import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
 
 import { BaseRuntime } from "./baseRuntime";
-import { SceneBuilder } from "./Scene/physicsTestScene";
+import { SceneBuilder } from "./Scene/wasmPhysicsTestScene";
 
 const Canvas = document.createElement("canvas");
 Canvas.style.width = "100%";

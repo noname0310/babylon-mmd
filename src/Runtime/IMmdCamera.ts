@@ -72,9 +72,9 @@ export interface IMmdCamera extends IMmdRuntimeAnimatable {
      * If handle is null, the current animation will be cleared
      *
      * @param handle The handle of the animation to set as current
-     * @returns True if the animation was set, false if it was not found
+     * @throws {Error} if the animation with the handle is not found
      */
-    setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): boolean;
+    setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): void;
 
     /**
      * Get the runtime animation map of the camera

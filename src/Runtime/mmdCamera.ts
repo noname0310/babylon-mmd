@@ -122,9 +122,9 @@ export class MmdCamera extends Camera implements IMmdCamera {
      * If handle is null, the current animation will be cleared
      *
      * @param handle The handle of the animation to set as current
-     * @returns True if the animation was set, false if it was not found
+     * @throws {Error} if the animation with the handle is not found
      */
-    public setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): boolean {
+    public setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>): void {
         if (handle === null) {
             if (this._currentAnimation !== null) {
                 const endFrame = this._currentAnimation.animation.endFrame;
@@ -133,7 +133,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
                     this.onAnimationDurationChangedObservable.notifyObservers(0);
                 }
             }
-            return true;
+            return;
         }
 
         const animation = this._animationHandleMap.get(handle);
@@ -146,7 +146,6 @@ export class MmdCamera extends Camera implements IMmdCamera {
         if (oldAnimationEndFrame !== animation.animation.endFrame) {
             this.onAnimationDurationChangedObservable.notifyObservers(animation.animation.endFrame);
         }
-        return true;
     }
 
     /**

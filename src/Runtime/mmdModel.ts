@@ -25,6 +25,8 @@ import type { IMmdLinkedBoneContainer, IMmdRuntimeLinkedBone } from "./IMmdRunti
 import type { MmdSkinnedMesh, RuntimeMmdMesh } from "./mmdMesh";
 import { MmdMorphController } from "./mmdMorphController";
 import type { IMmdModelPhysicsCreationOptions } from "./mmdRuntime";
+import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
+import { CreateMmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 import { MmdRuntimeBone } from "./mmdRuntimeBone";
 import type { IMmdPhysics, IMmdPhysicsModel } from "./Physics/IMmdPhysics";
 
@@ -111,7 +113,7 @@ export class MmdModel implements IMmdModel {
      * Value is 30fps frame time duration of the animation
      */
     public readonly onAnimationDurationChangedObservable: Observable<number>;
-    private readonly _animations: RuntimeModelAnimation[];
+    private readonly _animationHandleMap: Map<MmdRuntimeAnimationHandle, RuntimeModelAnimation>;
 
     private _currentAnimation: Nullable<RuntimeModelAnimation>;
     private _needStateReset: boolean;
@@ -208,7 +210,7 @@ export class MmdModel implements IMmdModel {
         }
 
         this.onAnimationDurationChangedObservable = new Observable<number>();
-        this._animations = [];
+        this._animationHandleMap = new Map();
 
         this._currentAnimation = null;
         this._needStateReset = false;
@@ -230,11 +232,10 @@ export class MmdModel implements IMmdModel {
         this._physicsModel?.dispose();
         this.onAnimationDurationChangedObservable.clear();
 
-        const animations = this._animations;
-        for (let i = 0; i < animations.length; ++i) {
-            (animations[i] as IMmdRuntimeModelAnimation).dispose?.();
+        for (const animation of this._animationHandleMap.values()) {
+            (animation as IMmdRuntimeModelAnimation).dispose?.();
         }
-        this._animations.length = 0;
+        this._animationHandleMap.clear();
 
         (this.mesh as any).metadata = null;
     }
@@ -249,20 +250,15 @@ export class MmdModel implements IMmdModel {
     }
 
     /**
-     * Add an animation to this model
-     *
-     * If the animation is already added, it will be replaced
-     *
-     * updateMorphTarget is used only when the current animation is overwritten by this method
+     * Bind the animation to this model and return a handle to the runtime animation
      * @param animation MMD animation or MMD model animation group to add
      * @param retargetingMap Animation bone name to model bone name map
-     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
+     * @returns A handle to the runtime animation
      */
-    public addAnimation(
+    public createRuntimeAnimation(
         animation: IMmdBindableModelAnimation,
-        retargetingMap?: { [key: string]: string },
-        updateMorphTarget = true
-    ): void {
+        retargetingMap?: { [key: string]: string }
+    ): MmdRuntimeAnimationHandle {
         let runtimeAnimation: RuntimeModelAnimation;
         if ((animation as IMmdBindableModelAnimation).createRuntimeModelAnimation !== undefined) {
             runtimeAnimation = animation.createRuntimeModelAnimation(this, retargetingMap, this._logger);
@@ -270,33 +266,19 @@ export class MmdModel implements IMmdModel {
             throw new Error("animation is not MmdAnimation or MmdModelAnimationContainer or MmdCompositeAnimation. are you missing import \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation\" or \"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer\" or \"babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation\"?");
         }
 
-        const index = this._animations.findIndex(a => a.animation.name === animation.name);
-        if (index !== -1) {
-            const oldAnimation = this._animations[index];
-            this._animations[index] = runtimeAnimation;
-            if (this._currentAnimation === oldAnimation) {
-                this._currentAnimation = runtimeAnimation;
-                this._resetPose();
-                this._needStateReset = true;
-                runtimeAnimation.induceMaterialRecompile(updateMorphTarget, this._logger);
-                if (oldAnimation.animation.endFrame !== runtimeAnimation.animation.endFrame) {
-                    this.onAnimationDurationChangedObservable.notifyObservers(runtimeAnimation.animation.endFrame);
-                }
-            }
-        } else {
-            this._animations.push(runtimeAnimation);
-        }
+        const handle = CreateMmdRuntimeAnimationHandle();
+        this._animationHandleMap.set(handle, runtimeAnimation);
+        return handle;
     }
 
     /**
-     * Remove an animation from this model
-     *
-     * If index is out of range, do nothing
-     * @param index The index of the animation to remove
+     * Destroy a runtime animation by its handle
+     * @param handle The handle of the runtime animation to destroy
+     * @returns True if the animation was destroyed, false if it was not found
      */
-    public removeAnimation(index: number): void {
-        const animation = this._animations[index];
-        if (animation === undefined) return;
+    public destroyRuntimeAnimation(handle: MmdRuntimeAnimationHandle): boolean {
+        const animation = this._animationHandleMap.get(handle);
+        if (animation === undefined) return false;
 
         if (this._currentAnimation === animation) {
             this._currentAnimation = null;
@@ -306,18 +288,21 @@ export class MmdModel implements IMmdModel {
             }
         }
 
-        this._animations.splice(index, 1);
+        this._animationHandleMap.delete(handle);
         (animation as IMmdRuntimeModelAnimation).dispose?.();
+        return true;
     }
 
     /**
      * Set the current animation of this model
-     * @param name The name of the animation to set
+     *
+     * If handle is null, the current animation will be cleared
+     * @param handle The handle of the animation to set as current
      * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
-     * @throws {Error} if the animation is not found
+     * @throws {Error} if the animation with the handle is not found
      */
-    public setAnimation(name: Nullable<string>, updateMorphTarget = true): void {
-        if (name === null) {
+    public setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>, updateMorphTarget = true): void {
+        if (handle === null) {
             if (this._currentAnimation !== null) {
                 const endFrame = this._currentAnimation.animation.endFrame;
                 this._currentAnimation = null;
@@ -329,9 +314,9 @@ export class MmdModel implements IMmdModel {
             return;
         }
 
-        const index = this._animations.findIndex(a => a.animation.name === name);
-        if (index === -1) {
-            throw new Error(`Animation '${name}' is not found.`);
+        const animation = this._animationHandleMap.get(handle);
+        if (animation === undefined) {
+            throw new Error(`Animation with handle ${handle} is not found.`);
         }
 
         if (this._currentAnimation !== null) {
@@ -339,7 +324,7 @@ export class MmdModel implements IMmdModel {
             this._needStateReset = true;
         }
         const oldAnimationEndFrame = this._currentAnimation?.animation.endFrame ?? 0;
-        const animation = this._currentAnimation = this._animations[index];
+        this._currentAnimation = animation;
         animation.induceMaterialRecompile(updateMorphTarget, this._logger);
         if (oldAnimationEndFrame !== animation.animation.endFrame) {
             this.onAnimationDurationChangedObservable.notifyObservers(animation.animation.endFrame);
@@ -347,10 +332,10 @@ export class MmdModel implements IMmdModel {
     }
 
     /**
-     * Get the animations of this model
+     * Get the runtime animation map of this model
      */
-    public get runtimeAnimations(): readonly RuntimeModelAnimation[] {
-        return this._animations;
+    public get runtimeAnimations(): ReadonlyMap<MmdRuntimeAnimationHandle, RuntimeModelAnimation> {
+        return this._animationHandleMap;
     }
 
     /**

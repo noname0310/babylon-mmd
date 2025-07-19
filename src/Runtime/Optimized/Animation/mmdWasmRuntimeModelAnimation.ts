@@ -499,6 +499,7 @@ declare module "./mmdWasmAnimation" {
         _runtimeModelAnimations: MmdWasmRuntimeModelAnimation[];
 
         /**
+         * @internal
          * Create wasm runtime model animation
          * @param model Bind target
          * @param onDispose Callback when this instance is disposed
@@ -516,6 +517,7 @@ declare module "./mmdWasmAnimation" {
 }
 
 /**
+ * @internal
  * Create runtime model animation
  * @param model Bind target
  * @param onDispose Callback when this instance is disposed
