@@ -1,28 +1,13 @@
 # babylon-mmd
 
-mmd loader and runtime for Babylon.js
+Babylon.js loader and runtime for MikuMikuDance (MMD) models and animations. It supports PMX/PMD model formats, VMD/VPD animation formats, and provides a runtime for physics, IK, morphs, and more.
 
-## Screenshots
+![screenshot](/docs/static/img/fig4.png)
 
-https://github.com/noname0310/babylon-mmd/assets/48761044/a4f046b7-3041-4c58-ac09-a3456d45c6e8
+### [Playground Demo](https://www.babylonjs-playground.com/#C46RTJ)
 
-Music: [ピチカートドロップス](https://youtu.be/eYKAwm-sZ-o)
-
-Model: [YYB Piano dress Miku](https://www.deviantart.com/mamiya-mmd/art/YYB-Piano-dress-Miku-and-Rin-Models-Download-831030256)
-
-Stage: [ガラス片ドーム](http://nebusokummd.blog.shinobi.jp/)
-
-Motion: https://www.nicovideo.jp/watch/sm31508557
-
-Camera: https://www.nicovideo.jp/watch/sm36273873
-
-![screenshot2](./docs/static/img/fig2.png)
-
-### [JavaScript Runtime Demo (stable)](https://playground.babylonjs.com/#028YR6#81)
-
-### [Web Assembly Runtime Demo (experimental)](https://playground.babylonjs.com/#MY96ZK#14)
-
-### [Web Assembly Runtime With Integrated Physics Demo (experimental)](https://www.babylonjs-playground.com/#8CYL1V#10) - most advanced method
+<details>
+<summary>Credits</summary>
 
 Music: [メランコリ・ナイト](https://youtu.be/y__uZETTuL8)
 
@@ -30,14 +15,33 @@ Model: [YYB Hatsune Miku_10th](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsu
 
 Motion / Camera: https://www.nicovideo.jp/watch/sm41164308
 
-## How to use
+</details>
 
-First, install the package.
-```bash
-npm add @babylonjs/core @babylonjs/havok babylon-mmd
-```
+https://github.com/noname0310/babylon-mmd/assets/48761044/a4f046b7-3041-4c58-ac09-a3456d45c6e8
 
-Here is the code to build a scene with a simple MMD model and play a VMD animation.
+<details>
+<summary>Credits</summary>
+
+Music: [ピチカートドロップス](https://youtu.be/eYKAwm-sZ-o)
+
+Model: [YYB Piano dress Miku](https://www.deviantart.com/mamiya-mmd/art/YYB-Piano-dress-Miku-and-Rin-Models-Download-831030256)  
+
+Stage: [ガラス片ドーム](http://nebusokummd.blog.shinobi.jp/)  
+
+Motion: https://www.nicovideo.jp/watch/sm31508557  
+
+Camera: https://www.nicovideo.jp/watch/sm36273873  
+
+</details>
+
+## [Documentation](https://noname0310.github.io/babylon-mmd/)
+
+Please refer to the documentation for detailed instructions on how to use it.
+
+## Usage
+
+Here is how to load and animate an MMD model using babylon-mmd. For more details, please refer to the [Documentation](https://noname0310.github.io/babylon-mmd/).
+
 ```typescript
 // side effects that register the loader
 import "babylon-mmd/esm/Loader/pmxLoader";
@@ -65,13 +69,12 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     
     CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     
-    // Use havok physics engine for rigid body/joint simulation
-    const havokInstance = await HavokPhysics();
-    const havokPlugin = new HavokPlugin(true, havokInstance);
-    scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), havokPlugin);
+    const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR());
+    const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
+    physicsRuntime.setGravity(new Vector3(0, -98, 0));
     
     // MMD runtime for solving morph, append transform, IK, animation, physics
-    const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
+    const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
     mmdRuntime.register(scene);
     
     // For synced audio playback
@@ -87,77 +90,25 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     
     const vmdLoader = new VmdLoader(scene);
 
-    mmdRuntime.setCamera(camera);
-    const cameraMotion = await vmdLoader.loadAsync("camera_motion_1", "your_camera_motion_path.vmd");
-    camera.addAnimation(cameraMotion);
-    camera.setAnimation("camera_motion_1");
+    const cameraAnimation = await vmdLoader.loadAsync("camera_motion", "your_camera_motion_path.vmd");
+    const cameraRuntimeAnimationHandle = camera.createRuntimeAnimation(cameraAnimation);
+    camera.setRuntimeAnimation(cameraRuntimeAnimationHandle);
+    mmdRuntime.addAnimatable(camera);
 
-    const model = await loadAssetContainerAsync("path/to/your_file.pmx", scene)
-        .then(result => {
-            result.addAllToScene();
-            return result.meshes[0] as MmdMesh;
-        });
-    const mmdModel = mmdRuntime.createMmdModel(model);
-    const modelMotion = await vmdLoader.loadAsync("model_motion_1", "your_model_motion_path.vmd");
-    mmdModel.addAnimation(modelMotion);
-    mmdModel.setAnimation("model_motion_1");
+    const assetContainer = await loadAssetContainerAsync("path/to/your_file.pmx", scene);
+    assetContainer.addAllToScene();
+    const mmdMesh = assetContainer.meshes[0] as MmdMesh;
+
+    const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
+        materialProxyConstructor: MmdStandardMaterialProxy
+    });
+    const modelMotion = await vmdLoader.loadAsync("model_motion", "your_model_motion_path.vmd");
+    const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(modelMotion);
+    mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 
     return scene;
 }
 ```
-
-If your model uses textures such as TGA, don't forget to also import the side effects for TGA textures.
-
-```typescript
-// side effects for TGA textures
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
-```
-
-## Use optimized custom format
-
-The optimized custom formats, BPMX (BabylonPMX) and BVMD (BabylonVMD), handle most of the validation and parsing process required for loading at the conversion stage.
-
-As a result, you can provide users with an **incredibly fast loading experience**.
-
-Furthermore, it is also useful when you want to protect the original model/motion files since they cannot be loaded in MMD.
-
-### PMX to BPMX
-
-To perform pmx conversion, please visit below link and load the desired models directory. Then select the model you want to convert and click on "convert".
-
-### [pmx converter](https://noname0310.github.io/babylon-mmd/pmx_converter)
-
-then you can load the converted files like below.
-
-```typescript
-// side effects that register the loader
-import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
-
-const model = await loadAssetContainerAsync("path/to/your_file.bpmx", scene)
-    .then(result => {
-        result.addAllToScene();
-        return result.meshes[0] as MmdMesh;
-    });
-```
-
-### VMD to BVMD
-
-To perform vmd conversion, please visit below link and load the desired motions. Then, simply click on "convert". By default, it is possible to merge one camera motion and one model motion together.
-
-### [vmd converter](https://noname0310.github.io/babylon-mmd/vmd_converter)
-
-then you can load the converted files like below.
-
-```typescript
-const bvmdLoader = new BvmdLoader(scene);
-const motion = await bvmdLoader.loadAsync("motion_1", "your_motion_path.bvmd");
-```
-
-## Documentation
-
-Please refer to the documentation for more detailed instructions on how to use it.
-
-- [Documentation](https://noname0310.github.io/babylon-mmd/)
 
 ## Implementation status
 
