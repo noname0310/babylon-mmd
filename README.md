@@ -17,7 +17,7 @@ Motion / Camera: https://www.nicovideo.jp/watch/sm41164308
 
 </details>
 
-https://github.com/noname0310/babylon-mmd/assets/48761044/a4f046b7-3041-4c58-ac09-a3456d45c6e8
+https://github.com/user-attachments/assets/64207280-560a-49b5-ba50-bba7959dc79a
 
 <details>
 <summary>Credits</summary>
