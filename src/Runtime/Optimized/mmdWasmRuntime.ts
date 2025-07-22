@@ -542,14 +542,23 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             return;
         }
 
-        if (!this._animationPaused) {
-            const audioFrameTimeDuration = audioPlayer.duration * 30;
-            if (this._currentFrameTime < audioFrameTimeDuration) {
-                audioPlayer.currentTime = this._currentFrameTime / 30;
-                await audioPlayer.play();
-                if (this._setAudioPlayerLastValue !== audioPlayer) {
-                    audioPlayer.pause();
-                    return;
+        // sync audio player time with current frame time
+        const audioFrameTimeDuration = audioPlayer.duration * 30;
+        if (this._currentFrameTime < audioFrameTimeDuration) {
+            audioPlayer.currentTime = this._currentFrameTime / 30;
+        }
+        // sync audio player pause state with animation pause state
+        if (this._animationPaused !== audioPlayer.paused) {
+            if (this._animationPaused) {
+                audioPlayer.pause();
+            } else {
+                if (audioFrameTimeDuration <= this._currentFrameTime) {
+                    await audioPlayer.play();
+                    // for handle race condition
+                    if (this._setAudioPlayerLastValue !== audioPlayer) {
+                        audioPlayer.pause();
+                        return;
+                    }
                 }
             }
         }
