@@ -1,6 +1,6 @@
 {
     "label": "0.X Legacy Documentation",
-    "position": 0,
+    "position": 2,
     "link": {
         "type": "generated-index",
         "description": "This section contains legacy documentation for versions 0.x of babylon-mmd, providing insights into older features and functionalities that may not be present in the latest versions."

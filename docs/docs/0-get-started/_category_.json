@@ -1,8 +1,0 @@
-{
-    "label": "Get Started",
-    "position": 0,
-    "link": {
-        "type": "generated-index",
-        "description": "This section provides a quick start guide for using babylon-mmd."
-    }
-}
