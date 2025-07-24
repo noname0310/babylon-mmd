@@ -36,20 +36,20 @@ These sections provide information needed to understand the asset structure and 
 
 These sections explain how to load MMD models and animation data.
 
-- **[MMD Model Loader (PmxLoader, PmdLoader)](/docs/reference/loader/mmd-model-loader/pmxloader-pmdloader)** - Describes the components used to load MMD model files (PMX, PMD).
+- **[MMD Model Loader (PmxLoader, PmdLoader)](/docs/reference/loader/mmd-model-loader)** - Describes the components used to load MMD model files (PMX, PMD).
   - **[Fix BMP Texture Loader](/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader)** - Explains the component for correctly loading MMD models with BMP textures.
   - **[SDEF Support](/docs/reference/loader/mmd-model-loader/sdef-support)** - Explains the component for correctly loading MMD models with Spherical Deformation (SDEF).
   - **[MMD StandardMaterial](/docs/reference/loader/mmd-model-loader/mmd-standard-material)** - Describes the standard material used for MMD models.
   - **[Material Builder](/docs/reference/loader/mmd-model-loader/material-builder)** - Explains how to assign materials to MMD models and discusses how to reproduce MMD's rendering methods.
-    - **[Build Your Own MMD Material Builder](/docs/reference/loader/mmd-model-loader/build-your-own-mmd-material-builder)** - Explains how to customize material assignment for MMD models.
+    - **[Build Your Own MMD Material Builder](/docs/reference/loader/mmd-model-loader/material-builder/build-your-own-mmd-material-builder)** - Explains how to customize material assignment for MMD models.
   - **[The Babylon PMX format](/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format)** - Describes the BPMX file format, a variant of PMX files provided by babylon-mmd.
-    - **[Convert PMX to BPMX format](/docs/reference/loader/mmd-model-loader/convert-pmx-to-bpmx-format)** - Explains how to convert PMX files to BPMX format.
-    - **[BPMX Loader](/docs/reference/loader/mmd-model-loader/bpmx-loader)** - Explains how to load BPMX files.
+    - **[Convert PMX to BPMX format](/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format)** - Explains how to convert PMX files to BPMX format.
+    - **[BPMX Loader](/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/bpmx-loader)** - Explains how to load BPMX files.
 
 - **[Mmd Animation Loader (VmdLoader, VpdLoader)](/docs/reference/loader/mmd-animation-loader)** - Describes the components used to load MMD animation files (VMD, VPD).
   - **[The Babylon VMD format](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format)** - Describes the BVMD file format, a variant of VMD files provided by babylon-mmd.
-    - **[Convert VMD to BVMD format](/docs/reference/loader/mmd-animation-loader/convert-vmd-to-bvmd-format)** - Explains how to convert VMD files to BVMD format.
-    - **[BVMD Loader](/docs/reference/loader/mmd-animation-loader/bvmd-loader)** - Explains how to load BVMD files.
+    - **[Convert VMD to BVMD format](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/convert-vmd-to-bvmd-format)** - Explains how to convert VMD files to BVMD format.
+    - **[BVMD Loader](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/bvmd-loader)** - Explains how to load BVMD files.
 
 ## **[Runtime](/docs/reference/runtime)**
 
