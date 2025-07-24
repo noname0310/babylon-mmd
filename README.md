@@ -1,5 +1,7 @@
 # babylon-mmd
 
+<p align="center"> <img src="./docs/static/img/logo-typo.png" alt="babylon-mmd logo" width="627"/> </p>
+
 Babylon.js loader and runtime for MikuMikuDance (MMD) models and animations. It supports PMX/PMD model formats, VMD/VPD animation formats, and provides a runtime for physics, IK, morphs, and more.
 
 ![screenshot](/docs/static/img/fig4.png)

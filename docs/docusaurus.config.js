@@ -55,13 +55,14 @@ const config = {
     themeConfig:
         /** @type {import("@docusaurus/preset-classic").ThemeConfig} */
         ({
+            image: "img/logo-typo.png",
             // image: "img/docusaurus-social-card.jpg",
             navbar: {
                 title: "babylon-mmd",
-                // logo: {
-                //     alt: "babylon-mmd Logo",
-                //     src: "img/logo.svg",
-                // },
+                logo: {
+                    alt: "babylon-mmd Logo",
+                    src: "img/logo.svg",
+                },
                 items: [
                     {
                         type: "docSidebar",
