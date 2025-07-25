@@ -74,13 +74,14 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR());
     const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
     physicsRuntime.setGravity(new Vector3(0, -98, 0));
+    physicsRuntime.register(scene);
     
     // MMD runtime for solving morph, append transform, IK, animation, physics
     const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
     mmdRuntime.register(scene);
     
     // For synced audio playback
-    const audioPlayer = new StreamAudioPlayer();
+    const audioPlayer = new StreamAudioPlayer(scene);
     audioPlayer.source = "your_audio_path.mp3";
     mmdRuntime.setAudioPlayer(audioPlayer);
     
@@ -97,7 +98,7 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     camera.setRuntimeAnimation(cameraRuntimeAnimationHandle);
     mmdRuntime.addAnimatable(camera);
 
-    const assetContainer = await loadAssetContainerAsync("path/to/your_file.pmx", scene);
+    const assetContainer = await LoadAssetContainerAsync("path/to/your_file.pmx", scene);
     assetContainer.addAllToScene();
     const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 
