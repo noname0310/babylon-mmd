@@ -1,0 +1,90 @@
+---
+sidebar_position: 1
+sidebar_label: Introduction to PMX and PMD
+---
+
+# Introduction to PMX and PMD
+
+This section explains what information PMX and PMD files consist of, how MMD interprets that information,
+and how babylon-mmd implements MMD's behavior.
+
+:::note
+In this document, content about how babylon-mmd implements MMD's behavior is distinguished with this block.
+:::
+
+import TOCInline from '@theme/TOCInline';
+
+<TOCInline toc={toc} />
+
+## PMX/PMD File Overview
+
+PMX and PMD files are 3D model file formats used in Miku Miku Dance (MMD).
+
+Basically, PMX/PMD files are single binary files that contain all data except texture files.
+
+Since these file formats have no documented specifications, only information known through reverse engineering analysis exists, so there may be minor errors.
+
+Also, since there are no official names for each piece of information,
+this document arbitrarily assigns common names to each piece of information for explanation.
+
+### Differences from Modern 3D Asset Formats
+
+Modern widely-used 3D asset formats (e.g. glTF, FBX, etc.) have structures designed to represent
+Scene Graphs that include 3D models.
+In contrast, PMX and PMD files basically contain only information for representing a single geometry-based 3D model,
+and do not include information for representing elements other than 3D models such as cameras, lighting, animations, and Scene Graphs.
+
+### PMX Files
+
+PMX is an improved version of PMD that provides better structure and more features than PMD.
+
+Currently known PMX file versions are 2.0 and 2.1.
+
+PMX 2.1 supports various features such as Soft Body Physics, Vertex Color, PhysicsMorph, etc.,
+but only PMX Editor supports this specification, and since MMD also does not support version 2.1,
+version 2.1 is not practically used.
+
+:::note
+babylon-mmd's `PmxParser` supports parsing PMX 2.1 files, but `PmxLoader` does not load them.
+babylon-mmd supports most of the PMX 2.0 specification, and unprocessed data is preserved during the model loading process.
+:::
+
+### PMD Files
+
+PMD is the previous version of PMX, with simpler structure and limited features compared to PMX.
+
+PMX files are not backward compatible with PMD files, and it is presumed that in MMD, models loaded as PMD files are processed with separate logic from PMX files.
+
+:::note
+babylon-mmd performs the task of converting PMD files to PMX format simultaneously while `PmdParser` parses PMD files.
+Therefore, there is no separate logic for processing PMD models, and all MMD models are processed with common logic.
+:::
+
+## PMX/PMD File Structure and Parsing Method
+
+PMX/PMD files are Little Endian binary files containing various data types.
+
+These files are structured in a typical Length-Prefixed format. For example, when representing Skeleton data,
+the number of Bones is indicated first, followed by sequential listing of each Bone's information.
+The size of each data can be fixed or variable length, and the order of data is always the same.
+
+Data alignment is not enforced, and each field is stored consecutively in the binary file.
+
+## PMX/PMD File Components
+
+PMX/PMD files consist of the following main components:
+
+### Header
+
+The header of PMX/PMD files includes the file version, model name, comments, etc.
+This information serves as file metadata, used for identifying and managing models.
+
+In the case of PMX files, English fields such as english model name and english comment exist, but are generally not well utilized.
+
+### Geometry
+### Texture
+### Material
+### Skeleton
+### Morph
+### DisplayFrame
+### Physics
