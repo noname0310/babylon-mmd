@@ -82,7 +82,7 @@ In the case of PMX files, English fields such as english model name and english 
 The geometry of PMX/PMD files is the core part of 3D model data, and **only one geometry data exists per file**,
 mainly containing information held by vertices.
 
-The attributes included in vertices are as follows:
+Looking at the key vertex attributes in PMX structure, the main components are:
 
 - **Position**: The 3D coordinates of the vertex in the model's local space.
 - **Normal**: The normal vector of the vertex, used for lighting calculations.
@@ -151,7 +151,7 @@ This can be enabled using the `RegisterDxBmpTextureLoader` function.
 ## Material
 
 Materials define the surface properties of models in PMX/PMD files.
-Multiple materials can exist in a single PMX/PMD file, and each material includes the following properties:
+Multiple materials can exist in a single PMX/PMD file, and based on the PMX format, each material includes the following properties:
 
 - **Diffuse Color**: The base color of the material.
 - **Specular Color**: The color of the specular highlight.
