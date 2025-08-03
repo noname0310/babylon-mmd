@@ -18,7 +18,7 @@ import TOCInline from '@theme/TOCInline';
 
 ## PMX/PMD File Overview
 
-PMX and PMD files are 3D model file formats used in Miku Miku Dance (MMD).
+Polygon Model eXtended (PMX) and Polygon Model Data (PMD) files are 3D model file formats used in Miku Miku Dance (MMD).
 
 Basically, PMX/PMD files are single binary files that contain all data except texture files.
 
@@ -31,7 +31,7 @@ this document arbitrarily assigns common names to each piece of information for 
 
 Modern widely-used 3D asset formats (e.g. glTF, FBX, etc.) have structures designed to represent
 Scene Graphs that include 3D models.
-In contrast, PMX and PMD files basically contain only information for representing a single geometry-based 3D model,
+In contrast, **PMX and PMD files basically contain only information for representing a single geometry-based 3D model**,
 and do not include information for representing elements other than 3D models such as cameras, lighting, animations, and Scene Graphs.
 
 ### PMX Files
@@ -62,9 +62,9 @@ Therefore, there is no separate logic for processing PMD models, and all MMD mod
 
 ## PMX/PMD File Structure and Parsing Method
 
-PMX/PMD files are Little Endian binary files containing various data types.
+PMX/PMD files are Little Endian **binary files** containing various data types.
 
-These files are structured in a typical Length-Prefixed format. For example, when representing Skeleton data,
+These files are **structured in a typical Length-Prefixed format**. For example, when representing Skeleton data,
 the number of Bones is indicated first, followed by sequential listing of each Bone's information.
 The size of each data can be fixed or variable length, and the order of data is always the same.
 
@@ -76,14 +76,140 @@ PMX/PMD files consist of the following main components:
 
 ### Header
 
-The header of PMX/PMD files includes the file version, model name, comments, etc.
+The header of PMX/PMD files includes the **file version, model name, comments**, etc.
 This information serves as file metadata, used for identifying and managing models.
 
 In the case of PMX files, English fields such as english model name and english comment exist, but are generally not well utilized.
 
 ### Geometry
+
+The geometry of PMX/PMD files is the core part of 3D model data, and **only one geometry data exists per file**,
+mainly containing information held by vertices.
+
+The attributes included in vertices are as follows:
+
+- **Position**: The 3D coordinates of the vertex in the model's local space.
+- **Normal**: The normal vector of the vertex, used for lighting calculations.
+- **UV**: The texture coordinates of the vertex, used for mapping textures onto the model.
+- **Additional Vec4**: Additional texture coordinates or vertex color information for advanced texturing techniques. This is not present in PMD models and is not used in most PMX models either.
+- **Bone Weight Type**: The type of bone weight used for skinning (BDEF1, BDEF2, BDEF4, SDEF, QDEF).
+- **Bone Index**: The index of the bone that influences the vertex.
+- **Bone Weight**: The weight of the influence of the bone on the vertex, used for skinning.
+- **Edge Scale**: The scale of the edge, used for rendering edges in the model. 
+
+Additional Vec4 is not commonly used in MMD models.
+This field is often utilized in specifications added in PMX 2.1, and can be used when applying custom shaders using MikuMikuEffect (MME) in MMD.
+
+:::note
+babylon-mmd loads vertex information from MMD models.
+
+As an exception, the Additional Vec4 field is only preserved when the `mmdmodel.preserveSerializationData` option is `true`.
+:::
+:::note
+Since MMD follows DirectX's UV coordinate system while Babylon.js follows OpenGL's UV coordinate system,
+Y Flip is applied to UV coordinates when loading MMD models.
+:::
+
+Not only vertex information but also indices are included. This allows the **geometry to be represented as an indexed mesh**.
+
+:::note
+Since MMD and Babylon.js use different Winding Orders, babylon-mmd reverses the Winding Order of indices when loading MMD models.
+:::
+
 ### Texture
+
+Textures define the images applied to the model's surface in PMX/PMD files.
+Multiple textures can exist in a single PMX/PMD file,
+and textures are stored as strings representing relative paths from the directory containing the .pmx or .pmd file.
+
+For example, in the following file structure:
+
+```
+- model.pmx
+- textures/
+  - texture1.png
+  - texture2.png
+```
+
+In the `model.pmx` file, textures are stored as relative paths like `textures/texture1.png`, `textures/texture2.png`.
+
+Based on my investigations, the texture formats supported by MMD are PNG, JPEG, BMP, TGA.
+
+:::note
+Textures stored as relative paths are handled case-insensitively in the Windows file system.
+
+However, since URLs are case-sensitive in web environments, texture loading may fail when loading models in babylon-mmd.
+
+To solve this, babylon-mmd provides methods to convert MMD models to BPMX or load textures using the browser File API instead of URLs.
+:::
+
+:::note
+For BMP file loaders, due to differences in BMP loader implementations between browsers and MMD,
+the alpha channel may be removed when loading BMP files in browsers.
+
+To solve this, babylon-mmd provides an option to preserve the alpha channel by modifying the header when loading BMP files.
+
+This can be enabled using the `RegisterDxBmpTextureLoader` function.
+:::
+
 ### Material
+
+Materials define the surface properties of models in PMX/PMD files.
+Multiple materials can exist in a single PMX/PMD file, and each material includes the following properties:
+
+- **Diffuse Color**: The base color of the material.
+- **Specular Color**: The color of the specular highlight.
+- **Shininess**: The shininess of the material, affecting the size of the specular highlight.
+- **Ambient Color**: The ambient color of the material, used for ambient lighting.
+- **Edge Color**: The color of the edge of the material, used for rendering edges.
+- **Edge Size**: The size of the edge, used for rendering edges.
+- **Texture**: The index of the texture used by the material.
+- **Sphere Texture**: The index of the sphere texture used by the material.
+- **Toon Texture Index**: The index of the toon 
+- **Flag**: Flags indicating various properties of the material, such as whether it is double-sided or whether it uses edge rendering.
+- **Index Count**: The number of indices used by the material.
+
+#### Index Count and Submesh
+
+PMX/PMD files can have multiple Materials for a single Geometry.
+
+Each material defines a submesh by dividing sections of the Geometry's Indices.
+Specifically, each material defines the number of indices to use from the Indices buffer, and submeshes for the Geometry's Indices are defined according to the order of materials.
+
+For example, if the indices length is 100 and the first and second materials each use 50 indices,\
+the first material uses indices[0] ~ indices[49] and\
+the second material uses indices[50] ~ indices[99].
+
+:::note
+babylon-mmd implements MMD model submeshes using Babylon.js's `MultiMaterial` and `SubMesh`.
+
+However, since this approach has poor compatibility with Babylon.js and may have performance issues, an option to split a single geometry into multiple geometries at load time is also provided.
+This option can be enabled through the `mmdmodel.optimizeSubmeshes` option and is enabled by default.
+:::
+
+#### Rendering Method
+
+MMD materials are rendered in the order listed in PMX/PMD files using Depth Test, Depth Write, and Alpha Blending.
+
+:::note
+babylon-mmd provides the following rendering methods to reproduce MMD's rendering approach while offering better performance or integrating with existing Babylon.js scenes:
+
+- `DepthWriteAlphaBlending`
+  - Uses Depth Test, Depth Write, and Alpha Blending identical to MMD's rendering method, rendering with Draw Order in the order listed in PMX/PMD files.
+- `AlphaEvaluation`
+  - Respects Babylon.js's rendering approach by determining materials that don't need Alpha Blend, rendering some materials as Opaque and others using Alpha Blending. Draw Order is from the closest to the farthest materials from the camera.
+- `DepthWriteAlphaBlendingWithEvaluation` (default)
+  - Combines `DepthWriteAlphaBlending` and `AlphaEvaluation`, using Depth Test, Depth Write, and Alpha Blending with Draw Order in the order listed in PMX/PMD files. Materials that don't need Alpha Blend are rendered as Opaque.
+:::
+
+MMD's shading uses **toon shading based on the Blinn-Phong shading model**.
+
+:::note
+babylon-mmd uses `MmdStandardMaterial`, a modified version of `StandardMaterial`, to reproduce MMD materials.
+
+Additionally, models can be loaded using Babylon.js's `StandardMaterial` or `PBRMaterial`.
+:::
+
 ### Skeleton
 ### Morph
 ### DisplayFrame
