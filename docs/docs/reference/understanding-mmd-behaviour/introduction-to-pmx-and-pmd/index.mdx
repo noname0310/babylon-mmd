@@ -60,7 +60,7 @@ babylon-mmd performs the task of converting PMD files to PMX format simultaneous
 Therefore, there is no separate logic for processing PMD models, and all MMD models are processed with common logic.
 :::
 
-## PMX/PMD File Structure and Parsing Method
+### PMX/PMD File Structure and Parsing Method
 
 PMX/PMD files are Little Endian **binary files** containing various data types.
 
@@ -70,18 +70,14 @@ The size of each data can be fixed or variable length, and the order of data is 
 
 Data alignment is not enforced, and each field is stored consecutively in the binary file.
 
-## PMX/PMD File Components
-
-PMX/PMD files consist of the following main components:
-
-### Header
+## Header
 
 The header of PMX/PMD files includes the **file version, model name, comments**, etc.
 This information serves as file metadata, used for identifying and managing models.
 
 In the case of PMX files, English fields such as english model name and english comment exist, but are generally not well utilized.
 
-### Geometry
+## Geometry
 
 The geometry of PMX/PMD files is the core part of 3D model data, and **only one geometry data exists per file**,
 mainly containing information held by vertices.
@@ -95,7 +91,7 @@ The attributes included in vertices are as follows:
 - **Bone Weight Type**: The type of bone weight used for skinning (BDEF1, BDEF2, BDEF4, SDEF, QDEF).
 - **Bone Index**: The index of the bone that influences the vertex.
 - **Bone Weight**: The weight of the influence of the bone on the vertex, used for skinning.
-- **Edge Scale**: The scale of the edge, used for rendering edges in the model. 
+- **Edge Scale**: The scale of the edge, used for rendering edges in the model.
 
 Additional Vec4 is not commonly used in MMD models.
 This field is often utilized in specifications added in PMX 2.1, and can be used when applying custom shaders using MikuMikuEffect (MME) in MMD.
@@ -116,7 +112,7 @@ Not only vertex information but also indices are included. This allows the **geo
 Since MMD and Babylon.js use different Winding Orders, babylon-mmd reverses the Winding Order of indices when loading MMD models.
 :::
 
-### Texture
+## Texture
 
 Textures define the images applied to the model's surface in PMX/PMD files.
 Multiple textures can exist in a single PMX/PMD file,
@@ -152,7 +148,7 @@ To solve this, babylon-mmd provides an option to preserve the alpha channel by m
 This can be enabled using the `RegisterDxBmpTextureLoader` function.
 :::
 
-### Material
+## Material
 
 Materials define the surface properties of models in PMX/PMD files.
 Multiple materials can exist in a single PMX/PMD file, and each material includes the following properties:
@@ -169,7 +165,7 @@ Multiple materials can exist in a single PMX/PMD file, and each material include
 - **Flag**: Flags indicating various properties of the material, such as whether it is double-sided or whether it uses edge rendering.
 - **Index Count**: The number of indices used by the material.
 
-#### Index Count and Submesh
+### Index Count and Submesh
 
 PMX/PMD files can have multiple Materials for a single Geometry.
 
@@ -187,7 +183,7 @@ However, since this approach has poor compatibility with Babylon.js and may have
 This option can be enabled through the `mmdmodel.optimizeSubmeshes` option and is enabled by default.
 :::
 
-#### Rendering Method
+### Rendering Method
 
 MMD materials are rendered in the order listed in PMX/PMD files using Depth Test, Depth Write, and Alpha Blending.
 
@@ -210,7 +206,7 @@ babylon-mmd uses `MmdStandardMaterial`, a modified version of `StandardMaterial`
 Additionally, models can be loaded using Babylon.js's `StandardMaterial` or `PBRMaterial`.
 :::
 
-### Skeleton
-### Morph
-### DisplayFrame
-### Physics
+## Skeleton
+## Morph
+## DisplayFrame
+## Physics
