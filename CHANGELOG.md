@@ -40,6 +40,8 @@
 
 - fix state invalidation when set audio player which is playing to `MmdRuntime`
 
+- fix `PmxLoader`, `PmdLoader` crash when load model with no meshes
+
 ## 0.68.0 (2025-07-16)
 
 - BPMX format updated to 3.0.0. 2.X files are no longer supported

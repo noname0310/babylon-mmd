@@ -851,10 +851,10 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
                     offset += materialInfo.indexCount;
                 }
-            }
-            const subMeshes = rootMesh.subMeshes;
-            for (let i = 0; i < subMeshes.length; ++i) {
-                referencedMeshList.push([{ mesh: rootMesh, subMeshIndex: i }]);
+                const subMeshes = rootMesh.subMeshes;
+                for (let i = 0; i < subMeshes.length; ++i) {
+                    referencedMeshList.push([{ mesh: rootMesh, subMeshIndex: i }]);
+                }
             }
         }
 
