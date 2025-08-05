@@ -208,6 +208,88 @@ Additionally, models can be loaded using Babylon.js's `StandardMaterial` or `PBR
 
 ## Skeleton
 
+Skeleton is a structure in PMX/PMD files **used to apply bone-based deformation to models**.
+
+This provides functionality similar to Unity's Skinned Mesh and Unreal Engine's Skeletal Mesh.
+
+MMD's skeleton is composed of a hierarchical structure of bones, just like a typical Skinned Mesh skeleton.
+
+MMD skeletons have the following special properties:
+
+### Transform Order
+
+Skeletons with hierarchical structures typically apply transforms sequentially from the top-level bones to the lower-level bones.
+
+However, MMD's skeleton differs in that it **calculates transforms in the order that bones are defined in the file**.
+As an exception, **bones that define a separate Transform Order have a different calculation order**.
+When a bone has a separately defined Transform Order value, that value takes priority in determining the calculation order, followed by the order in which bones are listed in the file.
+
+Generally, **Transform Order is used to ensure that IK bones are calculated last**.
+
+For PMD files, bone information cannot define a separate Transform Order, and IK bones are implicitly assigned the correct Transform Order.
+
+#### When Transform Order and Bone Ordering Don't Match the Actual Hierarchy
+
+MMD calculates the animated positions of bones and then references these results when calculating the next frame.
+This approach creates calculation delays equal to the depth of the incorrect hierarchy, but appears to work reasonably well.
+
+{/* Example image to be added */}
+
+:::note
+Having animation calculations influenced by previous frame results makes animation outcomes unpredictable and can confuse users.
+Therefore, unlike MMD's implementation, babylon-mmd does not reference previous frame calculation results when computing new frames.
+
+*This implementation may be changed if it causes issues in reproducing MMD behavior.*
+
+PMX Editor also follows the same approach as babylon-mmd, not referencing previous frame results when calculating current frame bone animations.
+:::
+
+:::note
+Babylon.js's Skeleton implementation assumes bones are already sorted according to their hierarchy and calculates transforms in bone order.
+
+This calculation method doesn't cause issues when MMD models are controlled by `MmdRuntime` since it's replaced by a completely different algorithm.
+However, when using MMD models without additional runtime, models may display incorrectly.
+
+To solve this, babylon-mmd provides `OiComputeTransformInjector`, which modifies Babylon.js Skeleton's bone transform calculation implementation so models display correctly when not using `MmdRuntime`.
+:::
+
+### Bone Morph
+
+Bone Morph is a **feature that rotates or moves multiple bones simultaneously by predefined specific offsets**.
+
+This feature exists in the PMX specification and is not supported in PMD.
+
+It is primarily used to effectively manipulate body parts like fingers, where many bones need to move together.
+
+This will be covered in detail in the Morph section below.
+
+### Append Transform
+
+Append Transform allows bones that are not in a parent-child relationship to influence each other as if they were hierarchically related.
+
+This feature exists in the PMX specification and is not supported in PMD.
+
+Append Transform is similar to Unity's Transform Constraint component.
+
+In the Semi-Standard Bone Structure explained later, Append Transform is utilized to implement various convenience features that help animators create animations more easily.
+
+### IK
+
+Inverse Kinematics (IK) is a **feature that automatically calculates joint angles by working backwards from a target position**.
+
+In MMD, IK is primarily used to **easily control foot and knee movements**.
+For example, when you specify a foot position, IK automatically calculates the angles of the knee and thigh to create a natural leg pose.
+
+IK consists of **IK Chain** and **IK Target**:
+- **IK Chain**: A series of bones controlled by IK (e.g., thigh → knee → ankle)
+- **IK Target**: A bone representing the target position that IK tries to reach
+
+:::info
+Almost all MMD models have IK applied to their legs.
+
+This allows foot movements to be maintained correctly when applying animations between models of different heights, without requiring separate retargeting.
+:::
+
 ### Standard Bone Structure / Semi-Standard Bone Structure
 
 MMD's skeleton has a standardized bone structure, divided into Standard Bone Structure (標準ボーン構造) and its extended version, Semi-Standard Bone Structure (準標準ボーン構造).
@@ -338,7 +420,7 @@ The Semi-Standard Bone Structure is as follows, and while it is similar to Unity
  */
 ```
 
-## Hip Position and Parent Relationship Differences
+<h2>Hip Position and Parent Relationship Differences</h2>
 
 Generally, humanoid-type skeletons have Hip as the root and have the following structure:
 
@@ -376,7 +458,7 @@ It also provides `HumanoidMmd`, a feature for applying MMD animations to humanoi
 `HumanoidMmd` performs the exception handling for the center bone mentioned above.
 :::
 
-## Shoulder Structure
+<h2>Shoulder Structure</h2>
 
 ```
 - 右肩P: right shoulder parent
@@ -391,7 +473,7 @@ When manipulating the shoulder, these bones rotate the Child bone in the opposit
 
 This is implemented by applying Append Transform to the Child bone and reflecting the Parent bone's rotation value.
 
-## Leg Structure
+<h2>Leg Structure</h2>
 
 ```
 - センター: center
@@ -424,7 +506,6 @@ In Standard Bone Structure, IK is applied to the legs.
 
 右足ＩＫ and 右つま先ＩＫ are used as IK target bones. They represent the foot position and toe position respectively.
 
-
 ```
 - 右足: right leg
     - 右ひざ: right knee
@@ -445,5 +526,85 @@ As a result, while using IK, FK can also be used together when fine adjustments 
 </details>
 
 ## Morph
-## DisplayFrame
+
+Morph is a feature that changes the shape of models, primarily used to control MMD model facial expressions and mouth shapes that are difficult to express with skeletons alone.
+
+This is similar to Unity's Blend Shape and Blender 3D's Shape Key, but has additional functionality.
+
+### Vertex Morph
+
+Vertex Morph is a **feature that changes the model's shape by modifying vertex positions**.
+
+### Bone Morph
+
+Bone Morph is a **feature that rotates or moves multiple bones simultaneously by predefined specific offsets**.
+PMD does not support this specification.
+
+Bone Morph is primarily used for efficiently controlling body parts where many bones need to move together, such as fingers.
+
+### UV Morph
+
+UV Morph is a **feature that changes the model's appearance by modifying UV coordinates**.
+PMD does not support this specification.
+
+This is primarily used for effects like changing texture mapping or creating animated textures.
+
+### Material Morph
+
+Material Morph is a **feature that changes the model's appearance by modifying material properties**.
+PMD does not support this specification.
+
+This allows for effects like changing material colors, transparency, or other material properties during runtime.
+
+:::note
+There are also Flip Morph and Impulse Morph.
+
+Since these were added in the PMX 2.1 specification and are rarely used in most MMD models, babylon-mmd does not implement them.
+:::
+
+## Display Frame
+
+A list of bones and morphs to be displayed in MMD's timeline panel.
+
+:::note
+Unlike MMD, babylon-mmd does not provide animation editing functionality, so this data is not used.
+
+This data is preserved in metadata when the `mmdmodel.preserveSerializationData` option is `true`.
+:::
+
 ## Physics
+
+MMD uses Bullet Physics 2.75 to perform rigid body dynamics simulation to **express the physical movement of model hair and clothing**.
+
+To enable this, PMX/PMD files include information about rigid bodies that reference bones and constraints that connect rigid bodies to each other.
+
+Rigid bodies are classified into two main types: Dynamic and Kinematic.
+
+### Dynamic Rigid Body
+
+When a specific bone is referenced by a Dynamic Rigid Body, that bone's transform ignores the hierarchy and is controlled by the physics engine.
+
+### Kinematic Rigid Body
+
+When a specific bone is referenced by a Kinematic Rigid Body, that rigid body's transform is controlled by the bone.
+
+### Constraint
+
+Constraints connect two rigid bodies together.
+
+Usually, multiple rigid bodies are connected in a chain-like formation to represent hair or clothing, and constraints are used to connect them together.
+
+:::note
+babylon-mmd uses Bullet Physics 3.26.
+
+Due to implementation differences in the Constraint Solver between Bullet Physics 3.26 and 2.75, physics calculations for some models may behave strangely in babylon-mmd.
+
+To resolve this, babylon-mmd provides the `MmdModelPhysicsCreationOptions.disableOffsetForConstraintFrame` option, which allows using the 2.75 version's Constraint Solver logic.
+Setting this option to `true` can achieve results more similar to MMD's physics calculations.
+
+However, the 2.75 version implementation may cause artifacts where rigid bodies shake due to numerical instability.
+:::
+
+:::note
+While the PMX 2.1 specification includes SoftBody Physics specifications, as mentioned earlier, we do not discuss the 2.1 specification.
+:::
