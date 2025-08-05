@@ -207,6 +207,243 @@ Additionally, models can be loaded using Babylon.js's `StandardMaterial` or `PBR
 :::
 
 ## Skeleton
+
+### Standard Bone Structure / Semi-Standard Bone Structure
+
+MMD's skeleton has a standardized bone structure, divided into Standard Bone Structure (標準ボーン構造) and its extended version, Semi-Standard Bone Structure (準標準ボーン構造).
+
+Standard Bone Structure is the standard bone structure for representing humanoid-type models in MMD, and almost all MMD models follow this structure.
+
+Semi-Standard Bone Structure is an extended structure based on Standard Bone Structure, which appears to be mostly used in models created after 2014.
+
+Thanks to this standardized structure, when loading MMD animations, most animations can be easily applied without additional retargeting steps.
+
+<details>
+<summary>Explanation of Standard Bone Structure</summary>
+
+The Semi-Standard Bone Structure is as follows, and while it is similar to Unity's Humanoid Skeleton and Mixamo's Rig, there are some differences.
+
+```typescript title="src/Loader/Util/mmdHumanoidMapper.ts (L1-180)"
+/**
+ * refs:
+ * https://learnmmd.com/http:/learnmmd.com/mmd-bone-reference-charts/
+ * https://bowlroll.net/file/9611
+ *
+ * mmd standard bone structure:
+ *
+ * -全ての親: all parents (semi-standard)
+ *
+ *     - センター: center
+ *         - グルーブ: groove (semi-standard)
+ *             - 腰: waist (semi-standard)
+ *                 - 上半身: upper body
+ *                     - 上半身2: upper body 2 (semi-standard)
+ *
+ *                         - 右肩P: right shoulder parent
+ *                             - 右肩: right shoulder
+ *                                 - 右肩C: right shoulder child
+ *                                     - 右腕: right arm
+ *                                         - 右腕捩: right arm twist (semi-standard)
+ *                                             - 右ひじ: right elbow
+ *                                                 - 右手捩: right hand twist (semi-standard)
+ *                                                     - 右手首: right wrist
+ *
+ *                                                        - 右中指１: right middle finger 1
+ *                                                            - 右中指２: right middle finger 2
+ *                                                                - 右中指３: right middle finger 3
+ *
+ *                                                        - 右人指１: right index finger 1
+ *                                                            - 右人指２: right index finger 2
+ *                                                                - 右人指３: right index finger 3
+ *
+ *                                                        - 右小指１: right little finger 1
+ *                                                            - 右小指２: right little finger 2
+ *                                                                - 右小指３: right little finger 3
+ *
+ *                                                        - 右薬指１: right ring finger 1
+ *                                                            - 右薬指２: right ring finger 2
+ *                                                                - 右薬指３: right ring finger 3
+ *
+ *                                                        - 右親指０: right thumb 0 (semi-standard)
+ *                                                            - 右親指１: right thumb 1
+ *                                                                - 右親指２: right thumb 2
+ *
+ *                         - 左肩P: left shoulder parent
+ *                             - 左肩: left shoulder
+ *                                 - 左肩C: left shoulder child
+ *                                     - 左腕: left arm
+ *                                         - 左腕捩: left arm twist (semi-standard)
+ *                                             - 左ひじ: left elbow
+ *                                                 - 左手捩: left hand twist (semi-standard)
+ *                                                     - 左手首: left wrist
+ *
+ *                                                         - 左中指１: left middle finger 1
+ *                                                             - 左中指２: left middle finger 2
+ *                                                                 - 左中指３: left middle finger 3
+ *
+ *                                                         - 左人指１: left index finger 1
+ *                                                             - 左人指２: left index finger 2
+ *                                                                 - 左人指３: left index finger 3
+ *
+ *                                                         - 左小指１: left little finger 1
+ *                                                             - 左小指２: left little finger 2
+ *                                                                 - 左小指３: left little finger 3
+ *
+ *                                                         - 左薬指２: left ring finger 1
+ *                                                             - 左薬指３: left ring finger 2
+ *                                                                 - 左薬指４: left ring finger 3
+ *
+ *                                                         - 左親指０: left thumb 0 (semi-standard)
+ *                                                             - 左親指１: left thumb 1
+ *                                                                 - 左親指２: left thumb 2
+ *
+ *                         - 首: neck
+ *                             - 頭: head
+ *                                - 両目: both eyes
+ *                                - 右目: right eye
+ *                                - 左目: left eye
+ *
+ *                 - 下半身: lower body
+ *                     - 腰キャンセル右: waist cancel right (semi-standard)
+ *
+ *                         - 右足: right leg
+ *                             - 右ひざ: right knee
+ *                                 - 右足首: right ankle
+ *                                     - 右つま先: right toe
+ *
+ *                         - 右足D: right leg D (semi-standard)
+ *                             - 右ひざD: right knee D (semi-standard)
+ *                                 - 右足首D: right ankle D (semi-standard)
+ *                                     - 右足先EX: right toe extra (semi-standard)
+ *
+ *                     - 腰キャンセル左: waist cancel left (semi-standard)
+ *
+ *                          - 左足: left leg
+ *                             - 左ひざ: left knee
+ *                                - 左足首: left ankle
+ *                                   - 左つま先: left toe
+ *
+ *                          - 左足D: left leg D (semi-standard)
+ *                             - 左ひざD: left knee D (semi-standard)
+ *                                - 左足首D: left ankle D (semi-standard)
+ *                                   - 左足先EX: left toe extra (semi-standard)
+ *
+ *     - 右足IK親: right leg ik parent (semi-standard)
+ *         - 右足ＩＫ: right leg ik
+ *             - 右つま先ＩＫ: right toe ik
+ *
+ *     - 左足IK親: left leg ik parent (semi-standard)
+ *         - 左足ＩＫ: left leg ik
+ *             - 左つま先ＩＫ: left toe ik
+ */
+```
+
+## Hip Position and Parent Relationship Differences
+
+Generally, humanoid-type skeletons have Hip as the root and have the following structure:
+
+```
+- Hip
+    - Spine
+    - LeftUpperLeg
+    - RightUpperLeg
+```
+
+The MMD skeleton structure corresponding to the above humanoid skeleton structure is as follows:
+
+```
+- センター: center **Vertex weights corresponding to the Hip area are assigned to this bone!!**
+    - グルーブ: groove (semi-standard)
+        - 腰: waist (semi-standard)
+            - 上半身: upper body - **Corresponds to the Hip position!!**
+            - 下半身: lower body
+```
+
+In MMD's skeleton, vertex weights for the Hip area are assigned to the center (センター) bone.
+However, the bone at the position corresponding to the humanoid Hip is the upper body (上半身) bone.
+
+This different structure causes problems when applying MMD animations to non-MMD models, and to solve this, special handling must be done exclusively for the center bone.
+
+:::tip
+When applying humanoid animations to MMD models, this structural difference does not cause problems.
+:::
+
+:::note
+babylon-mmd provides `AnimationRetargeter`, a feature for applying humanoid animations such as mixamo animations to MMD models.
+
+It also provides `HumanoidMmd`, a feature for applying MMD animations to humanoid models.
+
+`HumanoidMmd` performs the exception handling for the center bone mentioned above.
+:::
+
+## Shoulder Structure
+
+```
+- 右肩P: right shoulder parent
+    - 右肩: right shoulder
+        - 右肩C: right shoulder child
+            - 右腕: right arm
+```
+
+In Semi-Standard Bone Structure, shoulders have additional Parent bones and Child bones added to make it easier to apply animations to the shoulders.
+
+When manipulating the shoulder, these bones rotate the Child bone in the opposite direction by the amount of the Parent bone's rotation value, so that the shoulder's children are not affected by the rotation when the shoulder is rotated.
+
+This is implemented by applying Append Transform to the Child bone and reflecting the Parent bone's rotation value.
+
+## Leg Structure
+
+```
+- センター: center
+    - グルーブ: groove (semi-standard)
+        - 腰: waist (semi-standard)
+            - 下半身: lower body
+                - 腰キャンセル右: waist cancel right (semi-standard)
+                    - 右足: right leg
+                        - 右ひざ: right knee
+                            - 右足首: right ankle
+                                - 右つま先: right toe
+                    - 右足D: right leg D (semi-standard)
+                        - 右ひざD: right knee D (semi-standard)
+                            - 右足首D: right ankle D (semi-standard)
+                                - 右足先EX: right toe extra (semi-standard)
+- 右足IK親: right leg ik parent (semi-standard)
+    - 右足ＩＫ: right leg ik
+        - 右つま先ＩＫ: right toe ik
+```
+
+Let's look at only the right leg. The left leg has the same structure.
+
+```
+- 右足IK親: right leg ik parent (semi-standard)
+    - 右足ＩＫ: right leg ik
+        - 右つま先ＩＫ: right toe ik
+```
+
+In Standard Bone Structure, IK is applied to the legs.
+
+右足ＩＫ and 右つま先ＩＫ are used as IK target bones. They represent the foot position and toe position respectively.
+
+
+```
+- 右足: right leg
+    - 右ひざ: right knee
+        - 右足首: right ankle
+            - 右つま先: right toe
+- 右足D: right leg D (semi-standard)
+    - 右ひざD: right knee D (semi-standard)
+        - 右足首D: right ankle D (semi-standard)
+            - 右足先EX: right toe extra (semi-standard)
+```
+
+Only in the Semi-Standard structure, you can see that the same structure of leg bones is defined twice.
+The bones with `D` suffix are bones for FK manipulation, and the bones without any suffix are IK Chain bones controlled by IK.
+
+The bones with `D` suffix manipulate the legs by applying offsets to IK calculation results using Append Transform.
+
+As a result, while using IK, FK can also be used together when fine adjustments are needed.
+</details>
+
 ## Morph
 ## DisplayFrame
 ## Physics
