@@ -197,6 +197,10 @@ export class TextureAlphaChecker {
     ): Promise<TransparencyMode> {
         if (!texture.isReady()) throw new Error("Texture is not ready");
 
+        if (!mesh.subMeshes || mesh.subMeshes.length === 0) {
+            return TransparencyMode.Opaque; // no sub meshes, no translucent fragments
+        }
+
         if (this._blockRendering) {
             await new Promise<void>(resolve => {
                 this._taskQueue.push(resolve);
@@ -251,6 +255,10 @@ export class TextureAlphaChecker {
         subMeshIndex: Nullable<number>
     ): Promise<boolean> {
         if (!texture.isReady()) throw new Error("Texture is not ready");
+
+        if (!mesh.subMeshes || mesh.subMeshes.length === 0) {
+            return true; // no sub meshes, all fragments are opaque
+        }
 
         if (this._blockRendering) {
             await new Promise<void>(resolve => {
