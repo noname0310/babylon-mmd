@@ -68,4 +68,4 @@ These sections describe the runtime components needed to run MMD models and anim
   - **[Animation Blending](/docs/reference/runtime/animation/animation-blending)** - Explains how to blend multiple animations together.
 - **[Audio Player](/docs/reference/runtime/audio-player)** - Explains how to set up an audio player synchronized with animations.
 - **[Apply MMD Animation on Non-MMD Model](/docs/reference/runtime/apply-mmd-animation-on-non-mmd-model)** - Explains how to apply MMD animations to non-MMD models.
-- **[Use MMD Model Without Runtime](/docs/reference/runtime/use-mmd-model-without-runtime)** - Explains how to use MMD models without a runtime.
+<!-- - **[Use MMD Model Without Runtime](/docs/reference/runtime/use-mmd-model-without-runtime)** - Explains how to use MMD models without a runtime. -->

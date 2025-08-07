@@ -243,7 +243,7 @@ Therefore, unlike MMD's implementation, babylon-mmd does not reference previous 
 
 PMX Editor also follows the same approach as babylon-mmd, not referencing previous frame results when calculating current frame bone animations.
 :::
-
+{/* 
 :::note
 Babylon.js's Skeleton implementation assumes bones are already sorted according to their hierarchy and calculates transforms in bone order.
 
@@ -251,7 +251,7 @@ This calculation method doesn't cause issues when MMD models are controlled by `
 However, when using MMD models without additional runtime, models may display incorrectly.
 
 To solve this, babylon-mmd provides `OiComputeTransformInjector`, which modifies Babylon.js Skeleton's bone transform calculation implementation so models display correctly when not using `MmdRuntime`.
-:::
+::: */}
 
 ### Bone Morph
 
