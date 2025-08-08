@@ -1,0 +1,131 @@
+---
+sidebar_position: 2
+sidebar_label: Introduction to VMD and VPD
+---
+
+# Introduction to VMD and VPD
+
+This section explains what information VMD and VPD files consist of, how MMD interprets that information,
+and how babylon-mmd implements MMD's behavior.
+
+:::note
+In this document, content about how babylon-mmd implements MMD's behavior is distinguished with this block.
+:::
+
+import TOCInline from '@theme/TOCInline';
+
+<TOCInline toc={toc} />
+
+## VMD/VPD File Overview
+
+VMD (Vocaloid Motion Data) and VPD (Vocaloid Pose Data) files are animation data formats used in MMD (MikuMikuDance).
+
+These files are used to store the motion and pose information of an MMD model, respectively.
+
+Since these file formats have no documented specifications, only information known through reverse engineering analysis exists, so there may be minor errors.
+
+Also, since there are no official names for each piece of information,
+this document arbitrarily assigns common names to each piece of information for explanation.
+
+### VMD Files
+
+VMD files store animation data for an MMD model's Bones, Morphs, Self Shadow, and Property.
+
+They also store animation data not tied to the model itself, such as Camera and Light information.
+
+### VPD Files
+
+VPD files store the names of the targets to bind (bones or morphs) and the current state (pose) of those targets.
+
+Unlike VMD, VPD stores only the state of an MMD model's Bones and Morphs; it does not include Camera, Light, Self Shadow, or Property keyframes.
+
+Regarding morph information, MMD itself does not support processing morph data in VPD; storing morph data in VPD is an extension provided by MMM (MikuMikuMoving).
+
+:::note
+While MMD does not support processing morph data in VPD files, MMM and Blender MMD Tools support the specification for storing morph information in VPD.
+
+Even though this is not supported by MMD itself, because MMD-compatible software supports it, babylon-mmd also reads and processes morph data in VPD files.
+:::
+
+:::note
+babylon-mmd treats a VPD as a one-frame animation, handling VMD and VPD files in the same way.
+:::
+
+### VMD File Structure and Parsing Method
+
+VMD file is Little Endian **binary files** containing various data types.
+
+The data is **structured in a typical Length-Prefixed format**. For example, when representing Bone Keyframes data,
+the number of Keyframes is indicated first, followed by sequential listing of each Bone Keyframe's information.
+The size of each data can be fixed or variable length, and the order of data is always the same.
+
+Data alignment is not enforced, and each field is stored consecutively in the binary file.
+
+VMD files do not include an explicit version in the header.
+Instead, data appears in the order of Bone, Morph, Camera, Light, Self Shadow, and Property keyframes,
+and older versions may omit keyframe sections that come later in this order.
+
+For example, [WAVEFILE fullver. モーション](https://bowlroll.net/file/5983) does not include Property keyframes.
+
+### VPD File Structure and Parsing Method
+
+A VPD file is a plain text file saved with Shift_JIS encoding.
+
+Below is an example of a VPD file containing Bone and Morph keyframes.
+
+```
+Vocaloid Pose Data file
+
+YYB式初音ミク_10th_v1.02.osm;		// 親ファイル名
+4;				// 総ポーズボーン数
+
+Bone0{右腕捩
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.000000,-0.000000,0.000000,1.000000;		// Quaternion x,y,z,w
+}
+
+Bone1{右ひじ
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  0.176789,-0.061290,0.747712,0.637114;		// Quaternion x,y,z,w
+}
+
+Bone2{右手捩
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.000000,-0.000000,-0.000000,1.000000;		// Quaternion x,y,z,w
+}
+
+Bone3{右手首
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.574374,-0.615622,0.113957,0.527368;		// Quaternion x,y,z,w
+}
+
+Morph0{う
+  0.200000;
+}
+
+Morph1{え
+  0;
+}
+```
+
+The `4;` on the fourth line indicates the number of Bone states. MMD reads exactly that many Bone entries and ignores any subsequent information.
+
+Therefore, the MMM extension that includes Morph states always places the Morph state information after the Bone state information.
+
+:::note
+To process VPD files, babylon-mmd uses a lexer-based tokenization approach.
+
+Since the format is text-based, it is designed to handle various edge cases flexibly.
+:::
+
+## Bone Keyframes
+
+## Morph Keyframes
+
+## Camera Keyframes
+
+## Light Keyframes
+
+## Self Shadow Keyframes
+
+## Property Keyframes
