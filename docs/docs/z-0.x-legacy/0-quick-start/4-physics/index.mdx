@@ -26,11 +26,8 @@ const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
 For heavier, but more MMD-like results, you can use `MmdAmmoPhysics`, which is powered by ammo.js
 :::
 
-import ReactPlayer from "react-player";
 import ResultVideo from "./2023-07-27 17-53-30.mp4";
 
-<ReactPlayer
-    url={ResultVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={ResultVideo} type="video/mp4"/>
+</video>

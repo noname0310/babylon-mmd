@@ -12,7 +12,7 @@ and how babylon-mmd implements MMD's behavior.
 In this document, content about how babylon-mmd implements MMD's behavior is distinguished with this block.
 :::
 
-import TOCInline from '@theme/TOCInline';
+import TOCInline from "@theme/TOCInline";
 
 <TOCInline toc={toc} />
 
@@ -231,14 +231,11 @@ For PMD files, bone information cannot define a separate Transform Order, and IK
 
 #### When Transform Order and Bone Ordering Don't Match the Actual Hierarchy
 
-import ReactPlayer from "react-player";
 import TransformOrderBrokenVideo from "./transform_order_broken.mp4";
 
-<ReactPlayer
-    url={TransformOrderBrokenVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={TransformOrderBrokenVideo}/>
+</video>
 
 *This shows an example where Transform Order is incorrect. You can see that the bone at the end follows with a one-frame delay.*
 
@@ -279,11 +276,9 @@ This will be covered in detail in the Morph section below.
 
 import AppendTransformVideo from "./append_transform.mp4";
 
-<ReactPlayer
-    url={AppendTransformVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={AppendTransformVideo} type="video/mp4"/>
+</video>
 
 *This video shows Append Transform applied to shoulders used in Semi-Standard Bone Structure. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
@@ -299,12 +294,9 @@ In the Semi-Standard Bone Structure explained later, Append Transform is utilize
 
 import IkVideo from "./inverse_kinematics.mp4";
 
-<ReactPlayer
-    url={IkVideo}
-    controls={true}
-    width="100%"
-    height="100%"
-/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={IkVideo} type="video/mp4"/>
+</video>
 
 *This video demonstrates Inverse Kinematics (IK) applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
@@ -510,12 +502,9 @@ This is implemented by applying Append Transform to the Child bone and reflectin
 
 import IkWithAppendTransform from "./ik_with_append_transform.mp4";
 
-<ReactPlayer
-    url={IkWithAppendTransform}
-    controls={true}
-    width="100%"
-    height="100%"
-/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={IkWithAppendTransform} type="video/mp4"/>
+</video>
 
 *This video demonstrates Inverse Kinematics (IK) with Append Transform applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
@@ -579,12 +568,9 @@ This is similar to Unity's Blend Shape and Blender 3D's Shape Key, but has addit
 
 import VertexMorphVideo from "./vertex_morph.mp4";
 
-<ReactPlayer
-    url={VertexMorphVideo}
-    controls={true}
-    width="100%"
-    height="100%"
-/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={VertexMorphVideo} type="video/mp4"/>
+</video>
 
 *Example of Vertex Morph that changes the face shape. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
@@ -594,11 +580,9 @@ Vertex Morph is a **feature that changes the model's shape by modifying vertex p
 
 import BoneMorphVideo from "./bone_morph.mp4";
 
-<ReactPlayer
-    url={BoneMorphVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={BoneMorphVideo} type="video/mp4"/>
+</video>
 
 *Example of Bone Morph that moves the hand. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
@@ -618,11 +602,9 @@ This is primarily used for effects like changing texture mapping or creating ani
 
 import MaterialMorphVideo from "./material_morph.mp4";
 
-<ReactPlayer
-    url={MaterialMorphVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={MaterialMorphVideo} type="video/mp4"/>
+</video>
 
 *Example of Material Morph that turns hair shadow mesh on and off. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 

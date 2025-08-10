@@ -81,11 +81,8 @@ mmdRuntime.playAnimation();
 - Both `MmdCamera` and `MmdModel` are designed to store multiple animations. Therefore, you must set the animation to use after adding it.
 - `mmdRuntime.playAnimation()` - Start playing the animation.
 
-import ReactPlayer from "react-player";
 import ResultVideo from "./2023-07-27 17-00-43.mp4";
 
-<ReactPlayer
-    url={ResultVideo}
-    controls={true}
-    width="100%"
-    height="100%"/>
+<video controls style={{ width: "100%", height: "100%" }}>
+  <source src={ResultVideo} type="video/mp4"/>
+</video>
