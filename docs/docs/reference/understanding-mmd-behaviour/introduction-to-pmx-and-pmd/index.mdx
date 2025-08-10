@@ -101,6 +101,7 @@ babylon-mmd loads vertex information from MMD models.
 
 As an exception, the Additional Vec4 field is only preserved when the `mmdmodel.preserveSerializationData` option is `true`.
 :::
+
 :::note
 Since MMD follows DirectX's UV coordinate system while Babylon.js follows OpenGL's UV coordinate system,
 Y Flip is applied to UV coordinates when loading MMD models.
@@ -230,6 +231,17 @@ For PMD files, bone information cannot define a separate Transform Order, and IK
 
 #### When Transform Order and Bone Ordering Don't Match the Actual Hierarchy
 
+import ReactPlayer from "react-player";
+import TransformOrderBrokenVideo from "./transform_order_broken.mp4";
+
+<ReactPlayer
+    url={TransformOrderBrokenVideo}
+    controls={true}
+    width="100%"
+    height="100%"/>
+
+*This shows an example where Transform Order is incorrect. You can see that the bone at the end follows with a one-frame delay.*
+
 MMD calculates the animated positions of bones and then references these results when calculating the next frame.
 This approach creates calculation delays equal to the depth of the incorrect hierarchy, but appears to work reasonably well.
 
@@ -265,6 +277,16 @@ This will be covered in detail in the Morph section below.
 
 ### Append Transform
 
+import AppendTransformVideo from "./append_transform.mp4";
+
+<ReactPlayer
+    url={AppendTransformVideo}
+    controls={true}
+    width="100%"
+    height="100%"/>
+
+*This video shows Append Transform applied to shoulders used in Semi-Standard Bone Structure. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+
 Append Transform allows bones that are not in a parent-child relationship to influence each other as if they were hierarchically related.
 
 This feature exists in the PMX specification and is not supported in PMD.
@@ -274,6 +296,17 @@ Append Transform is similar to Unity's Transform Constraint component.
 In the Semi-Standard Bone Structure explained later, Append Transform is utilized to implement various convenience features that help animators create animations more easily.
 
 ### IK
+
+import IkVideo from "./inverse_kinematics.mp4";
+
+<ReactPlayer
+    url={IkVideo}
+    controls={true}
+    width="100%"
+    height="100%"
+/>
+
+*This video demonstrates Inverse Kinematics (IK) applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 Inverse Kinematics (IK) is a **feature that automatically calculates joint angles by working backwards from a target position**.
 
@@ -475,6 +508,17 @@ This is implemented by applying Append Transform to the Child bone and reflectin
 
 <h2>Leg Structure</h2>
 
+import IkWithAppendTransform from "./ik_with_append_transform.mp4";
+
+<ReactPlayer
+    url={IkWithAppendTransform}
+    controls={true}
+    width="100%"
+    height="100%"
+/>
+
+*This video demonstrates Inverse Kinematics (IK) with Append Transform applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+
 ```
 - センター: center
     - グルーブ: groove (semi-standard)
@@ -533,9 +577,30 @@ This is similar to Unity's Blend Shape and Blender 3D's Shape Key, but has addit
 
 ### Vertex Morph
 
+import VertexMorphVideo from "./vertex_morph.mp4";
+
+<ReactPlayer
+    url={VertexMorphVideo}
+    controls={true}
+    width="100%"
+    height="100%"
+/>
+
+*Example of Vertex Morph that changes the face shape. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+
 Vertex Morph is a **feature that changes the model's shape by modifying vertex positions**.
 
 ### Bone Morph
+
+import BoneMorphVideo from "./bone_morph.mp4";
+
+<ReactPlayer
+    url={BoneMorphVideo}
+    controls={true}
+    width="100%"
+    height="100%"/>
+
+*Example of Bone Morph that moves the hand. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 Bone Morph is a **feature that rotates or moves multiple bones simultaneously by predefined specific offsets**.
 PMD does not support this specification.
@@ -551,6 +616,16 @@ This is primarily used for effects like changing texture mapping or creating ani
 
 ### Material Morph
 
+import MaterialMorphVideo from "./material_morph.mp4";
+
+<ReactPlayer
+    url={MaterialMorphVideo}
+    controls={true}
+    width="100%"
+    height="100%"/>
+
+*Example of Material Morph that turns hair shadow mesh on and off. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+
 Material Morph is a **feature that changes the model's appearance by modifying material properties**.
 PMD does not support this specification.
 
@@ -562,9 +637,14 @@ There are also Flip Morph and Impulse Morph.
 Since these were added in the PMX 2.1 specification and are rarely used in most MMD models, babylon-mmd does not implement them.
 :::
 
+### Group Morph
+
+Group Morph is a **feature that allows multiple morphs to be grouped together and controlled as a single morph**.
+
 ## Display Frame
 
-A list of bones and morphs to be displayed in MMD's timeline panel.
+![display frame](./2025-08-10-183859.png)\
+*List of bones and morphs displayed in MMD's timeline panel. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 :::note
 Unlike MMD, babylon-mmd does not provide animation editing functionality, so this data is not used.
@@ -573,6 +653,9 @@ This data is preserved in metadata when the `mmdmodel.preserveSerializationData`
 :::
 
 ## Physics
+
+![physics](./2025-08-10-184326.png)\
+*Physics Body Visualization in MMD (Yellow: Kinematic Rigid Body, Red: Dynamic Rigid Body) Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 MMD uses Bullet Physics 2.75 to perform rigid body dynamics simulation to **express the physical movement of model hair and clothing**.
 
