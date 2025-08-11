@@ -63,7 +63,7 @@ These sections describe the runtime components needed to run MMD models and anim
 - **[Bullet Physics](/docs/reference/runtime/bullet-physics)** - Explains how to control the Bullet Physics world.
 - **[Animation](/docs/reference/runtime/animation/mmd-animation)** - Explains how to set up and control animations for MMD models.
   - **[MMD Animation](/docs/reference/runtime/animation/mmd-animation)** - Explains how to set up and use MMD animations.
-  - **[Use Babylon.js Animation Runtime](/docs/reference/runtime/animation/use-babylonjs-animation-runtime)** - Explains how to use the Babylon.js animation runtime.
+  - **[Use Babylon.js Animation Runtime](/docs/reference/runtime/animation/use-babylonjs-animation-runtime)** - Explains how to use the Babylon.js animation runtime to animate MMD models.
   - **[MMD Player Control](/docs/reference/runtime/animation/mmd-player-control)** - Explains how to control MMD animations using a GUI similar to a video player.
   - **[Animation Blending](/docs/reference/runtime/animation/animation-blending)** - Explains how to blend multiple animations together.
 - **[Audio Player](/docs/reference/runtime/audio-player)** - Explains how to set up an audio player synchronized with animations.

@@ -97,7 +97,7 @@ Let's examine the functionality provided by each element.
 
 - [**Line 36-37**](#mmd-player-control-creation-line-36-37): Create MMD player control.
 
-- [**Line 39-44**](#vmd-loader-line-39-43): Use VMD loader to load camera animation and set runtime animation on the camera.
+- [**Line 39-44**](#vmd-loader-line-39-44): Use VMD loader to load camera animation and set runtime animation on the camera.
 
 - [**Line 46-53**](#pmx-loader-line-46-53): Use PMX loader to load MMD model and VMD loader to load model animations. Then set up runtime animation.
 
