@@ -16,6 +16,7 @@ import { SdefVertex as sdefVertexWgsl } from "./ShadersWGSL/sdefVertex";
  * This class is used to inject SDEF code into the vertex shader
  */
 export class SdefInjector {
+    // NOTE: be careful with the Babylon.js createEffect method changes
     /**
      * Override engine create effect
      *

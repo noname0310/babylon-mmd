@@ -293,6 +293,7 @@ export class SdefMesh extends Mesh {
         return "SdefMesh";
     }
 
+    // NOTE: clone method is just a copy of the original method with a different return type. becareful to babylon.js internal changes
     /**
      * Returns a new Mesh object generated from the current mesh properties.
      * This method must not get confused with createInstance()

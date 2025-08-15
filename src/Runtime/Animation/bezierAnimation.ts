@@ -25,6 +25,7 @@ export class BezierAnimation extends Animation {
      */
     public static readonly ANIMATIONTYPE_SLERP_TANGENT_QUATERNION = 8;
 
+    // NOTE: be careful with the Babylon.js _interpolate method changes
     /**
      * @internal Internal use only
      */

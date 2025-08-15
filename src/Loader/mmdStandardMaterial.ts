@@ -369,6 +369,7 @@ export class MmdStandardMaterial extends StandardMaterial {
             this._pluginMaterial.sphereTextureBlendMode === MmdPluginMaterialSphereTextureBlendMode.Multiply);
     }
 
+    // NOTE: clone method is just a copy of the original method with a different return type. becareful to babylon.js internal changes
     /**
      * Makes a duplicate of the material, and gives it a new name
      * @param name defines the new name for the duplicated material
@@ -389,6 +390,7 @@ export class MmdStandardMaterial extends StandardMaterial {
         return result;
     }
 
+    // NOTE: Parse method is just a copy of the original method with a different return type. becareful to babylon.js internal changes
     /**
      * Creates a mmd standard material from parsed material data
      * @param source defines the JSON representation of the material
