@@ -35,24 +35,32 @@ export class BezierAnimation extends Animation {
         }
 
         const keys = (this as any)._keys as IAnimationKey[];
-        const keysLength = keys.length;
+        let key: number;
 
-        let key = state.key;
+        if (!this._coreAnimation) {
+            const keysLength = keys.length;
 
-        while (key >= 0 && currentFrame < keys[key].frame) {
-            key -= 1;
-        }
+            key = state.key;
 
-        while (key + 1 <= keysLength - 1 && currentFrame >= keys[key + 1].frame) {
-            key += 1;
-        }
+            while (key >= 0 && currentFrame < keys[key].frame) {
+                key -= 1;
+            }
 
-        state.key = key;
+            while (key + 1 <= keysLength - 1 && currentFrame >= keys[key + 1].frame) {
+                key += 1;
+            }
 
-        if (key < 0) {
-            return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[0].value);
-        } else if (key + 1 > keysLength - 1) {
-            return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[keysLength - 1].value);
+            state.key = key;
+
+            if (key < 0) {
+                return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[0].value);
+            } else if (key + 1 > keysLength - 1) {
+                return searchClosestKeyOnly ? undefined : this._getKeyValue(keys[keysLength - 1].value);
+            }
+
+            this._key = key;
+        } else {
+            key = this._coreAnimation._key;
         }
 
         const startKey = keys[key];
@@ -80,7 +88,8 @@ export class BezierAnimation extends Animation {
 
         // check for easingFunction and correction of gradient
         const easingFunction = startKey.easingFunction || this.getEasingFunction();
-        if (easingFunction !== null) {
+        // can also be undefined, if not provided
+        if (easingFunction) {
             gradient = easingFunction.ease(gradient);
         }
 
