@@ -2,6 +2,7 @@ import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { MeshCloneOptions, MeshCreationOptions } from "@babylonjs/core/Meshes/mesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { MeshLODLevel } from "@babylonjs/core/Meshes/meshLODLevel";
 import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
@@ -49,8 +50,21 @@ interface _InternalMeshDataInfo {
     _forcedInstanceCount: number;
 
     _overrideRenderingFillMode: Nullable<number>;
+
+    _sideOrientation: number;
+
+    _effectiveSideOrientation: number;
 }
 /* eslint-enable @typescript-eslint/naming-convention */
+
+// NOTE: just copy of Babylon.js internal code
+const MeshCreationOptions: MeshCreationOptions = {
+    source: null,
+    parent: null,
+    doNotCloneChildren: false,
+    clonePhysicsImpostor: true,
+    cloneThinInstances: false
+};
 
 /**
  * Sdef mesh
@@ -298,13 +312,24 @@ export class SdefMesh extends Mesh {
      * Returns a new Mesh object generated from the current mesh properties.
      * This method must not get confused with createInstance()
      * @param name is a string, the name given to the new mesh
-     * @param newParent can be any Node object (default `null`)
+     * @param newParent can be any Node object (default `null`) or an instance of MeshCloneOptions. If the latter, doNotCloneChildren and clonePhysicsImpostor are unused.
      * @param doNotCloneChildren allows/denies the recursive cloning of the original mesh children if any (default `false`)
      * @param clonePhysicsImpostor allows/denies the cloning in the same time of the original mesh `body` used by the physics engine, if any (default `true`)
      * @returns a new mesh
      */
-    public override clone(name: string = "", newParent: Nullable<Node> = null, doNotCloneChildren?: boolean, clonePhysicsImpostor: boolean = true): Mesh {
-        return new SdefMesh(name, this.getScene(), newParent, this, doNotCloneChildren, clonePhysicsImpostor);
+    public override clone(name: string = "", newParent: Nullable<Node> | MeshCloneOptions = null, doNotCloneChildren?: boolean, clonePhysicsImpostor: boolean = true): Mesh {
+        if (newParent && (newParent as Node)._addToSceneRootNodes === undefined) {
+            const cloneOptions = newParent as MeshCloneOptions;
+
+            MeshCreationOptions.source = this;
+            MeshCreationOptions.doNotCloneChildren = cloneOptions.doNotCloneChildren;
+            MeshCreationOptions.clonePhysicsImpostor = cloneOptions.clonePhysicsImpostor;
+            MeshCreationOptions.cloneThinInstances = cloneOptions.cloneThinInstances;
+
+            return new SdefMesh(name, this.getScene(), MeshCreationOptions);
+        }
+
+        return new SdefMesh(name, this.getScene(), newParent as Nullable<Node>, this, doNotCloneChildren, clonePhysicsImpostor);
     }
 
     // NOTE: currently there is no way to override Mesh.Parse method
