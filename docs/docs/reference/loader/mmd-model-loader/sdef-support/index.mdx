@@ -151,6 +151,10 @@ for (const mesh of modelMesh.metadata.meshes) mesh.computeBonesUsingShaders = fa
 
 When **`useSdef` is set to `true`**, the CPU Skinning implementation is overridden, and **`SdefMesh` (which inherits from `Mesh`) is used instead** of `Mesh` for meshes that need SDEF support.
 
+However, in this case, **you cannot use Morph Targets simultaneously**.
+This is because when applying deformation, **Morph Targets should be applied before Skinning**, but when Skinning is processed first in CPU bound, **Morph Targets are applied later in shaders**, resulting in an incorrect transformation order.
+Therefore, while **no runtime errors will occur**, it can produce **very strange results**.
+
 ## SDEF Shader Injection Implementation Details
 
 To **support SDEF, Babylon.js's internal shader code must be modified**, and all render pipelines inside Babylon.js must be modified accordingly.
