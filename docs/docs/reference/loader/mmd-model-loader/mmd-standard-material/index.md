@@ -186,8 +186,9 @@ To help with visualization, we'll use **YYB式初音ミク_10th_v1.02 model by S
 First, **`baseColor` stores the result of the color sampled from the texture**.
 The following elements are considered in this process:
 
-- **`textureMultiplicativeColor` and `textureAdditiveColor`** values from `MmdStandardMaterial`
-- **`BaseTexture.level`**
+- `MmdStandardMaterial.textureMultiplicativeColor`
+- `MmdStandardMaterial.textureAdditiveColor`
+- `BaseTexture.level`
 
 ```cpp
     vec4 baseColor = vec4(1., 1., 1., 1.);
@@ -216,15 +217,230 @@ The following elements are considered in this process:
 ```
 
 ![baseColor](./baseColor.png)
-*Result of rendering the baseColor.*
+*Result of rendering the `baseColor`.*
 
 ### lightingInfo
 
-### Diffuse
+The **computeLighting function** is called to calculate lighting information using the **Blinn-Phong model**.
 
-### Ramp Texture Shading
+```cpp
+struct lightingInfo {
+    float ndl;
+    float isToon;
+    vec3 diffuse;
+    vec3 specular;
+};
+// ...
 
-### Spherical Environment Mapping
+    lightingInfo info;
+    // ...
+    vec4 diffuse0 = light0.vLightDiffuse;
+#define CUSTOM_LIGHT0_COLOR
+    info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
+```
+
+The `computeLighting` function calculates shading for the Directional Light using the following parameters:
+
+- view direction (**viewDirectionW**)
+- surface normal (**normalW**)
+- `DirectionalLight.direction` (**light0.vLightData**)
+- `DirectionalLight.diffuse` (**diffuse0.rgb**)
+- `DirectionalLight.specular` (**light0.vLightSpecular.rgb**)
+- light range (not used for Directional Light as attenuation is not considered)
+- `specularPower` (**glossiness**)
+
+The resulting `ndl`, `diffuse`, and `specular` values are visualized as follows:
+
+|ndl|diffuse|specular|
+|---|-------|--------|
+|![ndl](./ndl.png)|![diffuse](./diffuse.png)|![specular](./specular.png)|
+
+*Each image visualizes the `ndl`, `diffuse`, and `specular` values calculated as a result of the `computeLighting` function.*
+
+The `isToon` value is a parameter to ensure normal operation in case of shader injection failure, and it always has a value of 1.0. If shader injection fails, this value will be 0.0, and fallback processing will be performed using this value in the future.
+
+In this section, for the sake of explanation, we will not consider the case where the `isToon` value is 0.0.
+
+### shadow
+
+The shadow is calculated using the Percentage Closer Filtering (PCF) method. This can vary significantly depending on the settings of the `ShadowGenerator`.
+
+```cpp
+    float shadow = 1.;
+    // ...
+    shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
+```
+
+The `shadow` value is visualized as follows:
+
+![shadow](./shadow.png)
+*Result of rendering the `shadow`.*
+
+### diffuseBase
+
+The final shading is calculated by multiplying the `ndl` with the `shadow`. Then, the result is mapped to the toonTexture.
+
+```cpp
+    vec3 toonNdl;
+    // ...
+    vec3 diffuseBase = vec3(0., 0., 0.);
+    // ...
+    toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
+    toonNdl.r = texture(toonSampler, vec2(0.5, toonNdl.r)).r;
+    toonNdl.g = texture(toonSampler, vec2(0.5, toonNdl.g)).g;
+    toonNdl.b = texture(toonSampler, vec2(0.5, toonNdl.b)).b;
+    diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
+    // ...
+```
+
+![ndlShadow](./ndlShadow.png)
+*Result of rendering `info.ndl * shadow`.*
+
+![toonNdl](./toonNdl.png)
+
+*Result of rendering `toonNdl`, which is the shadow value mapped to the toonTexture (Ramp Texture) between 0 and 1.*
+
+The toonTexture typically has this kind of gradient. The value changes vertically, mapping the bottom to 0 and the top to 1.
+
+<img src={"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAOUlEQVRYR+3WMREAMAwDsYY/yoDI7MLwIiP40+RJklfcCCBAgAABAgTqArfb/QMCCBAgQIAAgbbAB3z/e0F3js2cAAAAAElFTkSuQmCC"} width="200"/>
+*Example of toonTexture data*
+
+### finalDiffuse
+
+Finally, the diffuse lighting is calculated by taking the  `diffuseBase` which is a toon-mapped result, multiplying it by the material's diffuse color, adding the material's emissive color, and finally multiplying by the sampled result in `baseColor`.
+
+```cpp
+    vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
+    // ...
+    vec3 emissiveColor = vEmissiveColor;
+    vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor, 0.0, 1.0) * baseColor.rgb;
+```
+
+The material's diffuse color is calculated as follows:
+
+- `StandardMaterial.diffuseColor` (**vDiffuseColor**)
+- `StandardMaterial.ambientColor` * `Scene.ambientColor` (**vAmbientColor**) - The CPU bounds multiply the material and Scene's ambient color together and pass the result to the shader.
+
+`clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);`
+
+You can see that the ambient color is also involved in the calculation of the diffuse color to achieve the same result as MMD's shader, which is not a typical approach.
+
+:::warning
+It's important to note that `Scene.ambientColor` should be set to vec3(0.5, 0.5, 0.5).
+This is because MMD's implementation scales the ambient color to 0.5.
+Therefore, to achieve the same result, the Scene's ambient color should be set to 0.5 so that the ambient color is calculated with the same 0.5 scaling as MMD.
+:::
+
+![finalDiffuse](./finalDiffuse.png)
+*Result of rendering `finalDiffuse`, the result of the diffuse light calculation.*
+
+### finalSpecular
+
+The `shadow` value is multiplied with the `specular` to exclude the areas that are in shadow.
+
+Then, the material's `StandardMaterial.specularColor` (**vSpecularColor**) is used to calculate the final specular value.
+
+```cpp
+    vec3 specularColor = vSpecularColor.rgb;
+    // ...
+    vec3 specularBase = vec3(0., 0., 0.);
+    // ...
+    specularBase += info.specular * shadow;
+    // ...
+    vec3 finalSpecular = specularBase * specularColor;
+```
+
+Below is the render result of the final specular value, `finalSpecular`.
+
+![finalSpecular](./finalSpecular.png)
+*Result of rendering `finalSpecular`, the result of the specular light calculation.*
+
+### finalDiffuse + finalSpecular
+
+Finally, the results of the diffuse light and specular light calculations are added together. Additionally, the following properties are considered:
+
+- `StandardMaterial.ambientTexture` (**baseAmbientColor**)
+- `StandardMaterial.reflectionTexture` (**reflectionColor**)
+- `StandardMaterial.refractionTexture` (**refractionColor**)
+
+However, these properties are not used in the current example, so in the shader code, they are simply initialized as constants.
+
+```cpp
+    vec3 baseAmbientColor = vec3(1., 1., 1.);
+    // ...
+    vec4 refractionColor = vec4(0., 0., 0., 1.);
+    vec4 reflectionColor = vec4(0., 0., 0., 1.);
+    // ...
+    vec4 color = vec4(finalDiffuse * baseAmbientColor + finalSpecular + reflectionColor.rgb + refractionColor.rgb, alpha);
+```
+
+Below is the render result of `color`, which is the result of adding `finalDiffuse` and `finalSpecular`.
+
+![color](./color.png)
+*Result of rendering `color`, the result of adding `finalDiffuse` and `finalSpecular`.*
+
+### sphereReflectionColor
+
+Finally, spherical environment mapping is applied using the sphereTexture.
+
+The following material properties are used here:
+
+- `StandardMaterial.sphereTexture` (**sphereSampler**)
+- `StandardMaterial.sphereTextureMultiplicativeColor` (**sphereTextureMultiplicativeColor**)
+- `StandardMaterial.sphereTextureAdditiveColor` (**sphereTextureAdditiveColor**)
+
+Typically, the sphereTexture uses a spherical texture like this.
+
+![sphereTexture](./sphereTexture.png)\
+*Example of sphereTexture data*
+
+```cpp
+    vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
+
+    // Calculate UV coordinates for spherical environment mapping.
+    vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
+
+    vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
+    // Apply sphere texture color morphing.
+    sphereReflectionColor.rgb = mix(
+        vec3(1.0),
+        sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
+        sphereTextureMultiplicativeColor.a
+    );
+    sphereReflectionColor.rgb = clamp(
+        sphereReflectionColor.rgb + (sphereReflectionColor.rgb - vec3(1.0)) * sphereTextureAdditiveColor.a,
+        0.0,
+        1.0
+    ) + sphereTextureAdditiveColor.rgb;
+    sphereReflectionColor.rgb *= diffuseBase;
+```
+
+The render result of `sphereReflectionColor`, which is the result of applying spherical environment mapping, is as follows.
+
+![sphereReflectionColor](./sphereReflectionColor.png)
+
+*Result of rendering `sphereReflectionColor`, the result of applying spherical environment mapping using sphereTexture.*
+
+### Final Color
+
+Finally, the diffuse lighting, specular lighting, and reflection color are all added together to calculate the final color.
+
+Additionally, the `Material.visibility` is taken into account.
+
+```cpp
+    color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
+    color.rgb = max(color.rgb, 0.);
+    color.a *= visibility;
+    glFragColor = color;
+}
+```
+
+![finalRender](./finalRender.png)
+*Result of the final rendering, combining diffuse light, specular light, and environment light.*
+
+## Full Source Code of Mmd Standard Material Shader
+
+The GLSL source code including uniform variable declarations and external function definitions that were omitted above is as follows:
 
 <details>
 <summary>Organized GLSL shader code for MmdStandardMaterial</summary>
@@ -449,3 +665,57 @@ void main(void) {
 </details>
 
 ## Outline Rendering
+
+babylon-mmd provides **`MmdOutlineRenderer`** to implement MMD's rendering method. This renderer is used to implement MMD's **toon edge**.
+
+**`MmdOutlineRenderer`** uses the **Inverted Hull method** to render the outlines of meshes. This method renders the outline by flipping all faces of the mesh and rendering them again.
+
+As a result, when rendering outlines, **additional draw calls** occur equal to the number of meshes.
+
+### Usage
+
+When importing **"babylon-mmd/esm/Loader/mmdOutlineRenderer"**, an **`MmdOutlineRenderer`** is added to the `Scene` using prototype extension.
+
+```typescript
+import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+```
+
+After that, if the material has the following **four properties**, outlines will be rendered. (**`MmdStandardMaterial`** has these properties by default.)
+
+- **`renderOutline`** (boolean)
+- **`outlineWidth`** (number)
+- **`outlineColor`** (Color3)
+- **`outlineAlpha`** (number)
+
+Therefore, **any material** can render outlines by adding these properties as follows:
+
+```typescript
+class OutlinePBRMaterial extends PBRMaterial {
+    private _renderOutline = false;
+    public outlineWidth = 0.01;
+    public outlineColor = new Color3(0, 0, 0);
+    public outlineAlpha = 1.0;
+
+    public get renderOutline(): boolean {
+        return this._renderOutline;
+    }
+
+    public set renderOutline(value: boolean) {
+        // Lazy Load the component
+        if (value) {
+            this.getScene().getMmdOutlineRenderer?.();
+        }
+        this._renderOutline = value;
+    }
+}
+```
+
+This implements **Lazy Loading** by registering the `MmdOutlineRenderer` to the Scene when the `renderOutline` property becomes true.
+
+### Applied to MmdStandardMaterial
+
+For **`MmdStandardMaterial`**, settings are automatically configured by the **`MmdStandardMaterialBuilder`**,
+and you only need to add `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";` to your code for it to work.
+
+![outline](./outline.png)
+*Result with outline applied.*
