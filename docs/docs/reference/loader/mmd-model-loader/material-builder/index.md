@@ -214,6 +214,62 @@ If you want to change the loading behavior, you can **override the corresponding
 
 ## Render Method
 
-### Alpha Evaluation
+MMD renders meshes using **Alpha Blending** with **Depth Write** and **Depth Test** enabled.
+The Material Builder provides several options to implement this behavior while achieving optimized results.
 
-### Draw Order Configuration
+If a Mesh is completely **Opaque**, rendering without Alpha Blending can produce the same result. babylon-mmd provides several options to automatically perform this for rendering optimization, controlled by the material builder's `renderMethod`.
+
+### DepthWriteAlphaBlendingWithEvaluation
+
+This rendering method renders **Opaque meshes without Alpha Blending** and uses Alpha Blending only when absolutely necessary.
+
+In other words, when loading a model with this method, the material's `transparencyMode` can be either **`Material.MATERIAL_ALPHABLEND`** or **`Material.MATERIAL_ALPOAQUE`**, and `forceDepthWrite` is set to **`true`**.
+
+This is the **default** method.
+
+### DepthWriteAlphaBlending
+
+This rendering method renders **all meshes using Alpha Blending**.
+
+In other words, when loading a model with this method, the material's `transparencyMode` is always **`Material.MATERIAL_ALPHABLEND`**, and `forceDepthWrite` is set to **`true`**.
+
+This method is **identical to MMD's rendering method**, so if you encounter any rendering issues, it is recommended to try this method.
+
+### AlphaEvaluation
+
+This rendering method determines whether to render a mesh using **Alpha Blending, Alpha Test, or Opaque** mode, and **does not perform Depth Write when using Alpha Blending**.
+
+In other words, when loading a model with this method, the material's `transparencyMode` can be **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`false`**.
+
+This method is the **most compatible with Babylon.js's rendering pipeline**, as using Alpha Blend with Depth Write is not a common practice.
+
+## Alpha Evaluation
+
+Among the rendering methods described above, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** needs to determine if a mesh is Opaque. Also, **`MmdMaterialRenderMethod.AlphaEvaluation`** needs to evaluate the mesh's Alpha value to select the appropriate rendering method.
+
+This process is called **Alpha Evaluation**.
+
+### Process
+
+1. Render the geometry in **UV Space** to a Render Target. At this time, only the **Alpha value** of each pixel is rendered by sampling the texture.
+2. Read the pixel data of the Render Target using the **readPixels** function.
+3. Evaluate the Alpha values from the read pixel data to select the appropriate rendering method.
+
+- For **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**, if even one fragment of the textured geometry has an Alpha value other than `255`, the material's `transparencyMode` is set to **`Material.MATERIAL_ALPHABLEND`**.
+- For **`MmdMaterialRenderMethod.AlphaEvaluation`**, the material's rendering method is determined by the material builder's **`alphaThreshold`** and **`alphaBlendThreshold`** values.
+
+### Caveats
+
+**Alpha Evaluation may not work correctly in some edge cases**. For example, if the mesh's UV topology is abnormal, Alpha Evaluation may produce incorrect results. In this case, increasing the material builder's **`alphaEvaluationResolution`** might solve the problem.
+
+When performing Alpha Evaluation, **every material must be rendered to a Render Target once at load time**. This is a non-negligible cost. Therefore, you can disable Alpha Evaluation using the material builder's **`forceDisableAlphaEvaluation`** option.
+In this case, Alpha Evaluation is not performed.
+
+Also, the **BPMX format** stores the Alpha Evaluation results in the format, so you can use it and **skip the Alpha Evaluation process at load time**.
+
+## Draw Order Configuration
+
+MMD always renders meshes according to the order of materials.
+However, Babylon.js, in contrast, sorts meshes based on their distance from the camera before rendering.
+
+babylon-mmd provides separate solutions for two cases to reproduce the same Draw Order as MMD.
