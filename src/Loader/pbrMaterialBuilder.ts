@@ -145,7 +145,7 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
         } else {
             onTextureLoadComplete?.();
         }
-    };
+    }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async setAlphaBlendMode(

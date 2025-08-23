@@ -137,7 +137,7 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
         } else {
             onTextureLoadComplete?.();
         }
-    };
+    }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public override async setAlphaBlendMode(

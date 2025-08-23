@@ -225,5 +225,5 @@ export class MmdStandardMaterialBuilder extends StandardMaterialBuilderBase<MmdS
             );
             material.outlineAlpha = edgeColor[3];
         }
-    };
+    }
 }
