@@ -223,7 +223,7 @@ If a Mesh is completely **Opaque**, rendering without Alpha Blending can produce
 
 This rendering method renders **Opaque meshes without Alpha Blending** and uses Alpha Blending only when absolutely necessary.
 
-In other words, when loading a model with this method, the material's `transparencyMode` can be either **`Material.MATERIAL_ALPHABLEND`** or **`Material.MATERIAL_ALPOAQUE`**, and `forceDepthWrite` is set to **`true`**.
+In other words, when loading a model with this method, the material's `transparencyMode` can be either **`Material.MATERIAL_ALPHABLEND`** or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`true`**.
 
 This is the **default** method.
 
@@ -273,3 +273,80 @@ MMD always renders meshes according to the order of materials.
 However, Babylon.js, in contrast, sorts meshes based on their distance from the camera before rendering.
 
 babylon-mmd provides separate solutions for two cases to reproduce the same Draw Order as MMD.
+
+### Handling Multiple Meshes
+
+MMD's Draw Order is reproduced by setting an appropriate value for **`Mesh.alphaIndex`**.
+
+The following two properties of the material builder are used for this:
+
+- **`nextStartingAlphaIndex`** - The starting Alpha Index value for the next MMD model
+- **`alphaIndexIncrementsPerModel`** - The Alpha Index increment value for each MMD model
+
+**`nextStartingAlphaIndex`** increases by **`alphaIndexIncrementsPerModel`** after loading one MMD model.
+
+Therefore, with the following settings:
+- `nextStartingAlphaIndex`: 0
+- `alphaIndexIncrementsPerModel`: 3
+
+If you load MMD model A with 2 materials and MMD model B with 3 materials in order, **`nextStartingAlphaIndex`** changes as follows:
+
+1. Before loading, `nextStartingAlphaIndex`: 0
+2. After loading model A, `nextStartingAlphaIndex`: 3
+3. After loading model B, `nextStartingAlphaIndex`: 6
+
+And the **`Mesh.alphaIndex`** of the loaded models will be set as follows:
+
+```
+Model A: {
+    Mesh1: { alphaIndex: 0 }
+    Mesh2: { alphaIndex: 1 }
+}
+
+Model B: {
+    Mesh1: { alphaIndex: 3 }
+    Mesh2: { alphaIndex: 4 }
+    Mesh3: { alphaIndex: 5 }
+}
+```
+
+The important point here is that if **`alphaIndexIncrementsPerModel` is not large enough**, the **`Mesh.alphaIndex`** of the previously loaded model and the newly loaded model may **overlap**.
+
+For example, if **`alphaIndexIncrementsPerModel`** was set to 1 in the previous example, the **`Mesh.alphaIndex`** for each model would be as follows:
+
+```
+Model A: {
+    Mesh1: { alphaIndex: 0 }
+    Mesh2: { alphaIndex: 1 }
+}
+
+Model B: {
+    Mesh1: { alphaIndex: 1 }
+    Mesh2: { alphaIndex: 2 }
+    Mesh3: { alphaIndex: 3 }
+}
+```
+
+Model A's Mesh2 and Model B's Mesh1 will have the same **`alphaIndex`**, so their drawing order will be determined by their distance from the camera.
+
+To prevent this problem, the default value of **`alphaIndexIncrementsPerModel`** is set to a sufficiently large number.
+
+:::info
+Note that when using this method, the **Draw Order is determined by the order in which MMD models are loaded**.
+
+If you need to strictly reproduce the Draw Order between MMD models, you can set **`alphaIndexIncrementsPerModel` to 0** and adjust **`Mesh.alphaIndex` manually**.
+:::
+
+Note that Multiple Meshes Draw Order reproduction is not applied when `renderMethod` is `MmdMaterialRenderMethod.AlphaEvaluation`.
+
+### Handling Multiple SubMeshes
+
+In Babylon.js, there is **no way to control the Draw Order between multiple SubMeshes** within a single mesh.
+
+When a single mesh has multiple SubMeshes, the drawing order is determined by calculating the distance from the camera based on each SubMesh's own **Bounding Sphere Center**.
+
+Considering this behavior, babylon-mmd applies the **same `BoundingInfo` to all SubMeshes** when loading an MMD model.
+
+In this case, all SubMeshes will have the same distance from the camera, and they will be drawn in the order of **`Mesh.subMeshes`** due to **stable sort**.
+
+This is always applied when the MMD model loader's **`loaderOptions.mmdmodel.optimizeSubmeshes`** option is **`false`**.
