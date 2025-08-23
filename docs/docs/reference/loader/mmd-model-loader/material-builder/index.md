@@ -251,12 +251,12 @@ This process is called **Alpha Evaluation**.
 
 ### Process
 
-1. Render the geometry in **UV Space** to a Render Target. At this time, only the **Alpha value** of each pixel is rendered by sampling the texture.
-2. Read the pixel data of the Render Target using the **readPixels** function.
-3. Evaluate the Alpha values from the read pixel data to select the appropriate rendering method.
+1.  Render the geometry in **UV Space** to a Render Target. At this time, only the **Alpha value** of each pixel is rendered by sampling the texture.
+2.  Read the pixel data of the Render Target using the **readPixels** function.
+3.  Evaluate the Alpha values from the read pixel data to select the appropriate rendering method.
 
-- For **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**, if even one fragment of the textured geometry has an Alpha value other than `255`, the material's `transparencyMode` is set to **`Material.MATERIAL_ALPHABLEND`**.
-- For **`MmdMaterialRenderMethod.AlphaEvaluation`**, the material's rendering method is determined by the material builder's **`alphaThreshold`** and **`alphaBlendThreshold`** values.
+-   For **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**, if even one fragment of the textured geometry has an Alpha value other than `255`, the material's `transparencyMode` is set to **`Material.MATERIAL_ALPHABLEND`**.
+-   For **`MmdMaterialRenderMethod.AlphaEvaluation`**, the material's rendering method is determined by the material builder's **`alphaThreshold`** and **`alphaBlendThreshold`** values.
 
 ### Caveats
 
@@ -274,14 +274,16 @@ However, Babylon.js, in contrast, sorts meshes based on their distance from the 
 
 babylon-mmd provides separate solutions for two cases to reproduce the same Draw Order as MMD.
 
+Note that Draw Order reproduction is not applied when `renderMethod` is `MmdMaterialRenderMethod.AlphaEvaluation`.
+
 ### Handling Multiple Meshes
 
 MMD's Draw Order is reproduced by setting an appropriate value for **`Mesh.alphaIndex`**.
 
 The following two properties of the material builder are used for this:
 
-- **`nextStartingAlphaIndex`** - The starting Alpha Index value for the next MMD model
-- **`alphaIndexIncrementsPerModel`** - The Alpha Index increment value for each MMD model
+-   **`nextStartingAlphaIndex`** - The starting Alpha Index value for the next MMD model
+-   **`alphaIndexIncrementsPerModel`** - The Alpha Index increment value for each MMD model
 
 **`nextStartingAlphaIndex`** increases by **`alphaIndexIncrementsPerModel`** after loading one MMD model.
 
@@ -291,9 +293,9 @@ Therefore, with the following settings:
 
 If you load MMD model A with 2 materials and MMD model B with 3 materials in order, **`nextStartingAlphaIndex`** changes as follows:
 
-1. Before loading, `nextStartingAlphaIndex`: 0
-2. After loading model A, `nextStartingAlphaIndex`: 3
-3. After loading model B, `nextStartingAlphaIndex`: 6
+1.  Before loading, `nextStartingAlphaIndex`: 0
+2.  After loading model A, `nextStartingAlphaIndex`: 3
+3.  After loading model B, `nextStartingAlphaIndex`: 6
 
 And the **`Mesh.alphaIndex`** of the loaded models will be set as follows:
 
@@ -336,8 +338,6 @@ Note that when using this method, the **Draw Order is determined by the order in
 
 If you need to strictly reproduce the Draw Order between MMD models, you can set **`alphaIndexIncrementsPerModel` to 0** and adjust **`Mesh.alphaIndex` manually**.
 :::
-
-Note that Multiple Meshes Draw Order reproduction is not applied when `renderMethod` is `MmdMaterialRenderMethod.AlphaEvaluation`.
 
 ### Handling Multiple SubMeshes
 
