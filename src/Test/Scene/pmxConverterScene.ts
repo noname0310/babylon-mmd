@@ -14,13 +14,16 @@ import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
+import type { ReferencedMesh } from "@/Loader/IMmdMaterialBuilder";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -77,6 +80,7 @@ export class SceneBuilder implements ISceneBuilder {
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.deleteTextureBufferAfterLoad = false;
         materialBuilder.renderMethod = MmdMaterialRenderMethod.AlphaEvaluation;
+        materialBuilder.forceDisableAlphaEvaluation = true;
 
         const scene = new Scene(engine);
         scene.ambientColor = new Color3(0.5, 0.5, 0.5);
@@ -126,19 +130,19 @@ export class SceneBuilder implements ISceneBuilder {
         const loadModelAsync = async(file: File): Promise<void> => {
             if (isLoading) return;
 
-            if (mesh !== null) {
-                for (const subMesh of mesh.metadata.meshes) {
+            if (mmdMesh !== null) {
+                for (const subMesh of mmdMesh.metadata.meshes) {
                     shadowGenerator.removeShadowCaster(subMesh);
                 }
-                mesh.dispose(false, true);
-                mesh = null;
+                mmdMesh.dispose(false, true);
+                mmdMesh = null;
             }
 
             isLoading = true;
             engine.displayLoadingUI();
             const fileRelativePath = file.webkitRelativePath as string;
             selectedPmxFile.textContent = file.name;
-            mesh = await LoadAssetContainerAsync(
+            mmdMesh = await LoadAssetContainerAsync(
                 file,
                 scene,
                 {
@@ -165,7 +169,7 @@ export class SceneBuilder implements ISceneBuilder {
                 return mmdMesh;
             });
             {
-                const meshes = mesh!.metadata.meshes;
+                const meshes = mmdMesh!.metadata.meshes;
                 for (let i = 0; i < meshes.length; ++i) {
                     const mesh = meshes[i];
                     mesh.receiveShadows = true;
@@ -173,7 +177,7 @@ export class SceneBuilder implements ISceneBuilder {
                     mesh.alphaIndex = i;
                 }
 
-                const materials = mesh!.metadata.materials;
+                const materials = mmdMesh!.metadata.materials;
                 translucentMaterials.length = materials.length;
                 alphaEvaluateResults.length = materials.length;
                 for (let i = 0; i < materials.length; ++i) {
@@ -184,15 +188,41 @@ export class SceneBuilder implements ISceneBuilder {
                         material.useAlphaFromDiffuseTexture = true;
                     }
 
+                    const referencedMeshes: ReferencedMesh[] = [];
+                    for (let meshIndex = 0; meshIndex < meshes.length; ++meshIndex) {
+                        const mesh = meshes[meshIndex];
+                        if ((mesh.material as MultiMaterial).subMaterials !== undefined) {
+                            const subMaterials = (mesh.material as MultiMaterial).subMaterials;
+                            for (let subMaterialIndex = 0; subMaterialIndex < subMaterials.length; ++subMaterialIndex) {
+                                const subMaterial = subMaterials[subMaterialIndex];
+                                if (subMaterial === material) {
+                                    referencedMeshes.push({
+                                        mesh,
+                                        subMeshIndex: subMaterialIndex
+                                    });
+                                }
+                            }
+                        } else {
+                            if (mesh.material === material) referencedMeshes.push(mesh);
+                        }
+                    }
+
                     if (material.alpha < 1) {
                         translucentMaterials[i] = true;
                     } else if (!diffuseTexture) {
                         translucentMaterials[i] = false;
                     } else {
                         translucentMaterials[i] = true;
-                        const referencedMeshes = meshes.filter(m => m.material === material);
-                        for (const referencedMesh of referencedMeshes) {
-                            const isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometryAsync(diffuseTexture, referencedMesh, null);
+
+                        for (let referencedMeshIndex = 0; referencedMeshIndex < referencedMeshes.length; ++referencedMeshIndex) {
+                            const referencedMesh = referencedMeshes[referencedMeshIndex];
+                            let isOpaque = false;
+                            if ((referencedMesh as { mesh: Mesh; subMeshIndex: number }).subMeshIndex) {
+                                const { mesh, subMeshIndex } = referencedMesh as { mesh: Mesh; subMeshIndex: number };
+                                isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometryAsync(diffuseTexture, mesh, subMeshIndex);
+                            } else {
+                                isOpaque = await textureAlphaChecker.hasFragmentsOnlyOpaqueOnGeometryAsync(diffuseTexture, referencedMesh as Mesh, null);
+                            }
                             if (isOpaque) {
                                 translucentMaterials[i] = false;
                                 break;
@@ -200,7 +230,32 @@ export class SceneBuilder implements ISceneBuilder {
                         }
                     }
 
-                    alphaEvaluateResults[i] = material.transparencyMode ?? -1;
+                    if (diffuseTexture !== null) {
+                        let transparencyMode = Number.MIN_SAFE_INTEGER;
+                        for (let i = 0; i < referencedMeshes.length; ++i) {
+                            const referencedMesh = referencedMeshes[i];
+
+                            const newTransparencyMode = await textureAlphaChecker.hasTranslucentFragmentsOnGeometryAsync(
+                                diffuseTexture,
+                                (referencedMesh as { mesh: Mesh })?.mesh ?? referencedMesh as Mesh,
+                                (referencedMesh as { subMeshIndex: number })?.subMeshIndex !== undefined
+                                    ? (referencedMesh as { subMeshIndex: number }).subMeshIndex
+                                    : null,
+                                materialBuilder.alphaThreshold,
+                                materialBuilder.alphaBlendThreshold
+                            );
+
+                            if (transparencyMode < newTransparencyMode) {
+                                transparencyMode = newTransparencyMode;
+                            }
+                        }
+                        alphaEvaluateResults[i] = transparencyMode !== Number.MIN_SAFE_INTEGER
+                            ? transparencyMode
+                            : Material.MATERIAL_OPAQUE;
+                    } else {
+                        alphaEvaluateResults[i] = Material.MATERIAL_OPAQUE;
+                    }
+                    material.transparencyMode = alphaEvaluateResults[i];
                 }
             }
             renderMaterialsList();
@@ -209,16 +264,16 @@ export class SceneBuilder implements ISceneBuilder {
         };
 
         let selectedFile: Nullable<File> = null;
-        let mesh: Nullable<MmdMesh> = null;
+        let mmdMesh: Nullable<MmdMesh> = null;
         const translucentMaterials: boolean[] = [];
         const alphaEvaluateResults: number[] = [];
         let currentMode: "Alpha Mode" | "Force Depth Write Mode" = "Alpha Mode";
         let isLoading = false;
 
         const switchMaterialTransparencyMode = (mode: "Alpha Mode" | "Force Depth Write Mode"): void => {
-            if (mesh === null) return;
+            if (mmdMesh === null) return;
 
-            const materials = mesh.metadata.materials;
+            const materials = mmdMesh.metadata.materials;
 
             if (mode === "Alpha Mode") {
                 for (let i = 0; i < materials.length; ++i) {
@@ -523,11 +578,11 @@ export class SceneBuilder implements ISceneBuilder {
         const renderMaterialsList = (): void => {
             materialList.innerHTML = "";
 
-            if (mesh === null) return;
+            if (mmdMesh === null) return;
 
-            const meshes = mesh.metadata.meshes;
-            for (let i = 0; i < meshes.length; ++i) {
-                const material = meshes[i].material as MmdStandardMaterial;
+            const materials = mmdMesh.metadata.materials;
+            for (let i = 0; i < materials.length; ++i) {
+                const material = materials[i] as MmdStandardMaterial;
 
                 const item = document.createElement("li");
                 item.style.padding = "5px 0px";
@@ -756,13 +811,13 @@ export class SceneBuilder implements ISceneBuilder {
         convertButton.onclick = async(): Promise<void> => {
             if (isLoading) return;
             if (selectedFile === null) return;
-            if (mesh === null) return;
+            if (mmdMesh === null) return;
 
             isLoading = true;
             engine.displayLoadingUI();
 
             engine.loadingUIText = `<br/><br/><br/>Converting (${selectedFile.name})...`;
-            const arrayBuffer = bpmxConverter.convert(mesh, {
+            const arrayBuffer = bpmxConverter.convert(mmdMesh, {
                 includeSkinningData: buildSkeletonInput.checked,
                 includeMorphData: buildMorphInput.checked,
                 translucentMaterials: translucentMaterials,
