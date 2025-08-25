@@ -244,4 +244,6 @@ assetContainer.dispose();
 
 You can create a function for this to reuse it as needed.
 
+For more detailed implementation details, **please refer to the [PMX to BPMX Converter Source](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/pmxConverterScene.ts)**.
+
 The **`BpmxConverter`** API supports various options, making it very tricky to write code that fully adheres to all specifications, but you can get useful results by selectively using only the features you need.
