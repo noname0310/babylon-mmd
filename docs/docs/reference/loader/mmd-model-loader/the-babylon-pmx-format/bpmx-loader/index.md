@@ -51,14 +51,12 @@ Below is an example of selecting and loading a **BPMX** file using the [showOpen
 
 ```typescript
 const [fileHandle] = await window.showOpenFilePicker({
-    types: [
-        {
-            description: "BPMX File",
-            accept: {
-                "application/octet-stream": [".bpmx"],
-            },
+    types: [{
+        description: "BPMX File",
+        accept: {
+            "application/octet-stream": [".bpmx"],
         },
-    ],
+    }],
     excludeAcceptAllOption: true,
     multiple: false,
 });
@@ -81,24 +79,24 @@ Below is an example of setting all options supported by the **BPMX** loader usin
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
-        modelFileOrUrl,
-        scene,
-        {
-                pluginOptions: {
-                        mmdmodel: {
-                                materialBuilder: null,
-                                useSdef: true,
-                                buildSkeleton: true,
-                                buildMorph: true,
-                                boundingBoxMargin: 10,
-                                alwaysSetSubMeshesBoundingInfo: true,
-                                preserveSerializationData: false,
-                                loggingEnabled: false,
+    modelFileOrUrl,
+    scene,
+    {
+        pluginOptions: {
+            mmdmodel: {
+                materialBuilder: null,
+                useSdef: true,
+                buildSkeleton: true,
+                buildMorph: true,
+                boundingBoxMargin: 10,
+                alwaysSetSubMeshesBoundingInfo: true,
+                preserveSerializationData: false,
+                loggingEnabled: false,
 
-                                useSingleMeshForSingleGeometryModel: true
-                        }
-                }
+                useSingleMeshForSingleGeometryModel: true
+            }
         }
+    }
 );
 ```
 
