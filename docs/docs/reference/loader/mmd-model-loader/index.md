@@ -165,7 +165,7 @@ file1
 
 We need to allow users to **select the `file1` folder**.
 
-Ideally, you can use the **[showDirectoryFilePicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker) API** to select folders, but this feature is **not supported in Firefox and Safari**.
+Ideally, you can use the **[showDirectoryPicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker) API** to select folders, but this feature is **not supported in Firefox and Safari**.
 
 Therefore, this document explains how to **select folders using HTML file input**.
 
