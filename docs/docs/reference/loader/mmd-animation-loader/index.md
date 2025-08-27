@@ -17,7 +17,7 @@ This section explains the components used to load **MMD animation files** (**VMD
 
 ```typescript
 const vmdLoader = new VmdLoader();
-const mmdAnimation: MmdAnimation = vmdLoader.loadAsync("motion1", "path/to/motion1.vmd");
+const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", "path/to/motion1.vmd");
 ```
 
 The parameters received by the **`loadAsync`** method are as follows:
@@ -29,7 +29,7 @@ An important point to note here is that we can receive multiple animation source
 
 ```typescript
 const vmdLoader = new VmdLoader();
-const mmdAnimation: MmdAnimation = vmdLoader.loadAsync("motion1", [
+const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", [
   "path/to/motion1.vmd",
   "path/to/motion2.vmd"
 ]);
@@ -72,7 +72,7 @@ if (vmdData === null) {
 const vmdObject = VmdObject.Parse(vmdData);
 
 const vmdLoader = new VmdLoader();
-vmdLoader.loadFromVmdObject("motion1", vmdObject);
+const mmdAnimation = await vmdLoader.loadFromVmdObjectAsync("motion1", vmdObject);
 ```
 
 By allowing all processes to be explicitly called and loaded in this way, babylon-mmd provides extensibility that enables modifications during the loading process or writing new logic to load into completely different containers.
@@ -90,7 +90,7 @@ In addition, **`VmdLoader`** provides the following options:
 
 ```typescript
 const vpdLoader = new VpdLoader();
-const mmdAnimation: MmdAnimation = vpdLoader.loadAsync("pose1", "path/to/pose1.vpd");
+const mmdAnimation: MmdAnimation = await vpdLoader.loadAsync("pose1", "path/to/pose1.vpd");
 ```
 
 The animation created at this time is a one-frame animation.
@@ -126,7 +126,7 @@ const text = textDecoder.decode(arrayBuffer);
 const vpdObject = VpdReader.Parse(text);
 
 const vpdLoader = new VpdLoader();
-vpdLoader.loadFromVpdObject("pose1", vpdObject);
+const mmdAnimation = await vpdLoader.loadFromVpdObjectAsync("pose1", vpdObject);
 ```
 
 In addition, you can enable log output during the loading process through the **`VpdLoader.loggingEnabled`** option. The default value of this option is `false`.
@@ -160,7 +160,7 @@ Therefore, when loading vmd animations, model animations and camera animations c
 
 ```typescript
 const vmdLoader = new VmdLoader();
-const mmdAnimation: MmdAnimation = vmdLoader.loadAsync("motion1", [
+const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", [
     "path/to/model/anim.vmd",
     "path/to/camera/anim.vmd"
 ]);
