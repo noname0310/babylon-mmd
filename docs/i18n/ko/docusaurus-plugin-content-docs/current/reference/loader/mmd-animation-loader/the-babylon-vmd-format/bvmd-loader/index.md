@@ -1,30 +1,30 @@
 ---
 sidebar_position: 2
-sidebar_label: BVMD Loader
+sidebar_label: BVMD 로더
 ---
 
-# BVMD Loader
+# BVMD 로더
 
-This section explains how to load **Babylon VMD (BVMD)** animation files.
+이 섹션에서는 **Babylon VMD (BVMD)** 애니메이션 파일을 로드하는 방법을 설명합니다.
 
 ## BvmdLoader
 
-You can use **`BvmdLoader`** to load **BVMD** files as **`MmdAnimation`** objects. **`BvmdLoader`** provides an interface almost identical to **`VmdLoader`**.
+**BVMD** 파일을 **`MmdAnimation`** 객체로 로드하기 위해 **`BvmdLoader`**를 사용할 수 있습니다. **`BvmdLoader`**는 **`VmdLoader`**와 거의 동일한 인터페이스를 제공합니다.
 
 ```typescript
 const bvmdLoader = new BvmdLoader();
 const mmdAnimation: MmdAnimation = await bvmdLoader.loadAsync("motion1", "path/to/motion1.bvmd");
 ```
 
-The parameters received by the **`loadAsync`** method are as follows:
+**`loadAsync`** 메서드가 받는 매개변수는 다음과 같습니다:
 
-- **`name`**: The name of the animation.
-- **`fileOrUrl`**: The URL of the BVMD file as a `string` or `File`.
-- **`onProgress`**: A callback function that is called periodically with the loading progress.
+- **`name`**: 애니메이션의 이름.
+- **`fileOrUrl`**: `string` 또는 `File`로 된 BVMD 파일의 URL.
+- **`onProgress`**: 로딩 진행 상황과 함께 주기적으로 호출되는 콜백 함수.
 
-Additionally, you can use the **`load`** method to load **BVMD** files with **`onLoad`** and **`onError`** callbacks.
+또한 **`onLoad`**와 **`onError`** 콜백과 함께 **BVMD** 파일을 로드하기 위해 **`load`** 메서드를 사용할 수 있습니다.
 
-You can also load **BVMD** files from an **`ArrayBuffer`** using the **`loadFromBuffer`** method.
+**`loadFromBuffer`** 메서드를 사용하여 **`ArrayBuffer`**에서 **BVMD** 파일을 로드할 수도 있습니다.
 
 ```typescript
 const arrayBuffer = await fetch("path/to/motion1.bvmd")
@@ -34,6 +34,6 @@ const bvmdLoader = new BvmdLoader();
 const mmdAnimation = bvmdLoader.loadFromBuffer("motion1", arrayBuffer);
 ```
 
-Due to the efficient structure of the **BVMD** format, parsing time is very short, so **`loadFromBuffer`** doesn't provide an **`onProgress`** callback and is not an asynchronous operation.
+**BVMD** 포맷의 효율적인 구조로 인해 파싱 시간이 매우 짧기 때문에, **`loadFromBuffer`**는 **`onProgress`** 콜백을 제공하지 않으며 비동기 작업이 아닙니다.
 
-Additionally, you can enable logging using **`BvmdLoader.loggingEnabled`**. The default value is `false`. When set to `false`, no logs are output.
+또한 **`BvmdLoader.loggingEnabled`**를 사용하여 로깅을 활성화할 수 있습니다. 기본값은 `false`입니다. `false`로 설정되면 로그가 출력되지 않습니다.

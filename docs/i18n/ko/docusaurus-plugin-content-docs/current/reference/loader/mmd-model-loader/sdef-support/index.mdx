@@ -1,19 +1,19 @@
 ---
 sidebar_position: 2
-sidebar_label: SDEF Support
+sidebar_label: SDEF 지원
 ---
 
-# SDEF Support
+# SDEF 지원
 
-This section explains how to **correctly load MMD models that use Spherical Deformation (SDEF)**.
+이 섹션에서는 **구면 변형(SDEF)을 사용하는 MMD 모델을 올바르게 로드하는 방법**을 설명합니다.
 
-## What is SDEF?
+## SDEF란 무엇인가?
 
-Generally, **Linear Blend Skinning (LBS)** is used for skinning.
+일반적으로 스키닝에는 **선형 블렌드 스키닝(Linear Blend Skinning, LBS)**이 사용됩니다.
 
-This method determines vertex positions through **Linear Interpolation** based on the weight of each bone's influence when each vertex is affected by multiple bones.
+이 메서드는 각 버텍스가 여러 본의 영향을 받을 때, 각 본의 영향력 가중치에 기반하여 **선형 보간법**을 통해 버텍스 위치를 결정합니다.
 
-This method is **simple and fast**, but can cause issues like **candy wrapper artifacts**.
+이 메서드는 **간단하고 빠르지만**, **캔디 래퍼 아티팩트**와 같은 문제를 일으킬 수 있습니다.
 
 import YouTube from "react-youtube";
 
@@ -21,25 +21,25 @@ import YouTube from "react-youtube";
     videoId="ksDgnOYzWM0"
     opts={{ width: "100%" }} />
 
-**Spherical Deformation (SDEF)** is a method proposed to solve these problems. SDEF uses **spherical interpolation instead of linear interpolation** when determining vertex positions, making vertex positions more naturally corrected.
+**구면 변형(Spherical Deformation, SDEF)**은 이러한 문제를 해결하기 위해 제안된 방법입니다. SDEF는 버텍스 위치를 결정할 때 **선형 보간 대신 구면 보간**을 사용하여 버텍스 위치를 더 자연스럽게 보정합니다.
 
-## SDEF Support in babylon-mmd
+## babylon-mmd에서의 SDEF 지원
 
-**Many MMD models use SDEF**. In contrast, most modern software only supports LBS.
+**많은 MMD 모델이 SDEF를 사용합니다**. 반면에 대부분의 현대 소프트웨어는 LBS만 지원합니다.
 
-Since **MMD model specifications and MMD support SDEF**, babylon-mmd supports SDEF to achieve the same results as MMD's behavior.
+**MMD 모델 사양과 MMD가 SDEF를 지원하기 때문에**, babylon-mmd는 MMD의 동작과 동일한 결과를 얻기 위해 SDEF를 지원합니다.
 
-Since **Babylon.js also does not support SDEF**, babylon-mmd uses somewhat unconventional methods.
+**Babylon.js 또한 SDEF를 지원하지 않기 때문에**, babylon-mmd는 다소 비관행적인 방법을 사용합니다.
 
-**Four options are provided** for handling SDEF.
+SDEF를 처리하기 위한 **네 가지 옵션이 제공됩니다**.
 
-### Option 1: Use LBS
+### 옵션 1: LBS 사용하기
 
-**Models that use SDEF Skinning can be rendered with LBS**.
+**SDEF 스키닝을 사용하는 모델도 LBS로 렌더링할 수 있습니다**.
 
-This method has the **highest compatibility** because it uses Babylon.js's default Skinning method as-is.
+이 방법은 Babylon.js의 기본 스키닝 메서드를 그대로 사용하기 때문에 **호환성이 가장 높습니다**.
 
-Simply set the **`pluginOptions.mmdmodel.useSdef` value to `false`** when loading the model to use the LBS method. (The default value is `true`.)
+모델을 로드할 때 **`pluginOptions.mmdmodel.useSdef` 값을 `false`로 설정**하기만 하면 LBS 방법을 사용할 수 있습니다. (기본값은 `true`입니다.)
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -55,7 +55,7 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 );
 ```
 
-However, **artifacts like the following may occur**.
+하지만 **다음과 같은 아티팩트가 발생할 수 있습니다**.
 
 import Ldef from "@site/docs/reference/loader/mmd-model-loader/sdef-support/ldef.mp4";
 
@@ -63,17 +63,17 @@ import Ldef from "@site/docs/reference/loader/mmd-model-loader/sdef-support/ldef
   <source src={Ldef} type="video/mp4"/>
 </video>
 
-*This video shows the result of **rendering an MMD model that uses SDEF with LBS**. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 **SDEF를 사용하는 MMD 모델을 LBS로 렌더링한 결과**를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-### Option 2: Apply SDEF Only to MmdStandardMaterial
+### 옵션 2: MmdStandardMaterial에만 SDEF 적용하기
 
-When **rendering using `MmdStandardMaterial`**, you can apply SDEF.
+**`MmdStandardMaterial`을 사용하여 렌더링할 때** SDEF를 적용할 수 있습니다.
 
-**`MmdStandardMaterial` is a material provided by babylon-mmd** for rendering MMD models.
-This material is created by **modifying Babylon.js's `StandardMaterial`** using `MaterialPlugin`.
-**`MmdStandardMaterial` provides various MMD material properties** and supports SDEF.
+**`MmdStandardMaterial`은 babylon-mmd에서 제공하는** MMD 모델 렌더링을 위한 머티리얼입니다.
+이 머티리얼은 `MaterialPlugin`을 사용하여 **Babylon.js의 `StandardMaterial`을 수정하여 만들어졌습니다**.
+**`MmdStandardMaterial`은 다양한 MMD 머티리얼 속성**을 제공하고 SDEF를 지원합니다.
 
-To **load MMD models using this material and apply SDEF**, load as follows:
+**이 머티리얼을 사용하여 MMD 모델을 로드하고 SDEF를 적용**하려면 다음과 같이 로드하세요:
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -90,9 +90,9 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 );
 ```
 
-**Using this material allows SDEF application**, but **does not affect the rest of the render pipeline** except for materials.
+**이 머티리얼을 사용하면 SDEF 적용이 가능**하지만, **머티리얼을 제외한 렌더 파이프라인의 나머지 부분에는 영향을 미치지 않습니다**.
 
-Therefore, as shown in the video below, **even when SDEF is applied, it is not applied to Shadow map** and instead shows results rendered with LBS.
+따라서 아래 비디오에서 볼 수 있듯이 **SDEF가 적용되더라도 섀도우 맵에는 적용되지 않고** 대신 LBS로 렌더링된 결과를 보여줍니다.
 
 import Sdef from "@site/docs/reference/loader/mmd-model-loader/sdef-support/sdef.mp4";
 
@@ -100,21 +100,21 @@ import Sdef from "@site/docs/reference/loader/mmd-model-loader/sdef-support/sdef
   <source src={Sdef} type="video/mp4"/>
 </video>
 
-*This video shows the result of **rendering an MMD model with SDEF applied using `MmdStandardMaterial`**. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 **`MmdStandardMaterial`을 사용하여 SDEF가 적용된 MMD 모델을 렌더링한 결과**를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-### Option 3: Apply SDEF Using Shader Injection
+### 옵션 3: 셰이더 인젝션을 사용하여 SDEF 적용하기
 
-This method **modifies Babylon.js's shader compilation entry point to apply SDEF**, and is **the most powerful SDEF support method provided by babylon-mmd**.
+이 방법은 **SDEF를 적용하기 위해 Babylon.js의 셰이더 컴파일 진입점을 수정**하며, **babylon-mmd에서 제공하는 가장 강력한 SDEF 지원 방법**입니다.
 
-**This method is best used together with Option 2**, but can also apply SDEF in other cases.
+**이 방법은 옵션 2와 함께 사용하는 것이 가장 좋습니다**만, 다른 경우에도 SDEF를 적용할 수 있습니다.
 
-**Before creating the `Scene`**, execute the following code to modify the `Engine.createEffect` function:
+**`Scene`을 생성하기 전에** 다음 코드를 실행하여 `Engine.createEffect` 함수를 수정하세요:
 
 ```
 SdefInjector.OverrideEngineCreateEffect(engine);
 ```
 
-**This does not modify the prototype** and works by adding a createEffect function to the `Engine` instance.
+**이것은 프로토타입을 수정하지 않으며**, `Engine` 인스턴스에 `createEffect` 함수를 추가하는 방식으로 작동합니다.
 
 import SdefWithInjection from "@site/docs/reference/loader/mmd-model-loader/sdef-support/sdef_with_injection.mp4";
 
@@ -122,13 +122,13 @@ import SdefWithInjection from "@site/docs/reference/loader/mmd-model-loader/sdef
   <source src={SdefWithInjection} type="video/mp4"/>
 </video>
 
-*This video shows the result of **rendering an MMD model that uses SDEF through shader injection**. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 **셰이더 인젝션을 통해 SDEF가 적용된 MMD 모델을 렌더링한 결과**를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-### Option 4: CPU Bound SDEF Skinning
+### 옵션 4: CPU 바운드 SDEF 스키닝
 
-This method **performs SDEF Skinning on the CPU**, with **very low performance** but can apply SDEF in any rendering pipeline.
+이 방법은 **CPU에서 SDEF 스키닝을 수행**하며, **성능은 매우 낮지만** 모든 렌더링 파이프라인에서 SDEF를 적용할 수 있습니다.
 
-Set **`pluginOptions.mmdmodel.useSdef` to `true`** and set all meshes' **`computeBonesUsingShaders` value to `false`**.
+**`pluginOptions.mmdmodel.useSdef`를 `true`로 설정**하고 모든 메시의 **`computeBonesUsingShaders` 값을 `false`로 설정**하세요.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -147,31 +147,31 @@ const modelMesh = assetContainer.meshes[0] as MmdMesh;
 for (const mesh of modelMesh.metadata.meshes) mesh.computeBonesUsingShaders = false;
 ```
 
-**Babylon.js's `Mesh` supports CPU bound skinning** as a fallback when skinning cannot be done with shaders. However, since **Babylon.js's CPU bound skinning does not support SDEF**, babylon-mmd overrides this to support SDEF.
+**Babylon.js의 `Mesh`는 CPU 바운드 스키닝을 지원**하며, 셰이더로 스키닝을 수행할 수 없는 경우 대체 방법으로 사용됩니다. 그러나 **Babylon.js의 CPU 바운드 스키닝은 SDEF를 지원하지 않기 때문에**, babylon-mmd는 이를 오버라이드하여 SDEF를 지원합니다.
 
-When **`useSdef` is set to `true`**, the CPU Skinning implementation is overridden, and **`SdefMesh` (which inherits from `Mesh`) is used instead** of `Mesh` for meshes that need SDEF support.
+**`useSdef`가 `true`로 설정되면**, CPU 스키닝 구현이 오버라이드되고, **SDEF 지원이 필요한 메시에는 `Mesh` 대신 `SdefMesh`가 사용됩니다**.
 
-However, in this case, **you cannot use Morph Targets simultaneously**.
-This is because when applying deformation, **Morph Targets should be applied before Skinning**, but when Skinning is processed first in CPU bound, **Morph Targets are applied later in shaders**, resulting in an incorrect transformation order.
-Therefore, while **no runtime errors will occur**, it can produce **very strange results**.
+그러나 이 경우 **모프 타겟을 동시에 사용할 수 없습니다**.
+변형을 적용할 때 **모프 타겟이 스키닝 전에 적용되어야 하지만**, CPU 바운드에서 스키닝이 먼저 처리되고 **모프 타겟이 나중에 셰이더에서 적용되어 변형 순서가 잘못됩니다**.
+따라서 **런타임 오류는 발생하지 않지만**, **매우 이상한 결과**가 발생할 수 있습니다.
 
-## SDEF Shader Injection Implementation Details
+## SDEF 셰이더 인젝션 구현 세부사항
 
-To **support SDEF, Babylon.js's internal shader code must be modified**, and all render pipelines inside Babylon.js must be modified accordingly.
+SDEF를 지원하려면 **Babylon.js의 내부 셰이더 코드를 수정**하고, Babylon.js 내부의 모든 렌더 파이프라인을 accordingly 수정해야 합니다.
 
-For example, to **use MMD models that use SDEF with Depth Of Field effects**, you must **modify the Depth Renderer's Vertex Shader** and then modify the render pipeline to **additionally bind the attributes needed to apply SDEF**.
+예를 들어, **SDEF를 사용하는 MMD 모델로 피사계 심도 효과를 사용하려면**, **Depth Renderer의 정점 셰이더를 수정**한 다음 렌더 파이프라인을 수정하여 **SDEF를 적용하는 데 필요한 속성을 추가로 바인딩**해야 합니다.
 
-Since **such work is practically impossible**, babylon-mmd instead uses a method of **modifying Babylon.js's shader compilation entry point to insert SDEF code**.
+이러한 작업은 **사실상 불가능하기 때문에**, babylon-mmd는 대신 **Babylon.js의 셰이더 컴파일 진입점을 수정하여 SDEF 코드를 삽입하는 방법**을 사용합니다.
 
-**Babylon.js passes shader code along with attributes, uniforms, etc.** needed to execute shaders to the `Engine.createEffect` function. **babylon-mmd intercepts this process to insert SDEF-related code**.
+**Babylon.js는 셰이더를 실행하는 데 필요한 속성, 유니폼 등과 함께 셰이더 코드를 `Engine.createEffect` 함수에 전달**합니다. **babylon-mmd는 이 프로세스를 가로채어 SDEF 관련 코드를 삽입합니다**.
 
-The **modified `createEffect` function goes through the following process**:
+수정된 `createEffect` 함수는 다음 프로세스를 거칩니다:
 
-1. **Check if the shader currently being compiled supports Skeleton**.
-2. **Add attributes for SDEF** if Skeleton is supported.
-3. **Insert SDEF Skinning code**.
-4. **Pass modified parameters to the original `createEffect` function**.
+1. 현재 컴파일 중인 셰이더가 **스켈레톤을 지원하는지 확인**합니다.
+2. 스켈레톤이 지원되는 경우 **SDEF용 속성 추가**합니다.
+3. **SDEF 스키닝 코드 삽입**.
+4. 수정된 매개변수를 원래의 `createEffect` 함수에 전달합니다.
 
-The **side effect of this approach** is that **SDEF code is also inserted into shaders that support Skeleton but do not support SDEF**.
+이 접근 방식의 **부작용은 SDEF를 지원하지 않는 스켈레톤을 렌더링할 때도 SDEF 코드가 삽입된다는 점**입니다.
 
-In this case, **due to shader branch divergence, the same computational cost as applying SDEF occurs** even when rendering Skeletons that use LBS.
+이 경우, **셰이더 분기 발산으로 인해 LBS를 사용하는 스켈레톤을 렌더링할 때 SDEF를 적용하는 것과 동일한 계산 비용이 발생합니다**.

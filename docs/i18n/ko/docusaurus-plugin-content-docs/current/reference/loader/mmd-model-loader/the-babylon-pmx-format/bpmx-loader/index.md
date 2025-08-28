@@ -1,35 +1,35 @@
 ---
 sidebar_position: 2
-sidebar_label: BPMX Loader
+sidebar_label: BPMX 로더
 ---
 
-# BPMX Loader
+# BPMX 로더
 
-This section explains how to load **Babylon PMX (BPMX)** files, a variation of **PMX** files.
+이 섹션에서는 **PMX** 파일의 변형인 **Babylon PMX (BPMX)** 파일을 로드하는 방법에 대해 설명합니다.
 
-The **BPMX** format is a format for storing **MMD** models, and unlike **PMX/PMD**, it is a single binary format.
+**BPMX** 포맷은 **MMD** 모델을 저장하기 위한 포맷으로, **PMX/PMD**와 달리 단일 바이너리 포맷입니다.
 
-To load **BPMX** files, we use the **`BpmxLoader`**. This loader works in almost the same way as **`PmxLoader`** and **`PmdLoader`**.
+**BPMX** 파일을 로드하기 위해 **`BpmxLoader`**를 사용합니다. 이 로더는 **`PmxLoader`**와 **`PmdLoader`**와 거의 동일한 방식으로 작동합니다.
 
-## Registering with SceneLoader
+## SceneLoader에 등록하기
 
-First, we need to register the **`BpmxLoader`** with the **Babylon.js SceneLoader**. This is done by importing it for its side effect.
+먼저, **`BpmxLoader`**를 **Babylon.js SceneLoader**에 등록해야 합니다. 이는 사이드 이펙트를 위한 임포트를 통해 수행됩니다.
 
 ```typescript
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 ```
 
-This import statement implicitly performs the following side effect:
+이 임포트 구문은 암묵적으로 다음과 같은 사이드 이펙트를 수행합니다:
 
 ```typescript
 RegisterSceneLoaderPlugin(new BpmxLoader());
 ```
 
-## Loading BPMX Files
+## BPMX 파일 로딩하기
 
-**BPMX** files can be loaded using the **Babylon.js SceneLoader API**, just like **PMX/PMD** files.
+**BPMX** 파일은 **PMX/PMD** 파일과 마찬가지로 **Babylon.js SceneLoader API**를 사용하여 로드할 수 있습니다.
 
-Below is an example of loading a **BPMX** file using **`LoadAssetContainerAsync`**, one of the SceneLoader API methods.
+아래는 SceneLoader API 메서드 중 하나인 **`LoadAssetContainerAsync`**를 사용하여 **BPMX** 파일을 로드하는 예시입니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync("path/to/mmdModel.bpmx", scene);
@@ -37,17 +37,17 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-You can also use **`ImportMeshAsync`** and **`AppendSceneAsync`** to load **BPMX** files.
+또한 **`ImportMeshAsync`**와 **`AppendSceneAsync`**를 사용하여 **BPMX** 파일을 로드할 수도 있습니다.
 
 :::info
-Since **BPMX** files store all assets, including textures, in a single file, there are no **Texture Resolution** related issues, and all assets can be loaded with a single network request.
+**BPMX** 파일은 텍스처를 포함한 모든 에셋을 단일 파일에 저장하기 때문에 **텍스처 해상도**와 관련된 문제가 없으며, 모든 에셋은 단일 네트워크 요청으로 로드할 수 있습니다.
 :::
 
-## Use Browser File API
+## 브라우저 파일 API 사용하기
 
-You can also load files using the browser's **File API**.
+브라우저의 **파일 API**를 사용하여 파일을 로드할 수도 있습니다.
 
-Below is an example of selecting and loading a **BPMX** file using the [showOpenFilePicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker) API.
+아래는 [showOpenFilePicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker) API를 사용하여 **BPMX** 파일을 선택하고 로드하는 예시입니다.
 
 ```typescript
 const [fileHandle] = await window.showOpenFilePicker({
@@ -68,14 +68,14 @@ const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
 :::warning
-The showOpenFilePicker browser API is not supported in Firefox and Safari.
+showOpenFilePicker 브라우저 API는 Firefox와 Safari에서 지원되지 않습니다.
 :::
 
-## Loader Options
+## 로더 옵션
 
-Unlike the **PMX/PMD** loaders, the **BPMX** loader does not support some optimization-related options. This is because **BPMX** files are already optimized during the conversion process.
+**PMX/PMD** 로더와 달리, **BPMX** 로더는 일부 최적화 관련 옵션을 지원하지 않습니다. 이는 **BPMX** 파일이 변환 과정에서 이미 최적화되었기 때문입니다.
 
-Below is an example of setting all options supported by the **BPMX** loader using **`pluginOptions`**.
+아래는 **`pluginOptions`**를 사용하여 **BPMX** 로더가 지원하는 모든 옵션을 설정하는 예시입니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -100,11 +100,11 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 );
 ```
 
-Except for **`useSingleMeshForSingleGeometryModel`**, the other options are the same as for the **PMX/PMD** loaders. For a description of each option, please refer to the [PMX/PMD Loader Options](../../#loader-options) document.
+**`useSingleMeshForSingleGeometryModel`**을 제외하고, 다른 옵션들은 **PMX/PMD** 로더와 동일합니다. 각 옵션에 대한 설명은 [PMX/PMD 로더 옵션](../../#loader-options) 문서를 참조하세요.
 
 ### useSingleMeshForSingleGeometryModel
 
-The **`BpmxLoader`** creates an empty **Root mesh** to load a model with N geometries and creates N meshes with geometries under it. Therefore, the structure of a 3D model with 3 geometries is configured as follows.
+**`BpmxLoader`**는 N개의 지오메트리가 있는 모델을 로드하기 위해 빈 **루트 메시**를 생성하고 그 아래에 지오메트리가 있는 N개의 메시를 생성합니다. 따라서 3개의 지오메트리가 있는 3D 모델의 구조는 다음과 같이 구성됩니다.
 
 ```
 RootMesh {
@@ -116,13 +116,13 @@ RootMesh {
 }
 ```
 
-However, if the model has a single geometry, the **Root mesh** is unnecessary. Therefore, if **`useSingleMeshForSingleGeometryModel`** is `true`, a model with a single geometry will consist of only one mesh without a **Root mesh**, and the hierarchy will be configured as follows.
+그러나 모델이 단일 지오메트리를 가진 경우, **루트 메시**는 불필요합니다. 따라서 **`useSingleMeshForSingleGeometryModel`**이 `true`인 경우, 단일 지오메트리를 가진 모델은 **루트 메시** 없이 하나의 메시만으로 구성되며, 계층 구조는 다음과 같이 구성됩니다.
 
 ```
 Mesh1
 ```
 
-If **`useSingleMeshForSingleGeometryModel`** is `false`, a model with a single geometry will still have a **rootMesh**, and the hierarchy will be configured as follows.
+**`useSingleMeshForSingleGeometryModel`**이 `false`인 경우, 단일 지오메트리를 가진 모델도 여전히 **rootMesh**를 가지며, 계층 구조는 다음과 같이 구성됩니다.
 
 ```
 RootMesh {
@@ -132,4 +132,4 @@ RootMesh {
 }
 ```
 
-The default value of **`useSingleMeshForSingleGeometryModel`** is `true`.
+**`useSingleMeshForSingleGeometryModel`**의 기본값은 `true`입니다.

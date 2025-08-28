@@ -3,34 +3,34 @@ sidebar_position: 3
 sidebar_label: The Babylon VMD format
 ---
 
-# The Babylon VMD format
+# 바빌론 VMD 포맷
 
-This section explains the **Babylon VMD (BVMD)** format, which is a variation of the **VMD** format.
+이 섹션에서는 **VMD** 포맷의 변형인 **바빌론 VMD (BVMD)** 포맷에 대해 설명합니다.
 
-## Key Differences
+## 주요 차이점
 
-The main differences from the original **VMD** format are as follows:
+원본 **VMD** 포맷과의 주요 차이점은 다음과 같습니다:
 
-- **Smaller file size**: The **BVMD** format has about 3 times smaller file size.
-- **Faster loading time**: The **BVMD** format has a structure that allows for very fast parsing.
+- **더 작은 파일 크기**: **BVMD** 포맷은 약 3배 더 작은 파일 크기를 가집니다.
+- **더 빠른 로딩 시간**: **BVMD** 포맷은 매우 빠른 파싱을 가능하게 하는 구조를 가지고 있습니다.
 
-These differences occur because the **VMD** format stores **bone binding information** for each keyframe when storing animation keyframe data, whereas the **BVMD** format stores keyframe information in tracks and stores bone binding information only once per track.
+이러한 차이점은 **VMD** 포맷이 애니메이션 키프레임 데이터를 저장할 때 각 키프레임마다 **본 바인딩 정보**를 저장하는 반면, **BVMD** 포맷은 키프레임 정보를 트랙에 저장하고 본 바인딩 정보를 트랙당 한 번만 저장하기 때문에 발생합니다.
 
-## Not Compatible with Any Other Software
+## 다른 소프트웨어와 호환되지 않음
 
-Additionally, the **BVMD** format is designed by **babylon-mmd** and is not compatible with any other 3D software.
+또한, **BVMD** 포맷은 **babylon-mmd**에 의해 설계되었으며 다른 3D 소프트웨어와 호환되지 않습니다.
 
-This is intentional, and as a result, you can protect your assets by converting the **VMD** format to the **BVMD** format.
+이는 의도적인 것이며, 결과적으로 **VMD** 포맷을 **BVMD** 포맷으로 변환함으로써 자산을 보호할 수 있습니다.
 
 :::info
-The **BVMD** format is not designed to be exposed to users. Therefore, designs that require users to convert **VMD** format to **BVMD** for use in applications are not use cases intended by babylon-mmd.
+**BVMD** 포맷은 사용자에게 노출되도록 설계되지 않았습니다. 따라서 사용자가 애플리케이션에서 사용하기 위해 **VMD** 포맷을 **BVMD**로 변환해야 하는 설계는 babylon-mmd가 의도한 사용 사례가 아닙니다.
 :::
 
-## Conclusion
+## 결론
 
-The **BVMD** format is a variation of the **VMD** format with improved file size and loading time. Also, using the **BVMD** format can help protect your assets.
+**BVMD** 포맷은 파일 크기와 로딩 시간이 개선된 **VMD** 포맷의 변형입니다. 또한, **BVMD** 포맷을 사용하면 자산을 보호하는 데 도움이 될 수 있습니다.
 
-The following two sections explain how to utilize the **BVMD** format.
+다음 두 섹션에서는 **BVMD** 포맷을 활용하는 방법을 설명합니다.
 
-- [Convert VMD to BVMD format](./convert-vmd-to-bvmd-format) - Explains how to convert **VMD** format to **BVMD** format.
-- [BVMD Loader](./bvmd-loader) - Explains how to load the **BVMD** format.
+- [VMD를 BVMD 포맷으로 변환](./convert-vmd-to-bvmd-format) - **VMD** 포맷을 **BVMD** 포맷으로 변환하는 방법을 설명합니다.
+- [BVMD 로더](./bvmd-loader) - **BVMD** 포맷을 로드하는 방법을 설명합니다.

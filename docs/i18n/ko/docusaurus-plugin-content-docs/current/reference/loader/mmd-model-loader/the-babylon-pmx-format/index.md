@@ -3,41 +3,41 @@ sidebar_position: 5
 sidebar_label: The Babylon PMX format
 ---
 
-# The Babylon PMX format
+# Babylon PMX 포맷
 
-The **Babylon PMX (BPMX)** format is a variation of the **PMX** format that solves problems encountered when loading models in a web environment and provides improved performance.
+**Babylon PMX (BPMX)** 포맷은 웹 환경에서 모델을 로딩할 때 발생하는 문제를 해결하고 성능을 향상시키는 **PMX** 포맷의 변형입니다.
 
-## Single-File Format
+## 단일 파일 포맷
 
-Unlike the **PMX** format, the **BPMX** format stores all resources, including textures, in a single binary file.
+**PMX** 포맷과 달리, **BPMX** 포맷은 텍스처를 포함한 모든 리소스를 하나의 바이너리 파일에 저장합니다.
 
-This solves the problem of loading failures during the **Texture Resolution** process due to differences between URLs and file systems.
+이는 URL과 파일 시스템 간의 차이로 인해 **텍스처 해상도** 과정에서 로딩 실패가 발생하는 문제를 해결합니다.
 
-Additionally, the **BPMX** format performs some optimizations during the **PMX to BPMX** conversion process to improve loading speed.
+또한, **BPMX** 포맷은 **PMX에서 BPMX**로 변환하는 과정에서 로딩 속도를 향상시키기 위한 일부 최적화를 수행합니다.
 
-## Not Compatible with Any Other Software
+## 다른 소프트웨어와 호환되지 않음
 
-The **BPMX** format is a proprietary format designed by **babylon-mmd** and is not compatible with other 3D software such as **Blender** or **Unity**.
+**BPMX** 포맷은 **babylon-mmd**에서 설계한 독점 포맷으로, **Blender**나 **Unity**와 같은 다른 3D 소프트웨어와 호환되지 않습니다.
 
-This is intentional, and as a result, converting **PMX** format to **BPMX** format can protect your assets.
+이는 의도적인 것으로, 결과적으로 **PMX** 포맷을 **BPMX** 포맷으로 변환하면 에셋을 보호할 수 있습니다.
 
-## Usable for 3D Model Caching
+## 3D 모델 캐싱에 사용 가능
 
-Converting from **PMX** format to **BPMX** format is a simple way to serialize the **PMX** format without loss.
+**PMX** 포맷에서 **BPMX** 포맷으로의 변환은 손실 없이 **PMX** 포맷을 직렬화하는 간단한 방법입니다.
 
-This allows you to cache **PMX** models in various storage locations such as the browser's **IndexedDB**, **Persistent Storage**, or a server.
+이를 통해 브라우저의 **IndexedDB**, **영구 스토리지** 또는 서버와 같은 다양한 스토리지 위치에 **PMX** 모델을 캐시할 수 있습니다.
 
 :::info
-The **BPMX** format is designed with asset protection and caching in mind, and it is not intended to be exposed to users.
+**BPMX** 포맷은 에셋 보호와 캐싱을 염두에 두고 설계되었으며, 사용자에게 직접 노출되도록 의도된 것이 아닙니다.
 
-For example, it is not the intended use for an application to require users to directly convert **PMX** files to **BPMX** files and upload them to the application.
+예를 들어, 애플리케이션이 사용자에게 직접 **PMX** 파일을 **BPMX** 파일로 변환하여 애플리케이션에 업로드하도록 요구하는 것은 의도된 사용 방법이 아닙니다.
 :::
 
-## Conclusion
+## 결론
 
-The **BPMX** format is a variation of the **PMX** format, designed to solve model loading issues in a web environment, protect assets, and improve performance.
+**BPMX** 포맷은 웹 환경에서 모델 로딩 문제를 해결하고, 에셋을 보호하며, 성능을 향상시키기 위해 설계된 **PMX** 포맷의 변형입니다.
 
-The next two sections explain how to utilize the **BPMX** format.
+다음 두 섹션에서는 **BPMX** 포맷을 활용하는 방법을 설명합니다.
 
-- [Convert PMX to BPMX format](./convert-pmx-to-bpmx-format) - Explains how to convert **PMX** files to **BPMX** files.
-- [BPMX Loader](./bpmx-loader) - Explains how to load **BPMX** files.
+- [PMX를 BPMX 포맷으로 변환](./convert-pmx-to-bpmx-format) - **PMX** 파일을 **BPMX** 파일로 변환하는 방법을 설명합니다.
+- [BPMX 로더](./bpmx-loader) - **BPMX** 파일을 로드하는 방법을 설명합니다.

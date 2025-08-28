@@ -1,13 +1,13 @@
 ---
 sidebar_position: 1
-sidebar_label: Understanding MMD Behavior
+sidebar_label: MMD 동작 이해하기
 ---
 
-# Understanding MMD Behavior
+# MMD 동작 이해하기
 
-This section explains what information PMX, PMD, VMD, and VPD files contain respectively, how MMD interprets that information, and explores how babylon-mmd implements MMD's behavior.
+이 섹션에서는 PMX, PMD, VMD 및 VPD 파일이 각각 어떤 정보를 포함하고 있는지, MMD가 이러한 정보를 어떻게 해석하는지, 그리고 babylon-mmd가 MMD의 동작을 어떻게 구현하는지 설명합니다.
 
-Those who have some experience with MMD probably know roughly that PMX and PMD are files that store 3D models, VMD stores motion data, and VPD stores pose data.
+MMD를 경험해 본 사람들은 아마도 PMX와 PMD는 3D 모델을 저장하는 파일이고, VMD는 모션 데이터를 저장하며, VPD는 포즈 데이터를 저장한다는 것을 대략적으로 알고 있을 것입니다.
 
-However, we need to understand in detail exactly what information these files contain.
-This is because babylon-mmd attempts to process the information provided by MMD files in the same way that MMD interprets them, and various features have been implemented based on this approach.
+하지만 이러한 파일들이 정확히 어떤 정보를 담고 있는지 자세히 이해할 필요가 있습니다.
+이는 babylon-mmd가 MMD 파일이 제공하는 정보를 MMD가 해석하는 방식과 동일하게 처리하려고 하며, 이러한 접근법을 기반으로 다양한 기능들이 구현되었기 때문입니다.

@@ -5,84 +5,84 @@ sidebar_label: MMD StandardMaterial
 
 # MMD StandardMaterial
 
-This section explains the **`MmdStandardMaterial`** provided by babylon-mmd to reproduce MMD's shading model.
+이 섹션에서는 babylon-mmd에서 MMD의 셰이딩 모델을 재현하기 위해 제공하는 **`MmdStandardMaterial`**에 대해 설명합니다.
 
-**`MmdStandardMaterial`** implements MMD's shading model by modifying shaders using **`MaterialPlugin`** based on Babylon.js's **`StandardMaterial`**.
+**`MmdStandardMaterial`**은 Babylon.js의 **`StandardMaterial`**을 기반으로 **`MaterialPlugin`**을 사용하여 셰이더를 수정함으로써 MMD의 셰이딩 모델을 구현합니다.
 
-## MMD's Shading Model and `MmdStandardMaterial`
+## MMD의 셰이딩 모델과 `MmdStandardMaterial`
 
-### Lighting
+### 라이팅
 
-MMD always has **one Directional Light** that exists globally in the Scene, and there are no additional lights.
+MMD는 항상 씬에 전역적으로 존재하는 **하나의 디렉셔널 라이트**를 가지며, 추가 라이트가 없습니다.
 
-babylon-mmd's **`MmdStandardMaterial`** reproduces this shading model of MMD, so it works best in situations where there is **only one Directional Light** in the Scene. It is designed to work in other scenarios as well, but may not look visually appealing.
+babylon-mmd의 **`MmdStandardMaterial`**은 MMD의 이러한 셰이딩 모델을 재현하므로, 씬에 **하나의 디렉셔널 라이트**만 있는 상황에서 가장 잘 작동합니다. 다른 시나리오에서도 작동하도록 설계되었지만, 시각적으로 매력적이지 않을 수 있습니다.
 
-### Ground Shadow
+### 그라운드 셰도우
 
-MMD implements shadows on the ground specifically by **projecting Mesh onto the ground**. This is called a **ground shadow**.
+MMD는 **메시를 지면에 투영**함으로써 지면에 특별한 그림자를 구현합니다. 이를 **그라운드 셰도우**라고 합니다.
 
-babylon-mmd does not implement this. (It may be added later if there are requests.)
-Instead, you can implement shadows using Babylon.js's **ShadowGenerator**.
+babylon-mmd는 이를 구현하지 않습니다. (요청이 있다면 나중에 추가될 수 있습니다.)
+대신 Babylon.js의 **ShadowGenerator**를 사용하여 그림자를 구현할 수 있습니다.
 
-### Shadow
+### 셰도우
 
-MMD controls whether a mesh **casts or receives Shadow** through Material properties. babylon-mmd does not implement this, and the responsibility for shadow control lies with the user. (This may also be added later if there are requests.)
+MMD는 메시가 **그림자를 드리우거나 받는지**를 머티리얼 속성을 통해 제어합니다. babylon-mmd는 이를 구현하지 않으며, 그림자 제어에 대한 책임은 사용자에게 있습니다. (이 또한 요청이 있다면 나중에 추가될 수 있습니다.)
 
-### Render Method
+### 렌더링 방식
 
-MMD uses a **Forward Rendering** approach. The **Draw order** of each Mesh is always fixed in the order of Materials, and all materials perform **Depth Write and Depth Test** and are drawn using **Alpha Blending**.
+MMD는 **포워드 렌더링** 접근 방식을 사용합니다. 각 메시의 **드로우 순서**는 항상 머티리얼 순서로 고정되어 있으며, 모든 머티리얼은 **뎁스 라이트와 뎁스 테스트**를 수행하고 **알파 블렌딩**을 사용하여 그려집니다.
 
-## MMD Material Properties
+## MMD 머티리얼 속성
 
-MMD materials have various properties, and the **`MmdStandardMaterial`** class provides properties corresponding to each property of MMD materials.
+MMD 머티리얼에는 다양한 속성이 있으며, **`MmdStandardMaterial`** 클래스는 MMD 머티리얼의 각 속성에 해당하는 속성을 제공합니다.
 
-The properties of MMD materials and their corresponding properties in **`MmdStandardMaterial`** are as follows:
+MMD 머티리얼의 속성과 **`MmdStandardMaterial`**에서 해당하는 속성은 다음과 같습니다:
 
-| MMD Material Property | `MmdStandardMaterial` Property | Description |
+| MMD 머티리얼 속성 | `MmdStandardMaterial` 속성 | 설명 |
 |-----------------|----------------------------|------|
-| diffuse(rgba) | diffuseColor(rgb), alpha(a) | Diffuse reflection color and transparency |
-| specular(rgb) | specularColor | Specular reflection color |
-| ambient(rgb) | ambientColor | Ambient light color |
-| reflect | specularPower | Reflection intensity |
+| diffuse(rgba) | diffuseColor(rgb), alpha(a) | 확산 반사 색상 및 투명도 |
+| specular(rgb) | specularColor | 반사 색상 |
+| ambient(rgb) | ambientColor | 환경광 색상 |
+| reflect | specularPower | 반사 강도 |
 |-----------------|----------------------------|------|
-| is double sided | backFaceCulling | Whether to render both sides of the mesh |
-| ground shadow | N/A | Not implemented |
-| draw shadow | N/A | Not implemented |
-| receive shadow | N/A | Not implemented |
-| toon edge | renderOutline | Whether to render outlines |
-| vertex color (PMX 2.1 spec) | N/A | Not implemented |
-| point draw (PMX 2.1 spec) | N/A | Not implemented |
-| line draw (PMX 2.1 spec) | N/A | Not implemented |
+| is double sided | backFaceCulling | 메시의 양면을 렌더링할지 여부 |
+| ground shadow | N/A | 구현되지 않음 |
+| draw shadow | N/A | 구현되지 않음 |
+| receive shadow | N/A | 구현되지 않음 |
+| toon edge | renderOutline | 외곽선을 렌더링할지 여부 |
+| vertex color (PMX 2.1 spec) | N/A | 구현되지 않음 |
+| point draw (PMX 2.1 spec) | N/A | 구현되지 않음 |
+| line draw (PMX 2.1 spec) | N/A | 구현되지 않음 |
 |-----------------|----------------------------|------|
-| edge color(rgba) | outlineColor(rgb), outlineAlpha(a) | Outline color and transparency |
-| edge size | outlineWidth | Outline thickness |
-| texture | diffuseTexture | Texture |
-| sphere texture | sphereTexture | Texture used for spherical environment mapping, used for reflective material representation |
-| sphere texture mode | sphereTextureBlendMode | Sphere texture blending mode |
-| toon texture | toonTexture | Texture used for Ramp texture shading |
+| edge color(rgba) | outlineColor(rgb), outlineAlpha(a) | 외곽선 색상 및 투명도 |
+| edge size | outlineWidth | 외곽선 두께 |
+| texture | diffuseTexture | 텍스처 |
+| sphere texture | sphereTexture | 구형 환경 매핑에 사용되는 텍스처로, 반사 재질 표현에 사용 |
+| sphere texture mode | sphereTextureBlendMode | 스피어 텍스처 블렌딩 모드 |
+| toon texture | toonTexture | 램프 텍스처 셰이딩에 사용되는 텍스처 |
 
-Additionally, there are properties applied by Material Morphing. These are not exposed on the surface in MMD and are parameters that can only be changed through Material Morphing.
+또한, 머티리얼 모핑에 의해 적용되는 속성들이 있습니다. 이들은 MMD에서 표면적으로 노출되지 않으며 머티리얼 모핑을 통해서만 변경할 수 있는 파라미터입니다.
 
-| `MmdStandardMaterial` Property | Description |
+| `MmdStandardMaterial` 속성 | 설명 |
 |----------------------------|------|
-| textureMultiplicativeColor(rgba) | Color value multiplied to diffuse texture |
-| textureAdditiveColor(rgba) | Color value added to diffuse texture |
-| sphereTextureMultiplicativeColor(rgba) | Color value multiplied to sphere texture |
-| sphereTextureAdditiveColor(rgba) | Color value added to sphere texture |
-| toonTextureMultiplicativeColor(rgba) | Color value multiplied to toon texture |
-| toonTextureAdditiveColor(rgba) | Color value added to toon texture |
+| textureMultiplicativeColor(rgba) | 디퓨즈 텍스처에 곱해지는 색상 값 |
+| textureAdditiveColor(rgba) | 디퓨즈 텍스처에 더해지는 색상 값 |
+| sphereTextureMultiplicativeColor(rgba) | 스피어 텍스처에 곱해지는 색상 값 |
+| sphereTextureAdditiveColor(rgba) | 스피어 텍스처에 더해지는 색상 값 |
+| toonTextureMultiplicativeColor(rgba) | 툰 텍스처에 곱해지는 색상 값 |
+| toonTextureAdditiveColor(rgba) | 툰 텍스처에 더해지는 색상 값 |
 
-## MMD Material Implementation
+## MMD 머티리얼 구현
 
-Let's look at how each property participates in calculations through the Fragment shader code actually used in MMD Standard Materials.
+이제 MMD 스탠다드 머티리얼에서 실제로 사용되는 프래그먼트 셰이더 코드를 통해 각 속성이 계산에 어떻게 참여하는지 살펴보겠습니다.
 
-This document explains based on GLSL(WebGL) shaders, but WGSL(WebGPU) code also works in the same way.
+이 문서는 GLSL(WebGL) 셰이더를 기반으로 설명하지만, WGSL(WebGPU) 코드도 동일한 방식으로 작동합니다.
 
 :::tip
-**Keep in mind that the actual shader performs optimization for multiple cases with numerous #ifdef branches**. This is just a simplified example after the preprocessor has been applied.
+**실제 셰이더는 여러 케이스에 대한 최적화를 위해 수많은 #ifdef 분기를 포함합니다**. 이것은 전처리기가 적용된 후의 단순화된 예시입니다.
 :::
 
-This is the **main function of the GLSL Fragment Shader** for MMD Standard Material generated by the Babylon.js runtime. Let's examine the key parts separately.
+다음은 Babylon.js 런타임에 의해 생성된 MMD 스탠다드 머티리얼의 **GLSL 프래그먼트 셰이더의 메인 함수**입니다. 핵심 부분을 따로 살펴보겠습니다.
 ```cpp
 void main(void) {
     vec3 toonNdl;
@@ -90,11 +90,11 @@ void main(void) {
     vec3 viewDirectionW = normalize(vEyePosition.xyz - vPositionW);
     vec4 baseColor = vec4(1., 1., 1., 1.);
     
-    // The sum of diffuse color and ambient color is used as diffuse color.
-    // This is to achieve the same result as MMD's shader and is not a typical approach.
-    // At this time, although not visible in the shader, the value of vAmbientColor is scene.ambientColor * material.ambientColor.
-    // Therefore, to implement the same 0.5 scaling that MMD applies to the ambient color property,
-    // the scene.ambientColor value needs to be (0.5, 0.5, 0.5).
+    // 디퓨즈 색상과 앰비언트 색상의 합이 디퓨즈 색상으로 사용됩니다.
+    // 이는 MMD의 셰이더와 동일한 결과를 얻기 위한 것으로, 일반적인 접근 방식은 아닙니다.
+    // 이때, 셰이더에서는 보이지 않지만, vAmbientColor 값은 scene.ambientColor * material.ambientColor입니다.
+    // 따라서 MMD가 앰비언트 색상 속성에 적용하는 0.5 스케일링과 동일하게 구현하기 위해서는
+    // scene.ambientColor 값이 (0.5, 0.5, 0.5)이어야 합니다.
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
     float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
 
@@ -102,7 +102,7 @@ void main(void) {
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply material diffuse texture color morphing.
+    // 머티리얼 디퓨즈 텍스처 색상 모핑을 적용합니다.
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
@@ -129,19 +129,19 @@ void main(void) {
     float numLights = 0.;
     vec4 diffuse0 = light0.vLightDiffuse;
 #define CUSTOM_LIGHT0_COLOR
-    // Calculate shading using the Blinn-Phong model for directional light.
+    // 디렉셔널 라이트에 대해 Blinn-Phong 모델을 사용하여 셰이딩을 계산합니다.
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
-    // Here, shadows are calculated using Percentage Closer Filtering (PCF). This vary depending on ShadowGenerator settings.
+    // 여기서 그림자는 퍼센티지 클로저 필터링(PCF)을 사용하여 계산됩니다. 이는 ShadowGenerator 설정에 따라 달라질 수 있습니다.
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
     aggShadow += shadow;
     numLights += 1.0;
-    // Apply Ramp texture shading by mapping the Blinn-Phong model value with Shadow applied to the Toon texture.
+    // 그림자가 적용된 Blinn-Phong 모델 값을 툰 텍스처에 매핑하여 램프 텍스처 셰이딩을 적용합니다.
     toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
     toonNdl.r = texture(toonSampler, vec2(0.5, toonNdl.r)).r;
     toonNdl.g = texture(toonSampler, vec2(0.5, toonNdl.g)).g;
     toonNdl.b = texture(toonSampler, vec2(0.5, toonNdl.b)).b;
     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
-    // info.specular is an r dot l value approximated by the half vector.
+    // info.specular는 하프 벡터로 근사된 r dot l 값입니다.
     specularBase += info.specular * shadow;
     aggShadow = aggShadow / numLights;
     vec4 refractionColor = vec4(0., 0., 0., 1.);
@@ -153,11 +153,11 @@ void main(void) {
 #define CUSTOM_FRAGMENT_BEFORE_FOG
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 구형 환경 매핑을 위한 UV 좌표를 계산합니다.
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // 스피어 텍스처 색상 모핑을 적용합니다.
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -169,7 +169,7 @@ void main(void) {
         1.0
     ) + sphereTextureAdditiveColor.rgb;
     sphereReflectionColor.rgb *= diffuseBase;
-    // Apply sphere texture as add blend mode. Different code is applied when using multiply blend mode.
+    // 스피어 텍스처를 add 블렌드 모드로 적용합니다. multiply 블렌드 모드를 사용할 때는 다른 코드가 적용됩니다.
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
     color.rgb = max(color.rgb, 0.);
     color.a *= visibility;
@@ -179,12 +179,12 @@ void main(void) {
 }
 ```
 
-To help with visualization, we'll use **YYB式初音ミク_10th_v1.02 model by SANMUYYB** as a sample model.
+시각화를 돕기 위해, 샘플 모델로 **SANMUYYB의 YYB式初音ミク_10th_v1.02 모델**을 사용하겠습니다.
 
 ### baseColor
 
-First, **`baseColor` stores the result of the color sampled from the texture**.
-The following elements are considered in this process:
+먼저, **`baseColor`는 텍스처에서 샘플링된 색상의 결과를 저장합니다**.
+이 과정에서 다음 요소들이 고려됩니다:
 
 - `MmdStandardMaterial.textureMultiplicativeColor`
 - `MmdStandardMaterial.textureAdditiveColor`
@@ -195,17 +195,17 @@ The following elements are considered in this process:
     
     // ...
     
-    // If UV morphing is applied, additional calculations are added to the uvOffset variable during shader code generation.
+    // UV 모핑이 적용되면, 셰이더 코드 생성 중에 uvOffset 변수에 추가 계산이 적용됩니다.
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply `textureMultiplicativeColor`
+    // `textureMultiplicativeColor` 적용
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
         textureMultiplicativeColor.a
     );
-    // Apply `textureAdditiveColor`
+    // `textureAdditiveColor` 적용
     baseColor.rgb = clamp(
         baseColor.rgb + (baseColor.rgb - vec3(1.0)) * textureAdditiveColor.a,
         0.0,
@@ -213,15 +213,15 @@ The following elements are considered in this process:
     ) + textureAdditiveColor.rgb;
 
 #define CUSTOM_FRAGMENT_UPDATE_ALPHA
-    baseColor.rgb *= vDiffuseInfos.y; // vDiffuseInfos.y is the value of `BaseTexture.level`
+    baseColor.rgb *= vDiffuseInfos.y; // vDiffuseInfos.y는 `BaseTexture.level`의 값입니다
 ```
 
 ![baseColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/baseColor.png)
-*Result of rendering the `baseColor`.*
+*`baseColor`를 렌더링한 결과.*
 
 ### lightingInfo
 
-The **computeLighting function** is called to calculate lighting information using the **Blinn-Phong model**.
+**computeLighting 함수**가 호출되어 **Blinn-Phong 모델**을 사용하여 라이팅 정보를 계산합니다.
 
 ```cpp
 struct lightingInfo {
@@ -239,31 +239,31 @@ struct lightingInfo {
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
 ```
 
-The `computeLighting` function calculates shading for the Directional Light using the following parameters:
+`computeLighting` 함수는 다음 파라미터를 사용하여 디렉셔널 라이트에 대한 셰이딩을 계산합니다:
 
-- view direction (**viewDirectionW**)
-- surface normal (**normalW**)
+- 뷰 방향 (**viewDirectionW**)
+- 표면 노말 (**normalW**)
 - `DirectionalLight.direction` (**light0.vLightData**)
 - `DirectionalLight.diffuse` (**diffuse0.rgb**)
 - `DirectionalLight.specular` (**light0.vLightSpecular.rgb**)
-- light range (not used for Directional Light as attenuation is not considered)
+- 라이트 범위 (디렉셔널 라이트에서는 감쇠가 고려되지 않으므로 사용되지 않음)
 - `specularPower` (**glossiness**)
 
-The resulting `ndl`, `diffuse`, and `specular` values are visualized as follows:
+결과로 얻은 `ndl`, `diffuse`, `specular` 값은 다음과 같이 시각화됩니다:
 
 |ndl|diffuse|specular|
 |---|-------|--------|
 |![ndl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndl.png)|![diffuse](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/diffuse.png)|![specular](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/specular.png)|
 
-*Each image visualizes the `ndl`, `diffuse`, and `specular` values calculated as a result of the `computeLighting` function.*
+*각 이미지는 `computeLighting` 함수의 결과로 계산된 `ndl`, `diffuse`, `specular` 값을 시각화합니다.*
 
-The `isToon` value is a parameter to ensure normal operation in case of shader injection failure, and it always has a value of 1.0. If shader injection fails, this value will be 0.0, and fallback processing will be performed using this value in the future.
+`isToon` 값은 셰이더 주입 실패 시 정상 작동을 보장하기 위한 파라미터로, 항상 1.0 값을 가집니다. 셰이더 주입이 실패하면 이 값은 0.0이 되고, 이 값을 사용하여 향후 대체 처리가 수행됩니다.
 
-In this section, for the sake of explanation, we will not consider the case where the `isToon` value is 0.0.
+이 섹션에서는 설명을 위해 `isToon` 값이 0.0인 경우는 고려하지 않겠습니다.
 
 ### shadow
 
-The shadow is calculated using the Percentage Closer Filtering (PCF) method. This can vary significantly depending on the settings of the `ShadowGenerator`.
+그림자는 퍼센티지 클로저 필터링(PCF) 방식을 사용하여 계산됩니다. 이는 `ShadowGenerator`의 설정에 따라 크게 달라질 수 있습니다.
 
 ```cpp
     float shadow = 1.;
@@ -271,14 +271,14 @@ The shadow is calculated using the Percentage Closer Filtering (PCF) method. Thi
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
 ```
 
-The `shadow` value is visualized as follows:
+`shadow` 값은 다음과 같이 시각화됩니다:
 
 ![shadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/shadow.png)
-*Result of rendering the `shadow`.*
+*`shadow`를 렌더링한 결과.*
 
 ### diffuseBase
 
-The final shading is calculated by multiplying the `ndl` with the `shadow`. Then, the result is mapped to the toonTexture.
+최종 셰이딩은 `ndl`에 `shadow`를 곱하여 계산됩니다. 그런 다음 결과는 toonTexture에 매핑됩니다.
 
 ```cpp
     vec3 toonNdl;
@@ -294,20 +294,20 @@ The final shading is calculated by multiplying the `ndl` with the `shadow`. Then
 ```
 
 ![ndlShadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndlShadow.png)
-*Result of rendering `info.ndl * shadow`.*
+*`info.ndl * shadow`를 렌더링한 결과.*
 
 ![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png)
 
-*Result of rendering `toonNdl`, which is the shadow value mapped to the toonTexture (Ramp Texture) between 0 and 1.*
+*그림자 값을 toonTexture(램프 텍스처)에 0과 1 사이로 매핑한 `toonNdl`을 렌더링한 결과.*
 
-The toonTexture typically has this kind of gradient. The value changes vertically, mapping the bottom to 0 and the top to 1.
+toonTexture는 일반적으로 이런 종류의 그라데이션을 가집니다. 값은 세로로 변하며, 아래쪽은 0에, 위쪽은 1에 매핑됩니다.
 
 <img src={"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAOUlEQVRYR+3WMREAMAwDsYY/yoDI7MLwIiP40+RJklfcCCBAgAABAgTqArfb/QMCCBAgQIAAgbbAB3z/e0F3js2cAAAAAElFTkSuQmCC"} width="200"/>
-*Example of toonTexture data*
+*toonTexture 데이터 예시*
 
 ### finalDiffuse
 
-Finally, the diffuse lighting is calculated by taking the  `diffuseBase` which is a toon-mapped result, multiplying it by the material's diffuse color, adding the material's emissive color, and finally multiplying by the sampled result in `baseColor`.
+마지막으로, 디퓨즈 라이팅은 툰 매핑된 결과인 `diffuseBase`를 취하여 머티리얼의 디퓨즈 색상을 곱하고, 머티리얼의 이미시브 색상을 더한 다음, 최종적으로 `baseColor`에서 샘플링된 결과를 곱하여 계산됩니다.
 
 ```cpp
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
@@ -316,29 +316,29 @@ Finally, the diffuse lighting is calculated by taking the  `diffuseBase` which i
     vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor, 0.0, 1.0) * baseColor.rgb;
 ```
 
-The material's diffuse color is calculated as follows:
+머티리얼의 디퓨즈 색상은 다음과 같이 계산됩니다:
 
 - `StandardMaterial.diffuseColor` (**vDiffuseColor**)
-- `StandardMaterial.ambientColor` * `Scene.ambientColor` (**vAmbientColor**) - The CPU bounds multiply the material and Scene's ambient color together and pass the result to the shader.
+- `StandardMaterial.ambientColor` * `Scene.ambientColor` (**vAmbientColor**) - CPU는 머티리얼과 씬의 앰비언트 색상을 함께 곱하여 결과를 셰이더에 전달합니다.
 
 `clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);`
 
-You can see that the ambient color is also involved in the calculation of the diffuse color to achieve the same result as MMD's shader, which is not a typical approach.
+앰비언트 색상도 디퓨즈 색상 계산에 관여하여 MMD 셰이더와 동일한 결과를 얻는 것을 볼 수 있으며, 이는 일반적인 접근 방식이 아닙니다.
 
 :::warning
-It's important to note that `Scene.ambientColor` should be set to vec3(0.5, 0.5, 0.5).
-This is because MMD's implementation scales the ambient color to 0.5.
-Therefore, to achieve the same result, the Scene's ambient color should be set to 0.5 so that the ambient color is calculated with the same 0.5 scaling as MMD.
+`Scene.ambientColor`는 vec3(0.5, 0.5, 0.5)로 설정해야 한다는 점에 유의하세요.
+이는 MMD의 구현이 앰비언트 색상을 0.5로 스케일링하기 때문입니다.
+따라서 동일한 결과를 얻으려면 씬의 앰비언트 색상을 0.5로 설정하여 MMD와 같은 0.5 스케일링으로 앰비언트 색상을 계산해야 합니다.
 :::
 
 ![finalDiffuse](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalDiffuse.png)
-*Result of rendering `finalDiffuse`, the result of the diffuse light calculation.*
+*`finalDiffuse`, 디퓨즈 라이트 계산 결과를 렌더링한 결과.*
 
 ### finalSpecular
 
-The `shadow` value is multiplied with the `specular` to exclude the areas that are in shadow.
+`shadow` 값은 그림자 영역을 제외하기 위해 `specular`와 곱해집니다.
 
-Then, the material's `StandardMaterial.specularColor` (**vSpecularColor**) is used to calculate the final specular value.
+그런 다음 머티리얼의 `StandardMaterial.specularColor` (**vSpecularColor**)를 사용하여 최종 스페큘러 값을 계산합니다.
 
 ```cpp
     vec3 specularColor = vSpecularColor.rgb;
@@ -350,20 +350,20 @@ Then, the material's `StandardMaterial.specularColor` (**vSpecularColor**) is us
     vec3 finalSpecular = specularBase * specularColor;
 ```
 
-Below is the render result of the final specular value, `finalSpecular`.
+아래는 최종 스페큘러 값인 `finalSpecular`의 렌더링 결과입니다.
 
 ![finalSpecular](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalSpecular.png)
-*Result of rendering `finalSpecular`, the result of the specular light calculation.*
+*`finalSpecular`, 스페큘러 라이트 계산 결과를 렌더링한 결과.*
 
 ### finalDiffuse + finalSpecular
 
-Finally, the results of the diffuse light and specular light calculations are added together. Additionally, the following properties are considered:
+마지막으로 디퓨즈 라이트와 스페큘러 라이트 계산 결과가 합쳐집니다. 추가적으로 다음 속성들이 고려됩니다:
 
 - `StandardMaterial.ambientTexture` (**baseAmbientColor**)
 - `StandardMaterial.reflectionTexture` (**reflectionColor**)
 - `StandardMaterial.refractionTexture` (**refractionColor**)
 
-However, these properties are not used in the current example, so in the shader code, they are simply initialized as constants.
+하지만 현재 예제에서는 이러한 속성들이 사용되지 않으므로, 셰이더 코드에서는 단순히 상수로 초기화됩니다.
 
 ```cpp
     vec3 baseAmbientColor = vec3(1., 1., 1.);
@@ -374,34 +374,34 @@ However, these properties are not used in the current example, so in the shader 
     vec4 color = vec4(finalDiffuse * baseAmbientColor + finalSpecular + reflectionColor.rgb + refractionColor.rgb, alpha);
 ```
 
-Below is the render result of `color`, which is the result of adding `finalDiffuse` and `finalSpecular`.
+아래는 `finalDiffuse`와 `finalSpecular`를 더한 결과인 `color`의 렌더링 결과입니다.
 
 ![color](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/color.png)
-*Result of rendering `color`, the result of adding `finalDiffuse` and `finalSpecular`.*
+*`color`, `finalDiffuse`와 `finalSpecular`를 더한 결과를 렌더링한 결과.*
 
 ### sphereReflectionColor
 
-Finally, spherical environment mapping is applied using the sphereTexture.
+마지막으로 sphereTexture를 사용한 구형 환경 매핑이 적용됩니다.
 
-The following material properties are used here:
+여기서 다음 머티리얼 속성들이 사용됩니다:
 
 - `StandardMaterial.sphereTexture` (**sphereSampler**)
 - `StandardMaterial.sphereTextureMultiplicativeColor` (**sphereTextureMultiplicativeColor**)
 - `StandardMaterial.sphereTextureAdditiveColor` (**sphereTextureAdditiveColor**)
 
-Typically, the sphereTexture uses a spherical texture like this.
+일반적으로 sphereTexture는 다음과 같은 구형 텍스처를 사용합니다.
 
 ![sphereTexture](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereTexture.png)\
-*Example of sphereTexture data*
+*sphereTexture 데이터 예시*
 
 ```cpp
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 구형 환경 매핑을 위한 UV 좌표를 계산합니다.
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // 스피어 텍스처 색상 모핑을 적용합니다.
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -415,17 +415,17 @@ Typically, the sphereTexture uses a spherical texture like this.
     sphereReflectionColor.rgb *= diffuseBase;
 ```
 
-The render result of `sphereReflectionColor`, which is the result of applying spherical environment mapping, is as follows.
+구형 환경 매핑을 적용한 결과인 `sphereReflectionColor`의 렌더링 결과는 다음과 같습니다.
 
 ![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png)
 
-*Result of rendering `sphereReflectionColor`, the result of applying spherical environment mapping using sphereTexture.*
+*sphereTexture를 사용한 구형 환경 매핑을 적용한 결과인 `sphereReflectionColor`를 렌더링한 결과.*
 
-### Final Color
+### 최종 색상
 
-Finally, the diffuse lighting, specular lighting, and reflection color are all added together to calculate the final color.
+마지막으로, 디퓨즈 라이팅, 스페큘러 라이팅, 반사 색상을 모두 더해 최종 색상을 계산합니다.
 
-Additionally, the `Material.visibility` is taken into account.
+또한 `Material.visibility`도 고려됩니다.
 
 ```cpp
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
@@ -436,14 +436,14 @@ Additionally, the `Material.visibility` is taken into account.
 ```
 
 ![finalRender](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalRender.png)
-*Result of the final rendering, combining diffuse light, specular light, and environment light.*
+*디퓨즈 라이트, 스페큘러 라이트, 환경 라이트를 결합한 최종 렌더링 결과.*
 
-## Full Source Code of Mmd Standard Material Shader
+## Mmd Standard Material 셰이더의 전체 소스 코드
 
-The GLSL source code including uniform variable declarations and external function definitions that were omitted above is as follows:
+균일 변수 선언 및 외부 함수 정의를 포함한 GLSL 소스 코드는 다음과 같습니다:
 
 <details>
-<summary>Organized GLSL shader code for MmdStandardMaterial</summary>
+<summary>MmdStandardMaterial을 위한 정리된 GLSL 셰이더 코드</summary>
 
 ```cpp
 layout(std140, column_major) uniform;
@@ -573,11 +573,11 @@ void main(void) {
     vec3 viewDirectionW = normalize(vEyePosition.xyz - vPositionW);
     vec4 baseColor = vec4(1., 1., 1., 1.);
     
-    // The sum of diffuse color and ambient color is used as diffuse color.
-    // This is to achieve the same result as MMD's shader and is not a typical approach.
-    // At this time, although not visible in the shader, the value of vAmbientColor is scene.ambientColor * material.ambientColor.
-    // Therefore, to implement the same 0.5 scaling that MMD applies to the ambient color property,
-    // the scene.ambientColor value needs to be (0.5, 0.5, 0.5).
+    // 디퓨즈 색상과 앰비언트 색상의 합이 디퓨즈 색상으로 사용됩니다.
+    // 이는 MMD의 셰이더와 동일한 결과를 얻기 위한 것으로, 일반적인 접근 방식은 아닙니다.
+    // 이때, 셰이더에서는 보이지 않지만, vAmbientColor 값은 scene.ambientColor * material.ambientColor입니다.
+    // 따라서 MMD가 앰비언트 색상 속성에 적용하는 0.5 스케일링과 동일하게 구현하기 위해서는
+    // scene.ambientColor 값이 (0.5, 0.5, 0.5)이어야 합니다.
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
     float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
 
@@ -585,7 +585,7 @@ void main(void) {
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply material diffuse texture color morphing.
+    // 머티리얼 디퓨즈 텍스처 색상 모핑을 적용합니다.
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
@@ -612,19 +612,19 @@ void main(void) {
     float numLights = 0.;
     vec4 diffuse0 = light0.vLightDiffuse;
 #define CUSTOM_LIGHT0_COLOR
-    // Calculate shading using the Blinn-Phong model for directional light.
+    // 디렉셔널 라이트에 대해 Blinn-Phong 모델을 사용하여 셰이딩을 계산합니다.
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
-    // Here, shadows are calculated using Percentage Closer Filtering (PCF). This vary depending on ShadowGenerator settings.
+    // 여기서 그림자는 퍼센티지 클로저 필터링(PCF)을 사용하여 계산됩니다. 이는 ShadowGenerator 설정에 따라 달라질 수 있습니다.
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
     aggShadow += shadow;
     numLights += 1.0;
-    // Apply Ramp texture shading by mapping the Blinn-Phong model value with Shadow applied to the Toon texture.
+    // 그림자가 적용된 Blinn-Phong 모델 값을 툰 텍스처에 매핑하여 램프 텍스처 셰이딩을 적용합니다.
     toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
     toonNdl.r = texture(toonSampler, vec2(0.5, toonNdl.r)).r;
     toonNdl.g = texture(toonSampler, vec2(0.5, toonNdl.g)).g;
     toonNdl.b = texture(toonSampler, vec2(0.5, toonNdl.b)).b;
     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
-    // info.specular is an r dot l value approximated by the half vector.
+    // info.specular는 하프 벡터로 근사된 r dot l 값입니다.
     specularBase += info.specular * shadow;
     aggShadow = aggShadow / numLights;
     vec4 refractionColor = vec4(0., 0., 0., 1.);
@@ -636,11 +636,11 @@ void main(void) {
 #define CUSTOM_FRAGMENT_BEFORE_FOG
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 구형 환경 매핑을 위한 UV 좌표를 계산합니다.
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // 스피어 텍스처 색상 모핑을 적용합니다.
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -652,7 +652,7 @@ void main(void) {
         1.0
     ) + sphereTextureAdditiveColor.rgb;
     sphereReflectionColor.rgb *= diffuseBase;
-    // Apply sphere texture as add blend mode. Different code is applied when using multiply blend mode.
+    // 스피어 텍스처를 add 블렌드 모드로 적용합니다. multiply 블렌드 모드를 사용할 때는 다른 코드가 적용됩니다.
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
     color.rgb = max(color.rgb, 0.);
     color.a *= visibility;
@@ -664,30 +664,30 @@ void main(void) {
 
 </details>
 
-## Outline Rendering
+## 외곽선 렌더링
 
-babylon-mmd provides **`MmdOutlineRenderer`** to implement MMD's rendering method. This renderer is used to implement MMD's **toon edge**.
+babylon-mmd는 MMD의 렌더링 방식을 구현하기 위해 **`MmdOutlineRenderer`**를 제공합니다. 이 렌더러는 MMD의 **툰 엣지**를 구현하는 데 사용됩니다.
 
-**`MmdOutlineRenderer`** uses the **Inverted Hull method** to render the outlines of meshes. This method renders the outline by flipping all faces of the mesh and rendering them again.
+**`MmdOutlineRenderer`**는 메시의 외곽선을 렌더링하기 위해 **인버티드 헐 메서드**를 사용합니다. 이 메서드는 메시의 모든 면을 뒤집고 다시 렌더링하여 외곽선을 렌더링합니다.
 
-As a result, when rendering outlines, **additional draw calls** occur equal to the number of meshes.
+결과적으로 외곽선을 렌더링할 때는 메시 수만큼 **추가적인 드로우 콜**이 발생합니다.
 
-### Usage
+### 사용법
 
-When importing **"babylon-mmd/esm/Loader/mmdOutlineRenderer"**, an **`MmdOutlineRenderer`** is added to the `Scene` using prototype extension.
+**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`**가 `Scene`에 추가됩니다.
 
 ```typescript
 import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 ```
 
-After that, if the material has the following **four properties**, outlines will be rendered. (**`MmdStandardMaterial`** has these properties by default.)
+그 후, 머티리얼이 다음 **네 가지 속성**을 가지고 있다면 외곽선이 렌더링됩니다. (**`MmdStandardMaterial`**은 기본적으로 이러한 속성을 가집니다.)
 
 - **`renderOutline`** (boolean)
 - **`outlineWidth`** (number)
 - **`outlineColor`** (Color3)
 - **`outlineAlpha`** (number)
 
-Therefore, **any material** can render outlines by adding these properties as follows:
+따라서 다음과 같이 이러한 속성을 추가하면 **어떤 머티리얼**이든 외곽선을 렌더링할 수 있습니다:
 
 ```typescript
 class OutlinePBRMaterial extends PBRMaterial {
@@ -701,7 +701,7 @@ class OutlinePBRMaterial extends PBRMaterial {
     }
 
     public set renderOutline(value: boolean) {
-        // Lazy Load the component
+        // 레이지 로드 컴포넌트
         if (value) {
             this.getScene().getMmdOutlineRenderer?.();
         }
@@ -710,12 +710,12 @@ class OutlinePBRMaterial extends PBRMaterial {
 }
 ```
 
-This implements **Lazy Loading** by registering the `MmdOutlineRenderer` to the Scene when the `renderOutline` property becomes true.
+이는 `renderOutline` 속성이 true가 될 때 `MmdOutlineRenderer`를 씬에 등록하는 **레이지 로딩**을 구현합니다.
 
-### Applied to MmdStandardMaterial
+### MmdStandardMaterial에 적용
 
-For **`MmdStandardMaterial`**, settings are automatically configured by the **`MmdStandardMaterialBuilder`**,
-and you only need to add `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";` to your code for it to work.
+**`MmdStandardMaterial`**의 경우, 설정은 **`MmdStandardMaterialBuilder`**에 의해 자동으로 구성되며,
+작동하기 위해서는 코드에 `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`만 추가하면 됩니다.
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)
-*Result with outline applied.*
+*외곽선이 적용된 결과.*

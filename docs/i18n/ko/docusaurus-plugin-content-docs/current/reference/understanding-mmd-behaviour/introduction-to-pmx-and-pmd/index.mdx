@@ -1,125 +1,125 @@
 ---
 sidebar_position: 1
-sidebar_label: Introduction to PMX and PMD
+sidebar_label: PMX와 PMD 소개
 ---
 
-# Introduction to PMX and PMD
+# PMX와 PMD 소개
 
-This section explains what information PMX and PMD files consist of, how MMD interprets that information,
-and how babylon-mmd implements MMD's behavior.
+이 섹션에서는 PMX와 PMD 파일이 어떤 정보로 구성되어 있는지, MMD가 해당 정보를 어떻게 해석하는지,
+그리고 babylon-mmd가 MMD의 동작을 어떻게 구현하는지 설명합니다.
 
 :::note
-In this document, content about how babylon-mmd implements MMD's behavior is distinguished with this block.
+이 문서에서는 babylon-mmd가 MMD의 동작을 구현하는 방법에 대한 내용을 이 블록으로 구분합니다.
 :::
 
 import TOCInline from "@theme/TOCInline";
 
 <TOCInline toc={toc} />
 
-## PMX/PMD File Overview
+## PMX/PMD 파일 개요
 
-Polygon Model eXtended (PMX) and Polygon Model Data (PMD) files are 3D model file formats used in Miku Miku Dance (MMD).
+Polygon Model eXtended(PMX)와 Polygon Model Data(PMD) 파일은 Miku Miku Dance(MMD)에서 사용되는 3D 모델 파일 포맷입니다.
 
-Basically, PMX/PMD files are single binary files that contain all data except texture files.
+기본적으로 PMX/PMD 파일은 텍스처 파일을 제외한 모든 데이터를 포함하는 단일 바이너리 파일입니다.
 
-Since these file formats have **no documented specifications**, only information known through **reverse engineering analysis** exists, so there may be minor errors.
+이러한 파일 포맷은 **문서화된 명세가 없기 때문에**, **리버스 엔지니어링 분석**을 통해 알려진 정보만 존재하므로 약간의 오류가 있을 수 있습니다.
 
-Also, since there are **no official names** for each piece of information,
-this document arbitrarily assigns common names to each piece of information for explanation.
+또한, 각 정보에 대한 **공식 이름이 없기 때문에**,
+이 문서에서는 설명을 위해 각 정보에 임의로 일반적인 이름을 부여합니다.
 
-### Differences from Modern 3D Asset Formats
+### 현대적인 3D 애셋 포맷과의 차이점
 
-Modern widely-used 3D asset formats (e.g. glTF, FBX, etc.) have structures designed to represent
-Scene Graphs that include 3D models.
-In contrast, **PMX and PMD files basically contain only information for representing a single geometry-based 3D model**,
-and do not include information for representing elements other than 3D models such as cameras, lighting, animations, and Scene Graphs.
+현대적인 널리 사용되는 3D 애셋 포맷(예: glTF, FBX 등)은 3D 모델을 포함하는
+씬 그래프를 표현하기 위한 구조로 설계되어 있습니다.
+이와 대조적으로, **PMX와 PMD 파일은 기본적으로 단일 지오메트리 기반 3D 모델을 표현하기 위한 정보만 포함**하고,
+카메라, 라이팅, 애니메이션, 씬 그래프와 같은 3D 모델 이외의 요소를 표현하기 위한 정보는 포함하지 않습니다.
 
-### PMX Files
+### PMX 파일
 
-PMX is an improved version of PMD that provides better structure and more features than PMD.
+PMX는 PMD의 개선된 버전으로, PMD보다 더 나은 구조와 더 많은 기능을 제공합니다.
 
-Currently known PMX file versions are 2.0 and 2.1.
+현재 알려진 PMX 파일 버전은 2.0과 2.1입니다.
 
-PMX 2.1 supports various features such as Soft Body Physics, Vertex Color, PhysicsMorph, etc.,
-but only PMX Editor supports this specification, and since MMD also does not support version 2.1,
-version 2.1 is not practically used.
-
-:::note
-babylon-mmd's `PmxParser` supports parsing PMX 2.1 files, but `PmxLoader` does not load them.
-babylon-mmd supports most of the PMX 2.0 specification, and unprocessed data is preserved during the model loading process.
-:::
-
-### PMD Files
-
-PMD is the previous version of PMX, with simpler structure and limited features compared to PMX.
-
-PMX files are not backward compatible with PMD files, and it is presumed that in MMD, models loaded as PMD files are processed with separate logic from PMX files.
+PMX 2.1은 소프트 바디 피직스, 버텍스 컬러, 피직스모프 등과 같은 다양한 기능을 지원합니다.
+하지만 이 명세는 PMX 에디터에서만 지원하며, MMD도 버전 2.1을 지원하지 않기 때문에
+버전 2.1은 실질적으로 사용되지 않습니다.
 
 :::note
-babylon-mmd performs the task of converting PMD files to PMX format simultaneously while `PmdParser` parses PMD files.
-Therefore, there is no separate logic for processing PMD models, and all MMD models are processed with common logic.
+babylon-mmd의 `PmxParser`는 PMX 2.1 파일의 파싱을 지원하지만, `PmxLoader`는 이를 로드하지 않습니다.
+babylon-mmd는 PMX 2.0 명세의 대부분을 지원하며, 처리되지 않은 데이터는 모델 로딩 과정에서 보존됩니다.
 :::
 
-### PMX/PMD File Structure and Parsing Method
+### PMD 파일
 
-PMX/PMD files are Little Endian **binary files** containing various data types.
+PMD는 PMX의 이전 버전으로, PMX보다 더 단순한 구조와 제한된 기능을 갖고 있습니다.
 
-These files are **structured in a typical Length-Prefixed format**. For example, when representing Skeleton data,
-the number of Bones is indicated first, followed by sequential listing of each Bone's information.
-The size of each data can be fixed or variable length, and the order of data is always the same.
-
-Data alignment is not enforced, and each field is stored consecutively in the binary file.
-
-## Header
-
-The header of PMX/PMD files includes the **file version, model name, comments**, etc.
-This information serves as file metadata, used for identifying and managing models.
-
-In the case of PMX files, English fields such as english model name and english comment exist, but are generally not well utilized.
-
-## Geometry
-
-The geometry of PMX/PMD files is the core part of 3D model data, and **only one geometry data exists per file**,
-mainly containing information held by vertices.
-
-Looking at the key vertex attributes in PMX structure, the main components are:
-
-- **Position**: The 3D coordinates of the vertex in the model's local space.
-- **Normal**: The normal vector of the vertex, used for lighting calculations.
-- **UV**: The texture coordinates of the vertex, used for mapping textures onto the model.
-- **Additional Vec4**: Additional texture coordinates or vertex color information for advanced texturing techniques. This is not present in PMD models and is not used in most PMX models either.
-- **Bone Weight Type**: The type of bone weight used for skinning (BDEF1, BDEF2, BDEF4, SDEF, QDEF).
-- **Bone Index**: The index of the bone that influences the vertex.
-- **Bone Weight**: The weight of the influence of the bone on the vertex, used for skinning.
-- **Edge Scale**: The scale of the edge, used for rendering edges in the model.
-
-Additional Vec4 is not commonly used in MMD models.
-This field is often utilized in specifications added in PMX 2.1, and can be used when applying custom shaders using MikuMikuEffect (MME) in MMD.
+PMX 파일은 PMD 파일과 하위 호환되지 않으며, MMD에서는 PMD 파일로 로드된 모델이 PMX 파일과 별도의 로직으로 처리된다고 추정됩니다.
 
 :::note
-babylon-mmd loads vertex information from MMD models.
+babylon-mmd는 `PmdParser`가 PMD 파일을 파싱하는 동시에 PMD 파일을 PMX 포맷으로 변환하는 작업을 수행합니다.
+따라서 PMD 모델을 처리하기 위한 별도의 로직이 없으며, 모든 MMD 모델은 공통 로직으로 처리됩니다.
+:::
 
-As an exception, the Additional Vec4 field is only preserved when the `mmdmodel.preserveSerializationData` option is `true`.
+### PMX/PMD 파일 구조와 파싱 방법
+
+PMX/PMD 파일은 다양한 데이터 타입을 포함하는 리틀 엔디안 **바이너리 파일**입니다.
+
+이 파일들은 **일반적인 길이 접두사 형식으로 구조화**되어 있습니다. 예를 들어, 스켈레톤 데이터를 표현할 때,
+먼저 본의 수가 표시되고, 그 다음에 각 본의 정보가 순차적으로 나열됩니다.
+각 데이터의 크기는 고정 또는 가변 길이일 수 있으며, 데이터의 순서는 항상 동일합니다.
+
+데이터 정렬은 강제되지 않으며, 각 필드는 바이너리 파일에 연속적으로 저장됩니다.
+
+## 헤더
+
+PMX/PMD 파일의 헤더는 **파일 버전, 모델 이름, 코멘트** 등을 포함합니다.
+이 정보는 파일 메타데이터로 사용되며, 모델을 식별하고 관리하는 데 사용됩니다.
+
+PMX 파일의 경우, 영어 모델 이름 및 영어 코멘트와 같은 영어 필드가 존재하지만, 일반적으로 잘 활용되지 않습니다.
+
+## 지오메트리
+
+PMX/PMD 파일의 지오메트리는 3D 모델 데이터의 핵심 부분이며, **파일당 하나의 지오메트리 데이터만 존재**하고,
+주로 버텍스가 보유한 정보를 포함합니다.
+
+PMX 구조의 주요 버텍스 속성을 살펴보면, 주요 구성 요소는 다음과 같습니다:
+
+- **포지션**: 모델의 로컬 공간에서 버텍스의 3D 좌표.
+- **노말**: 버텍스의 노말 벡터로, 라이팅 계산에 사용됩니다.
+- **UV**: 버텍스의 텍스처 좌표로, 모델에 텍스처를 매핑하는 데 사용됩니다.
+- **추가 Vec4**: 고급 텍스처링 기법을 위한 추가 텍스처 좌표 또는 버텍스 컬러 정보. PMD 모델에는 존재하지 않으며, 대부분의 PMX 모델에서도 사용되지 않습니다.
+- **본 웨이트 타입**: 스키닝에 사용되는 본 웨이트 유형(BDEF1, BDEF2, BDEF4, SDEF, QDEF).
+- **본 인덱스**: 버텍스에 영향을 미치는 본의 인덱스.
+- **본 웨이트**: 버텍스에 대한 본의 영향 가중치로, 스키닝에 사용됩니다.
+- **엣지 스케일**: 모델에서 엣지를 렌더링하는 데 사용되는 엣지의 스케일.
+
+추가 Vec4는 MMD 모델에서 일반적으로 사용되지 않습니다.
+이 필드는 주로 PMX 2.1에 추가된 명세에서 활용되며, MMD에서 MikuMikuEffect(MME)를 사용하는 커스텀 셰이더를 적용할 때 사용할 수 있습니다.
+
+:::note
+babylon-mmd는 MMD 모델에서 버텍스 정보를 로드합니다.
+
+예외로, 추가 Vec4 필드는 `mmdmodel.preserveSerializationData` 옵션이 `true`일 때만 보존됩니다.
 :::
 
 :::note
-Since MMD follows DirectX's UV coordinate system while Babylon.js follows OpenGL's UV coordinate system,
-Y Flip is applied to UV coordinates when loading MMD models.
+MMD는 DirectX의 UV 좌표계를 따르는 반면, Babylon.js는 OpenGL의 UV 좌표계를 따르기 때문에,
+MMD 모델을 로드할 때 UV 좌표에 Y Flip이 적용됩니다.
 :::
 
-Not only vertex information but also indices are included. This allows the **geometry to be represented as an indexed mesh**.
+버텍스 정보뿐만 아니라 인덱스도 포함됩니다. 이를 통해 **지오메트리를 인덱스드 메시로 표현**할 수 있습니다.
 
 :::note
-Since MMD and Babylon.js use different Winding Orders, babylon-mmd reverses the Winding Order of indices when loading MMD models.
+MMD와 Babylon.js는 서로 다른 와인딩 오더를 사용하기 때문에, babylon-mmd는 MMD 모델을 로드할 때 인덱스의 와인딩 오더를 반전시킵니다.
 :::
 
-## Texture
+## 텍스처
 
-Textures define the images applied to the model's surface in PMX/PMD files.
-Multiple textures can exist in a single PMX/PMD file,
-and textures are stored as strings representing relative paths from the directory containing the .pmx or .pmd file.
+텍스처는 PMX/PMD 파일에서 모델의 표면에 적용되는 이미지를 정의합니다.
+단일 PMX/PMD 파일에 여러 텍스처가 존재할 수 있으며,
+텍스처는 .pmx 또는 .pmd 파일이 포함된 디렉토리에서의 상대 경로를 나타내는 문자열로 저장됩니다.
 
-For example, in the following file structure:
+예를 들어, 다음과 같은 파일 구조에서:
 
 ```
 - model.pmx
@@ -128,108 +128,108 @@ For example, in the following file structure:
   - texture2.png
 ```
 
-In the `model.pmx` file, textures are stored as relative paths like `textures/texture1.png`, `textures/texture2.png`.
+`model.pmx` 파일에서 텍스처는 `textures/texture1.png`, `textures/texture2.png`와 같은 상대 경로로 저장됩니다.
 
-Based on my investigations, the texture formats supported by MMD are PNG, JPEG, BMP, TGA.
+제가 조사한 바에 따르면, MMD가 지원하는 텍스처 포맷은 PNG, JPEG, BMP, TGA입니다.
 
 :::note
-Textures stored as relative paths are handled case-insensitively in the Windows file system.
+상대 경로로 저장된 텍스처는 윈도우 파일 시스템에서 대소문자를 구분하지 않습니다.
 
-However, since URLs are case-sensitive in web environments, texture loading may fail when loading models in babylon-mmd.
+그러나 웹 환경에서는 URL이 대소문자를 구분하기 때문에 babylon-mmd에서 모델을 로드할 때 텍스처 로딩이 실패할 수 있습니다.
 
-To solve this, babylon-mmd provides methods to convert MMD models to BPMX or load textures using the browser File API instead of URLs.
+이를 해결하기 위해 babylon-mmd는 MMD 모델을 BPMX로 변환하거나 URL 대신 브라우저 File API를 사용하여 텍스처를 로드하는 방법을 제공합니다.
 :::
 
 :::note
-For BMP file loaders, due to differences in BMP loader implementations between browsers and MMD,
-the alpha channel may be removed when loading BMP files in browsers.
+BMP 파일 로더의 경우, 브라우저와 MMD 간의 BMP 로더 구현 차이로 인해,
+브라우저에서 BMP 파일을 로드할 때 알파 채널이 제거될 수 있습니다.
 
-To solve this, babylon-mmd provides an option to preserve the alpha channel by modifying the header when loading BMP files.
+이를 해결하기 위해 babylon-mmd는 BMP 파일을 로드할 때 헤더를 수정하여 알파 채널을 보존하는 옵션을 제공합니다.
 
-This can be enabled using the `RegisterDxBmpTextureLoader` function.
+이 기능은 `RegisterDxBmpTextureLoader` 함수를 사용하여 활성화할 수 있습니다.
 :::
 
-## Material
+## 머티리얼
 
-Materials define the surface properties of models in PMX/PMD files.
-Multiple materials can exist in a single PMX/PMD file, and based on the PMX format, each material includes the following properties:
+머티리얼은 PMX/PMD 파일에서 모델의 표면 속성을 정의합니다.
+단일 PMX/PMD 파일에 여러 머티리얼이 존재할 수 있으며, PMX 포맷을 기준으로 각 머티리얼에는 다음 속성이 포함됩니다:
 
-- **Diffuse Color**: The base color of the material.
-- **Specular Color**: The color of the specular highlight.
-- **Shininess**: The shininess of the material, affecting the size of the specular highlight.
-- **Ambient Color**: The ambient color of the material, used for ambient lighting.
-- **Edge Color**: The color of the edge of the material, used for rendering edges.
-- **Edge Size**: The size of the edge, used for rendering edges.
-- **Texture**: The index of the texture used by the material.
-- **Sphere Texture**: The index of the sphere texture used by the material.
-- **Toon Texture Index**: The index of the toon 
-- **Flag**: Flags indicating various properties of the material, such as whether it is double-sided or whether it uses edge rendering.
-- **Index Count**: The number of indices used by the material.
+- **디퓨즈 컬러**: 머티리얼의 기본 색상.
+- **스페큘러 컬러**: 스페큘러 하이라이트의 색상.
+- **광택도**: 머티리얼의 광택도로, 스페큘러 하이라이트의 크기에 영향을 미칩니다.
+- **앰비언트 컬러**: 머티리얼의 앰비언트 색상으로, 앰비언트 라이팅에 사용됩니다.
+- **엣지 컬러**: 머티리얼의 엣지 색상으로, 엣지를 렌더링하는 데 사용됩니다.
+- **엣지 크기**: 엣지의 크기로, 엣지를 렌더링하는 데 사용됩니다.
+- **텍스처**: 머티리얼에 사용되는 텍스처의 인덱스.
+- **스피어 텍스처**: 머티리얼에 사용되는 스피어 텍스처의 인덱스.
+- **툰 텍스처 인덱스**: 툰 텍스처의 인덱스.
+- **플래그**: 머티리얼이 양면인지 또는 엣지 렌더링을 사용하는지 등과 같은 머티리얼의 다양한 속성을 나타내는 플래그.
+- **인덱스 카운트**: 머티리얼이 사용하는 인덱스의 수.
 
-### Index Count and Submesh
+### 인덱스 카운트와 서브메시
 
-PMX/PMD files can have multiple Materials for a single Geometry.
+PMX/PMD 파일은 단일 지오메트리에 대해 여러 머티리얼을 가질 수 있습니다.
 
-Each material defines a submesh by dividing sections of the Geometry's Indices.
-Specifically, each material defines the number of indices to use from the Indices buffer, and submeshes for the Geometry's Indices are defined according to the order of materials.
+각 머티리얼은 지오메트리의 인덱스 섹션을 나누어 서브메시를 정의합니다.
+구체적으로, 각 머티리얼은 인덱스 버퍼에서 사용할 인덱스의 수를 정의하고, 머티리얼의 순서에 따라 지오메트리의 인덱스에 대한 서브메시가 정의됩니다.
 
-For example, if the indices length is 100 and the first and second materials each use 50 indices,\
-the first material uses indices[0] ~ indices[49] and\
-the second material uses indices[50] ~ indices[99].
+예를 들어, 인덱스 길이가 100이고 첫 번째와 두 번째 머티리얼이 각각 50개의 인덱스를 사용하는 경우,\
+첫 번째 머티리얼은 indices[0] ~ indices[49]를 사용하고\
+두 번째 머티리얼은 indices[50] ~ indices[99]를 사용합니다.
 
 :::note
-babylon-mmd implements MMD model submeshes using Babylon.js's `MultiMaterial` and `SubMesh`.
+babylon-mmd는 Babylon.js의 `MultiMaterial`과 `SubMesh`를 사용하여 MMD 모델 서브메시를 구현합니다.
 
-However, since this approach has poor compatibility with Babylon.js and may have performance issues, an option to split a single geometry into multiple geometries at load time is also provided.
-This option can be enabled through the `mmdmodel.optimizeSubmeshes` option and is enabled by default.
+그러나 이 접근 방식은 Babylon.js와의 호환성이 낮고 성능 이슈가 있을 수 있으므로, 로드 시 단일 지오메트리를 여러 지오메트리로 분할하는 옵션도 제공됩니다.
+이 옵션은 `mmdmodel.optimizeSubmeshes` 옵션을 통해 활성화할 수 있으며 기본적으로 활성화되어 있습니다.
 :::
 
-### Rendering Method
+### 렌더링 메서드
 
-MMD materials are rendered in the order listed in PMX/PMD files using Depth Test, Depth Write, and Alpha Blending.
+MMD 머티리얼은 뎁스 테스트, 뎁스 라이트, 알파 블렌딩을 사용하여 PMX/PMD 파일에 나열된 순서대로 렌더링됩니다.
 
 :::note
-babylon-mmd provides the following rendering methods to reproduce MMD's rendering approach while offering better performance or integrating with existing Babylon.js scenes:
+babylon-mmd는 MMD의 렌더링 방식을 재현하면서도 더 나은 성능을 제공하거나 기존 Babylon.js 씬과 통합하기 위해 다음과 같은 렌더링 메서드를 제공합니다:
 
 - `DepthWriteAlphaBlending`
-  - Uses Depth Test, Depth Write, and Alpha Blending identical to MMD's rendering method, rendering with Draw Order in the order listed in PMX/PMD files.
+  - MMD의 렌더링 방식과 동일하게 뎁스 테스트, 뎁스 라이트, 알파 블렌딩을 사용하며, PMX/PMD 파일에 나열된 순서대로 드로우 오더로 렌더링합니다.
 - `AlphaEvaluation`
-  - Respects Babylon.js's rendering approach by determining materials that don't need Alpha Blend, rendering some materials as Opaque and others using Alpha Blending. Draw Order is from the closest to the farthest materials from the camera.
-- `DepthWriteAlphaBlendingWithEvaluation` (default)
-  - Combines `DepthWriteAlphaBlending` and `AlphaEvaluation`, using Depth Test, Depth Write, and Alpha Blending with Draw Order in the order listed in PMX/PMD files. Materials that don't need Alpha Blend are rendered as Opaque.
+  - Babylon.js의 렌더링 방식을 존중하여 알파 블렌드가 필요하지 않은 머티리얼을 결정하고, 일부 머티리얼은 오페이크로 렌더링하고 다른 머티리얼은 알파 블렌딩을 사용합니다. 드로우 오더는 카메라에서 가장 가까운 머티리얼부터 가장 먼 머티리얼까지입니다.
+- `DepthWriteAlphaBlendingWithEvaluation` (기본값)
+  - `DepthWriteAlphaBlending`과 `AlphaEvaluation`을 결합하여, 뎁스 테스트, 뎁스 라이트, 알파 블렌딩을 사용하고 PMX/PMD 파일에 나열된 순서대로 드로우 오더로 렌더링합니다. 알파 블렌드가 필요하지 않은 머티리얼은 오페이크로 렌더링됩니다.
 :::
 
-MMD's shading uses **toon shading based on the Blinn-Phong shading model**.
+MMD의 셰이딩은 **블린-퐁 셰이딩 모델을 기반으로 한 툰 셰이딩**을 사용합니다.
 
 :::note
-babylon-mmd uses `MmdStandardMaterial`, a modified version of `StandardMaterial`, to reproduce MMD materials.
+babylon-mmd는 MMD 머티리얼을 재현하기 위해 `StandardMaterial`의 수정 버전인 `MmdStandardMaterial`을 사용합니다.
 
-Additionally, models can be loaded using Babylon.js's `StandardMaterial` or `PBRMaterial`.
+또한 모델은 Babylon.js의 `StandardMaterial` 또는 `PBRMaterial`을 사용하여 로드할 수도 있습니다.
 :::
 
-## Skeleton
+## 스켈레톤
 
-Skeleton is a structure in PMX/PMD files **used to apply bone-based deformation to models**.
+스켈레톤은 PMX/PMD 파일에서 **모델에 본 기반 변형을 적용하는 데 사용되는 구조**입니다.
 
-This provides functionality similar to Unity's Skinned Mesh and Unreal Engine's Skeletal Mesh.
+이는 Unity의 스킨드 메시와 Unreal Engine의 스켈레탈 메시와 유사한 기능을 제공합니다.
 
-MMD's skeleton is composed of a hierarchical structure of bones, just like a typical Skinned Mesh skeleton.
+MMD의 스켈레톤은 일반적인 스킨드 메시 스켈레톤과 마찬가지로 본의 계층적 구조로 구성됩니다.
 
-MMD skeletons have the following special properties:
+MMD 스켈레톤은 다음과 같은 특별한 속성을 가지고 있습니다:
 
-### Transform Order
+### 트랜스폼 오더
 
-Skeletons with hierarchical structures typically apply transforms sequentially from the top-level bones to the lower-level bones.
+계층적 구조를 가진 스켈레톤은 일반적으로 상위 레벨 본에서 하위 레벨 본까지 순차적으로 트랜스폼을 적용합니다.
 
-However, MMD's skeleton differs in that it **calculates transforms in the order that bones are defined in the file**.
-As an exception, **bones that define a separate Transform Order have a different calculation order**.
-When a bone has a separately defined Transform Order value, that value takes priority in determining the calculation order, followed by the order in which bones are listed in the file.
+그러나 MMD의 스켈레톤은 **파일에 정의된 순서대로 본의 트랜스폼을 계산**한다는 점에서 다릅니다.
+예외적으로, **별도의 트랜스폼 오더를 정의하는 본은 계산 순서가 다릅니다**.
+본이 별도로 정의된 트랜스폼 오더 값을 가질 때, 해당 값이 계산 순서를 결정하는 데 우선순위를 가지며, 그 다음으로 파일에 나열된 본의 순서가 적용됩니다.
 
-Generally, **Transform Order is used to ensure that IK bones are calculated last**.
+일반적으로, **트랜스폼 오더는 IK 본이 마지막에 계산되도록 하는 데 사용**됩니다.
 
-For PMD files, bone information cannot define a separate Transform Order, and IK bones are implicitly assigned the correct Transform Order.
+PMD 파일의 경우, 본 정보는 별도의 트랜스폼 오더를 정의할 수 없으며, IK 본은 암묵적으로 올바른 트랜스폼 오더가 할당됩니다.
 
-#### When Transform Order and Bone Ordering Don't Match the Actual Hierarchy
+#### 트랜스폼 오더와 본 순서가 실제 계층 구조와 일치하지 않을 때
 
 import TransformOrderBrokenVideo from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/transform_order_broken.mp4";
 
@@ -237,42 +237,42 @@ import TransformOrderBrokenVideo from "@site/docs/reference/understanding-mmd-be
   <source src={TransformOrderBrokenVideo}/>
 </video>
 
-*This shows an example where Transform Order is incorrect. You can see that the bone at the end follows with a one-frame delay.*
+*이는 트랜스폼 오더가 잘못된 예를 보여줍니다. 끝에 있는 본이 한 프레임 지연되어 따라오는 것을 볼 수 있습니다.*
 
-MMD calculates the animated positions of bones and then references these results when calculating the next frame.
-This approach creates calculation delays equal to the depth of the incorrect hierarchy, but appears to work reasonably well.
+MMD는 본의 애니메이션 포지션을 계산한 다음, 다음 프레임을 계산할 때 이러한 결과를 참조합니다.
+이 접근 방식은 잘못된 계층 구조의 깊이와 동일한 계산 지연을 만들지만, 상당히 잘 작동하는 것으로 보입니다.
 
-{/* Example image to be added */}
+{/* 예시 이미지 추가 예정 */}
 
 :::note
-Having animation calculations influenced by previous frame results makes animation outcomes unpredictable and can confuse users.
-Therefore, unlike MMD's implementation, babylon-mmd does not reference previous frame calculation results when computing new frames.
+이전 프레임 결과의 영향을 받는 애니메이션 계산은 애니메이션 결과를 예측할 수 없게 만들고 사용자를 혼란스럽게 할 수 있습니다.
+따라서 MMD의 구현과 달리, babylon-mmd는 새로운 프레임을 계산할 때 이전 프레임 계산 결과를 참조하지 않습니다.
 
-*This implementation may be changed if it causes issues in reproducing MMD behavior.*
+*이 구현은 MMD 동작을 재현하는 데 문제가 있을 경우 변경될 수 있습니다.*
 
-PMX Editor also follows the same approach as babylon-mmd, not referencing previous frame results when calculating current frame bone animations.
+PMX 에디터도 babylon-mmd와 동일한 접근 방식을 따르며, 현재 프레임 본 애니메이션을 계산할 때 이전 프레임 결과를 참조하지 않습니다.
 :::
 {/* 
 :::note
-Babylon.js's Skeleton implementation assumes bones are already sorted according to their hierarchy and calculates transforms in bone order.
+Babylon.js의 스켈레톤 구현은 본이 이미 계층 구조에 따라 정렬되어 있다고 가정하고 본 순서대로 트랜스폼을 계산합니다.
 
-This calculation method doesn't cause issues when MMD models are controlled by `MmdRuntime` since it's replaced by a completely different algorithm.
-However, when using MMD models without additional runtime, models may display incorrectly.
+이 계산 방법은 MMD 모델이 `MmdRuntime`으로 제어될 때는 문제를 일으키지 않습니다. 왜냐하면 완전히 다른 알고리즘으로 대체되기 때문입니다.
+그러나 추가 런타임 없이 MMD 모델을 사용할 때는 모델이 잘못 표시될 수 있습니다.
 
-To solve this, babylon-mmd provides `OiComputeTransformInjector`, which modifies Babylon.js Skeleton's bone transform calculation implementation so models display correctly when not using `MmdRuntime`.
+이를 해결하기 위해 babylon-mmd는 `OiComputeTransformInjector`를 제공합니다. 이는 Babylon.js 스켈레톤의 본 트랜스폼 계산 구현을 수정하여 `MmdRuntime`을 사용하지 않을 때도 모델이 올바르게 표시되도록 합니다.
 ::: */}
 
-### Bone Morph
+### 본 모프
 
-Bone Morph is a **feature that rotates or moves multiple bones simultaneously by predefined specific offsets**.
+본 모프는 **미리 정의된 특정 오프셋으로 여러 본을 동시에 회전하거나 이동시키는 기능**입니다.
 
-This feature exists in the PMX specification and is not supported in PMD.
+이 기능은 PMX 명세에 존재하며 PMD에서는 지원되지 않습니다.
 
-It is primarily used to effectively manipulate body parts like fingers, where many bones need to move together.
+주로 손가락과 같이 많은 본이 함께 움직여야 하는 신체 부위를 효과적으로 조작하는 데 사용됩니다.
 
-This will be covered in detail in the Morph section below.
+이에 대해서는 아래의 모프 섹션에서 자세히 설명합니다.
 
-### Append Transform
+### 어펜드 트랜스폼
 
 import AppendTransformVideo from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/append_transform.mp4";
 
@@ -280,15 +280,15 @@ import AppendTransformVideo from "@site/docs/reference/understanding-mmd-behavio
   <source src={AppendTransformVideo} type="video/mp4"/>
 </video>
 
-*This video shows Append Transform applied to shoulders used in Semi-Standard Bone Structure. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 준표준 본 구조에서 사용되는 어깨에 적용된 어펜드 트랜스폼을 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-Append Transform allows bones that are not in a parent-child relationship to influence each other as if they were hierarchically related.
+어펜드 트랜스폼을 사용하면 부모-자식 관계가 아닌 본들이 계층적으로 연결된 것처럼 서로 영향을 미칠 수 있습니다.
 
-This feature exists in the PMX specification and is not supported in PMD.
+이 기능은 PMX 명세에 존재하며 PMD에서는 지원되지 않습니다.
 
-Append Transform is similar to Unity's Transform Constraint component.
+어펜드 트랜스폼은 Unity의 Transform Constraint 컴포넌트와 유사합니다.
 
-In the Semi-Standard Bone Structure explained later, Append Transform is utilized to implement various convenience features that help animators create animations more easily.
+나중에 설명할 준표준 본 구조에서는 어펜드 트랜스폼을 활용하여 애니메이터가 더 쉽게 애니메이션을 만들 수 있도록 돕는 다양한 편의 기능을 구현합니다.
 
 ### IK
 
@@ -298,37 +298,37 @@ import IkVideo from "@site/docs/reference/understanding-mmd-behaviour/introducti
   <source src={IkVideo} type="video/mp4"/>
 </video>
 
-*This video demonstrates Inverse Kinematics (IK) applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 다리 움직임에 적용된 인버스 키네마틱스(IK)를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-Inverse Kinematics (IK) is a **feature that automatically calculates joint angles by working backwards from a target position**.
+인버스 키네마틱스(IK)는 **타겟 포지션에서 역으로 작업하여 조인트 각도를 자동으로 계산하는 기능**입니다.
 
-In MMD, IK is primarily used to **easily control foot and knee movements**.
-For example, when you specify a foot position, IK automatically calculates the angles of the knee and thigh to create a natural leg pose.
+MMD에서 IK는 주로 **발과 무릎 움직임을 쉽게 제어**하는 데 사용됩니다.
+예를 들어, 발 포지션을 지정하면 IK는 자연스러운 다리 포즈를 만들기 위해 무릎과 허벅지의 각도를 자동으로 계산합니다.
 
-IK consists of **IK Chain** and **IK Target**:
-- **IK Chain**: A series of bones controlled by IK (e.g., thigh → knee → ankle)
-- **IK Target**: A bone representing the target position that IK tries to reach
+IK는 **IK 체인**과 **IK 타겟**으로 구성됩니다:
+- **IK 체인**: IK에 의해 제어되는 일련의 본(예: 허벅지 → 무릎 → 발목)
+- **IK 타겟**: IK가 도달하려는 타겟 포지션을 나타내는 본
 
 :::info
-Almost all MMD models have IK applied to their legs.
+거의 모든 MMD 모델은 다리에 IK가 적용되어 있습니다.
 
-This allows foot movements to be maintained correctly when applying animations between models of different heights, without requiring separate retargeting.
+이를 통해 별도의 리타겟팅 없이도 서로 다른 키의 모델 간에 애니메이션을 적용할 때 발 움직임이 올바르게 유지될 수 있습니다.
 :::
 
-### Standard Bone Structure / Semi-Standard Bone Structure
+### 표준 본 구조 / 준표준 본 구조
 
-MMD's skeleton has a standardized bone structure, divided into Standard Bone Structure (標準ボーン構造) and its extended version, Semi-Standard Bone Structure (準標準ボーン構造).
+MMD의 스켈레톤은 표준 본 구조(標準ボーン構造)와 이를 확장한 준표준 본 구조(準標準ボーン構造)로 나뉘는 표준화된 본 구조를 가지고 있습니다.
 
-Standard Bone Structure is the standard bone structure for representing humanoid-type models in MMD, and almost all MMD models follow this structure.
+표준 본 구조는 MMD에서 인간형 모델을 표현하기 위한 표준 본 구조이며, 거의 모든 MMD 모델이 이 구조를 따릅니다.
 
-Semi-Standard Bone Structure is an extended structure based on Standard Bone Structure, which appears to be mostly used in models created after 2014.
+준표준 본 구조는 표준 본 구조를 기반으로 한 확장 구조로, 주로 2014년 이후에 제작된 모델에서 사용되는 것으로 보입니다.
 
-Thanks to this standardized structure, when loading MMD animations, most animations can be easily applied without additional retargeting steps.
+이 표준화된 구조 덕분에 MMD 애니메이션을 로드할 때 대부분의 애니메이션은 추가적인 리타겟팅 단계 없이 쉽게 적용할 수 있습니다.
 
 <details>
-<summary>Explanation of Standard Bone Structure</summary>
+<summary>표준 본 구조 설명</summary>
 
-The Semi-Standard Bone Structure is as follows, and while it is similar to Unity's Humanoid Skeleton and Mixamo's Rig, there are some differences.
+준표준 본 구조는 다음과 같으며, Unity의 휴머노이드 스켈레톤 및 Mixamo의 리그와 유사하지만 몇 가지 차이점이 있습니다.
 
 ```typescript title="src/Loader/Util/mmdHumanoidMapper.ts (L1-180)"
 /**
@@ -445,9 +445,9 @@ The Semi-Standard Bone Structure is as follows, and while it is similar to Unity
  */
 ```
 
-<h2>Hip Position and Parent Relationship Differences</h2>
+<h2>힙 포지션과 부모 관계 차이점</h2>
 
-Generally, humanoid-type skeletons have Hip as the root and have the following structure:
+일반적으로 인간형 스켈레톤은 Hip을 루트로 하고 다음과 같은 구조를 가집니다:
 
 ```
 - Hip
@@ -456,34 +456,34 @@ Generally, humanoid-type skeletons have Hip as the root and have the following s
     - RightUpperLeg
 ```
 
-The MMD skeleton structure corresponding to the above humanoid skeleton structure is as follows:
+위 휴머노이드 스켈레톤 구조에 해당하는 MMD 스켈레톤 구조는 다음과 같습니다:
 
 ```
-- センター: center **Vertex weights corresponding to the Hip area are assigned to this bone!!**
+- センター: center **Hip 영역에 해당하는 버텍스 웨이트가 이 본에 할당됩니다!!**
     - グルーブ: groove (semi-standard)
         - 腰: waist (semi-standard)
-            - 上半身: upper body - **Corresponds to the Hip position!!**
+            - 上半身: upper body - **휴머노이드 Hip 위치에 해당합니다!!**
             - 下半身: lower body
 ```
 
-In MMD's skeleton, vertex weights for the Hip area are assigned to the center (センター) bone.
-However, the bone at the position corresponding to the humanoid Hip is the upper body (上半身) bone.
+MMD의 스켈레톤에서는 Hip 영역의 버텍스 웨이트가 center(センター) 본에 할당됩니다.
+그러나 휴머노이드 Hip에 해당하는 위치의 본은 upper body(上半身) 본입니다.
 
-This different structure causes problems when applying MMD animations to non-MMD models, and to solve this, special handling must be done exclusively for the center bone.
+이러한 다른 구조는 MMD 애니메이션을 MMD가 아닌 모델에 적용할 때 문제를 일으키며, 이를 해결하기 위해서는 center 본에 대한 특별한 처리를 해야 합니다.
 
 :::tip
-When applying humanoid animations to MMD models, this structural difference does not cause problems.
+휴머노이드 애니메이션을 MMD 모델에 적용할 때는 이러한 구조적 차이가 문제를 일으키지 않습니다.
 :::
 
 :::note
-babylon-mmd provides `AnimationRetargeter`, a feature for applying humanoid animations such as mixamo animations to MMD models.
+babylon-mmd는 mixamo 애니메이션과 같은 휴머노이드 애니메이션을 MMD 모델에 적용하기 위한 기능인 `AnimationRetargeter`를 제공합니다.
 
-It also provides `HumanoidMmd`, a feature for applying MMD animations to humanoid models.
+또한 MMD 애니메이션을 휴머노이드 모델에 적용하기 위한 기능인 `HumanoidMmd`도 제공합니다.
 
-`HumanoidMmd` performs the exception handling for the center bone mentioned above.
+`HumanoidMmd`는 위에서 언급한 center 본에 대한 예외 처리를 수행합니다.
 :::
 
-<h2>Shoulder Structure</h2>
+<h2>어깨 구조</h2>
 
 ```
 - 右肩P: right shoulder parent
@@ -492,13 +492,13 @@ It also provides `HumanoidMmd`, a feature for applying MMD animations to humanoi
             - 右腕: right arm
 ```
 
-In Semi-Standard Bone Structure, shoulders have additional Parent bones and Child bones added to make it easier to apply animations to the shoulders.
+준표준 본 구조에서는 어깨에 어깨를 더 쉽게 애니메이션할 수 있도록 추가적인 부모 본과 자식 본이 추가되어 있습니다.
 
-When manipulating the shoulder, these bones rotate the Child bone in the opposite direction by the amount of the Parent bone's rotation value, so that the shoulder's children are not affected by the rotation when the shoulder is rotated.
+어깨를 조작할 때, 이러한 본들은 어깨가 회전할 때 어깨의 자식들이 회전의 영향을 받지 않도록 부모 본의 회전 값만큼 자식 본을 반대 방향으로 회전시킵니다.
 
-This is implemented by applying Append Transform to the Child bone and reflecting the Parent bone's rotation value.
+이는 어펜드 트랜스폼을 자식 본에 적용하고 부모 본의 회전 값을 반영하여 구현됩니다.
 
-<h2>Leg Structure</h2>
+<h2>다리 구조</h2>
 
 import IkWithAppendTransform from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/ik_with_append_transform.mp4";
 
@@ -506,7 +506,7 @@ import IkWithAppendTransform from "@site/docs/reference/understanding-mmd-behavi
   <source src={IkWithAppendTransform} type="video/mp4"/>
 </video>
 
-*This video demonstrates Inverse Kinematics (IK) with Append Transform applied to leg movements. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*이 비디오는 다리 움직임에 적용된 어펜드 트랜스폼이 있는 인버스 키네마틱스(IK)를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 ```
 - センター: center
@@ -527,7 +527,7 @@ import IkWithAppendTransform from "@site/docs/reference/understanding-mmd-behavi
         - 右つま先ＩＫ: right toe ik
 ```
 
-Let's look at only the right leg. The left leg has the same structure.
+오른쪽 다리만 살펴보겠습니다. 왼쪽 다리도 동일한 구조를 가지고 있습니다.
 
 ```
 - 右足IK親: right leg ik parent (semi-standard)
@@ -535,9 +535,9 @@ Let's look at only the right leg. The left leg has the same structure.
         - 右つま先ＩＫ: right toe ik
 ```
 
-In Standard Bone Structure, IK is applied to the legs.
+표준 본 구조에서는 다리에 IK가 적용됩니다.
 
-右足ＩＫ and 右つま先ＩＫ are used as IK target bones. They represent the foot position and toe position respectively.
+右足ＩＫ와 右つま先ＩＫ는 IK 타겟 본으로 사용됩니다. 이들은 각각 발 위치와 발가락 위치를 나타냅니다.
 
 ```
 - 右足: right leg
@@ -550,21 +550,21 @@ In Standard Bone Structure, IK is applied to the legs.
             - 右足先EX: right toe extra (semi-standard)
 ```
 
-Only in the Semi-Standard structure, you can see that the same structure of leg bones is defined twice.
-The bones with `D` suffix are bones for FK manipulation, and the bones without any suffix are IK Chain bones controlled by IK.
+준표준 구조에서만 동일한 구조의 다리 본이 두 번 정의된 것을 볼 수 있습니다.
+`D` 접미사가 있는 본은 FK 조작을 위한 본이고, 접미사가 없는 본은 IK에 의해 제어되는 IK 체인 본입니다.
 
-The bones with `D` suffix manipulate the legs by applying offsets to IK calculation results using Append Transform.
+`D` 접미사가 있는 본은 어펜드 트랜스폼을 사용하여 IK 계산 결과에 오프셋을 적용하여 다리를 조작합니다.
 
-As a result, while using IK, FK can also be used together when fine adjustments are needed.
+그 결과, IK를 사용하면서도 미세 조정이 필요할 때 FK도 함께 사용할 수 있습니다.
 </details>
 
-## Morph
+## 모프
 
-Morph is a feature that changes the shape of models, primarily used to control MMD model facial expressions and mouth shapes that are difficult to express with skeletons alone.
+모프는 모델의 모양을 변경하는 기능으로, 주로 스켈레톤만으로는 표현하기 어려운 MMD 모델의 표정과 입 모양을 제어하는 데 사용됩니다.
 
-This is similar to Unity's Blend Shape and Blender 3D's Shape Key, but has additional functionality.
+이는 Unity의 블렌드 셰이프와 Blender 3D의 셰이프 키와 유사하지만 추가 기능이 있습니다.
 
-### Vertex Morph
+### 버텍스 모프
 
 import VertexMorphVideo from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/vertex_morph.mp4";
 
@@ -572,11 +572,11 @@ import VertexMorphVideo from "@site/docs/reference/understanding-mmd-behaviour/i
   <source src={VertexMorphVideo} type="video/mp4"/>
 </video>
 
-*Example of Vertex Morph that changes the face shape. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*얼굴 모양을 변경하는 버텍스 모프의 예. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-Vertex Morph is a **feature that changes the model's shape by modifying vertex positions**.
+버텍스 모프는 **버텍스 포지션을 수정하여 모델의 모양을 변경하는 기능**입니다.
 
-### Bone Morph
+### 본 모프
 
 import BoneMorphVideo from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/bone_morph.mp4";
 
@@ -584,21 +584,21 @@ import BoneMorphVideo from "@site/docs/reference/understanding-mmd-behaviour/int
   <source src={BoneMorphVideo} type="video/mp4"/>
 </video>
 
-*Example of Bone Morph that moves the hand. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*손을 움직이는 본 모프의 예. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-Bone Morph is a **feature that rotates or moves multiple bones simultaneously by predefined specific offsets**.
-PMD does not support this specification.
+본 모프는 **미리 정의된 특정 오프셋으로 여러 본을 동시에 회전하거나 이동시키는 기능**입니다.
+PMD는 이 명세를 지원하지 않습니다.
 
-Bone Morph is primarily used for efficiently controlling body parts where many bones need to move together, such as fingers.
+본 모프는 주로 손가락과 같이 많은 본이 함께 움직여야 하는 신체 부위를 효율적으로 제어하는 데 사용됩니다.
 
-### UV Morph
+### UV 모프
 
-UV Morph is a **feature that changes the model's appearance by modifying UV coordinates**.
-PMD does not support this specification.
+UV 모프는 **UV 좌표를 수정하여 모델의 외관을 변경하는 기능**입니다.
+PMD는 이 명세를 지원하지 않습니다.
 
-This is primarily used for effects like changing texture mapping or creating animated textures.
+이는 주로 텍스처 매핑 변경이나 애니메이션 텍스처 생성과 같은 효과에 사용됩니다.
 
-### Material Morph
+### 머티리얼 모프
 
 import MaterialMorphVideo from "@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/material_morph.mp4";
 
@@ -606,70 +606,70 @@ import MaterialMorphVideo from "@site/docs/reference/understanding-mmd-behaviour
   <source src={MaterialMorphVideo} type="video/mp4"/>
 </video>
 
-*Example of Material Morph that turns hair shadow mesh on and off. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*머리카락 그림자 메시를 켜고 끄는 머티리얼 모프의 예. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-Material Morph is a **feature that changes the model's appearance by modifying material properties**.
-PMD does not support this specification.
+머티리얼 모프는 **머티리얼 속성을 수정하여 모델의 외관을 변경하는 기능**입니다.
+PMD는 이 명세를 지원하지 않습니다.
 
-This allows for effects like changing material colors, transparency, or other material properties during runtime.
+이를 통해 런타임에 머티리얼 색상, 투명도 또는 기타 머티리얼 속성을 변경하는 효과를 적용할 수 있습니다.
 
 :::note
-There are also Flip Morph and Impulse Morph.
+플립 모프와 임펄스 모프도 있습니다.
 
-Since these were added in the PMX 2.1 specification and are rarely used in most MMD models, babylon-mmd does not implement them.
+이들은 PMX 2.1 명세에 추가된 기능이며 대부분의 MMD 모델에서 거의 사용되지 않기 때문에 babylon-mmd는 이들을 구현하지 않습니다.
 :::
 
-### Group Morph
+### 그룹 모프
 
-Group Morph is a **feature that allows multiple morphs to be grouped together and controlled as a single morph**.
+그룹 모프는 **여러 모프를 그룹화하여 단일 모프로 제어할 수 있는 기능**입니다.
 
-## Display Frame
+## 디스플레이 프레임
 
 ![display frame](@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/2025-08-10-183859.png)\
-*List of bones and morphs displayed in MMD's timeline panel. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*MMD의 타임라인 패널에 표시된 본과 모프 목록. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 :::note
-Unlike MMD, babylon-mmd does not provide animation editing functionality, so this data is not used.
+MMD와 달리 babylon-mmd는 애니메이션 편집 기능을 제공하지 않으므로 이 데이터는 사용되지 않습니다.
 
-This data is preserved in metadata when the `mmdmodel.preserveSerializationData` option is `true`.
+이 데이터는 `mmdmodel.preserveSerializationData` 옵션이 `true`일 때 메타데이터에 보존됩니다.
 :::
 
-## Physics
+## 피직스
 
 ![physics](@site/docs/reference/understanding-mmd-behaviour/introduction-to-pmx-and-pmd/2025-08-10-184326.png)\
-*Physics Body Visualization in MMD (Yellow: Kinematic Rigid Body, Red: Dynamic Rigid Body) Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
+*MMD의 피직스 바디 시각화(노란색: 키네마틱 리지드 바디, 빨간색: 다이내믹 리지드 바디) 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
-MMD uses Bullet Physics 2.75 to perform rigid body dynamics simulation to **express the physical movement of model hair and clothing**.
+MMD는 Bullet Physics 2.75를 사용하여 **모델의 머리카락과 옷의 물리적 움직임을 표현**하기 위한 리지드 바디 다이내믹스 시뮬레이션을 수행합니다.
 
-To enable this, PMX/PMD files include information about rigid bodies that reference bones and constraints that connect rigid bodies to each other.
+이를 위해 PMX/PMD 파일은 본을 참조하는 리지드 바디와 리지드 바디를 서로 연결하는 컨스트레인트에 대한 정보를 포함합니다.
 
-Rigid bodies are classified into two main types: Dynamic and Kinematic.
+리지드 바디는 다이내믹과 키네마틱의 두 가지 주요 유형으로 분류됩니다.
 
-### Dynamic Rigid Body
+### 다이내믹 리지드 바디
 
-When a specific bone is referenced by a Dynamic Rigid Body, that bone's transform ignores the hierarchy and is controlled by the physics engine.
+특정 본이 다이내믹 리지드 바디에 의해 참조되면, 해당 본의 트랜스폼은 계층 구조를 무시하고 피직스 엔진에 의해 제어됩니다.
 
-### Kinematic Rigid Body
+### 키네마틱 리지드 바디
 
-When a specific bone is referenced by a Kinematic Rigid Body, that rigid body's transform is controlled by the bone.
+특정 본이 키네마틱 리지드 바디에 의해 참조되면, 해당 리지드 바디의 트랜스폼은 본에 의해 제어됩니다.
 
-### Constraint
+### 컨스트레인트
 
-Constraints connect two rigid bodies together.
+컨스트레인트는 두 리지드 바디를 서로 연결합니다.
 
-Usually, multiple rigid bodies are connected in a chain-like formation to represent hair or clothing, and constraints are used to connect them together.
+일반적으로 머리카락이나 옷을 표현하기 위해 여러 리지드 바디가 체인 형태로 연결되며, 컨스트레인트는 이들을 함께 연결하는 데 사용됩니다.
 
 :::note
-babylon-mmd uses Bullet Physics 3.26.
+babylon-mmd는 Bullet Physics 3.26을 사용합니다.
 
-Due to implementation differences in the Constraint Solver between Bullet Physics 3.26 and 2.75, physics calculations for some models may behave strangely in babylon-mmd.
+Bullet Physics 3.26과 2.75 간의 컨스트레인트 솔버 구현 차이로 인해 일부 모델의 피직스 계산이 babylon-mmd에서 이상하게 동작할 수 있습니다.
 
-To resolve this, babylon-mmd provides the `MmdModelPhysicsCreationOptions.disableOffsetForConstraintFrame` option, which allows using the 2.75 version's Constraint Solver logic.
-Setting this option to `true` can achieve results more similar to MMD's physics calculations.
+이를 해결하기 위해 babylon-mmd는 `MmdModelPhysicsCreationOptions.disableOffsetForConstraintFrame` 옵션을 제공합니다. 이 옵션을 통해 2.75 버전의 컨스트레인트 솔버 로직을 사용할 수 있습니다.
+이 옵션을 `true`로 설정하면 MMD의 피직스 계산과 더 유사한 결과를 얻을 수 있습니다.
 
-However, the 2.75 version implementation may cause artifacts where rigid bodies shake due to numerical instability.
+그러나 2.75 버전 구현은 수치적 불안정성으로 인해 리지드 바디가 흔들리는 아티팩트를 발생시킬 수 있습니다.
 :::
 
 :::note
-While the PMX 2.1 specification includes SoftBody Physics specifications, as mentioned earlier, we do not discuss the 2.1 specification.
+PMX 2.1 명세에는 소프트바디 피직스 명세도 포함되어 있지만, 앞서 언급했듯이 2.1 명세에 대해서는 논의하지 않습니다.
 :::

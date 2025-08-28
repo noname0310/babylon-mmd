@@ -3,42 +3,42 @@ sidebar_position: 4
 sidebar_label: Material Builder
 ---
 
-# Material Builder
+# 머티리얼 빌더
 
-During the process of loading an MMD model, the tasks of **loading textures and assigning materials are entirely delegated to the Material Builder**.
+MMD 모델을 로드하는 과정에서 **텍스처 로드 및 머티리얼 할당 작업은 전적으로 머티리얼 빌더에 위임됩니다**.
 
-You can set the `materialBuilder` for `PmxLoader` and `PmdLoader` through loader options.
+로더 옵션을 통해 `PmxLoader`와 `PmdLoader`의 `materialBuilder`를 설정할 수 있습니다.
 
-We have separated the material loading process for the following reasons:
+다음과 같은 이유로 머티리얼 로딩 프로세스를 분리했습니다:
 
-- Measurements have shown that, on average, the most time-consuming part of loading an MMD model is **initializing materials by loading textures**. However, depending on the use case, loading materials may not be necessary. Therefore, we need to allow users to **selectively load materials to reduce loading time**.
+- 측정 결과, 평균적으로 MMD 모델을 로드하는 데 가장 많은 시간이 소요되는 부분은 **텍스처를 로드하여 머티리얼을 초기화하는 것**입니다. 그러나 사용 사례에 따라 머티리얼 로딩이 필요하지 않을 수 있습니다. 따라서 사용자가 **로딩 시간을 단축하기 위해 선택적으로 머티리얼을 로드할 수 있도록** 해야 합니다.
 
-- Additionally, users should be able to **apply shading based on different materials instead of the MMD shading model at load time**. For example, a user might want to use a **Physically Based Rendering (PBR) material** for a more realistic look.
+- 또한 사용자는 **로드 시 MMD 셰이딩 모델 대신 다른 머티리얼 기반 셰이딩을 적용할 수 있어야 합니다**. 예를 들어, 사용자는 더 사실적인 표현을 위해 **물리 기반 렌더링(PBR) 머티리얼**을 사용하고 싶을 수 있습니다.
 
-## Introduction of Material Builder
+## 머티리얼 빌더 소개
 
-All MMD model loaders allow you to set a material builder via **`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`**.
+모든 MMD 모델 로더는 **`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`**를 통해 머티리얼 빌더를 설정할 수 있습니다.
 
-This option defaults to **`null`**, but if you import the babylon-mmd index, **`MmdStandardMaterialBuilder` is set as the default**.
+이 옵션은 기본적으로 **`null`**이지만, babylon-mmd 인덱스를 임포트하면 **`MmdStandardMaterialBuilder`가 기본값으로 설정**됩니다.
 
 :::info
-In this context, importing the index means code like this:
+여기서 인덱스를 임포트한다는 것은 다음과 같은 코드를 의미합니다:
 
 ```typescript
 import { Something } from "babylon-mmd";
 ```
 
-Conversely, you can also import the file where the symbol is defined directly:
+반대로, 심볼이 정의된 파일을 직접 임포트할 수도 있습니다:
 
 ```typescript
 import { Something } from "babylon-mmd/esm/something";
 ```
 
-For tree-shaking purposes, the default value of `loaderOptions.mmdmodel.materialBuilder` is set to `null`.
-However, to make the library easier for beginners to use, it is designed so that **importing the index sets `MmdStandardMaterialBuilder` as the default**.
+트리 셰이킹(tree-shaking)을 위해 `loaderOptions.mmdmodel.materialBuilder`의 기본값은 `null`로 설정되어 있습니다.
+그러나 초보자가 라이브러리를 더 쉽게 사용할 수 있도록, **인덱스를 임포트하면 `MmdStandardMaterialBuilder`가 기본값으로 설정**되도록 설계되었습니다.
 :::
 
-You can set the material builder as follows:
+다음과 같이 머티리얼 빌더를 설정할 수 있습니다:
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(modelFileOrUrl, scene, {
@@ -50,9 +50,9 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(modelFileOr
 });
 ```
 
-If you are loading multiple models with a single material, you can **share one material builder**.
+단일 머티리얼로 여러 모델을 로드하는 경우, **머티리얼 빌더를 공유**할 수 있습니다.
 
-In this case, the material builder **internally caches textures**, which can significantly reduce loading time, especially when loading the same model multiple times.
+이 경우, 머티리얼 빌더는 **내부적으로 텍스처를 캐싱**하므로, 특히 동일한 모델을 여러 번 로드할 때 로딩 시간을 크게 줄일 수 있습니다.
 
 ```typescript
 const pbrMaterialBuilder = new PBRMaterialBuilder();
@@ -74,99 +74,99 @@ const assetContainer2: AssetContainer = await LoadAssetContainerAsync(modelFileO
 });
 ```
 
-## Kinds of Material Builders
+## 머티리얼 빌더의 종류
 
-You can create a material builder by implementing the **`IMmdMaterialBuilder`** interface, and the material builders provided by babylon-mmd also implement this interface.
+**`IMmdMaterialBuilder`** 인터페이스를 구현하여 머티리얼 빌더를 만들 수 있으며, babylon-mmd에서 제공하는 머티리얼 빌더도 이 인터페이스를 구현합니다.
 
-babylon-mmd provides three material builders:
+babylon-mmd는 세 가지 머티리얼 빌더를 제공합니다:
 
-- **`MmdStandardMaterialBuilder`** - A material builder that uses **`MmdStandardMaterial`** to reproduce MMD's behavior.
-- **`StandardMaterialBuilder`** - A material builder that uses Babylon.js's **`StandardMaterial`**.
-- **`PBRMaterialBuilder`** - A material builder that uses Babylon.js's **`PBRMaterial`**.
+- **`MmdStandardMaterialBuilder`** - MMD의 동작을 재현하기 위해 **`MmdStandardMaterial`**을 사용하는 머티리얼 빌더입니다.
+- **`StandardMaterialBuilder`** - Babylon.js의 **`StandardMaterial`**을 사용하는 머티리얼 빌더입니다.
+- **`PBRMaterialBuilder`** - Babylon.js의 **`PBRMaterial`**을 사용하는 머티리얼 빌더입니다.
 
 ### MmdStandardMaterialBuilder
 
-**`MmdStandardMaterialBuilder`** is a material builder that loads MMD materials using **`MmdStandardMaterial`**.
+**`MmdStandardMaterialBuilder`**는 **`MmdStandardMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
-This material builder **loads all MMD material properties supported by babylon-mmd**, with methods provided for each category.
+이 머티리얼 빌더는 **babylon-mmd에서 지원하는 모든 MMD 머티리얼 속성을 로드**하며, 각 카테고리별 메서드가 제공됩니다.
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+로딩 동작을 변경하고 싶다면, `_setMeshesAlphaIndex`를 제외한 **해당 메서드를 오버라이드**할 수 있습니다.
 
-**Properties set by `MmdStandardMaterialBuilder._setMeshesAlphaIndex`:**
+**`MmdStandardMaterialBuilder._setMeshesAlphaIndex`에 의해 설정되는 속성:**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - 머티리얼 순서에 따라 머티리얼의 알파 인덱스를 설정합니다(아래 렌더 메서드 참조).
 
-**Properties set by `MmdStandardMaterialBuilder.loadGeneralScalarProperties`:**
+**`MmdStandardMaterialBuilder.loadGeneralScalarProperties`에 의해 설정되는 속성:**
 
-- **`StandardMaterial.diffuseColor`** - MMD Material "diffuse" (rgb)
-- **`StandardMaterial.specularColor`** - MMD Material "specular" (rgb)
-- **`StandardMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`StandardMaterial.specularPower`** - MMD Material "reflect"
+- **`StandardMaterial.diffuseColor`** - MMD 머티리얼 "diffuse" (rgb)
+- **`StandardMaterial.specularColor`** - MMD 머티리얼 "specular" (rgb)
+- **`StandardMaterial.ambientColor`** - MMD 머티리얼 "ambient" (rgb)
+- **`Material.alpha`** - MMD 머티리얼 "diffuse" (a)
+- **`AbstractMesh.isVisible`** - "diffuse" (a)가 0인 경우 false로 설정
+- **`StandardMaterial.specularPower`** - MMD 머티리얼 "reflect"
 
-**Properties set by `MmdStandardMaterialBuilder.loadDiffuseTexture`:**
+**`MmdStandardMaterialBuilder.loadDiffuseTexture`에 의해 설정되는 속성:**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`StandardMaterial.diffuseTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMD 머티리얼 "is double sided"
+- **`StandardMaterial.diffuseTexture`** - MMD 머티리얼 "texture"
 
-**Properties set by `MmdStandardMaterialBuilder.setAlphaBlendMode`:**
+**`MmdStandardMaterialBuilder.setAlphaBlendMode`에 의해 설정되는 속성:**
 
-- **`StandardMaterial.diffuseTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`StandardMaterial.useAlphaFromDiffuseTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`StandardMaterial.diffuseTexture.hasAlpha`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정(아래 알파 평가 참조)
+- **`StandardMaterial.useAlphaFromDiffuseTexture`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정
+- **`Material.transparencyMode`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
+- **`Material.forceDepthWrite`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
 
-**Properties set by `MmdStandardMaterialBuilder.loadSphereTexture`:**
+**`MmdStandardMaterialBuilder.loadSphereTexture`에 의해 설정되는 속성:**
 
-- **`MmdStandardMaterial.sphereTexture`** - MMD Material "sphere texture"
-- **`MmdStandardMaterial.sphereTextureBlendMode`** - MMD Material "sphere texture mode"
+- **`MmdStandardMaterial.sphereTexture`** - MMD 머티리얼 "sphere texture"
+- **`MmdStandardMaterial.sphereTextureBlendMode`** - MMD 머티리얼 "sphere texture mode"
 
-**Properties set by `MmdStandardMaterialBuilder.loadToonTexture`:**
+**`MmdStandardMaterialBuilder.loadToonTexture`에 의해 설정되는 속성:**
 
-- **`MmdStandardMaterial.toonTexture`** - MMD Material "toon texture"
+- **`MmdStandardMaterial.toonTexture`** - MMD 머티리얼 "toon texture"
 
-**Properties set by `MmdStandardMaterialBuilder.loadOutlineRenderingProperties`:**
+**`MmdStandardMaterialBuilder.loadOutlineRenderingProperties`에 의해 설정되는 속성:**
 
-- **`MmdStandardMaterial.renderOutline`** - Set to true to enable outline rendering
-- **`MmdStandardMaterial.outlineWidth`** - MMD Material "edge size"
-- **`MmdStandardMaterial.outlineColor`** - MMD Material "edge color" (rgb)
-- **`MmdStandardMaterial.outlineAlpha`** - MMD Material "edge color" (a)
+- **`MmdStandardMaterial.renderOutline`** - 아웃라인 렌더링을 활성화하려면 true로 설정
+- **`MmdStandardMaterial.outlineWidth`** - MMD 머티리얼 "edge size"
+- **`MmdStandardMaterial.outlineColor`** - MMD 머티리얼 "edge color" (rgb)
+- **`MmdStandardMaterial.outlineAlpha`** - MMD 머티리얼 "edge color" (a)
 
 ### StandardMaterialBuilder
 
-**`StandardMaterialBuilder`** is a material builder that loads MMD materials using **`StandardMaterial`**.
+**`StandardMaterialBuilder`**는 Babylon.js의 **`StandardMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
-This material builder **loads only a subset of MMD material properties**, so data loss occurs during the loading process.
+이 머티리얼 빌더는 **MMD 머티리얼 속성의 일부만 로드**하므로, 로딩 과정에서 데이터 손실이 발생합니다.
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+로딩 동작을 변경하고 싶다면, `_setMeshesAlphaIndex`를 제외한 **해당 메서드를 오버라이드**할 수 있습니다.
 
-**Properties set by `StandardMaterialBuilder._setMeshesAlphaIndex`:**
+**`StandardMaterialBuilder._setMeshesAlphaIndex`에 의해 설정되는 속성:**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - 머티리얼 순서에 따라 머티리얼의 알파 인덱스를 설정합니다(아래 렌더 메서드 참조).
 
-**Properties set by `StandardMaterialBuilder.loadGeneralScalarProperties`:**
+**`StandardMaterialBuilder.loadGeneralScalarProperties`에 의해 설정되는 속성:**
 
-- **`StandardMaterial.diffuseColor`** - MMD Material "diffuse" (rgb)
-- **`StandardMaterial.specularColor`** - MMD Material "specular" (rgb)
-- **`StandardMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`StandardMaterial.specularPower`** - MMD Material "reflect"
+- **`StandardMaterial.diffuseColor`** - MMD 머티리얼 "diffuse" (rgb)
+- **`StandardMaterial.specularColor`** - MMD 머티리얼 "specular" (rgb)
+- **`StandardMaterial.ambientColor`** - MMD 머티리얼 "ambient" (rgb)
+- **`Material.alpha`** - MMD 머티리얼 "diffuse" (a)
+- **`AbstractMesh.isVisible`** - "diffuse" (a)가 0인 경우 false로 설정
+- **`StandardMaterial.specularPower`** - MMD 머티리얼 "reflect"
 
-**Properties set by `StandardMaterialBuilder.loadDiffuseTexture`:**
+**`StandardMaterialBuilder.loadDiffuseTexture`에 의해 설정되는 속성:**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`StandardMaterial.diffuseTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMD 머티리얼 "is double sided"
+- **`StandardMaterial.diffuseTexture`** - MMD 머티리얼 "texture"
 
-**Properties set by `StandardMaterialBuilder.setAlphaBlendMode`:**
+**`StandardMaterialBuilder.setAlphaBlendMode`에 의해 설정되는 속성:**
 
-- **`StandardMaterial.diffuseTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`StandardMaterial.useAlphaFromDiffuseTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`StandardMaterial.diffuseTexture.hasAlpha`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정(아래 알파 평가 참조)
+- **`StandardMaterial.useAlphaFromDiffuseTexture`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정
+- **`Material.transparencyMode`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
+- **`Material.forceDepthWrite`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
 
-**The following three methods are empty and can be optionally implemented by overriding them:**
+**다음 세 가지 메서드는 비어 있으며, 오버라이딩하여 선택적으로 구현할 수 있습니다:**
 
 - `StandardMaterialBuilder.loadSphereTexture`
 - `StandardMaterialBuilder.loadToonTexture`
@@ -174,130 +174,130 @@ If you want to change the loading behavior, you can **override the corresponding
 
 ### PBRMaterialBuilder
 
-**`PBRMaterialBuilder`** is a material builder that loads MMD materials using **`PBRMaterial`**.
+**`PBRMaterialBuilder`**는 Babylon.js의 **`PBRMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
-This material builder **loads only a subset of MMD material properties**, so data loss occurs during the loading process.
-Also, for properties that do not have a 1:1 mapping with MMD material parameters, **data distortion may occur** due to additional conversions.
+이 머티리얼 빌더는 **MMD 머티리얼 속성의 일부만 로드**하므로, 로딩 과정에서 데이터 손실이 발생합니다.
+또한, MMD 머티리얼 파라미터와 1:1 매핑이 되지 않는 속성의 경우, 추가적인 변환으로 인해 **데이터 왜곡이 발생**할 수 있습니다.
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+로딩 동작을 변경하고 싶다면, `_setMeshesAlphaIndex`를 제외한 **해당 메서드를 오버라이드**할 수 있습니다.
 
-**Properties set by `PBRMaterialBuilder._setMeshesAlphaIndex`:**
+**`PBRMaterialBuilder._setMeshesAlphaIndex`에 의해 설정되는 속성:**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - 머티리얼 순서에 따라 머티리얼의 알파 인덱스를 설정합니다(아래 렌더 메서드 참조).
 
-**Properties set by `PBRMaterialBuilder.loadGeneralScalarProperties`:**
+**`PBRMaterialBuilder.loadGeneralScalarProperties`에 의해 설정되는 속성:**
 
-- **`PBRMaterial.albedoColor`** - MMD Material "diffuse" (rgb)
-- **`PBRMaterial.reflectionColor`** - MMD Material "specular" (rgb)
-- **`PBRMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`PBRMaterial.roughness`** - MMD Material "reflect"
+- **`PBRMaterial.albedoColor`** - MMD 머티리얼 "diffuse" (rgb)
+- **`PBRMaterial.reflectionColor`** - MMD 머티리얼 "specular" (rgb)
+- **`PBRMaterial.ambientColor`** - MMD 머티리얼 "ambient" (rgb)
+- **`Material.alpha`** - MMD 머티리얼 "diffuse" (a)
+- **`AbstractMesh.isVisible`** - "diffuse" (a)가 0인 경우 false로 설정
+- **`PBRMaterial.roughness`** - MMD 머티리얼 "reflect"
 
-**Properties set by `PBRMaterialBuilder.loadDiffuseTexture`:**
+**`PBRMaterialBuilder.loadDiffuseTexture`에 의해 설정되는 속성:**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`PBRMaterial.albedoTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMD 머티리얼 "is double sided"
+- **`PBRMaterial.albedoTexture`** - MMD 머티리얼 "texture"
 
-**Properties set by `PBRMaterialBuilder.setAlphaBlendMode`:**
+**`PBRMaterialBuilder.setAlphaBlendMode`에 의해 설정되는 속성:**
 
-- **`PBRMaterial.albedoTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`PBRMaterial.useAlphaFromAlbedoTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`PBRMaterial.albedoTexture.hasAlpha`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정(아래 알파 평가 참조)
+- **`PBRMaterial.useAlphaFromAlbedoTexture`** - MMD 머티리얼 "texture"에 알파 채널이 있으면 true로 설정
+- **`Material.transparencyMode`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
+- **`Material.forceDepthWrite`** - 렌더 메서드에 의해 결정(아래 렌더 메서드 참조)
 
-**The following three methods are empty and can be optionally implemented by overriding them:**
+**다음 세 가지 메서드는 비어 있으며, 오버라이딩하여 선택적으로 구현할 수 있습니다:**
 
 - `PBRMaterialBuilder.loadSphereTexture`
 - `PBRMaterialBuilder.loadToonTexture`
 - `PBRMaterialBuilder.loadOutlineRenderingProperties`
 
-## Render Method
+## 렌더 메서드
 
-MMD renders meshes using **Alpha Blending** with **Depth Write** and **Depth Test** enabled.
-The Material Builder provides several options to implement this behavior while achieving optimized results.
+MMD는 **Depth Write**와 **Depth Test**가 활성화된 **알파 블렌딩**을 사용하여 메시를 렌더링합니다.
+머티리얼 빌더는 최적화된 결과를 얻으면서 이 동작을 구현하기 위한 여러 옵션을 제공합니다.
 
-If a Mesh is completely **Opaque**, rendering without Alpha Blending can produce the same result. babylon-mmd provides several options to automatically perform this for rendering optimization, controlled by the material builder's `renderMethod`.
+메시가 완전히 **불투명(Opaque)**한 경우, 알파 블렌딩 없이 렌더링해도 동일한 결과를 얻을 수 있습니다. babylon-mmd는 렌더링 최적화를 위해 이를 자동으로 수행하는 여러 옵션을 제공하며, 이는 머티리얼 빌더의 `renderMethod`로 제어됩니다.
 
 ### DepthWriteAlphaBlendingWithEvaluation
 
-This rendering method renders **Opaque meshes without Alpha Blending** and uses Alpha Blending only when absolutely necessary.
+이 렌더링 메서드는 **불투명 메시를 알파 블렌딩 없이 렌더링**하고, 절대적으로 필요한 경우에만 알파 블렌딩을 사용합니다.
 
-In other words, when loading a model with this method, the material's `transparencyMode` can be either **`Material.MATERIAL_ALPHABLEND`** or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`true`**.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`** 또는 **`Material.MATERIAL_OPAQUE`**가 될 수 있으며, `forceDepthWrite`는 **`true`**로 설정됩니다.
 
-This is the **default** method.
+이것이 **기본** 메서드입니다.
 
 ### DepthWriteAlphaBlending
 
-This rendering method renders **all meshes using Alpha Blending**.
+이 렌더링 메서드는 **모든 메시를 알파 블렌딩을 사용하여 렌더링**합니다.
 
-In other words, when loading a model with this method, the material's `transparencyMode` is always **`Material.MATERIAL_ALPHABLEND`**, and `forceDepthWrite` is set to **`true`**.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 항상 **`Material.MATERIAL_ALPHABLEND`**이며, `forceDepthWrite`는 **`true`**로 설정됩니다.
 
-This method is **identical to MMD's rendering method**, so if you encounter any rendering issues, it is recommended to try this method.
+이 메서드는 **MMD의 렌더링 메서드와 동일**하므로, 렌더링 문제가 발생하면 이 메서드를 시도해 보는 것이 좋습니다.
 
 ### AlphaEvaluation
 
-This rendering method determines whether to render a mesh using **Alpha Blending, Alpha Test, or Opaque** mode, and **does not perform Depth Write when using Alpha Blending**.
+이 렌더링 메서드는 메시를 **알파 블렌딩, 알파 테스트, 또는 불투명** 모드로 렌더링할지 결정하고, **알파 블렌딩을 사용할 때는 Depth Write를 수행하지 않습니다**.
 
-In other words, when loading a model with this method, the material's `transparencyMode` can be **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`false`**.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, 또는 **`Material.MATERIAL_OPAQUE`**가 될 수 있으며, `forceDepthWrite`는 **`false`**로 설정됩니다.
 
-This method is the **most compatible with Babylon.js's rendering pipeline**, as using Alpha Blend with Depth Write is not a common practice.
+이 메서드는 Depth Write와 함께 알파 블렌드를 사용하는 것이 일반적인 관행이 아니기 때문에 **Babylon.js의 렌더링 파이프라인과 가장 호환성이 높습니다**.
 
-## Alpha Evaluation
+## 알파 평가
 
-Among the rendering methods described above, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** needs to determine if a mesh is Opaque. Also, **`MmdMaterialRenderMethod.AlphaEvaluation`** needs to evaluate the mesh's Alpha value to select the appropriate rendering method.
+위에서 설명한 렌더링 메서드 중, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**은 메시가 불투명한지 판단해야 합니다. 또한, **`MmdMaterialRenderMethod.AlphaEvaluation`**은 적절한 렌더링 메서드를 선택하기 위해 메시의 알파 값을 평가해야 합니다.
 
-This process is called **Alpha Evaluation**.
+이 과정을 **알파 평가**라고 합니다.
 
-### Process
+### 과정
 
-1.  Render the geometry in **UV Space** to a Render Target. At this time, only the **Alpha value** of each pixel is rendered by sampling the texture.
-2.  Read the pixel data of the Render Target using the **readPixels** function.
-3.  Evaluate the Alpha values from the read pixel data to select the appropriate rendering method.
+1.  Render Target에 **UV 공간**에서 지오메트리를 렌더링합니다. 이때, 텍스처를 샘플링하여 각 픽셀의 **알파 값**만 렌더링됩니다.
+2.  **readPixels** 함수를 사용하여 Render Target의 픽셀 데이터를 읽습니다.
+3.  읽은 픽셀 데이터의 알파 값을 평가하여 적절한 렌더링 메서드를 선택합니다.
 
--   For **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**, if even one fragment of the textured geometry has an Alpha value other than `255`, the material's `transparencyMode` is set to **`Material.MATERIAL_ALPHABLEND`**.
--   For **`MmdMaterialRenderMethod.AlphaEvaluation`**, the material's rendering method is determined by the material builder's **`alphaThreshold`** and **`alphaBlendThreshold`** values.
+-   **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**의 경우, 텍스처가 적용된 지오메트리의 한 프래그먼트라도 알파 값이 `255`가 아니면 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`**로 설정됩니다.
+-   **`MmdMaterialRenderMethod.AlphaEvaluation`**의 경우, 머티리얼의 렌더링 메서드는 머티리얼 빌더의 **`alphaThreshold`**와 **`alphaBlendThreshold`** 값에 의해 결정됩니다.
 
-### Caveats
+### 주의사항
 
-**Alpha Evaluation may not work correctly in some edge cases**. For example, if the mesh's UV topology is abnormal, Alpha Evaluation may produce incorrect results. In this case, increasing the material builder's **`alphaEvaluationResolution`** might solve the problem.
+**알파 평가는 일부 엣지 케이스에서 제대로 작동하지 않을 수 있습니다**. 예를 들어, 메시의 UV 토폴로지가 비정상적인 경우, 알파 평가가 잘못된 결과를 생성할 수 있습니다. 이 경우, 머티리얼 빌더의 **`alphaEvaluationResolution`**을 증가시키는 것이 문제를 해결할 수 있습니다.
 
-When performing Alpha Evaluation, **every material must be rendered to a Render Target once at load time**. This is a non-negligible cost. Therefore, you can disable Alpha Evaluation using the material builder's **`forceDisableAlphaEvaluation`** option.
-In this case, Alpha Evaluation is not performed.
+알파 평가를 수행할 때, **모든 머티리얼은 로드 시 한 번 Render Target에 렌더링**되어야 합니다. 이는 무시할 수 없는 비용입니다. 따라서 머티리얼 빌더의 **`forceDisableAlphaEvaluation`** 옵션을 사용하여 알파 평가를 비활성화할 수 있습니다.
+이 경우, 알파 평가는 수행되지 않습니다.
 
-Also, the **BPMX format** stores the Alpha Evaluation results in the format, so you can use it and **skip the Alpha Evaluation process at load time**.
+또한, **BPMX 포맷**은 알파 평가 결과를 포맷에 저장하므로, 이를 사용하여 **로드 시 알파 평가 과정을 건너뛸 수 있습니다**.
 
-## Draw Order Configuration
+## 드로우 오더 설정
 
-MMD always renders meshes according to the order of materials.
-However, Babylon.js, in contrast, sorts meshes based on their distance from the camera before rendering.
+MMD는 항상 머티리얼의 순서에 따라 메시를 렌더링합니다.
+그러나 Babylon.js는 반대로, 렌더링하기 전에 카메라와의 거리를 기준으로 메시를 정렬합니다.
 
-babylon-mmd provides separate solutions for two cases to reproduce the same Draw Order as MMD.
+babylon-mmd는 MMD와 동일한 드로우 오더를 재현하기 위해 두 가지 경우에 대해 별도의 솔루션을 제공합니다.
 
-Note that Draw Order reproduction is not applied when `renderMethod` is `MmdMaterialRenderMethod.AlphaEvaluation`.
+`renderMethod`가 `MmdMaterialRenderMethod.AlphaEvaluation`인 경우에는 드로우 오더 재현이 적용되지 않습니다.
 
-### Handling Multiple Meshes
+### 여러 메시 처리
 
-MMD's Draw Order is reproduced by setting an appropriate value for **`Mesh.alphaIndex`**.
+MMD의 드로우 오더는 **`Mesh.alphaIndex`**에 적절한 값을 설정하여 재현됩니다.
 
-The following two properties of the material builder are used for this:
+머티리얼 빌더의 다음 두 속성이 이를 위해 사용됩니다:
 
--   **`nextStartingAlphaIndex`** - The starting Alpha Index value for the next MMD model
--   **`alphaIndexIncrementsPerModel`** - The Alpha Index increment value for each MMD model
+-   **`nextStartingAlphaIndex`** - 다음 MMD 모델의 시작 알파 인덱스 값
+-   **`alphaIndexIncrementsPerModel`** - 각 MMD 모델의 알파 인덱스 증가값
 
-**`nextStartingAlphaIndex`** increases by **`alphaIndexIncrementsPerModel`** after loading one MMD model.
+**`nextStartingAlphaIndex`**는 하나의 MMD 모델을 로드한 후 **`alphaIndexIncrementsPerModel`**만큼 증가합니다.
 
-Therefore, with the following settings:
+따라서 다음과 같은 설정으로:
 - `nextStartingAlphaIndex`: 0
 - `alphaIndexIncrementsPerModel`: 3
 
-If you load MMD model A with 2 materials and MMD model B with 3 materials in order, **`nextStartingAlphaIndex`** changes as follows:
+머티리얼이 2개인 MMD 모델 A와 머티리얼이 3개인 MMD 모델 B를 순서대로 로드하면, **`nextStartingAlphaIndex`**는 다음과 같이 변경됩니다:
 
-1.  Before loading, `nextStartingAlphaIndex`: 0
-2.  After loading model A, `nextStartingAlphaIndex`: 3
-3.  After loading model B, `nextStartingAlphaIndex`: 6
+1.  로드하기 전, `nextStartingAlphaIndex`: 0
+2.  모델 A를 로드한 후, `nextStartingAlphaIndex`: 3
+3.  모델 B를 로드한 후, `nextStartingAlphaIndex`: 6
 
-And the **`Mesh.alphaIndex`** of the loaded models will be set as follows:
+그리고 로드된 모델의 **`Mesh.alphaIndex`**는 다음과 같이 설정됩니다:
 
 ```
 Model A: {
@@ -312,9 +312,9 @@ Model B: {
 }
 ```
 
-The important point here is that if **`alphaIndexIncrementsPerModel` is not large enough**, the **`Mesh.alphaIndex`** of the previously loaded model and the newly loaded model may **overlap**.
+여기서 중요한 점은 **`alphaIndexIncrementsPerModel`이 충분히 크지 않으면**, 이전에 로드된 모델과 새로 로드된 모델의 **`Mesh.alphaIndex`**가 **겹칠 수 있다**는 것입니다.
 
-For example, if **`alphaIndexIncrementsPerModel`** was set to 1 in the previous example, the **`Mesh.alphaIndex`** for each model would be as follows:
+예를 들어, 이전 예제에서 **`alphaIndexIncrementsPerModel`**가 1로 설정되었다면, 각 모델의 **`Mesh.alphaIndex`**는 다음과 같을 것입니다:
 
 ```
 Model A: {
@@ -329,24 +329,24 @@ Model B: {
 }
 ```
 
-Model A's Mesh2 and Model B's Mesh1 will have the same **`alphaIndex`**, so their drawing order will be determined by their distance from the camera.
+모델 A의 Mesh2와 모델 B의 Mesh1은 동일한 **`alphaIndex`**를 갖게 되므로, 그들의 드로잉 순서는 카메라로부터의 거리에 의해 결정됩니다.
 
-To prevent this problem, the default value of **`alphaIndexIncrementsPerModel`** is set to a sufficiently large number.
+이 문제를 방지하기 위해, **`alphaIndexIncrementsPerModel`**의 기본값은 충분히 큰 숫자로 설정되어 있습니다.
 
 :::info
-Note that when using this method, the **Draw Order is determined by the order in which MMD models are loaded**.
+이 메서드를 사용할 때, **드로우 오더는 MMD 모델이 로드되는 순서에 의해 결정**된다는 점에 유의하세요.
 
-If you need to strictly reproduce the Draw Order between MMD models, you can set **`alphaIndexIncrementsPerModel` to 0** and adjust **`Mesh.alphaIndex` manually**.
+MMD 모델 간의 드로우 오더를 엄격하게 재현해야 하는 경우, **`alphaIndexIncrementsPerModel`을 0으로 설정**하고 **`Mesh.alphaIndex`를 수동으로 조정**할 수 있습니다.
 :::
 
-### Handling Multiple SubMeshes
+### 여러 서브메시 처리
 
-In Babylon.js, there is **no way to control the Draw Order between multiple SubMeshes** within a single mesh.
+Babylon.js에서는 **단일 메시 내의 여러 서브메시 간의 드로우 오더를 제어할 수 있는 방법이 없습니다**.
 
-When a single mesh has multiple SubMeshes, the drawing order is determined by calculating the distance from the camera based on each SubMesh's own **Bounding Sphere Center**.
+단일 메시에 여러 서브메시가 있는 경우, 드로잉 순서는 각 서브메시 자체의 **바운딩 스피어 센터**를 기반으로 카메라로부터의 거리를 계산하여 결정됩니다.
 
-Considering this behavior, babylon-mmd applies the **same `BoundingInfo` to all SubMeshes** when loading an MMD model.
+이러한 동작을 고려하여, babylon-mmd는 MMD 모델을 로드할 때 **모든 서브메시에 동일한 `BoundingInfo`를 적용**합니다.
 
-In this case, all SubMeshes will have the same distance from the camera, and they will be drawn in the order of **`Mesh.subMeshes`** due to **stable sort**.
+이 경우, 모든 서브메시는 카메라로부터 동일한 거리를 갖게 되며, **안정적인 정렬**로 인해 **`Mesh.subMeshes`**의 순서대로 그려집니다.
 
-This is always applied when the MMD model loader's **`loaderOptions.mmdmodel.optimizeSubmeshes`** option is **`false`**.
+이는 MMD 모델 로더의 **`loaderOptions.mmdmodel.optimizeSubmeshes`** 옵션이 **`false`**일 때 항상 적용됩니다.

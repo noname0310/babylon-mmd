@@ -1,77 +1,77 @@
 ---
 sidebar_position: 1
-sidebar_label: MMD Model Loader (PmxLoader, PmdLoader)
+sidebar_label: MMD 모델 로더 (PmxLoader, PmdLoader)
 ---
 
-# MMD Model Loader (PmxLoader, PmdLoader)
+# MMD 모델 로더 (PmxLoader, PmdLoader)
 
-This section describes the components used to **load MMD model files (PMX, PMD)**.
+이 섹션에서는 **MMD 모델 파일(PMX, PMD)을 로드**하는 데 사용되는 컴포넌트에 대해 설명합니다.
 
-MMD models can be loaded using **`PmxLoader`** or **`PmdLoader`**.
+MMD 모델은 **`PmxLoader`** 또는 **`PmdLoader`**를 사용하여 로드할 수 있습니다.
 
 ## PmxLoader/PmdLoader
 
-**`PmxLoader`** and **`PmdLoader`** are loaders used to load **PMX and PMD files** respectively.
+**`PmxLoader`**와 **`PmdLoader`**는 각각 **PMX 및 PMD 파일**을 로드하는 데 사용되는 로더입니다.
 
-## Registering Loaders with Babylon.js SceneLoader
+## Babylon.js SceneLoader에 로더 등록하기
 
-These are integrated with the **Babylon.js SceneLoader API**.
+이들은 **Babylon.js SceneLoader API**와 통합되어 있습니다.
 
-So before using them, you must first **register `PmxLoader` or `PmdLoader` with the Babylon.js SceneLoader**.
+따라서 사용하기 전에 먼저 **`PmxLoader` 또는 `PmdLoader`를 Babylon.js SceneLoader에 등록**해야 합니다.
 
-This can be done by importing **"babylon-mmd/esm/Loader/pmxLoader"** or **"babylon-mmd/esm/Loader/pmdLoader"**.
+이는 **"babylon-mmd/esm/Loader/pmxLoader"** 또는 **"babylon-mmd/esm/Loader/pmdLoader"**를 가져옴으로써 수행할 수 있습니다.
 
 ```typescript
-// Registers a `PmxLoader` instance to the global SceneLoader state for loading .pmx files.
+// .pmx 파일을 로드하기 위해 글로벌 SceneLoader 상태에 `PmxLoader` 인스턴스를 등록합니다.
 import "babylon-mmd/esm/Loader/pmxLoader"; 
 
-// Registers a `PmdLoader` instance to the global SceneLoader state for loading .pmd files.
+// .pmd 파일을 로드하기 위해 글로벌 SceneLoader 상태에 `PmdLoader` 인스턴스를 등록합니다.
 import "babylon-mmd/esm/Loader/pmdLoader"; 
 ```
 
-This implicitly executes the following code:
+이는 암시적으로 다음 코드를 실행합니다:
 
 ```typescript
-RegisterSceneLoaderPlugin(new PmxLoader()); // When importing "babylon-mmd/esm/Loader/pmxLoader"
-RegisterSceneLoaderPlugin(new PmdLoader()); // When importing "babylon-mmd/esm/Loader/pmdLoader"
+RegisterSceneLoaderPlugin(new PmxLoader()); // "babylon-mmd/esm/Loader/pmxLoader"를 가져올 때
+RegisterSceneLoaderPlugin(new PmdLoader()); // "babylon-mmd/esm/Loader/pmdLoader"를 가져올 때
 ```
 
 :::info
-If you are using the **UMD package**, these side effects are automatically applied when the script is loaded. Therefore, you don't need to import them separately.
+**UMD 패키지**를 사용하는 경우, 스크립트가 로드될 때 이러한 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
 :::
 
 :::info
-If you import symbols from the root like **`import "babylon-mmd";`**, all side effects are automatically applied. Therefore, you don't need to import them separately.
+**`import "babylon-mmd";`**와 같이 루트에서 심볼을 가져오면 모든 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
 
-However, in this case **Tree Shaking is not applied**, so it's not recommended for production environments.
+그러나 이 경우 **트리 셰이킹이 적용되지 않으므로** 프로덕션 환경에서는 권장하지 않습니다.
 :::
 
-## Loading MMD Models
+## MMD 모델 로드하기
 
-The **Babylon.js SceneLoader API** provides several functions to add 3D assets to the Scene.
+**Babylon.js SceneLoader API**는 씬에 3D 에셋을 추가하는 여러 함수를 제공합니다.
 
-You can use any of these functions to **load MMD models**.
+이러한 함수 중 어느 것이든 사용하여 **MMD 모델을 로드**할 수 있습니다.
 
 ### ImportMeshAsync
 
-The **`ImportMeshAsync`** function adds an MMD model to the Scene and returns the loaded elements in the form of **`ISceneLoaderAsyncResult`**.
+**`ImportMeshAsync`** 함수는 MMD 모델을 씬에 추가하고 로드된 요소를 **`ISceneLoaderAsyncResult`** 형태로 반환합니다.
 
-We can obtain the **`MmdMesh`**, which is the root node of the MMD, from the return value.
+반환값에서 MMD의 루트 노드인 **`MmdMesh`**를 얻을 수 있습니다.
 
 ```typescript
 const result: ISceneLoaderAsyncResult = await ImportMeshAsync("path/to/mmdModel.pmx", scene);
 const mmdMesh = result.meshes[0] as MmdMesh;
 ```
 
-In the above example, we are casting **`result.meshes[0]`** to **`MmdMesh`**. This is always valid when loading MMD models.
+위 예제에서는 **`result.meshes[0]`**을 **`MmdMesh`**로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
 
-When loading MMD models, the **first element** of the **`ISceneLoaderAsyncResult.meshes`** array is always the **root mesh** of the MMD model.
+MMD 모델을 로드할 때, **`ISceneLoaderAsyncResult.meshes`** 배열의 **첫 번째 요소**는 항상 MMD 모델의 **루트 메시**입니다.
 
 ### AppendSceneAsync
 
-The **`AppendSceneAsync`** function adds an MMD model to the Scene. However, since there's no return value, you need to use the Scene's **`meshes`** property to get the loaded elements.
+**`AppendSceneAsync`** 함수는 MMD 모델을 씬에 추가합니다. 하지만 반환값이 없기 때문에 로드된 요소를 가져오려면 씬의 **`meshes`** 속성을 사용해야 합니다.
 
-Therefore, this method is **not commonly used**.
+따라서 이 메서드는 **일반적으로 사용되지 않습니다**.
 
 ```typescript
 await AppendSceneAsync("path/to/mmdModel.pmx", scene);
@@ -79,10 +79,10 @@ await AppendSceneAsync("path/to/mmdModel.pmx", scene);
 
 ### LoadAssetContainerAsync
 
-The **`LoadAssetContainerAsync`** function loads an MMD model and returns an **`AssetContainer`** containing all resources that make up the MMD model.
-This **`AssetContainer`** includes loaded Mesh, Material, Texture, etc.
+**`LoadAssetContainerAsync`** 함수는 MMD 모델을 로드하고 MMD 모델을 구성하는 모든 리소스가 포함된 **`AssetContainer`**를 반환합니다.
+이 **`AssetContainer`**에는 로드된 메시, 머티리얼, 텍스처 등이 포함됩니다.
 
-Like **`ImportMeshAsync`**, we can obtain the **root mesh** of the MMD model from the returned **`AssetContainer`**.
+**`ImportMeshAsync`**와 마찬가지로, 반환된 **`AssetContainer`**에서 MMD 모델의 **루트 메시**를 얻을 수 있습니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync("path/to/mmdModel.pmx", scene);
@@ -90,26 +90,26 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-In the above example, we are casting **`assetContainer.meshes[0]`** to **`MmdMesh`**. This is always valid when loading MMD models.
+위 예제에서는 **`assetContainer.meshes[0]`**을 **`MmdMesh`**로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
 
-When loading MMD models, the **first element** of the **`AssetContainer.meshes`** array is always the **root mesh** of the MMD model.
+MMD 모델을 로드할 때, **`AssetContainer.meshes`** 배열의 **첫 번째 요소**는 항상 MMD 모델의 **루트 메시**입니다.
 
-The **`LoadAssetContainerAsync`** function adds everything to the Scene at once after the MMD model is fully loaded, while the **`ImportMeshAsync`** function asynchronously adds Mesh, Material, Texture, etc. to the Scene during the MMD model loading process. **It is recommended to use the `LoadAssetContainerAsync` function** to load MMD models to avoid potential issues caused by asynchronous processing.
+**`LoadAssetContainerAsync`** 함수는 MMD 모델이 완전히 로드된 후 모든 것을 한 번에 씬에 추가하는 반면, **`ImportMeshAsync`** 함수는 MMD 모델 로딩 과정 중에 메시, 머티리얼, 텍스처 등을 비동기적으로 씬에 추가합니다. 비동기 처리로 인한 잠재적 문제를 방지하기 위해 **`LoadAssetContainerAsync` 함수를 사용하는 것이 권장**됩니다.
 
-## Use Browser File API
+## 브라우저 파일 API 사용하기
 
-Above, we learned how to **load MMD models using the model's URL**.
-However, the **URL-based loading method has issues**, and these can be resolved by using the **browser's File API**.
+위에서 우리는 **모델의 URL을 사용하여 MMD 모델을 로드**하는 방법을 배웠습니다.
+그러나 **URL 기반 로딩 방식에는 문제**가 있으며, 이러한 문제는 **브라우저의 파일 API**를 사용하여 해결할 수 있습니다.
 
-You can also use the **File API to load files received from users**.
+또한 **파일 API를 사용하여 사용자로부터 받은 파일**을 로드할 수도 있습니다.
 
-### Issues with URL-based Loading
+### URL 기반 로딩의 문제점
 
-When using URLs, the loader **fetches the PMX/PMD file** and then **fetches the texture files** required by the 3D model again.
+URL을 사용할 때, 로더는 **PMX/PMD 파일을 가져온** 다음 3D 모델에 필요한 **텍스처 파일을 다시 가져옵니다**.
 
-The **PMX/PMD format includes texture file paths as relative paths** based on the file's location.
+**PMX/PMD 형식은 파일 위치를 기준으로 상대 경로**로 텍스처 파일 경로를 포함합니다.
 
-For example, in this file structure:
+예를 들어, 이 파일 구조에서:
 
 ```
 file1
@@ -121,7 +121,7 @@ file1
     └── texture4.png
 ```
 
-Texture file paths are typically stored in PMX/PMD files as strings like this:
+텍스처 파일 경로는 일반적으로 PMX/PMD 파일에 다음과 같은 문자열로 저장됩니다:
 
 ```
 texture1.png
@@ -130,7 +130,7 @@ file2/texture3.png
 file2/texture4.png
 ```
 
-However, since the **Windows file system is case-insensitive** for files and folders, the following data is also valid:
+그러나 **윈도우 파일 시스템은 파일과 폴더의 대소문자를 구분하지 않기** 때문에 다음 데이터도 유효합니다:
 
 ```
 Texture1.png
@@ -139,19 +139,19 @@ File2/Texture3.png
 File2/Texture4.png
 ```
 
-Conversely, when **fetching in a browser environment, case sensitivity applies**, so if the case doesn't match exactly, textures cannot be found.
+반대로, **브라우저 환경에서 가져올 때는 대소문자 구분이 적용**되므로, 대소문자가 정확히 일치하지 않으면 텍스처를 찾을 수 없습니다.
 
-To solve this, we can use a **File API-based loading method** instead of fetch.
+이를 해결하기 위해 가져오기 대신 **파일 API 기반 로딩 방식**을 사용할 수 있습니다.
 
-### Selecting a Folder Containing MMD Model Files
+### MMD 모델 파일이 포함된 폴더 선택하기
 
-First, you need to implement a way to **select and read local files using the File API**.
+먼저, **파일 API를 사용하여 로컬 파일을 선택하고 읽는** 방법을 구현해야 합니다.
 
-Here, we need to read not only the **.pmx/.pmd files** but also the **texture files used by the model**.
+여기서는 **.pmx/.pmd 파일**뿐만 아니라 모델에서 사용하는 **텍스처 파일**도 읽어야 합니다.
 
-Therefore, you need to allow users to **select a folder containing all resources** needed to load the MMD model.
+따라서 사용자가 MMD 모델을 로드하는 데 필요한 **모든 리소스가 포함된 폴더를 선택**할 수 있게 해야 합니다.
 
-For example, in this file structure:
+예를 들어, 이 파일 구조에서:
 
 ```
 file1
@@ -163,19 +163,19 @@ file1
     └── texture4.png
 ```
 
-We need to allow users to **select the `file1` folder**.
+사용자가 **`file1` 폴더를 선택**할 수 있어야 합니다.
 
-Ideally, you can use the **[showDirectoryPicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker) API** to select folders, but this feature is **not supported in Firefox and Safari**.
+이상적으로는 폴더를 선택하기 위해 **[showDirectoryPicker](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker) API**를 사용할 수 있지만, 이 기능은 **Firefox와 Safari에서 지원되지 않습니다**.
 
-Therefore, this document explains how to **select folders using HTML file input**.
+따라서 이 문서에서는 **HTML 파일 입력을 사용하여 폴더를 선택**하는 방법을 설명합니다.
 
-First, create an HTML file input and enable directory selection using the **`directory` and `webkitdirectory`** attributes.
+먼저, HTML 파일 입력을 생성하고 **`directory`와 `webkitdirectory`** 속성을 사용하여 디렉토리 선택을 활성화합니다.
 
 ```html
 <input type="file" id="folderInput" directory webkitdirectory />
 ```
 
-Then, when the user selects a folder, you can **read all files in the folder**.
+그런 다음, 사용자가 폴더를 선택하면 **폴더 내의 모든 파일을 읽을 수 있습니다**.
 
 ```typescript
 const fileInput = document.getElementById("folderInput") as HTMLInputElement;
@@ -183,7 +183,7 @@ fileInput.onchange = (): void => {
     if (fileInput.files === null) return;
     const files = Array.from(fileInput.files);
 
-    // Find the model file to load. (You can implement this as UI to let users choose from multiple PMX/PMD files.)
+    // 로드할 모델 파일을 찾습니다. (여러 PMX/PMD 파일 중에서 선택할 수 있는 UI로 구현할 수도 있습니다.)
     let modelFile: File | null = null;
     for (const file of files) {
         const name = file.name.toLowerCase();
@@ -193,19 +193,19 @@ fileInput.onchange = (): void => {
         }
     }
     if (modelFile === null) {
-        console.error("No PMX/PMD model file found.");
+        console.error("PMX/PMD 모델 파일을 찾을 수 없습니다.");
         return;
     }
 
-    // Now we have files containing all files in the folder and modelFile as the target to load.
+    // 이제 폴더 내의 모든 파일을 포함하는 files와 로드할 대상인 modelFile을 갖게 되었습니다.
 };
 ```
 
-Alternatively, you can implement **drag & drop functionality** for folder selection. For this, refer to [babylon-mmd-viewer fileDropControlBuilder.ts](https://github.com/noname0310/babylon-mmd-viewer/blob/main/src/Viewer/fileDropControlBuilder.ts).
+또는 폴더 선택을 위한 **드래그 앤 드롭 기능**을 구현할 수도 있습니다. 이에 대해서는 [babylon-mmd-viewer fileDropControlBuilder.ts](https://github.com/noname0310/babylon-mmd-viewer/blob/main/src/Viewer/fileDropControlBuilder.ts)를 참조하세요.
 
-### Using File Instead of URL
+### URL 대신 파일 사용하기
 
-Simply **replace the URL with a file** in the code that loaded using URLs above. Here, we also need to pass the **list of all files read from the folder** to load textures.
+위에서 URL을 사용하여 로드한 코드에서 **URL을 파일로 교체**하면 됩니다. 여기서는 텍스처를 로드하기 위해 **폴더에서 읽은 모든 파일 목록**도 전달해야 합니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -215,7 +215,7 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
         rootUrl: modelFile.webkitRelativePath.substring(0, modelFile.webkitRelativePath.lastIndexOf("/") + 1),
         pluginOptions: {
             mmdmodel: {
-                referenceFiles: files // Pass all files that could potentially be textures.
+                referenceFiles: files // 잠재적으로 텍스처가 될 수 있는 모든 파일을 전달합니다.
             }
         }
     }
@@ -224,23 +224,23 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-When loading this way, the loader **uses `files.webkitRelativePath` to find textures**. It mimics the **Windows File System's path resolution method** to correctly find texture files.
+이렇게 로드할 때 로더는 **텍스처를 찾기 위해 `files.webkitRelativePath`를 사용**합니다. 이는 텍스처 파일을 올바르게 찾기 위해 **윈도우 파일 시스템의 경로 해결 방식을 모방**합니다.
 
-The **rootUrl** is the path extracted from `modelFile.webkitRelativePath` up to the last `/`.
-This path represents the **folder path where the MMD model is located**, and the loader calculates relative paths based on this path when finding texture files.
+**rootUrl**은 `modelFile.webkitRelativePath`에서 마지막 `/`까지 추출한 경로입니다.
+이 경로는 **MMD 모델이 위치한 폴더 경로**를 나타내며, 로더는 텍스처 파일을 찾을 때 이 경로를 기준으로 상대 경로를 계산합니다.
 
-## URL Texture Path Resolution
+## URL 텍스처 경로 해결
 
-When **serving MMD models from a server**, you must use URL fetch methods, so you cannot use the File API approach. In this case, you can use **two methods to solve texture loading issues**:
+**서버에서 MMD 모델을 제공**할 때는 URL 가져오기 메서드를 사용해야 하므로 파일 API 접근 방식을 사용할 수 없습니다. 이 경우 텍스처 로딩 문제를 해결하기 위해 **두 가지 방법**을 사용할 수 있습니다:
 
-1. **Model Modification** - Use **[PMXEditor](https://www.deviantart.com/johnwithlenon/art/PmxEditor-v0273-English-Version-unofficial-trans-925125044)** to fix case errors in the model's texture paths.
-2. **Convert to BPMX** - When converting PMX/PMD format to BPMX format, texture path issues are resolved during the conversion process. For details, see the **[The Babylon PMX Format](./the-babylon-pmx-format)** documentation.
+1. **모델 수정** - **[PMXEditor](https://www.deviantart.com/johnwithlenon/art/PmxEditor-v0273-English-Version-unofficial-trans-925125044)**를 사용하여 모델의 텍스처 경로의 대소문자 오류를 수정합니다.
+2. **BPMX로 변환** - PMX/PMD 형식을 BPMX 형식으로 변환할 때 텍스처 경로 문제는 변환 과정에서 해결됩니다. 자세한 내용은 **[바빌론 PMX 포맷](./the-babylon-pmx-format)** 문서를 참조하세요.
 
-## Loader Options
+## 로더 옵션
 
-The **MMD model loader provides various options** to achieve the best results in multiple scenarios when loading MMD models.
+**MMD 모델 로더는 다양한 옵션**을 제공하여 MMD 모델을 로드할 때 여러 시나리오에서 최상의 결과를 얻을 수 있습니다.
 
-These options are passed through **`pluginOptions`**.
+이러한 옵션은 **`pluginOptions`**를 통해 전달됩니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -267,79 +267,79 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 );
 ```
 
-Each option serves the following purposes:
+각 옵션은 다음과 같은 목적으로 사용됩니다:
 
 ### materialBuilder
 
-Sets an **`IMmdMaterialBuilder`** instance that defines how to assign materials to MMD models.\
-Default value is **`null`**. **When the default value is `null`, MMD models are loaded without materials.**
+MMD 모델에 머티리얼을 할당하는 방법을 정의하는 **`IMmdMaterialBuilder`** 인스턴스를 설정합니다.\
+기본값은 **`null`**입니다. **기본값이 `null`인 경우 MMD 모델은 머티리얼 없이 로드됩니다.**
 
-For details, see the **[Material Builder](./material-builder)** documentation.
+자세한 내용은 **[머티리얼 빌더](./material-builder)** 문서를 참조하세요.
 
 ### useSdef
 
-Sets whether the model supports **SDEF (Spherical Deformation)**.\
-Default value is **`true`**.
+모델이 **SDEF(구형 변형, Spherical Deformation)**를 지원하는지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-For details, see the **[SDEF Support](./sdef-support)** documentation.
+자세한 내용은 **[SDEF 지원](./sdef-support)** 문서를 참조하세요.
 
 ### buildSkeleton
 
-Sets whether to **load the skeleton**.\
-Default value is **`true`**.
+**스켈레톤을 로드**할지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-For example, when loading stages, you don't need to create skeletons, so you can set this to **`false`**. **`MmdMesh` without a Skeleton cannot be registered with the MMD runtime**.
+예를 들어, 스테이지를 로드할 때는 스켈레톤을 생성할 필요가 없으므로 이 값을 **`false`**로 설정할 수 있습니다. **스켈레톤이 없는 `MmdMesh`는 MMD 런타임에 등록할 수 없습니다**.
 
 ### buildMorph
 
-Sets whether to **load Morphs**.\
-Default value is **`true`**.
+**모프(Morph)를 로드**할지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-For example, when loading stages, you don't need to create Morphs, so you can set this to **`false`**.
+예를 들어, 스테이지를 로드할 때는 모프를 생성할 필요가 없으므로 이 값을 **`false`**로 설정할 수 있습니다.
 
 ### boundingBoxMargin
 
-Sets the **margin for the bounding box**.\
-Default value is **`10`**.
+**바운딩 박스의 여백**을 설정합니다.\
+기본값은 **`10`**입니다.
 
-**Babylon.js does not update bounding boxes when deformation occurs due to Skeleton**. Bounding boxes are only updated when explicitly using **[BoundingInfoHelper](https://forum.babylonjs.com/t/new-feature-boundinginfohelper/51469)**.
+**Babylon.js는 스켈레톤으로 인한 변형이 발생할 때 바운딩 박스를 업데이트하지 않습니다**. 바운딩 박스는 명시적으로 **[BoundingInfoHelper](https://forum.babylonjs.com/t/new-feature-boundinginfohelper/51469)**를 사용할 때만 업데이트됩니다.
 
-Therefore, when **animations are applied to MMD models**, the bounding box and mesh may not match, causing meshes within the **Camera Frustum to be culled**.
-To prevent this, it's good to **set a margin for the bounding box**.
+따라서 **MMD 모델에 애니메이션이 적용**될 때 바운딩 박스와 메시가 일치하지 않아 **카메라 프러스텀 내의 메시가 컬링**될 수 있습니다.
+이를 방지하기 위해 **바운딩 박스에 여백을 설정**하는 것이 좋습니다.
 
-This value should be adjusted based on **how far MMD animations move the MMD model from the origin**.
-If MMD animations move the MMD model farther from the origin, it's better to **set a larger value**.
+이 값은 **MMD 애니메이션이 MMD 모델을 원점에서 얼마나 멀리 이동시키는지**에 따라 조정해야 합니다.
+MMD 애니메이션이 MMD 모델을 원점에서 더 멀리 이동시킨다면, **더 큰 값을 설정**하는 것이 좋습니다.
 
-For example, stages have no movement, so **setting `boundingBoxMargin` to 0 is fine**.
+예를 들어, 스테이지는 움직임이 없으므로 **`boundingBoxMargin`을 0으로 설정**해도 괜찮습니다.
 
-If the MMD model mesh's **`alwaysSelectAsActiveMesh` property is set to `true`**, **Frustum Culling is not applied** to that mesh. In this case, you also don't need to set the `boundingBoxMargin` value.
+MMD 모델 메시의 **`alwaysSelectAsActiveMesh` 속성이 `true`로 설정**되어 있으면, 해당 메시에는 **프러스텀 컬링이 적용되지 않습니다**. 이 경우에도 `boundingBoxMargin` 값을 설정할 필요가 없습니다.
 
 ### alwaysSetSubMeshesBoundingInfo
 
-Sets whether to **always set bounding information for sub-meshes**.\
-Default value is **`true`**.
+**항상 서브메시에 바운딩 정보를 설정**할지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-**When optimizeSubmeshes is false**
+**optimizeSubmeshes가 false인 경우**
 
-If **optimizeSubmeshes** is set to `false`, this option is ignored, and **all `SubMesh` BoundingInfo of the `Mesh` is always set to match the Mesh's BoundingInfo**.
+**optimizeSubmeshes**가 `false`로 설정된 경우, 이 옵션은 무시되며 **모든 `SubMesh` BoundingInfo는 항상 메시의 BoundingInfo와 일치하도록 설정**됩니다.
 
-This is to **set the material rendering order for MMD models**.
+이는 **MMD 모델의 머티리얼 렌더링 순서를 설정**하기 위한 것입니다.
 
-**MMD models must always be rendered in the same order** when rendering materials.
-If sub-meshes are all divided into independent `Mesh`es, you can **set rendering order using `Mesh.alphaIndex`**.
+**MMD 모델은 머티리얼을 렌더링할 때 항상 동일한 순서로 렌더링**되어야 합니다.
+서브메시가 모두 독립적인 `Mesh`로 분할되어 있다면 **`Mesh.alphaIndex`를 사용하여 렌더링 순서를 설정**할 수 있습니다.
 
-However, when **multiple `SubMesh`es exist in one `Mesh`**, each `SubMesh`'s Draw order cannot be set through normal methods, and **Babylon.js sets rendering order by sorting based on each `SubMesh`'s `BoundingInfo`**.
-To solve this, **all `SubMesh` BoundingInfo is set identically**. Since Babylon.js uses **stable sort when sorting rendering order**, rendering is performed in the order of `Mesh.subMeshes` in this case.
+그러나 **하나의 `Mesh`에 여러 개의 `SubMesh`가 존재**하는 경우, 각 `SubMesh`의 그리기 순서는 일반적인 방법으로 설정할 수 없으며, **Babylon.js는 각 `SubMesh`의 `BoundingInfo`를 기준으로 정렬하여 렌더링 순서를 설정**합니다.
+이를 해결하기 위해 **모든 `SubMesh` BoundingInfo가 동일하게 설정**됩니다. Babylon.js는 **렌더링 순서를 정렬할 때 안정적 정렬을 사용**하므로, 이 경우 렌더링은 `Mesh.subMeshes`의 순서대로 수행됩니다.
 
-**When optimizeSubmeshes is true**
+**optimizeSubmeshes가 true인 경우**
 
-In this case, since **only one `SubMesh` exists per `Mesh`**, copying the `Mesh`'s BoundingInfo to the `SubMesh` may seem meaningless.
-When **one `SubMesh` exists per `Mesh`**, Babylon.js doesn't store BoundingInfo in the `SubMesh` and returns the `Mesh`'s BoundingInfo when calling `SubMesh.getBoundingInfo()`.
+이 경우 **`Mesh`당 하나의 `SubMesh`만 존재**하므로 `Mesh`의 BoundingInfo를 `SubMesh`에 복사하는 것은 의미가 없어 보일 수 있습니다.
+**`Mesh`당 하나의 `SubMesh`가 존재**하는 경우, Babylon.js는 BoundingInfo를 `SubMesh`에 저장하지 않고 `SubMesh.getBoundingInfo()`를 호출할 때 `Mesh`의 BoundingInfo를 반환합니다.
 
-However, when **`scene.clearCachedVertexData()` is performed** to remove VertexData already uploaded to GPU,
-when calling `SubMesh.getBoundingInfo()`, the `SubMesh` **returns undefined instead of the `Mesh`'s BoundingInfo**.
+그러나 **`scene.clearCachedVertexData()`를 수행**하여 이미 GPU에 업로드된 VertexData를 제거할 때,
+`SubMesh.getBoundingInfo()`를 호출하면 `SubMesh`는 **`Mesh`의 BoundingInfo 대신 undefined를 반환**합니다.
 
-The reason is that **`this.IsGlobal` returns `false` contrary to reality** in `SubMesh.getBoundingInfo()`. **This is a bug**.
+그 이유는 `SubMesh.getBoundingInfo()`에서 **`this.IsGlobal`이 실제와 달리 `false`를 반환**하기 때문입니다. **이것은 버그**입니다.
 
 ```typescript
 // https://github.com/BabylonJS/Babylon.js/blob/master/packages/dev/core/src/Meshes/subMesh.ts#L230-L249
@@ -371,47 +371,47 @@ class SubMesh {
 }
 ```
 
-Because of this, **sorting fails during the rendering process**, causing **Errors to be thrown during rendering**.
+이로 인해 **렌더링 과정에서 정렬이 실패**하여 **렌더링 중 오류가 발생**합니다.
 
-This problem is **solved by copying the `Mesh`'s `BoundingInfo` to the `SubMesh`**.
+이 문제는 **`Mesh`의 `BoundingInfo`를 `SubMesh`에 복사**하여 해결됩니다.
 
 ### preserveSerializationData
 
-Sets whether to **preserve data for re-serialization**.\
-Default value is **`false`**.
+**재직렬화를 위한 데이터를 보존**할지 여부를 설정합니다.\
+기본값은 **`false`**입니다.
 
-To **preserve data not used by babylon-mmd** in MMD models, you need to set `preserveSerializationData` to **`true`**.
-In this case, you can preserve **additional information like Bone's tailPosition or Material's English name**.
+MMD 모델에서 **babylon-mmd에서 사용되지 않는 데이터를 보존**하려면 `preserveSerializationData`를 **`true`**로 설정해야 합니다.
+이 경우 **본의 tailPosition이나 머티리얼의 영어 이름과 같은 추가 정보**를 보존할 수 있습니다.
 
-If you **load PMX/PMD models and then convert to BPMX** using `BpmxConverter`, you should set this option to **`true`** to convert to BPMX without loss.
+**PMX/PMD 모델을 로드한 다음 `BpmxConverter`를 사용하여 BPMX로 변환**하는 경우, 손실 없이 BPMX로 변환하기 위해 이 옵션을 **`true`**로 설정해야 합니다.
 
 ### loggingEnabled
 
-Sets whether to **enable logging**.\
-Default value is **`false`**.
+**로깅을 활성화**할지 여부를 설정합니다.\
+기본값은 **`false`**입니다.
 
-It's good to **enable logging during development**. It helps diagnose issues when loading invalid PMX/PMD files.
+**개발 중에 로깅을 활성화**하는 것이 좋습니다. 잘못된 PMX/PMD 파일을 로드할 때 발생하는 문제를 진단하는 데 도움이 됩니다.
 
-If this value is **`false`**, the loader **outputs no warnings about issues** that occur during the loading process.
+이 값이 **`false`**이면 로더는 **로딩 과정에서 발생하는 문제에 대한 경고를 출력하지 않습니다**.
 
 ### referenceFiles
 
-Sets the **list of reference files**.\
-Default value is **`[]`**.
+**참조 파일 목록**을 설정합니다.\
+기본값은 **`[]`**입니다.
 
-**Reference files are used to load textures** for MMD models.
+**참조 파일은 MMD 모델의 텍스처를 로드**하는 데 사용됩니다.
 
 ### optimizeSubmeshes
 
-Sets whether to **enable sub-mesh optimization**.\
-Default value is **`true`**.
+**서브메시 최적화를 활성화**할지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-If this value is **`false`**, MMD models are loaded as **one `Mesh` with multiple `SubMesh`es**.
+이 값이 **`false`**이면 MMD 모델은 **여러 개의 `SubMesh`가 있는 하나의 `Mesh`**로 로드됩니다.
 
-For example, if an MMD model has 3 materials, this model is loaded as **one `Mesh` with 3 `SubMesh`es**, and **`MultiMaterial` is used** to assign separate `Material`s to each `SubMesh`.
+예를 들어, MMD 모델에 3개의 머티리얼이 있는 경우, 이 모델은 **3개의 `SubMesh`가 있는 하나의 `Mesh`**로 로드되며, 각 `SubMesh`에 별도의 `Material`을 할당하기 위해 **`MultiMaterial`이 사용**됩니다.
 
 ```typescript
-// MMD model loaded with multiple SubMeshes based on materials
+// 머티리얼 기반으로 여러 SubMesh가 로드된 MMD 모델
 Mesh1 {
     subMeshes: [
         SubMesh1,
@@ -428,10 +428,10 @@ Mesh1 {
 }
 ```
 
-If this value is **`true`**, MMD models are **divided into multiple `Mesh`es** based on the number of materials. **Each `Mesh` has only one `SubMesh`**.
+이 값이 **`true`**이면 MMD 모델은 머티리얼 수에 따라 **여러 개의 `Mesh`로 분할**됩니다. **각 `Mesh`에는 하나의 `SubMesh`만** 있습니다.
 
 ```typescript
-// MMD model divided into multiple Meshes based on materials
+// 머티리얼 기반으로 여러 Mesh로 분할된 MMD 모델
 Mesh1 {
     children: [
         Mesh2 {
@@ -450,20 +450,20 @@ Mesh1 {
 }
 ```
 
-In this case, **information loss may occur** during the process of dividing one geometry into multiple parts.
+이 경우, 하나의 지오메트를 여러 부분으로 분할하는 과정에서 **정보 손실이 발생할 수 있습니다**.
 
-Depending on the situation, **setting this option to `false` may provide better performance**.
+상황에 따라 **이 옵션을 `false`로 설정하면 더 나은 성능**을 제공할 수 있습니다.
 
 ### optimizeSingleMaterialModel
 
-Sets whether to **enable single material model optimization**.\
-Default value is **`true`**.
+**단일 머티리얼 모델 최적화를 활성화**할지 여부를 설정합니다.\
+기본값은 **`true`**입니다.
 
-When **optimizeSubmeshes is `true`**, even when MMD models use a single material, they are loaded as **one mesh under the root mesh**.
-In this case, it's possible to **optimize to one `Mesh` instance** by including geometry in the root mesh, and this optimization is applied when **optimizeSingleMaterialModel is `true`**.
+**optimizeSubmeshes가 `true`**인 경우에도 MMD 모델이 단일 머티리얼을 사용할 때는 **루트 메시 아래에 하나의 메시**로 로드됩니다.
+이 경우 지오메트를 루트 메시에 포함시켜 **하나의 `Mesh` 인스턴스로 최적화**할 수 있으며, 이 최적화는 **optimizeSingleMaterialModel이 `true`**일 때 적용됩니다.
 
 ```typescript
-// MMD model using one material loaded with optimizeSingleMaterialModel: false, optimizeSubmeshes: true
+// optimizeSingleMaterialModel: false, optimizeSubmeshes: true로 로드된 하나의 머티리얼을 사용하는 MMD 모델
 Mesh1 {
     children: [
         Mesh2 {
@@ -475,20 +475,20 @@ Mesh1 {
 ```
 
 ```typescript
-// MMD model using one material loaded with optimizeSingleMaterialModel: true, optimizeSubmeshes: true
+// optimizeSingleMaterialModel: true, optimizeSubmeshes: true로 로드된 하나의 머티리얼을 사용하는 MMD 모델
 Mesh1 {
     subMeshes: [ SubMesh1 ]
 }
 ```
 
-When **optimizeSubmeshes is `false`**, this option is **ignored**.
+**optimizeSubmeshes가 `false`**인 경우, 이 옵션은 **무시됩니다**.
 
-## Going Further
+## 더 나아가기
 
-babylon-mmd provides **various loading options** to support multiple use cases and **several features to reproduce MMD behavior**.
+babylon-mmd는 다양한 사용 사례를 지원하기 위한 **다양한 로딩 옵션**과 **MMD 동작을 재현하기 위한 여러 기능**을 제공합니다.
 
-- **BMP Texture Loading Issues** - For issues where **BMP textures are not loaded correctly**, see **[Fix BMP Texture Loader](./fix-bmp-texture-loader)**.
-- **Model Deformation Issues** - For issues where **model deformation differs from MMD**, see **[SDEF Support](./sdef-support)**.
-- **Material Builder** - For detailed information about **material builders**, see **[Material Builder](./material-builder)**.
-- **MMD Standard Material** - For detailed information about **MMD Standard Material that reproduces MMD shaders**, see **[MMD Standard Material](./mmd-standard-material)**.
-- **BPMX** - For detailed information about **PMX/PMD file conversion and optimization**, see **[The Babylon PMX Format](./the-babylon-pmx-format)**.
+- **BMP 텍스처 로딩 이슈** - **BMP 텍스처가 올바르게 로드되지 않는 문제**에 대해서는 **[BMP 텍스처 로더 수정](./fix-bmp-texture-loader)**을 참조하세요.
+- **모델 변형 이슈** - **모델 변형이 MMD와 다른 문제**에 대해서는 **[SDEF 지원](./sdef-support)**을 참조하세요.
+- **머티리얼 빌더** - **머티리얼 빌더**에 대한 자세한 정보는 **[머티리얼 빌더](./material-builder)**를 참조하세요.
+- **MMD 스탠다드 머티리얼** - **MMD 셰이더를 재현하는 MMD 스탠다드 머티리얼**에 대한 자세한 정보는 **[MMD 스탠다드 머티리얼](./mmd-standard-material)**을 참조하세요.
+- **BPMX** - **PMX/PMD 파일 변환 및 최적화**에 대한 자세한 정보는 **[바빌론 PMX 포맷](./the-babylon-pmx-format)**을 참조하세요.
