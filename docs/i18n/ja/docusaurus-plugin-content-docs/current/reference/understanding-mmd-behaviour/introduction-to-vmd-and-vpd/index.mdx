@@ -1,0 +1,264 @@
+---
+sidebar_position: 2
+sidebar_label: Introduction to VMD and VPD
+---
+
+# Introduction to VMD and VPD
+
+This section explains what information VMD and VPD files consist of, how MMD interprets that information,
+and how babylon-mmd implements MMD's behavior.
+
+:::note
+In this document, content about how babylon-mmd implements MMD's behavior is distinguished with this block.
+:::
+
+import TOCInline from "@theme/TOCInline";
+
+<TOCInline toc={toc} />
+
+## VMD/VPD File Overview
+
+VMD (Vocaloid Motion Data) and VPD (Vocaloid Pose Data) files are animation data formats used in MMD (MikuMikuDance).
+
+These files are used to store the motion and pose information of an MMD model, respectively.
+
+Since these file formats have **no documented specifications**, only information known through **reverse engineering analysis** exists, so there may be minor errors.
+
+Also, since there are **no official names** for each piece of information,
+this document arbitrarily assigns common names to each piece of information for explanation.
+
+### VMD Files
+
+VMD files store animation data for an MMD model's **Bones**, **Morphs**, **Self Shadow**, and **Property**.
+
+They also store animation data not tied to the model itself, such as **Camera** and **Light** information.
+
+### VPD Files
+
+VPD files store the names of the targets to bind (**bones** or **morphs**) and the current state (**pose**) of those targets.
+
+Unlike VMD, VPD stores only the state of an MMD model's **Bones** and **Morphs**; it does not include **Camera**, **Light**, **Self Shadow**, or **Property** keyframes.
+
+Regarding morph information, MMD itself does not support processing morph data in VPD; storing morph data in VPD is an extension provided by **MMM (MikuMikuMoving)**.
+
+:::note
+While MMD does not support processing morph data in VPD files, MMM and Blender MMD Tools support the specification for storing morph information in VPD.
+
+Even though this is not supported by MMD itself, because MMD-compatible software supports it, babylon-mmd also reads and processes morph data in VPD files.
+:::
+
+:::note
+babylon-mmd treats a VPD as a one-frame animation, handling VMD and VPD files in the same way.
+:::
+
+### VMD File Structure and Parsing Method
+
+VMD file is **Little Endian** **binary files** containing various data types.
+
+The data is structured in a typical **Length-Prefixed format**. For example, when representing Bone Keyframes data,
+the number of Keyframes is indicated first, followed by sequential listing of each Bone Keyframe's information.
+The size of each data can be fixed or variable length, and the order of data is always the same.
+
+Data alignment is **not enforced**, and each field is stored consecutively in the binary file.
+
+VMD files do not include an **explicit version** in the header.
+Instead, data appears in the order of **Bone**, **Morph**, **Camera**, **Light**, **Self Shadow**, and **Property** keyframes,
+and older versions may omit keyframe sections that come later in this order.
+
+For example, [WAVEFILE fullver. モーション](https://bowlroll.net/file/5983) does not include Property keyframes.
+
+### VPD File Structure and Parsing Method
+
+A VPD file is a **plain text file** saved with **Shift_JIS** encoding.
+
+Below is an example of a VPD file containing Bone and Morph keyframes.
+```
+Vocaloid Pose Data file
+
+YYB式初音ミク_10th_v1.02.osm;		// 親ファイル名
+4;				// 総ポーズボーン数
+
+Bone0{右腕捩
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.000000,-0.000000,0.000000,1.000000;		// Quaternion x,y,z,w
+}
+
+Bone1{右ひじ
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  0.176789,-0.061290,0.747712,0.637114;		// Quaternion x,y,z,w
+}
+
+Bone2{右手捩
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.000000,-0.000000,-0.000000,1.000000;		// Quaternion x,y,z,w
+}
+
+Bone3{右手首
+  0.000000,0.000000,0.000000;				// trans x,y,z
+  -0.574374,-0.615622,0.113957,0.527368;		// Quaternion x,y,z,w
+}
+
+Morph0{う
+  0.200000;
+}
+
+Morph1{え
+  0;
+}
+```
+The `4;` on the fourth line indicates the number of **Bone states**. MMD reads exactly that many Bone entries and ignores any subsequent information.
+
+Therefore, the **MMM extension** that includes Morph states always places the Morph state information after the Bone state information.
+
+:::note
+To process VPD files, babylon-mmd uses a lexer-based tokenization approach.
+
+Since the format is text-based, it is designed to handle various edge cases flexibly.
+:::
+
+## Header
+
+The headers of VMD and VPD files contain a **Model Name**.
+
+When MMD exports an animation, it stores in the header the name of the model the animation was applied to.
+
+This name is later used when MMD binds the animation to a model to check whether the binding target matches the model from which the animation was exported.
+
+However, due to **text encoding issues** and the **length limitation** on storing the model name (20 bytes in VMD; no limit in VPD), in practice this mechanism does not work reliably.
+
+:::note
+Because the Model Name is effectively non-functional, babylon-mmd ignores and skips it during parsing.
+:::
+
+A VMD file can store either a **camera animation** or a **3D model animation**.
+
+If it stores a camera animation the Model Name is set to "**カメラ・照明**" (Camera/Light); if it stores a model animation it is set to the model's name.
+- When loading an animation, if MMD reads the Model Name "カメラ・照明" it treats it as a camera animation and **does not allow applying it to a model**.
+- If the Model Name is set to a model's name, MMD **does not allow applying it to the camera**; when applying it to a model it **checks whether the names match**.
+If they do not match, MMD outputs a **warning** before applying the animation. As mentioned earlier, due to encoding differences and the model name length limit, this feature can malfunction even for animations exported from the same model.
+
+:::note
+In a **VPD file** the header specifies the **number of Bone pose entries**, but **babylon-mmd ignores this** and parses all Bone pose information it can.
+
+Being as **permissive** as possible allows it to handle VPD files from **many different sources**.
+:::
+
+:::note
+Although VMD's specification allows storing both **camera** and **3D model animations** together, the **Model Name validation** process ultimately restricts binding to either the camera or the 3D model animation, but not both.
+
+However, since **babylon-mmd ignores the Model Name** when loading a VMD file, it can load a VMD file containing both a camera animation and a 3D model animation and apply both.
+
+This mechanism also applies to **BVMD**, an optimized format for VMD that will be introduced later.
+:::
+
+## Bone Keyframes
+
+A VMD file stores **Bone keyframes** for an MMD model. Bone keyframes define Bone movement in the model; specifically each keyframe includes the binded Bone's name, position, rotation, and more.
+
+A Bone keyframe in a VMD file contains:
+- **Bone Name**: Name of the Bone the keyframe applies to.
+- **Frame Number**: Frame index at which the keyframe is applied.
+- **Position**: Bone translation (x, y, z).
+- **Rotation**: Bone rotation as a quaternion (x, y, z, w).
+- **Interpolation**: Bezier curve parameters (for position x, y, z and rotation (applied to slerp t), each represented by two control point vectors).
+- **PhysicsToggle**: Flag indicating whether physics is applied to the Bone.
+
+In a **VMD file**, the **Bone Name** is limited to **15 bytes**, and longer bone names are **truncated**.
+
+Therefore, animations for bones with names exceeding 15 bytes are saved in the VMD file, but they are **not binded correctly** when reloaded.
+
+:::tip
+Often, when baking a **Physics Bone** into a VMD animation and then loading it, the binding fails because the Physics Bone's name **exceeds 15 bytes**.
+:::
+
+A VPD file stores only the **Bone name** and its current **state (position, rotation)**.
+
+## Morph Keyframes
+
+A VMD file stores **Morph keyframes**. Morph keyframes define the state of an MMD model's morphs, and each keyframe includes the **morph's name** and its **value**.
+
+A Morph keyframe in a VMD file contains:
+- **Morph Name**: Name of the Morph the keyframe applies to.
+- **Frame Number**: Frame index at which the keyframe is applied.
+- **Value**: Morph value (0.0 to 1.0).
+
+In a **VMD file**, the **Morph Name** is also limited to **15 bytes**, and longer morph names are **truncated**.
+
+However, since MMD model morph names are generally **shorter than bone names**, it is **rare** for binding to fail due to a long Morph Name.
+
+Storing Morph states in a **VPD file** is an **extension feature of MMM** and is **not processed by MMD**.
+
+A **VPD file** stores the **Morph's name** and its current **state (value)**.
+:::note
+**babylon-mmd** supports reading and processing Morph states from **VPD files**.
+:::
+
+## Camera Keyframes
+
+A **VMD file** stores **camera keyframes**. Camera keyframes contain information such as the camera's **position**, **rotation**, and **fov**.
+
+Since MMD has only **one camera** in the scene, camera keyframes do not include information about a binding target.
+
+MMD's camera operates as an **Orbit Camera**, rotating around a **center position**.
+
+A Camera keyframe in a VMD file contains:
+- **Frame Number**: Frame index at which the keyframe is applied.
+- **Distance**: Distance from the camera to the center (the center of the camera's orbit).
+- **Position**: Camera center position (x, y, z).
+- **Rotation**: Camera rotation as a yaw, pitch, roll (x, y, z).
+- **Interpolation**: Bezier curve parameters (for distance, position x, y, z, rotation x, y, z and fov each represented by two control point vectors).
+- **FOV**: Field of view (in degrees).
+- **Projection Type**: Projection type (whether the camera is perspective or orthographic).
+
+:::note
+**babylon-mmd** only supports **perspective projection**.
+
+**Orthographic projection** support may be added in the future upon request. The reason for its absence is simply that orthographic projection is **rarely used**.
+:::
+
+**VPD files** do not support storing camera keyframes.
+
+## Light Keyframes
+
+A **VMD file** stores **light keyframes**. Light keyframes contain information about the light's **direction** and **color**.
+
+Since MMD has only **one Directional Light** in the scene, light keyframes do not include information about a binding target.
+
+In general, **Light Keyframes** are **rarely used**.
+
+:::note
+Modern 3D rendering engines typically use **multiple lights** rather than a single fixed light.
+
+Due to the differences in shading methods between 3D rendering engines and MMD, **babylon-mmd does not support light keyframes**.
+
+This is not because it is technically impossible to implement, but because a **single-light model is not used in modern applications**.
+
+Support for **Light Keyframes** may be added in the future upon request.
+:::
+
+**VPD files** do not support storing light keyframes.
+
+## Self Shadow Keyframes
+
+A **VMD file** stores **self-shadow keyframes**. Self-shadow keyframes contain information about how an MMD model generates its own shadows.
+
+This is a **rarely used** feature.
+
+:::note
+**babylon-mmd does not support self-shadow keyframes**.
+
+Support for **self-shadow keyframes** may be added in the future upon request.
+:::
+
+**VPD files** do not support storing self-shadow keyframes.
+
+## Property Keyframes
+
+A **VMD file** stores **property keyframes**. Property keyframes include the **visibility** of the MMD model and the **enabled status of IK bones**.
+
+A property keyframe in a VMD file contains the following information:
+- **Frame Number**: Frame index at which the keyframe is applied.
+- **Visible**: Whether the model is visible (true/false).
+- **IK Enable Table**: The enabled status for each IK bone of the model (true/false).
+
+**VPD files** do not support storing property keyframes.

@@ -1,0 +1,70 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.docsSidebar.category.Reference": {
+    "message": "Reference",
+    "description": "The label for category Reference in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Understanding MMD Behavior": {
+    "message": "Understanding MMD Behavior",
+    "description": "The label for category Understanding MMD Behavior in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Loader": {
+    "message": "Loader",
+    "description": "The label for category Loader in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.MMD Model Loader (PmxLoader, PmdLoader)": {
+    "message": "MMD Model Loader (PmxLoader, PmdLoader)",
+    "description": "The label for category MMD Model Loader (PmxLoader, PmdLoader) in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Material Builder": {
+    "message": "Material Builder",
+    "description": "The label for category Material Builder in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.The Babylon PMX format": {
+    "message": "The Babylon PMX format",
+    "description": "The label for category The Babylon PMX format in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.MMD Animation Loader (VmdLoader, VpdLoader)": {
+    "message": "MMD Animation Loader (VmdLoader, VpdLoader)",
+    "description": "The label for category MMD Animation Loader (VmdLoader, VpdLoader) in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.The Babylon VMD format": {
+    "message": "The Babylon VMD format",
+    "description": "The label for category The Babylon VMD format in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Runtime": {
+    "message": "Runtime",
+    "description": "The label for category Runtime in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Animation": {
+    "message": "Animation",
+    "description": "The label for category Animation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.0.X Legacy Documentation": {
+    "message": "0.X Legacy Documentation",
+    "description": "The label for category 0.X Legacy Documentation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.0.X Legacy Documentation.link.generated-index.description": {
+    "message": "This section contains legacy documentation for versions 0.x of babylon-mmd, providing insights into older features and functionalities that may not be present in the latest versions.",
+    "description": "The generated-index page description for category 0.X Legacy Documentation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Quick Start": {
+    "message": "Quick Start",
+    "description": "The label for category Quick Start in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Quick Start.link.generated-index.description": {
+    "message": "Let's load mmd with minimal elements.",
+    "description": "The generated-index page description for category Quick Start in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Deep Usage": {
+    "message": "Deep Usage",
+    "description": "The label for category Deep Usage in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Deep Usage.link.generated-index.description": {
+    "message": "Deals with how to use babylon-mmd in a performance-friendly and user-experienced way.",
+    "description": "The generated-index page description for category Deep Usage in sidebar docsSidebar"
+  }
+}
