@@ -1,44 +1,44 @@
 ---
 sidebar_position: 4
-sidebar_label: Material Builder
+sidebar_label: マテリアルビルダー
 ---
 
-# Material Builder
+# マテリアルビルダー
 
-During the process of loading an MMD model, the tasks of **loading textures and assigning materials are entirely delegated to the Material Builder**.
+MMDモデルを読み込む過程において、**テクスチャの読み込みとマテリアルの割り当ての作業は、完全にマテリアルビルダーに委任されています**。
 
-You can set the `materialBuilder` for `PmxLoader` and `PmdLoader` through loader options.
+`PmxLoader`と`PmdLoader`の`materialBuilder`はローダーオプションを通じて設定できます。
 
-We have separated the material loading process for the following reasons:
+以下の理由からマテリアルの読み込み処理を分離しました：
 
-- Measurements have shown that, on average, the most time-consuming part of loading an MMD model is **initializing materials by loading textures**. However, depending on the use case, loading materials may not be necessary. Therefore, we need to allow users to **selectively load materials to reduce loading time**.
+- 測定によると、平均的に、MMDモデルの読み込みで最も時間がかかる部分は**テクスチャを読み込んでマテリアルを初期化する**ことです。しかし、ユースケースによっては、マテリアルの読み込みが必要ない場合があります。そのため、ユーザーが**選択的にマテリアルを読み込み、読み込み時間を短縮できるようにする**必要があります。
 
-- Additionally, users should be able to **apply shading based on different materials instead of the MMD shading model at load time**. For example, a user might want to use a **Physically Based Rendering (PBR) material** for a more realistic look.
+- さらに、ユーザーは読み込み時に**MMDのシェーディングモデルではなく、異なるマテリアルに基づいたシェーディングを適用できる**べきです。例えば、よりリアルな見た目のために**物理ベースレンダリング（PBR）マテリアル**を使用したい場合があります。
 
-## Introduction of Material Builder
+## マテリアルビルダーの紹介
 
-All MMD model loaders allow you to set a material builder via **`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`**.
+すべてのMMDモデルローダーでは、**`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`**を通じてマテリアルビルダーを設定できます。
 
-This option defaults to **`null`**, but if you import the babylon-mmd index, **`MmdStandardMaterialBuilder` is set as the default**.
+このオプションのデフォルトは**`null`**ですが、babylon-mmdのインデックスをインポートすると、**`MmdStandardMaterialBuilder`がデフォルト**として設定されます。
 
 :::info
-In this context, importing the index means code like this:
+この文脈でインデックスをインポートするとは、このようなコードを意味します：
 
 ```typescript
 import { Something } from "babylon-mmd";
 ```
 
-Conversely, you can also import the file where the symbol is defined directly:
+逆に、シンボルが定義されているファイルを直接インポートすることもできます：
 
 ```typescript
 import { Something } from "babylon-mmd/esm/something";
 ```
 
-For tree-shaking purposes, the default value of `loaderOptions.mmdmodel.materialBuilder` is set to `null`.
-However, to make the library easier for beginners to use, it is designed so that **importing the index sets `MmdStandardMaterialBuilder` as the default**.
+ツリーシェイキングの目的で、`loaderOptions.mmdmodel.materialBuilder`のデフォルト値は`null`に設定されています。
+しかし、初心者がライブラリを使いやすくするために、**インデックスをインポートすると`MmdStandardMaterialBuilder`がデフォルト**として設定されるように設計されています。
 :::
 
-You can set the material builder as follows:
+マテリアルビルダーは次のように設定できます：
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(modelFileOrUrl, scene, {
@@ -50,9 +50,9 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(modelFileOr
 });
 ```
 
-If you are loading multiple models with a single material, you can **share one material builder**.
+単一のマテリアルで複数のモデルを読み込む場合は、**マテリアルビルダーを共有**できます。
 
-In this case, the material builder **internally caches textures**, which can significantly reduce loading time, especially when loading the same model multiple times.
+この場合、マテリアルビルダーは**内部でテクスチャをキャッシュ**するため、特に同じモデルを複数回読み込む場合、読み込み時間を大幅に短縮できます。
 
 ```typescript
 const pbrMaterialBuilder = new PBRMaterialBuilder();
@@ -74,99 +74,99 @@ const assetContainer2: AssetContainer = await LoadAssetContainerAsync(modelFileO
 });
 ```
 
-## Kinds of Material Builders
+## マテリアルビルダーの種類
 
-You can create a material builder by implementing the **`IMmdMaterialBuilder`** interface, and the material builders provided by babylon-mmd also implement this interface.
+**`IMmdMaterialBuilder`**インターフェースを実装することでマテリアルビルダーを作成できます。また、babylon-mmdが提供するマテリアルビルダーもこのインターフェースを実装しています。
 
-babylon-mmd provides three material builders:
+babylon-mmdは3つのマテリアルビルダーを提供しています：
 
-- **`MmdStandardMaterialBuilder`** - A material builder that uses **`MmdStandardMaterial`** to reproduce MMD's behavior.
-- **`StandardMaterialBuilder`** - A material builder that uses Babylon.js's **`StandardMaterial`**.
-- **`PBRMaterialBuilder`** - A material builder that uses Babylon.js's **`PBRMaterial`**.
+- **`MmdStandardMaterialBuilder`** - **`MmdStandardMaterial`**を使用してMMDの動作を再現するマテリアルビルダー。
+- **`StandardMaterialBuilder`** - Babylon.jsの**`StandardMaterial`**を使用するマテリアルビルダー。
+- **`PBRMaterialBuilder`** - Babylon.jsの**`PBRMaterial`**を使用するマテリアルビルダー。
 
 ### MmdStandardMaterialBuilder
 
-**`MmdStandardMaterialBuilder`** is a material builder that loads MMD materials using **`MmdStandardMaterial`**.
+**`MmdStandardMaterialBuilder`**は**`MmdStandardMaterial`**を使用してMMDマテリアルを読み込むマテリアルビルダーです。
 
-This material builder **loads all MMD material properties supported by babylon-mmd**, with methods provided for each category.
+このマテリアルビルダーは**babylon-mmdがサポートするすべてのMMDマテリアルプロパティを読み込み**、各カテゴリ用のメソッドが提供されています。
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+読み込み動作を変更したい場合は、`_setMeshesAlphaIndex`を除いて、**対応するメソッドをオーバーライド**できます。
 
-**Properties set by `MmdStandardMaterialBuilder._setMeshesAlphaIndex`:**
+**`MmdStandardMaterialBuilder._setMeshesAlphaIndex`によって設定されるプロパティ：**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - マテリアルの順序に従ってマテリアルのアルファインデックスを設定します（下記のレンダーメソッドを参照）。
 
-**Properties set by `MmdStandardMaterialBuilder.loadGeneralScalarProperties`:**
+**`MmdStandardMaterialBuilder.loadGeneralScalarProperties`によって設定されるプロパティ：**
 
-- **`StandardMaterial.diffuseColor`** - MMD Material "diffuse" (rgb)
-- **`StandardMaterial.specularColor`** - MMD Material "specular" (rgb)
-- **`StandardMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`StandardMaterial.specularPower`** - MMD Material "reflect"
+- **`StandardMaterial.diffuseColor`** - MMDマテリアルの「拡散色」(rgb)
+- **`StandardMaterial.specularColor`** - MMDマテリアルの「光沢色」(rgb)
+- **`StandardMaterial.ambientColor`** - MMDマテリアルの「環境色」(rgb)
+- **`Material.alpha`** - MMDマテリアルの「拡散色」(a)
+- **`AbstractMesh.isVisible`** - 「拡散色」(a)が0の場合はfalseに設定
+- **`StandardMaterial.specularPower`** - MMDマテリアルの「反射率」
 
-**Properties set by `MmdStandardMaterialBuilder.loadDiffuseTexture`:**
+**`MmdStandardMaterialBuilder.loadDiffuseTexture`によって設定されるプロパティ：**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`StandardMaterial.diffuseTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMDマテリアルの「両面描画」
+- **`StandardMaterial.diffuseTexture`** - MMDマテリアルの「テクスチャ」
 
-**Properties set by `MmdStandardMaterialBuilder.setAlphaBlendMode`:**
+**`MmdStandardMaterialBuilder.setAlphaBlendMode`によって設定されるプロパティ：**
 
-- **`StandardMaterial.diffuseTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`StandardMaterial.useAlphaFromDiffuseTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`StandardMaterial.diffuseTexture.hasAlpha`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定（下記のアルファ評価を参照）
+- **`StandardMaterial.useAlphaFromDiffuseTexture`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定
+- **`Material.transparencyMode`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
+- **`Material.forceDepthWrite`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
 
-**Properties set by `MmdStandardMaterialBuilder.loadSphereTexture`:**
+**`MmdStandardMaterialBuilder.loadSphereTexture`によって設定されるプロパティ：**
 
-- **`MmdStandardMaterial.sphereTexture`** - MMD Material "sphere texture"
-- **`MmdStandardMaterial.sphereTextureBlendMode`** - MMD Material "sphere texture mode"
+- **`MmdStandardMaterial.sphereTexture`** - MMDマテリアルの「スフィアテクスチャ」
+- **`MmdStandardMaterial.sphereTextureBlendMode`** - MMDマテリアルの「スフィアテクスチャモード」
 
-**Properties set by `MmdStandardMaterialBuilder.loadToonTexture`:**
+**`MmdStandardMaterialBuilder.loadToonTexture`によって設定されるプロパティ：**
 
-- **`MmdStandardMaterial.toonTexture`** - MMD Material "toon texture"
+- **`MmdStandardMaterial.toonTexture`** - MMDマテリアルの「トゥーンテクスチャ」
 
-**Properties set by `MmdStandardMaterialBuilder.loadOutlineRenderingProperties`:**
+**`MmdStandardMaterialBuilder.loadOutlineRenderingProperties`によって設定されるプロパティ：**
 
-- **`MmdStandardMaterial.renderOutline`** - Set to true to enable outline rendering
-- **`MmdStandardMaterial.outlineWidth`** - MMD Material "edge size"
-- **`MmdStandardMaterial.outlineColor`** - MMD Material "edge color" (rgb)
-- **`MmdStandardMaterial.outlineAlpha`** - MMD Material "edge color" (a)
+- **`MmdStandardMaterial.renderOutline`** - アウトラインレンダリングを有効にするためにtrueに設定
+- **`MmdStandardMaterial.outlineWidth`** - MMDマテリアルの「エッジサイズ」
+- **`MmdStandardMaterial.outlineColor`** - MMDマテリアルの「エッジ色」(rgb)
+- **`MmdStandardMaterial.outlineAlpha`** - MMDマテリアルの「エッジ色」(a)
 
 ### StandardMaterialBuilder
 
-**`StandardMaterialBuilder`** is a material builder that loads MMD materials using **`StandardMaterial`**.
+**`StandardMaterialBuilder`**は**`StandardMaterial`**を使用してMMDマテリアルを読み込むマテリアルビルダーです。
 
-This material builder **loads only a subset of MMD material properties**, so data loss occurs during the loading process.
+このマテリアルビルダーは**MMDマテリアルプロパティのサブセットのみを読み込む**ため、読み込み処理中にデータの損失が発生します。
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+読み込み動作を変更したい場合は、`_setMeshesAlphaIndex`を除いて、**対応するメソッドをオーバーライド**できます。
 
-**Properties set by `StandardMaterialBuilder._setMeshesAlphaIndex`:**
+**`StandardMaterialBuilder._setMeshesAlphaIndex`によって設定されるプロパティ：**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - マテリアルの順序に従ってマテリアルのアルファインデックスを設定します（下記のレンダーメソッドを参照）。
 
-**Properties set by `StandardMaterialBuilder.loadGeneralScalarProperties`:**
+**`StandardMaterialBuilder.loadGeneralScalarProperties`によって設定されるプロパティ：**
 
-- **`StandardMaterial.diffuseColor`** - MMD Material "diffuse" (rgb)
-- **`StandardMaterial.specularColor`** - MMD Material "specular" (rgb)
-- **`StandardMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`StandardMaterial.specularPower`** - MMD Material "reflect"
+- **`StandardMaterial.diffuseColor`** - MMDマテリアルの「拡散色」(rgb)
+- **`StandardMaterial.specularColor`** - MMDマテリアルの「光沢色」(rgb)
+- **`StandardMaterial.ambientColor`** - MMDマテリアルの「環境色」(rgb)
+- **`Material.alpha`** - MMDマテリアルの「拡散色」(a)
+- **`AbstractMesh.isVisible`** - 「拡散色」(a)が0の場合はfalseに設定
+- **`StandardMaterial.specularPower`** - MMDマテリアルの「反射率」
 
-**Properties set by `StandardMaterialBuilder.loadDiffuseTexture`:**
+**`StandardMaterialBuilder.loadDiffuseTexture`によって設定されるプロパティ：**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`StandardMaterial.diffuseTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMDマテリアルの「両面描画」
+- **`StandardMaterial.diffuseTexture`** - MMDマテリアルの「テクスチャ」
 
-**Properties set by `StandardMaterialBuilder.setAlphaBlendMode`:**
+**`StandardMaterialBuilder.setAlphaBlendMode`によって設定されるプロパティ：**
 
-- **`StandardMaterial.diffuseTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`StandardMaterial.useAlphaFromDiffuseTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`StandardMaterial.diffuseTexture.hasAlpha`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定（下記のアルファ評価を参照）
+- **`StandardMaterial.useAlphaFromDiffuseTexture`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定
+- **`Material.transparencyMode`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
+- **`Material.forceDepthWrite`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
 
-**The following three methods are empty and can be optionally implemented by overriding them:**
+**以下の3つのメソッドは空であり、オーバーライドすることで任意に実装できます：**
 
 - `StandardMaterialBuilder.loadSphereTexture`
 - `StandardMaterialBuilder.loadToonTexture`
@@ -174,130 +174,130 @@ If you want to change the loading behavior, you can **override the corresponding
 
 ### PBRMaterialBuilder
 
-**`PBRMaterialBuilder`** is a material builder that loads MMD materials using **`PBRMaterial`**.
+**`PBRMaterialBuilder`**は**`PBRMaterial`**を使用してMMDマテリアルを読み込むマテリアルビルダーです。
 
-This material builder **loads only a subset of MMD material properties**, so data loss occurs during the loading process.
-Also, for properties that do not have a 1:1 mapping with MMD material parameters, **data distortion may occur** due to additional conversions.
+このマテリアルビルダーは**MMDマテリアルプロパティのサブセットのみを読み込む**ため、読み込み処理中にデータの損失が発生します。
+また、MMDマテリアルパラメータと1対1のマッピングがないプロパティについては、追加の変換による**データの歪み**が発生する可能性があります。
 
-If you want to change the loading behavior, you can **override the corresponding methods**, except for `_setMeshesAlphaIndex`.
+読み込み動作を変更したい場合は、`_setMeshesAlphaIndex`を除いて、**対応するメソッドをオーバーライド**できます。
 
-**Properties set by `PBRMaterialBuilder._setMeshesAlphaIndex`:**
+**`PBRMaterialBuilder._setMeshesAlphaIndex`によって設定されるプロパティ：**
 
-- **`AbstractMesh.alphaIndex`** - Sets the material's alpha index according to the material order (see Render Method below).
+- **`AbstractMesh.alphaIndex`** - マテリアルの順序に従ってマテリアルのアルファインデックスを設定します（下記のレンダーメソッドを参照）。
 
-**Properties set by `PBRMaterialBuilder.loadGeneralScalarProperties`:**
+**`PBRMaterialBuilder.loadGeneralScalarProperties`によって設定されるプロパティ：**
 
-- **`PBRMaterial.albedoColor`** - MMD Material "diffuse" (rgb)
-- **`PBRMaterial.reflectionColor`** - MMD Material "specular" (rgb)
-- **`PBRMaterial.ambientColor`** - MMD Material "ambient" (rgb)
-- **`Material.alpha`** - MMD Material "diffuse" (a)
-- **`AbstractMesh.isVisible`** - Set to false if "diffuse" (a) is 0
-- **`PBRMaterial.roughness`** - MMD Material "reflect"
+- **`PBRMaterial.albedoColor`** - MMDマテリアルの「拡散色」(rgb)
+- **`PBRMaterial.reflectionColor`** - MMDマテリアルの「光沢色」(rgb)
+- **`PBRMaterial.ambientColor`** - MMDマテリアルの「環境色」(rgb)
+- **`Material.alpha`** - MMDマテリアルの「拡散色」(a)
+- **`AbstractMesh.isVisible`** - 「拡散色」(a)が0の場合はfalseに設定
+- **`PBRMaterial.roughness`** - MMDマテリアルの「反射率」
 
-**Properties set by `PBRMaterialBuilder.loadDiffuseTexture`:**
+**`PBRMaterialBuilder.loadDiffuseTexture`によって設定されるプロパティ：**
 
-- **`Material.backFaceCulling`** - MMD Material "is double sided"
-- **`PBRMaterial.albedoTexture`** - MMD Material "texture"
+- **`Material.backFaceCulling`** - MMDマテリアルの「両面描画」
+- **`PBRMaterial.albedoTexture`** - MMDマテリアルの「テクスチャ」
 
-**Properties set by `PBRMaterialBuilder.setAlphaBlendMode`:**
+**`PBRMaterialBuilder.setAlphaBlendMode`によって設定されるプロパティ：**
 
-- **`PBRMaterial.albedoTexture.hasAlpha`** - Set to true if MMD Material "texture" has an alpha channel (see Alpha Evaluation below)
-- **`PBRMaterial.useAlphaFromAlbedoTexture`** - Set to true if MMD Material "texture" has an alpha channel
-- **`Material.transparencyMode`** - Determined by Render Method (see Render Method below)
-- **`Material.forceDepthWrite`** - Determined by Render Method (see Render Method below)
+- **`PBRMaterial.albedoTexture.hasAlpha`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定（下記のアルファ評価を参照）
+- **`PBRMaterial.useAlphaFromAlbedoTexture`** - MMDマテリアルの「テクスチャ」がアルファチャンネルを持つ場合はtrueに設定
+- **`Material.transparencyMode`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
+- **`Material.forceDepthWrite`** - レンダーメソッドによって決定（下記のレンダーメソッドを参照）
 
-**The following three methods are empty and can be optionally implemented by overriding them:**
+**以下の3つのメソッドは空であり、オーバーライドすることで任意に実装できます：**
 
 - `PBRMaterialBuilder.loadSphereTexture`
 - `PBRMaterialBuilder.loadToonTexture`
 - `PBRMaterialBuilder.loadOutlineRenderingProperties`
 
-## Render Method
+## レンダーメソッド
 
-MMD renders meshes using **Alpha Blending** with **Depth Write** and **Depth Test** enabled.
-The Material Builder provides several options to implement this behavior while achieving optimized results.
+MMDは**デプスライト**と**デプステスト**を有効にした**アルファブレンディング**を使用してメッシュをレンダリングします。
+マテリアルビルダーは、この動作を実装しながら最適化された結果を得るためのいくつかのオプションを提供します。
 
-If a Mesh is completely **Opaque**, rendering without Alpha Blending can produce the same result. babylon-mmd provides several options to automatically perform this for rendering optimization, controlled by the material builder's `renderMethod`.
+メッシュが完全に**不透明**である場合、アルファブレンディングなしでレンダリングしても同じ結果が得られます。babylon-mmdはレンダリングの最適化のためにこれを自動的に実行するためのいくつかのオプションを提供しており、それはマテリアルビルダーの`renderMethod`によって制御されます。
 
 ### DepthWriteAlphaBlendingWithEvaluation
 
-This rendering method renders **Opaque meshes without Alpha Blending** and uses Alpha Blending only when absolutely necessary.
+このレンダリングメソッドは**不透明なメッシュをアルファブレンディングなし**でレンダリングし、絶対に必要な場合にのみアルファブレンディングを使用します。
 
-In other words, when loading a model with this method, the material's `transparencyMode` can be either **`Material.MATERIAL_ALPHABLEND`** or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`true`**.
+つまり、このメソッドでモデルを読み込むと、マテリアルの`transparencyMode`は**`Material.MATERIAL_ALPHABLEND`**または**`Material.MATERIAL_OPAQUE`**のいずれかになり、`forceDepthWrite`は**`true`**に設定されます。
 
-This is the **default** method.
+これが**デフォルト**のメソッドです。
 
 ### DepthWriteAlphaBlending
 
-This rendering method renders **all meshes using Alpha Blending**.
+このレンダリングメソッドは**すべてのメッシュをアルファブレンディング**を使用してレンダリングします。
 
-In other words, when loading a model with this method, the material's `transparencyMode` is always **`Material.MATERIAL_ALPHABLEND`**, and `forceDepthWrite` is set to **`true`**.
+つまり、このメソッドでモデルを読み込むと、マテリアルの`transparencyMode`は常に**`Material.MATERIAL_ALPHABLEND`**であり、`forceDepthWrite`は**`true`**に設定されます。
 
-This method is **identical to MMD's rendering method**, so if you encounter any rendering issues, it is recommended to try this method.
+このメソッドは**MMDのレンダリングメソッドと同一**なので、レンダリングの問題が発生した場合は、このメソッドを試すことをお勧めします。
 
 ### AlphaEvaluation
 
-This rendering method determines whether to render a mesh using **Alpha Blending, Alpha Test, or Opaque** mode, and **does not perform Depth Write when using Alpha Blending**.
+このレンダリングメソッドは、メッシュを**アルファブレンディング、アルファテスト、または不透明**モードのいずれでレンダリングするかを決定し、**アルファブレンディングを使用する場合にはデプスライトを実行しません**。
 
-In other words, when loading a model with this method, the material's `transparencyMode` can be **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, or **`Material.MATERIAL_OPAQUE`**, and `forceDepthWrite` is set to **`false`**.
+つまり、このメソッドでモデルを読み込むと、マテリアルの`transparencyMode`は**`Material.MATERIAL_ALPHATEST`**、**`Material.MATERIAL_ALPHABLEND`**、または**`Material.MATERIAL_OPAQUE`**のいずれかになり、`forceDepthWrite`は**`false`**に設定されます。
 
-This method is the **most compatible with Babylon.js's rendering pipeline**, as using Alpha Blend with Depth Write is not a common practice.
+このメソッドは**Babylon.jsのレンダリングパイプラインと最も互換性がある**方法です。デプスライトとアルファブレンドの併用は一般的な手法ではないためです。
 
-## Alpha Evaluation
+## アルファ評価
 
-Among the rendering methods described above, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** needs to determine if a mesh is Opaque. Also, **`MmdMaterialRenderMethod.AlphaEvaluation`** needs to evaluate the mesh's Alpha value to select the appropriate rendering method.
+上記のレンダリングメソッドのうち、**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**はメッシュが不透明かどうかを判断する必要があります。また、**`MmdMaterialRenderMethod.AlphaEvaluation`**はメッシュのアルファ値を評価して適切なレンダリングメソッドを選択する必要があります。
 
-This process is called **Alpha Evaluation**.
+このプロセスを**アルファ評価**と呼びます。
 
-### Process
+### プロセス
 
-1.  Render the geometry in **UV Space** to a Render Target. At this time, only the **Alpha value** of each pixel is rendered by sampling the texture.
-2.  Read the pixel data of the Render Target using the **readPixels** function.
-3.  Evaluate the Alpha values from the read pixel data to select the appropriate rendering method.
+1.  ジオメトリを**UVスペース**でレンダーターゲットにレンダリングします。この時、テクスチャをサンプリングして各ピクセルの**アルファ値のみ**をレンダリングします。
+2.  **readPixels**関数を使用してレンダーターゲットのピクセルデータを読み取ります。
+3.  読み取ったピクセルデータからアルファ値を評価して、適切なレンダリングメソッドを選択します。
 
--   For **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**, if even one fragment of the textured geometry has an Alpha value other than `255`, the material's `transparencyMode` is set to **`Material.MATERIAL_ALPHABLEND`**.
--   For **`MmdMaterialRenderMethod.AlphaEvaluation`**, the material's rendering method is determined by the material builder's **`alphaThreshold`** and **`alphaBlendThreshold`** values.
+-   **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**の場合、テクスチャ付きのジオメトリのフラグメントが1つでも`255`以外のアルファ値を持つ場合、マテリアルの`transparencyMode`は**`Material.MATERIAL_ALPHABLEND`**に設定されます。
+-   **`MmdMaterialRenderMethod.AlphaEvaluation`**の場合、マテリアルのレンダリングメソッドはマテリアルビルダーの**`alphaThreshold`**と**`alphaBlendThreshold`**の値によって決定されます。
 
-### Caveats
+### 注意点
 
-**Alpha Evaluation may not work correctly in some edge cases**. For example, if the mesh's UV topology is abnormal, Alpha Evaluation may produce incorrect results. In this case, increasing the material builder's **`alphaEvaluationResolution`** might solve the problem.
+**アルファ評価は一部のエッジケースで正しく機能しない場合があります**。例えば、メッシュのUVトポロジーが異常な場合、アルファ評価は不正確な結果を生成する可能性があります。この場合、マテリアルビルダーの**`alphaEvaluationResolution`**を増やすことで問題が解決する場合があります。
 
-When performing Alpha Evaluation, **every material must be rendered to a Render Target once at load time**. This is a non-negligible cost. Therefore, you can disable Alpha Evaluation using the material builder's **`forceDisableAlphaEvaluation`** option.
-In this case, Alpha Evaluation is not performed.
+アルファ評価を実行する場合、**すべてのマテリアルは読み込み時に一度レンダーターゲットにレンダリングされる必要があります**。これは無視できないコストです。そのため、マテリアルビルダーの**`forceDisableAlphaEvaluation`**オプションを使用してアルファ評価を無効にすることができます。
+この場合、アルファ評価は実行されません。
 
-Also, the **BPMX format** stores the Alpha Evaluation results in the format, so you can use it and **skip the Alpha Evaluation process at load time**.
+また、**BPMXフォーマット**はアルファ評価の結果をフォーマット内に格納するため、それを使用して**読み込み時のアルファ評価プロセスをスキップ**することができます。
 
-## Draw Order Configuration
+## 描画順序の設定
 
-MMD always renders meshes according to the order of materials.
-However, Babylon.js, in contrast, sorts meshes based on their distance from the camera before rendering.
+MMDは常にマテリアルの順序に従ってメッシュをレンダリングします。
+しかし、Babylon.jsはレンダリング前にカメラからの距離に基づいてメッシュをソートします。
 
-babylon-mmd provides separate solutions for two cases to reproduce the same Draw Order as MMD.
+babylon-mmdはMMDと同じ描画順序を再現するために、2つのケースに対して別々のソリューションを提供します。
 
-Note that Draw Order reproduction is not applied when `renderMethod` is `MmdMaterialRenderMethod.AlphaEvaluation`.
+描画順序の再現は、`renderMethod`が`MmdMaterialRenderMethod.AlphaEvaluation`の場合には適用されないことに注意してください。
 
-### Handling Multiple Meshes
+### 複数のメッシュの処理
 
-MMD's Draw Order is reproduced by setting an appropriate value for **`Mesh.alphaIndex`**.
+MMDの描画順序は、**`Mesh.alphaIndex`**に適切な値を設定することで再現されます。
 
-The following two properties of the material builder are used for this:
+マテリアルビルダーの以下の2つのプロパティがこのために使用されます：
 
--   **`nextStartingAlphaIndex`** - The starting Alpha Index value for the next MMD model
--   **`alphaIndexIncrementsPerModel`** - The Alpha Index increment value for each MMD model
+-   **`nextStartingAlphaIndex`** - 次のMMDモデルの開始アルファインデックス値
+-   **`alphaIndexIncrementsPerModel`** - 各MMDモデルのアルファインデックスの増分値
 
-**`nextStartingAlphaIndex`** increases by **`alphaIndexIncrementsPerModel`** after loading one MMD model.
+**`nextStartingAlphaIndex`**は1つのMMDモデルを読み込んだ後に**`alphaIndexIncrementsPerModel`**だけ増加します。
 
-Therefore, with the following settings:
+したがって、以下の設定で：
 - `nextStartingAlphaIndex`: 0
 - `alphaIndexIncrementsPerModel`: 3
 
-If you load MMD model A with 2 materials and MMD model B with 3 materials in order, **`nextStartingAlphaIndex`** changes as follows:
+マテリアルが2つあるMMDモデルAとマテリアルが3つあるMMDモデルBを順番に読み込むと、**`nextStartingAlphaIndex`**は以下のように変化します：
 
-1.  Before loading, `nextStartingAlphaIndex`: 0
-2.  After loading model A, `nextStartingAlphaIndex`: 3
-3.  After loading model B, `nextStartingAlphaIndex`: 6
+1.  読み込み前、`nextStartingAlphaIndex`: 0
+2.  モデルA読み込み後、`nextStartingAlphaIndex`: 3
+3.  モデルB読み込み後、`nextStartingAlphaIndex`: 6
 
-And the **`Mesh.alphaIndex`** of the loaded models will be set as follows:
+そして、読み込まれたモデルの**`Mesh.alphaIndex`**は以下のように設定されます：
 
 ```
 Model A: {
@@ -312,9 +312,9 @@ Model B: {
 }
 ```
 
-The important point here is that if **`alphaIndexIncrementsPerModel` is not large enough**, the **`Mesh.alphaIndex`** of the previously loaded model and the newly loaded model may **overlap**.
+ここで重要なのは、**`alphaIndexIncrementsPerModel`が十分に大きくない場合**、以前に読み込まれたモデルと新しく読み込まれたモデルの**`Mesh.alphaIndex`**が**重複する**可能性があることです。
 
-For example, if **`alphaIndexIncrementsPerModel`** was set to 1 in the previous example, the **`Mesh.alphaIndex`** for each model would be as follows:
+例えば、前の例で**`alphaIndexIncrementsPerModel`**が1に設定されていた場合、各モデルの**`Mesh.alphaIndex`**は以下のようになります：
 
 ```
 Model A: {
@@ -329,24 +329,24 @@ Model B: {
 }
 ```
 
-Model A's Mesh2 and Model B's Mesh1 will have the same **`alphaIndex`**, so their drawing order will be determined by their distance from the camera.
+モデルAのMesh2とモデルBのMesh1は同じ**`alphaIndex`**を持つため、それらの描画順序はカメラからの距離によって決定されます。
 
-To prevent this problem, the default value of **`alphaIndexIncrementsPerModel`** is set to a sufficiently large number.
+この問題を防ぐために、**`alphaIndexIncrementsPerModel`**のデフォルト値は十分に大きな数に設定されています。
 
 :::info
-Note that when using this method, the **Draw Order is determined by the order in which MMD models are loaded**.
+この方法を使用する場合、**描画順序はMMDモデルが読み込まれる順序によって決まる**ことに注意してください。
 
-If you need to strictly reproduce the Draw Order between MMD models, you can set **`alphaIndexIncrementsPerModel` to 0** and adjust **`Mesh.alphaIndex` manually**.
+MMDモデル間の描画順序を厳密に再現する必要がある場合は、**`alphaIndexIncrementsPerModel`を0に設定**し、**`Mesh.alphaIndex`を手動で調整**することができます。
 :::
 
-### Handling Multiple SubMeshes
+### 複数のサブメッシュの処理
 
-In Babylon.js, there is **no way to control the Draw Order between multiple SubMeshes** within a single mesh.
+Babylon.jsでは、単一メッシュ内の**複数のサブメッシュ間の描画順序を制御する方法はありません**。
 
-When a single mesh has multiple SubMeshes, the drawing order is determined by calculating the distance from the camera based on each SubMesh's own **Bounding Sphere Center**.
+単一のメッシュが複数のサブメッシュを持つ場合、描画順序は各サブメッシュ自身の**境界球の中心**に基づいてカメラからの距離を計算することによって決定されます。
 
-Considering this behavior, babylon-mmd applies the **same `BoundingInfo` to all SubMeshes** when loading an MMD model.
+この動作を考慮して、babylon-mmdはMMDモデルを読み込む際に**すべてのサブメッシュに同じ`BoundingInfo`を適用**します。
 
-In this case, all SubMeshes will have the same distance from the camera, and they will be drawn in the order of **`Mesh.subMeshes`** due to **stable sort**.
+この場合、すべてのサブメッシュはカメラからの距離が同じになり、**安定したソート**により**`Mesh.subMeshes`**の順序で描画されます。
 
-This is always applied when the MMD model loader's **`loaderOptions.mmdmodel.optimizeSubmeshes`** option is **`false`**.
+これはMMDモデルローダーの**`loaderOptions.mmdmodel.optimizeSubmeshes`**オプションが**`false`**の場合、常に適用されます。

@@ -3,86 +3,86 @@ sidebar_position: 3
 sidebar_label: MMD StandardMaterial
 ---
 
-# MMD StandardMaterial
+# MMD スタンダードマテリアル
 
-This section explains the **`MmdStandardMaterial`** provided by babylon-mmd to reproduce MMD's shading model.
+このセクションでは、babylon-mmdが提供する**`MmdStandardMaterial`**によるMMDのシェーディングモデルの再現について説明します。
 
-**`MmdStandardMaterial`** implements MMD's shading model by modifying shaders using **`MaterialPlugin`** based on Babylon.js's **`StandardMaterial`**.
+**`MmdStandardMaterial`**はBabylon.jsの**`StandardMaterial`**をベースに**`MaterialPlugin`**を使用してシェーダーを変更し、MMDのシェーディングモデルを実装しています。
 
-## MMD's Shading Model and `MmdStandardMaterial`
+## MMDのシェーディングモデルと`MmdStandardMaterial`
 
-### Lighting
+### ライティング
 
-MMD always has **one Directional Light** that exists globally in the Scene, and there are no additional lights.
+MMDでは、シーン内にグローバルに存在する**1つのディレクショナルライト**が常に存在し、追加のライトはありません。
 
-babylon-mmd's **`MmdStandardMaterial`** reproduces this shading model of MMD, so it works best in situations where there is **only one Directional Light** in the Scene. It is designed to work in other scenarios as well, but may not look visually appealing.
+babylon-mmdの**`MmdStandardMaterial`**はMMDのこのシェーディングモデルを再現しており、シーン内に**1つのディレクショナルライト**だけが存在する状況で最適に機能します。他のシナリオでも動作するように設計されていますが、視覚的に魅力的でない場合があります。
 
-### Ground Shadow
+### グラウンドシャドウ
 
-MMD implements shadows on the ground specifically by **projecting Mesh onto the ground**. This is called a **ground shadow**.
+MMDでは、メッシュを地面に**投影**することで、地面上の影を特別に実装しています。これを**グラウンドシャドウ**と呼びます。
 
-babylon-mmd does not implement this. (It may be added later if there are requests.)
-Instead, you can implement shadows using Babylon.js's **ShadowGenerator**.
+babylon-mmdはこれを実装していません（要望があれば後で追加される可能性があります）。
+代わりに、Babylon.jsの**ShadowGenerator**を使用して影を実装することができます。
 
-### Shadow
+### シャドウ
 
-MMD controls whether a mesh **casts or receives Shadow** through Material properties. babylon-mmd does not implement this, and the responsibility for shadow control lies with the user. (This may also be added later if there are requests.)
+MMDでは、メッシュが**シャドウをキャストするか受け取るか**をマテリアルプロパティで制御します。babylon-mmdはこれを実装しておらず、シャドウ制御の責任はユーザーにあります（これも要望があれば後で追加される可能性があります）。
 
-### Render Method
+### レンダリングメソッド
 
-MMD uses a **Forward Rendering** approach. The **Draw order** of each Mesh is always fixed in the order of Materials, and all materials perform **Depth Write and Depth Test** and are drawn using **Alpha Blending**.
+MMDは**フォワードレンダリング**アプローチを使用します。各メッシュの**描画順序**は常にマテリアル順に固定され、すべてのマテリアルは**デプスライトとデプステスト**を実行し、**アルファブレンディング**を使用して描画されます。
 
-## MMD Material Properties
+## MMD マテリアルプロパティ
 
-MMD materials have various properties, and the **`MmdStandardMaterial`** class provides properties corresponding to each property of MMD materials.
+MMDマテリアルには様々なプロパティがあり、**`MmdStandardMaterial`**クラスはMMDマテリアルの各プロパティに対応するプロパティを提供します。
 
-The properties of MMD materials and their corresponding properties in **`MmdStandardMaterial`** are as follows:
+MMDマテリアルのプロパティと**`MmdStandardMaterial`**の対応するプロパティは以下の通りです：
 
-| MMD Material Property | `MmdStandardMaterial` Property | Description |
+| MMDマテリアルプロパティ | `MmdStandardMaterial`プロパティ | 説明 |
 |-----------------|----------------------------|------|
-| diffuse(rgba) | diffuseColor(rgb), alpha(a) | Diffuse reflection color and transparency |
-| specular(rgb) | specularColor | Specular reflection color |
-| ambient(rgb) | ambientColor | Ambient light color |
-| reflect | specularPower | Reflection intensity |
+| diffuse(rgba) | diffuseColor(rgb), alpha(a) | 拡散反射色と透明度 |
+| specular(rgb) | specularColor | 鏡面反射色 |
+| ambient(rgb) | ambientColor | アンビエントライト色 |
+| reflect | specularPower | 反射強度 |
 |-----------------|----------------------------|------|
-| is double sided | backFaceCulling | Whether to render both sides of the mesh |
-| ground shadow | N/A | Not implemented |
-| draw shadow | N/A | Not implemented |
-| receive shadow | N/A | Not implemented |
-| toon edge | renderOutline | Whether to render outlines |
-| vertex color (PMX 2.1 spec) | N/A | Not implemented |
-| point draw (PMX 2.1 spec) | N/A | Not implemented |
-| line draw (PMX 2.1 spec) | N/A | Not implemented |
+| is double sided | backFaceCulling | メッシュの両面をレンダリングするかどうか |
+| ground shadow | N/A | 実装されていません |
+| draw shadow | N/A | 実装されていません |
+| receive shadow | N/A | 実装されていません |
+| toon edge | renderOutline | アウトラインをレンダリングするかどうか |
+| vertex color (PMX 2.1 spec) | N/A | 実装されていません |
+| point draw (PMX 2.1 spec) | N/A | 実装されていません |
+| line draw (PMX 2.1 spec) | N/A | 実装されていません |
 |-----------------|----------------------------|------|
-| edge color(rgba) | outlineColor(rgb), outlineAlpha(a) | Outline color and transparency |
-| edge size | outlineWidth | Outline thickness |
-| texture | diffuseTexture | Texture |
-| sphere texture | sphereTexture | Texture used for spherical environment mapping, used for reflective material representation |
-| sphere texture mode | sphereTextureBlendMode | Sphere texture blending mode |
-| toon texture | toonTexture | Texture used for Ramp texture shading |
+| edge color(rgba) | outlineColor(rgb), outlineAlpha(a) | アウトラインの色と透明度 |
+| edge size | outlineWidth | アウトラインの太さ |
+| texture | diffuseTexture | テクスチャ |
+| sphere texture | sphereTexture | 球面環境マッピングに使用されるテクスチャ、反射材質表現に使用 |
+| sphere texture mode | sphereTextureBlendMode | スフィアテクスチャのブレンドモード |
+| toon texture | toonTexture | ランプテクスチャシェーディングに使用されるテクスチャ |
 
-Additionally, there are properties applied by Material Morphing. These are not exposed on the surface in MMD and are parameters that can only be changed through Material Morphing.
+さらに、マテリアルモーフィングによって適用されるプロパティがあります。これらはMMDの表面には公開されておらず、マテリアルモーフィングを通してのみ変更できるパラメーターです。
 
-| `MmdStandardMaterial` Property | Description |
+| `MmdStandardMaterial`プロパティ | 説明 |
 |----------------------------|------|
-| textureMultiplicativeColor(rgba) | Color value multiplied to diffuse texture |
-| textureAdditiveColor(rgba) | Color value added to diffuse texture |
-| sphereTextureMultiplicativeColor(rgba) | Color value multiplied to sphere texture |
-| sphereTextureAdditiveColor(rgba) | Color value added to sphere texture |
-| toonTextureMultiplicativeColor(rgba) | Color value multiplied to toon texture |
-| toonTextureAdditiveColor(rgba) | Color value added to toon texture |
+| textureMultiplicativeColor(rgba) | 拡散テクスチャに乗算される色値 |
+| textureAdditiveColor(rgba) | 拡散テクスチャに加算される色値 |
+| sphereTextureMultiplicativeColor(rgba) | スフィアテクスチャに乗算される色値 |
+| sphereTextureAdditiveColor(rgba) | スフィアテクスチャに加算される色値 |
+| toonTextureMultiplicativeColor(rgba) | トゥーンテクスチャに乗算される色値 |
+| toonTextureAdditiveColor(rgba) | トゥーンテクスチャに加算される色値 |
 
-## MMD Material Implementation
+## MMD マテリアル実装
 
-Let's look at how each property participates in calculations through the Fragment shader code actually used in MMD Standard Materials.
+それでは、MMDスタンダードマテリアルで実際に使用されているフラグメントシェーダーコードを通じて、各プロパティが計算にどのように参加するかを見てみましょう。
 
-This document explains based on GLSL(WebGL) shaders, but WGSL(WebGPU) code also works in the same way.
+このドキュメントではGLSL(WebGL)シェーダーに基づいて説明していますが、WGSL(WebGPU)コードも同様に動作します。
 
 :::tip
-**Keep in mind that the actual shader performs optimization for multiple cases with numerous #ifdef branches**. This is just a simplified example after the preprocessor has been applied.
+**実際のシェーダーは多数の#ifdefブランチで複数のケースに対する最適化を行っていることに注意してください**。これはプリプロセッサが適用された後の簡略化された例です。
 :::
 
-This is the **main function of the GLSL Fragment Shader** for MMD Standard Material generated by the Babylon.js runtime. Let's examine the key parts separately.
+これはMMDスタンダードマテリアル用にBabylon.jsランタイムによって生成されたGLSLフラグメントシェーダーの**main関数**です。主要な部分を個別に見ていきましょう。
 ```cpp
 void main(void) {
     vec3 toonNdl;
@@ -90,11 +90,11 @@ void main(void) {
     vec3 viewDirectionW = normalize(vEyePosition.xyz - vPositionW);
     vec4 baseColor = vec4(1., 1., 1., 1.);
     
-    // The sum of diffuse color and ambient color is used as diffuse color.
-    // This is to achieve the same result as MMD's shader and is not a typical approach.
-    // At this time, although not visible in the shader, the value of vAmbientColor is scene.ambientColor * material.ambientColor.
-    // Therefore, to implement the same 0.5 scaling that MMD applies to the ambient color property,
-    // the scene.ambientColor value needs to be (0.5, 0.5, 0.5).
+    // 拡散色とアンビエント色の合計が拡散色として使用されます。
+    // これはMMDのシェーダーと同じ結果を得るためであり、一般的なアプローチではありません。
+    // この時点で、シェーダーには見えませんが、vAmbientColorの値はscene.ambientColor * material.ambientColorです。
+    // したがって、MMDがアンビエント色のプロパティに適用する0.5のスケーリングと同じ実装をするには、
+    // scene.ambientColorの値を(0.5, 0.5, 0.5)にする必要があります。
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
     float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
 
@@ -102,7 +102,7 @@ void main(void) {
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply material diffuse texture color morphing.
+    // マテリアル拡散テクスチャカラーモーフィングを適用します。
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
@@ -129,19 +129,19 @@ void main(void) {
     float numLights = 0.;
     vec4 diffuse0 = light0.vLightDiffuse;
 #define CUSTOM_LIGHT0_COLOR
-    // Calculate shading using the Blinn-Phong model for directional light.
+    // ディレクショナルライト用のBlinn-Phongモデルを使用してシェーディングを計算します。
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
-    // Here, shadows are calculated using Percentage Closer Filtering (PCF). This vary depending on ShadowGenerator settings.
+    // ここでは、パーセンテージクローザーフィルタリング（PCF）を使用して影が計算されます。これはShadowGeneratorの設定によって異なります。
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
     aggShadow += shadow;
     numLights += 1.0;
-    // Apply Ramp texture shading by mapping the Blinn-Phong model value with Shadow applied to the Toon texture.
+    // シャドウが適用されたBlinn-Phongモデル値をトゥーンテクスチャにマッピングしてランプテクスチャシェーディングを適用します。
     toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
     toonNdl.r = texture(toonSampler, vec2(0.5, toonNdl.r)).r;
     toonNdl.g = texture(toonSampler, vec2(0.5, toonNdl.g)).g;
     toonNdl.b = texture(toonSampler, vec2(0.5, toonNdl.b)).b;
     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
-    // info.specular is an r dot l value approximated by the half vector.
+    // info.specularはハーフベクトルによって近似されたr dot l値です。
     specularBase += info.specular * shadow;
     aggShadow = aggShadow / numLights;
     vec4 refractionColor = vec4(0., 0., 0., 1.);
@@ -153,11 +153,11 @@ void main(void) {
 #define CUSTOM_FRAGMENT_BEFORE_FOG
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 球面環境マッピング用のUV座標を計算します。
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // スフィアテクスチャカラーモーフィングを適用します。
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -169,7 +169,7 @@ void main(void) {
         1.0
     ) + sphereTextureAdditiveColor.rgb;
     sphereReflectionColor.rgb *= diffuseBase;
-    // Apply sphere texture as add blend mode. Different code is applied when using multiply blend mode.
+    // スフィアテクスチャをアドブレンドモードとして適用します。乗算ブレンドモードを使用する場合は異なるコードが適用されます。
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
     color.rgb = max(color.rgb, 0.);
     color.a *= visibility;
@@ -179,12 +179,12 @@ void main(void) {
 }
 ```
 
-To help with visualization, we'll use **YYB式初音ミク_10th_v1.02 model by SANMUYYB** as a sample model.
+視覚化を助けるために、サンプルモデルとして**YYB式初音ミク_10th_v1.02 by SANMUYYB**を使用します。
 
 ### baseColor
 
-First, **`baseColor` stores the result of the color sampled from the texture**.
-The following elements are considered in this process:
+まず、**`baseColor`にテクスチャからサンプリングされた色の結果が格納されます**。
+このプロセスでは以下の要素が考慮されます：
 
 - `MmdStandardMaterial.textureMultiplicativeColor`
 - `MmdStandardMaterial.textureAdditiveColor`
@@ -195,17 +195,17 @@ The following elements are considered in this process:
     
     // ...
     
-    // If UV morphing is applied, additional calculations are added to the uvOffset variable during shader code generation.
+    // UVモーフィングが適用されている場合、シェーダーコード生成中にuvOffset変数に追加の計算が追加されます。
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply `textureMultiplicativeColor`
+    // `textureMultiplicativeColor`を適用
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
         textureMultiplicativeColor.a
     );
-    // Apply `textureAdditiveColor`
+    // `textureAdditiveColor`を適用
     baseColor.rgb = clamp(
         baseColor.rgb + (baseColor.rgb - vec3(1.0)) * textureAdditiveColor.a,
         0.0,
@@ -213,15 +213,15 @@ The following elements are considered in this process:
     ) + textureAdditiveColor.rgb;
 
 #define CUSTOM_FRAGMENT_UPDATE_ALPHA
-    baseColor.rgb *= vDiffuseInfos.y; // vDiffuseInfos.y is the value of `BaseTexture.level`
+    baseColor.rgb *= vDiffuseInfos.y; // vDiffuseInfos.yは`BaseTexture.level`の値です
 ```
 
 ![baseColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/baseColor.png)
-*Result of rendering the `baseColor`.*
+*`baseColor`をレンダリングした結果。*
 
 ### lightingInfo
 
-The **computeLighting function** is called to calculate lighting information using the **Blinn-Phong model**.
+**Blinn-Phongモデル**を使用してライティング情報を計算するために**computeLighting関数**が呼び出されます。
 
 ```cpp
 struct lightingInfo {
@@ -239,31 +239,31 @@ struct lightingInfo {
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
 ```
 
-The `computeLighting` function calculates shading for the Directional Light using the following parameters:
+`computeLighting`関数は、以下のパラメータを使用してディレクショナルライトのシェーディングを計算します：
 
-- view direction (**viewDirectionW**)
-- surface normal (**normalW**)
+- 視線方向 (**viewDirectionW**)
+- 表面法線 (**normalW**)
 - `DirectionalLight.direction` (**light0.vLightData**)
 - `DirectionalLight.diffuse` (**diffuse0.rgb**)
 - `DirectionalLight.specular` (**light0.vLightSpecular.rgb**)
-- light range (not used for Directional Light as attenuation is not considered)
+- ライト範囲（ディレクショナルライトでは減衰が考慮されないため使用されません）
 - `specularPower` (**glossiness**)
 
-The resulting `ndl`, `diffuse`, and `specular` values are visualized as follows:
+結果の`ndl`、`diffuse`、`specular`値は以下のように視覚化されます：
 
 |ndl|diffuse|specular|
 |---|-------|--------|
 |![ndl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndl.png)|![diffuse](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/diffuse.png)|![specular](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/specular.png)|
 
-*Each image visualizes the `ndl`, `diffuse`, and `specular` values calculated as a result of the `computeLighting` function.*
+*各画像は`computeLighting`関数の結果として計算された`ndl`、`diffuse`、`specular`値を視覚化したものです。*
 
-The `isToon` value is a parameter to ensure normal operation in case of shader injection failure, and it always has a value of 1.0. If shader injection fails, this value will be 0.0, and fallback processing will be performed using this value in the future.
+`isToon`値はシェーダーインジェクションの失敗時に正常に動作するためのパラメータであり、常に1.0の値を持ちます。シェーダーインジェクションが失敗した場合、この値は0.0になり、この値を使用して将来的にフォールバック処理が実行されます。
 
-In this section, for the sake of explanation, we will not consider the case where the `isToon` value is 0.0.
+このセクションでは、説明のために`isToon`値が0.0のケースは考慮しません。
 
 ### shadow
 
-The shadow is calculated using the Percentage Closer Filtering (PCF) method. This can vary significantly depending on the settings of the `ShadowGenerator`.
+シャドウはパーセンテージクローザーフィルタリング（PCF）メソッドを使用して計算されます。これは`ShadowGenerator`の設定によって大きく異なる場合があります。
 
 ```cpp
     float shadow = 1.;
@@ -271,14 +271,14 @@ The shadow is calculated using the Percentage Closer Filtering (PCF) method. Thi
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
 ```
 
-The `shadow` value is visualized as follows:
+`shadow`値は以下のように視覚化されます：
 
 ![shadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/shadow.png)
-*Result of rendering the `shadow`.*
+*`shadow`をレンダリングした結果。*
 
 ### diffuseBase
 
-The final shading is calculated by multiplying the `ndl` with the `shadow`. Then, the result is mapped to the toonTexture.
+最終的なシェーディングは`ndl`と`shadow`を乗算して計算されます。その後、結果はトゥーンテクスチャにマッピングされます。
 
 ```cpp
     vec3 toonNdl;
@@ -294,20 +294,20 @@ The final shading is calculated by multiplying the `ndl` with the `shadow`. Then
 ```
 
 ![ndlShadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndlShadow.png)
-*Result of rendering `info.ndl * shadow`.*
+*`info.ndl * shadow`をレンダリングした結果。*
 
 ![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png)
 
-*Result of rendering `toonNdl`, which is the shadow value mapped to the toonTexture (Ramp Texture) between 0 and 1.*
+*`toonNdl`をレンダリングした結果。これはシャドウ値が0から1の間でトゥーンテクスチャ（ランプテクスチャ）にマッピングされたものです。*
 
-The toonTexture typically has this kind of gradient. The value changes vertically, mapping the bottom to 0 and the top to 1.
+トゥーンテクスチャは通常、この種のグラデーションを持っています。値は垂直方向に変化し、下部を0、上部を1にマッピングします。
 
 <img src={"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAOUlEQVRYR+3WMREAMAwDsYY/yoDI7MLwIiP40+RJklfcCCBAgAABAgTqArfb/QMCCBAgQIAAgbbAB3z/e0F3js2cAAAAAElFTkSuQmCC"} width="200"/>
-*Example of toonTexture data*
+*トゥーンテクスチャデータの例*
 
 ### finalDiffuse
 
-Finally, the diffuse lighting is calculated by taking the  `diffuseBase` which is a toon-mapped result, multiplying it by the material's diffuse color, adding the material's emissive color, and finally multiplying by the sampled result in `baseColor`.
+最後に、拡散ライティングは、トゥーンマッピングされた結果である`diffuseBase`を取り、マテリアルの拡散色を乗算し、マテリアルの放射色を加算し、最後に`baseColor`でサンプリングされた結果を乗算して計算されます。
 
 ```cpp
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
@@ -316,29 +316,29 @@ Finally, the diffuse lighting is calculated by taking the  `diffuseBase` which i
     vec3 finalDiffuse = clamp(diffuseBase * diffuseColor + emissiveColor, 0.0, 1.0) * baseColor.rgb;
 ```
 
-The material's diffuse color is calculated as follows:
+マテリアルの拡散色は次のように計算されます：
 
 - `StandardMaterial.diffuseColor` (**vDiffuseColor**)
-- `StandardMaterial.ambientColor` * `Scene.ambientColor` (**vAmbientColor**) - The CPU bounds multiply the material and Scene's ambient color together and pass the result to the shader.
+- `StandardMaterial.ambientColor` * `Scene.ambientColor` (**vAmbientColor**) - CPUはマテリアルとシーンのアンビエント色を乗算してその結果をシェーダーに渡します。
 
 `clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);`
 
-You can see that the ambient color is also involved in the calculation of the diffuse color to achieve the same result as MMD's shader, which is not a typical approach.
+アンビエント色も拡散色の計算に関与しており、これはMMDのシェーダーと同じ結果を得るためのもので、一般的なアプローチではないことがわかります。
 
 :::warning
-It's important to note that `Scene.ambientColor` should be set to vec3(0.5, 0.5, 0.5).
-This is because MMD's implementation scales the ambient color to 0.5.
-Therefore, to achieve the same result, the Scene's ambient color should be set to 0.5 so that the ambient color is calculated with the same 0.5 scaling as MMD.
+`Scene.ambientColor`をvec3(0.5, 0.5, 0.5)に設定することが重要です。
+これは、MMDの実装がアンビエント色を0.5にスケーリングするためです。
+したがって、同じ結果を得るためには、シーンのアンビエント色を0.5に設定し、MMDと同じ0.5スケーリングでアンビエント色が計算されるようにする必要があります。
 :::
 
 ![finalDiffuse](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalDiffuse.png)
-*Result of rendering `finalDiffuse`, the result of the diffuse light calculation.*
+*`finalDiffuse`をレンダリングした結果。これは拡散光計算の結果です。*
 
 ### finalSpecular
 
-The `shadow` value is multiplied with the `specular` to exclude the areas that are in shadow.
+`shadow`値が`specular`と乗算され、影にある領域が除外されます。
 
-Then, the material's `StandardMaterial.specularColor` (**vSpecularColor**) is used to calculate the final specular value.
+次に、マテリアルの`StandardMaterial.specularColor` (**vSpecularColor**)を使用して最終的なスペキュラー値が計算されます。
 
 ```cpp
     vec3 specularColor = vSpecularColor.rgb;
@@ -350,20 +350,20 @@ Then, the material's `StandardMaterial.specularColor` (**vSpecularColor**) is us
     vec3 finalSpecular = specularBase * specularColor;
 ```
 
-Below is the render result of the final specular value, `finalSpecular`.
+以下は最終的なスペキュラー値である`finalSpecular`のレンダリング結果です。
 
 ![finalSpecular](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalSpecular.png)
-*Result of rendering `finalSpecular`, the result of the specular light calculation.*
+*`finalSpecular`をレンダリングした結果。これはスペキュラー光計算の結果です。*
 
 ### finalDiffuse + finalSpecular
 
-Finally, the results of the diffuse light and specular light calculations are added together. Additionally, the following properties are considered:
+最後に、拡散光とスペキュラー光の計算結果が加算されます。さらに、以下のプロパティが考慮されます：
 
 - `StandardMaterial.ambientTexture` (**baseAmbientColor**)
 - `StandardMaterial.reflectionTexture` (**reflectionColor**)
 - `StandardMaterial.refractionTexture` (**refractionColor**)
 
-However, these properties are not used in the current example, so in the shader code, they are simply initialized as constants.
+ただし、現在の例ではこれらのプロパティは使用されていないため、シェーダーコードでは単に定数として初期化されています。
 
 ```cpp
     vec3 baseAmbientColor = vec3(1., 1., 1.);
@@ -374,34 +374,34 @@ However, these properties are not used in the current example, so in the shader 
     vec4 color = vec4(finalDiffuse * baseAmbientColor + finalSpecular + reflectionColor.rgb + refractionColor.rgb, alpha);
 ```
 
-Below is the render result of `color`, which is the result of adding `finalDiffuse` and `finalSpecular`.
+以下は`finalDiffuse`と`finalSpecular`を加算した結果である`color`のレンダリング結果です。
 
 ![color](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/color.png)
-*Result of rendering `color`, the result of adding `finalDiffuse` and `finalSpecular`.*
+*`color`をレンダリングした結果。これは`finalDiffuse`と`finalSpecular`を加算した結果です。*
 
 ### sphereReflectionColor
 
-Finally, spherical environment mapping is applied using the sphereTexture.
+最後に、スフィアテクスチャを使用して球面環境マッピングが適用されます。
 
-The following material properties are used here:
+ここでは以下のマテリアルプロパティが使用されます：
 
 - `StandardMaterial.sphereTexture` (**sphereSampler**)
 - `StandardMaterial.sphereTextureMultiplicativeColor` (**sphereTextureMultiplicativeColor**)
 - `StandardMaterial.sphereTextureAdditiveColor` (**sphereTextureAdditiveColor**)
 
-Typically, the sphereTexture uses a spherical texture like this.
+通常、スフィアテクスチャはこのような球面テクスチャを使用します。
 
 ![sphereTexture](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereTexture.png)\
-*Example of sphereTexture data*
+*スフィアテクスチャデータの例*
 
 ```cpp
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 球面環境マッピング用のUV座標を計算します。
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // スフィアテクスチャカラーモーフィングを適用します。
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -415,17 +415,17 @@ Typically, the sphereTexture uses a spherical texture like this.
     sphereReflectionColor.rgb *= diffuseBase;
 ```
 
-The render result of `sphereReflectionColor`, which is the result of applying spherical environment mapping, is as follows.
+球面環境マッピングを適用した結果である`sphereReflectionColor`のレンダリング結果は以下の通りです。
 
 ![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png)
 
-*Result of rendering `sphereReflectionColor`, the result of applying spherical environment mapping using sphereTexture.*
+*`sphereReflectionColor`をレンダリングした結果。これはスフィアテクスチャを使用した球面環境マッピングを適用した結果です。*
 
-### Final Color
+### 最終カラー
 
-Finally, the diffuse lighting, specular lighting, and reflection color are all added together to calculate the final color.
+最後に、拡散光、スペキュラー光、反射色がすべて加算されて最終的な色が計算されます。
 
-Additionally, the `Material.visibility` is taken into account.
+さらに、`Material.visibility`も考慮されます。
 
 ```cpp
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
@@ -436,14 +436,14 @@ Additionally, the `Material.visibility` is taken into account.
 ```
 
 ![finalRender](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalRender.png)
-*Result of the final rendering, combining diffuse light, specular light, and environment light.*
+*最終的なレンダリングの結果。拡散光、スペキュラー光、環境光を組み合わせたものです。*
 
-## Full Source Code of Mmd Standard Material Shader
+## Mmd スタンダードマテリアルシェーダーの完全なソースコード
 
-The GLSL source code including uniform variable declarations and external function definitions that were omitted above is as follows:
+上記で省略されたユニフォーム変数宣言と外部関数定義を含むGLSLソースコードは次の通りです：
 
 <details>
-<summary>Organized GLSL shader code for MmdStandardMaterial</summary>
+<summary>MmdStandardMaterial用の整理されたGLSLシェーダーコード</summary>
 
 ```cpp
 layout(std140, column_major) uniform;
@@ -573,11 +573,11 @@ void main(void) {
     vec3 viewDirectionW = normalize(vEyePosition.xyz - vPositionW);
     vec4 baseColor = vec4(1., 1., 1., 1.);
     
-    // The sum of diffuse color and ambient color is used as diffuse color.
-    // This is to achieve the same result as MMD's shader and is not a typical approach.
-    // At this time, although not visible in the shader, the value of vAmbientColor is scene.ambientColor * material.ambientColor.
-    // Therefore, to implement the same 0.5 scaling that MMD applies to the ambient color property,
-    // the scene.ambientColor value needs to be (0.5, 0.5, 0.5).
+    // 拡散色とアンビエント色の合計が拡散色として使用されます。
+    // これはMMDのシェーダーと同じ結果を得るためであり、一般的なアプローチではありません。
+    // この時点で、シェーダーには見えませんが、vAmbientColorの値はscene.ambientColor * material.ambientColorです。
+    // したがって、MMDがアンビエント色のプロパティに適用する0.5のスケーリングと同じ実装をするには、
+    // scene.ambientColorの値を(0.5, 0.5, 0.5)にする必要があります。
     vec3 diffuseColor = clamp(vDiffuseColor.rgb + vAmbientColor, 0.0, 1.0);
     float alpha = clamp(vDiffuseColor.a, 0.0, 1.0);
 
@@ -585,7 +585,7 @@ void main(void) {
     vec2 uvOffset = vec2(0.0, 0.0);
     baseColor = texture(diffuseSampler, (vDiffuseUV + uvOffset));
 
-    // Apply material diffuse texture color morphing.
+    // マテリアル拡散テクスチャカラーモーフィングを適用します。
     baseColor.rgb = mix(
         vec3(1.0),
         baseColor.rgb * textureMultiplicativeColor.rgb,
@@ -612,19 +612,19 @@ void main(void) {
     float numLights = 0.;
     vec4 diffuse0 = light0.vLightDiffuse;
 #define CUSTOM_LIGHT0_COLOR
-    // Calculate shading using the Blinn-Phong model for directional light.
+    // ディレクショナルライト用のBlinn-Phongモデルを使用してシェーディングを計算します。
     info = computeLighting(viewDirectionW, normalW, light0.vLightData, diffuse0.rgb, light0.vLightSpecular.rgb, diffuse0.a, glossiness);
-    // Here, shadows are calculated using Percentage Closer Filtering (PCF). This vary depending on ShadowGenerator settings.
+    // ここでは、パーセンテージクローザーフィルタリング（PCF）を使用して影が計算されます。これはShadowGeneratorの設定によって異なります。
     shadow = computeShadowWithPCF3(vPositionFromLight0, vDepthMetric0, shadowTexture0, light0.shadowsInfo.yz, light0.shadowsInfo.x, light0.shadowsInfo.w);
     aggShadow += shadow;
     numLights += 1.0;
-    // Apply Ramp texture shading by mapping the Blinn-Phong model value with Shadow applied to the Toon texture.
+    // シャドウが適用されたBlinn-Phongモデル値をトゥーンテクスチャにマッピングしてランプテクスチャシェーディングを適用します。
     toonNdl = vec3(clamp(info.ndl * shadow, 0.02, 0.98));
     toonNdl.r = texture(toonSampler, vec2(0.5, toonNdl.r)).r;
     toonNdl.g = texture(toonSampler, vec2(0.5, toonNdl.g)).g;
     toonNdl.b = texture(toonSampler, vec2(0.5, toonNdl.b)).b;
     diffuseBase += mix(info.diffuse * shadow, toonNdl * info.diffuse, info.isToon);
-    // info.specular is an r dot l value approximated by the half vector.
+    // info.specularはハーフベクトルによって近似されたr dot l値です。
     specularBase += info.specular * shadow;
     aggShadow = aggShadow / numLights;
     vec4 refractionColor = vec4(0., 0., 0., 1.);
@@ -636,11 +636,11 @@ void main(void) {
 #define CUSTOM_FRAGMENT_BEFORE_FOG
     vec3 viewSpaceNormal = normalize(mat3(view) * vNormalW);
 
-    // Calculate UV coordinates for spherical environment mapping.
+    // 球面環境マッピング用のUV座標を計算します。
     vec2 sphereUV = viewSpaceNormal.xy * 0.5 + 0.5;
 
     vec4 sphereReflectionColor = texture(sphereSampler, sphereUV);
-    // Apply sphere texture color morphing.
+    // スフィアテクスチャカラーモーフィングを適用します。
     sphereReflectionColor.rgb = mix(
         vec3(1.0),
         sphereReflectionColor.rgb * sphereTextureMultiplicativeColor.rgb,
@@ -652,7 +652,7 @@ void main(void) {
         1.0
     ) + sphereTextureAdditiveColor.rgb;
     sphereReflectionColor.rgb *= diffuseBase;
-    // Apply sphere texture as add blend mode. Different code is applied when using multiply blend mode.
+    // スフィアテクスチャをアドブレンドモードとして適用します。乗算ブレンドモードを使用する場合は異なるコードが適用されます。
     color = vec4(color.rgb + sphereReflectionColor.rgb, color.a); 
     color.rgb = max(color.rgb, 0.);
     color.a *= visibility;
@@ -664,30 +664,30 @@ void main(void) {
 
 </details>
 
-## Outline Rendering
+## アウトラインレンダリング
 
-babylon-mmd provides **`MmdOutlineRenderer`** to implement MMD's rendering method. This renderer is used to implement MMD's **toon edge**.
+babylon-mmdは、MMDのレンダリング方式を実装するための**`MmdOutlineRenderer`**を提供しています。このレンダラーは、MMDの**トゥーンエッジ**を実装するために使用されます。
 
-**`MmdOutlineRenderer`** uses the **Inverted Hull method** to render the outlines of meshes. This method renders the outline by flipping all faces of the mesh and rendering them again.
+**`MmdOutlineRenderer`**は、メッシュのアウトラインをレンダリングするために**反転ハル法**を使用します。このメソッドは、メッシュのすべての面を反転させて再度レンダリングすることでアウトラインをレンダリングします。
 
-As a result, when rendering outlines, **additional draw calls** occur equal to the number of meshes.
+その結果、アウトラインをレンダリングする際、メッシュの数と同じ数の**追加のドローコール**が発生します。
 
-### Usage
+### 使用方法
 
-When importing **"babylon-mmd/esm/Loader/mmdOutlineRenderer"**, an **`MmdOutlineRenderer`** is added to the `Scene` using prototype extension.
+**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**をインポートすると、プロトタイプ拡張を使用して**`MmdOutlineRenderer`**が`Scene`に追加されます。
 
 ```typescript
 import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 ```
 
-After that, if the material has the following **four properties**, outlines will be rendered. (**`MmdStandardMaterial`** has these properties by default.)
+その後、マテリアルに以下の**4つのプロパティ**がある場合、アウトラインがレンダリングされます。（**`MmdStandardMaterial`**はデフォルトでこれらのプロパティを持っています）
 
 - **`renderOutline`** (boolean)
 - **`outlineWidth`** (number)
 - **`outlineColor`** (Color3)
 - **`outlineAlpha`** (number)
 
-Therefore, **any material** can render outlines by adding these properties as follows:
+したがって、以下のようにこれらのプロパティを追加することで、**任意のマテリアル**でアウトラインをレンダリングできます：
 
 ```typescript
 class OutlinePBRMaterial extends PBRMaterial {
@@ -701,7 +701,7 @@ class OutlinePBRMaterial extends PBRMaterial {
     }
 
     public set renderOutline(value: boolean) {
-        // Lazy Load the component
+        // コンポーネントの遅延ロード
         if (value) {
             this.getScene().getMmdOutlineRenderer?.();
         }
@@ -710,12 +710,12 @@ class OutlinePBRMaterial extends PBRMaterial {
 }
 ```
 
-This implements **Lazy Loading** by registering the `MmdOutlineRenderer` to the Scene when the `renderOutline` property becomes true.
+これは、`renderOutline`プロパティがtrueになったときにシーンに`MmdOutlineRenderer`を登録することで**遅延ロード**を実装します。
 
-### Applied to MmdStandardMaterial
+### MmdStandardMaterialへの適用
 
-For **`MmdStandardMaterial`**, settings are automatically configured by the **`MmdStandardMaterialBuilder`**,
-and you only need to add `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";` to your code for it to work.
+**`MmdStandardMaterial`**の場合、**`MmdStandardMaterialBuilder`**によって設定が自動的に構成され、
+動作させるためにはコードに`import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`を追加するだけで済みます。
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)
-*Result with outline applied.*
+*アウトラインが適用された結果。*

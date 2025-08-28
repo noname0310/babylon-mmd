@@ -1,42 +1,42 @@
 ---
 sidebar_position: 1
-sidebar_label: Build Your Own MMD Material Builder
+sidebar_label: 独自のMMDマテリアルビルダーを構築する
 ---
 
-# Build Your Own MMD Material Builder
+# 独自のMMDマテリアルビルダーを構築する
 
-This section explains how to implement your own **material builder**.
+このセクションでは、独自の**マテリアルビルダー**の実装方法について説明します。
 
-The MMD model loaders (**`PmxLoader`**, **`PmdLoader`**, **`BpmxLoader`**) delegate all responsibility for loading textures and materials to the **material builder** during the MMD model loading process.
+MMDモデルローダー（**`PmxLoader`**、**`PmdLoader`**、**`BpmxLoader`**）は、MMDモデルの読み込みプロセス中にテクスチャとマテリアルの読み込みの全責任を**マテリアルビルダー**に委託しています。
 
-Therefore, the **material builder** is responsible for the entire process, from **resource resolution** to **alpha evaluation** and **draw order** settings.
+したがって、**マテリアルビルダー**は、**リソース解決**から**アルファ評価**、**描画順序**設定まで、プロセス全体を担当します。
 
-Implementing a material builder from scratch is not a simple task, as it requires consideration of all these aspects.
+マテリアルビルダーをゼロから実装するのは簡単なタスクではありません。これらの側面すべてを考慮する必要があるためです。
 
-## Implementing with `MaterialBuilderBase`
+## `MaterialBuilderBase`を使った実装
 
-The **`MaterialBuilderBase`** class provides common implementations needed when creating a material builder.
+**`MaterialBuilderBase`**クラスは、マテリアルビルダーを作成する際に必要な共通の実装を提供します。
 
-This class provides the following implementations:
+このクラスは以下の実装を提供します：
 
-- **Alpha Evaluation**
-- **Draw Order** setting
+- **アルファ評価**
+- **描画順序**設定
 
-This class requires the implementation of the following methods:
+このクラスは以下のメソッドの実装を必要とします：
 
-- **`_buildTextureNameMap`** - A method to build the texture name map.
-- **`loadGeneralScalarProperties`** - A method to load diffuse, specular, ambient, and shininess properties.
-- **`loadDiffuseTexture`** - A method to load the Diffuse texture.
-- **`setAlphaBlendMode`** - A method to set the alpha blend mode of the Diffuse texture.
-- **`loadSphereTexture`** - A method to load the Sphere Texture.
-- **`loadToonTexture`** - A method to load the Toon Texture.
-- **`loadOutlineRenderingProperties`** - A method to load edgeSize and edgeColor properties.
+- **`_buildTextureNameMap`** - テクスチャ名マップを構築するメソッド
+- **`loadGeneralScalarProperties`** - 拡散光、鏡面光、環境光、光沢度プロパティを読み込むメソッド
+- **`loadDiffuseTexture`** - 拡散テクスチャを読み込むメソッド
+- **`setAlphaBlendMode`** - 拡散テクスチャのアルファブレンドモードを設定するメソッド
+- **`loadSphereTexture`** - スフィアテクスチャを読み込むメソッド
+- **`loadToonTexture`** - トゥーンテクスチャを読み込むメソッド
+- **`loadOutlineRenderingProperties`** - エッジサイズとエッジカラーのプロパティを読み込むメソッド
 
-If there is no corresponding implementation for a feature in the material, you can leave the method body empty.
+マテリアルに機能に対応する実装がない場合は、メソッド本体を空にしておくことができます。
 
-For example, **`PBRMaterialBuilder`** has empty method bodies for **`loadSphereTexture`**, **`loadToonTexture`**, and **`loadOutlineRenderingProperties`**.
+例えば、**`PBRMaterialBuilder`**では**`loadSphereTexture`**、**`loadToonTexture`**、および**`loadOutlineRenderingProperties`**のメソッド本体は空です。
 
-We start by inheriting from **`MaterialBuilderBase`**, setting the generic parameter, and implementing the constructor:
+まずは**`MaterialBuilderBase`**を継承し、ジェネリックパラメータを設定し、コンストラクターを実装します：
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
     public constructor() {
@@ -45,9 +45,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-### Implementing `_buildTextureNameMap`
+### `_buildTextureNameMap`の実装
 
-This is a method to build a mapping to store texture names without loss when serializing an MMD model.
+これは、MMDモデルをシリアライズする際にテクスチャ名を損失なく保存するためのマッピングを構築するメソッドです。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -90,9 +90,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-The **`textureNameMap`** is stored in **`MmdMesh.metadata.textureNameMap`** after loading.
+**`textureNameMap`**は読み込み後に**`MmdMesh.metadata.textureNameMap`**に保存されます。
 
-### Implementing `loadGeneralScalarProperties`
+### `loadGeneralScalarProperties`の実装
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -130,7 +130,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
                 if ((mesh as Mesh).isVisible !== undefined) {
                     (mesh as Mesh).isVisible = false;
                 } else {
-                    // TODO: handle visibility of submeshes individually
+                    // TODO: サブメッシュの可視性を個別に処理する
                 }
             }
         }
@@ -140,13 +140,13 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-Each material may or may not have properties corresponding to **`diffuseColor`**, **`specularColor`**, **`ambientColor`**, **`alpha`**, and **`specularPower`**. You only need to perform mapping for the properties that exist.
+各マテリアルは**`diffuseColor`**、**`specularColor`**、**`ambientColor`**、**`alpha`**、および**`specularPower`**に対応するプロパティを持つ場合と持たない場合があります。存在するプロパティについてのみマッピングを行えばよいです。
 
-### BMP Loader Support
+### BMPローダーサポート
 
-If you have applied babylon-mmd's custom BMP texture loader, the material builder also needs to be modified.
+babylon-mmdのカスタムBMPテクスチャローダーを適用している場合、マテリアルビルダーも変更する必要があります。
 
-For this, we can add the following method to the material builder:
+そのために、マテリアルビルダーに以下のメソッドを追加できます：
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -161,11 +161,11 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-### Implementing `loadDiffuseTexture`
+### `loadDiffuseTexture`の実装
 
-Perform **Texture Resolution** using **`imagePathTable`**, **`referenceFileResolver`**, **`_textureLoader`**, **`uniqueId`**, and **`rootUrl`**. It should be implemented to handle cases using the browser File API, URLs, or ArrayBuffers.
+**`imagePathTable`**、**`referenceFileResolver`**、**`_textureLoader`**、**`uniqueId`**、および**`rootUrl`**を使用して**テクスチャ解決**を実行します。これは、ブラウザのFile API、URL、またはArrayBufferを使用するケースを処理するように実装する必要があります。
 
-**`onTextureLoadComplete`** must be called regardless of whether the texture loading succeeds or fails. If this callback is not called, the material builder will wait indefinitely for the texture to load.
+テクスチャの読み込みが成功したか失敗したかに関わらず、**`onTextureLoadComplete`**を呼び出す必要があります。このコールバックが呼び出されないと、マテリアルビルダーはテクスチャが読み込まれるのを無期限に待ちます。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -226,7 +226,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
             if (diffuseTexture !== null) {
                 material.diffuseTexture = diffuseTexture;
             } else {
-                logger.error(`Failed to load diffuse texture: ${diffuseTextureFileFullPath}`);
+                logger.error(`拡散テクスチャの読み込みに失敗しました: ${diffuseTextureFileFullPath}`);
             }
             onTextureLoadComplete?.();
         } else {
@@ -236,15 +236,15 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-### Implementing `setAlphaBlendMode`
+### `setAlphaBlendMode`の実装
 
-In this method, you perform **Alpha Evaluation** and apply the results to the material.
+このメソッドでは、**アルファ評価**を実行し、その結果をマテリアルに適用します。
 
-Here, different processing is required for each **`MmdMaterialRenderMethod`**.
+ここでは、各**`MmdMaterialRenderMethod`**に対して異なる処理が必要です。
 
-Also, the BPMX format may already contain the Alpha Evaluation result, so you should check **`evaluatedTransparency`**.
+また、BPMXフォーマットにはすでにアルファ評価の結果が含まれている可能性があるため、**`evaluatedTransparency`**をチェックする必要があります。
 
-To simplify the process a bit, the **`MaterialBuilderBase._evaluateDiffuseTextureTransparencyModeAsync`** method is provided.
+プロセスを少し簡略化するために、**`MaterialBuilderBase._evaluateDiffuseTextureTransparencyModeAsync`**メソッドが提供されています。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -302,15 +302,15 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
         } else {
             if (this.renderMethod === MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation) {
                 let etIsNotOpaque = (evaluatedTransparency >> 4) & 0x03;
-                if ((etIsNotOpaque ^ 0x03) === 0) { // 11: not evaluated
-                    etIsNotOpaque = 0; // fallback to opaque
+                if ((etIsNotOpaque ^ 0x03) === 0) { // 11: 評価されていない
+                    etIsNotOpaque = 0; // 不透明にフォールバック
                 }
 
                 material.transparencyMode = etIsNotOpaque === 0 ? Material.MATERIAL_OPAQUE : Material.MATERIAL_ALPHABLEND;
             } else /* if (this.renderMethod === MmdStandardMaterialRenderMethod.AlphaEvaluation) */ {
                 let etAlphaEvaluateResult = evaluatedTransparency & 0x0F;
-                if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: not evaluated
-                    etAlphaEvaluateResult = 0; // fallback to opaque
+                if ((etAlphaEvaluateResult ^ 0x0F) === 0) { // 1111: 評価されていない
+                    etAlphaEvaluateResult = 0; // 不透明にフォールバック
                 }
 
                 material.transparencyMode = Material.MATERIAL_OPAQUE;
@@ -320,11 +320,11 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-### Implementing `loadSphereTexture`
+### `loadSphereTexture`の実装
 
-This method loads the **Sphere texture**. The Texture Resolution method is similar to **`loadDiffuseTexture`**.
+このメソッドは**スフィアテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`**と似ています。
 
-Additionally, the method of applying the Sphere texture to the material differs depending on **`materialInfo.sphereTextureMode`**.
+さらに、スフィアテクスチャをマテリアルに適用する方法は**`materialInfo.sphereTextureMode`**によって異なります。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -346,7 +346,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
             if (sphereTexturePath !== undefined) {
                 const format = scene.getEngine().isWebGPU || materialInfo.sphereTextureMode === PmxObject.Material.SphereTextureMode.Multiply
                     ? Constants.TEXTUREFORMAT_RGBA
-                    : Constants.TEXTUREFORMAT_RGB; // Maybe we should not use RGB format for performance reasons
+                    : Constants.TEXTUREFORMAT_RGB; // パフォーマンス上の理由でRGBフォーマットを使用しないほうが良いかもしれません
 
                 const sphereTextureFileFullPath = referenceFileResolver.createFullPath(sphereTexturePath);
 
@@ -387,7 +387,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
                     material.sphereTexture = sphereTexture;
                     material.sphereTextureBlendMode = materialInfo.sphereTextureMode as number;
                 } else {
-                    logger.error(`Failed to load sphere texture: ${sphereTextureFileFullPath}`);
+                    logger.error(`スフィアテクスチャの読み込みに失敗しました: ${sphereTextureFileFullPath}`);
                 }
 
                 onTextureLoadComplete?.();
@@ -401,11 +401,11 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-### Implementing `loadToonTexture`
+### `loadToonTexture`の実装
 
-This method loads the **Toon texture**. The Texture Resolution method is similar to **`loadDiffuseTexture`**.
+このメソッドは**トゥーンテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`**と似ています。
 
-During the Texture Resolution process for Toon textures, if **`isSharedToonTexture`** is true, one of the 11 pre-provided shared textures will be used. In this case, instead of finding the texture path from **`imagePathTable`**, **`materialInfo.toonTextureIndex`** is passed to **`_textureLoader`** to specify which shared texture to use. This behavior mimics the implementation of MMD.
+トゥーンテクスチャのテクスチャ解決プロセス中に、**`isSharedToonTexture`**がtrueの場合、あらかじめ提供されている11の共有テクスチャの1つが使用されます。この場合、**`imagePathTable`**からテクスチャパスを見つける代わりに、どの共有テクスチャを使用するかを指定するために**`materialInfo.toonTextureIndex`**が**`_textureLoader`**に渡されます。この動作はMMDの実装を模倣しています。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -433,7 +433,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
             let toonTexture: Nullable<Texture>;
             const file = typeof toonTexturePath === "string" ? referenceFileResolver.resolve(toonTextureFileFullPath) : undefined;
-            if (file !== undefined) {
+            if
                 toonTexture = (await this._textureLoader.loadTextureFromBufferAsync(
                     uniqueId,
                     toonTextureFileFullPath,

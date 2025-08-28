@@ -3,88 +3,88 @@ sidebar_position: 1
 sidebar_label: Convert PMX to BPMX format
 ---
 
-# Convert PMX to BPMX format
+# PMX形式をBPMX形式に変換する
 
-This section explains how to convert **PMX** files to **BPMX** files.
+このセクションでは、**PMX**ファイルを**BPMX**ファイルに変換する方法について説明します。
 
-To convert **PMX** files to **BPMX** files, you can use one of the following two methods:
+**PMX**ファイルを**BPMX**ファイルに変換するには、以下の2つの方法があります：
 
-- You can use a web application for conversion.
-- You can convert them programmatically.
+- ウェブアプリケーションを使用して変換する方法
+- プログラムを使用して変換する方法
 
-Each method has its pros and cons, so please choose the appropriate method according to your needs.
+それぞれの方法にはメリットとデメリットがありますので、ニーズに合わせて適切な方法を選択してください。
 
-## Use Converter Application
+## コンバーターアプリケーションを使用する
 
-**babylon-mmd** provides a web application to convert **PMX/PMD** files to **BPMX** files.
+**babylon-mmd**は**PMX/PMD**ファイルを**BPMX**ファイルに変換するためのウェブアプリケーションを提供しています。
 
-You can use the application at the link below.
+以下のリンクからアプリケーションを使用できます。
 
-[PMX to BPMX Converter](https://noname0310.github.io/babylon-mmd/pmx_converter/)
+[PMX to BPMX コンバーター](https://noname0310.github.io/babylon-mmd/pmx_converter/)
 
-![Converter UI](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-ui.png)
-*Screenshot of the **PMX to BPMX Converter**. Model: [YYB Hatsune Miku_NT](https://bowlroll.net/file/284019)*
+![コンバーターUI](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-ui.png)
+***PMX to BPMX コンバーター**のスクリーンショット。モデル：[YYB Hatsune Miku_NT](https://bowlroll.net/file/284019)*
 
-1. **Drag and drop the folder containing the PMX/PMD file.**
-    - It must include all texture files required to load the MMD model.
+1. **PMX/PMDファイルを含むフォルダをドラッグアンドドロップします。**
+    - MMDモデルを読み込むために必要なすべてのテクスチャファイルを含んでいる必要があります。
 
-2. **Select the PMX/PMD file to convert from the file list, and the model will be displayed in the Scene on the right.**
+2. **ファイルリストから変換するPMX/PMDファイルを選択すると、右側のシーンにモデルが表示されます。**
 
-3. **Set the optimization options. Each option can be set differently depending on the characteristics of the model you want to convert.**
-    - ***Preserve Serialization Data***: Preserves serialization data from the **PMX/PMD** file that **babylon-mmd** does not use.
-      - This includes things like **Texture path**, **Material english name**, and **Display frame**.
-      - This is internally controlled by the `loaderOptions.mmdmodel.preserveSerializationData` option.
-    - ***Optimize Submeshes***: Sets whether to separate **SubMeshes** into individual **Meshes**.
-      - This is internally controlled by the `loaderOptions.mmdmodel.optimizeSubmeshes` option.
-    - ***Build Skeleton***: Sets whether to save the model's **Skeleton** data.
-      - You can turn this option off for models that do not require a skeleton, such as stages.
-    - ***Build Morph Targets***: Sets whether to save the model's **Morph Target** data.
-      - You can turn this option off for models that do not require Morph Targets, such as stages.
+3. **最適化オプションを設定します。各オプションは、変換したいモデルの特性に応じて異なる設定が可能です。**
+    - ***シリアライゼーションデータの保存***: **babylon-mmd**が使用しない**PMX/PMD**ファイルからのシリアライゼーションデータを保存します。
+      - **テクスチャパス**、**マテリアル英語名**、**表示枠**などが含まれます。
+      - これは内部的に`loaderOptions.mmdmodel.preserveSerializationData`オプションによって制御されます。
+    - ***サブメッシュの最適化***: **サブメッシュ**を個別の**メッシュ**に分離するかどうかを設定します。
+      - これは内部的に`loaderOptions.mmdmodel.optimizeSubmeshes`オプションによって制御されます。
+    - ***スケルトンの構築***: モデルの**スケルトン**データを保存するかどうかを設定します。
+      - ステージのような、スケルトンを必要としないモデルではこのオプションをオフにできます。
+    - ***モーフターゲットの構築***: モデルの**モーフターゲット**データを保存するかどうかを設定します。
+      - ステージのような、モーフターゲットを必要としないモデルではこのオプションをオフにできます。
 
-4. **Fix material rendering issues.**
-   - This step is optional. If the model renders correctly, you can skip this step.
-   - For this, please refer to the **Fix Material Rendering Method** section below.
+4. **マテリアルのレンダリングの問題を修正します。**
+   - この手順はオプションです。モデルが正しくレンダリングされている場合は、このステップをスキップできます。
+   - この作業については、下記の**マテリアルレンダリング方法の修正**セクションを参照してください。
 
-5. **Perform the conversion.**
+5. **変換を実行します。**
 
 :::info
-Despite its name, the **PMX to BPMX Converter** also supports **PMD** files.
+名前は「PMX to BPMX コンバーター」ですが、**PMD**ファイルもサポートしています。
 :::
 
-![Download BPMX](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-download.png)
-*The converted file downloaded in **BPMX** format.*
+![BPMXのダウンロード](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-download.png)
+***BPMX**形式でダウンロードされた変換済みファイル。*
 
-### Fix Material Rendering Method
+### マテリアルレンダリング方法の修正
 
-**BPMX** files store the material's **Alpha Evaluation** results in the format.
+**BPMX**ファイルは、マテリアルの**アルファ評価**結果をフォーマット内に保存します。
 
-Specifically, it stores the **Alpha Evaluation** results required for the **`MmdMaterialRenderMethod.AlphaEvaluation`** or **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** methods, respectively.
+具体的には、**`MmdMaterialRenderMethod.AlphaEvaluation`**または**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**メソッドに必要な**アルファ評価**結果をそれぞれ保存します。
 
-This result is used later when loading the model, which speeds up the model loading process by skipping the **Alpha Evaluation** step. It also allows you to manually correct and convert elements that are rendered incorrectly due to algorithm flaws.
+この結果は後でモデルを読み込む際に使用され、**アルファ評価**ステップをスキップすることでモデル読み込みプロセスを高速化します。また、アルゴリズムの欠陥により正しくレンダリングされない要素を手動で修正し変換することも可能です。
 
-The **Fix Material** tab provides a UI to modify these **Alpha Evaluation** results.
+**Fix Material**タブでは、これらの**アルファ評価**結果を修正するためのUIを提供しています。
 
 ![Fix Material UI](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-fixmaterial1.png)
-***Fix Material**'s Alpha Mode tab*
+***Fix Material**のAlpha Modeタブ*
 
-**Alpha Mode** shows how the model looks with the **`MmdMaterialRenderMethod.AlphaEvaluation`** render method. Here you can modify the rendering method of materials that look strange.
+**Alpha Mode**は、**`MmdMaterialRenderMethod.AlphaEvaluation`**レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
 
-For the YYB Hatsune Miku_NT model, changing the rendering method of B, B-L, and sleeve05 to **Alpha Blend** gives better results.
+YYB Hatsune Miku_NTモデルでは、B、B-L、sleeve05のレンダリング方法を**Alpha Blend**に変更すると、より良い結果が得られます。
 
 ![Fix Material UI 2](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-fixmaterial2.png)
-***Fix Material**'s Force Depth Write Mode tab*
+***Fix Material**のForce Depth Write Modeタブ*
 
-**Force Depth Write Mode** shows how the model looks with the **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** render method. Here you can modify the rendering method of materials that look strange.
+**Force Depth Write Mode**は、**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
 
-For the YYB Hatsune Miku_NT model, changing the rendering method of sleeve05 to **Alpha Blend** gives better results.
+YYB Hatsune Miku_NTモデルでは、sleeve05のレンダリング方法を**Alpha Blend**に変更すると、より良い結果が得られます。
 
-## Programmatic Conversion
+## プログラムによる変換
 
-**BPMX** conversion is performed by the **`BpmxConverter`**.
+**BPMX**変換は、**`BpmxConverter`**によって実行されます。
 
-**`BpmxConverter`** takes an **`MmdMesh`** as input and converts it to **BPMX** format.
+**`BpmxConverter`**は**`MmdMesh`**を入力として受け取り、**BPMX**形式に変換します。
 
-The simplest usage example is as follows:
+最も単純な使用例は次のとおりです：
 
 ```typescript
 const materialBuilder = new MmdStandardMaterialBuilder();
@@ -109,15 +109,15 @@ const arrayBuffer = bpmxConverter.convert(mmdMesh); // 2
 assetContainer.dispose(); // 3
 ```
 
-1. By default, the material builder is set to delete the buffer after uploading the texture to the GPU. However, this makes it impossible to serialize the texture, so you must first set the material builder's **`deleteTextureBufferAfterLoad`** option to `false`.
+1. デフォルトでは、マテリアルビルダーはテクスチャをGPUにアップロードした後にバッファを削除するように設定されています。ただし、これではテクスチャをシリアライズできなくなるため、マテリアルビルダーの**`deleteTextureBufferAfterLoad`**オプションを`false`に設定する必要があります。
 
-2. Perform the conversion using **`BpmxConverter.convert`**. This function can take options as a second parameter.
+2. **`BpmxConverter.convert`**を使用して変換を実行します。この関数は、2番目のパラメータとしてオプションを取ることができます。
 
-3. Release resources by calling **`assetContainer.dispose()`**. If you used **`assetContainer.addAllToScene()`**, you must manually release all resources (Geometry, Material, Texture, MorphTargetManager, Skeleton).
+3. **`assetContainer.dispose()`**を呼び出してリソースを解放します。**`assetContainer.addAllToScene()`**を使用した場合は、すべてのリソース（ジオメトリ、マテリアル、テクスチャ、モーフターゲットマネージャー、スケルトン）を手動で解放する必要があります。
 
-However, in the example above, the **Alpha Evaluation** results are not saved in the **BPMX** file. To save the **Alpha Evaluation** results, you must use **`TextureAlphaChecker`** to manually generate the **Alpha Evaluation** results and pass them to the **`BpmxConverter`**.
+ただし、上記の例では、**アルファ評価**結果が**BPMX**ファイルに保存されていません。**アルファ評価**結果を保存するには、**`TextureAlphaChecker`**を使用して手動で**アルファ評価**結果を生成し、**`BpmxConverter`**に渡す必要があります。
 
-Here is an example that does all of this:
+これらすべてを行う例を以下に示します：
 
 ```typescript
 const settings = {
@@ -242,8 +242,8 @@ const arrayBuffer = bpmxConverter.convert(mmdMesh, {
 assetContainer.dispose();
 ```
 
-You can create a function for this to reuse it as needed.
+必要に応じて再利用できるよう、これに関する関数を作成することができます。
 
-For more detailed implementation details, **please refer to the [PMX to BPMX Converter Source](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/pmxConverterScene.ts)**.
+より詳細な実装の詳細については、**[PMX to BPMX コンバーターのソース](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/pmxConverterScene.ts)を参照してください**。
 
-The **`BpmxConverter`** API supports various options, making it very tricky to write code that fully adheres to all specifications, but you can get useful results by selectively using only the features you need.
+**`BpmxConverter`** APIはさまざまなオプションをサポートしており、すべての仕様に完全に準拠するコードを書くのは非常に難しいですが、必要な機能のみを選択的に使用することで、有用な結果を得ることができます。

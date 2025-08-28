@@ -1,36 +1,36 @@
 ---
 sidebar_position: 3
-sidebar_label: The Babylon VMD format
+sidebar_label: Babylon VMD フォーマット
 ---
 
-# The Babylon VMD format
+# Babylon VMD フォーマット
 
-This section explains the **Babylon VMD (BVMD)** format, which is a variation of the **VMD** format.
+このセクションでは、**VMD** フォーマットの変種である **Babylon VMD (BVMD)** フォーマットについて説明します。
 
-## Key Differences
+## 主な違い
 
-The main differences from the original **VMD** format are as follows:
+オリジナルの **VMD** フォーマットとの主な違いは以下の通りです：
 
-- **Smaller file size**: The **BVMD** format has about 3 times smaller file size.
-- **Faster loading time**: The **BVMD** format has a structure that allows for very fast parsing.
+- **より小さなファイルサイズ**: **BVMD** フォーマットは約3倍小さいファイルサイズを持ちます。
+- **より速い読み込み時間**: **BVMD** フォーマットは非常に高速な解析を可能にする構造を持っています。
 
-These differences occur because the **VMD** format stores **bone binding information** for each keyframe when storing animation keyframe data, whereas the **BVMD** format stores keyframe information in tracks and stores bone binding information only once per track.
+これらの違いは、**VMD** フォーマットがアニメーションキーフレームデータを保存する際に各キーフレームごとに**ボーン バインディング情報**を格納するのに対し、**BVMD** フォーマットではキーフレーム情報をトラックに保存し、ボーン バインディング情報はトラックごとに一度だけ格納するためです。
 
-## Not Compatible with Any Other Software
+## 他のソフトウェアとの互換性なし
 
-Additionally, the **BVMD** format is designed by **babylon-mmd** and is not compatible with any other 3D software.
+さらに、**BVMD** フォーマットは **babylon-mmd** によって設計されており、他の3Dソフトウェアとの互換性はありません。
 
-This is intentional, and as a result, you can protect your assets by converting the **VMD** format to the **BVMD** format.
+これは意図的なもので、結果として **VMD** フォーマットを **BVMD** フォーマットに変換することによって、あなたのアセットを保護することができます。
 
 :::info
-The **BVMD** format is not designed to be exposed to users. Therefore, designs that require users to convert **VMD** format to **BVMD** for use in applications are not use cases intended by babylon-mmd.
+**BVMD** フォーマットはユーザーに公開することを想定していません。したがって、ユーザーがアプリケーションで使用するために **VMD** フォーマットを **BVMD** に変換する必要があるようなデザインは、babylon-mmd が想定しているユースケースではありません。
 :::
 
-## Conclusion
+## 結論
 
-The **BVMD** format is a variation of the **VMD** format with improved file size and loading time. Also, using the **BVMD** format can help protect your assets.
+**BVMD** フォーマットは、ファイルサイズと読み込み時間が改善された **VMD** フォーマットの変種です。また、**BVMD** フォーマットを使用することで、アセットを保護するのに役立ちます。
 
-The following two sections explain how to utilize the **BVMD** format.
+以下の2つのセクションでは、**BVMD** フォーマットの活用方法について説明しています。
 
-- [Convert VMD to BVMD format](./convert-vmd-to-bvmd-format) - Explains how to convert **VMD** format to **BVMD** format.
-- [BVMD Loader](./bvmd-loader) - Explains how to load the **BVMD** format.
+- [VMD を BVMD フォーマットに変換する](./convert-vmd-to-bvmd-format) - **VMD** フォーマットを **BVMD** フォーマットに変換する方法について説明します。
+- [BVMD ローダー](./bvmd-loader) - **BVMD** フォーマットを読み込む方法について説明します。

@@ -1,36 +1,36 @@
 ---
 sidebar_position: 0
-sidebar_label: Overview
+sidebar_label: 概要
 ---
 
-# Overview
+# 概要
 
-This section provides an overview of the features that babylon-mmd offers.
+このセクションではbabylon-mmdが提供する機能の概要を説明します。
 
-## Library Overview
+## ライブラリ概要
 
-babylon-mmd is a library written in TypeScript that provides Babylon.js loaders and runtime for MikuMikuDance (MMD) models and animations. It is currently distributed as an npm package.
+babylon-mmdはTypeScriptで書かれたライブラリで、Babylon.jsにMikuMikuDance（MMD）モデルとアニメーションのローダーとランタイムを提供します。現在はnpmパッケージとして配布されています。
 
-This library can be used as either ESM or UMD modules. The UMD build can be used in environments like Babylon.js Playground.
+このライブラリはESMまたはUMDモジュールとして使用できます。UMDビルドはBabylon.js Playgroundのような環境で使用できます。
 
-This documentation is written based on usage in ESM module-based projects that use bundlers like webpack.
+このドキュメントはwebpackのようなバンドラーを使用するESMモジュールベースのプロジェクトでの使用法に基づいて書かれています。
 
-## Hello World of babylon-mmd
+## babylon-mmdのハローワールド
 
-In this section, we'll explore an overview of babylon-mmd through a simple example.
-This example shows how to load MMD models, set up camera and lighting, and play animations with audio.
+このセクションでは、簡単な例を通じてbabylon-mmdの概要を見ていきます。
+この例では、MMDモデルのロード方法、カメラとライティングのセットアップ方法、オーディオ付きのアニメーション再生方法を示しています。
 
 :::info
 
-To keep the example concise, import statements except for side effects have been omitted.
+例を簡潔にするため、サイドエフェクト以外のインポート文は省略されています。
 
 :::
 
 ```typescript showLineNumbers
-// side effects that register the loader
+// ローダーを登録するサイドエフェクト
 import "babylon-mmd/esm/Loader/pmxLoader";
 
-// side effects that register the animation runtime
+// アニメーションランタイムを登録するサイドエフェクト
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 
@@ -50,19 +50,19 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     physicsRuntime.setGravity(new Vector3(0, -98, 0));
     physicsRuntime.register(scene);
     
-    // MMD runtime for solving morph, append transform, IK, animation, physics
+    // モーフ、アペンド変換、IK、アニメーション、物理演算を処理するMMDランタイム
     const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
     mmdRuntime.register(scene);
     
-    // For synced audio playback
+    // 同期オーディオ再生のため
     const audioPlayer = new StreamAudioPlayer(scene);
     audioPlayer.source = "your_audio_path.mp3";
     mmdRuntime.setAudioPlayer(audioPlayer);
     
-    // You can also run the animation before it loads. This will allow the audio to run first.
+    // ロード前にアニメーションを実行することもできます。これによりオーディオが先に実行されます。
     mmdRuntime.playAnimation();
 
-    // create a youtube-like player control
+    // YouTubeのようなプレイヤーコントロールを作成
     new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
     
     const vmdLoader = new VmdLoader(scene);
@@ -85,58 +85,58 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 }
 ```
 
-You can try it in Babylon.js Playground. https://www.babylonjs-playground.com/#S7XDNP
+Babylon.js Playgroundで試すことができます。https://www.babylonjs-playground.com/#S7XDNP
 
-Let's examine the functionality provided by each element.
+それぞれの要素が提供する機能を見ていきましょう。
 
-- [**Line 1-6**](#side-effects-line-1-6): Register side effects required for scene loading.
+- [**1-6行目**](#サイドエフェクト-1-6行目): シーンのロードに必要なサイドエフェクトを登録します。
 
-- [**Line 9-17**](#scene-creation-line-9-17): Create a scene and set up camera and lighting.
+- [**9-17行目**](#シーン作成-9-17行目): シーンを作成し、カメラとライティングをセットアップします。
 
-- [**Line 19-34**](#mmd-runtime-creation-line-19-34): Create MMD runtime and set up physics engine. Also configure audio player to synchronize animations with audio.
+- [**19-34行目**](#mmdランタイム作成-19-34行目): MMDランタイムを作成し、物理エンジンをセットアップします。また、オーディオとアニメーションを同期させるためのオーディオプレーヤーも設定します。
 
-- [**Line 36-37**](#mmd-player-control-creation-line-36-37): Create MMD player control.
+- [**36-37行目**](#mmdプレイヤーコントロールの作成-36-37行目): MMDプレイヤーコントロールを作成します。
 
-- [**Line 39-44**](#vmd-loader-line-39-44): Use VMD loader to load camera animation and set runtime animation on the camera.
+- [**39-44行目**](#vmdローダー-39-44行目): VMDローダーを使用してカメラアニメーションをロードし、カメラにランタイムアニメーションを設定します。
 
-- [**Line 46-53**](#pmx-loader-line-46-53): Use PMX loader to load MMD model and VMD loader to load model animations. Then set up runtime animation.
+- [**46-53行目**](#pmxローダー-46-53行目): PMXローダーを使用してMMDモデルをロードし、VMDローダーでモデルアニメーションをロードします。そしてランタイムアニメーションをセットアップします。
 
-## Side Effects (Line 1-6)
+## サイドエフェクト (1-6行目)
 
 ```typescript
-// side effects that register the loader
+// ローダーを登録するサイドエフェクト
 import "babylon-mmd/esm/Loader/pmxLoader";
 
-// side effects that register the animation runtime
+// アニメーションランタイムを登録するサイドエフェクト
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 ```
 
-This code registers babylon-mmd's PMX loader and animation runtime with Babylon.js SceneLoader. This enables loading PMX files and playing camera and model animations.
+このコードはbabylon-mmdのPMXローダーとアニメーションランタイムをBabylon.jsのシーンローダーに登録します。これによりPMXファイルのロードとカメラやモデルのアニメーション再生が可能になります。
 
-Not only PMX loader but also other MMD model loaders can be used in the same way. For example, to use the PMD loader, you can add the following:
+PMXローダーだけでなく、他のMMDモデルローダーも同じ方法で使用できます。例えば、PMDローダーを使用するには、以下のように追加します：
 
 ```typescript
 import "babylon-mmd/esm/Loader/pmdLoader";
 ```
 
-Or to use the BPMX loader, you can add the following:
+あるいは、BPMXローダーを使用するには、以下のように追加します：
 ```typescript
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
 ```
 
 :::warning
 
-If even one symbol is imported from the "babylon-mmd" path, all possible side effects will be applied.
+"babylon-mmd"パスから1つのシンボルがインポートされるだけでも、可能なすべてのサイドエフェクトが適用されます。
 
-This follows Babylon.js conventions.
-Therefore, for tree shaking to work properly, all imports must be written with full paths.
+これはBabylon.jsの規約に従っています。
+したがって、ツリーシェイキングが正しく機能するためには、すべてのインポートが完全なパスで記述される必要があります。
 
-To perform tree shaking properly, refer to [this Babylon.js documentation](https://doc.babylonjs.com/setup/frameworkPackages/es6Support#side-effects).
+ツリーシェイキングを適切に行うには、[このBabylon.jsドキュメント](https://doc.babylonjs.com/setup/frameworkPackages/es6Support#side-effects)を参照してください。
 
 :::
 
-## Scene Creation (Line 9-17)
+## シーン作成 (9-17行目)
 
 ```typescript
 const scene = new Scene(engine);
@@ -150,13 +150,13 @@ directionalLight.intensity = 1.0;
 CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
 ```
 
-This code creates a Babylon.js Scene and sets up basic lighting and camera.
+このコードはBabylon.jsのシーンを作成し、基本的なライティングとカメラをセットアップします。
 
-Here, the scene's ambientColor is set to rgb(0.5, 0.5, 0.5). **This is not an arbitrary value**, but is set to reproduce the same behavior as MMD material implementation, which maps ambient color to the 0-0.5 range.
+ここでは、シーンのambientColorをrgb(0.5, 0.5, 0.5)に設定しています。**これは任意の値ではなく**、MMDマテリアルの実装と同じ動作を再現するために設定されています。MMDマテリアルはアンビエントカラーを0-0.5の範囲にマッピングします。
 
-The reason for using directionalLight is also to reproduce MMD material's Lighting Model and is not an arbitrary setting.
+ディレクショナルライトを使用する理由も、MMDマテリアルのライティングモデルを再現するためであり、任意の設定ではありません。
 
-## MMD Runtime Creation (Line 19-34)
+## MMDランタイム作成 (19-34行目)
 
 ```typescript
 const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeSPR());
@@ -164,40 +164,40 @@ const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
 physicsRuntime.setGravity(new Vector3(0, -98, 0));
 physicsRuntime.register(scene);
 
-// MMD runtime for solving morph, append transform, IK, animation, physics
+// モーフ、アペンド変換、IK、アニメーション、物理演算を処理するMMDランタイム
 const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
 mmdRuntime.register(scene);
 
-// For synced audio playback
+// 同期オーディオ再生のため
 const audioPlayer = new StreamAudioPlayer(scene);
 audioPlayer.source = "your_audio_path.mp3";
 mmdRuntime.setAudioPlayer(audioPlayer);
 
-// You can also run the animation before it loads. This will allow the audio to run first.
+// ロード前にアニメーションを実行することもできます。これによりオーディオが先に実行されます。
 mmdRuntime.playAnimation();
 ```
 
-This code creates MMD runtime and sets up the physics engine. It also configures an audio player to synchronize animations with audio.
+このコードはMMDランタイムを作成し、物理エンジンをセットアップします。また、オーディオとアニメーションを同期させるためのオーディオプレーヤーも設定します。
 
-### WebAssembly Binary
+### WebAssemblyバイナリ
 
-The `GetMmdWasmInstance` function at the top loads babylon-mmd's WASM binary.
+最初の`GetMmdWasmInstance`関数はbabylon-mmdのWASMバイナリをロードします。
 
-babylon-mmd provides some functionality written in Rust and compiled to WASM binary to improve processing performance.
-Since TypeScript implementations corresponding to the WebAssembly parts exist, they can be used optionally.
+babylon-mmdは処理パフォーマンスを向上させるためにRustで書かれWASMバイナリにコンパイルされた一部の機能を提供しています。
+WebAssembly部分に対応するTypeScript実装も存在するため、オプションで使用することができます。
 
-For example, there is a WASM runtime called `MmdWasmRuntime` that provides the same functionality as the TypeScript-written MMD runtime `MmdRuntime`.
+例えば、TypeScriptで書かれたMMDランタイム`MmdRuntime`と同じ機能を提供する`MmdWasmRuntime`というWASMランタイムがあります。
 
-WebAssembly binary primarily provides MMD model animation processing logic and additionally provides Bullet Physics engine.
+WebAssemblyバイナリは主にMMDモデルアニメーション処理ロジックを提供し、さらにBullet Physicsエンジンも提供します。
 
 ```typescript
 const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeSPR());
 ```
-In this example, we use `MmdWasmInstanceTypeSPR` to determine the WASM binary type. SPR stands for Single threaded, Physics Engine Included, and Release Build respectively.
+この例では、WASMバイナリのタイプを決定するために`MmdWasmInstanceTypeSPR`を使用しています。SPRはそれぞれSingle threaded（シングルスレッド）、Physics Engine Included（物理エンジン含む）、Release Build（リリースビルド）を表します。
 
-In other words, the binary we're using is a single-threaded release build that includes the physics engine.
+つまり、使用しているバイナリは物理エンジンを含むシングルスレッドのリリースビルドです。
 
-Other WASM binary types include `SR`, `SPD`, etc. `SR` means Single threaded, Release Build and is a binary without the physics engine included. `SPD` means Single threaded, Physics Engine Included, Debug Build.
+他のWASMバイナリタイプには`SR`、`SPD`などがあります。`SR`はSingle threaded、Release Buildを意味し、物理エンジンを含まないバイナリです。`SPD`はSingle threaded、Physics Engine Included、Debug Buildを意味します。
 
 ```typescript
 const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
@@ -205,49 +205,49 @@ physicsRuntime.setGravity(new Vector3(0, -98, 0));
 physicsRuntime.register(scene);
 ```
 
-We create a physics engine instance using the Bullet Physics engine provided by babylon-mmd's WASM binary.
+babylon-mmdのWASMバイナリが提供するBullet Physicsエンジンを使用して物理エンジンのインスタンスを作成します。
 
-Here we set the gravity acceleration to -98 m/s² instead of the typical Earth gravity acceleration of -9.8 m/s². This value is set to match MMD's physics engine settings. 
+ここでは重力加速度を一般的な地球の重力加速度である-9.8 m/s²ではなく、-98 m/s²に設定しています。この値はMMDの物理エンジンの設定に合わせるために設定されています。
 
 ```typescript
-// MMD runtime for solving morph, append transform, IK, animation, physics
+// モーフ、アペンド変換、IK、アニメーション、物理演算を処理するMMDランタイム
 const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
 mmdRuntime.register(scene);
 
-// For synced audio playback
+// 同期オーディオ再生のため
 const audioPlayer = new StreamAudioPlayer(scene);
 audioPlayer.source = "your_audio_path.mp3";
 mmdRuntime.setAudioPlayer(audioPlayer);
 
-// You can also run the animation before it loads. This will allow the audio to run first.
+// ロード前にアニメーションを実行することもできます。これによりオーディオが先に実行されます。
 mmdRuntime.playAnimation();
 ```
 
-Then we create the MMD runtime.
+次にMMDランタイムを作成します。
 
-The MMD runtime synchronizes and orchestrates elements participating in MMD animations.
+MMDランタイムはMMDアニメーションに参加する要素を同期し調整します。
 
 ```typescript
-// You can also run the animation before it loads. This will allow the audio to run first.
+// ロード前にアニメーションを実行することもできます。これによりオーディオが先に実行されます。
 mmdRuntime.playAnimation();
 ```
 
-Since loading 3D models and animations takes time, you can call `MmdRuntime.playAnimation()` to start playing audio in advance while waiting.
+3Dモデルやアニメーションのロードには時間がかかるため、待機中に先行してオーディオを再生開始するために`MmdRuntime.playAnimation()`を呼び出すことができます。
 
-You can dynamically add models, cameras, and animations to `MmdRuntime` while animations are playing.
+アニメーション再生中にモデル、カメラ、アニメーションを`MmdRuntime`に動的に追加することができます。
 
-## MMD Player Control Creation (Line 36-37)
+## MMDプレイヤーコントロールの作成 (36-37行目)
 
 ```typescript
-// create a youtube-like player control
+// YouTubeのようなプレイヤーコントロールを作成
 new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
 ```
 
-This code creates an MMD player control. This control provides a UI for playing, pausing, and adjusting audio of MMD animations.
+このコードはMMDプレイヤーコントロールを作成します。このコントロールはMMDアニメーションの再生、一時停止、オーディオ調整のためのUIを提供します。
 
-This code is provided for quick testing purposes, and it's recommended to implement your own for production use.
+このコードはクイックテスト目的で提供されており、本番環境では独自のものを実装することをお勧めします。
 
-## VMD Loader (Line 39-44)
+## VMDローダー (39-44行目)
 
 ```typescript
 const vmdLoader = new VmdLoader(scene);
@@ -258,23 +258,23 @@ camera.setRuntimeAnimation(cameraRuntimeAnimationHandle);
 mmdRuntime.addAnimatable(camera);
 ```
 
-This code uses the VMD loader to load camera animation and bind the animation to the camera.
+このコードはVMDローダーを使用してカメラアニメーションをロードし、そのアニメーションをカメラにバインドします。
 
-### babylon-mmd's Animation System
+### babylon-mmdのアニメーションシステム
 
-babylon-mmd does not use Babylon.js's Animation system by default and implements its own animation system.
+babylon-mmdはデフォルトではBabylon.jsのアニメーションシステムを使用せず、独自のアニメーションシステムを実装しています。
 
-This is because Babylon.js's Animation system is not optimized for processing large animation data and cannot fully support MMD's animation runtime specifications.
+これはBabylon.jsのアニメーションシステムが大量のアニメーションデータの処理に最適化されておらず、MMDのアニメーションランタイム仕様を完全にサポートできないためです。
 
-The animation system provided by babylon-mmd manages animation data with `MmdAnimation` containers. And animations must be bound to specific objects to be played.
+babylon-mmdが提供するアニメーションシステムは`MmdAnimation`コンテナでアニメーションデータを管理します。そしてアニメーションは再生するために特定のオブジェクトにバインドされる必要があります。
 
 ```typescript
 const cameraRuntimeAnimationHandle = camera.createRuntimeAnimation(cameraAnimation);
 ```
 
-Bound animations are called `MmdRuntimeAnimation`. These objects are generally not recommended for direct access, so `MmdCamera.createRuntimeAnimation` returns a handle to access them.
+バインドされたアニメーションは`MmdRuntimeAnimation`と呼ばれます。これらのオブジェクトは一般的に直接アクセスすることは推奨されないため、`MmdCamera.createRuntimeAnimation`はそれらにアクセスするためのハンドルを返します。
 
-## PMX Loader (Line 46-53)
+## PMXローダー (46-53行目)
 
 ```typescript
 const assetContainer = await LoadAssetContainerAsync("path/to/your_file.pmx", scene);
@@ -287,11 +287,11 @@ const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(modelMotion)
 mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 ```
 
-This code uses the PMX loader to load MMD model and VMD loader to load model animations. Then set up runtime animation.
+このコードはPMXローダーを使用してMMDモデルをロードし、VMDローダーでモデルアニメーションをロードします。そしてランタイムアニメーションをセットアップします。
 
-### MMD Model Loader
+### MMDモデルローダー
 
-babylon-mmd supports various MMD model formats such as PMX, PMD, BPMX. In this example, we're using the PMX loader to load the model.
+babylon-mmdはPMX、PMD、BPMXなどの様々なMMDモデル形式をサポートしています。この例ではPMXローダーを使用してモデルをロードしています。
 
 ```typescript
 const assetContainer = await LoadAssetContainerAsync("path/to/your_file.pmx", scene);
@@ -299,15 +299,15 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-This code loads a PMX file using Babylon.js's SceneLoader.
+このコードはBabylon.jsのシーンローダーを使用してPMXファイルをロードします。
 
-Since we previously registered the PMX loader with `import "babylon-mmd/esm/Loader/pmxLoader";`, the `LoadAssetContainerAsync` function can correctly load PMX files.
+前に`import "babylon-mmd/esm/Loader/pmxLoader";`でPMXローダーを登録したため、`LoadAssetContainerAsync`関数は正しくPMXファイルをロードできます。
 
-We then cast the first mesh from the loaded meshes in assetContainer to `MmdMesh` type for use.
+次に、使用するためにassetContainerのロードされたメッシュの最初のものを`MmdMesh`タイプにキャストします。
 
-MMD model loaders always place the MMD model root mesh at `meshes[0]`, so this casting is always valid.
+MMDモデルローダーは常にMMDモデルのルートメッシュを`meshes[0]`に配置するため、このキャストは常に有効です。
 
-### Adding MMD Model to Runtime
+### MMDモデルをランタイムに追加する
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh);
@@ -316,20 +316,20 @@ const modelRuntimeAnimationHandle = mmdModel.createRuntimeAnimation(modelMotion)
 mmdModel.setRuntimeAnimation(modelRuntimeAnimationHandle);
 ```
 
-You can create an MMD model controlled by the runtime from an MMD mesh using the `MmdRuntime.createMmdModel` function.
-Once MmdModel is created, all meshes and materials under the MMD root mesh are controlled by the MMD runtime.
+`MmdRuntime.createMmdModel`関数を使用してMMDメッシュからランタイムによって制御されるMMDモデルを作成できます。
+MmdModelが作成されると、MMDルートメッシュの下のすべてのメッシュとマテリアルがMMDランタイムによって制御されます。
 
-The way to bind animations to MmdModel is the same as camera animations.
+MmdModelにアニメーションをバインドする方法はカメラアニメーションと同じです。
 
-## Conclusion
+## 結論
 
-In this section, we've looked at the basic usage of babylon-mmd.
+このセクションでは、babylon-mmdの基本的な使用方法を見てきました。
 
-The newly introduced concepts are as follows:
+新しく紹介された概念は以下の通りです：
 
-- **MmdRuntime**: A runtime that processes MMD animations. It manages MMD models and animations, integrating physics engine and audio player.
-- **MmdWasmInstance**: A WebAssembly instance for processing MMD animations. It improves performance using WASM binaries. Using this is optional.
-- **MmdAnimation**: A container that manages MMD animation data. You can create and bind runtime animations.
-- **MmdMesh**: An object representing the mesh of an MMD model. It supports various MMD model formats such as PMX, PMD, BPMX.
-- **MmdModel**: An object that adds MMD models to runtime and binds animations. It controls all meshes and materials under the MMD model's root mesh.
-- **MmdPlayerControl**: A UI control for controlling MMD animations. You can play, pause, adjust audio, etc.
+- **MmdRuntime**: MMDアニメーションを処理するランタイム。MMDモデルとアニメーションを管理し、物理エンジンとオーディオプレーヤーを統合します。
+- **MmdWasmInstance**: MMDアニメーション処理用のWebAssemblyインスタンス。WASMバイナリを使用してパフォーマンスを向上させます。使用はオプションです。
+- **MmdAnimation**: MMDアニメーションデータを管理するコンテナ。ランタイムアニメーションを作成してバインドできます。
+- **MmdMesh**: MMDモデルのメッシュを表すオブジェクト。PMX、PMD、BPMXなどの様々なMMDモデル形式をサポートしています。
+- **MmdModel**: MMDモデルをランタイムに追加してアニメーションをバインドするオブジェクト。MMDモデルのルートメッシュの下にあるすべてのメッシュとマテリアルを制御します。
+- **MmdPlayerControl**: MMDアニメーションを制御するためのUIコントロール。再生、一時停止、オーディオ調整などができます。

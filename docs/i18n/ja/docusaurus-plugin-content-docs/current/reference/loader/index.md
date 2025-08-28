@@ -1,19 +1,19 @@
 ---
 sidebar_position: 2
-sidebar_label: Loader
+sidebar_label: ローダー
 ---
 
-# Loader
+# ローダー
 
-This section explains how to load **MMD models** and **animations**.
+このセクションでは、**MMDモデル**と**アニメーション**のロード方法について説明します。
 
-The **MMD model** and **animation formats** supported by **babylon-mmd** are as follows:
+**babylon-mmd**がサポートする**MMDモデル**と**アニメーションフォーマット**は以下の通りです：
 
-**MMD Models**: **PMX**, **PMD**, **BPMX**
+**MMDモデル**：**PMX**、**PMD**、**BPMX**
 
-**MMD Animations**: **VMD**, **VPD**, **BVMD**
+**MMDアニメーション**：**VMD**、**VPD**、**BVMD**
 
-For more information about each format, please refer to the following sections:
+各フォーマットの詳細については、以下のセクションを参照してください：
 
-- [Mmd Model Loader](./mmd-model-loader)
-- [Mmd Animation Loader](./mmd-animation-loader)
+- [Mmdモデルローダー](./mmd-model-loader)
+- [Mmdアニメーションローダー](./mmd-animation-loader)

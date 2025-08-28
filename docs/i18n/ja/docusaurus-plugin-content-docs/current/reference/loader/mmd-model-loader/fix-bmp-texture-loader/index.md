@@ -1,30 +1,30 @@
 ---
 sidebar_position: 1
-sidebar_label: Fix BMP Texture Loader
+sidebar_label: Fix BMP テクスチャローダー
 ---
 
-# Fix BMP Texture Loader
+# Fix BMP テクスチャローダー
 
-If you encounter issues when **loading models that use BMP textures**, you can refer to this document to resolve the problem.
+**BMPテクスチャを使用したモデルの読み込み**に問題が発生した場合は、このドキュメントを参照して問題を解決できます。
 
-## Problem Diagnosis
+## 問題の診断
 
-![Example of incorrectly loaded BMP texture](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-211741.png)
-*Example of **incorrectly loaded texture** from the [MMD School Auditorium Stage](https://www.deviantart.com/maddoktor2/art/DL-MMD-School-Auditorium-Stage-665280215) stage model.*
+![不正確に読み込まれたBMPテクスチャの例](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-211741.png)
+*[MMDスクールオーディトリアムステージ](https://www.deviantart.com/maddoktor2/art/DL-MMD-School-Auditorium-Stage-665280215)ステージモデルからの**不正確に読み込まれたテクスチャ**の例。*
 
-When loading models that use **BMP textures**, there are cases where **BMP files with alpha channels are not displayed properly**.
+**BMPテクスチャ**を使用したモデルを読み込む際、**アルファチャンネルを持つBMPファイルが正しく表示されない**ケースがあります。
 
-## Cause
+## 原因
 
-This issue occurs due to **differences in how browsers and MMD read BMP texture files**. (Babylon.js uses the browser's BMP texture loading implementation.)
+この問題は、**ブラウザとMMDがBMPテクスチャファイルを読み込む方法の違い**によって発生します。（Babylon.jsはブラウザのBMPテクスチャ読み込み実装を使用しています。）
 
-The problem is that **browsers ignore the alpha channel and only read RGB channels**, even when the texture has an alpha channel. This causes **alpha channel loss**.
+問題は、テクスチャにアルファチャンネルがあっても、**ブラウザがアルファチャンネルを無視してRGBチャンネルのみを読み取る**ことです。これにより**アルファチャンネルの損失**が発生します。
 
-## Solution
+## 解決策
 
-babylon-mmd provides a **BMP texture loader that performs additional processing** to correctly load BMP textures.
+babylon-mmdは、BMPテクスチャを正しく読み込むための**追加処理を行うBMPテクスチャローダー**を提供しています。
 
-To use this, you need to **register babylon-mmd's BMP texture loader** to the Babylon.js texture loader global state.
+これを使用するには、babylon-mmdのBMPテクスチャローダーをBabylon.jsのテクスチャローダーのグローバルステートに**登録する必要があります**。
 
 ```typescript
 import { RegisterDxBmpTextureLoader } from "babylon-mmd/esm/Loader/registerDxBmpTextureLoader";
@@ -32,13 +32,13 @@ import { RegisterDxBmpTextureLoader } from "babylon-mmd/esm/Loader/registerDxBmp
 RegisterDxBmpTextureLoader();
 ```
 
-The **`RegisterDxBmpTextureLoader` function registers babylon-mmd's BMP texture loader** to Babylon.js's texture loader. This function **only affects the first call**.
+**`RegisterDxBmpTextureLoader`関数は、babylon-mmdのBMPテクスチャローダー**をBabylon.jsのテクスチャローダーに登録します。この関数は**最初の呼び出し時にのみ有効**です。
 
 :::info
-This function is a **side-effect that runs when importing the index**. e.g. `import { MmdRuntime } from "babylon-mmd";`
+この関数は、**インデックスをインポートすると実行されるサイドエフェクト**です。例：`import { MmdRuntime } from "babylon-mmd";`
 
-Therefore, if you **import babylon-mmd's index even once**, the `DxBmpTextureLoader` will already be registered.
+したがって、**babylon-mmdのインデックスを一度でもインポートする**と、`DxBmpTextureLoader`はすでに登録されています。
 :::
 
-![Example of correctly loaded BMP texture](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-212535.png)
-*Example of **correctly loaded texture** from the MMD School Auditorium Stage stage model.*
+![正しく読み込まれたBMPテクスチャの例](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-212535.png)
+*MMDスクールオーディトリアムステージモデルからの**正しく読み込まれたテクスチャ**の例。*

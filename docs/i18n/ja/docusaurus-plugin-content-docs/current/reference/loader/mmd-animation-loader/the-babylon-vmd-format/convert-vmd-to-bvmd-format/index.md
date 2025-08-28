@@ -1,40 +1,40 @@
 ---
 sidebar_position: 1
-sidebar_label: Convert VMD to BVMD format
+sidebar_label: VMDからBVMDフォーマットへの変換
 ---
 
-# Convert VMD to BVMD format
+# VMDからBVMDフォーマットへの変換
 
-This section explains how to convert **VMD** files to **BVMD** files.
+このセクションでは、**VMD**ファイルを**BVMD**ファイルに変換する方法について説明します。
 
-To convert **VMD** files to **BVMD** files, you can use one of the following two methods:
+**VMD**ファイルを**BVMD**ファイルに変換するには、以下の2つの方法があります：
 
-- You can use a web application for conversion.
-- You can convert them programmatically.
+- ウェブアプリケーションを使用して変換する方法
+- プログラムによって変換する方法
 
-**Both methods produce identical results.**
+**どちらの方法も同じ結果が得られます。**
 
-## Use Converter Application
+## コンバーターアプリケーションを使用する
 
-**babylon-mmd** provides a web application to convert **VMD** files to **BVMD** files.
+**babylon-mmd**は**VMD**ファイルを**BVMD**ファイルに変換するためのウェブアプリケーションを提供しています。
 
-You can use the application at the link below.
+以下のリンクからアプリケーションを使用できます。
 
-[VMD to BVMD Converter](https://noname0310.github.io/babylon-mmd/vmd_converter/)
+[VMD to BVMD コンバーター](https://noname0310.github.io/babylon-mmd/vmd_converter/)
 
-![Converter UI](@site/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/convert-vmd-to-bvmd-format/bvmd-converter-ui.png)
-*Screenshot of the **VMD to BVMD Converter.*
+![コンバーターUI](@site/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/convert-vmd-to-bvmd-format/bvmd-converter-ui.png)
+***VMD to BVMD コンバーター**のスクリーンショット。*
 
-1. **Drag and drop one or more VMD files.**
-    - If you drop multiple **VMD** files, they will be merged, and keyframes from the files dropped first will take precedence.
+1. **1つ以上のVMDファイルをドラッグ＆ドロップします。**
+    - 複数の**VMD**ファイルをドロップした場合、それらはマージされ、最初にドロップされたファイルのキーフレームが優先されます。
 
-2. **Perform the conversion.**
+2. **変換を実行します。**
 
-## Programmatic Conversion
+## プログラムによる変換
 
-**BVMD** conversion is performed using the **`BvmdConverter`** class.
+**BVMD**変換は**`BvmdConverter`**クラスを使用して行われます。
 
-The **`BvmdConverter`** takes an **`MmdAnimation`** object as input and converts it to **BVMD** format data.
+**`BvmdConverter`**は**`MmdAnimation`**オブジェクトを入力として受け取り、それを**BVMD**フォーマットデータに変換します。
 
 ```typescript
 const vmdLoader = new VmdLoader();
@@ -43,4 +43,4 @@ const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("path/to/your/file.
 const arrayBuffer = BvmdConverter.Convert(mmdAnimation);
 ```
 
-This works exactly the same way as the web application version.
+これはウェブアプリケーション版と全く同じように動作します。

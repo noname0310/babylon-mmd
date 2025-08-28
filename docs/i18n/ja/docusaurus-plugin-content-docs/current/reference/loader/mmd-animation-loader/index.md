@@ -1,32 +1,32 @@
 ---
 sidebar_position: 2
-sidebar_label: MMD Animation Loader (VmdLoader, VpdLoader)
+sidebar_label: MMDアニメーションローダー (VmdLoader, VpdLoader)
 ---
 
-# MMD Animation Loader (VmdLoader, VpdLoader)
+# MMDアニメーションローダー (VmdLoader, VpdLoader)
 
-This section explains the components used to load **MMD animation files** (**VMD**, **VPD**).
+このセクションでは、**MMDアニメーションファイル**（**VMD**、**VPD**）をロードするために使用されるコンポーネントについて説明します。
 
-**MMD animations** can be loaded with **`VmdLoader`**, and pose data can also be loaded as animations using **`VpdLoader`**.
+**MMDアニメーション**は**`VmdLoader`**でロードでき、ポーズデータも**`VpdLoader`**を使用してアニメーションとしてロードできます。
 
 ## VmdLoader
 
-**`VmdLoader`** is used to load **Vocaloid Motion Data (VMD)** files, which are MMD animation file formats. This loader reads the animation data from VMD files and loads it in a way that can be applied to the babylon-mmd Runtime.
+**`VmdLoader`**は、MMDアニメーションファイル形式である**ボーカロイドモーションデータ（VMD）**ファイルをロードするために使用されます。このローダーはVMDファイルからアニメーションデータを読み取り、babylon-mmdランタイムに適用できる形式でロードします。
 
-**`VmdLoader`** provides several methods that parse VMD files and return **`MmdAnimation`** instances, with the most basic method being **`loadAsync`**.
+**`VmdLoader`**はVMDファイルを解析して**`MmdAnimation`**インスタンスを返す複数のメソッドを提供しており、最も基本的なメソッドは**`loadAsync`**です。
 
 ```typescript
 const vmdLoader = new VmdLoader();
 const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", "path/to/motion1.vmd");
 ```
 
-The parameters received by the **`loadAsync`** method are as follows:
+**`loadAsync`**メソッドが受け取るパラメータは以下の通りです：
 
-- **`name`**: The name of the animation.
-- **`fileOrUrl`**: The URL of the VMD file as a `string` or `string[]` or `File` or `File[]`.
-- **`onProgress`**: A callback function that is called periodically with the loading progress.
+- **`name`**: アニメーションの名前。
+- **`fileOrUrl`**: VMDファイルのURLを`string`または`string[]`、あるいは`File`または`File[]`として指定。
+- **`onProgress`**: ロード進捗を定期的に通知するコールバック関数。
 
-An important point to note here is that we can receive multiple animation sources to create a single **`MmdAnimation`** instance. For example, multiple VMD files can be loaded into one **`MmdAnimation`**.
+ここで注目すべき重要なポイントは、単一の**`MmdAnimation`**インスタンスを作成するために複数のアニメーションソースを受け取ることができることです。例えば、複数のVMDファイルを1つの**`MmdAnimation`**にロードできます。
 
 ```typescript
 const vmdLoader = new VmdLoader();
@@ -36,30 +36,30 @@ const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", [
 ]);
 ```
 
-In this case, the two motions are combined, with the motion that appears first in the array taking precedence. This means that if both motions have keyframes for the same frame, the keyframe from the motion that appears first in the array will be used.
+この場合、2つのモーションが結合され、配列内で先に登場するモーションが優先されます。つまり、両方のモーションが同じフレームにキーフレームを持つ場合、配列内で最初に登場するモーションのキーフレームが使用されます。
 
-You can also load using the browser's **File API**.
+また、ブラウザの**File API**を使用してロードすることもできます。
 
-In addition, the following methods are provided:
+さらに、以下のメソッドも提供されています：
 
-- **`load`**: Loads VMD files synchronously, supporting onLoad and onError callbacks.
-- **`loadFromBufferAsync`**/**`loadFromBuffer`**: Parses multiple **`ArrayBuffer`** instances to load an **`MmdAnimation`**.
-- **`loadFromVmdDataAsync`**/**`loadFromVmdData`**: Loads an **`MmdAnimation`** from multiple **`VmdData`** instances.
-- **`loadFromVmdObjectAsync`**/**`loadFromVmdObject`**: Loads an **`MmdAnimation`** from multiple **`VmdObject`** instances.
+- **`load`**: VMDファイルを同期的にロードし、onLoadおよびonErrorコールバックをサポート。
+- **`loadFromBufferAsync`**/**`loadFromBuffer`**: 複数の**`ArrayBuffer`**インスタンスを解析して**`MmdAnimation`**をロード。
+- **`loadFromVmdDataAsync`**/**`loadFromVmdData`**: 複数の**`VmdData`**インスタンスから**`MmdAnimation`**をロード。
+- **`loadFromVmdObjectAsync`**/**`loadFromVmdObject`**: 複数の**`VmdObject`**インスタンスから**`MmdAnimation`**をロード。
 
-When we summarize all these methods, we can organize the input data formats supported by **`VmdLoader`** as follows:
+これらすべてのメソッドをまとめると、**`VmdLoader`**がサポートする入力データ形式は以下のようになります：
 
-- VMD files (**`File`** or **`File[]`**, **`string`** or **`string[]`**)
-- ArrayBuffer (**`ArrayBuffer`** or **`ArrayBuffer[]`**)
-- VMD data (**`VmdData`** or **`VmdData[]`**)
-- VMD objects (**`VmdObject`** or **`VmdObject[]`**)
+- VMDファイル（**`File`**または**`File[]`**、**`string`**または**`string[]`**）
+- アレイバッファ（**`ArrayBuffer`**または**`ArrayBuffer[]`**）
+- VMDデータ（**`VmdData`**または**`VmdData[]`**）
+- VMDオブジェクト（**`VmdObject`**または**`VmdObject[]`**）
 
-Here, **`VmdData`** and **`VmdObject`** are the following types:
+ここで、**`VmdData`**と**`VmdObject`**は以下のような型です：
 
-- **`VmdData`**: A container type representing a buffer with VMD data
-- **`VmdObject`**: A VMD data object that is lazily parsed
+- **`VmdData`**: VMDデータを持つバッファを表すコンテナ型
+- **`VmdObject`**: 遅延解析されるVMDデータオブジェクト
 
-We can use these to explicitly call parsing methods to create an **`MmdAnimation`**:
+これらを使用して、解析メソッドを明示的に呼び出して**`MmdAnimation`**を作成することができます：
 
 ```typescript
 const arrayBuffer = await fetch("path/to/motion1.vmd")
@@ -67,7 +67,7 @@ const arrayBuffer = await fetch("path/to/motion1.vmd")
 
 const vmdData = VmdData.CheckedCreate(arrayBuffer);
 if (vmdData === null) {
-    throw new Error("VMD data Validation failed");
+    throw new Error("VMDデータの検証に失敗しました");
 }
 
 const vmdObject = VmdObject.Parse(vmdData);
@@ -76,45 +76,45 @@ const vmdLoader = new VmdLoader();
 const mmdAnimation = await vmdLoader.loadFromVmdObjectAsync("motion1", vmdObject);
 ```
 
-By allowing all processes to be explicitly called and loaded in this way, babylon-mmd provides extensibility that enables modifications during the loading process or writing new logic to load into completely different containers.
+このように、すべてのプロセスを明示的に呼び出してロードできるようにすることで、babylon-mmdはロード過程での修正や、完全に異なるコンテナにロードする新しいロジックの記述を可能にする拡張性を提供しています。
 
-In addition, **`VmdLoader`** provides the following options:
+さらに、**`VmdLoader`**は以下のオプションを提供します：
 
-- **`VmdLoader.optimizeEmptyTracks`**: Sets whether to optimize and remove tracks that have no effect on the animation. The default is `true`.
-- **`VmdLoader.loggingEnabled`**: Enables log output during the loading process. If the value is `false`, no logs are generated for any problems that occur. The default is `false`.
+- **`VmdLoader.optimizeEmptyTracks`**: アニメーションに影響を与えないトラックを最適化して削除するかどうかを設定します。デフォルトは`true`です。
+- **`VmdLoader.loggingEnabled`**: ロード処理中のログ出力を有効にします。値が`false`の場合、発生した問題に関するログは生成されません。デフォルトは`false`です。
 
 ## VpdLoader
 
-**`VpdLoader`** is used to load **Vocaloid Pose Data (VPD)** files, which are MMD pose data file formats. This loader reads the pose data from VPD files and loads it in a way that can be applied to the babylon-mmd Runtime.
+**`VpdLoader`**は、MMDポーズデータファイル形式である**ボーカロイドポーズデータ（VPD）**ファイルをロードするために使用されます。このローダーはVPDファイルからポーズデータを読み取り、babylon-mmdランタイムに適用できる形式でロードします。
 
-**`VpdLoader`** also provides several methods that return **`MmdAnimation`** in a similar way to **`VmdLoader`**. The most basic method is **`loadAsync`**.
+**`VpdLoader`**も**`VmdLoader`**と同様に、**`MmdAnimation`**を返す複数のメソッドを提供しています。最も基本的なメソッドは**`loadAsync`**です。
 
 ```typescript
 const vpdLoader = new VpdLoader();
 const mmdAnimation: MmdAnimation = await vpdLoader.loadAsync("pose1", "path/to/pose1.vpd");
 ```
 
-The animation created at this time is a one-frame animation.
+このとき作成されるアニメーションは1フレームのアニメーションです。
 
-Other load methods provided include:
+他に提供されるロードメソッドには以下があります：
 
-- **`load`**: Loads VPD files synchronously, supporting onLoad and onError callbacks.
-- **`loadFromBufferAsync`**/**`loadFromBuffer`**: Parses an **`ArrayBuffer`** instance to load an **`MmdAnimation`**.
-- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: Loads an **`MmdAnimation`** from a **`VpdObject`** instance.
+- **`load`**: VPDファイルを同期的にロードし、onLoadおよびonErrorコールバックをサポート。
+- **`loadFromBufferAsync`**/**`loadFromBuffer`**: **`ArrayBuffer`**インスタンスを解析して**`MmdAnimation`**をロード。
+- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: **`VpdObject`**インスタンスから**`MmdAnimation`**をロード。
 
-Unlike **`VmdLoader`**, **`VpdLoader`** does not support loading multiple VPD files at once.
+**`VmdLoader`**とは異なり、**`VpdLoader`**は一度に複数のVPDファイルをロードすることをサポートしていません。
 
-The input data formats supported by **`VpdLoader`** are as follows:
+**`VpdLoader`**がサポートする入力データ形式は以下の通りです：
 
-- VPD files (**`File`** or **`string[]`**)
-- ArrayBuffer (**`ArrayBuffer`**)
-- VPD objects (**`VpdObject`**)
+- VPDファイル（**`File`**または**`string[]`**）
+- アレイバッファ（**`ArrayBuffer`**）
+- VPDオブジェクト（**`VpdObject`**）
 
-Here, **`VpdObject`** is an object that represents data parsed from a VPD file.
+ここで、**`VpdObject`**はVPDファイルから解析されたデータを表すオブジェクトです。
 
-Unlike VMD, VPD files do not support Lazy Parsing, so VpdObject is represented as a javascript object, not a class.
+VMDとは異なり、VPDファイルは遅延解析をサポートしていないため、VpdObjectはクラスではなくJavaScriptオブジェクトとして表されます。
 
-Using this, we can explicitly call parsing methods to create an **`MmdAnimation`** as follows:
+これを使用して、解析メソッドを明示的に呼び出して**`MmdAnimation`**を作成する方法は以下の通りです：
 
 ```typescript
 const arrayBuffer = await fetch("path/to/pose1.vpd")
@@ -130,34 +130,34 @@ const vpdLoader = new VpdLoader();
 const mmdAnimation = await vpdLoader.loadFromVpdObjectAsync("pose1", vpdObject);
 ```
 
-In addition, you can enable log output during the loading process through the **`VpdLoader.loggingEnabled`** option. The default value of this option is `false`.
+また、**`VpdLoader.loggingEnabled`**オプションを通じて、ロード処理中のログ出力を有効にすることができます。このオプションのデフォルト値は`false`です。
 
 ## MmdAnimation
 
-Basically, **MMD animations** run in a separate animation runtime from the Babylon.js animation runtime. This is because the specification difference between MMD animations and the Babylon.js animation runtime is too large to integrate.
+基本的に、**MMDアニメーション**はBabylon.jsのアニメーションランタイムとは別のアニメーションランタイムで実行されます。これは、MMDアニメーションとBabylon.jsアニメーションランタイム間の仕様の違いが統合するには大きすぎるためです。
 
-Therefore, the container for storing MMD animations also uses **`MmdAnimation`** provided by babylon-mmd instead of Babylon.js's **`Animation`** and **`AnimationGroup`** by default.
+したがって、MMDアニメーションを格納するコンテナも、デフォルトではBabylon.jsの**`Animation`**や**`AnimationGroup`**ではなく、babylon-mmdが提供する**`MmdAnimation`**を使用します。
 
-The properties of **`MmdAnimation`** are as follows:
+**`MmdAnimation`**のプロパティは以下の通りです：
 
-|Property Name|Type|Description|
+|プロパティ名|型|説明|
 |---|---|---|
-|**`name`**|**`string`**|Name of the animation|
-|**`boneTracks`**|**`MmdBoneAnimationTrack[]`**|List of bone Position and Rotation animation tracks|
-|**`movableBoneTracks`**|**`MmdMovableBoneAnimationTrack[]`**|List of bone Rotation animation tracks|
-|**`morphTracks`**|**`MmdMorphAnimationTrack[]`**|List of Morph animation tracks|
-|**`propertyTrack`**|**`MmdPropertyAnimationTrack`**|Visibility and Ik toggle animation track|
-|**`cameraTrack`**|**`MmdCameraAnimationTrack`**|Camera animation track|
+|**`name`**|**`string`**|アニメーションの名前|
+|**`boneTracks`**|**`MmdBoneAnimationTrack[]`**|ボーンの位置と回転アニメーショントラックのリスト|
+|**`movableBoneTracks`**|**`MmdMovableBoneAnimationTrack[]`**|ボーンの回転アニメーショントラックのリスト|
+|**`morphTracks`**|**`MmdMorphAnimationTrack[]`**|モーフアニメーショントラックのリスト|
+|**`propertyTrack`**|**`MmdPropertyAnimationTrack`**|表示状態とIK切り替えアニメーショントラック|
+|**`cameraTrack`**|**`MmdCameraAnimationTrack`**|カメラアニメーショントラック|
 
 :::info
-All animation tracks are represented by TypedArrays and are assumed to be immutable by default.
+すべてのアニメーショントラックはTypedArrayで表され、デフォルトでは不変であることが前提とされています。
 
-This is a constraint to facilitate optimization related to WebAssembly, which will be mentioned later. If you know it's safe to modify the data, you can modify the track values without any problems.
+これは後述するWebAssemblyに関連する最適化を容易にするための制約です。データを修正しても安全だとわかっている場合は、問題なくトラック値を変更できます。
 :::
 
-A notable aspect of **`MmdAnimation`** is that the four track types representing model animation (**`boneTracks`**, **`movableBoneTracks`**, **`morphTracks`**, **`propertyTrack`**) and the **`cameraTrack`** representing camera animation are separated.
+**`MmdAnimation`**の注目すべき点は、モデルアニメーションを表す4つのトラックタイプ（**`boneTracks`**、**`movableBoneTracks`**、**`morphTracks`**、**`propertyTrack`**）とカメラアニメーションを表す**`cameraTrack`**が分離されていることです。
 
-Therefore, when loading vmd animations, model animations and camera animations can be loaded into a single **`MmdAnimation`** instance.
+そのため、vmdアニメーションをロードする際、モデルアニメーションとカメラアニメーションを単一の**`MmdAnimation`**インスタンスにロードすることができます。
 
 ```typescript
 const vmdLoader = new VmdLoader();
@@ -167,4 +167,4 @@ const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", [
 ]);
 ```
 
-In this case, the animation can later be applied to both MMD models and cameras.
+この場合、アニメーションは後でMMDモデルとカメラの両方に適用できます。
