@@ -24,7 +24,8 @@ The parameters received by the **`loadAsync`** method are as follows:
 
 - **`name`**: The name of the animation.
 - **`fileOrUrl`**: The URL of the VMD file as a `string` or `string[]` or `File` or `File[]`.
-  
+- **`onProgress`**: A callback function that is called periodically with the loading progress.
+
 An important point to note here is that we can receive multiple animation sources to create a single **`MmdAnimation`** instance. For example, multiple VMD files can be loaded into one **`MmdAnimation`**.
 
 ```typescript
