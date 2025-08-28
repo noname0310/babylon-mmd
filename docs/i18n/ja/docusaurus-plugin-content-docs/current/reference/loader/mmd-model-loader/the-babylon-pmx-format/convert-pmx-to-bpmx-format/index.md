@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-sidebar_label: Convert PMX to BPMX format
+sidebar_label: PMX形式をBPMX形式に変換する
 ---
 
 # PMX形式をBPMX形式に変換する

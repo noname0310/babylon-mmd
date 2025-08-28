@@ -1,6 +1,6 @@
 ---
 sidebar_position: 5
-sidebar_label: The Babylon PMX format
+sidebar_label: Babylon PMX 포맷
 ---
 
 # Babylon PMX 포맷

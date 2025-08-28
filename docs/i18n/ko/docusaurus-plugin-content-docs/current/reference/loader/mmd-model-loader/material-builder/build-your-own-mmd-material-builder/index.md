@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-sidebar_label: Build Your Own MMD Material Builder
+sidebar_label: 자신만의 MMD 머티리얼 빌더 만들기
 ---
 
 # 자신만의 MMD 머티리얼 빌더 만들기

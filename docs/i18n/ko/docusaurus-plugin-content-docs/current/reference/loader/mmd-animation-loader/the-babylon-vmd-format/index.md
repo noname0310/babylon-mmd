@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-sidebar_label: The Babylon VMD format
+sidebar_label: 바빌론 VMD 포맷
 ---
 
 # 바빌론 VMD 포맷

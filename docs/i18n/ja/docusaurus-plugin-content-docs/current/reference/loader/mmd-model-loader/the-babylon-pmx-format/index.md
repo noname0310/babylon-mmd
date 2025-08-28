@@ -1,9 +1,9 @@
 ---
 sidebar_position: 5
-sidebar_label: The Babylon PMX format
+sidebar_label: Babylon PMX フォーマット
 ---
 
-# The Babylon PMX フォーマット
+# Babylon PMX フォーマット
 
 **Babylon PMX (BPMX)** フォーマットは、**PMX** フォーマットの変形で、ウェブ環境でモデルをロードする際に遭遇する問題を解決し、パフォーマンスを向上させます。
 

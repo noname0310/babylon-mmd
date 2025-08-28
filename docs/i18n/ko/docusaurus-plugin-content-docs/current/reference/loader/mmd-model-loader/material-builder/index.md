@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-sidebar_label: Material Builder
+sidebar_label: 머티리얼 빌더
 ---
 
 # 머티리얼 빌더
