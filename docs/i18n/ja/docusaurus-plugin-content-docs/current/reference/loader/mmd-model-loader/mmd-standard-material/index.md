@@ -5,9 +5,9 @@ sidebar_label: MMD StandardMaterial
 
 # MMD スタンダードマテリアル
 
-このセクションでは、babylon-mmdが提供する**`MmdStandardMaterial`**によるMMDのシェーディングモデルの再現について説明します。
+このセクションでは、babylon-mmdが提供する**`MmdStandardMaterial`** によるMMDのシェーディングモデルの再現について説明します。
 
-**`MmdStandardMaterial`**はBabylon.jsの**`StandardMaterial`**をベースに**`MaterialPlugin`**を使用してシェーダーを変更し、MMDのシェーディングモデルを実装しています。
+**`MmdStandardMaterial`** はBabylon.jsの**`StandardMaterial`** をベースに**`MaterialPlugin`** を使用してシェーダーを変更し、MMDのシェーディングモデルを実装しています。
 
 ## MMDのシェーディングモデルと`MmdStandardMaterial`
 
@@ -15,7 +15,7 @@ sidebar_label: MMD StandardMaterial
 
 MMDでは、シーン内にグローバルに存在する**1つのディレクショナルライト**が常に存在し、追加のライトはありません。
 
-babylon-mmdの**`MmdStandardMaterial`**はMMDのこのシェーディングモデルを再現しており、シーン内に**1つのディレクショナルライト**だけが存在する状況で最適に機能します。他のシナリオでも動作するように設計されていますが、視覚的に魅力的でない場合があります。
+babylon-mmdの**`MmdStandardMaterial`** はMMDのこのシェーディングモデルを再現しており、シーン内に**1つのディレクショナルライト**だけが存在する状況で最適に機能します。他のシナリオでも動作するように設計されていますが、視覚的に魅力的でない場合があります。
 
 ### グラウンドシャドウ
 
@@ -34,9 +34,9 @@ MMDは**フォワードレンダリング**アプローチを使用します。�
 
 ## MMD マテリアルプロパティ
 
-MMDマテリアルには様々なプロパティがあり、**`MmdStandardMaterial`**クラスはMMDマテリアルの各プロパティに対応するプロパティを提供します。
+MMDマテリアルには様々なプロパティがあり、**`MmdStandardMaterial`** クラスはMMDマテリアルの各プロパティに対応するプロパティを提供します。
 
-MMDマテリアルのプロパティと**`MmdStandardMaterial`**の対応するプロパティは以下の通りです：
+MMDマテリアルのプロパティと**`MmdStandardMaterial`** の対応するプロパティは以下の通りです：
 
 | MMDマテリアルプロパティ | `MmdStandardMaterial`プロパティ | 説明 |
 |-----------------|----------------------------|------|
@@ -666,21 +666,21 @@ void main(void) {
 
 ## アウトラインレンダリング
 
-babylon-mmdは、MMDのレンダリング方式を実装するための**`MmdOutlineRenderer`**を提供しています。このレンダラーは、MMDの**トゥーンエッジ**を実装するために使用されます。
+babylon-mmdは、MMDのレンダリング方式を実装するための**`MmdOutlineRenderer`** を提供しています。このレンダラーは、MMDの**トゥーンエッジ**を実装するために使用されます。
 
-**`MmdOutlineRenderer`**は、メッシュのアウトラインをレンダリングするために**反転ハル法**を使用します。このメソッドは、メッシュのすべての面を反転させて再度レンダリングすることでアウトラインをレンダリングします。
+**`MmdOutlineRenderer`** は、メッシュのアウトラインをレンダリングするために**反転ハル法**を使用します。このメソッドは、メッシュのすべての面を反転させて再度レンダリングすることでアウトラインをレンダリングします。
 
 その結果、アウトラインをレンダリングする際、メッシュの数と同じ数の**追加のドローコール**が発生します。
 
 ### 使用方法
 
-**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**をインポートすると、プロトタイプ拡張を使用して**`MmdOutlineRenderer`**が`Scene`に追加されます。
+**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**をインポートすると、プロトタイプ拡張を使用して**`MmdOutlineRenderer`** が`Scene`に追加されます。
 
 ```typescript
 import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 ```
 
-その後、マテリアルに以下の**4つのプロパティ**がある場合、アウトラインがレンダリングされます。（**`MmdStandardMaterial`**はデフォルトでこれらのプロパティを持っています）
+その後、マテリアルに以下の**4つのプロパティ**がある場合、アウトラインがレンダリングされます。（**`MmdStandardMaterial`** はデフォルトでこれらのプロパティを持っています）
 
 - **`renderOutline`** (boolean)
 - **`outlineWidth`** (number)
@@ -714,7 +714,7 @@ class OutlinePBRMaterial extends PBRMaterial {
 
 ### MmdStandardMaterialへの適用
 
-**`MmdStandardMaterial`**の場合、**`MmdStandardMaterialBuilder`**によって設定が自動的に構成され、
+**`MmdStandardMaterial`** の場合、**`MmdStandardMaterialBuilder`** によって設定が自動的に構成され、
 動作させるためにはコードに`import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`を追加するだけで済みます。
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)

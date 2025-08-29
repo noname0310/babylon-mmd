@@ -32,9 +32,9 @@ sidebar_label: VMDからBVMDフォーマットへの変換
 
 ## プログラムによる変換
 
-**BVMD**変換は**`BvmdConverter`**クラスを使用して行われます。
+**BVMD**変換は**`BvmdConverter`** クラスを使用して行われます。
 
-**`BvmdConverter`**は**`MmdAnimation`**オブジェクトを入力として受け取り、それを**BVMD**フォーマットデータに変換します。
+**`BvmdConverter`** は**`MmdAnimation`** オブジェクトを入力として受け取り、それを**BVMD**フォーマットデータに変換します。
 
 ```typescript
 const vmdLoader = new VmdLoader();

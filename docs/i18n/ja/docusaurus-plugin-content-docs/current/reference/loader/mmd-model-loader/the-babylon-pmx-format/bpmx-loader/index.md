@@ -9,11 +9,11 @@ sidebar_label: BPMXローダー
 
 **BPMX**フォーマットは**MMD**モデルを格納するためのフォーマットであり、**PMX/PMD**とは異なり、単一のバイナリフォーマットです。
 
-**BPMX**ファイルをロードするには、**`BpmxLoader`**を使用します。このローダーは**`PmxLoader`**と**`PmdLoader`**とほぼ同じ方法で動作します。
+**BPMX**ファイルをロードするには、**`BpmxLoader`** を使用します。このローダーは**`PmxLoader`** と**`PmdLoader`** とほぼ同じ方法で動作します。
 
 ## SceneLoaderへの登録
 
-まず、**`BpmxLoader`**を**Babylon.js SceneLoader**に登録する必要があります。これはサイドエフェクトのためにインポートすることで行われます。
+まず、**`BpmxLoader`** を**Babylon.js SceneLoader**に登録する必要があります。これはサイドエフェクトのためにインポートすることで行われます。
 
 ```typescript
 import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
@@ -29,7 +29,7 @@ RegisterSceneLoaderPlugin(new BpmxLoader());
 
 **BPMX**ファイルは、**PMX/PMD**ファイルと同様に、**Babylon.js SceneLoader API**を使用してロードできます。
 
-以下は、SceneLoader APIメソッドの1つである**`LoadAssetContainerAsync`**を使用して**BPMX**ファイルをロードする例です。
+以下は、SceneLoader APIメソッドの1つである**`LoadAssetContainerAsync`** を使用して**BPMX**ファイルをロードする例です。
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync("path/to/mmdModel.bpmx", scene);
@@ -37,7 +37,7 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-**BPMX**ファイルをロードするために**`ImportMeshAsync`**や**`AppendSceneAsync`**を使用することもできます。
+**BPMX**ファイルをロードするために**`ImportMeshAsync`** や**`AppendSceneAsync`** を使用することもできます。
 
 :::info
 **BPMX**ファイルはテクスチャを含むすべてのアセットを単一のファイルに格納するため、**テクスチャ解決**に関連する問題がなく、すべてのアセットを単一のネットワークリクエストでロードできます。
@@ -75,7 +75,7 @@ showOpenFilePickerブラウザAPIは、FirefoxおよびSafariではサポート�
 
 **PMX/PMD**ローダーとは異なり、**BPMX**ローダーはいくつかの最適化関連オプションをサポートしていません。これは、**BPMX**ファイルが変換プロセス中に既に最適化されているためです。
 
-以下は、**`pluginOptions`**を使用して**BPMX**ローダーでサポートされているすべてのオプションを設定する例です。
+以下は、**`pluginOptions`** を使用して**BPMX**ローダーでサポートされているすべてのオプションを設定する例です。
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync(
@@ -100,11 +100,11 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 );
 ```
 
-**`useSingleMeshForSingleGeometryModel`**を除いて、他のオプションは**PMX/PMD**ローダーと同じです。各オプションの説明については、[PMX/PMDローダーオプション](../../#loader-options)のドキュメントを参照してください。
+**`useSingleMeshForSingleGeometryModel`** を除いて、他のオプションは**PMX/PMD**ローダーと同じです。各オプションの説明については、[PMX/PMDローダーオプション](../../#loader-options)のドキュメントを参照してください。
 
 ### useSingleMeshForSingleGeometryModel
 
-**`BpmxLoader`**はNつのジオメトリを持つモデルをロードするために空の**ルートメッシュ**を作成し、その下にジオメトリを持つNつのメッシュを作成します。したがって、3つのジオメトリを持つ3Dモデルの構造は次のように構成されます。
+**`BpmxLoader`** はNつのジオメトリを持つモデルをロードするために空の**ルートメッシュ**を作成し、その下にジオメトリを持つNつのメッシュを作成します。したがって、3つのジオメトリを持つ3Dモデルの構造は次のように構成されます。
 
 ```
 RootMesh {
@@ -116,13 +116,13 @@ RootMesh {
 }
 ```
 
-ただし、モデルが単一のジオメトリを持つ場合、**ルートメッシュ**は不要です。したがって、**`useSingleMeshForSingleGeometryModel`**が`true`の場合、単一のジオメトリを持つモデルは**ルートメッシュ**なしの1つのメッシュのみで構成され、階層は次のように構成されます。
+ただし、モデルが単一のジオメトリを持つ場合、**ルートメッシュ**は不要です。したがって、**`useSingleMeshForSingleGeometryModel`** が`true`の場合、単一のジオメトリを持つモデルは**ルートメッシュ**なしの1つのメッシュのみで構成され、階層は次のように構成されます。
 
 ```
 Mesh1
 ```
 
-**`useSingleMeshForSingleGeometryModel`**が`false`の場合、単一のジオメトリを持つモデルでも**ルートメッシュ**が存在し、階層は次のように構成されます。
+**`useSingleMeshForSingleGeometryModel`** が`false`の場合、単一のジオメトリを持つモデルでも**ルートメッシュ**が存在し、階層は次のように構成されます。
 
 ```
 RootMesh {
@@ -132,4 +132,4 @@ RootMesh {
 }
 ```
 
-**`useSingleMeshForSingleGeometryModel`**のデフォルト値は`true`です。
+**`useSingleMeshForSingleGeometryModel`** のデフォルト値は`true`です。

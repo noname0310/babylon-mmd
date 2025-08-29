@@ -58,7 +58,7 @@ sidebar_label: PMX形式をBPMX形式に変換する
 
 **BPMX**ファイルは、マテリアルの**アルファ評価**結果をフォーマット内に保存します。
 
-具体的には、**`MmdMaterialRenderMethod.AlphaEvaluation`**または**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**メソッドに必要な**アルファ評価**結果をそれぞれ保存します。
+具体的には、**`MmdMaterialRenderMethod.AlphaEvaluation`** または**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** メソッドに必要な**アルファ評価**結果をそれぞれ保存します。
 
 この結果は後でモデルを読み込む際に使用され、**アルファ評価**ステップをスキップすることでモデル読み込みプロセスを高速化します。また、アルゴリズムの欠陥により正しくレンダリングされない要素を手動で修正し変換することも可能です。
 
@@ -67,22 +67,22 @@ sidebar_label: PMX形式をBPMX形式に変換する
 ![Fix Material UI](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-fixmaterial1.png)
 ***Fix Material**のAlpha Modeタブ*
 
-**Alpha Mode**は、**`MmdMaterialRenderMethod.AlphaEvaluation`**レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
+**Alpha Mode**は、**`MmdMaterialRenderMethod.AlphaEvaluation`** レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
 
 YYB Hatsune Miku_NTモデルでは、B、B-L、sleeve05のレンダリング方法を**Alpha Blend**に変更すると、より良い結果が得られます。
 
 ![Fix Material UI 2](@site/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format/bpmx-converter-fixmaterial2.png)
 ***Fix Material**のForce Depth Write Modeタブ*
 
-**Force Depth Write Mode**は、**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
+**Force Depth Write Mode**は、**`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** レンダリングメソッドでモデルがどのように見えるかを表示します。ここで、おかしく見えるマテリアルのレンダリング方法を変更できます。
 
 YYB Hatsune Miku_NTモデルでは、sleeve05のレンダリング方法を**Alpha Blend**に変更すると、より良い結果が得られます。
 
 ## プログラムによる変換
 
-**BPMX**変換は、**`BpmxConverter`**によって実行されます。
+**BPMX**変換は、**`BpmxConverter`** によって実行されます。
 
-**`BpmxConverter`**は**`MmdMesh`**を入力として受け取り、**BPMX**形式に変換します。
+**`BpmxConverter`** は**`MmdMesh`** を入力として受け取り、**BPMX**形式に変換します。
 
 最も単純な使用例は次のとおりです：
 
@@ -109,13 +109,13 @@ const arrayBuffer = bpmxConverter.convert(mmdMesh); // 2
 assetContainer.dispose(); // 3
 ```
 
-1. デフォルトでは、マテリアルビルダーはテクスチャをGPUにアップロードした後にバッファを削除するように設定されています。ただし、これではテクスチャをシリアライズできなくなるため、マテリアルビルダーの**`deleteTextureBufferAfterLoad`**オプションを`false`に設定する必要があります。
+1. デフォルトでは、マテリアルビルダーはテクスチャをGPUにアップロードした後にバッファを削除するように設定されています。ただし、これではテクスチャをシリアライズできなくなるため、マテリアルビルダーの**`deleteTextureBufferAfterLoad`** オプションを`false`に設定する必要があります。
 
-2. **`BpmxConverter.convert`**を使用して変換を実行します。この関数は、2番目のパラメータとしてオプションを取ることができます。
+2. **`BpmxConverter.convert`** を使用して変換を実行します。この関数は、2番目のパラメータとしてオプションを取ることができます。
 
-3. **`assetContainer.dispose()`**を呼び出してリソースを解放します。**`assetContainer.addAllToScene()`**を使用した場合は、すべてのリソース（ジオメトリ、マテリアル、テクスチャ、モーフターゲットマネージャー、スケルトン）を手動で解放する必要があります。
+3. **`assetContainer.dispose()`** を呼び出してリソースを解放します。**`assetContainer.addAllToScene()`** を使用した場合は、すべてのリソース（ジオメトリ、マテリアル、テクスチャ、モーフターゲットマネージャー、スケルトン）を手動で解放する必要があります。
 
-ただし、上記の例では、**アルファ評価**結果が**BPMX**ファイルに保存されていません。**アルファ評価**結果を保存するには、**`TextureAlphaChecker`**を使用して手動で**アルファ評価**結果を生成し、**`BpmxConverter`**に渡す必要があります。
+ただし、上記の例では、**アルファ評価**結果が**BPMX**ファイルに保存されていません。**アルファ評価**結果を保存するには、**`TextureAlphaChecker`** を使用して手動で**アルファ評価**結果を生成し、**`BpmxConverter`** に渡す必要があります。
 
 これらすべてを行う例を以下に示します：
 

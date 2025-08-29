@@ -5,9 +5,9 @@ sidebar_label: MMD StandardMaterial
 
 # MMD StandardMaterial
 
-이 섹션에서는 babylon-mmd에서 MMD의 셰이딩 모델을 재현하기 위해 제공하는 **`MmdStandardMaterial`**에 대해 설명합니다.
+이 섹션에서는 babylon-mmd에서 MMD의 셰이딩 모델을 재현하기 위해 제공하는 **`MmdStandardMaterial`** 에 대해 설명합니다.
 
-**`MmdStandardMaterial`**은 Babylon.js의 **`StandardMaterial`**을 기반으로 **`MaterialPlugin`**을 사용하여 셰이더를 수정함으로써 MMD의 셰이딩 모델을 구현합니다.
+**`MmdStandardMaterial`** 은 Babylon.js의 **`StandardMaterial`** 을 기반으로 **`MaterialPlugin`** 을 사용하여 셰이더를 수정함으로써 MMD의 셰이딩 모델을 구현합니다.
 
 ## MMD의 셰이딩 모델과 `MmdStandardMaterial`
 
@@ -15,7 +15,7 @@ sidebar_label: MMD StandardMaterial
 
 MMD는 항상 씬에 전역적으로 존재하는 **하나의 디렉셔널 라이트**를 가지며, 추가 라이트가 없습니다.
 
-babylon-mmd의 **`MmdStandardMaterial`**은 MMD의 이러한 셰이딩 모델을 재현하므로, 씬에 **하나의 디렉셔널 라이트**만 있는 상황에서 가장 잘 작동합니다. 다른 시나리오에서도 작동하도록 설계되었지만, 시각적으로 매력적이지 않을 수 있습니다.
+babylon-mmd의 **`MmdStandardMaterial`** 은 MMD의 이러한 셰이딩 모델을 재현하므로, 씬에 **하나의 디렉셔널 라이트**만 있는 상황에서 가장 잘 작동합니다. 다른 시나리오에서도 작동하도록 설계되었지만, 시각적으로 매력적이지 않을 수 있습니다.
 
 ### 그라운드 셰도우
 
@@ -36,7 +36,7 @@ MMD는 **포워드 렌더링** 접근 방식을 사용합니다. 각 메시의 *
 
 MMD 머티리얼에는 다양한 속성이 있으며, **`MmdStandardMaterial`** 클래스는 MMD 머티리얼의 각 속성에 해당하는 속성을 제공합니다.
 
-MMD 머티리얼의 속성과 **`MmdStandardMaterial`**에서 해당하는 속성은 다음과 같습니다:
+MMD 머티리얼의 속성과 **`MmdStandardMaterial`** 에서 해당하는 속성은 다음과 같습니다:
 
 | MMD 머티리얼 속성 | `MmdStandardMaterial` 속성 | 설명 |
 |-----------------|----------------------------|------|
@@ -666,21 +666,21 @@ void main(void) {
 
 ## 외곽선 렌더링
 
-babylon-mmd는 MMD의 렌더링 방식을 구현하기 위해 **`MmdOutlineRenderer`**를 제공합니다. 이 렌더러는 MMD의 **툰 엣지**를 구현하는 데 사용됩니다.
+babylon-mmd는 MMD의 렌더링 방식을 구현하기 위해 **`MmdOutlineRenderer`** 를 제공합니다. 이 렌더러는 MMD의 **툰 엣지**를 구현하는 데 사용됩니다.
 
-**`MmdOutlineRenderer`**는 메시의 외곽선을 렌더링하기 위해 **인버티드 헐 메서드**를 사용합니다. 이 메서드는 메시의 모든 면을 뒤집고 다시 렌더링하여 외곽선을 렌더링합니다.
+**`MmdOutlineRenderer`** 는 메시의 외곽선을 렌더링하기 위해 **인버티드 헐 메서드**를 사용합니다. 이 메서드는 메시의 모든 면을 뒤집고 다시 렌더링하여 외곽선을 렌더링합니다.
 
 결과적으로 외곽선을 렌더링할 때는 메시 수만큼 **추가적인 드로우 콜**이 발생합니다.
 
 ### 사용법
 
-**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`**가 `Scene`에 추가됩니다.
+**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`** 가 `Scene`에 추가됩니다.
 
 ```typescript
 import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 ```
 
-그 후, 머티리얼이 다음 **네 가지 속성**을 가지고 있다면 외곽선이 렌더링됩니다. (**`MmdStandardMaterial`**은 기본적으로 이러한 속성을 가집니다.)
+그 후, 머티리얼이 다음 **네 가지 속성**을 가지고 있다면 외곽선이 렌더링됩니다. (**`MmdStandardMaterial`** 은 기본적으로 이러한 속성을 가집니다.)
 
 - **`renderOutline`** (boolean)
 - **`outlineWidth`** (number)
@@ -714,7 +714,7 @@ class OutlinePBRMaterial extends PBRMaterial {
 
 ### MmdStandardMaterial에 적용
 
-**`MmdStandardMaterial`**의 경우, 설정은 **`MmdStandardMaterialBuilder`**에 의해 자동으로 구성되며,
+**`MmdStandardMaterial`** 의 경우, 설정은 **`MmdStandardMaterialBuilder`** 에 의해 자동으로 구성되며,
 작동하기 위해서는 코드에 `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`만 추가하면 됩니다.
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)

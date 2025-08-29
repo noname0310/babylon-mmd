@@ -17,9 +17,9 @@ MMD 모델을 로드하는 과정에서 **텍스처 로드 및 머티리얼 할�
 
 ## 머티리얼 빌더 소개
 
-모든 MMD 모델 로더는 **`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`**를 통해 머티리얼 빌더를 설정할 수 있습니다.
+모든 MMD 모델 로더는 **`loaderOptions.mmdmodel.materialBuilder: Nullable<IMaterialBuilder>`** 를 통해 머티리얼 빌더를 설정할 수 있습니다.
 
-이 옵션은 기본적으로 **`null`**이지만, babylon-mmd 인덱스를 임포트하면 **`MmdStandardMaterialBuilder`가 기본값으로 설정**됩니다.
+이 옵션은 기본적으로 **`null`** 이지만, babylon-mmd 인덱스를 임포트하면 **`MmdStandardMaterialBuilder`가 기본값으로 설정**됩니다.
 
 :::info
 여기서 인덱스를 임포트한다는 것은 다음과 같은 코드를 의미합니다:
@@ -80,13 +80,13 @@ const assetContainer2: AssetContainer = await LoadAssetContainerAsync(modelFileO
 
 babylon-mmd는 세 가지 머티리얼 빌더를 제공합니다:
 
-- **`MmdStandardMaterialBuilder`** - MMD의 동작을 재현하기 위해 **`MmdStandardMaterial`**을 사용하는 머티리얼 빌더입니다.
-- **`StandardMaterialBuilder`** - Babylon.js의 **`StandardMaterial`**을 사용하는 머티리얼 빌더입니다.
-- **`PBRMaterialBuilder`** - Babylon.js의 **`PBRMaterial`**을 사용하는 머티리얼 빌더입니다.
+- **`MmdStandardMaterialBuilder`** - MMD의 동작을 재현하기 위해 **`MmdStandardMaterial`** 을 사용하는 머티리얼 빌더입니다.
+- **`StandardMaterialBuilder`** - Babylon.js의 **`StandardMaterial`** 을 사용하는 머티리얼 빌더입니다.
+- **`PBRMaterialBuilder`** - Babylon.js의 **`PBRMaterial`** 을 사용하는 머티리얼 빌더입니다.
 
 ### MmdStandardMaterialBuilder
 
-**`MmdStandardMaterialBuilder`**는 **`MmdStandardMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
+**`MmdStandardMaterialBuilder`** 는 **`MmdStandardMaterial`** 을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
 이 머티리얼 빌더는 **babylon-mmd에서 지원하는 모든 MMD 머티리얼 속성을 로드**하며, 각 카테고리별 메서드가 제공됩니다.
 
@@ -135,7 +135,7 @@ babylon-mmd는 세 가지 머티리얼 빌더를 제공합니다:
 
 ### StandardMaterialBuilder
 
-**`StandardMaterialBuilder`**는 Babylon.js의 **`StandardMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
+**`StandardMaterialBuilder`** 는 Babylon.js의 **`StandardMaterial`** 을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
 이 머티리얼 빌더는 **MMD 머티리얼 속성의 일부만 로드**하므로, 로딩 과정에서 데이터 손실이 발생합니다.
 
@@ -174,7 +174,7 @@ babylon-mmd는 세 가지 머티리얼 빌더를 제공합니다:
 
 ### PBRMaterialBuilder
 
-**`PBRMaterialBuilder`**는 Babylon.js의 **`PBRMaterial`**을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
+**`PBRMaterialBuilder`** 는 Babylon.js의 **`PBRMaterial`** 을 사용하여 MMD 머티리얼을 로드하는 머티리얼 빌더입니다.
 
 이 머티리얼 빌더는 **MMD 머티리얼 속성의 일부만 로드**하므로, 로딩 과정에서 데이터 손실이 발생합니다.
 또한, MMD 머티리얼 파라미터와 1:1 매핑이 되지 않는 속성의 경우, 추가적인 변환으로 인해 **데이터 왜곡이 발생**할 수 있습니다.
@@ -223,7 +223,7 @@ MMD는 **Depth Write**와 **Depth Test**가 활성화된 **알파 블렌딩**을
 
 이 렌더링 메서드는 **불투명 메시를 알파 블렌딩 없이 렌더링**하고, 절대적으로 필요한 경우에만 알파 블렌딩을 사용합니다.
 
-다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`** 또는 **`Material.MATERIAL_OPAQUE`**가 될 수 있으며, `forceDepthWrite`는 **`true`**로 설정됩니다.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`** 또는 **`Material.MATERIAL_OPAQUE`** 가 될 수 있으며, `forceDepthWrite`는 **`true`** 로 설정됩니다.
 
 이것이 **기본** 메서드입니다.
 
@@ -231,7 +231,7 @@ MMD는 **Depth Write**와 **Depth Test**가 활성화된 **알파 블렌딩**을
 
 이 렌더링 메서드는 **모든 메시를 알파 블렌딩을 사용하여 렌더링**합니다.
 
-다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 항상 **`Material.MATERIAL_ALPHABLEND`**이며, `forceDepthWrite`는 **`true`**로 설정됩니다.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 항상 **`Material.MATERIAL_ALPHABLEND`** 이며, `forceDepthWrite`는 **`true`** 로 설정됩니다.
 
 이 메서드는 **MMD의 렌더링 메서드와 동일**하므로, 렌더링 문제가 발생하면 이 메서드를 시도해 보는 것이 좋습니다.
 
@@ -239,13 +239,13 @@ MMD는 **Depth Write**와 **Depth Test**가 활성화된 **알파 블렌딩**을
 
 이 렌더링 메서드는 메시를 **알파 블렌딩, 알파 테스트, 또는 불투명** 모드로 렌더링할지 결정하고, **알파 블렌딩을 사용할 때는 Depth Write를 수행하지 않습니다**.
 
-다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, 또는 **`Material.MATERIAL_OPAQUE`**가 될 수 있으며, `forceDepthWrite`는 **`false`**로 설정됩니다.
+다시 말해, 이 메서드로 모델을 로드할 때 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHATEST`**, **`Material.MATERIAL_ALPHABLEND`**, 또는 **`Material.MATERIAL_OPAQUE`** 가 될 수 있으며, `forceDepthWrite`는 **`false`** 로 설정됩니다.
 
 이 메서드는 Depth Write와 함께 알파 블렌드를 사용하는 것이 일반적인 관행이 아니기 때문에 **Babylon.js의 렌더링 파이프라인과 가장 호환성이 높습니다**.
 
 ## 알파 평가
 
-위에서 설명한 렌더링 메서드 중, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**은 메시가 불투명한지 판단해야 합니다. 또한, **`MmdMaterialRenderMethod.AlphaEvaluation`**은 적절한 렌더링 메서드를 선택하기 위해 메시의 알파 값을 평가해야 합니다.
+위에서 설명한 렌더링 메서드 중, **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** 은 메시가 불투명한지 판단해야 합니다. 또한, **`MmdMaterialRenderMethod.AlphaEvaluation`** 은 적절한 렌더링 메서드를 선택하기 위해 메시의 알파 값을 평가해야 합니다.
 
 이 과정을 **알파 평가**라고 합니다.
 
@@ -255,12 +255,12 @@ MMD는 **Depth Write**와 **Depth Test**가 활성화된 **알파 블렌딩**을
 2.  **readPixels** 함수를 사용하여 Render Target의 픽셀 데이터를 읽습니다.
 3.  읽은 픽셀 데이터의 알파 값을 평가하여 적절한 렌더링 메서드를 선택합니다.
 
--   **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`**의 경우, 텍스처가 적용된 지오메트리의 한 프래그먼트라도 알파 값이 `255`가 아니면 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`**로 설정됩니다.
--   **`MmdMaterialRenderMethod.AlphaEvaluation`**의 경우, 머티리얼의 렌더링 메서드는 머티리얼 빌더의 **`alphaThreshold`**와 **`alphaBlendThreshold`** 값에 의해 결정됩니다.
+-   **`MmdMaterialRenderMethod.DepthWriteAlphaBlendingWithEvaluation`** 의 경우, 텍스처가 적용된 지오메트리의 한 프래그먼트라도 알파 값이 `255`가 아니면 머티리얼의 `transparencyMode`는 **`Material.MATERIAL_ALPHABLEND`** 로 설정됩니다.
+-   **`MmdMaterialRenderMethod.AlphaEvaluation`** 의 경우, 머티리얼의 렌더링 메서드는 머티리얼 빌더의 **`alphaThreshold`** 와 **`alphaBlendThreshold`** 값에 의해 결정됩니다.
 
 ### 주의사항
 
-**알파 평가는 일부 엣지 케이스에서 제대로 작동하지 않을 수 있습니다**. 예를 들어, 메시의 UV 토폴로지가 비정상적인 경우, 알파 평가가 잘못된 결과를 생성할 수 있습니다. 이 경우, 머티리얼 빌더의 **`alphaEvaluationResolution`**을 증가시키는 것이 문제를 해결할 수 있습니다.
+**알파 평가는 일부 엣지 케이스에서 제대로 작동하지 않을 수 있습니다**. 예를 들어, 메시의 UV 토폴로지가 비정상적인 경우, 알파 평가가 잘못된 결과를 생성할 수 있습니다. 이 경우, 머티리얼 빌더의 **`alphaEvaluationResolution`** 을 증가시키는 것이 문제를 해결할 수 있습니다.
 
 알파 평가를 수행할 때, **모든 머티리얼은 로드 시 한 번 Render Target에 렌더링**되어야 합니다. 이는 무시할 수 없는 비용입니다. 따라서 머티리얼 빌더의 **`forceDisableAlphaEvaluation`** 옵션을 사용하여 알파 평가를 비활성화할 수 있습니다.
 이 경우, 알파 평가는 수행되지 않습니다.
@@ -278,26 +278,26 @@ babylon-mmd는 MMD와 동일한 드로우 오더를 재현하기 위해 두 가�
 
 ### 여러 메시 처리
 
-MMD의 드로우 오더는 **`Mesh.alphaIndex`**에 적절한 값을 설정하여 재현됩니다.
+MMD의 드로우 오더는 **`Mesh.alphaIndex`** 에 적절한 값을 설정하여 재현됩니다.
 
 머티리얼 빌더의 다음 두 속성이 이를 위해 사용됩니다:
 
 -   **`nextStartingAlphaIndex`** - 다음 MMD 모델의 시작 알파 인덱스 값
 -   **`alphaIndexIncrementsPerModel`** - 각 MMD 모델의 알파 인덱스 증가값
 
-**`nextStartingAlphaIndex`**는 하나의 MMD 모델을 로드한 후 **`alphaIndexIncrementsPerModel`**만큼 증가합니다.
+**`nextStartingAlphaIndex`** 는 하나의 MMD 모델을 로드한 후 **`alphaIndexIncrementsPerModel`** 만큼 증가합니다.
 
 따라서 다음과 같은 설정으로:
 - `nextStartingAlphaIndex`: 0
 - `alphaIndexIncrementsPerModel`: 3
 
-머티리얼이 2개인 MMD 모델 A와 머티리얼이 3개인 MMD 모델 B를 순서대로 로드하면, **`nextStartingAlphaIndex`**는 다음과 같이 변경됩니다:
+머티리얼이 2개인 MMD 모델 A와 머티리얼이 3개인 MMD 모델 B를 순서대로 로드하면, **`nextStartingAlphaIndex`** 는 다음과 같이 변경됩니다:
 
 1.  로드하기 전, `nextStartingAlphaIndex`: 0
 2.  모델 A를 로드한 후, `nextStartingAlphaIndex`: 3
 3.  모델 B를 로드한 후, `nextStartingAlphaIndex`: 6
 
-그리고 로드된 모델의 **`Mesh.alphaIndex`**는 다음과 같이 설정됩니다:
+그리고 로드된 모델의 **`Mesh.alphaIndex`** 는 다음과 같이 설정됩니다:
 
 ```
 Model A: {
@@ -312,9 +312,9 @@ Model B: {
 }
 ```
 
-여기서 중요한 점은 **`alphaIndexIncrementsPerModel`이 충분히 크지 않으면**, 이전에 로드된 모델과 새로 로드된 모델의 **`Mesh.alphaIndex`**가 **겹칠 수 있다**는 것입니다.
+여기서 중요한 점은 **`alphaIndexIncrementsPerModel`이 충분히 크지 않으면**, 이전에 로드된 모델과 새로 로드된 모델의 **`Mesh.alphaIndex`** 가 **겹칠 수 있다**는 것입니다.
 
-예를 들어, 이전 예제에서 **`alphaIndexIncrementsPerModel`**가 1로 설정되었다면, 각 모델의 **`Mesh.alphaIndex`**는 다음과 같을 것입니다:
+예를 들어, 이전 예제에서 **`alphaIndexIncrementsPerModel`** 가 1로 설정되었다면, 각 모델의 **`Mesh.alphaIndex`** 는 다음과 같을 것입니다:
 
 ```
 Model A: {
@@ -329,9 +329,9 @@ Model B: {
 }
 ```
 
-모델 A의 Mesh2와 모델 B의 Mesh1은 동일한 **`alphaIndex`**를 갖게 되므로, 그들의 드로잉 순서는 카메라로부터의 거리에 의해 결정됩니다.
+모델 A의 Mesh2와 모델 B의 Mesh1은 동일한 **`alphaIndex`** 를 갖게 되므로, 그들의 드로잉 순서는 카메라로부터의 거리에 의해 결정됩니다.
 
-이 문제를 방지하기 위해, **`alphaIndexIncrementsPerModel`**의 기본값은 충분히 큰 숫자로 설정되어 있습니다.
+이 문제를 방지하기 위해, **`alphaIndexIncrementsPerModel`** 의 기본값은 충분히 큰 숫자로 설정되어 있습니다.
 
 :::info
 이 메서드를 사용할 때, **드로우 오더는 MMD 모델이 로드되는 순서에 의해 결정**된다는 점에 유의하세요.
@@ -347,6 +347,6 @@ Babylon.js에서는 **단일 메시 내의 여러 서브메시 간의 드로우 
 
 이러한 동작을 고려하여, babylon-mmd는 MMD 모델을 로드할 때 **모든 서브메시에 동일한 `BoundingInfo`를 적용**합니다.
 
-이 경우, 모든 서브메시는 카메라로부터 동일한 거리를 갖게 되며, **안정적인 정렬**로 인해 **`Mesh.subMeshes`**의 순서대로 그려집니다.
+이 경우, 모든 서브메시는 카메라로부터 동일한 거리를 갖게 되며, **안정적인 정렬**로 인해 **`Mesh.subMeshes`** 의 순서대로 그려집니다.
 
-이는 MMD 모델 로더의 **`loaderOptions.mmdmodel.optimizeSubmeshes`** 옵션이 **`false`**일 때 항상 적용됩니다.
+이는 MMD 모델 로더의 **`loaderOptions.mmdmodel.optimizeSubmeshes`** 옵션이 **`false`** 일 때 항상 적용됩니다.

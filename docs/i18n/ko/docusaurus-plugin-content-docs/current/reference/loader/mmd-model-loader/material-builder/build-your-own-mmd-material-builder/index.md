@@ -34,9 +34,9 @@ MMD 모델 로더(**`PmxLoader`**, **`PmdLoader`**, **`BpmxLoader`**)는 MMD 모
 
 머티리얼에 해당 기능에 대한 구현이 없는 경우 메서드 본문을 비워둘 수 있습니다.
 
-예를 들어, **`PBRMaterialBuilder`**는 **`loadSphereTexture`**, **`loadToonTexture`**, **`loadOutlineRenderingProperties`**에 대해 비어있는 메서드 본문을 가지고 있습니다.
+예를 들어, **`PBRMaterialBuilder`** 는 **`loadSphereTexture`**, **`loadToonTexture`**, **`loadOutlineRenderingProperties`** 에 대해 비어있는 메서드 본문을 가지고 있습니다.
 
-우리는 **`MaterialBuilderBase`**를 상속받고 제네릭 매개변수를 설정하고 생성자를 구현하는 것으로 시작합니다:
+우리는 **`MaterialBuilderBase`** 를 상속받고 제네릭 매개변수를 설정하고 생성자를 구현하는 것으로 시작합니다:
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
     public constructor() {
@@ -90,7 +90,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-**`textureNameMap`**은 로딩 후 **`MmdMesh.metadata.textureNameMap`**에 저장됩니다.
+**`textureNameMap`** 은 로딩 후 **`MmdMesh.metadata.textureNameMap`** 에 저장됩니다.
 
 ### `loadGeneralScalarProperties` 구현하기
 
@@ -140,7 +140,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-각 머티리얼은 **`diffuseColor`**, **`specularColor`**, **`ambientColor`**, **`alpha`**, **`specularPower`**에 해당하는 속성이 있을 수도 있고 없을 수도 있습니다. 존재하는 속성에 대해서만 매핑을 수행하면 됩니다.
+각 머티리얼은 **`diffuseColor`**, **`specularColor`**, **`ambientColor`**, **`alpha`**, **`specularPower`** 에 해당하는 속성이 있을 수도 있고 없을 수도 있습니다. 존재하는 속성에 대해서만 매핑을 수행하면 됩니다.
 
 ### BMP 로더 지원
 
@@ -163,9 +163,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadDiffuseTexture` 구현하기
 
-**`imagePathTable`**, **`referenceFileResolver`**, **`_textureLoader`**, **`uniqueId`**, **`rootUrl`**을 사용하여 **텍스처 로딩**을 수행합니다. 브라우저 파일 API, URL 또는 ArrayBuffer를 사용하는 경우를 처리하도록 구현해야 합니다.
+**`imagePathTable`**, **`referenceFileResolver`**, **`_textureLoader`**, **`uniqueId`**, **`rootUrl`** 을 사용하여 **텍스처 로딩**을 수행합니다. 브라우저 파일 API, URL 또는 ArrayBuffer를 사용하는 경우를 처리하도록 구현해야 합니다.
 
-텍스처 로딩이 성공하든 실패하든 상관없이 **`onTextureLoadComplete`**를 호출해야 합니다. 이 콜백이 호출되지 않으면 머티리얼 빌더는 텍스처가 로드될 때까지 무기한 대기합니다.
+텍스처 로딩이 성공하든 실패하든 상관없이 **`onTextureLoadComplete`** 를 호출해야 합니다. 이 콜백이 호출되지 않으면 머티리얼 빌더는 텍스처가 로드될 때까지 무기한 대기합니다.
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -240,9 +240,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 이 메서드에서는 **알파 평가**를 수행하고 결과를 머티리얼에 적용합니다.
 
-여기서는 각 **`MmdMaterialRenderMethod`**에 대해 다른 처리가 필요합니다.
+여기서는 각 **`MmdMaterialRenderMethod`** 에 대해 다른 처리가 필요합니다.
 
-또한 BPMX 형식에는 이미 알파 평가 결과가 포함되어 있을 수 있으므로 **`evaluatedTransparency`**를 확인해야 합니다.
+또한 BPMX 형식에는 이미 알파 평가 결과가 포함되어 있을 수 있으므로 **`evaluatedTransparency`** 를 확인해야 합니다.
 
 프로세스를 조금 단순화하기 위해 **`MaterialBuilderBase._evaluateDiffuseTextureTransparencyModeAsync`** 메서드가 제공됩니다.
 
@@ -322,9 +322,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadSphereTexture` 구현하기
 
-이 메서드는 **스피어 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`**와 유사합니다.
+이 메서드는 **스피어 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`** 와 유사합니다.
 
-또한, 스피어 텍스처를 머티리얼에 적용하는 방법은 **`materialInfo.sphereTextureMode`**에 따라 다릅니다.
+또한, 스피어 텍스처를 머티리얼에 적용하는 방법은 **`materialInfo.sphereTextureMode`** 에 따라 다릅니다.
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -403,9 +403,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadToonTexture` 구현하기
 
-이 메서드는 **툰 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`**와 유사합니다.
+이 메서드는 **툰 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`** 와 유사합니다.
 
-툰 텍스처의 텍스처 로딩 과정에서 **`isSharedToonTexture`**가 true인 경우, 11개의 미리 제공된 공유 텍스처 중 하나가 사용됩니다. 이 경우 **`imagePathTable`**에서 텍스처 경로를 찾는 대신 **`materialInfo.toonTextureIndex`**가 **`_textureLoader`**에 전달되어 어떤 공유 텍스처를 사용할지 지정합니다. 이 동작은 MMD의 구현을 모방합니다.
+툰 텍스처의 텍스처 로딩 과정에서 **`isSharedToonTexture`** 가 true인 경우, 11개의 미리 제공된 공유 텍스처 중 하나가 사용됩니다. 이 경우 **`imagePathTable`** 에서 텍스처 경로를 찾는 대신 **`materialInfo.toonTextureIndex`** 가 **`_textureLoader`** 에 전달되어 어떤 공유 텍스처를 사용할지 지정합니다. 이 동작은 MMD의 구현을 모방합니다.
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {

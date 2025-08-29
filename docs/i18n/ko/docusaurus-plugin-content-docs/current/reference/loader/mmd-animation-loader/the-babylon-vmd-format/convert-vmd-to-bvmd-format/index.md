@@ -34,7 +34,7 @@ sidebar_label: VMD를 BVMD 포맷으로 변환하기
 
 **BVMD** 변환은 **`BvmdConverter`** 클래스를 사용하여 수행됩니다.
 
-**`BvmdConverter`**는 **`MmdAnimation`** 오브젝트를 입력으로 받아 **BVMD** 포맷 데이터로 변환합니다.
+**`BvmdConverter`** 는 **`MmdAnimation`** 오브젝트를 입력으로 받아 **BVMD** 포맷 데이터로 변환합니다.
 
 ```typescript
 const vmdLoader = new VmdLoader();

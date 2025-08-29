@@ -15,7 +15,7 @@ MMDモデルローダー（**`PmxLoader`**、**`PmdLoader`**、**`BpmxLoader`**�
 
 ## `MaterialBuilderBase`を使った実装
 
-**`MaterialBuilderBase`**クラスは、マテリアルビルダーを作成する際に必要な共通の実装を提供します。
+**`MaterialBuilderBase`** クラスは、マテリアルビルダーを作成する際に必要な共通の実装を提供します。
 
 このクラスは以下の実装を提供します：
 
@@ -34,9 +34,9 @@ MMDモデルローダー（**`PmxLoader`**、**`PmdLoader`**、**`BpmxLoader`**�
 
 マテリアルに機能に対応する実装がない場合は、メソッド本体を空にしておくことができます。
 
-例えば、**`PBRMaterialBuilder`**では**`loadSphereTexture`**、**`loadToonTexture`**、および**`loadOutlineRenderingProperties`**のメソッド本体は空です。
+例えば、**`PBRMaterialBuilder`** では**`loadSphereTexture`**、**`loadToonTexture`**、および**`loadOutlineRenderingProperties`** のメソッド本体は空です。
 
-まずは**`MaterialBuilderBase`**を継承し、ジェネリックパラメータを設定し、コンストラクターを実装します：
+まずは**`MaterialBuilderBase`** を継承し、ジェネリックパラメータを設定し、コンストラクターを実装します：
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
     public constructor() {
@@ -90,7 +90,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-**`textureNameMap`**は読み込み後に**`MmdMesh.metadata.textureNameMap`**に保存されます。
+**`textureNameMap`** は読み込み後に**`MmdMesh.metadata.textureNameMap`** に保存されます。
 
 ### `loadGeneralScalarProperties`の実装
 
@@ -140,7 +140,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 }
 ```
 
-各マテリアルは**`diffuseColor`**、**`specularColor`**、**`ambientColor`**、**`alpha`**、および**`specularPower`**に対応するプロパティを持つ場合と持たない場合があります。存在するプロパティについてのみマッピングを行えばよいです。
+各マテリアルは**`diffuseColor`**、**`specularColor`**、**`ambientColor`**、**`alpha`**、および**`specularPower`** に対応するプロパティを持つ場合と持たない場合があります。存在するプロパティについてのみマッピングを行えばよいです。
 
 ### BMPローダーサポート
 
@@ -163,9 +163,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadDiffuseTexture`の実装
 
-**`imagePathTable`**、**`referenceFileResolver`**、**`_textureLoader`**、**`uniqueId`**、および**`rootUrl`**を使用して**テクスチャ解決**を実行します。これは、ブラウザのFile API、URL、またはArrayBufferを使用するケースを処理するように実装する必要があります。
+**`imagePathTable`**、**`referenceFileResolver`**、**`_textureLoader`**、**`uniqueId`**、および**`rootUrl`** を使用して**テクスチャ解決**を実行します。これは、ブラウザのFile API、URL、またはArrayBufferを使用するケースを処理するように実装する必要があります。
 
-テクスチャの読み込みが成功したか失敗したかに関わらず、**`onTextureLoadComplete`**を呼び出す必要があります。このコールバックが呼び出されないと、マテリアルビルダーはテクスチャが読み込まれるのを無期限に待ちます。
+テクスチャの読み込みが成功したか失敗したかに関わらず、**`onTextureLoadComplete`** を呼び出す必要があります。このコールバックが呼び出されないと、マテリアルビルダーはテクスチャが読み込まれるのを無期限に待ちます。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -240,11 +240,11 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 このメソッドでは、**アルファ評価**を実行し、その結果をマテリアルに適用します。
 
-ここでは、各**`MmdMaterialRenderMethod`**に対して異なる処理が必要です。
+ここでは、各**`MmdMaterialRenderMethod`** に対して異なる処理が必要です。
 
-また、BPMXフォーマットにはすでにアルファ評価の結果が含まれている可能性があるため、**`evaluatedTransparency`**をチェックする必要があります。
+また、BPMXフォーマットにはすでにアルファ評価の結果が含まれている可能性があるため、**`evaluatedTransparency`** をチェックする必要があります。
 
-プロセスを少し簡略化するために、**`MaterialBuilderBase._evaluateDiffuseTextureTransparencyModeAsync`**メソッドが提供されています。
+プロセスを少し簡略化するために、**`MaterialBuilderBase._evaluateDiffuseTextureTransparencyModeAsync`** メソッドが提供されています。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -322,9 +322,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadSphereTexture`の実装
 
-このメソッドは**スフィアテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`**と似ています。
+このメソッドは**スフィアテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`** と似ています。
 
-さらに、スフィアテクスチャをマテリアルに適用する方法は**`materialInfo.sphereTextureMode`**によって異なります。
+さらに、スフィアテクスチャをマテリアルに適用する方法は**`materialInfo.sphereTextureMode`** によって異なります。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
@@ -403,9 +403,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadToonTexture`の実装
 
-このメソッドは**トゥーンテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`**と似ています。
+このメソッドは**トゥーンテクスチャ**を読み込みます。テクスチャ解決方法は**`loadDiffuseTexture`** と似ています。
 
-トゥーンテクスチャのテクスチャ解決プロセス中に、**`isSharedToonTexture`**がtrueの場合、あらかじめ提供されている11の共有テクスチャの1つが使用されます。この場合、**`imagePathTable`**からテクスチャパスを見つける代わりに、どの共有テクスチャを使用するかを指定するために**`materialInfo.toonTextureIndex`**が**`_textureLoader`**に渡されます。この動作はMMDの実装を模倣しています。
+トゥーンテクスチャのテクスチャ解決プロセス中に、**`isSharedToonTexture`** がtrueの場合、あらかじめ提供されている11の共有テクスチャの1つが使用されます。この場合、**`imagePathTable`** からテクスチャパスを見つける代わりに、どの共有テクスチャを使用するかを指定するために**`materialInfo.toonTextureIndex`** が**`_textureLoader`** に渡されます。この動作はMMDの実装を模倣しています。
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {

@@ -99,8 +99,8 @@ const mmdAnimation: MmdAnimation = await vpdLoader.loadAsync("pose1", "path/to/p
 제공되는 다른 로드 메서드는 다음과 같습니다:
 
 - **`load`**: VPD 파일을 동기적으로 로드하며, onLoad 및 onError 콜백을 지원합니다.
-- **`loadFromBufferAsync`**/**`loadFromBuffer`**: **`ArrayBuffer`** 인스턴스를 파싱하여 **`MmdAnimation`**을 로드합니다.
-- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: **`VpdObject`** 인스턴스에서 **`MmdAnimation`**을 로드합니다.
+- **`loadFromBufferAsync`**/**`loadFromBuffer`**: **`ArrayBuffer`** 인스턴스를 파싱하여 **`MmdAnimation`** 을 로드합니다.
+- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: **`VpdObject`** 인스턴스에서 **`MmdAnimation`** 을 로드합니다.
 
 **`VmdLoader`** 와 달리, **`VpdLoader`** 는 여러 VPD 파일을 한 번에 로드하는 것을 지원하지 않습니다.
 
@@ -155,7 +155,7 @@ const mmdAnimation = await vpdLoader.loadFromVpdObjectAsync("pose1", vpdObject);
 이는 나중에 언급될 WebAssembly 관련 최적화를 용이하게 하기 위한 제약입니다. 데이터 수정이 안전하다는 것을 알고 있다면, 문제 없이 트랙 값을 수정할 수 있습니다.
 :::
 
-**`MmdAnimation`**의 주목할 만한 측면은 모델 애니메이션을 나타내는 네 가지 트랙 타입(**`boneTracks`**, **`movableBoneTracks`**, **`morphTracks`**, **`propertyTrack`**)과 카메라 애니메이션을 나타내는 **`cameraTrack`** 이 분리되어 있다는 것입니다.
+**`MmdAnimation`** 의 주목할 만한 측면은 모델 애니메이션을 나타내는 네 가지 트랙 타입(**`boneTracks`**, **`movableBoneTracks`**, **`morphTracks`**, **`propertyTrack`**)과 카메라 애니메이션을 나타내는 **`cameraTrack`** 이 분리되어 있다는 것입니다.
 
 따라서, vmd 애니메이션을 로드할 때, 모델 애니메이션과 카메라 애니메이션을 단일 **`MmdAnimation`** 인스턴스로 로드할 수 있습니다.
 

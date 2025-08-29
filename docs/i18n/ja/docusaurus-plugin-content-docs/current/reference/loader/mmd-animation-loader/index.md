@@ -20,7 +20,7 @@ const vmdLoader = new VmdLoader();
 const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", "path/to/motion1.vmd");
 ```
 
-**`loadAsync`**メソッドが受け取るパラメータは以下の通りです：
+**`loadAsync`** メソッドが受け取るパラメータは以下の通りです：
 
 - **`name`**: アニメーションの名前。
 - **`fileOrUrl`**: VMDファイルのURLを`string`または`string[]`、あるいは`File`または`File[]`として指定。
@@ -43,16 +43,16 @@ const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("motion1", [
 さらに、以下のメソッドも提供されています：
 
 - **`load`**: VMDファイルを同期的にロードし、onLoadおよびonErrorコールバックをサポート。
-- **`loadFromBufferAsync`**/**`loadFromBuffer`**: 複数の**`ArrayBuffer`**インスタンスを解析して**`MmdAnimation`**をロード。
-- **`loadFromVmdDataAsync`**/**`loadFromVmdData`**: 複数の**`VmdData`**インスタンスから**`MmdAnimation`**をロード。
-- **`loadFromVmdObjectAsync`**/**`loadFromVmdObject`**: 複数の**`VmdObject`**インスタンスから**`MmdAnimation`**をロード。
+- **`loadFromBufferAsync`**/**`loadFromBuffer`**: 複数の**`ArrayBuffer`** インスタンスを解析して**`MmdAnimation`** をロード。
+- **`loadFromVmdDataAsync`**/**`loadFromVmdData`**: 複数の**`VmdData`** インスタンスから**`MmdAnimation`** をロード。
+- **`loadFromVmdObjectAsync`**/**`loadFromVmdObject`**: 複数の**`VmdObject`** インスタンスから**`MmdAnimation`** をロード。
 
-これらすべてのメソッドをまとめると、**`VmdLoader`**がサポートする入力データ形式は以下のようになります：
+これらすべてのメソッドをまとめると、**`VmdLoader`** がサポートする入力データ形式は以下のようになります：
 
-- VMDファイル（**`File`**または**`File[]`**、**`string`**または**`string[]`**）
-- アレイバッファ（**`ArrayBuffer`**または**`ArrayBuffer[]`**）
-- VMDデータ（**`VmdData`**または**`VmdData[]`**）
-- VMDオブジェクト（**`VmdObject`**または**`VmdObject[]`**）
+- VMDファイル（**`File`** または**`File[]`**、**`string`** または**`string[]`**）
+- アレイバッファ（**`ArrayBuffer`** または**`ArrayBuffer[]`**）
+- VMDデータ（**`VmdData`** または**`VmdData[]`**）
+- VMDオブジェクト（**`VmdObject`** または**`VmdObject[]`**）
 
 ここで、**`VmdData`** と **`VmdObject`** は以下のような型です：
 
@@ -78,14 +78,14 @@ const mmdAnimation = await vmdLoader.loadFromVmdObjectAsync("motion1", vmdObject
 
 このように、すべてのプロセスを明示的に呼び出してロードできるようにすることで、babylon-mmdはロード過程での修正や、完全に異なるコンテナにロードする新しいロジックの記述を可能にする拡張性を提供しています。
 
-さらに、**`VmdLoader`**は以下のオプションを提供します：
+さらに、**`VmdLoader`** は以下のオプションを提供します：
 
 - **`VmdLoader.optimizeEmptyTracks`**: アニメーションに影響を与えないトラックを最適化して削除するかどうかを設定します。デフォルトは`true`です。
 - **`VmdLoader.loggingEnabled`**: ロード処理中のログ出力を有効にします。値が`false`の場合、発生した問題に関するログは生成されません。デフォルトは`false`です。
 
 ## VpdLoader
 
-**`VpdLoader`**は、MMDポーズデータファイル形式である**ボーカロイドポーズデータ（VPD）**ファイルをロードするために使用されます。このローダーはVPDファイルからポーズデータを読み取り、babylon-mmdランタイムに適用できる形式でロードします。
+**`VpdLoader`** は、MMDポーズデータファイル形式である**ボーカロイドポーズデータ（VPD）**ファイルをロードするために使用されます。このローダーはVPDファイルからポーズデータを読み取り、babylon-mmdランタイムに適用できる形式でロードします。
 
 **`VpdLoader`** も **`VmdLoader`** と同様に、**`MmdAnimation`** を返す複数のメソッドを提供しています。最も基本的なメソッドは **`loadAsync`** です。
 
@@ -99,14 +99,14 @@ const mmdAnimation: MmdAnimation = await vpdLoader.loadAsync("pose1", "path/to/p
 他に提供されるロードメソッドには以下があります：
 
 - **`load`**: VPDファイルを同期的にロードし、onLoadおよびonErrorコールバックをサポート。
-- **`loadFromBufferAsync`**/**`loadFromBuffer`**: **`ArrayBuffer`**インスタンスを解析して **`MmdAnimation`** をロード。
-- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: **`VpdObject`**インスタンスから **`MmdAnimation`** をロード。
+- **`loadFromBufferAsync`**/**`loadFromBuffer`**: **`ArrayBuffer`** インスタンスを解析して **`MmdAnimation`** をロード。
+- **`loadFromVpdObjectAsync`**/**`loadFromVpdObject`**: **`VpdObject`** インスタンスから **`MmdAnimation`** をロード。
 
-**`VmdLoader`**とは異なり、**`VpdLoader`**は一度に複数のVPDファイルをロードすることをサポートしていません。
+**`VmdLoader`** とは異なり、**`VpdLoader`** は一度に複数のVPDファイルをロードすることをサポートしていません。
 
-**`VpdLoader`**がサポートする入力データ形式は以下の通りです：
+**`VpdLoader`** がサポートする入力データ形式は以下の通りです：
 
-- VPDファイル（**`File`**または**`string[]`**）
+- VPDファイル（**`File`** または**`string[]`**）
 - アレイバッファ（**`ArrayBuffer`**）
 - VPDオブジェクト（**`VpdObject`**）
 
