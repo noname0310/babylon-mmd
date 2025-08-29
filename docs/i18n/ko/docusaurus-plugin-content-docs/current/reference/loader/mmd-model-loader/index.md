@@ -7,11 +7,11 @@ sidebar_label: MMD 모델 로더 (PmxLoader, PmdLoader)
 
 이 섹션에서는 **MMD 모델 파일(PMX, PMD)을 로드**하는 데 사용되는 컴포넌트에 대해 설명합니다.
 
-MMD 모델은 **`PmxLoader`** 또는 **`PmdLoader`**를 사용하여 로드할 수 있습니다.
+MMD 모델은 **`PmxLoader`** 또는 **`PmdLoader`** 를 사용하여 로드할 수 있습니다.
 
 ## PmxLoader/PmdLoader
 
-**`PmxLoader`**와 **`PmdLoader`**는 각각 **PMX 및 PMD 파일**을 로드하는 데 사용되는 로더입니다.
+**`PmxLoader`** 와 **`PmdLoader`** 는 각각 **PMX 및 PMD 파일**을 로드하는 데 사용되는 로더입니다.
 
 ## Babylon.js SceneLoader에 로더 등록하기
 
@@ -19,7 +19,7 @@ MMD 모델은 **`PmxLoader`** 또는 **`PmdLoader`**를 사용하여 로드할 �
 
 따라서 사용하기 전에 먼저 **`PmxLoader` 또는 `PmdLoader`를 Babylon.js SceneLoader에 등록**해야 합니다.
 
-이는 **"babylon-mmd/esm/Loader/pmxLoader"** 또는 **"babylon-mmd/esm/Loader/pmdLoader"**를 가져옴으로써 수행할 수 있습니다.
+이는 **"babylon-mmd/esm/Loader/pmxLoader"** 또는 **"babylon-mmd/esm/Loader/pmdLoader"** 를 가져옴으로써 수행할 수 있습니다.
 
 ```typescript
 // .pmx 파일을 로드하기 위해 글로벌 SceneLoader 상태에 `PmxLoader` 인스턴스를 등록합니다.
@@ -41,7 +41,7 @@ RegisterSceneLoaderPlugin(new PmdLoader()); // "babylon-mmd/esm/Loader/pmdLoader
 :::
 
 :::info
-**`import "babylon-mmd";`**와 같이 루트에서 심볼을 가져오면 모든 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
+**`import "babylon-mmd";`** 와 같이 루트에서 심볼을 가져오면 모든 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
 
 그러나 이 경우 **트리 셰이킹이 적용되지 않으므로** 프로덕션 환경에서는 권장하지 않습니다.
 :::
@@ -56,14 +56,14 @@ RegisterSceneLoaderPlugin(new PmdLoader()); // "babylon-mmd/esm/Loader/pmdLoader
 
 **`ImportMeshAsync`** 함수는 MMD 모델을 씬에 추가하고 로드된 요소를 **`ISceneLoaderAsyncResult`** 형태로 반환합니다.
 
-반환값에서 MMD의 루트 노드인 **`MmdMesh`**를 얻을 수 있습니다.
+반환값에서 MMD의 루트 노드인 **`MmdMesh`** 를 얻을 수 있습니다.
 
 ```typescript
 const result: ISceneLoaderAsyncResult = await ImportMeshAsync("path/to/mmdModel.pmx", scene);
 const mmdMesh = result.meshes[0] as MmdMesh;
 ```
 
-위 예제에서는 **`result.meshes[0]`**을 **`MmdMesh`**로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
+위 예제에서는 **`result.meshes[0]`** 을 **`MmdMesh`** 로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
 
 MMD 모델을 로드할 때, **`ISceneLoaderAsyncResult.meshes`** 배열의 **첫 번째 요소**는 항상 MMD 모델의 **루트 메시**입니다.
 
@@ -79,10 +79,10 @@ await AppendSceneAsync("path/to/mmdModel.pmx", scene);
 
 ### LoadAssetContainerAsync
 
-**`LoadAssetContainerAsync`** 함수는 MMD 모델을 로드하고 MMD 모델을 구성하는 모든 리소스가 포함된 **`AssetContainer`**를 반환합니다.
-이 **`AssetContainer`**에는 로드된 메시, 머티리얼, 텍스처 등이 포함됩니다.
+**`LoadAssetContainerAsync`** 함수는 MMD 모델을 로드하고 MMD 모델을 구성하는 모든 리소스가 포함된 **`AssetContainer`** 를 반환합니다.
+이 **`AssetContainer`** 에는 로드된 메시, 머티리얼, 텍스처 등이 포함됩니다.
 
-**`ImportMeshAsync`**와 마찬가지로, 반환된 **`AssetContainer`**에서 MMD 모델의 **루트 메시**를 얻을 수 있습니다.
+**`ImportMeshAsync`** 와 마찬가지로, 반환된 **`AssetContainer`** 에서 MMD 모델의 **루트 메시**를 얻을 수 있습니다.
 
 ```typescript
 const assetContainer: AssetContainer = await LoadAssetContainerAsync("path/to/mmdModel.pmx", scene);
@@ -90,7 +90,7 @@ assetContainer.addAllToScene();
 const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 ```
 
-위 예제에서는 **`assetContainer.meshes[0]`**을 **`MmdMesh`**로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
+위 예제에서는 **`assetContainer.meshes[0]`** 을 **`MmdMesh`** 로 캐스팅하고 있습니다. 이는 MMD 모델을 로드할 때 항상 유효합니다.
 
 MMD 모델을 로드할 때, **`AssetContainer.meshes`** 배열의 **첫 번째 요소**는 항상 MMD 모델의 **루트 메시**입니다.
 
@@ -233,7 +233,7 @@ const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 
 **서버에서 MMD 모델을 제공**할 때는 URL 가져오기 메서드를 사용해야 하므로 파일 API 접근 방식을 사용할 수 없습니다. 이 경우 텍스처 로딩 문제를 해결하기 위해 **두 가지 방법**을 사용할 수 있습니다:
 
-1. **모델 수정** - **[PMXEditor](https://www.deviantart.com/johnwithlenon/art/PmxEditor-v0273-English-Version-unofficial-trans-925125044)**를 사용하여 모델의 텍스처 경로의 대소문자 오류를 수정합니다.
+1. **모델 수정** - **[PMXEditor](https://www.deviantart.com/johnwithlenon/art/PmxEditor-v0273-English-Version-unofficial-trans-925125044)** 를 사용하여 모델의 텍스처 경로의 대소문자 오류를 수정합니다.
 2. **BPMX로 변환** - PMX/PMD 형식을 BPMX 형식으로 변환할 때 텍스처 경로 문제는 변환 과정에서 해결됩니다. 자세한 내용은 **[바빌론 PMX 포맷](./the-babylon-pmx-format)** 문서를 참조하세요.
 
 ## 로더 옵션
@@ -272,37 +272,37 @@ const assetContainer: AssetContainer = await LoadAssetContainerAsync(
 ### materialBuilder
 
 MMD 모델에 머티리얼을 할당하는 방법을 정의하는 **`IMmdMaterialBuilder`** 인스턴스를 설정합니다.\
-기본값은 **`null`**입니다. **기본값이 `null`인 경우 MMD 모델은 머티리얼 없이 로드됩니다.**
+기본값은 **`null`** 입니다. **기본값이 `null`인 경우 MMD 모델은 머티리얼 없이 로드됩니다.**
 
 자세한 내용은 **[머티리얼 빌더](./material-builder)** 문서를 참조하세요.
 
 ### useSdef
 
 모델이 **SDEF(구형 변형, Spherical Deformation)**를 지원하는지 여부를 설정합니다.\
-기본값은 **`true`**입니다.
+기본값은 **`true`** 입니다.
 
 자세한 내용은 **[SDEF 지원](./sdef-support)** 문서를 참조하세요.
 
 ### buildSkeleton
 
 **스켈레톤을 로드**할지 여부를 설정합니다.\
-기본값은 **`true`**입니다.
+기본값은 **`true`** 입니다.
 
 예를 들어, 스테이지를 로드할 때는 스켈레톤을 생성할 필요가 없으므로 이 값을 **`false`**로 설정할 수 있습니다. **스켈레톤이 없는 `MmdMesh`는 MMD 런타임에 등록할 수 없습니다**.
 
 ### buildMorph
 
 **모프(Morph)를 로드**할지 여부를 설정합니다.\
-기본값은 **`true`**입니다.
+기본값은 **`true`** 입니다.
 
 예를 들어, 스테이지를 로드할 때는 모프를 생성할 필요가 없으므로 이 값을 **`false`**로 설정할 수 있습니다.
 
 ### boundingBoxMargin
 
 **바운딩 박스의 여백**을 설정합니다.\
-기본값은 **`10`**입니다.
+기본값은 **`10`** 입니다.
 
-**Babylon.js는 스켈레톤으로 인한 변형이 발생할 때 바운딩 박스를 업데이트하지 않습니다**. 바운딩 박스는 명시적으로 **[BoundingInfoHelper](https://forum.babylonjs.com/t/new-feature-boundinginfohelper/51469)**를 사용할 때만 업데이트됩니다.
+**Babylon.js는 스켈레톤으로 인한 변형이 발생할 때 바운딩 박스를 업데이트하지 않습니다**. 바운딩 박스는 명시적으로 **[BoundingInfoHelper](https://forum.babylonjs.com/t/new-feature-boundinginfohelper/51469)** 를 사용할 때만 업데이트됩니다.
 
 따라서 **MMD 모델에 애니메이션이 적용**될 때 바운딩 박스와 메시가 일치하지 않아 **카메라 프러스텀 내의 메시가 컬링**될 수 있습니다.
 이를 방지하기 위해 **바운딩 박스에 여백을 설정**하는 것이 좋습니다.
@@ -317,7 +317,7 @@ MMD 모델 메시의 **`alwaysSelectAsActiveMesh` 속성이 `true`로 설정**�
 ### alwaysSetSubMeshesBoundingInfo
 
 **항상 서브메시에 바운딩 정보를 설정**할지 여부를 설정합니다.\
-기본값은 **`true`**입니다.
+기본값은 **`true`** 입니다.
 
 **optimizeSubmeshes가 false인 경우**
 
@@ -378,35 +378,35 @@ class SubMesh {
 ### preserveSerializationData
 
 **재직렬화를 위한 데이터를 보존**할지 여부를 설정합니다.\
-기본값은 **`false`**입니다.
+기본값은 **`false`** 입니다.
 
 MMD 모델에서 **babylon-mmd에서 사용되지 않는 데이터를 보존**하려면 `preserveSerializationData`를 **`true`**로 설정해야 합니다.
 이 경우 **본의 tailPosition이나 머티리얼의 영어 이름과 같은 추가 정보**를 보존할 수 있습니다.
 
-**PMX/PMD 모델을 로드한 다음 `BpmxConverter`를 사용하여 BPMX로 변환**하는 경우, 손실 없이 BPMX로 변환하기 위해 이 옵션을 **`true`**로 설정해야 합니다.
+**PMX/PMD 모델을 로드한 다음 `BpmxConverter`를 사용하여 BPMX로 변환**하는 경우, 손실 없이 BPMX로 변환하기 위해 이 옵션을 **`true`** 로 설정해야 합니다.
 
 ### loggingEnabled
 
 **로깅을 활성화**할지 여부를 설정합니다.\
-기본값은 **`false`**입니다.
+기본값은 **`false`** 입니다.
 
 **개발 중에 로깅을 활성화**하는 것이 좋습니다. 잘못된 PMX/PMD 파일을 로드할 때 발생하는 문제를 진단하는 데 도움이 됩니다.
 
-이 값이 **`false`**이면 로더는 **로딩 과정에서 발생하는 문제에 대한 경고를 출력하지 않습니다**.
+이 값이 **`false`** 이면 로더는 **로딩 과정에서 발생하는 문제에 대한 경고를 출력하지 않습니다**.
 
 ### referenceFiles
 
 **참조 파일 목록**을 설정합니다.\
-기본값은 **`[]`**입니다.
+기본값은 **`[]`** 입니다.
 
 **참조 파일은 MMD 모델의 텍스처를 로드**하는 데 사용됩니다.
 
 ### optimizeSubmeshes
 
 **서브메시 최적화를 활성화**할지 여부를 설정합니다.\
-기본값은 **`true`**입니다.
+기본값은 **`true`** 입니다.
 
-이 값이 **`false`**이면 MMD 모델은 **여러 개의 `SubMesh`가 있는 하나의 `Mesh`**로 로드됩니다.
+이 값이 **`false`** 이면 MMD 모델은 **여러 개의 `SubMesh`가 있는 하나의 `Mesh`** 로 로드됩니다.
 
 예를 들어, MMD 모델에 3개의 머티리얼이 있는 경우, 이 모델은 **3개의 `SubMesh`가 있는 하나의 `Mesh`**로 로드되며, 각 `SubMesh`에 별도의 `Material`을 할당하기 위해 **`MultiMaterial`이 사용**됩니다.
 

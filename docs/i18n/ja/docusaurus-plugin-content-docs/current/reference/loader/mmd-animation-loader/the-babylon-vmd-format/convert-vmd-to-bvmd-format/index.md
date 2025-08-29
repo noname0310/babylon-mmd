@@ -43,4 +43,4 @@ const mmdAnimation: MmdAnimation = await vmdLoader.loadAsync("path/to/your/file.
 const arrayBuffer = BvmdConverter.Convert(mmdAnimation);
 ```
 
-これはウェブアプリケーション版と全く同じように動作します。
+この方式はウェブアプリケーション版と全く同じように動作します。

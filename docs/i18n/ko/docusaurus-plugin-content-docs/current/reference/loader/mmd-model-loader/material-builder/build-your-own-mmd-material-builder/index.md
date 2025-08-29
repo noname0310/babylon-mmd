@@ -9,7 +9,7 @@ sidebar_label: 자신만의 MMD 머티리얼 빌더 만들기
 
 MMD 모델 로더(**`PmxLoader`**, **`PmdLoader`**, **`BpmxLoader`**)는 MMD 모델 로딩 과정에서 텍스처와 머티리얼을 로드하는 모든 책임을 **머티리얼 빌더**에게 위임합니다.
 
-따라서 **머티리얼 빌더**는 **리소스 해상도**부터 **알파 평가** 및 **드로우 오더** 설정까지 전체 프로세스를 담당합니다.
+따라서 **머티리얼 빌더**는 **리소스 로딩**부터 **알파 평가** 및 **드로우 오더** 설정까지 전체 프로세스를 담당합니다.
 
 머티리얼 빌더를 처음부터 구현하는 것은 이러한 모든 측면을 고려해야 하기 때문에 간단한 작업이 아닙니다.
 
@@ -163,7 +163,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadDiffuseTexture` 구현하기
 
-**`imagePathTable`**, **`referenceFileResolver`**, **`_textureLoader`**, **`uniqueId`**, **`rootUrl`**을 사용하여 **텍스처 해상도**를 수행합니다. 브라우저 파일 API, URL 또는 ArrayBuffer를 사용하는 경우를 처리하도록 구현해야 합니다.
+**`imagePathTable`**, **`referenceFileResolver`**, **`_textureLoader`**, **`uniqueId`**, **`rootUrl`**을 사용하여 **텍스처 로딩**을 수행합니다. 브라우저 파일 API, URL 또는 ArrayBuffer를 사용하는 경우를 처리하도록 구현해야 합니다.
 
 텍스처 로딩이 성공하든 실패하든 상관없이 **`onTextureLoadComplete`**를 호출해야 합니다. 이 콜백이 호출되지 않으면 머티리얼 빌더는 텍스처가 로드될 때까지 무기한 대기합니다.
 
@@ -322,7 +322,7 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadSphereTexture` 구현하기
 
-이 메서드는 **스피어 텍스처**를 로드합니다. 텍스처 해상도 방법은 **`loadDiffuseTexture`**와 유사합니다.
+이 메서드는 **스피어 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`**와 유사합니다.
 
 또한, 스피어 텍스처를 머티리얼에 적용하는 방법은 **`materialInfo.sphereTextureMode`**에 따라 다릅니다.
 
@@ -403,9 +403,9 @@ class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {
 
 ### `loadToonTexture` 구현하기
 
-이 메서드는 **툰 텍스처**를 로드합니다. 텍스처 해상도 방법은 **`loadDiffuseTexture`**와 유사합니다.
+이 메서드는 **툰 텍스처**를 로드합니다. 텍스처 로딩 방법은 **`loadDiffuseTexture`**와 유사합니다.
 
-툰 텍스처의 텍스처 해상도 과정에서 **`isSharedToonTexture`**가 true인 경우, 11개의 미리 제공된 공유 텍스처 중 하나가 사용됩니다. 이 경우 **`imagePathTable`**에서 텍스처 경로를 찾는 대신 **`materialInfo.toonTextureIndex`**가 **`_textureLoader`**에 전달되어 어떤 공유 텍스처를 사용할지 지정합니다. 이 동작은 MMD의 구현을 모방합니다.
+툰 텍스처의 텍스처 로딩 과정에서 **`isSharedToonTexture`**가 true인 경우, 11개의 미리 제공된 공유 텍스처 중 하나가 사용됩니다. 이 경우 **`imagePathTable`**에서 텍스처 경로를 찾는 대신 **`materialInfo.toonTextureIndex`**가 **`_textureLoader`**에 전달되어 어떤 공유 텍스처를 사용할지 지정합니다. 이 동작은 MMD의 구현을 모방합니다.
 
 ```typescript
 class MyMaterialBuilder extends MaterialBuilderBase<MyMaterial> {

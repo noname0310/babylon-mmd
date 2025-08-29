@@ -22,7 +22,7 @@ const mmdAnimation: MmdAnimation = await bvmdLoader.loadAsync("motion1", "path/t
 - **`fileOrUrl`**: `string` 또는 `File`로 된 BVMD 파일의 URL.
 - **`onProgress`**: 로딩 진행 상황과 함께 주기적으로 호출되는 콜백 함수.
 
-또한 **`onLoad`**와 **`onError`** 콜백과 함께 **BVMD** 파일을 로드하기 위해 **`load`** 메서드를 사용할 수 있습니다.
+또한 **BVMD** 파일을 로드하기 위해 **`load`** 메서드를 사용할 수 있습니다. **`load`** 메서드는 **`onLoad`**와 **`onError`** 콜백을 받습니다.
 
 **`loadFromBuffer`** 메서드를 사용하여 **`ArrayBuffer`**에서 **BVMD** 파일을 로드할 수도 있습니다.
 
