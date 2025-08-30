@@ -44,6 +44,9 @@ The following three processes for applying MMD animations are separated into ind
 
 ![The Process](./the-process.png)
 *Image visualizing each process. Model: YYB Hatsune Miku_10th, Motion: メランコリ・ナイト by ほうき堂, Frame 3390.*
+:::info
+Strictly speaking, the order of 'Solve IK, Append Transform, Morph' and 'Simulate Physics' can be changed. However, in general scenarios, they are mostly processed in the order shown in the figure.
+:::
 
 1. **Evaluate Animation**
 2. **Solve IK, Append Transform, Morph**

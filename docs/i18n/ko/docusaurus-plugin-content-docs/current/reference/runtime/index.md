@@ -44,6 +44,9 @@ MMD 애니메이션을 적용하기 위한 다음 세 가지 프로세스는 독
 
 ![프로세스](@site/docs/reference/runtime/the-process.png)
 *각 프로세스를 시각화한 이미지. 모델: YYB Hatsune Miku_10th, 모션: メランコリ・ナイト by ほうき堂, 프레임 3390.*
+:::info
+엄밀히 말하면 Solve IK, Append Transform, Morph와 Simulate Physics의 순서는 바뀔 수 있습니다. 그러나 일반적인 시나리오에서는 대부분 그림에 그려진 순서대로 진행됩니다.
+:::
 
 1. **애니메이션 평가**
 2. **IK 해결, 트랜스폼 추가, 모프**
