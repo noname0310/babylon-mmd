@@ -177,4 +177,3 @@ These elements include:
 - **UI elements**
 
 These are very common elements, but they are implemented very elaborately, so separate reference documentation is also provided for proper use.
-이들은 매우 당연한 요소이지만, 매우 정교하게 구현되어 있기에 이들을 적절히 사용하기 위한 레퍼런스 문서 또한 따로 제공됩니다.

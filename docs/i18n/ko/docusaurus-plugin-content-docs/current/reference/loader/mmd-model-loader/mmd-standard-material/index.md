@@ -674,7 +674,7 @@ babylon-mmd는 MMD의 렌더링 방식을 구현하기 위해 **`MmdOutlineRende
 
 ### 사용법
 
-**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`** 가 `Scene`에 추가됩니다.
+**"babylon-mmd/esm/Loader/mmdOutlineRenderer"** 를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`** 가 `Scene`에 추가됩니다.
 
 ```typescript
 import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
