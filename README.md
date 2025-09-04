@@ -61,13 +61,8 @@ async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
 
     const camera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene);
 
-    const hemisphericLight = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
-    hemisphericLight.intensity = 0.3;
-    hemisphericLight.specular = new Color3(0, 0, 0);
-    hemisphericLight.groundColor = new Color3(1, 1, 1);
-
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.5, -1, 1), scene);
-    directionalLight.intensity = 0.7;
+    directionalLight.intensity = 1.0;
     
     CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: false }, scene);
     
