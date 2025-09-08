@@ -336,4 +336,4 @@ babylon-mmd also provides `MmdWasmRuntime` implemented in WebAssembly (WASM) for
 
 However, the WASM implementation is difficult to customize arbitrarily and may be limited in special runtime environments (e.g., React Native).
 
-For more details, see the [MMD WebAssembly Runtime](./mmd-webassembly-runtime) documentation.
+For more details, see the [MMD WebAssembly Runtime](../mmd-webassembly-runtime) documentation.
