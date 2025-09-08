@@ -284,7 +284,7 @@ physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
 physicsRuntime.register(scene);
 ```
 
-You can use various methods provided by `MultiPhysicsRuntime` to control physics simulation, such as setting gravity or directly adding RigidBody or Constraint. For more details, see the [Bullet Physics](./bullet-physics) documentation.
+You can use various methods provided by `MultiPhysicsRuntime` to control physics simulation, such as setting gravity or directly adding RigidBody or Constraint. For more details, see the [Bullet Physics](../bullet-physics) documentation.
 
 ### Ammo.js Implementation
 
