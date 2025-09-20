@@ -8,7 +8,6 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import { BezierCurveEase } from "@babylonjs/core/Animations/easing";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Constants } from "@babylonjs/core/Engines/constants";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
@@ -88,9 +87,6 @@ export class SceneBuilder implements ISceneBuilder {
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        materialBuilder.afterBuildSingleMaterial = (material): void => {
-            if (material.name.toLowerCase() === "hairshadow") material.alphaMode = Constants.ALPHA_SUBTRACT;
-        };
 
         const [
             mmdAnimation1,
