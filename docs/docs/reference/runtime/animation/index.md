@@ -57,7 +57,7 @@ It provides the following two classes for this purpose:
 
 This method is the **most fundamental way** to play MMD animations and provides **excellent performance**.
 
-For more details, refer to the [Mmd Animation](./mmd-animation) document.
+For more details, refer to the [MMD Animation](./mmd-animation) document.
 
 ### MMD WASM Animation & MMD WASM Runtime Animation
 
@@ -67,7 +67,7 @@ This class provides functionality to evaluate `MmdWasmAnimation` and bind it to 
 
 This method provides the **highest performance** among the ways to play MMD animations.
 
-For more details, refer to the [Mmd Animation](./mmd-animation) document.
+For more details, refer to the [MMD Animation](./mmd-animation) document.
 
 ### MMD AnimationContainer & MMD Runtime AnimationContainer
 

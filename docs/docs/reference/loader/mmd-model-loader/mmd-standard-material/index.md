@@ -438,7 +438,7 @@ Additionally, the `Material.visibility` is taken into account.
 ![finalRender](./finalRender.png)
 *Result of the final rendering, combining diffuse light, specular light, and environment light.*
 
-## Full Source Code of Mmd Standard Material Shader
+## Full Source Code of MMD Standard Material Shader
 
 The GLSL source code including uniform variable declarations and external function definitions that were omitted above is as follows:
 

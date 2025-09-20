@@ -438,7 +438,7 @@ toonTexture는 일반적으로 이런 종류의 그라데이션을 가집니다.
 ![finalRender](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalRender.png)
 *디퓨즈 라이트, 스페큘러 라이트, 환경 라이트를 결합한 최종 렌더링 결과.*
 
-## Mmd Standard Material 셰이더의 전체 소스 코드
+## MMD Standard Material 셰이더의 전체 소스 코드
 
 균일 변수 선언 및 외부 함수 정의를 포함한 GLSL 소스 코드는 다음과 같습니다:
 

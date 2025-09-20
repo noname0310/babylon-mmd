@@ -153,7 +153,7 @@ From the moment the `MmdModel` instance is created, **various resources** of the
 Especially for `Skeleton`, since `MmdModel` overrides the calculation method internally, directly calling methods of the `Skeleton` or `Bone` objects managed by `MmdModel` may cause **unexpected behavior**.
 :::
 
-Destroying an `MmdModel` removes the corresponding Mmd Mesh from the runtime and releases all resources managed by the model.
+Destroying an `MmdModel` removes the corresponding MMD Mesh from the runtime and releases all resources managed by the model.
 
 ```typescript
 mmdRuntime.destroyMmdModel(mmdModel);

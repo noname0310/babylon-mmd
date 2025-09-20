@@ -40,7 +40,7 @@ You can also use Babylon.js's animation blending features by playing MMD animati
 However, this section **does not discuss** `AnimationGroup`. For information on how to play MMD animations using `AnimationGroup`, refer to the [Use Babylon.js Animation Runtime](../use-babylonjs-animation-runtime#babylonjs-animation-group) document.
 :::
 
-## Mmd Composite Animation
+## MMD Composite Animation
 
 `MmdCompositeAnimation` is an animation container that **bundles and manages** multiple MMD Animations as one.
 
@@ -59,7 +59,7 @@ compositeAnimation.addSpan(animationSpan2);
 
 In this case, **both animations** start from frame 0 and play until the `duration` frame.
 
-### Mmd Animation Span
+### MMD Animation Span
 
 The `MmdAnimationSpan` Constructor is as follows:
 

@@ -167,7 +167,7 @@ Due to structural differences between Humanoid Models and MMD Models, it is impo
 
 Therefore, `HumanoidMmd` uses a proxy skeleton to apply MMD Animation and retarget the results to the Humanoid Model in real-time.
 
-The process of applying MMD Animation to a Humanoid Model is almost the same as applying MMD animation to an MMD model, but with the additional step of wrapping the Humanoid Model as an Mmd Model.
+The process of applying MMD Animation to a Humanoid Model is almost the same as applying MMD animation to an MMD model, but with the additional step of wrapping the Humanoid Model as an MMD Model.
 
 ## Other Elements
 

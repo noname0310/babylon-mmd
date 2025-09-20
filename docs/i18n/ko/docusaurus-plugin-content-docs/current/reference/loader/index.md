@@ -15,5 +15,5 @@ sidebar_label: 로더
 
 각 포맷에 대한 자세한 정보는 다음 섹션을 참조하세요:
 
-- [Mmd 모델 로더](./mmd-model-loader)
-- [Mmd 애니메이션 로더](./mmd-animation-loader)
+- [MMD 모델 로더](./mmd-model-loader)
+- [MMD 애니메이션 로더](./mmd-animation-loader)

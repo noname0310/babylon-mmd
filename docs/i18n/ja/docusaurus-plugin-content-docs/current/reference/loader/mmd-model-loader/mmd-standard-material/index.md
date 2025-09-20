@@ -438,7 +438,7 @@ struct lightingInfo {
 ![finalRender](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/finalRender.png)
 *最終的なレンダリングの結果。拡散光、スペキュラー光、環境光を組み合わせたものです。*
 
-## Mmd スタンダードマテリアルシェーダーの完全なソースコード
+## MMD スタンダードマテリアルシェーダーの完全なソースコード
 
 上記で省略されたユニフォーム変数宣言と外部関数定義を含むGLSLソースコードは次の通りです：
 

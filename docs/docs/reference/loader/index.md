@@ -15,5 +15,5 @@ The **MMD model** and **animation formats** supported by **babylon-mmd** are as 
 
 For more information about each format, please refer to the following sections:
 
-- [Mmd Model Loader](./mmd-model-loader)
-- [Mmd Animation Loader](./mmd-animation-loader)
+- [MMD Model Loader](./mmd-model-loader)
+- [MMD Animation Loader](./mmd-animation-loader)

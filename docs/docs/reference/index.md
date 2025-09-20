@@ -46,7 +46,7 @@ These sections explain how to load MMD models and animation data.
     - **[Convert PMX to BPMX format](/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/convert-pmx-to-bpmx-format)** - Explains how to convert PMX files to BPMX format.
     - **[BPMX Loader](/docs/reference/loader/mmd-model-loader/the-babylon-pmx-format/bpmx-loader)** - Explains how to load BPMX files.
 
-- **[Mmd Animation Loader (VmdLoader, VpdLoader)](/docs/reference/loader/mmd-animation-loader)** - Describes the components used to load MMD animation files (VMD, VPD).
+- **[MMD Animation Loader (VmdLoader, VpdLoader)](/docs/reference/loader/mmd-animation-loader)** - Describes the components used to load MMD animation files (VMD, VPD).
   - **[The Babylon VMD format](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format)** - Describes the BVMD file format, a variant of VMD files provided by babylon-mmd.
     - **[Convert VMD to BVMD format](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/convert-vmd-to-bvmd-format)** - Explains how to convert VMD files to BVMD format.
     - **[BVMD Loader](/docs/reference/loader/mmd-animation-loader/the-babylon-vmd-format/bvmd-loader)** - Explains how to load BVMD files.
