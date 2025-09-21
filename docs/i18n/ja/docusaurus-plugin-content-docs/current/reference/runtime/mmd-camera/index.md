@@ -105,6 +105,6 @@ scene.onBeforeRenderObservable.add(() => {
 
 ## IMmdCamera interface
 
-Babylon-mmd provides the **`IMmdCamera`** interface to allow users to implement their own MMD camera.
+babylon-mmd provides the **`IMmdCamera`** interface to allow users to implement their own MMD camera.
 
 All components of babylon-mmd use the **`IMmdCamera`** interface instead of the **`MmdCamera`** class type to reference or pass MMD camera objects.
