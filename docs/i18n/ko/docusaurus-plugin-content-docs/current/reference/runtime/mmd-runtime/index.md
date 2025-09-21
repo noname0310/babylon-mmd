@@ -1,45 +1,45 @@
 ---
 sidebar_position: 2
-sidebar_label: MMD Runtime
+sidebar_label: MMD 런타임
 ---
 
-# MMD Runtime
+# MMD 런타임
 
-## MmdRuntime class
+## MmdRuntime 클래스
 
-`MmdRuntime` is the **core class** of the babylon-mmd runtime component.
-`MmdRuntime` references and controls all other runtime components to apply animation to MMD models.
+`MmdRuntime`은 **babylon-mmd 런타임 컴포넌트의 핵심 클래스**입니다.
+`MmdRuntime`은 다른 모든 런타임 컴포넌트를 참조하고 제어하여 MMD 모델에 애니메이션을 적용합니다.
 
-`MmdRuntime` provides the following features:
-- Control **multiple MMD models** simultaneously
-- Control **multiple MMD cameras** simultaneously
-- Apply **camera animation**
-- Control **physics simulation**
+`MmdRuntime`은 다음과 같은 기능을 제공합니다:
+- **여러 MMD 모델**을 동시에 제어
+- **여러 MMD 카메라**를 동시에 제어
+- **카메라 애니메이션** 적용
+- **물리 시뮬레이션** 제어
 
-Here is the code to create an `MmdRuntime`:
+다음은 `MmdRuntime`을 생성하는 코드입니다:
 
 ```typescript
 const mmdRuntime = new MmdRuntime(scene, null);
 ```
 
-The constructor of `MmdRuntime` takes two arguments:
-- `scene`: If a `Scene` object is provided, the lifetime of `MmdRuntime` is tied to the `Scene` object. That is, when the `Scene` is disposed, `MmdRuntime` is also **automatically disposed**. If `null` is provided, you must **manually call** the `dispose()` method of `MmdRuntime`, otherwise a **memory leak** may occur.
-- `physics`: Provides a physics simulation implementation. If `null` is provided, **physics simulation is disabled**. To enable physics simulation, you must provide an instance of a class implementing the `IMmdPhysics` interface, such as `MmdBulletPhysics`, `MmdAmmoPhysics`, or `MmdPhysics`.
+`MmdRuntime`의 생성자는 두 개의 인수를 받습니다:
+- `scene`: `Scene` 객체가 제공되면 `MmdRuntime`의 생명주기가 `Scene` 객체와 연결됩니다. 즉, `Scene`이 해제되면 `MmdRuntime`도 **자동으로 해제**됩니다. `null`이 제공되면 `MmdRuntime`의 `dispose()` 메서드를 **수동으로 호출**해야 하며, 그렇지 않으면 **메모리 누수**가 발생할 수 있습니다.
+- `physics`: 물리 시뮬레이션 구현을 제공합니다. `null`이 제공되면 **물리 시뮬레이션이 비활성화**됩니다. 물리 시뮬레이션을 활성화하려면 `MmdBulletPhysics`, `MmdAmmoPhysics`, `MmdPhysics`와 같은 `IMmdPhysics` 인터페이스를 구현하는 클래스의 인스턴스를 제공해야 합니다.
 
-Note that the logic for handling physics simulation is **not included** in `MmdRuntime` but is **injected from outside**.
+물리 시뮬레이션을 처리하는 로직은 `MmdRuntime`에 **포함되지 않고** **외부에서 주입**됩니다.
 
-This design allows you to **easily swap** out the physics engine implementation, implement your own **custom physics engine**, and bundle only the implementation you use to **reduce bundle size**.
+이러한 설계를 통해 물리 엔진 구현을 **쉽게 교체**하고, 자신만의 **커스텀 물리 엔진**을 구현하며, 사용하는 구현만 번들에 포함하여 **번들 크기를 줄일** 수 있습니다.
 
-### Frame Update
+### 프레임 업데이트
 
-To process animation, you must call the update functions `MmdRuntime.beforePhysics()` and `MmdRuntime.afterPhysics()` **every frame**.
+애니메이션을 처리하려면 **매 프레임마다** `MmdRuntime.beforePhysics()`와 `MmdRuntime.afterPhysics()` 업데이트 함수를 호출해야 합니다.
 
-These two methods should be called **before and after** the physics simulation is executed, respectively.
+이 두 메서드는 각각 물리 시뮬레이션이 실행되기 **전과 후에** 호출되어야 합니다.
 
-Therefore, an application using `MmdRuntime` should have a frame loop like this:
+따라서 `MmdRuntime`을 사용하는 애플리케이션은 다음과 같은 프레임 루프를 가져야 합니다:
 
 ```typescript
-// sudo code for frame loop
+// 프레임 루프를 위한 의사 코드
 for (; ;) {
     mmdRuntime.beforePhysics();
     simulatePhysics();
@@ -48,130 +48,130 @@ for (; ;) {
 }
 ```
 
-The easiest way to call these two methods every frame is to register callbacks to the `onBeforeAnimationsObservable` and `onBeforeRenderObservable` events of the `Scene`.
+매 프레임마다 이 두 메서드를 호출하는 가장 쉬운 방법은 `Scene`의 `onBeforeAnimationsObservable`과 `onBeforeRenderObservable` 이벤트에 콜백을 등록하는 것입니다.
 
-The `MmdRuntime.register()` method takes a `Scene` object as an argument and internally registers callbacks to these two events so that `beforePhysics()` and `afterPhysics()` are **automatically called** every render.
+`MmdRuntime.register()` 메서드는 `Scene` 객체를 인수로 받아 내부적으로 이 두 이벤트에 콜백을 등록하여 `beforePhysics()`와 `afterPhysics()`가 **자동으로 호출**되도록 합니다.
 
 ```typescript
 mmdRuntime.register(scene);
 ```
 
-If you want to temporarily stop updating `MmdRuntime`, you can call the `MmdRuntime.unregister()` method to remove the registered callbacks.
+`MmdRuntime` 업데이트를 일시적으로 중단하려면 `MmdRuntime.unregister()` 메서드를 호출하여 등록된 콜백을 제거할 수 있습니다.
 
 ```typescript
 mmdRuntime.unregister(scene);
 ```
 
-### Playback Control
+### 재생 제어
 
-One of the core features of `MmdRuntime` is controlling MMD animation playback.
+`MmdRuntime`의 핵심 기능 중 하나는 MMD 애니메이션 재생을 제어하는 것입니다.
 
-`MmdRuntime` provides the following methods to control animation:
-- `playAnimation(): Promise<void>`: **Starts** animation playback.
-- `pauseAnimation(): void`: **Pauses** animation playback.
-- `seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void>`: **Moves the animation** to a specific frame. If `forceEvaluate` is set to `true`, the animation is evaluated immediately after moving. Otherwise, it is evaluated on the next `beforePhysics(): void` call.
-- `setManualAnimationDuration(frameTimeDuration: Nullable<number>): void`: **Manually sets** the total frame time of the animation. By default, the total length of the animation is automatically set to the longest among all MMD animations participating in evaluation. This method is useful when there are multiple animation clips or no animation clips. If `null` is provided, it returns to automatic mode.
+`MmdRuntime`은 애니메이션을 제어하기 위해 다음과 같은 메서드를 제공합니다:
+- `playAnimation(): Promise<void>`: 애니메이션 재생을 **시작**합니다.
+- `pauseAnimation(): void`: 애니메이션 재생을 **일시 정지**합니다.
+- `seekAnimation(frameTime: number, forceEvaluate: boolean = false): Promise<void>`: **애니메이션을 특정 프레임으로 이동**합니다. `forceEvaluate`가 `true`로 설정되면 이동 후 즉시 애니메이션이 평가됩니다. 그렇지 않으면 다음 `beforePhysics(): void` 호출 시 평가됩니다.
+- `setManualAnimationDuration(frameTimeDuration: Nullable<number>): void`: **애니메이션의 총 프레임 시간을 수동으로 설정**합니다. 기본적으로 애니메이션의 총 길이는 평가에 참여하는 모든 MMD 애니메이션 중 가장 긴 것으로 자동 설정됩니다. 이 메서드는 여러 애니메이션 클립이 있거나 애니메이션 클립이 없을 때 유용합니다. `null`이 제공되면 자동 모드로 돌아갑니다.
 
-`MmdRuntime` provides the following properties to check the animation state:
-- `isAnimationPlaying: boolean`: Boolean value indicating whether the animation is **currently playing**.
-- `timeScale: number`: Numeric value controlling the **animation playback speed**. Default is `1.0`.
-- `currentFrameTime: number`: Numeric value indicating the **current frame time** of the animation.
-- `currentTime: number`: Numeric value indicating the **current time** of the animation in seconds.
-- `animationFrameTimeDuration: number`: Numeric value indicating the **total frame time length** of the animation.
-- `animationDuration: number`: Numeric value indicating the **total length** of the animation in seconds.
+`MmdRuntime`은 애니메이션 상태를 확인하기 위해 다음과 같은 속성을 제공합니다:
+- `isAnimationPlaying: boolean`: 애니메이션이 **현재 재생 중**인지 나타내는 불린 값입니다.
+- `timeScale: number`: **애니메이션 재생 속도**를 제어하는 숫자 값입니다. 기본값은 `1.0`입니다.
+- `currentFrameTime: number`: 애니메이션의 **현재 프레임 시간**을 나타내는 숫자 값입니다.
+- `currentTime: number`: 애니메이션의 **현재 시간**을 초 단위로 나타내는 숫자 값입니다.
+- `animationFrameTimeDuration: number`: 애니메이션의 **총 프레임 시간 길이**를 나타내는 숫자 값입니다.
+- `animationDuration: number`: 애니메이션의 **총 길이**를 초 단위로 나타내는 숫자 값입니다.
 
 :::info
-`MmdRuntime` internally uses **frame time** to represent time. MMD animation plays at **30 frames per second**, so 1 second corresponds to 30 frame time. For example, if `currentFrameTime` is `60`, it means the animation has played for 2 seconds.
+`MmdRuntime`은 내부적으로 시간을 나타내기 위해 **프레임 시간**을 사용합니다. MMD 애니메이션은 **초당 30프레임**으로 재생되므로 1초는 30 프레임 시간에 해당합니다. 예를 들어, `currentFrameTime`이 `60`이면 애니메이션이 2초 동안 재생되었음을 의미합니다.
 :::
 
 ### Animatable
 
-`MmdRuntime` provides the ability to control **arbitrary animatable objects**.
+`MmdRuntime`은 **임의의 애니메이션 가능한 객체**를 제어하는 기능을 제공합니다.
 
-For MMD models, `MmdRuntime` **directly processes** animation calculation, but for objects other than MMD models, each object is **delegated** to calculate its own animation.
+MMD 모델의 경우 `MmdRuntime`이 **직접 애니메이션 계산을 처리**하지만, MMD 모델이 아닌 객체의 경우 각 객체가 자신의 애니메이션을 계산하도록 **위임**됩니다.
 
-These objects must implement the `IMmdRuntimeAnimatable` interface and can be registered via the `addAnimatable()` method of `MmdRuntime`.
+이러한 객체들은 `IMmdRuntimeAnimatable` 인터페이스를 구현해야 하며, `MmdRuntime`의 `addAnimatable()` 메서드를 통해 등록할 수 있습니다.
 
-A typical example implementing the `IMmdRuntimeAnimatable` interface is the `MmdCamera` class.
+`IMmdRuntimeAnimatable` 인터페이스를 구현하는 대표적인 예시는 `MmdCamera` 클래스입니다.
 
-Here is an example code registering an `MmdCamera` object to `MmdRuntime` and playing animation:
+다음은 `MmdCamera` 객체를 `MmdRuntime`에 등록하고 애니메이션을 재생하는 예시 코드입니다:
 
 ```typescript
-// initialize MmdRuntime
+// MmdRuntime 초기화
 const mmdRuntime = new MmdRuntime(scene, null);
 mmdRuntime.register(scene);
 
-// load VMD animation
+// VMD 애니메이션 로드
 const vmdLoader = new VmdLoader();
 const mmdAnimation = await vmdLoader.loadAsync("motion", "path/to/motion.vmd");
 
-// create MmdCamera and set animation
+// MmdCamera 생성 및 애니메이션 설정
 const camera = new MmdCamera();
 const runtimeAnimation = camera.createRuntimeAnimation(mmdAnimation);
 camera.setRuntimeAnimation(runtimeAnimation);
 
-// add MmdCamera to MmdRuntime and play animation
+// MmdCamera를 MmdRuntime에 추가하고 애니메이션 재생
 mmdRuntime.addAnimatable(camera);
 mmdRuntime.playAnimation();
 ```
 
-## MmdModel class
+## MmdModel 클래스
 
-`MmdModel` is a class representing an MMD model. `MmdModel` wraps the **root mesh** (a.k.a MMD Mesh) of the MMD model and provides interfaces to control the model's **bones, morphs, physics simulation**, etc.
+`MmdModel`은 MMD 모델을 나타내는 클래스입니다. `MmdModel`은 MMD 모델의 **루트 메시**(일명 MMD 메시)를 래핑하고 모델의 **본, 모프, 물리 시뮬레이션** 등을 제어하는 인터페이스를 제공합니다.
 
-`MmdModel` is basically controlled by `MmdRuntime` and can **only be created** via the `createMmdModel()` or `createMmdModelFromSkeleton()` methods of `MmdRuntime`.
+`MmdModel`은 기본적으로 `MmdRuntime`에 의해 제어되며, `MmdRuntime`의 `createMmdModel()` 또는 `createMmdModelFromSkeleton()` 메서드를 통해서**만 생성**할 수 있습니다.
 
-Here is an example code loading a PMX model and creating an `MmdModel`:
+다음은 PMX 모델을 로드하고 `MmdModel`을 생성하는 예시 코드입니다:
 
 ```typescript
-// initialize MmdRuntime
+// MmdRuntime 초기화
 const mmdRuntime = new MmdRuntime(scene, null);
 mmdRuntime.register(scene);
 
-// load VMD animation
+// VMD 애니메이션 로드
 const vmdLoader = new VmdLoader();
 const mmdAnimation = await vmdLoader.loadAsync("motion", "path/to/motion.vmd");
 
-// load PMX model
+// PMX 모델 로드
 const assetContainer = await LoadAssetContainerAsync("path/to/model.pmx", scene)
 assetContainer.addAllToScene();
 const rootMesh = assetContainer.meshes[0] as Mesh;
 
-// create MmdModel and set animation
+// MmdModel 생성 및 애니메이션 설정
 const mmdModel = mmdRuntime.createMmdModel(rootMesh);
 const runtimeAnimation = mmdModel.createRuntimeAnimation(mmdAnimation);
 mmdModel.setRuntimeAnimation(runtimeAnimation);
 
-// play animation
+// 애니메이션 재생
 mmdRuntime.playAnimation();
 ```
 
-From the moment the `MmdModel` instance is created, **various resources** of the MMD Mesh are managed by `MmdModel`. This includes `Mesh`, `Skeleton`, `Bone`, `Morph Target`, `Material`, etc.
+`MmdModel` 인스턴스가 생성되는 순간부터 MMD 메시의 **다양한 리소스**가 `MmdModel`에 의해 관리됩니다. 여기에는 `Mesh`, `Skeleton`, `Bone`, `Morph Target`, `Material` 등이 포함됩니다.
 
 :::warning
-**Directly accessing or modifying** resources managed by `MmdModel` is **not recommended**.
-Especially for `Skeleton`, since `MmdModel` overrides the calculation method internally, directly calling methods of the `Skeleton` or `Bone` objects managed by `MmdModel` may cause **unexpected behavior**.
+`MmdModel`에서 관리하는 리소스에 **직접 접근하거나 수정**하는 것은 **권장되지 않습니다**.
+특히 `Skeleton`의 경우 `MmdModel`이 내부적으로 계산 방법을 재정의하므로, `MmdModel`에서 관리하는 `Skeleton`이나 `Bone` 객체의 메서드를 직접 호출하면 **예상치 못한 동작**이 발생할 수 있습니다.
 :::
 
-Destroying an `MmdModel` removes the corresponding MMD Mesh from the runtime and releases all resources managed by the model.
+`MmdModel`을 파괴하면 해당 MMD 메시가 런타임에서 제거되고 모델에서 관리하던 모든 리소스가 해제됩니다.
 
 ```typescript
 mmdRuntime.destroyMmdModel(mmdModel);
 ```
 
-The main properties of the `MmdModel` object are as follows:
+`MmdModel` 객체의 주요 속성은 다음과 같습니다:
 
-- `mesh: MmdSkinnedMesh | TrimmedMmdSkinnedMesh`: The **root mesh** of the MMD model.
-- `skeleton: IMmdLinkedBoneContainer`: The **skeleton** of the MMD model.
-- `worldTransformMatrices: Float32Array`: Array of **world transform matrices** of the MMD model. Contains the world transform matrix of each bone.
-- `ikSolverStates: Uint8Array`: Array of **IK solver states** of the MMD model. Contains the activation state of each IK bone.
-- `rigidBodyStates: Uint8Array`: Array of **rigid body states** of the MMD model. Contains the activation state of each rigid body.
-- `runtimeBones: readonly IMmdRuntimeBone[]` : Array of `MmdRuntimeBone` objects representing the **bones** of the MMD model.
-- `morph: MmdMorphController`: The `MmdMorphController` object controlling the **morphs** of the MMD model.
+- `mesh: MmdSkinnedMesh | TrimmedMmdSkinnedMesh`: MMD 모델의 **루트 메시**입니다.
+- `skeleton: IMmdLinkedBoneContainer`: MMD 모델의 **스켈레톤**입니다.
+- `worldTransformMatrices: Float32Array`: MMD 모델의 **월드 변환 행렬 배열**입니다. 각 본의 월드 변환 행렬을 포함합니다.
+- `ikSolverStates: Uint8Array`: MMD 모델의 **IK 솔버 상태 배열**입니다. 각 IK 본의 활성화 상태를 포함합니다.
+- `rigidBodyStates: Uint8Array`: MMD 모델의 **강체 상태 배열**입니다. 각 강체의 활성화 상태를 포함합니다.
+- `runtimeBones: readonly IMmdRuntimeBone[]` : MMD 모델의 **본**을 나타내는 `MmdRuntimeBone` 객체의 배열입니다.
+- `morph: MmdMorphController`: MMD 모델의 **모프**를 제어하는 `MmdMorphController` 객체입니다.
 
-### MmdModel Creation Options
+### MmdModel 생성 옵션
 
-When creating an `MmdModel` using the `createMmdModel()` method of `MmdRuntime`, you can pass an **options object** as the second argument to customize the behavior of the model.
+`MmdRuntime`의 `createMmdModel()` 메서드를 사용하여 `MmdModel`을 생성할 때, 두 번째 인수로 **옵션 객체**를 전달하여 모델의 동작을 사용자 정의할 수 있습니다.
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(rootMesh, {
@@ -181,40 +181,40 @@ const mmdModel = mmdRuntime.createMmdModel(rootMesh, {
 });
 ```
 
-The options object has the following properties:
+옵션 객체는 다음과 같은 속성을 가집니다:
 
-- `materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<TMaterial>>`: A constructor function for a material proxy. If provided, the material proxy is created for each material of the MMD model and used to manipulate material parameters. This enables support for **material morphing**. For more details, see the [Enable Material Morphing](../enable-material-morphing) documentation. Default is `null`.
-- `buildPhysics: IMmdModelPhysicsCreationOptions | boolean`: Options for creating physics simulation. If `true` is provided, **Rigid Bodies and Constraints** are created based on the metadata of the MMD model. If an object of type `IMmdModelPhysicsCreationOptions` is provided, you can set options for creating Rigid Bodies and Constraints. for more details, see the [Apply Physics To MMD Models](../apply-physics-to-mmd-models) documentation. Default is `true`.
-- `trimMetadata: boolean`: If `true` is provided, unnecessary metadata used only during the creation of the MMD model is **removed from the MMD Mesh** after the creation of the model. This can **reduce memory usage**. However, if you want to recreate `MmdModel` from the same MMD Mesh later, you need to set this option to `false`. Default is `true`.
+- `materialProxyConstructor: Nullable<IMmdMaterialProxyConstructor<TMaterial>>`: 머티리얼 프록시의 생성자 함수입니다. 제공되면 MMD 모델의 각 머티리얼에 대해 머티리얼 프록시가 생성되고 머티리얼 매개변수를 조작하는 데 사용됩니다. 이를 통해 **머티리얼 모프**를 지원할 수 있습니다. 자세한 내용은 [머티리얼 모프 활성화](../enable-material-morphing) 문서를 참조하세요. 기본값은 `null`입니다.
+- `buildPhysics: IMmdModelPhysicsCreationOptions | boolean`: 물리 시뮬레이션 생성 옵션입니다. `true`가 제공되면 MMD 모델의 메타데이터를 기반으로 **강체와 제약 조건**이 생성됩니다. `IMmdModelPhysicsCreationOptions` 타입의 객체가 제공되면 강체와 제약 조건 생성에 대한 옵션을 설정할 수 있습니다. 자세한 내용은 [MMD 모델에 물리 적용](../apply-physics-to-mmd-models) 문서를 참조하세요. 기본값은 `true`입니다.
+- `trimMetadata: boolean`: `true`가 제공되면 MMD 모델 생성 중에만 사용되는 불필요한 메타데이터가 모델 생성 후 **MMD 메시에서 제거**됩니다. 이를 통해 **메모리 사용량을 줄일** 수 있습니다. 그러나 나중에 같은 MMD 메시에서 `MmdModel`을 다시 생성하려면 이 옵션을 `false`로 설정해야 합니다. 기본값은 `true`입니다.
 
-### MmdRuntimeBone class
+### MmdRuntimeBone 클래스
 
-`MmdRuntimeBone` is a class representing a **bone of an MMD model**. It wraps the Babylon.js `Bone` class and provides interfaces to control the bone's **Morph, IK, Append Transform**, etc.
+`MmdRuntimeBone`은 **MMD 모델의 본**을 나타내는 클래스입니다. Babylon.js `Bone` 클래스를 래핑하고 본의 **모프, IK, Append Transform** 등을 제어하는 인터페이스를 제공합니다.
 
-You can access the `MmdRuntimeBone` object via the `MmdModel.runtimeBones` property.
+`MmdModel.runtimeBones` 속성을 통해 `MmdRuntimeBone` 객체에 접근할 수 있습니다.
 
-The main properties of the `MmdRuntimeBone` object are as follows:
+`MmdRuntimeBone` 객체의 주요 속성은 다음과 같습니다:
 
-- `linkedBone: Bone`: The Babylon.js `Bone` object wrapped by `MmdRuntimeBone`.
-- `name: string`: The name of the bone.
-- `parentBone: Nullable<MmdRuntimeBone>`: The parent bone. If it is the root bone, it is `null`.
-- `childBones: readonly MmdRuntimeBone[]`: Array of child bones.
-- `transformOrder: number`: The transform order of the bone.
-- `flag: number`: PMX bone flag value.
-- `transformAfterPhysics: boolean`: Whether the transform is applied after physics simulation.
-- `worldMatrix: Float32Array`: The world transform matrix of the bone. This refers to part of the `MmdModel.worldTransformMatrices` array.
-- `ikSolverIndex: number`: The IK solver index of the bone. If it is not an IK bone, it is `-1`. You can check the IK activation state of the bone via the `MmdModel.ikSolverStates` array.
-- `rigidBodyIndices: readonly number[]`: Array of indices of rigid bodies connected to the bone. You can check the activation state of each rigid body via the `MmdModel.rigidBodyStates` array.
+- `linkedBone: Bone`: `MmdRuntimeBone`에 의해 래핑된 Babylon.js `Bone` 객체입니다.
+- `name: string`: 본의 이름입니다.
+- `parentBone: Nullable<MmdRuntimeBone>`: 부모 본입니다. 루트 본인 경우 `null`입니다.
+- `childBones: readonly MmdRuntimeBone[]`: 자식 본의 배열입니다.
+- `transformOrder: number`: 본의 변환 순서입니다.
+- `flag: number`: PMX 본 플래그 값입니다.
+- `transformAfterPhysics: boolean`: 물리 시뮬레이션 후에 변환이 적용되는지 여부입니다.
+- `worldMatrix: Float32Array`: 본의 월드 변환 행렬입니다. `MmdModel.worldTransformMatrices` 배열의 일부를 참조합니다.
+- `ikSolverIndex: number`: 본의 IK 솔버 인덱스입니다. IK 본이 아닌 경우 `-1`입니다. `MmdModel.ikSolverStates` 배열을 통해 본의 IK 활성화 상태를 확인할 수 있습니다.
+- `rigidBodyIndices: readonly number[]`: 본에 연결된 강체의 인덱스 배열입니다. `MmdModel.rigidBodyStates` 배열을 통해 각 강체의 활성화 상태를 확인할 수 있습니다.
 
-`MmdRuntimeBone` also provides the following methods:
+`MmdRuntimeBone`은 또한 다음과 같은 메서드를 제공합니다:
 
-- `getWorldMatrixToRef(target: Matrix): Matrix`: Copies the **world transform matrix** of the bone to the `target` matrix.
-- `getWorldTranslationToRef(target: Vector3): Vector3`: Copies the **world position** of the bone to the `target` vector.
-- `setWorldTranslation(source: DeepImmutable<Vector3>): void`: Sets the **world position** of the bone to the `source` vector.
+- `getWorldMatrixToRef(target: Matrix): Matrix`: 본의 **월드 변환 행렬**을 `target` 행렬에 복사합니다.
+- `getWorldTranslationToRef(target: Vector3): Vector3`: 본의 **월드 위치**를 `target` 벡터에 복사합니다.
+- `setWorldTranslation(source: DeepImmutable<Vector3>): void`: 본의 **월드 위치**를 `source` 벡터로 설정합니다.
 
-These properties and methods of `MmdRuntimeBone` can be used to **read or set** the state of the bone.
+`MmdRuntimeBone`의 이러한 속성과 메서드는 본의 상태를 **읽거나 설정**하는 데 사용할 수 있습니다.
 
-Here is an example code printing the world position of the センター (Center) bone of an MMD model using the methods of `MmdRuntimeBone`:
+다음은 `MmdRuntimeBone`의 메서드를 사용하여 MMD 모델의 センター (Center) 본의 월드 위치를 출력하는 예시 코드입니다:
 
 ```typescript
 const meshWorldMatrix = mmdModel.mesh.getWorldMatrix();
@@ -222,7 +222,7 @@ const boneWorldMatrix = new Matrix();
 
 const centerBone = mmdModel.runtimeBones.find(bone => bone.name === "センター")!;
 
-// The bone world matrix is based on model space, so you need to multiply the mesh world matrix.
+// 본 월드 행렬은 모델 공간을 기준으로 하므로 메시 월드 행렬을 곱해야 합니다.
 centerBone.getWorldMatrixToRef(boneWorldMatrix).multiplyToRef(meshWorldMatrix, boneWorldMatrix);
 
 const centerPosition = new Vector3();
@@ -231,45 +231,45 @@ boneWorldMatrix.getTranslationToRef(centerPosition);
 console.log(`Center bone world position: ${centerPosition.toString()}`);
 ```
 
-### MmdMorphController class
+### MmdMorphController 클래스
 
-`MmdMorphController` is a class that controls the **morphs of an MMD model**.
-`MmdMorphController` provides interfaces to control **Vertex Morph, Bone Morph, UV Morph, Material Morph**, etc.
+`MmdMorphController`는 **MMD 모델의 모프**를 제어하는 클래스입니다.
+`MmdMorphController`는 **버텍스 모프, 본 모프, UV 모프, 머티리얼 모프** 등을 제어하는 인터페이스를 제공합니다.
 
-You can access the `MmdMorphController` object via the `MmdModel.morph` property.
+`MmdModel.morph` 속성을 통해 `MmdMorphController` 객체에 접근할 수 있습니다.
 
-The main methods of the `MmdMorphController` object are as follows:
+`MmdMorphController` 객체의 주요 메서드는 다음과 같습니다:
 
-- `setMorphWeight(morphName: string, weight: number): void`: **Sets the weight** of the morph with the name `morphName` to `weight`. If the morph with the given name does not exist, nothing happens.
-- `getMorphWeight(morphName: string): number`: Returns the **current weight** of the morph with the name `morphName`. If the morph with the given name does not exist, returns `0`.
-- `getMorphIndices(morphName: string): readonly number[] | undefined`: Returns the **index array** of the morph with the name `morphName`. If the morph with the given name does not exist, returns `undefined`.
-- `setMorphWeightFromIndex(morphIndex: number, weight: number): void`: Sets the weight of the morph with the **index** `morphIndex` to `weight`. If the morph with the given index does not exist, nothing happens.
-- `getMorphWeightFromIndex(morphIndex: number): number`: Returns the current weight of the morph with the **index** `morphIndex`. If the morph with the given index does not exist, returns `undefined`.
-- `getMorphWeights(): Readonly<ArrayLike<number>>`: Returns the **weight array** of all morphs.
-- `resetMorphWeights(): void`: **Initializes** the weight of all morphs to `0`.
-- `update(): void`: **Updates the state** of the morphs. Usually called automatically by `MmdRuntime`, so you don't need to call it directly.
+- `setMorphWeight(morphName: string, weight: number): void`: 이름이 `morphName`인 모프의 **가중치를 설정**합니다. 주어진 이름의 모프가 존재하지 않으면 아무 일도 일어나지 않습니다.
+- `getMorphWeight(morphName: string): number`: 이름이 `morphName`인 모프의 **현재 가중치**를 반환합니다. 주어진 이름의 모프가 존재하지 않으면 `0`을 반환합니다.
+- `getMorphIndices(morphName: string): readonly number[] | undefined`: 이름이 `morphName`인 모프의 **인덱스 배열**을 반환합니다. 주어진 이름의 모프가 존재하지 않으면 `undefined`를 반환합니다.
+- `setMorphWeightFromIndex(morphIndex: number, weight: number): void`: **인덱스**가 `morphIndex`인 모프의 가중치를 `weight`로 설정합니다. 주어진 인덱스의 모프가 존재하지 않으면 아무 일도 일어나지 않습니다.
+- `getMorphWeightFromIndex(morphIndex: number): number`: **인덱스**가 `morphIndex`인 모프의 현재 가중치를 반환합니다. 주어진 인덱스의 모프가 존재하지 않으면 `undefined`를 반환합니다.
+- `getMorphWeights(): Readonly<ArrayLike<number>>`: 모든 모프의 **가중치 배열**을 반환합니다.
+- `resetMorphWeights(): void`: 모든 모프의 가중치를 `0`으로 **초기화**합니다.
+- `update(): void`: 모프의 **상태를 업데이트**합니다. 일반적으로 `MmdRuntime`에 의해 자동으로 호출되므로 직접 호출할 필요가 없습니다.
 
 :::info
-By default, `MmdMorphController` uses **indices internally** to control morphs. Therefore, methods that set or get weights using morph names internally convert names to indices, so in **performance-sensitive situations**, it is better to use methods that use **indices directly**.
+기본적으로 `MmdMorphController`는 모프를 제어하기 위해 **내부적으로 인덱스를 사용**합니다. 따라서 모프 이름을 사용하여 가중치를 설정하거나 가져오는 메서드는 내부적으로 이름을 인덱스로 변환하므로, **성능에 민감한 상황**에서는 **인덱스를 직접 사용**하는 메서드를 사용하는 것이 좋습니다.
 :::
 
-## Physics
+## 물리 시뮬레이션
 
-`MmdRuntime` uses an **external physics engine** implementation injected for physics simulation. babylon-mmd provides **three physics engine implementations**:
-- `MmdBulletPhysics`: Uses the **Bullet Physics** engine. Bullet Physics is a physics engine written in C++, and babylon-mmd provides an optimized **WebAssembly-compiled version**.
-- `MmdAmmoPhysics`: Uses the **Ammo.js** engine.
-- `MmdPhysics`: Uses the **Havok Physics** engine.
+`MmdRuntime`은 물리 시뮬레이션을 위해 주입된 **외부 물리 엔진** 구현을 사용합니다. babylon-mmd는 **세 가지 물리 엔진 구현**을 제공합니다:
+- `MmdBulletPhysics`: **Bullet Physics** 엔진을 사용합니다. Bullet Physics는 C++로 작성된 물리 엔진이며, babylon-mmd는 최적화된 **WebAssembly로 컴파일된 버전**을 제공합니다.
+- `MmdAmmoPhysics`: **Ammo.js** 엔진을 사용합니다.
+- `MmdPhysics`: **Havok Physics** 엔진을 사용합니다.
 
-To enable physics simulation in `MmdRuntime`, you need to provide an instance of one of these classes when creating `MmdRuntime`.
+`MmdRuntime`에서 물리 시뮬레이션을 활성화하려면 `MmdRuntime`을 생성할 때 이러한 클래스 중 하나의 인스턴스를 제공해야 합니다.
 
-For more details on how to set up physics simulation, see the [Apply Physics To MMD Models](../apply-physics-to-mmd-models) documentation.
+물리 시뮬레이션 설정 방법에 대한 자세한 내용은 [MMD 모델에 물리 적용](../apply-physics-to-mmd-models) 문서를 참조하세요.
 
-## WebAssembly Implementation
+## WebAssembly 구현
 
-Solve IK, Append Transform, and Morph processing in `MmdRuntime` are all implemented in **TypeScript** and handled by the browser's JavaScript engine.
+`MmdRuntime`에서 IK 해결, Append Transform, 모프 처리는 모두 **TypeScript**로 구현되어 브라우저의 JavaScript 엔진에서 처리됩니다.
 
-babylon-mmd also provides `MmdWasmRuntime` implemented in **WebAssembly (WASM)** for **faster performance**. `MmdWasmRuntime` provides almost the same API as `MmdRuntime` and processes Solve IK, Append Transform, Morph, and Physics simulation in WebAssembly for **better performance**.
+babylon-mmd는 또한 **더 빠른 성능**을 위해 **WebAssembly (WASM)**로 구현된 `MmdWasmRuntime`을 제공합니다. `MmdWasmRuntime`은 `MmdRuntime`과 거의 동일한 API를 제공하며, IK 해결, Append Transform, 모프, 물리 시뮬레이션을 WebAssembly에서 처리하여 **더 나은 성능**을 제공합니다.
 
-However, the WASM implementation is **difficult to customize** arbitrarily and may be **limited in special runtime environments** (e.g., React Native).
+그러나 WASM 구현은 **임의로 사용자 정의하기 어렵고** **특수한 런타임 환경**(예: React Native)에서는 **제한이 있을 수** 있습니다.
 
-For more details, see the [MMD WebAssembly Runtime](../mmd-webassembly-runtime) documentation.
+자세한 내용은 [MMD WebAssembly Runtime](../mmd-webassembly-runtime) 문서를 참조하세요.

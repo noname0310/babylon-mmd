@@ -1,43 +1,43 @@
 ---
 sidebar_position: 1
-sidebar_label: MMD Animation
+sidebar_label: MMD 애니메이션
 ---
 
-# MMD Animation
+# MMD 애니메이션
 
-`MmdAnimation` is a **container for storing** MMD model or camera animations.
+`MmdAnimation`은 MMD 모델이나 카메라 애니메이션을 **저장하는 컨테이너**입니다.
 
-You can **play animations** by binding this to an MMD model or camera.
+이를 MMD 모델이나 카메라에 바인딩하여 **애니메이션을 재생**할 수 있습니다.
 
-## Animation Runtime
+## 애니메이션 런타임
 
-The animation runtime is the **entity responsible for evaluating** animation data at time t and **binding it** to MMD models or cameras.
+애니메이션 런타임은 시간 t에서 애니메이션 데이터를 **평가하고** 이를 MMD 모델이나 카메라에 **바인딩하는 역할을 담당하는 엔티티**입니다.
 
-There are several types of runtimes, and you can use the following two runtime implementations to bind `MmdAnimation`:
+여러 종류의 런타임이 있으며, `MmdAnimation`을 바인딩하기 위해 다음 두 런타임 구현을 사용할 수 있습니다:
 
-- `MmdRuntimeModelAnimation`: Runtime for binding MMD model animations
-- `MmdRuntimeCameraAnimation`: Runtime for binding MMD camera animations
+- `MmdRuntimeModelAnimation`: MMD 모델 애니메이션을 바인딩하기 위한 런타임
+- `MmdRuntimeCameraAnimation`: MMD 카메라 애니메이션을 바인딩하기 위한 런타임
 
-The reason camera and model animation runtimes are provided separately is for **efficient tree-shaking**.
+카메라와 모델 애니메이션 런타임이 별도로 제공되는 이유는 **효율적인 트리 셰이킹**을 위해서입니다.
 
-If you only need MMD model animations, you can import just `MmdRuntimeModelAnimation`, and if you only need camera animations, you can import just `MmdRuntimeCameraAnimation`.
+MMD 모델 애니메이션만 필요한 경우 `MmdRuntimeModelAnimation`만 가져올 수 있고, 카메라 애니메이션만 필요한 경우 `MmdRuntimeCameraAnimation`만 가져올 수 있습니다.
 
-Animation runtimes basically operate by **executing side-effects** that add binding methods to the animation container's (`MmdAnimation`) prototype.
+애니메이션 런타임은 기본적으로 애니메이션 컨테이너(`MmdAnimation`)의 프로토타입에 바인딩 메서드를 추가하는 **사이드 이펙트를 실행**하여 작동합니다.
 
-Therefore, to use a runtime, you must **import the runtime** to execute its side-effects.
+따라서 런타임을 사용하려면 해당 사이드 이펙트를 실행하기 위해 **런타임을 가져와야** 합니다.
 
 ```ts
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 ```
 
-## Create Runtime Animation
+## 런타임 애니메이션 생성
 
-Runtime animations are created by the target to which they will be bound, such as `MmdCamera` or `MmdModel`.
+런타임 애니메이션은 `MmdCamera`나 `MmdModel`과 같이 바인딩될 대상에 의해 생성됩니다.
 
-This is because runtime animations have **characteristics dependent on their binding target**.
+이는 런타임 애니메이션이 **바인딩 대상에 의존적인 특성**을 가지기 때문입니다.
 
-You can create runtime animations by calling the `createRuntimeAnimation` method of `MmdCamera` or `MmdModel` as follows:
+다음과 같이 `MmdCamera`나 `MmdModel`의 `createRuntimeAnimation` 메서드를 호출하여 런타임 애니메이션을 생성할 수 있습니다:
 
 ```ts
 const camera: MmdCamera = ...;
@@ -47,78 +47,78 @@ const cameraAnimationHandle: MmdRuntimeAnimationHandle = camera.createRuntimeAni
 const modelAnimationHandle: MmdRuntimeAnimationHandle = model.createRuntimeAnimation(animation);
 ```
 
-The `createRuntimeAnimation` method takes an animation container as an argument and **returns a runtime animation handle**.
+`createRuntimeAnimation` 메서드는 애니메이션 컨테이너를 인수로 받아 **런타임 애니메이션 핸들을 반환**합니다.
 
-It's important to note that it returns a **handle** rather than the Runtime Animation object itself.
+런타임 애니메이션 객체 자체가 아닌 **핸들**을 반환한다는 점을 주목하는 것이 중요합니다.
 
-## MMD Runtime Animation Handle
+## MMD 런타임 애니메이션 핸들
 
-A runtime animation is an object that contains binding information along with the animation container.
+런타임 애니메이션은 애니메이션 컨테이너와 함께 바인딩 정보를 포함하는 객체입니다.
 
-Accessing the properties of this object is generally **only necessary when reading or modifying bindings**, and typically you don't need to modify these values directly.
+이 객체의 속성에 접근하는 것은 일반적으로 **바인딩을 읽거나 수정할 때만 필요**하며, 일반적으로 이러한 값을 직접 수정할 필요는 없습니다.
 
-Therefore, runtime animations are **controlled through Handle objects** by default.
+따라서 런타임 애니메이션은 기본적으로 **핸들 객체를 통해 제어**됩니다.
 
-If you need to access the runtime animation object, you can access it using the handle as a key in the `runtimeAnimations` map of `MmdCamera` or `MmdModel`.
+런타임 애니메이션 객체에 접근해야 하는 경우, `MmdCamera`나 `MmdModel`의 `runtimeAnimations` 맵에서 핸들을 키로 사용하여 접근할 수 있습니다.
 
 ```ts
 const cameraRuntimeAnimation = camera.runtimeAnimations.get(cameraAnimationHandle);
 const modelRuntimeAnimation = model.runtimeAnimations.get(modelAnimationHandle);
 ```
 
-## Lifecycle of Runtime Animations
+## 런타임 애니메이션의 생명주기
 
-Since runtime animations are objects dependent on `MmdCamera` or `MmdModel`, when the binding target is destroyed, **the runtime animation is also destroyed**.
+런타임 애니메이션은 `MmdCamera`나 `MmdModel`에 의존적인 객체이므로, 바인딩 대상이 파괴되면 **런타임 애니메이션도 함께 파괴됩니다**.
 
-However, if you no longer need a runtime animation, you can **explicitly destroy it** by calling the `destroyRuntimeAnimation` method of `MmdCamera` or `MmdModel`.
+하지만 런타임 애니메이션이 더 이상 필요하지 않다면, `MmdCamera`나 `MmdModel`의 `destroyRuntimeAnimation` 메서드를 호출하여 **명시적으로 파괴**할 수 있습니다.
 
 ```ts
 camera.destroyRuntimeAnimation(cameraAnimationHandle);
 model.destroyRuntimeAnimation(modelAnimationHandle);
 ```
 
-## Playing Runtime Animations
+## 런타임 애니메이션 재생
 
-`MmdCamera` or `MmdModel` can **only play one runtime animation at a time**.
-Therefore, to play a new runtime animation, you need to call the `setRuntimeAnimation` method to **replace the currently playing runtime animation**.
+`MmdCamera`나 `MmdModel`은 **한 번에 하나의 런타임 애니메이션만 재생**할 수 있습니다.
+따라서 새로운 런타임 애니메이션을 재생하려면 `setRuntimeAnimation` 메서드를 호출하여 **현재 재생 중인 런타임 애니메이션을 교체**해야 합니다.
 
 ```ts
 camera.setRuntimeAnimation(cameraAnimationHandle);
 model.setRuntimeAnimation(modelAnimationHandle);
 ```
 
-If you want to stop playing an animation, you can pass `null` as an argument to the `setRuntimeAnimation` method.
+애니메이션 재생을 중지하려면 `setRuntimeAnimation` 메서드의 인수로 `null`을 전달할 수 있습니다.
 
 ```ts
 camera.setRuntimeAnimation(null);
 model.setRuntimeAnimation(null);
 ```
 
-Runtime animations are **always evaluated and bound at the same time** by the MMD Runtime.
+런타임 애니메이션은 MMD 런타임에 의해 **항상 동시에 평가되고 바인딩**됩니다.
 
-Therefore, if you want to play multiple animations at different times, you need to **create a separate MMD Runtime for each animation**.
+따라서 여러 애니메이션을 서로 다른 시간에 재생하려면 **각 애니메이션마다 별도의 MMD 런타임을 생성**해야 합니다.
 
 :::info
-There is also ways to play multiple animations simultaneously using Composite Animation, but in this case only one runtime animation is playing internally.
+컴포지트 애니메이션을 사용하여 여러 애니메이션을 동시에 재생하는 방법도 있지만, 이 경우 내부적으로는 하나의 런타임 애니메이션만 재생됩니다.
 :::
 
-## MMD WASM Animation
+## MMD WASM 애니메이션
 
-If you're using `MmdWasmRuntime`, you can also play MMD animations using MMD animation evaluation and binding functionality **implemented in WebAssembly (WASM)**.
+`MmdWasmRuntime`을 사용하는 경우, **WebAssembly(WASM)로 구현된** MMD 애니메이션 평가 및 바인딩 기능을 사용하여 MMD 애니메이션을 재생할 수도 있습니다.
 
-In this case, **all animation calculations except setting Morph Target weights** are processed in WASM, so you can expect **high performance**.
+이 경우 **모프 타겟 가중치 설정을 제외한 모든 애니메이션 계산**이 WASM에서 처리되므로 **높은 성능**을 기대할 수 있습니다.
 
-To use MMD WASM animation, you need to import the `MmdWasmRuntimeModelAnimation` runtime to execute its side-effects.
+MMD WASM 애니메이션을 사용하려면 `MmdWasmRuntimeModelAnimation` 런타임을 가져와서 해당 사이드 이펙트를 실행해야 합니다.
 
 ```ts
 import "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 ``` 
 
 :::info
-WASM implementation is **not provided for camera animations**. This is because camera animations have much less computation compared to model animations, so there wouldn't be significant performance improvement even if implemented in WASM.
+**카메라 애니메이션에는 WASM 구현이 제공되지 않습니다**. 이는 카메라 애니메이션이 모델 애니메이션에 비해 계산량이 훨씬 적기 때문에 WASM으로 구현하더라도 성능 향상이 크지 않기 때문입니다.
 :::
 
-After that, you create an Animation container as `MmdWasmAnimation` and **bind it to** `MmdWasmModel`.
+그 후 애니메이션 컨테이너를 `MmdWasmAnimation`으로 생성하고 이를 `MmdWasmModel`에 **바인딩**합니다.
 
 ```ts
 const wasmModel: MmdWasmModel = ...;
@@ -128,17 +128,17 @@ const wasmModelAnimationHandle = wasmModel.createRuntimeAnimation(wasmAnimation)
 
 :::warning
 
-To directly access animation data on the WASM side, `MmdWasmAnimation` **internally copies and stores** `MmdAnimation` data in WASM memory.
+WASM 측에서 애니메이션 데이터에 직접 접근하기 위해 `MmdWasmAnimation`은 **내부적으로 `MmdAnimation` 데이터를 WASM 메모리에 복사하여 저장**합니다.
 
-Therefore, all `TypedArray` data that `MmdWasmAnimation` has **references the memory buffer** of the `WebAssembly.Memory` object.
+따라서 `MmdWasmAnimation`이 가진 모든 `TypedArray` 데이터는 **`WebAssembly.Memory` 객체의 메모리 버퍼를 참조**합니다.
 
-As a result, accessing this `TypedArray` data in multi-threading scenarios is **very dangerous**.
+결과적으로 멀티스레딩 시나리오에서 이 `TypedArray` 데이터에 접근하는 것은 **매우 위험**합니다.
 
 :::
 
-### Precautions When Using MMD WASM Animation
+### MMD WASM 애니메이션 사용 시 주의사항
 
-An important point to note is that memory management for `MmdWasmAnimation` is **not automatically handled by the GC**, so if you are no longer using it, you **must explicitly free the memory** by calling the `dispose` method.
+주목해야 할 중요한 점은 `MmdWasmAnimation`의 메모리 관리는 **GC에 의해 자동으로 처리되지 않으므로**, 더 이상 사용하지 않는 경우 `dispose` 메서드를 호출하여 **명시적으로 메모리를 해제**해야 한다는 것입니다.
 
 ```ts
 wasmAnimation.dispose();
