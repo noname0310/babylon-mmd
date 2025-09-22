@@ -1,15 +1,15 @@
 ---
 sidebar_position: 4
-sidebar_label: Enable Material Morphing
+sidebar_label: マーテリアルモーフィングの有効化
 ---
 
-# Enable Material Morphing
+# マーテリアルモーフィングの有効化
 
-MMD models support **material morphing**, a feature that allows controlling material parameters through animation.
+MMDモデルは**マーテリアルモーフィング**をサポートしており、これはアニメーションを通じてマーテリアルパラメータを制御できる機能です。
 
-This feature is typically used to turn parts of the MMD model on and off through animation.
+この機能は通常、アニメーションを通じてMMDモデルの一部をオンまたはオフにするために使用されます。
 
-This feature is **disabled by default** in babylon-mmd, but can be activated by passing a material proxy implementation when creating an `MmdModel` object.
+この機能は、babylon-mmdでは**デフォルトで無効**になっていますが、`MmdModel`オブジェクトを作成する際にマーテリアルプロキシインプリメンテーションを渡すことで有効化できます。
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
@@ -18,22 +18,22 @@ const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
 ```
 
 :::info
-If you import the "babylon-mmd" package root, material morphing will be **automatically enabled** through side-effects.
+「babylon-mmd」パッケージルートをインポートした場合、サイドエフェクトを通じてマーテリアルモーフィングが**自動的に有効**になります。
 
-While this is a convenience feature for ease of use, it's **recommended to explicitly enable** it by passing a material proxy as shown above.
+これは使いやすさのための便利機能ですが、上記のようにマーテリアルプロキシを渡して**明示的に有効化する**ことが**推奨**されます。
 :::
 
-## Material Proxy
+## マーテリアルプロキシ
 
-When manipulating material parameters, the MMD runtime **doesn't access materials directly** but rather through a material proxy.
+マーテリアルパラメータを操作する際、MMDランタイムは**マーテリアルに直接アクセスせず**、マーテリアルプロキシを通してアクセスします。
 
-This approach enables support for material morphing on MMD models that use **any type of material**.
+このアプローチにより、**任意のタイプのマーテリアル**を使用するMMDモデルでマーテリアルモーフィングのサポートが可能になります。
 
-babylon-mmd provides **two material proxies**, and you can also implement your own by creating a class that implements the `IMmdMaterialProxy` interface.
+babylon-mmdは**2つのマーテリアルプロキシ**を提供しており、`IMmdMaterialProxy`インターフェースを実装するクラスを作成することで独自のものを実装することもできます。
 
-- `MmdStandardMaterialProxy`: A material proxy for MMD models using `MmdStandardMaterial`
-- `StandardMaterialProxy`: A material proxy for MMD models using `StandardMaterial`
+- `MmdStandardMaterialProxy`：`MmdStandardMaterial`を使用するMMDモデル用のマーテリアルプロキシ
+- `StandardMaterialProxy`：`StandardMaterial`を使用するMMDモデル用のマーテリアルプロキシ
 
 :::warning
-If you pass a material proxy that's **not compatible** with the materials used by the MMD model, runtime errors may occur.
+MMDモデルで使用されているマーテリアルと**互換性のない**マーテリアルプロキシを渡すと、ランタイムエラーが発生する可能性があります。
 :::

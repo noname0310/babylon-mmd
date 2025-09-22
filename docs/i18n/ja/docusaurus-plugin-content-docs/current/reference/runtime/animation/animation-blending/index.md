@@ -1,11 +1,11 @@
 ---
 sidebar_position: 4
-sidebar_label: Animation Blending
+sidebar_label: アニメーションブレンディング
 ---
 
-# Animation Blending
+# アニメーションブレンディング
 
-babylon-mmd provides `MmdCompositeAnimation`, an animation container that supports **frame-perfect animation blending**.
+babylon-mmdは、**フレーム完璧なアニメーションブレンディング**をサポートする`MmdCompositeAnimation`アニメーションコンテナを提供します。
 
 <blockquote class="twitter-tweet" data-media-max-width="10000">
 <p lang="ja" dir="ltr">
@@ -22,31 +22,31 @@ November 14, 2023
 </blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
 
-*This video shows an example of using Composite Animation to **alternately play** two-person dance animations on a single MMD model.*
+*このビデオは、Composite Animationを使用して2人用のダンスアニメーションを1つのMMDモデルで**交互に再生**する例を示しています。*
 
-Credit:
-- Model:
+クレジット：
+- モデル：
   - YYB Hatsune Miku_10th by YYB
   - YYB Miku Default edit by YYB / HB-Squiddy / FreezyChan-3Dreams
   - YYB miku Crown Knight by YYB / Pilou la baka
-- Motion by srs / ATY
-- Camara by 小紋
-- Music: 
+- モーション by srs / ATY
+- カメラ by 小紋
+- ミュージック： 
   - 君にとって by Wonder-K 
 
 :::info
-You can also use Babylon.js's animation blending features by playing MMD animations with Babylon.js's `AnimationGroup`.
+Babylon.jsの`AnimationGroup`でMMDアニメーションを再生することにより、Babylon.jsのアニメーションブレンディング機能も使用できます。
 
-However, this section **does not discuss** `AnimationGroup`. For information on how to play MMD animations using `AnimationGroup`, refer to the [Use Babylon.js Animation Runtime](../use-babylonjs-animation-runtime#babylonjs-animation-group) document.
+ただし、このセクションでは`AnimationGroup`については**説明しません**。`AnimationGroup`を使用してMMDアニメーションを再生する方法については、[Use Babylon.js Animation Runtime](../use-babylonjs-animation-runtime#babylonjs-animation-group)ドキュメントを参照してください。
 :::
 
 ## MMD Composite Animation
 
-`MmdCompositeAnimation` is an animation container that **bundles and manages** multiple MMD Animations as one.
+`MmdCompositeAnimation`は、複数のMMD Animationを1つとして**バンドルして管理**するアニメーションコンテナです。
 
-Each animation is managed as an `MmdAnimationSpan` object that includes **start frame and end frame** information.
+各アニメーションは、**開始フレームと終了フレーム**の情報を含む`MmdAnimationSpan`オブジェクトとして管理されます。
 
-The following is example code for bundling two `MmdAnimation` objects into one `MmdCompositeAnimation`:
+以下は、2つの`MmdAnimation`オブジェクトを1つの`MmdCompositeAnimation`にバンドルするサンプルコードです：
 
 ```typescript
 const compositeAnimation = new MmdCompositeAnimation("composite");
@@ -57,48 +57,48 @@ compositeAnimation.addSpan(animationSpan1);
 compositeAnimation.addSpan(animationSpan2);
 ```
 
-In this case, **both animations** start from frame 0 and play until the `duration` frame.
+この場合、**両方のアニメーション**がフレーム0から開始し、`duration`フレームまで再生されます。
 
 ### MMD Animation Span
 
-The `MmdAnimationSpan` Constructor is as follows:
+`MmdAnimationSpan`コンストラクタは以下の通りです：
 
 ```typescript
 new MmdAnimationSpan(animation: MmdBindableAnimation, startFrame?: number, endFrame?: number, offset?: number, weight?: number): MmdAnimationSpan
 ```
 
-- `animation`: Animation container that can be bound to Camera or Model, such as `MmdAnimation` or `MmdModelAnimationContainer`
-- `startFrame`: Frame where the animation starts (**default**: animation.startFrame)
-- `endFrame`: Frame where the animation ends (**default**: animation.endFrame)
-- `offset`: Frame where this Span starts in the Composite Animation (**default**: 0)
-- `weight`: Weight used for Animation Blending (**default**: 1)
+- `animation`：`MmdAnimation`や`MmdModelAnimationContainer`など、カメラやモデルにバインド可能なアニメーションコンテナ
+- `startFrame`：アニメーションが開始するフレーム（**デフォルト**：animation.startFrame）
+- `endFrame`：アニメーションが終了するフレーム（**デフォルト**：animation.endFrame）
+- `offset`：このSpanがComposite Animationで開始するフレーム（**デフォルト**：0）
+- `weight`：アニメーションブレンディングに使用される重み（**デフォルト**：1）
 
-`MmdCompositeAnimation` **manages multiple** `AnimationSpan` objects, and each `AnimationSpan` can be **dynamically added or removed** during animation playback.
+`MmdCompositeAnimation`は**複数の**`AnimationSpan`オブジェクトを管理し、各`AnimationSpan`はアニメーション再生中に**動的に追加または削除**できます。
 
-### MMD Composite Animation Methods
+### MMD Composite Animationメソッド
 
-The `MmdCompositeAnimation` class provides the following methods:
+`MmdCompositeAnimation`クラスは以下のメソッドを提供します：
 
-- `addSpan(span: MmdAnimationSpan): void`: **Adds** an `MmdAnimationSpan`.
-- `removeSpan(span: MmdAnimationSpan): void`: **Removes** an `MmdAnimationSpan`.
-- `removeSpanFromIndex(index: number): void`: **Removes** an `MmdAnimationSpan` by index.
-- `get startFrame(): number`: **Returns** the start frame of this Composite Animation.
-- `get endFrame(): number`: **Returns** the end frame of this Composite Animation.
-- `get spans(): readonly MmdAnimationSpan[]`: **Returns** all currently registered `MmdAnimationSpan` objects.
+- `addSpan(span: MmdAnimationSpan): void`：`MmdAnimationSpan`を**追加**します。
+- `removeSpan(span: MmdAnimationSpan): void`：`MmdAnimationSpan`を**削除**します。
+- `removeSpanFromIndex(index: number): void`：インデックスで`MmdAnimationSpan`を**削除**します。
+- `get startFrame(): number`：このComposite Animationの開始フレームを**返します**。
+- `get endFrame(): number`：このComposite Animationの終了フレームを**返します**。
+- `get spans(): readonly MmdAnimationSpan[]`：現在登録されているすべての`MmdAnimationSpan`オブジェクトを**返します**。
 
-### MMD Animation Span Transition
+### MMD Animation Spanトランジション
 
-`MmdAnimationSpan` can set weights used for animation blending through the `weight` property. Additionally, a **convenience feature** is provided that sets `transition` frames at the beginning and end of `MmdAnimationSpan` to **smoothly control** weight changes from 0 to 1 when animations start, or from 1 to 0 when they end.
+`MmdAnimationSpan`は、`weight`プロパティを通じてアニメーションブレンディングに使用される重みを設定できます。さらに、`MmdAnimationSpan`の開始と終了に`transition`フレームを設定して、アニメーション開始時に重みが0から1に、または終了時に1から0に変化することを**スムーズに制御**する**便利機能**が提供されています。
 
-For this purpose, the `MmdAnimationSpan` class provides the following properties:
+この目的のために、`MmdAnimationSpan`クラスは以下のプロパティを提供します：
 
-- `MmdAnimationSpan.easeInFrameTime`: Sets the number of frames for weight to change **from 0 to 1** when the animation starts.
-- `MmdAnimationSpan.easeOutFrameTime`: Sets the number of frames for weight to change **from 1 to 0** when the animation ends.
-- `MmdAnimationSpan.easingFunction`: Sets the easing function used for weight changes. The **default is** `null`, in which case **linear change** is applied.
+- `MmdAnimationSpan.easeInFrameTime`：アニメーション開始時に重みが**0から1に変化**するフレーム数を設定します。
+- `MmdAnimationSpan.easeOutFrameTime`：アニメーション終了時に重みが**1から0に変化**するフレーム数を設定します。
+- `MmdAnimationSpan.easingFunction`：重み変化に使用されるイージング関数を設定します。**デフォルトは**`null`で、この場合**線形変化**が適用されます。
 
-For example, since MMD animations play at 30fps, setting both `easeInFrameTime` and `easeOutFrameTime` to 30 will cause weights to change for **1 second each** when animations start and end.
+例えば、MMDアニメーションは30fpsで再生されるため、`easeInFrameTime`と`easeOutFrameTime`の両方を30に設定すると、アニメーション開始時と終了時に**それぞれ1秒間**重みが変化します。
 
-The following is example code that applies transitions by setting both `easeInFrameTime` and `easeOutFrameTime` to 30:
+以下は、`easeInFrameTime`と`easeOutFrameTime`の両方を30に設定してトランジションを適用するサンプルコードです：
 
 ```typescript
 const animationSpan = new MmdAnimationSpan(mmdAnimation1);
@@ -111,14 +111,14 @@ compositeAnimation.addSpan(animationSpan);
 
 ## MMD Composite Runtime Animation
 
-`MmdCompositeAnimation` can also be used by **binding to** `MmdCamera` or `MmdModel` like other MMD animation containers. For binding, you need to **import the runtime** responsible for Animation Evaluation and Binding.
+`MmdCompositeAnimation`も、他のMMDアニメーションコンテナと同様に`MmdCamera`や`MmdModel`に**バインディング**して使用できます。バインディングのために、アニメーション評価とバインディングを担当する**ランタイムをインポート**する必要があります。
 
 ```typescript
 import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
 import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 ```
 
-After that, you can **bind** `MmdCompositeAnimation` using the `createRuntimeAnimation` method of `MmdCamera` or `MmdModel`.
+その後、`MmdCamera`や`MmdModel`の`createRuntimeAnimation`メソッドを使用して`MmdCompositeAnimation`を**バインディング**できます。
 
 ```typescript
 const camera: MmdCamera = ...;
@@ -128,18 +128,18 @@ const compositeAnimationHandle: MmdRuntimeAnimationHandle = camera.createRuntime
 const compositeAnimationHandle: MmdRuntimeAnimationHandle = model.createRuntimeAnimation(compositeAnimation);
 ```
 
-## Limitations
+## 制限事項
 
-MMD Composite Animation **directly accesses** evaluation results from property paths when blending multiple animations to read and write them.
+MMD Composite Animationは、複数のアニメーションをブレンディングする際に、プロパティパスから評価結果に**直接アクセス**してそれらを読み書きします。
 
-Therefore, it is **not compatible** with features like the WASM-side animation evaluation provided by `MmdWasmRuntime`, where there is a delay between animation evaluation and actual application to properties.
+そのため、`MmdWasmRuntime`が提供するWASM側でのアニメーション評価など、アニメーション評価とプロパティへの実際の適用の間に遅延がある機能とは**互換性がありません**。
 
-For example, when evaluating `MmdWasmAnimation` using `MmdWasmRuntimeModelAnimation` to perform animation evaluation on the WASM side, **blending with** `MmdCompositeAnimation` is **not supported**.
+例えば、`MmdWasmRuntimeModelAnimation`を使用して`MmdWasmAnimation`を評価し、WASM側でアニメーション評価を実行する場合、`MmdCompositeAnimation`との**ブレンディングはサポートされません**。
 
-Instead, when evaluating `MmdWasmAnimation` using `MmdRuntimeModelAnimation`, **blending with** `MmdCompositeAnimation` **is possible**.
+代わりに、`MmdRuntimeModelAnimation`を使用して`MmdWasmAnimation`を評価する場合、`MmdCompositeAnimation`との**ブレンディングは可能**です。
 
-## Example Code
+## サンプルコード
 
-Example code can be found in [compositeAnimationTestScene.ts](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/compositeAnimationTestScene.ts).
+サンプルコードは[compositeAnimationTestScene.ts](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/compositeAnimationTestScene.ts)で確認できます。
 
-In this example code, you can **adjust weights through the UI**, and you can see two animations **alternately playing** according to statically set frame numbers.
+このサンプルコードでは、**UIを通じて重みを調整**でき、静的に設定されたフレーム番号に従って2つのアニメーションが**交互に再生**される様子を見ることができます。

@@ -1,33 +1,33 @@
 ---
 sidebar_position: 6
-sidebar_label: Bullet Physics
+sidebar_label: バレット物理演算
 ---
 
-# Bullet Physics
+# バレット物理演算
 
-This section explains how to use the **Bullet Physics** engine binding in babylon-mmd.
+このセクションでは、babylon-mmdで**Bullet Physics**エンジンバインディングを使用する方法について説明します。
 
-## Bullet Physics Overview
+## Bullet Physics概要
 
-babylon-mmd uses the **Bullet Physics** engine for physics simulation of MMD models.
+babylon-mmdは、MMDモデルの物理シミュレーションに**Bullet Physics**エンジンを使用します。
 
-The Bullet Physics engine is an **open source physics engine** written in **C++** that supports collision detection and rigid body dynamics simulation.
+Bullet Physicsエンジンは、**C++**で書かれた**オープンソース物理エンジン**で、衝突検出とリジッドボディダイナミクスシミュレーションをサポートします。
 
-Typically, to use this engine, you would use the Ammo.js library, which is the C++ code compiled to WebAssembly (WASM) using **emscripten**.
+通常、このエンジンを使用するには、**emscripten**を使用してC++コードをWebAssembly (WASM)にコンパイルしたAmmo.jsライブラリを使用します。
 
-However, babylon-mmd takes a different approach by **not using emscripten**. Instead, it integrates the Bullet Physics engine into Rust source code through FFI, and then compiles it to WASM using wasm-bindgen.
+しかし、babylon-mmdは**emscriptenを使用しない**という異なるアプローチを取ります。代わりに、FFIを通じてBullet PhysicsエンジンをRustソースコードに統合し、その後wasm-bindgenを使用してWASMにコンパイルします。
 
-In this process, all Bullet Physics binding code is **manually written**, providing **better performance** compared to Ammo.js.
+このプロセスでは、すべてのBullet Physicsバインディングコードが**手動で書かれ**、Ammo.jsと比較して**優れたパフォーマンス**を提供します。
 
-## Bullet Physics Integration Forms
+## Bullet Physics統合フォーム
 
-The Bullet Physics engine is integrated into babylon-mmd in **two main forms**.
+Bullet Physicsエンジンは、babylon-mmdに**2つの主要なフォーム**で統合されています。
 
-### Bullet Physics JavaScript Binding
+### Bullet Physics JavaScriptバインディング
 
-This binding allows the Bullet Physics engine to be called directly from JavaScript. The binding is located in the `babylon-mmd/esm/Runtime/Optimized/Physics/Bind` directory.
+このバインディングにより、Bullet PhysicsエンジンをJavaScriptから直接呼び出すことができます。バインディングは`babylon-mmd/esm/Runtime/Optimized/Physics/Bind`ディレクトリにあります。
 
-Here's the code to create an MMD runtime using this approach:
+このアプローチを使用してMMDランタイムを作成するコードは以下の通りです：
 
 ```typescript
 const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPR());
@@ -38,46 +38,46 @@ physicsRuntime.register(scene);
 const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
 ```
 
-In this case, the `MultiPhysicsRuntime` class is an object that **processes physics simulations for multiple models in parallel**, allowing you to control the simulation.
+この場合、`MultiPhysicsRuntime`クラスは**複数のモデルの物理シミュレーションを並列処理する**オブジェクトで、シミュレーションを制御できます。
 
-### Using MmdWasmPhysics
+### MmdWasmPhysicsの使用
 
-This approach calls the Bullet Physics engine from the `MmdWasmRuntime` written in Rust. This method **doesn't use bindings exposed to JavaScript**, but directly calls the Bullet Physics engine from Rust, **reducing FFI overhead**.
+このアプローチは、Rustで書かれた`MmdWasmRuntime`からBullet Physicsエンジンを呼び出します。このメソッドは**JavaScriptに公開されたバインディングを使用せず**、Rustから直接Bullet Physicsエンジンを呼び出して、**FFIオーバーヘッドを削減**します。
 
-Here's the code to create an MMD runtime using this approach:
+このアプローチを使用してMMDランタイムを作成するコードは以下の通りです：
 
 ```typescript
 const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeMPR());
 const mmdRuntime = new MmdWasmRuntime(scene, new MmdWasmPhysics(mmdWasmInstance));
 ```
 
-In this case as well, you can control the physics simulation using the `MmdWasmPhysicsRuntimeImpl` class, which is similar to `MultiPhysicsRuntime`:
+この場合でも、`MultiPhysicsRuntime`と似た`MmdWasmPhysicsRuntimeImpl`クラスを使用して物理シミュレーションを制御できます：
 
 ```typescript
 const physicsRuntime = mmdRuntime.physics!.getImpl(MmdWasmPhysicsRuntimeImpl);
 ```
 
-The main difference is that `MultiPhysicsRuntime` **directly owns the WASM resources**, whereas `MmdWasmPhysicsRuntimeImpl` **references the WASM resources** owned by `MmdWasmRuntime`.
+主な違いは、`MultiPhysicsRuntime`が**WASMリソースを直接所有**するのに対し、`MmdWasmPhysicsRuntimeImpl`は`MmdWasmRuntime`が所有する**WASMリソースを参照**することです。
 
-## Memory Management of Bullet Physics Binding Objects
+## Bullet Physicsバインディングオブジェクトのメモリー管理
 
-The Bullet Physics engine binding uses **FinalizationRegistry** to manage memory.
+Bullet Physicsエンジンバインディングは、メモリーを管理するために**FinalizationRegistry**を使用します。
 
-Therefore, when directly using the binding code in the `babylon-mmd/esm/Runtime/Optimized/Physics/Bind` directory, **memory is automatically released**.
+したがって、`babylon-mmd/esm/Runtime/Optimized/Physics/Bind`ディレクトリのバインディングコードを直接使用する場合、**メモリーは自動的に解放**されます。
 
-If you want to manually control memory management, you can explicitly release memory by calling the `dispose()` method.
+メモリー管理を手動で制御したい場合は、`dispose()`メソッドを呼び出してメモリーを明示的に解放できます。
 
 ```typescript
 const rigidBody = new RigidBody(physicsRuntime, rbInfo);
-// Use rigidBody
-rigidBody.dispose(); // Explicitly release memory
+// rigidBodyを使用
+rigidBody.dispose(); // メモリーを明示的に解放
 ```
 
-## Using the Bullet Physics API
+## Bullet Physics APIの使用
 
-The Bullet Physics binding code in the `babylon-mmd/esm/Runtime/Optimized/Physics/Bind` directory can also be used for **general physics simulations** that aren't related to MMD models.
+`babylon-mmd/esm/Runtime/Optimized/Physics/Bind`ディレクトリのBullet Physicsバインディングコードは、MMDモデルに関連しない**一般的な物理シミュレーション**にも使用できます。
 
-Below is a simple example of using the Bullet Physics binding to make a cube fall to the ground:
+以下は、Bullet Physicsバインディングを使用してキューブを地面に落下させる簡単な例です：
 
 ```typescript
 const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeSPR());
@@ -126,54 +126,54 @@ scene.onBeforeRenderObservable.add(() => {
 });
 ```
 
-The Bullet Physics binding consists of **several components**, and you can select and use only the components you need depending on the situation.
+Bullet Physicsバインディングは**いくつかのコンポーネント**で構成されており、状況に応じて必要なコンポーネントのみを選択して使用できます。
 
-- `PhysicsShape`: A class representing collision shapes used in physics simulation.
-  - Corresponds to Bullet Physics' `btCollisionShape`.
-- `RigidBody`: A class representing rigid bodies used in physics simulation.
-  - Corresponds to Bullet Physics' `btRigidBody`.
-- `RigidBodyConstructionInfo`: A class containing information for creating rigid bodies.
-  - Corresponds to Bullet Physics' `btRigidBody::btRigidBodyConstructionInfo`.
-- `Constraint`: A class representing constraints used in physics simulation.
-  - Corresponds to Bullet Physics' `btTypedConstraint`.
-- `PhysicsWorld`: A class managing physics simulation.
-  - Corresponds to Bullet Physics' `btDynamicsWorld`.
-- `PhysicsRuntime`: A wrapper class for `PhysicsWorld` that includes logic for handling Buffered Evaluation.
+- `PhysicsShape`：物理シミュレーションで使用される衝突シェイプを表すクラス。
+  - Bullet Physicsの`btCollisionShape`に対応。
+- `RigidBody`：物理シミュレーションで使用されるリジッドボディを表すクラス。
+  - Bullet Physicsの`btRigidBody`に対応。
+- `RigidBodyConstructionInfo`：リジッドボディ作成のための情報を含むクラス。
+  - Bullet Physicsの`btRigidBody::btRigidBodyConstructionInfo`に対応。
+- `Constraint`：物理シミュレーションで使用されるコンストレイントを表すクラス。
+  - Bullet Physicsの`btTypedConstraint`に対応。
+- `PhysicsWorld`：物理シミュレーションを管理するクラス。
+  - Bullet Physicsの`btDynamicsWorld`に対応。
+- `PhysicsRuntime`：バッファード評価を処理するロジックを含む`PhysicsWorld`のラッパークラス。
 
-### Physics Shape
+### フィジックスシェイプ
 
-Physics Shape is a class representing collision shapes used in physics simulation.
+フィジックスシェイプは、物理シミュレーションで使用される衝突シェイプを表すクラスです。
 
-babylon-mmd provides the following Physics Shape classes:
+babylon-mmdは以下のフィジックスシェイプクラスを提供します：
 
-- `PhysicsBoxShape`: A class representing box collision shapes.
-  - Corresponds to Bullet Physics' `btBoxShape`.
-- `PhysicsSphereShape`: A class representing sphere collision shapes.
-  - Corresponds to Bullet Physics' `btSphereShape`.
-- `PhysicsCapsuleShape`: A class representing capsule collision shapes.
-  - Corresponds to Bullet Physics' `btCapsuleShape`.
-- `PhysicsStaticPlaneShape`: A class representing infinite plane collision shapes.
-  - Corresponds to Bullet Physics' `btStaticPlaneShape`.
+- `PhysicsBoxShape`：ボックス衝突シェイプを表すクラス。
+  - Bullet Physicsの`btBoxShape`に対応。
+- `PhysicsSphereShape`：スフィア衝突シェイプを表すクラス。
+  - Bullet Physicsの`btSphereShape`に対応。
+- `PhysicsCapsuleShape`：カプセル衝突シェイプを表すクラス。
+  - Bullet Physicsの`btCapsuleShape`に対応。
+- `PhysicsStaticPlaneShape`：無限プレーン衝突シェイプを表すクラス。
+  - Bullet Physicsの`btStaticPlaneShape`に対応。
 
-While Bullet Physics supports many other Physics Shapes, babylon-mmd has implemented **only the collision shape bindings needed for MMD models**.
+Bullet Physicsは他にも多くのフィジックスシェイプをサポートしていますが、babylon-mmdでは**MMDモデルに必要な衝突シェイプバインディングのみ**を実装しています。
 
-### Rigid Body
+### リジッドボディ
 
-RigidBody represents rigid bodies used in physics simulation.
+リジッドボディは、物理シミュレーションで使用されるリジッドボディを表します。
 
-To create a RigidBody class, you must **initialize it using** a `RigidBodyConstructionInfo` object.
+リジッドボディクラスを作成するには、`RigidBodyConstructionInfo`オブジェクトを使用して**初期化する必要**があります。
 
-The RigidBody class is provided in **two types of implementations**:
-- `RigidBody`: A class representing a single RigidBody object.
-- `RigidBodyBundle`: A class that can handle multiple RigidBody objects bundled as a single object.
+リジッドボディクラスは**2つのタイプのインプリメンテーション**で提供されます：
+- `RigidBody`：単一のリジッドボディオブジェクトを表すクラス。
+- `RigidBodyBundle`：複数のリジッドボディオブジェクトを単一のオブジェクトとしてバンドルして処理できるクラス。
 
-The `RigidBodyBundle` class provides **better performance** by improving Memory Locality between RigidBody objects when creating multiple RigidBody objects at once.
+`RigidBodyBundle`クラスは、複数のリジッドボディオブジェクトを一度に作成する際にリジッドボディオブジェクト間のメモリーローカリティを改善することで**優れたパフォーマンス**を提供します。
 
-To efficiently initialize `RigidBodyBundle`, the `RigidBodyConstructionInfoList` class is also provided.
+`RigidBodyBundle`を効率的に初期化するために、`RigidBodyConstructionInfoList`クラスも提供されています。
 
-The `RigidBodyConstructionInfoList` class is a class that can handle multiple RigidBodyConstructionInfo objects bundled as a single object.
+`RigidBodyConstructionInfoList`クラスは、複数のRigidBodyConstructionInfoオブジェクトを単一のオブジェクトとしてバンドルして処理できるクラスです。
 
-Here's an example of using `RigidBodyBundle`:
+以下は`RigidBodyBundle`を使用する例です：
 
 ```typescript
 const boxShape = new PhysicsBoxShape(runtime, new Vector3(1, 1, 1));
@@ -192,58 +192,58 @@ const boxRigidBodyBundle = new RigidBodyBundle(runtime, rbInfoList);
 world.addRigidBodyBundle(boxRigidBodyBundle, worldId);
 ```
 
-### Constraint
+### コンストレイント
 
-Constraint represents constraints used in physics simulation.
+コンストレイントは、物理シミュレーションで使用されるコンストレイントを表します。
 
-babylon-mmd provides the following Constraint classes:
+babylon-mmdは以下のコンストレイントクラスを提供します：
 
-- `Generic6DofConstraint`: A class representing 6 degrees of freedom constraints.
-  - Corresponds to Bullet Physics' `btGeneric6DofConstraint`.
-- `Generic6DofSpringConstraint`: A class representing 6 degrees of freedom constraints with springs.
-  - Corresponds to Bullet Physics' `btGeneric6DofSpringConstraint`.
+- `Generic6DofConstraint`：6自由度コンストレイントを表すクラス。
+  - Bullet Physicsの`btGeneric6DofConstraint`に対応。
+- `Generic6DofSpringConstraint`：スプリング付き6自由度コンストレイントを表すクラス。
+  - Bullet Physicsの`btGeneric6DofSpringConstraint`に対応。
 
-While Bullet Physics supports many other Constraints, babylon-mmd has implemented **only the constraint bindings needed for MMD models**.
+Bullet Physicsは他にも多くのコンストレイントをサポートしていますが、babylon-mmdでは**MMDモデルに必要なコンストレイントバインディングのみ**を実装しています。
 
-### Physics World
+### フィジックスワールド
 
-PhysicsWorld is a class that manages physics simulation.
+フィジックスワールドは、物理シミュレーションを管理するクラスです。
 
-The PhysicsWorld class is provided in **two types of implementations**:
-- `PhysicsWorld`: A class representing a single physics simulation world.
-- `MultiPhysicsWorld`: A class that processes multiple physics simulation worlds in parallel.
-  - APIs are provided for interaction between each world.
+フィジックスワールドクラスは**2つのタイプのインプリメンテーション**で提供されます：
+- `PhysicsWorld`：単一の物理シミュレーションワールドを表すクラス。
+- `MultiPhysicsWorld`：複数の物理シミュレーションワールドを並列処理するクラス。
+  - 各ワールド間の相互作用のためのAPIが提供されています。
 
-RigidBody and Constraint objects **must be added** to a PhysicsWorld or MultiPhysicsWorld object to participate in physics simulation.
+リジッドボディとコンストレイントオブジェクトは、物理シミュレーションに参加するために、フィジックスワールドまたはマルチフィジックスワールドオブジェクトに**追加する必要**があります。
 
-### Physics Runtime
+### フィジックスランタイム
 
-PhysicsRuntime is a wrapper class for PhysicsWorld that includes logic for handling **Buffered Evaluation**.
+フィジックスランタイムは、**バッファード評価**を処理するロジックを含むフィジックスワールドのラッパークラスです。
 
-The PhysicsRuntime class is provided in **three types of implementations**:
+フィジックスランタイムクラスは**3つのタイプのインプリメンテーション**で提供されます：
 
-- `NullPhysicsRuntime`: A class for using PhysicsWorld without a runtime.
-- `PhysicsRuntime`: A class that processes PhysicsWorld.
-- `MultiPhysicsRuntime`: A class that processes MultiPhysicsWorld.
+- `NullPhysicsRuntime`：ランタイムなしでフィジックスワールドを使用するためのクラス。
+- `PhysicsRuntime`：フィジックスワールドを処理するクラス。
+- `MultiPhysicsRuntime`：マルチフィジックスワールドを処理するクラス。
 
-The `PhysicsRuntime` and `MultiPhysicsRuntime` classes support Buffered Evaluation, which means that if the `PhysicsRuntime.evaluationType` property is set to `PhysicsRuntimeEvaluationType.Buffered` in an environment where **multi-threading is possible**, physics simulation will be processed in a **separate worker thread**.
+`PhysicsRuntime`と`MultiPhysicsRuntime`クラスはバッファード評価をサポートします。これは、**マルチスレッディングが可能な**環境で`PhysicsRuntime.evaluationType`プロパティが`PhysicsRuntimeEvaluationType.Buffered`に設定された場合、物理シミュレーションが**別のワーカースレッド**で処理されることを意味します。
 
 ```typescript
 physicsRuntime.evaluationType = PhysicsRuntimeEvaluationType.Buffered;
 ```
 
 :::info
-While the `PhysicsWorld` or `MultiPhysicsWorld` objects perform the task of properly handling synchronization using locks, implementing this directly is **very difficult**.
+`PhysicsWorld`または`MultiPhysicsWorld`オブジェクトは、ロックを使用した適切な同期処理のタスクを実行しますが、これを直接実装することは**非常に困難**です。
 
-Therefore, controlling physics simulation using `NullPhysicsRuntime` without a runtime when using Buffered Evaluation is a **very complex task** and is not recommended.
+したがって、バッファード評価を使用する際にランタイムなしで`NullPhysicsRuntime`を使用して物理シミュレーションを制御することは**非常に複雑なタスク**であり、推奨されません。
 :::
 
 :::info
-The Physics Runtime compatible with the MMD runtime is `MultiPhysicsRuntime`, and other Physics Runtimes are **not compatible** with the MMD runtime.
+MMDランタイムと互換性のあるフィジックスランタイムは`MultiPhysicsRuntime`であり、他のフィジックスランタイムはMMDランタイムと**互換性がありません**。
 :::
 
-## Additional Resources
+## 追加リソース
 
-The Bullet Physics binding was initially developed in the `babylon-bulletphysics` repository and later integrated into babylon-mmd.
+Bullet Physicsバインディングは、最初に`babylon-bulletphysics`リポジトリで開発され、後にbabylon-mmdに統合されました。
 
-Therefore, you can check out [more examples and test code](https://github.com/noname0310/babylon-bulletphysics/tree/main/src/Test/Scene) for the Bullet Physics binding in the `babylon-bulletphysics` repository.
+したがって、`babylon-bulletphysics`リポジトリでBullet Physicsバインディングの[より多くの例とテストコード](https://github.com/noname0310/babylon-bulletphysics/tree/main/src/Test/Scene)を確認できます。

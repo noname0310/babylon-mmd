@@ -1,44 +1,44 @@
 ---
 sidebar_position: 8
-sidebar_label: Audio Player
+sidebar_label: オーディオプレイヤー
 ---
 
-# Audio Player
+# オーディオプレイヤー
 
-This section explains how to play music by adding an Audio Player component to the MMD Runtime.
+このセクションでは、MMDランタイムにオーディオプレイヤーコンポーネントを追加して音楽を再生する方法について説明します。
 
-## IPlayer interface
+## IPlayerインターフェース
 
-MMD Runtime **updates animations** by default using the `Engine.getDeltaTime()` method.
+MMDランタイムは、デフォルトで`Engine.getDeltaTime()`メソッドを使用して**アニメーションを更新**します。
 
-However, when playing audio, the playback speed of the MMD Runtime must be **synchronized with the audio playback speed**. This is because the audio object serves as a kind of timer.
+しかし、オーディオを再生する際は、MMDランタイムの再生速度がオーディオ再生速度と**同期**していなければなりません。これは、オーディオオブジェクトが一種のタイマーとして機能するためです。
 
-babylon-mmd defines the methods that an (audio) player must implement through the `IPlayer` interface. By implementing all of these methods, the player can be used as a **synchronization target** for the MMD Runtime.
+babylon-mmdは、（オーディオ）プレイヤーが実装しなければならないメソッドを`IPlayer`インターフェースを通じて定義しています。これらのメソッドをすべて実装することで、プレイヤーはMMDランタイムの**同期ターゲット**として使用できます。
 
-Below is an example of setting up a `StreamAudioPlayer` class that implements the `IPlayer` interface in `MmdRuntime`:
+以下は、`IPlayer`インターフェースを実装する`StreamAudioPlayer`クラスを`MmdRuntime`に設定する例です：
 
 ```typescript
 const audioPlayer = new StreamAudioPlayer();
 mmdRuntime.setAudioPlayer(audioPlayer);
 ```
 
-## Audio Synchronization Method
+## オーディオ同期メソッド
 
-When an audio player is set, the MMD Runtime uses **quite complex logic** to update animations.
+オーディオプレイヤーが設定されると、MMDランタイムは**非常に複雑なロジック**を使用してアニメーションを更新します。
 
-Strictly speaking, when using an audio player, the MMD Runtime still uses the `Engine.getDeltaTime()` method to update animations by default. However, if the playback position of the audio player is **not synchronized** with the animation playback position, the animation playback position is adjusted to match the audio player's playback position.
+厳密に言うと、オーディオプレイヤーを使用する場合でも、MMDランタイムはデフォルトで`Engine.getDeltaTime()`メソッドを使用してアニメーションを更新します。ただし、オーディオプレイヤーの再生位置がアニメーション再生位置と**同期していない**場合、アニメーション再生位置がオーディオプレイヤーの再生位置に合わせて調整されます。
 
-In other words, when an audio player is set, the MMD Runtime **adjusts the animation's playback position** to match the audio player's playback position, but **does not use** the audio player as the main timer.
+つまり、オーディオプレイヤーが設定されると、MMDランタイムは**アニメーションの再生位置を調整**してオーディオプレイヤーの再生位置に合わせますが、オーディオプレイヤーをメインタイマーとして**使用しません**。
 
-Additionally, if the animation is longer than the audio, the animation should continue playing until the end even after the audio stops. Therefore, the audio itself **cannot be the main timer** for the MMD Runtime's playback.
+さらに、アニメーションがオーディオよりも長い場合、オーディオが停止した後でもアニメーションは最後まで再生を続ける必要があります。したがって、オーディオ自体がMMDランタイムの再生の**メインタイマーになることはできません**。
 
 ## StreamAudioPlayer
 
-babylon-mmd provides the `StreamAudioPlayer` class that implements the `IPlayer` interface.
+babylon-mmdは、`IPlayer`インターフェースを実装する`StreamAudioPlayer`クラスを提供します。
 
-This class uses `HTMLAudioElement` internally to play audio.
+このクラスは内部的に`HTMLAudioElement`を使用してオーディオを再生します。
 
-Here's an example of how to use it:
+使用方法の例は以下の通りです：
 
 ```typescript
 const audioPlayer = new StreamAudioPlayer(scene);
@@ -46,8 +46,8 @@ audioPlayer.source = "path/to/audio/file.mp3";
 mmdRuntime.setAudioPlayer(audioPlayer);
 ```
 
-The `StreamAudioPlayer` class takes a `Scene` object as an argument when created. This is to **bind the lifetime** of the `HTMLAudioElement` to the `Scene` object.
+`StreamAudioPlayer`クラスは、作成時に`Scene`オブジェクトを引数として取ります。これは、`HTMLAudioElement`のライフタイムを`Scene`オブジェクトに**バインド**するためです。
 
 :::warning
-If you specify `null` as the first argument of the `StreamAudioPlayer` class constructor, be aware that the `HTMLAudioElement` may **remain in memory** until the `dispose()` method is called.
+`StreamAudioPlayer`クラスのコンストラクタの第1引数として`null`を指定すると、`dispose()`メソッドが呼び出されるまで`HTMLAudioElement`が**メモリーに残る**可能性があることに注意してください。
 :::

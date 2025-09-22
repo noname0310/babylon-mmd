@@ -1,100 +1,100 @@
 ---
 sidebar_position: 7
-sidebar_label: Animation
+sidebar_label: アニメーション
 ---
 
-# Animation
+# アニメーション
 
-This section explains **how to play and evaluate MMD animation data**.
+このセクションでは、**MMDアニメーションデータの再生と評価方法**について説明します。
 
-## **MMD Animation Storage Forms and Evaluation/Binding Components**
+## **MMDアニメーションストレージフォームと評価/バインディングコンポーネント**
 
-MMD animation data is **primarily represented** as an `MmdAnimation` object.
+MMDアニメーションデータは**主に**`MmdAnimation`オブジェクトとして表現されます。
 
-However, it can be **converted and stored in various forms**, with different methods for evaluation and binding depending on the form.
+しかし、**さまざまなフォームに変換して保存**することができ、フォームに応じて評価とバインディングのメソッドが異なります。
 
-**Here are the various forms for storing MMD animation data:**
+**MMDアニメーションデータを保存するさまざまなフォームは以下の通りです：**
 
-| Storage Form | Description |
+| ストレージフォーム | 説明 |
 |---|---|
-| `MmdAnimation` | **Basic form** that stores MMD animation data as is |
-| `MmdWasmAnimation` | Form of MMD animation data **for acceleration** in `MmdWasmRuntime` |
-| `MmdAnimationCameraContainer` | Form that converts MMD animation data to Babylon.js `Animation` objects **(for cameras)** |
-| `MmdAnimationModelContainer` | Form that converts MMD animation data to Babylon.js `Animation` objects **(for models)** |
-| `AnimationGroup` | Form that converts MMD animation data to Babylon.js `AnimationGroup` objects |
-| `MmdCompositeAnimation` | Form that **combines multiple MMD animation data** into one |
+| `MmdAnimation` | MMDアニメーションデータをそのまま保存する**基本フォーム** |
+| `MmdWasmAnimation` | `MmdWasmRuntime`での**高速化のための**MMDアニメーションデータのフォーム |
+| `MmdAnimationCameraContainer` | MMDアニメーションデータをBabylon.jsの`Animation`オブジェクト**(カメラ用)**に変換したフォーム |
+| `MmdAnimationModelContainer` | MMDアニメーションデータをBabylon.jsの`Animation`オブジェクト**(モデル用)**に変換したフォーム |
+| `AnimationGroup` | MMDアニメーションデータをBabylon.jsの`AnimationGroup`オブジェクトに変換したフォーム |
+| `MmdCompositeAnimation` | **複数のMMDアニメーションデータを組み合わせた**フォーム |
 
-To apply the stored MMD animation data to models and cameras, **evaluation and binding processes** are required.
+保存されたMMDアニメーションデータをモデルやカメラに適用するには、**評価とバインディングプロセス**が必要です。
 
-The animation application process can be divided into **two main steps**: evaluation and binding.
-1. **Evaluation**: Evaluates MMD animation data for a specific time t, calculating transformation and weight values for each bone and morph target.
-2. **Binding**: Applies the evaluated values to the bones and morph targets of the model.
-   - The evaluated animation state is reflected in two elements:
-     - Setting the `position` and `rotationQuaternion` properties of the model's `Bone` to the evaluated values
-     - Appropriately calling the `setMorphWeightFromIndex` method of the model's `MmdMorphController` to set the morph target weights
+アニメーション適用プロセスは**2つの主要なステップ**に分けることができます：評価とバインディングです。
+1. **評価**：特定の時間tに対してMMDアニメーションデータを評価し、各ボーンとモーフターゲットの変換と重みの値を計算します。
+2. **バインディング**：評価された値をモデルのボーンとモーフターゲットに適用します。
+   - 評価されたアニメーション状態は2つの要素に反映されます：
+     - モデルの`Bone`の`position`と`rotationQuaternion`プロパティを評価された値に設定
+     - モデルの`MmdMorphController`の`setMorphWeightFromIndex`メソッドを適切に呼び出してモーフターゲットの重みを設定
 
-The components that perform these evaluation and binding processes **differ depending on the storage form** of the animation.
+これらの評価とバインディングプロセスを実行するコンポーネントは、**アニメーションのストレージフォームによって異なります**。
 
-**Components for evaluation and binding are as follows:**
+**評価とバインディングのコンポーネントは以下の通りです：**
 
-| Storage Form | Evaluation Component | Binding Component |
+| ストレージフォーム | 評価コンポーネント | バインディングコンポーネント |
 |---|---|---|
 | `MmdAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdRuntimeModelAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdRuntimeModelAnimation` |
-| `MmdWasmAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdWasmRuntimeModelAnimation` or `MmdRuntimeModelAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdWasmRuntimeModelAnimation` or `MmdRuntimeModelAnimation` |
+| `MmdWasmAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdWasmRuntimeModelAnimation` または `MmdRuntimeModelAnimation` | `MmdRuntimeCameraAnimation` <br/><br/> `MmdWasmRuntimeModelAnimation` または `MmdRuntimeModelAnimation` |
 | `MmdAnimationCameraContainer` <br/><br/> `MmdAnimationModelContainer` | `MmdAnimationCameraContainer` <br/><br/> `MmdAnimationModelContainer` | `MmdRuntimeCameraAnimationContainer` <br/><br/> `MmdRuntimeModelAnimationContainer` |
 | `AnimationGroup` | `AnimationGroup` | `AnimationGroup` |
 | `MmdCompositeAnimation` | `MmdCompositeRuntimeCameraAnimation` <br/><br/> `MmdCompositeRuntimeModelAnimation` | `MmdCompositeRuntimeCameraAnimation` <br/><br/> `MmdCompositeRuntimeModelAnimation` |
 
-### MMD Animation & MMD Runtime Animation
+### MMDアニメーション & MMDランタイムアニメーション
 
-MMD Runtime Animation is the **basic functionality** for MMD animation evaluation and binding provided by babylon-mmd.
+MMDランタイムアニメーションは、babylon-mmdが提供するMMDアニメーション評価とバインディングの**基本機能**です。
 
-This class provides functionality to **evaluate** `MmdAnimation` and **bind** it to models and cameras.
+このクラスは、`MmdAnimation`を**評価**し、モデルとカメラに**バインディング**する機能を提供します。
 
-It provides the following two classes for this purpose:
-- `MmdRuntimeModelAnimation`: Class for applying animation to MMD models
-- `MmdRuntimeCameraAnimation`: Class for applying animation to MMD cameras
+この目的のために以下の2つのクラスを提供します：
+- `MmdRuntimeModelAnimation`：MMDモデルにアニメーションを適用するクラス
+- `MmdRuntimeCameraAnimation`：MMDカメラにアニメーションを適用するクラス
 
-This method is the **most fundamental way** to play MMD animations and provides **excellent performance**.
+このメソッドは、MMDアニメーションを再生する**最も基本的な方法**であり、**優れたパフォーマンス**を提供します。
 
-For more details, refer to the [MMD Animation](./mmd-animation) document.
+詳細については、[MMD Animation](./mmd-animation)ドキュメントを参照してください。
 
-### MMD WASM Animation & MMD WASM Runtime Animation
+### MMD WASMアニメーション & MMD WASMランタイムアニメーション
 
-MMD WASM Runtime Animation is a functionality for MMD animation evaluation and binding **implemented in WebAssembly**.
+MMD WASMランタイムアニメーションは、**WebAssemblyで実装された**MMDアニメーション評価とバインディング機能です。
 
-This class provides functionality to evaluate `MmdWasmAnimation` and bind it to models.
+このクラスは、`MmdWasmAnimation`を評価し、モデルにバインディングする機能を提供します。
 
-This method provides the **highest performance** among the ways to play MMD animations.
+このメソッドは、MMDアニメーションを再生する方法の中で**最高のパフォーマンス**を提供します。
 
-For more details, refer to the [MMD Animation](./mmd-animation) document.
+詳細については、[MMD Animation](./mmd-animation)ドキュメントを参照してください。
 
 ### MMD AnimationContainer & MMD Runtime AnimationContainer
 
-MMD AnimationContainer provide functionality to **evaluate MMD animations using** Babylon.js's `Animation` and **bind them** to models and cameras.
+MMD AnimationContainerは、Babylon.jsの`Animation`を**使用してMMDアニメーションを評価**し、モデルとカメラに**バインディング**する機能を提供します。
 
-Runtimes are provided for `MmdCameraAnimationContainer` and `MmdModelAnimationContainer` classes to enable binding:
-- `MmdRuntimeModelAnimationContainer`: Class for applying animation to MMD models
-- `MmdRuntimeCameraAnimationContainer`: Class for applying animation to MMD cameras
+バインディングを可能にするために、`MmdCameraAnimationContainer`と`MmdModelAnimationContainer`クラスのランタイムが提供されます：
+- `MmdRuntimeModelAnimationContainer`：MMDモデルにアニメーションを適用するクラス
+- `MmdRuntimeCameraAnimationContainer`：MMDカメラにアニメーションを適用するクラス
 
-The **advantage** of this method is that it can utilize Babylon.js's animation container system.
+このメソッドの**利点**は、Babylon.jsのアニメーションコンテナシステムを活用できることです。
 
-For more details, refer to the [Use Babylon.js Animation Runtime](./use-babylonjs-animation-runtime) document.
+詳細については、[Use Babylon.js Animation Runtime](./use-babylonjs-animation-runtime)ドキュメントを参照してください。
 
 ### Babylon.js AnimationGroup
 
-You can **handle all evaluation and binding** of MMD animations using Babylon.js's `AnimationGroup`.
+Babylon.jsの`AnimationGroup`を使用して、MMDアニメーションの**すべての評価とバインディングを処理**できます。
 
-For this purpose, babylon-mmd provides the `MmdModelAnimationContainer.createAnimationGroup` method that **converts** `MmdAnimation` to `AnimationGroup`.
+この目的のために、babylon-mmdは`MmdAnimation`を`AnimationGroup`に**変換**する`MmdModelAnimationContainer.createAnimationGroup`メソッドを提供します。
 
-The **advantage** of this method is that it can fully utilize Babylon.js's animation system.
+このメソッドの**利点**は、Babylon.jsのアニメーションシステムを完全に活用できることです。
 
-For more details, refer to the [Use Babylon.js Animation Runtime](./use-babylonjs-animation-runtime) document.
+詳細については、[Use Babylon.js Animation Runtime](./use-babylonjs-animation-runtime)ドキュメントを参照してください。
 
-### Animation Blending
+### アニメーションブレンディング
 
-babylon-mmd provides an animation runtime that supports **frame-perfect MMD animation blending**.
+babylon-mmdは、**フレーム完璧なMMDアニメーションブレンディング**をサポートするアニメーションランタイムを提供します。
 
-For this purpose, the `MmdCompositeAnimation` animation container class is provided, and the `MmdCompositeRuntimeCameraAnimation` and `MmdCompositeRuntimeModelAnimation` classes are provided to **evaluate and bind** it.
+この目的のために、`MmdCompositeAnimation`アニメーションコンテナクラスが提供され、それを**評価とバインディング**するために`MmdCompositeRuntimeCameraAnimation`と`MmdCompositeRuntimeModelAnimation`クラスが提供されます。
 
-For more details, refer to the [Animation Blending](./animation-blending) document.
+詳細については、[Animation Blending](./animation-blending)ドキュメントを参照してください。

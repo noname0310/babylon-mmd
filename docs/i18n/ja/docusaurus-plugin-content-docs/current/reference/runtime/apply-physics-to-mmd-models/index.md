@@ -1,43 +1,43 @@
 ---
 sidebar_position: 5
-sidebar_label: Apply Physics To MMD Models
+sidebar_label: MMDモデルに物理を適用
 ---
 
-# Apply Physics To MMD Models
+# MMDモデルに物理を適用
 
-This section explains how to apply **physics simulation** to MMD models.
+このセクションでは、MMDモデルに**物理シミュレーション**を適用する方法について説明します。
 
-MMD models support **physics simulation**, allowing you to apply physical effects to the model's bones using a physics engine.
+MMDモデルは**物理シミュレーション**をサポートしており、物理エンジンを使用してモデルのボーンに物理効果を適用できます。
 
-babylon-mmd provides **various options** to implement this. You can review the characteristics of each option and choose the one that best fits your usage scenario.
+babylon-mmdは、これを実装するための**様々なオプション**を提供します。各オプションの特性を確認し、使用シナリオに最も適したものを選択できます。
 
-## Physics Engine Options
+## 物理エンジンオプション
 
-babylon-mmd supports **three physics engines** to handle MMD physics simulation:
+babylon-mmdは、MMD物理シミュレーションを処理するために**3つの物理エンジン**をサポートします：
 
-- **Bullet Physics**: The physics engine used by MMD. It is compiled to WebAssembly using Rust wasm-bindgen and included in the babylon-mmd package.
-- **Ammo.js**: An Emscripten-based JavaScript port of Bullet Physics. It is provided as a WebAssembly binary compiled with Emscripten.
-- **Havok Physics**: A commercial physics engine supported by Babylon.js. It is provided as a WebAssembly binary.
+- **Bullet Physics**：MMDで使用される物理エンジン。Rust wasm-bindgenを使用してWebAssemblyにコンパイルされ、babylon-mmdパッケージに含まれています。
+- **Ammo.js**：Bullet PhysicsのEmscriptenベースのJavaScriptポート。EmscriptenでコンパイルされたWebAssemblyバイナリとして提供されます。
+- **Havok Physics**：Babylon.jsでサポートされる商用物理エンジン。WebAssemblyバイナリとして提供されます。
 
-Here are the characteristics of each physics engine when applied to MMD models:
+MMDモデルに適用した場合の各物理エンジンの特性は以下の通りです：
 
-| Physics Engine   | Performance       | Stability        | Portability      | Ease of Use      |
+| 物理エンジン   | パフォーマンス       | 安定性        | ポータビリティ      | 使いやすさ      |
 |------------------|-------------------|------------------|------------------|------------------|
-| Bullet Physics | ★★★★☆ - **Optimized binding** | ★★★★★ - **Excellent MMD behavior reproduction** | ★★★☆☆ - Available only in environments that support WebAssembly | ★★★☆☆ - Relatively less developer experience consideration in API |
-| Ammo.js | ★★★☆☆ - Performance degradation due to auto-generated binding | ★★★☆☆ - Good MMD behavior reproduction, but relatively higher crash possibility | ★★★★★ - **Can be used in environments without WebAssembly support** when using asm.js build | ★★★★★ - **Good compatibility and convenience** with Babylon.js |
-| Havok Physics | ★★★★★ - **Optimized binding, faster engine performance** | ★☆☆☆☆ - Poor MMD behavior reproduction, severe numerical instability | ★★★☆☆ - Available only in environments that support WebAssembly | ★★★★★ - **Good compatibility and convenience** with Babylon.js |
+| Bullet Physics | ★★★★☆ - **最適化されたバインディング** | ★★★★★ - **優秀なMMD動作再現** | ★★★☆☆ - WebAssemblyをサポートする環境でのみ利用可能 | ★★★☆☆ - APIで開発者エクスペリエンスの配慮が相対的に少ない |
+| Ammo.js | ★★★☆☆ - 自動生成バインディングによるパフォーマンス低下 | ★★★☆☆ - 良好なMMD動作再現、しかし相対的に高いクラッシュ可能性 | ★★★★★ - **asm.jsビルドを使用時、WebAssemblyサポートなしの環境でも使用可能** | ★★★★★ - **Babylon.jsとの良好な互換性と利便性** |
+| Havok Physics | ★★★★★ - **最適化されたバインディング、より高速なエンジンパフォーマンス** | ★☆☆☆☆ - 悪いMMD動作再現、深刻な数値不安定性 | ★★★☆☆ - WebAssemblyをサポートする環境でのみ利用可能 | ★★★★★ - **Babylon.jsとの良好な互換性と利便性** |
 
-Below, we explain how to initialize each physics engine.
+以下、各物理エンジンの初期化方法について説明します。
 
-### Bullet Physics Implementation
+### Bullet Physicsインプリメンテーション
 
-You can use the Bullet Physics engine to process MMD physics simulation.
+Bullet Physicsエンジンを使用してMMD物理シミュレーションを処理できます。
 
-This Bullet Physics engine is compiled to WebAssembly after C++ to Rust **FFI binding** and is included as part of the babylon-mmd package.
+このBullet Physicsエンジンは、C++からRustへの**FFIバインディング**後にWebAssemblyにコンパイルされ、babylon-mmdパッケージの一部として含まれています。
 
-It is a **completely independent binding** from Ammo.js, providing **better performance and stability**.
+Ammo.jsとは**完全に独立したバインディング**で、**優れたパフォーマンスと安定性**を提供します。
 
-Below is an example code creating `MmdRuntime` using the Bullet Physics engine:
+以下は、Bullet Physicsエンジンを使用して`MmdRuntime`を作成するサンプルコードです：
 
 ```typescript
 const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeSPR());
@@ -48,22 +48,22 @@ physicsRuntime.register(scene);
 const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
 ```
 
-To use the Bullet Physics engine, you must first **load the WebAssembly binary** provided by babylon-mmd. This can be done using the `getMmdWasmInstance()` function.
+Bullet Physicsエンジンを使用するには、まずbabylon-mmdが提供する**WebAssemblyバイナリをロード**する必要があります。これは`getMmdWasmInstance()`ファンクションを使用して行うことができます。
 
-Here, you can choose one of **four WebAssembly instance types**:
-- `MmdWasmInstanceTypeSPR`: **Single-threaded, Physics, Release Build**
-- `MmdWasmInstanceTypeSPD`: **Single-threaded, Physics, Debug Build**
-- `MmdWasmInstanceTypeMPR`: **Multi-threaded, Physics, Release Build**
-- `MmdWasmInstanceTypeMPD`: **Multi-threaded, Physics, Debug Build**
+ここで、**4つのWebAssemblyインスタンスタイプ**のうち1つを選択できます：
+- `MmdWasmInstanceTypeSPR`：**シングルスレッド、フィジックス、リリースビルド**
+- `MmdWasmInstanceTypeSPD`：**シングルスレッド、フィジックス、デバッグビルド**
+- `MmdWasmInstanceTypeMPR`：**マルチスレッド、フィジックス、リリースビルド**
+- `MmdWasmInstanceTypeMPD`：**マルチスレッド、フィジックス、デバッグビルド**
 
-The multi-threaded version only works in environments that support **`SharedArrayBuffer`**. Choose the appropriate binary depending on your environment.
+マルチスレッドバージョンは**`SharedArrayBuffer`**をサポートする環境でのみ動作します。環境に応じて適切なバイナリを選択してください。
 
-In the example above, the **single-threaded release build** is used.
+上記の例では、**シングルスレッドリリースビルド**を使用しています。
 ```typescript
 const mmdWasmInstance = await getMmdWasmInstance(new MmdWasmInstanceTypeSPR());
 ```
 
-The `MultiPhysicsRuntime` class is a runtime class that processes physics simulation using the Bullet Physics engine. After creating an instance of `MultiPhysicsRuntime`, **set the gravity vector** and **register update callbacks** to the `Scene`.
+`MultiPhysicsRuntime`クラスは、Bullet Physicsエンジンを使用して物理シミュレーションを処理するランタイムクラスです。`MultiPhysicsRuntime`のインスタンスを作成した後、**重力ベクターを設定**し、`Scene`に**アップデートコールバックを登録**します。
 
 ```typescript
 const physicsRuntime = new MultiPhysicsRuntime(mmdWasmInstance);
@@ -71,29 +71,29 @@ physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
 physicsRuntime.register(scene);
 ```
 
-You can use various methods provided by `MultiPhysicsRuntime` to control physics simulation, such as **setting gravity** or directly adding **RigidBody or Constraint**. For more details, see the [Bullet Physics](../bullet-physics) documentation.
+`MultiPhysicsRuntime`が提供する様々なメソッドを使用して、**重力の設定**や**リジッドボディやコンストレイントの直接追加**など、物理シミュレーションを制御できます。詳細については、[Bullet Physics](../bullet-physics)ドキュメントを参照してください。
 
 :::info
-If you're using `MmdWasmRuntime`, you can use `MmdWasmPhysics` instead.
+`MmdWasmRuntime`を使用している場合は、代わりに`MmdWasmPhysics`を使用できます。
 
-This uses the same code internally, but it **eliminates the JavaScript-to-WASM binding** layer, providing **better performance**.
+これは内部的に同じコードを使用しますが、**JavaScriptからWASMへのバインディング**レイヤーを排除し、**優れたパフォーマンス**を提供します。
 
 ```typescript
 const mmdRuntime = new MmdWasmRuntime(mmdWasmInstance, scene, new MmdWasmPhysics(scene));
 
 const physicsRuntime = mmdRuntime.physics!.getImpl(MmdWasmPhysicsRuntimeImpl);
 
-// This code can be omitted as the gravity in physics worlds created
-// by the MMD WASM runtime is set to (0, -9.8*10, 0) by default
+// MMD WASMランタイムによって作成された物理ワールドの重力は
+// デフォルトで(0, -9.8*10, 0)に設定されるため、このコードは省略可能です
 physicsRuntime.setGravity(new Vector3(0, -9.8 * 10, 0));
 ```
 :::
 
-### Ammo.js Implementation
+### Ammo.jsインプリメンテーション
 
-Ammo.js is a **JavaScript port** of the Bullet Physics engine compiled with Emscripten. You can use it to process MMD physics simulation.
+Ammo.jsは、EmscriptenでコンパイルされたBullet Physicsエンジンの**JavaScriptポート**です。これを使用してMMD物理シミュレーションを処理できます。
 
-Below is an example code creating `MmdRuntime` using Ammo.js:
+以下は、Ammo.jsを使用して`MmdRuntime`を作成するサンプルコードです：
 
 ```typescript
 import ammo from "babylon-mmd/esm/Runtime/Physics/External/ammo.wasm";
@@ -105,19 +105,19 @@ scene.enablePhysics(new Vector3(0, -9.8 * 10, 0), physicsPlugin);
 const mmdRuntime = new MmdRuntime(scene, new MmdAmmoPhysics(scene));
 ```
 
-The babylon-mmd package includes the **Bullet Physics 3.25 version** compiled with Emscripten as the `ammo.wasm` binary. You can import it from the path `"babylon-mmd/esm/Runtime/Physics/External/ammo.wasm"`.
+babylon-mmdパッケージには、Emscriptenでコンパイルされた**Bullet Physics 3.25バージョン**が`ammo.wasm`バイナリとして含まれています。これは`"babylon-mmd/esm/Runtime/Physics/External/ammo.wasm"`パスからインポートできます。
 
 :::info
-Ammo.js has some **instability issues with constraints** for certain data, so it is recommended to use the Bullet Physics engine if possible.
+Ammo.jsは特定のデータに対して**コンストレイントの不安定性問題**があるため、可能であればBullet Physicsエンジンの使用が推奨されます。
 :::
 
-You can also use Babylon.js PhysicsPluginV1 interface to manage the Ammo.js physics engine. For more details, see the [Babylon.js Physics](https://doc.babylonjs.com/legacy/physics/) documentation.
+Babylon.js PhysicsPluginV1インターフェースを使用してAmmo.js物理エンジンを管理することもできます。詳細については、[Babylon.js Physics](https://doc.babylonjs.com/legacy/physics/)ドキュメントを参照してください。
 
-### Havok Physics Implementation
+### Havok Physicsインプリメンテーション
 
-You can use the **Havok Physics engine** to process MMD physics simulation.
+**Havok Physicsエンジン**を使用してMMD物理シミュレーションを処理できます。
 
-Below is an example code creating `MmdRuntime` using the Havok Physics engine:
+以下は、Havok Physicsエンジンを使用して`MmdRuntime`を作成するサンプルコードです：
 
 ```typescript
 import havok from "@babylonjs/havok";
@@ -130,14 +130,14 @@ const mmdRuntime = new MmdRuntime(scene, new MmdPhysics(scene));
 ```
 
 :::info
-The Havok Physics engine does not have **good numerical stability**, so it may **not be suitable** for MMD physics simulation. It is recommended to use the Bullet Physics engine if possible.
+Havok Physicsエンジンは**良好な数値安定性**を持たないため、MMD物理シミュレーションには**適さない可能性**があります。可能であればBullet Physicsエンジンの使用が推奨されます。
 :::
 
-You can also use Babylon.js PhysicsPluginV2 interface to manage the Havok Physics engine. For more details, see the [Babylon.js Physics V2](https://doc.babylonjs.com/features/featuresDeepDive/physics/usingPhysicsEngine) documentation.
+Babylon.js PhysicsPluginV2インターフェースを使用してHavok Physicsエンジンを管理することもできます。詳細については、[Babylon.js Physics V2](https://doc.babylonjs.com/features/featuresDeepDive/physics/usingPhysicsEngine)ドキュメントを参照してください。
 
-## Build Physics Of MMD Model
+## MMDモデルの物理ビルド
 
-After creating the `MmdRuntime` instance with one of the above physics engines, you can create an `MmdModel` instance with `buildPhysics` option set to `true` to **enable physics simulation** on the MMD model.
+上記の物理エンジンのいずれかで`MmdRuntime`インスタンスを作成した後、`buildPhysics`オプションを`true`に設定して`MmdModel`インスタンスを作成することで、MMDモデルで**物理シミュレーションを有効**にできます。
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
@@ -145,11 +145,11 @@ const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
 });
 ```
 
-When the `buildPhysics` option is set to `true`, the MMD runtime **automatically creates** RigidBody and Constraint for the MMD model based on the **physics data defined in the PMX file**.
+`buildPhysics`オプションが`true`に設定されると、MMDランタイムは**PMXファイルで定義された物理データ**に基づいて、MMDモデルのリジッドボディとコンストレイントを**自動的に作成**します。
 
-## Build Physics Options
+## 物理ビルドオプション
 
-When creating an `MmdModel` instance with physics enabled, you can pass **additional options** to customize the physics simulation.
+物理を有効にして`MmdModel`インスタンスを作成する際、物理シミュレーションをカスタマイズするための**追加オプション**を渡すことができます。
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
@@ -161,27 +161,25 @@ const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
 });
 ```
 
-The available options are as follows:
-- `worldId`: You can specify a **custom world ID** for the physics simulation. If not specified, a new world ID is automatically assigned.
-- `kinematicSharedWorldIds`: You can specify an array of world IDs to **share kinematic objects**. This is useful when you want to share kinematic objects between multiple MMD models.
-- `disableOffsetForConstraintFrame`: You can specify whether to disable the offset for the constraint frame. If your model's constraint is **not working correctly**, try setting this option to `true`.
+利用可能なオプションは以下の通りです：
+- `worldId`：物理シミュレーションの**カスタムワールドID**を指定できます。指定されない場合、新しいワールドIDが自動的に割り当てられます。
+- `kinematicSharedWorldIds`：**キネマティックオブジェクトを共有する**ワールドIDの配列を指定できます。これは、複数のMMDモデル間でキネマティックオブジェクトを共有したい場合に便利です。
+- `disableOffsetForConstraintFrame`：コンストレイントフレームのオフセットを無効にするかどうかを指定できます。モデルのコンストレイントが**正しく動作しない**場合、このオプションを`true`に設定してみてください。
 
-### Multi-World Physics Simulation
+### マルチワールド物理シミュレーション
 
-First, the `worldId` and `kinematicSharedWorldIds` options control the physics simulation world. These options are **only valid when using Bullet Physics** as the physics backend. The Bullet Physics API in babylon-mmd provides the ability to create **multiple physics worlds**, process them with multi-threading, and synchronize between worlds. 
+まず、`worldId`と`kinematicSharedWorldIds`オプションは物理シミュレーションワールドを制御します。これらのオプションは**Bullet Physicsを物理バックエンドとして使用する場合にのみ有効**です。babylon-mmdのBullet Physics APIは、**複数の物理ワールド**を作成し、マルチスレッドで処理し、ワールド間で同期する機能を提供します。
 
-By default, whenever an MMD model is created, each model gets its **own independent physics world**. However, if you specify a certain ID using the `worldId` option, it will reuse that world if a physics world with that ID already exists. This allows **multiple MMD models to share the same physics world**.
+デフォルトでは、MMDモデルが作成されるたびに、各モデルは**独自の独立した物理ワールド**を取得します。しかし、`worldId`オプションを使用して特定のIDを指定すると、そのIDの物理ワールドが既に存在する場合はそのワールドを再利用します。これにより、**複数のMMDモデルが同じ物理ワールドを共有**できます。
 
-Additionally, if you want to share kinematic objects between different worlds, you can use the `kinematicSharedWorldIds` option to specify a list of world IDs to share. With this option, **kinematic bodies** of MMD models belonging to different worlds can **interact with each other** in their respective worlds.
+さらに、異なるワールド間でキネマティックオブジェクトを共有したい場合は、`kinematicSharedWorldIds`オプションを使用して共有するワールドIDのリストを指定できます。このオプションにより、異なるワールドに属するMMDモデルの**キネマティックボディ**が、それぞれのワールドで**相互作用**できるようになります。
 
-### Fix Constraint Behavior
+### コンストレイント動作の修正
 
-The `disableOffsetForConstraintFrame` option is used when constraints in the MMD model are **not working correctly**. By default, this option is set to `false`. 
+`disableOffsetForConstraintFrame`オプションは、MMDモデルのコンストレイントが**正しく動作しない**場合に使用されます。デフォルトでは、このオプションは`false`に設定されています。
 
-MMD processes physics simulation using **Bullet Physics version 2.75**. However, in the newer Bullet Physics version 3.25, the behavior of constraints has changed, which can cause problems where constraints don't work correctly in some MMD models.
+MMDは**Bullet Physics バージョン2.75**を使用して物理シミュレーションを処理します。しかし、新しいBullet Physics バージョン3.25では、コンストレイントの動作が変更されており、一部のMMDモデルでコンストレイントが正しく動作しない問題が発生する可能性があります。
 
-Setting this option to `true` makes the Constraint Solver work in the **same way as version 2.75**, which can solve these issues. If your MMD model's constraints aren't working as expected, try setting this option to `true`.
+このオプションを`true`に設定すると、コンストレイントソルバーが**バージョン2.75と同じ方法**で動作し、これらの問題を解決できます。MMDモデルのコンストレイントが期待通りに動作しない場合は、このオプションを`true`に設定してみてください。
 
-However, be aware that the older constraint solver tends to have **more severe numerical instability**.
-
-
+ただし、古いコンストレイントソルバーは**より深刻な数値不安定性**を持つ傾向があることに注意してください。

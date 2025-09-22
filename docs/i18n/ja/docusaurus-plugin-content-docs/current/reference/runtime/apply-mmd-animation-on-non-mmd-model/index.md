@@ -1,19 +1,19 @@
 ---
 sidebar_position: 9
-sidebar_label: Apply MMD Animation on Non-MMD Model
+sidebar_label: 非MMDモデルにMMDアニメーションを適用
 ---
 
-# Apply MMD Animation on Non-MMD Model
+# 非MMDモデルにMMDアニメーションを適用
 
-MMD animations are generally designed to be compatible with MMD models that follow the **semi-standard bone structure** (準標準ボーン構造).
+MMDアニメーションは、一般的に**準標準ボーン構造**に従うMMDモデルと互換性があるように設計されています。
 
-However, babylon-mmd also supports applying MMD animations to **Humanoid models**.
+しかし、babylon-mmdは**ヒューマノイドモデル**にMMDアニメーションを適用することもサポートしています。
 
-## Humanoid Model
+## ヒューマノイドモデル
 
-A Humanoid model refers to models that follow the bone structure of **Unity's Humanoid Rig** and the **Mixamo rig**.
+ヒューマノイドモデルは、**UnityのHumanoid Rig**と**Mixamo rig**のボーン構造に従うモデルを指します。
 
-Humanoid model bone structure is as follows:
+ヒューマノイドモデルのボーン構造は以下の通りです：
 
 ```typescript title="babylon-mmd/Loader/Util/mmdHumanoidMapper.ts"
 /**
@@ -87,9 +87,9 @@ Humanoid model bone structure is as follows:
 
 ## Humanoid MMD
 
-`HumanoidMmd` is a **helper class** for applying MMD animations to Humanoid models.
+`HumanoidMmd`は、ヒューマノイドモデルにMMDアニメーションを適用するための**ヘルパークラス**です。
 
-Using this class, you can create a **proxy semi-standard skeleton** to generate an `MmdModel` and apply MMD animations to Humanoid models using **real-time retargeting**.
+このクラスを使用して、**プロキシ準標準スケルトン**を作成して`MmdModel`を生成し、**リアルタイムリターゲティング**を使用してヒューマノイドモデルにMMDアニメーションを適用できます。
 
 ```typescript
 const mmdRuntime = new MmdRuntime(scene);
@@ -163,7 +163,7 @@ const mmdModel = humanoidMmd.createMmdModelFromHumanoid(
 );
 ```
 
-The signature of the function that creates an `MmdModel` from a Humanoid model is as follows:
+ヒューマノイドモデルから`MmdModel`を作成するファンクションのシグネチャは以下の通りです：
 
 ```typescript
 HumanoidMmd.createMmdModelFromHumanoid<T extends IMmdModel>(
@@ -175,43 +175,43 @@ HumanoidMmd.createMmdModelFromHumanoid<T extends IMmdModel>(
 ```
 
 - **mmdRuntime: `IMmdRuntime<MmdModel>`**
-  - Can be an instance of the `MmdRuntime` class or the `MmdWasmRuntime` class.
+  - `MmdRuntime`クラスまたは`MmdWasmRuntime`クラスのインスタンスが可能です。
 
 - **humanoidMesh: `Mesh`**
-  - The mesh that will store the MMD metadata. This mesh is treated as an MMD model through **duck-typing**.
-  - After the `MmdModel` is created, this mesh will satisfy the `MmdSkinnedMesh` interface.
+  - MMDメタデータを格納するメッシュ。このメッシュは**ダックタイピング**を通じてMMDモデルとして扱われます。
+  - `MmdModel`が作成された後、このメッシュは`MmdSkinnedMesh`インターフェースを満たします。
 
 - **meshes: `readonly Mesh[]`**
-  - An array of meshes that make up the Humanoid model. `HumanoidMmd` searches for the **Skeleton and MorphTargetMerger** in this array of meshes when initializing the `MmdModel`.
-  - Therefore, if you want to use Morph Target animation, you **must include** the meshes containing Morph Targets in this array.
+  - ヒューマノイドモデルを構成するメッシュの配列。`HumanoidMmd`は、`MmdModel`の初期化時にこのメッシュ配列で**スケルトンとモーフターゲットマージャー**を検索します。
+  - したがって、モーフターゲットアニメーションを使用したい場合は、モーフターゲットを含むメッシュをこの配列に**含める必要**があります。
 
 - **options: `ICreateMmdModelFromHumanoidOptions`**
   - **boneMap: `{ [key: string]: string }`**
-    - The bone name map of the Humanoid model.
-    - Unity's Humanoid Rig doesn't fix bone names to specific strings, so users need to **specify the bone name map directly**.
+    - ヒューマノイドモデルのボーン名マップ。
+    - UnityのHumanoid Rigはボーン名を特定の文字列に固定しないため、ユーザーは**ボーン名マップを直接指定**する必要があります。
   - **morphMap: `{ [key: string]: string }`**
-    - The morph target name map of the Humanoid model.
-    - If the Humanoid model includes morph targets equivalent to MMD Morphs such as あ, い, う, え, お, etc., you can **map them** using this option to specify the morph target name map.
-    - If this option is not specified, it will look for morph targets with the **same names** as the MMD Morphs.
+    - ヒューマノイドモデルのモーフターゲット名マップ。
+    - ヒューマノイドモデルに「あ」、「い」、「う」、「え」、「お」などのMMDモーフに相当するモーフターゲットが含まれている場合、このオプションを使用してそれらを**マッピング**し、モーフターゲット名マップを指定できます。
+    - このオプションが指定されない場合、MMDモーフと**同じ名前**のモーフターゲットを探します。
   - **transformOffset?: `Matrix`**
-    - The transformation matrix to apply to the **root bone** of the Humanoid model.
-    - This option is necessary when the model's World Transform is **rotated in a specific direction** in its Rest pose.
-    - For example, GLTF models have a **180-degree rotation** applied to the root node around the y-axis when imported into Babylon.js, so you need to use this option to specify the root node of the Skeleton.
-    - Also, some models have Skeleton Transforms that are **not identity**. In this case, you can also use this option to correct the World Transform in the Rest pose.
+    - ヒューマノイドモデルの**ルートボーン**に適用するトランスフォームマトリックス。
+    - このオプションは、モデルのワールドトランスフォームがレストポーズで**特定の方向に回転**している場合に必要です。
+    - 例えば、GLTFモデルはBabylon.jsにインポートされる際にy軸周りに**180度の回転**がルートノードに適用されるため、このオプションを使用してスケルトンのルートノードを指定する必要があります。
+    - また、一部のモデルは**アイデンティティではない**スケルトントランスフォームを持っています。この場合も、このオプションを使用してレストポーズのワールドトランスフォームを修正できます。
 
 :::warning
-All options need to be **carefully configured**. If the boneMap is incorrect or the transformOffset is improperly set, the MMD animation may not be applied correctly to the Humanoid model.
+すべてのオプションは**慎重に設定**する必要があります。boneMapが間違っていたり、transformOffsetが不適切に設定されている場合、MMDアニメーションがヒューマノイドモデルに正しく適用されない可能性があります。
 :::
 
-### Rest Pose Configuration
+### レストポーズ設定
 
-You also need to set the model's rest pose to an **A-pose**.
+また、モデルのレストポーズを**Aポーズ**に設定する必要があります。
 
-`HumanoidMmd` considers the pose at the time of binding as the **Rest pose**.
+`HumanoidMmd`は、バインディング時のポーズを**レストポーズ**として考慮します。
 
-Therefore, if the model is in a T-pose, you need to **adjust the angle of the arms** to create an A-pose before binding.
+したがって、モデルがTポーズの場合、バインディング前に**腕の角度を調整**してAポーズを作成する必要があります。
 
-The following code is an example of adjusting the arms to an A-pose:
+以下のコードは、腕をAポーズに調整する例です：
 
 ```typecript title="src/Test/Scene/humanoidMmdTestScene2.ts"
 const modelMesh = modelLoadResult.meshes[1] as Mesh;
@@ -225,9 +225,9 @@ const modelMesh = modelLoadResult.meshes[1] as Mesh;
 }
 ```
 
-## Application Example
+## アプリケーション例
 
-Here's an example of applying MMD animations to a Humanoid model using babylon-mmd's Humanoid model support feature:
+以下は、babylon-mmdのヒューマノイドモデルサポート機能を使用してヒューマノイドモデルにMMDアニメーションを適用する例です：
 
 <blockquote class="twitter-tweet" data-media-max-width="10000">
 <p lang="ja" dir="ltr">
@@ -244,14 +244,14 @@ Here's an example of applying MMD animations to a Humanoid model using babylon-m
 </blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
 
-*Model: あまとうさぎ's [カリン](https://booth.pm/ja/items/3470989)*
+*モデル: あまとうさぎの[カリン](https://booth.pm/ja/items/3470989)*
 
-The code for this demo can be found in [babylon-mmd's test code](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/humanoidMmdTestScene2.ts).
+このデモのコードは[babylon-mmdのテストコード](https://github.com/noname0310/babylon-mmd/blob/main/src/Test/Scene/humanoidMmdTestScene2.ts)で確認できます。
 
-## Limitations
+## 制限事項
 
-- Humanoid MMD has many parts that are **hard-coded and implemented ad-hoc**. Therefore, it may not work perfectly for all Humanoid models.
-- Humanoid MMD performs retargeting in **real-time**, which may result in lower performance compared to MMD models.
-- Humanoid MMD **does not handle physics simulation**. If you want to apply physics simulation to a Non-MMD model, you need to implement the simulation Solver yourself.
+- ヒューマノイドMMDには**ハードコードされてアドホックに実装**された部分が多くあります。そのため、すべてのヒューマノイドモデルで完璧に動作しない可能性があります。
+- ヒューマノイドMMDは**リアルタイム**でリターゲティングを実行するため、MMDモデルと比較してパフォーマンスが低下する可能性があります。
+- ヒューマノイドMMDは**物理シミュレーションを処理しません**。非MMDモデルに物理シミュレーションを適用したい場合は、シミュレーションソルバーを自分で実装する必要があります。
 
-Therefore, when possible, it is recommended to **convert non-MMD models to PMX format** and use them as MMD models.
+したがって、可能な場合は、**非MMDモデルをPMXフォーマットに変換**してMMDモデルとして使用することが推奨されます。

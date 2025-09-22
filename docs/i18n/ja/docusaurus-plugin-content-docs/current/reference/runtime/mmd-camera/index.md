@@ -1,44 +1,44 @@
 ---
 sidebar_position: 1
-sidebar_label: MMD Camera
+sidebar_label: MMD カメラ
 ---
 
-# MMD Camera
+# MMD カメラ
 
-This section describes the **`MmdCamera`** class and the **`IMmdCamera`** interface, which reproduce the camera behavior of MMD.
+このセクションでは、MMDのカメラ動作を再現する**`MmdCamera`**クラスと**`IMmdCamera`**インターフェースについて説明します。
 
-## MmdCamera class
+## MmdCameraクラス
 
 ![Orbit Camera](@site/docs/reference/runtime/mmd-camera/orbit-camera.png)
-*Visual representation of the MMD camera orbit path*
+*MMDカメラのオービットパスの視覚的表現*
 
-The camera in MMD is an **Orbit Camera** that rotates around a center position.
-The **`MmdCamera`** class reproduces this, and therefore the parameters for controlling the camera are as follows:
+MMDのカメラは、センターポジションを中心に回転する**オービットカメラ**です。
+**`MmdCamera`**クラスはこれを再現しており、そのためカメラを制御するパラメータは以下の通りです：
 
-- **position** (Vector3) - Orbit center position
-- **rotation** (Vector3) - Yaw Pitch Roll
-- **distance** (number) - Distance from the Orbit center
-- **fov** (number) - Field of view in radians
+- **position** (Vector3) - オービットセンターポジション
+- **rotation** (Vector3) - ヨー ピッチ ロール
+- **distance** (number) - オービットセンターからの距離
+- **fov** (number) - ラジアン単位のフィールドオブビュー
 
-The **`MmdCamera`** class inherits from Babylon.js **`Camera`** class. Therefore, like other Babylon.js cameras, it can be added to the Scene for use.
+**`MmdCamera`**クラスは、Babylon.jsの**`Camera`**クラスを継承しています。そのため、他のBabylon.jsカメラと同様に、シーンに追加して使用できます。
 
-## Creating a Camera
+## カメラの作成
 
-You can create an **`MmdCamera`** and add it to the Scene with the following code:
+以下のコードで**`MmdCamera`**を作成し、シーンに追加できます：
 
 ```typescript
 const mmdCamera = new MmdCamera("mmdCamera", new Vector3(0, 10, 0), scene, true);
 ```
 
-Each parameter means the following in order:
-- **name**: Camera name
-- **position**: Initial Orbit center value (default: (0, 10, 0))
-- **scene**: Scene to add the camera to (default: Engine.LastCreatedScene)
-- **setActiveOnSceneIfNoneActive**: Whether to set this camera as the active camera in the Scene if no other camera is defined after creation (default: true)
+各パラメータは順に以下を意味します：
+- **name**：カメラ名
+- **position**：初期オービットセンター値（デフォルト：(0, 10, 0)）
+- **scene**：カメラを追加するシーン（デフォルト：Engine.LastCreatedScene）
+- **setActiveOnSceneIfNoneActive**：作成後に他のカメラが定義されていない場合、このカメラをシーンのアクティブカメラに設定するかどうか（デフォルト：true）
 
-## Animation Binding
+## アニメーションバインディング
 
-The **`MmdCamera`** can bind and use **`MmdAnimation`** created from VMD or BVMD files.
+**`MmdCamera`**は、VMDまたはBVMDファイルから作成された**`MmdAnimation`**をバインドして使用できます。
 
 ```typescript
 const vmdLoader = new VmdLoader();
@@ -48,63 +48,63 @@ const mmdCamera = new MmdCamera("camera", new Vector3(0, 10, 0), scene);
 const animationHandle: MmdRuntimeAnimationHandle = mmdCamera.createRuntimeAnimation(mmdAnimation);
 ```
 
-The code above is an example of loading a VMD file to create an **`MmdAnimation`** and binding it to an **`MmdCamera`**.
+上記のコードは、VMDファイルをロードして**`MmdAnimation`**を作成し、**`MmdCamera`**にバインドする例です。
 
-You can create a bound "Runtime Animation" using the **`MmdCamera.createRuntimeAnimation`** method. The result returned by the function is not the actual runtime animation object but a handle to the object.
+**`MmdCamera.createRuntimeAnimation`**メソッドを使用して、バインドされた「ランタイムアニメーション」を作成できます。ファンクションによって返される結果は、実際のランタイムアニメーションオブジェクトではなく、オブジェクトへのハンドルです。
 
 ### runtimeAnimations
 
-The created runtime animation object is added to **`MmdCamera.runtimeAnimations`**.
+作成されたランタイムアニメーションオブジェクトは**`MmdCamera.runtimeAnimations`**に追加されます。
 
-This allows for more low-level control by accessing the actual runtime animation object rather than the proxy.
+これにより、プロキシではなく実際のランタイムアニメーションオブジェクトにアクセスして、より低レベルの制御が可能になります。
 
-## Using Animation
+## アニメーションの使用
 
-To use the bound runtime animation, call the **`MmdCamera.setRuntimeAnimation`** method:
+バインドされたランタイムアニメーションを使用するには、**`MmdCamera.setRuntimeAnimation`**メソッドを呼び出します：
 
 ```typescript
 mmdCamera.setRuntimeAnimation(animationHandle);
 ```
 
-By default, the **`MmdCamera`** object can only play one animation at a time.
+デフォルトでは、**`MmdCamera`**オブジェクトは一度に1つのアニメーションのみを再生できます。
 
-To remove the currently set animation, pass **`null`** as an argument:
+現在設定されているアニメーションを削除するには、引数として**`null`**を渡します：
 
 ```typescript
 mmdCamera.setRuntimeAnimation(null);
 ```
 
-The currently set animation can be accessed through the **`MmdCamera.currentAnimation`** property.
+現在設定されているアニメーションは、**`MmdCamera.currentAnimation`**プロパティを通じてアクセスできます。
 
-## Destroying Runtime Animation
+## ランタイムアニメーションの破棄
 
-To destroy a runtime animation bound to the **`MmdCamera`**, call the **`destroyRuntimeAnimation`** method:
+**`MmdCamera`**にバインドされたランタイムアニメーションを破棄するには、**`destroyRuntimeAnimation`**メソッドを呼び出します：
 
 ```typescript
 mmdCamera.destroyRuntimeAnimation(animationHandle);
 ```
 
-If you don't destroy camera runtime animations that are no longer used, memory leaks won't occur, but runtime errors might occur in some special cases.
+使用されなくなったカメラランタイムアニメーションを破棄しない場合、メモリーリークは発生しませんが、特殊なケースでランタイムエラーが発生する可能性があります。
 
-## Evaluating Animation
+## アニメーションの評価
 
-You can evaluate the currently set animation using the **`MmdCamera.animate()`** method.
+現在設定されているアニメーションを評価するには、**`MmdCamera.animate()`**メソッドを使用できます。
 
-This method is **typically not called directly** but is called by the MMD runtime.
+このメソッドは**通常直接呼び出されません**が、MMDランタイムによって呼び出されます。
 
-If you are manually controlling the MmdCamera, you can call this method to evaluate the animation:
+MmdCameraを手動で制御している場合は、このメソッドを呼び出してアニメーションを評価できます：
 
 ```typescript
 let sec = 0;
 scene.onBeforeRenderObservable.add(() => {
-    const frameTime = sec * 30; // MMD operates at 30fps
-    mmdCamera.animate(frameTime); // Evaluate animation. Pass time scaled in 30 frame units as a parameter
+    const frameTime = sec * 30; // MMDは30fpsで動作します
+    mmdCamera.animate(frameTime); // アニメーションを評価します。30フレーム単位でスケールされた時間をパラメータとして渡します
     sec += engine.getDeltaTime() / 1000;
 });
 ```
 
-## IMmdCamera interface
+## IMmdCameraインターフェース
 
-babylon-mmd provides the **`IMmdCamera`** interface to allow users to implement their own MMD camera.
+babylon-mmdは、ユーザーが独自のMMDカメラを実装できるように**`IMmdCamera`**インターフェースを提供します。
 
-All components of babylon-mmd use the **`IMmdCamera`** interface instead of the **`MmdCamera`** class type to reference or pass MMD camera objects.
+babylon-mmdのすべてのコンポーネントは、MMDカメラオブジェクトを参照または渡す際に、**`MmdCamera`**クラスタイプではなく**`IMmdCamera`**インターフェースを使用します。
