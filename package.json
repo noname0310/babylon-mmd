@@ -40,8 +40,6 @@
         "@babylonjs/loaders": "8.16.2",
         "@babylonjs/materials": "8.16.2",
         "@stylistic/eslint-plugin": "^5.1.0",
-        "@typescript-eslint/eslint-plugin": "^8.37.0",
-        "@typescript-eslint/parser": "^8.37.0",
         "@wasm-tool/wasm-pack-plugin": "^1.7.0",
         "ammojs-typed": "^1.0.6",
         "compression-webpack-plugin": "^11.1.0",
