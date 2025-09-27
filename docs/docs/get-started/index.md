@@ -26,7 +26,7 @@ This tutorial consists of the following steps:
 - [**Load MMD Model**](./load-mmd-model): Load an MMD model.
 - [**Load and Play VMD Animation**](./load-and-play-vmd-animation): Load and play VMD animations.
 - [**Load and Play Audio**](./load-and-play-audio): Load and play audio.
+- [**Add Physics**](./add-physics): Add physics simulation.
 - [**Scene Details**](./scene-details): Configure detailed scene settings.
-- [**Final Code**](./final-code): Review the final code.
 
 Let's get started!
