@@ -296,8 +296,7 @@ struct lightingInfo {
 ![ndlShadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndlShadow.png)
 *`info.ndl * shadow`をレンダリングした結果。*
 
-![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png)
-
+![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png) \
 *`toonNdl`をレンダリングした結果。これはシャドウ値が0から1の間でトゥーンテクスチャ（ランプテクスチャ）にマッピングされたものです。*
 
 トゥーンテクスチャは通常、この種のグラデーションを持っています。値は垂直方向に変化し、下部を0、上部を1にマッピングします。
@@ -417,8 +416,7 @@ struct lightingInfo {
 
 球面環境マッピングを適用した結果である`sphereReflectionColor`のレンダリング結果は以下の通りです。
 
-![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png)
-
+![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png) \
 *`sphereReflectionColor`をレンダリングした結果。これはスフィアテクスチャを使用した球面環境マッピングを適用した結果です。*
 
 ### 最終カラー

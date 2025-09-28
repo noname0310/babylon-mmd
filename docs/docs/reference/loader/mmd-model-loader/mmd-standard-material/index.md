@@ -296,8 +296,7 @@ The final shading is calculated by multiplying the `ndl` with the `shadow`. Then
 ![ndlShadow](./ndlShadow.png)
 *Result of rendering `info.ndl * shadow`.*
 
-![toonNdl](./toonNdl.png)
-
+![toonNdl](./toonNdl.png) \
 *Result of rendering `toonNdl`, which is the shadow value mapped to the toonTexture (Ramp Texture) between 0 and 1.*
 
 The toonTexture typically has this kind of gradient. The value changes vertically, mapping the bottom to 0 and the top to 1.
@@ -417,8 +416,7 @@ Typically, the sphereTexture uses a spherical texture like this.
 
 The render result of `sphereReflectionColor`, which is the result of applying spherical environment mapping, is as follows.
 
-![sphereReflectionColor](./sphereReflectionColor.png)
-
+![sphereReflectionColor](./sphereReflectionColor.png) \
 *Result of rendering `sphereReflectionColor`, the result of applying spherical environment mapping using sphereTexture.*
 
 ### Final Color

@@ -296,8 +296,7 @@ struct lightingInfo {
 ![ndlShadow](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/ndlShadow.png)
 *`info.ndl * shadow`를 렌더링한 결과.*
 
-![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png)
-
+![toonNdl](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/toonNdl.png) \
 *그림자 값을 toonTexture(램프 텍스처)에 0과 1 사이로 매핑한 `toonNdl`을 렌더링한 결과.*
 
 toonTexture는 일반적으로 이런 종류의 그라데이션을 가집니다. 값은 세로로 변하며, 아래쪽은 0에, 위쪽은 1에 매핑됩니다.
@@ -417,8 +416,7 @@ toonTexture는 일반적으로 이런 종류의 그라데이션을 가집니다.
 
 구형 환경 매핑을 적용한 결과인 `sphereReflectionColor`의 렌더링 결과는 다음과 같습니다.
 
-![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png)
-
+![sphereReflectionColor](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/sphereReflectionColor.png) \
 *sphereTexture를 사용한 구형 환경 매핑을 적용한 결과인 `sphereReflectionColor`를 렌더링한 결과.*
 
 ### 최종 색상

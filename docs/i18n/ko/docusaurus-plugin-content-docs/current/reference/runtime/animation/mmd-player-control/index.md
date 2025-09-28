@@ -7,8 +7,7 @@ sidebar_label: MMD 플레이어 컨트롤
 
 이 섹션에서는 비디오 플레이어와 유사한 GUI를 사용하여 **MMD 애니메이션을 제어**하는 방법을 설명합니다.
 
-![playercontrol](@site/docs/reference/runtime/animation/mmd-player-control/playercontrol.png)
-
+![playercontrol](@site/docs/reference/runtime/animation/mmd-player-control/playercontrol.png) \
 *이 이미지는 `MmdPlayerControl`로 구성된 MMD 애니메이션 플레이어의 예제를 보여줍니다. 모델: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 ## MmdPlayerControl

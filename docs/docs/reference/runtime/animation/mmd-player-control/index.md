@@ -7,8 +7,7 @@ sidebar_label: MMD Player Control
 
 This section explains how to **control MMD animations** using a GUI similar to a video player.
 
-![playercontrol](playercontrol.png)
-
+![playercontrol](playercontrol.png) \
 *This image shows an example of an MMD animation player configured with `MmdPlayerControl`. Model: YYB式初音ミク_10th_v1.02 by SANMUYYB*
 
 ## MmdPlayerControl
