@@ -63,7 +63,7 @@ export class SceneBuilder implements ISceneBuilder {
         ground.receiveShadows = true;
 
         const audioPlayer = new StreamAudioPlayer(scene);
-        audioPlayer.source = "res/private_test/motion/melancholy_night/melancholy_night.mp3";
+        audioPlayer.source = "res/private_test/motion/メランコリ・ナイト/melancholy_night.mp3";
 
         // highlight-start
         const vmdLoader = new VmdLoader(scene);
@@ -90,10 +90,10 @@ export class SceneBuilder implements ISceneBuilder {
             })(),
             vmdLoader.loadAsync("motion",
                 [
-                    "res/private_test/motion/melancholy_night/camera.vmd",
-                    "res/private_test/motion/melancholy_night/facial.vmd",
-                    "res/private_test/motion/melancholy_night/lip.vmd",
-                    "res/private_test/motion/melancholy_night/motion.vmd"
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_カメラ.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_表情モーション.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_リップモーション.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト.vmd"
                 ]),
             LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",

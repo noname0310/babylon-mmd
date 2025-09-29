@@ -55,28 +55,26 @@ export class SceneBuilder implements ISceneBuilder {
 
         // highlight-start
         const audioPlayer = new StreamAudioPlayer(scene);
-        audioPlayer.source = "res/private_test/motion/melancholy_night/melancholy_night.mp3";
+        audioPlayer.source = "res/private_test/motion/メランコリ・ナイト/melancholy_night.mp3";
         // highlight-end
 
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
+        
+        const mmdRuntime = new MmdRuntime(scene);
+        mmdRuntime.loggingEnabled = true;
+        mmdRuntime.register(scene);
+        // highlight-next-line
+        mmdRuntime.setAudioPlayer(audioPlayer);
+        mmdRuntime.playAnimation();
 
-        const [mmdRuntime, mmdAnimation, modelMesh] = await Promise.all([
-            (async(): Promise<MmdRuntime> => {
-                const mmdRuntime = new MmdRuntime(scene);
-                mmdRuntime.loggingEnabled = true;
-                mmdRuntime.register(scene);
-                // highlight-next-line
-                mmdRuntime.setAudioPlayer(audioPlayer);
-                mmdRuntime.playAnimation();
-                return mmdRuntime;
-            })(),
+        const [mmdAnimation, modelMesh] = await Promise.all([
             vmdLoader.loadAsync("motion",
                 [
-                    "res/private_test/motion/melancholy_night/camera.vmd",
-                    "res/private_test/motion/melancholy_night/facial.vmd",
-                    "res/private_test/motion/melancholy_night/lip.vmd",
-                    "res/private_test/motion/melancholy_night/motion.vmd"
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_カメラ.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_表情モーション.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト_リップモーション.vmd",
+                    "res/private_test/motion/メランコリ・ナイト/メランコリ・ナイト.vmd"
                 ]),
             LoadAssetContainerAsync(
                 "res/private_test/model/YYB Hatsune Miku_10th/YYB Hatsune Miku_10th_v1.02.pmx",
