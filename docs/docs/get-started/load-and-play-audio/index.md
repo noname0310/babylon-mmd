@@ -5,6 +5,65 @@ sidebar_label: Load and Play Audio
 
 # Load and Play Audio
 
+We'll play **audio synchronized** with the animation.
+
+## Download MP3 Audio File
+
+First, we need an **audio file**. The audio for the animation we're using is [**higma - メランコリ・ナイト / melancholy night feat.初音ミク**](https://www.youtube.com/watch?v=y__uZETTuL8).
+
+You can **download it as an MP3 file** using a YouTube to MP3 converter or similar tool.
+
+Place the **downloaded MP3 file** in the **"res/private_test/motion/メランコリ・ナイト/"** folder.
+
+![vscode-file-structure](vscode-file-structure.png) \
+*Folder structure example*
+
+## Create Stream Audio Player
+
+Create a **Stream Audio Player**. This player uses **HTMLAudioElement** to play audio in a **streaming manner**.
+
+```typescript title="src/sceneBuilder.ts"
+// highlight-next-line
+import { StreamAudioPlayer } from "babylon-mmd/esm/Runtime/Audio/streamAudioPlayer";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const audioPlayer = new StreamAudioPlayer(scene);
+        audioPlayer.source = "res/private_test/motion/メランコリ・ナイト/melancholy_night.mp3";
+        // highlight-end
+        //...
+    }
+}
+```
+
+Then **set the audio player** in the runtime.
+
+```typescript title="src/sceneBuilder.ts"
+//...
+import { MmdRuntime } from "babylon-mmd/esm/Runtime/mmdRuntime";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        const mmdRuntime = new MmdRuntime(scene);
+        mmdRuntime.loggingEnabled = true;
+        mmdRuntime.register(scene);
+        // highlight-next-line
+        mmdRuntime.setAudioPlayer(audioPlayer);
+        mmdRuntime.playAnimation();
+        //...
+    }
+}
+```
+
+The audio must be set **before calling `playAnimation`** for the animation to play smoothly.
+
+If you set the audio player **after animation playback starts**, there may be a **brief glitch** while synchronizing with the audio.
+
+<details>
+<summary>Full code</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";
@@ -110,3 +169,4 @@ export class SceneBuilder implements ISceneBuilder {
     }
 }
 ```
+</details>
