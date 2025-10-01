@@ -5,6 +5,148 @@ sidebar_label: Add Physics
 
 # Add Physics
 
+Now let's **add physics simulation**.
+
+## Prepare MMD WASM Instance
+
+First, we need an **MMD WASM instance** that includes the **physics engine implementation** for physics simulation.
+
+This object is a **WebAssembly module** that provides **MMD runtime** and **Bullet Physics** engine bindings. In this example, we only use the **physics engine functionality**.
+
+```typescript title="src/sceneBuilder.ts"
+// highlight-next-line
+import { MmdWasmInstanceTypeMPR } from "babylon-mmd/esm/Runtime/Optimized/InstanceType/multiPhysicsRelease";
+import { GetMmdWasmInstance } from "babylon-mmd/esm/Runtime/Optimized/mmdWasmInstance";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const wasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR());
+        // highlight-end
+        //...
+    }
+}
+```
+
+## Create and Register MultiPhysicsRuntime
+
+Use the **MMD WASM instance** to create a **MultiPhysicsRuntime** object. This object is a **simulation runtime** that handles **multiple Physics Worlds** simultaneously and internally uses **Bullet Physics**.
+
+```typescript title="src/sceneBuilder.ts"
+// highlight-next-line
+import { MultiPhysicsRuntime } from "babylon-mmd/esm/Runtime/Optimized/Physics/Bind/Impl/multiPhysicsRuntime";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const physicsRuntime = new MultiPhysicsRuntime(wasmInstance);
+        physicsRuntime.setGravity(new Vector3(0, -98, 0));
+        physicsRuntime.register(scene);
+        // highlight-end
+        //...
+    }
+}
+```
+
+Here we use the **`setGravity`** method to set the **gravity vector**. Gravity is set to **-98**, which is **10 times the actual gravitational acceleration**. This is because **MMD programs are configured this way**. (The default gravity for MultiPhysicsRuntime is (0, -9.8, 0).)
+
+Call **`physicsRuntime.register(scene);`** to integrate the **physics simulation** into the scene's **rendering loop**.
+
+## Pass Physics Engine When Creating MmdRuntime
+
+Now you can use **`MultiPhysicsRuntime`** to create **simulation instances** for MMD models. When creating an **`MmdRuntime`** object, pass an **`MmdBulletPhysics`** object to the constructor. This object provides the logic to handle **physics simulation** for MMD models using **`MultiPhysicsRuntime`**.
+
+```typescript title="src/sceneBuilder.ts"
+// highlight-next-line
+import { MmdBulletPhysics } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdBulletPhysics";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
+        // highlight-end
+        mmdRuntime.loggingEnabled = true;
+        mmdRuntime.register(scene);
+        mmdRuntime.setAudioPlayer(audioPlayer);
+        mmdRuntime.playAnimation();
+        //...
+    }
+}
+```
+
+## Include WASM Instance Creation in Promise.all
+
+Since **`GetMmdWasmInstance`** is an **asynchronous function**, we'll include it in **`Promise.all`** to process it **in parallel** with other asynchronous operations.
+
+```typescript title="src/sceneBuilder.ts"
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const [[mmdRuntime, physicsRuntime], mmdAnimation, modelMesh] = await Promise.all([
+            (async(): Promise<[MmdRuntime, MultiPhysicsRuntime]> => {
+                const wasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR());
+
+                const physicsRuntime = new MultiPhysicsRuntime(wasmInstance);
+                physicsRuntime.setGravity(new Vector3(0, -98, 0));
+                physicsRuntime.register(scene);
+
+                const mmdRuntime = new MmdRuntime(scene, new MmdBulletPhysics(physicsRuntime));
+        // highlight-end
+                mmdRuntime.loggingEnabled = true;
+                mmdRuntime.register(scene);
+                mmdRuntime.setAudioPlayer(audioPlayer);
+                mmdRuntime.playAnimation();
+                // highlight-next-line
+                return [mmdRuntime, physicsRuntime];
+            })(),
+            //...
+        ]);
+    }
+}
+```
+
+## Add Ground Collider
+
+Finally, let's **add a ground collider** so the MMD model can **collide with the ground**.
+
+To do this, we create a **`PhysicsStaticPlaneShape`** object that defines an **infinite plane**, and use it to create a **`RigidBody`** object. This **`RigidBody`** object will serve as the **ground** in the physics simulation.
+
+```typescript title="src/sceneBuilder.ts"
+// highlight-next-line
+import { MotionType } from "babylon-mmd/esm/Runtime/Optimized/Physics/Bind/motionType";
+import { PhysicsStaticPlaneShape } from "babylon-mmd/esm/Runtime/Optimized/Physics/Bind/physicsShape";
+import { RigidBody } from "babylon-mmd/esm/Runtime/Optimized/Physics/Bind/rigidBody";
+import { RigidBodyConstructionInfo } from "babylon-mmd/esm/Runtime/Optimized/Physics/Bind/rigidBodyConstructionInfo";
+//...
+export class SceneBuilder implements ISceneBuilder {
+    public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        //...
+        // highlight-start
+        const info = new RigidBodyConstructionInfo(physicsRuntime.wasmInstance);
+        info.motionType = MotionType.Static;
+        info.shape = new PhysicsStaticPlaneShape(physicsRuntime, new Vector3(0, 1, 0), 0);
+        const groundBody = new RigidBody(physicsRuntime, info);
+        physicsRuntime.addRigidBodyToGlobal(groundBody);
+        // highlight-end
+        
+        return scene;
+    }
+}
+```
+
+## Result
+
+![result](result.png)
+
+**Physics simulation** has now been added. You can see the MMD model's **hair and clothing** moving **naturally**.
+
+<details>
+<summary>Full code</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";
@@ -65,10 +207,8 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.source = "res/private_test/motion/メランコリ・ナイト/melancholy_night.mp3";
 
-        // highlight-start
         const vmdLoader = new VmdLoader(scene);
         vmdLoader.loggingEnabled = true;
-        // highlight-end
 
         // highlight-start
         const [[mmdRuntime, physicsRuntime], mmdAnimation, modelMesh] = await Promise.all([
@@ -137,3 +277,4 @@ export class SceneBuilder implements ISceneBuilder {
     }
 }
 ```
+</details>
