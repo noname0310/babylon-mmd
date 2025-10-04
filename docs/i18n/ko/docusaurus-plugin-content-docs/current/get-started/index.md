@@ -1,32 +1,32 @@
 ---
 sidebar_position: 0
-sidebar_label: Get Started
+sidebar_label: 시작하기
 ---
 
-# Get Started
+# 시작하기
 
-**babylon-mmd** is a **Babylon.js-based MMD loader and runtime** that helps you easily load MMD models and play animations on the web.
+**babylon-mmd**는 웹에서 MMD 모델을 손쉽게 로드하고 애니메이션을 재생할 수 있도록 도와주는 **Babylon.js 기반 MMD 로더 및 런타임**입니다.
 
-In this section, we introduce the basic usage of **babylon-mmd** through a simple example that loads a **PMX model** from a server, plays **VMD animations**, and synchronizes **MP3 audio**.
+이 섹션에서는 서버에서 **PMX 모델**을 로드하고, **VMD 애니메이션**을 재생하며, **MP3 오디오**와 동기화하는 간단한 예제를 통해 **babylon-mmd**의 기본 사용 방법을 소개합니다.
 
-## Introduction
+## 소개
 
-**babylon-mmd** provides many options for loading MMD models and playing animations.
+**babylon-mmd**는 MMD 모델을 로드하고 애니메이션을 재생하기 위한 다양한 옵션을 제공합니다.
 
-This tutorial introduces the **most robust method** among various approaches. While this method works well in almost all environments, it may not be the **most performant** option.
+이 튜토리얼에서는 여러 접근 방식 중에서 대부분의 환경에서 안정적으로 동작하는 **가장 견고한 방법**을 소개합니다. 이 방법은 거의 모든 환경에서 잘 동작하지만, 항상 **최고의 성능**을 보장하지는 않을 수 있습니다.
 
-For other methods not covered in this tutorial, please refer to the [**Reference**](../reference/) section.
+이 튜토리얼에서 다루지 않은 다른 방법은 [**Reference**](../reference/) 섹션을 참고하세요.
 
-## Table of Contents
+## 목차
 
-This tutorial consists of the following steps:
+이 튜토리얼은 다음 단계로 구성됩니다.
 
-- [**Project Setup**](./project-setup): Set up an SPA project to use babylon-mmd.
-- [**Create Basic Scene**](./create-basic-scene): Configure a basic scene.
-- [**Load MMD Model**](./load-mmd-model): Load an MMD model.
-- [**Load and Play VMD Animation**](./load-and-play-vmd-animation): Load and play VMD animations.
-- [**Load and Play Audio**](./load-and-play-audio): Load and play audio.
-- [**Add Physics**](./add-physics): Add physics simulation.
-- [**Scene Details**](./scene-details): Configure detailed scene settings.
+- [**프로젝트 설정**](./project-setup): babylon-mmd를 사용하기 위한 SPA 프로젝트를 구성합니다.
+- [**기본 씬 만들기**](./create-basic-scene): 기본 씬을 설정합니다.
+- [**MMD 모델 로드**](./load-mmd-model): MMD 모델을 로드합니다.
+- [**VMD 애니메이션 로드 및 재생**](./load-and-play-vmd-animation): VMD 애니메이션을 로드하고 재생합니다.
+- [**오디오 로드 및 재생**](./load-and-play-audio): 오디오를 로드하고 재생합니다.
+- [**물리 시뮬레이션 추가**](./add-physics): 물리 시뮬레이션을 추가합니다.
+- [**씬 세부 설정**](./scene-details): 씬의 세부 설정을 구성합니다.
 
-Let's get started!
+지금 시작해 봅시다!

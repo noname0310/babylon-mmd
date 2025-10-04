@@ -1,26 +1,26 @@
 ---
 sidebar_position: 2
-sidebar_label: Load MMD Model
+sidebar_label: MMD 모델 로드
 ---
 
-# Load MMD Model
+# MMD 모델 로드
 
-Now we'll **load an MMD model** into the Scene and **add shadows**.
+이제 씬에 **MMD 모델을 로드**하고 **그림자를 추가**합니다.
 
-## Download PMX Model
+## PMX 모델 다운로드
 
-First, we need a **PMX model** to load.
+먼저 로드할 **PMX 모델**이 필요합니다.
 
-This example uses the [**YYB Hatsune Miku 10th Anniversary**](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716) model.
+이 예제에서는 [**YYB 하츠네 미쿠 10th 애니버서리**](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716) 모델을 사용합니다.
 
-**Download the model**, extract it, and place it in the **`res/private_test/model/`** folder.
+모델을 **다운로드**하여 압축을 풀고 **`res/private_test/model/`** 폴더에 배치하세요.
 
 ![vscode-file-structure](@site/docs/get-started/load-mmd-model/vscode-file-structure.png) \
-*Model folder structure example*
+*모델 폴더 구조 예시*
 
-## Import Required Side-Effects
+## 사이드 이펙트 임포트
 
-First, import the **side-effects** needed to load the model.
+먼저 모델을 로드하는 데 필요한 **사이드 이펙트**를 임포트합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -31,15 +31,15 @@ import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 //...
 ```
 
-**babylon-mmd** extends **Babylon.js's SceneLoader** to enable loading **PMX/PMD models**.
+**babylon-mmd**는 **Babylon.js의 SceneLoader**를 확장하여 **PMX/PMD 모델**을 로드할 수 있게 합니다.
 
-To load **PMD models**, import **`babylon-mmd/esm/Loader/pmdLoader`** and use the same method as loading PMX models described below.
+**PMD 모델**을 로드하려면 **`babylon-mmd/esm/Loader/pmdLoader`**를 임포트하고 아래에서 설명하는 PMX 모델 로드 방식과 동일하게 사용하면 됩니다.
 
-**`mmdOutlineRenderer`** provides functionality to **draw outlines** for MMD models. If **outline rendering is not needed**, you don't need to import it.
+**`mmdOutlineRenderer`**는 MMD 모델의 **아웃라인을 그리는 기능**을 제공합니다. **아웃라인 렌더링이 필요 없다면** 임포트하지 않아도 됩니다.
 
-## Load PMX Model
+## PMX 모델 로드
 
-Use the **`LoadAssetContainerAsync`** function to load the model. You can specify the **`mmdmodel`** option in **`pluginOptions`** to pass necessary settings to the MMD model loader.
+모델을 로드하려면 **`LoadAssetContainerAsync`** 함수를 사용합니다. **`pluginOptions`**의 **`mmdmodel`** 옵션을 지정하여 MMD 모델 로더에 필요한 설정을 전달할 수 있습니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -52,7 +52,6 @@ import { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMa
 // highlight-next-line
 import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 //...
-
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         // highlight-next-line
@@ -81,16 +80,16 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-The settings passed to the **`pluginOptions.mmdmodel`** option when loading the model are as follows:
-- **`loggingEnabled`**: Whether to output logs during the loading process. **Useful for debugging**.
-- **`materialBuilder`**: Specifies the implementation for creating MMD model materials. **`MmdStandardMaterialBuilder`** is the default implementation for creating basic MMD materials. If you want to use **custom materials**, you can implement the **`IMmdMaterialBuilder`** interface and pass it.
+모델을 로드할 때 **`pluginOptions.mmdmodel`** 옵션으로 전달하는 설정은 다음과 같습니다.
+- **`loggingEnabled`**: 로드 과정에서 로그를 출력할지 여부입니다. **디버깅에 유용**합니다.
+- **`materialBuilder`**: MMD 모델 머티리얼을 생성할 구현체를 지정합니다. **`MmdStandardMaterialBuilder`**는 기본적인 MMD 머티리얼을 생성하는 기본 구현체입니다. **커스텀 머티리얼**을 사용하고 싶다면 **`IMmdMaterialBuilder`** 인터페이스를 구현해 전달할 수 있습니다.
 
-When the model is loaded, an **`AssetContainer`** is returned. Call the **`addAllToScene`** method to add the model to the scene.
-The model's **root node** can be accessed as the **first element** of the **`rootNodes`** array. For **MMD models**, the first root node always satisfies **`MmdMesh`**.
+모델이 로드되면 **`AssetContainer`**가 반환됩니다. **`addAllToScene`** 메서드를 호출해서 모델을 씬에 추가하세요.
+모델의 **루트 노드**는 **`rootNodes`** 배열의 **첫 번째 요소**로 접근할 수 있습니다. **MMD 모델**의 경우 첫 번째 루트 노드는 항상 **`MmdMesh`** 타입을 만족합니다.
 
-## Add Shadows to Model
+## 모델에 그림자 추가
 
-To **add shadows** to the model, add the model to the **`ShadowGenerator`** we created earlier.
+모델에 **그림자를 추가**하려면 앞서 생성한 **`ShadowGenerator`**에 모델을 등록합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -107,16 +106,16 @@ export class SceneBuilder implements ISceneBuilder {
 //...
 ```
 
-**MMD models** consist of **multiple meshes** divided by material. Therefore, we iterate through the **`modelMesh.metadata.meshes`** array and configure each mesh to **receive shadows**.
+**MMD 모델**은 머티리얼별로 분할된 **여러 메시에 의해 구성**됩니다. 따라서 **`modelMesh.metadata.meshes`** 배열을 순회하며 각 메시에 **receiveShadows**를 설정합니다.
 
-## Result
+## 결과
 
-Now when you check the browser, you can see that the **model has been loaded**.
+이제 브라우저를 확인하면 **모델이 로드된 모습**을 볼 수 있습니다.
 
 ![result](@site/docs/get-started/load-mmd-model/result.png)
 
 <details>
-<summary>Full code</summary>
+<summary>전체 코드</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 // highlight-start

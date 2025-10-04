@@ -1,26 +1,26 @@
 ---
 sidebar_position: 4
-sidebar_label: Load and Play Audio
+sidebar_label: 오디오 로드 및 재생
 ---
 
-# Load and Play Audio
+# 오디오 로드 및 재생
 
-We'll play **audio synchronized** with the animation.
+애니메이션과 **동기화된 오디오**를 재생해 보겠습니다.
 
-## Download MP3 Audio File
+## MP3 오디오 파일 다운로드
 
-First, we need an **audio file**. The audio for the animation we're using is [**higma - メランコリ・ナイト / melancholy night feat.初音ミク**](https://www.youtube.com/watch?v=y__uZETTuL8).
+먼저 **오디오 파일**이 필요합니다. 사용 중인 애니메이션의 오디오는 [**higma - メランコリ・ナイト / melancholy night feat.初音ミク**](https://www.youtube.com/watch?v=y__uZETTuL8)입니다.
 
-You can **download it as an MP3 file** using a YouTube to MP3 converter or similar tool.
+YouTube to MP3 컨버터 또는 유사한 도구를 사용해 **MP3 파일로 다운로드**할 수 있습니다.
 
-Place the **downloaded MP3 file** in the **"res/private_test/motion/メランコリ・ナイト/"** folder.
+**다운로드한 MP3 파일**을 **"res/private_test/motion/メランコリ・ナイト/"** 폴더에 배치하세요.
 
 ![vscode-file-structure](@site/docs/get-started/load-and-play-audio/vscode-file-structure.png) \
-*Folder structure example*
+*폴더 구조 예시*
 
-## Create Stream Audio Player
+## 스트림 오디오 플레이어 생성
 
-Create a **Stream Audio Player**. This player uses **HTMLAudioElement** to play audio in a **streaming manner**.
+**스트림 오디오 플레이어**를 생성합니다. 이 플레이어는 **HTMLAudioElement**를 사용하여 **스트리밍 방식**으로 오디오를 재생합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -38,7 +38,7 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-Then **set the audio player** in the runtime.
+그런 다음 런타임에 **오디오 플레이어를 설정**합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -58,12 +58,12 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-The audio must be set **before calling `playAnimation`** for the animation to play smoothly.
+오디오는 애니메이션이 부드럽게 재생되도록 **`playAnimation` 호출 전에 설정**해야 합니다.
 
-If you set the audio player **after animation playback starts**, there may be a **brief glitch** while synchronizing with the audio.
+**애니메이션 재생이 시작된 후에** 오디오 플레이어를 설정하면 오디오와 동기화하는 동안 **짧은 끊김**이 발생할 수 있습니다.
 
 <details>
-<summary>Full code</summary>
+<summary>전체 코드</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";

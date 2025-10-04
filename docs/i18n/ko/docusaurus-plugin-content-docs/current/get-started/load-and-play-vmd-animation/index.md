@@ -1,26 +1,26 @@
 ---
 sidebar_position: 3
-sidebar_label: Load and Play VMD Animation
+sidebar_label: VMD 애니메이션 로드 및 재생
 ---
 
-# Load and Play VMD Animation
+# VMD 애니메이션 로드 및 재생
 
-Now let's **load and play VMD animations**.
+이제 **VMD 애니메이션을 로드하고 재생**해 보겠습니다.
 
-## Download VMD Animation
+## VMD 애니메이션 다운로드
 
-First, we need a **VMD animation** to load.
+먼저 로드할 **VMD 애니메이션**이 필요합니다.
 
-This example uses the [**VMD animation**](https://bowlroll.net/file/286064) distributed with the [**メランコリ・ナイト**](https://www.nicovideo.jp/watch/sm41164308) video by ほうき堂.
+이 예제에서는 ほうき堂가 제작한 [**メランコリ・ナイト**](https://www.nicovideo.jp/watch/sm41164308) 영상과 함께 배포된 [**VMD 애니메이션**](https://bowlroll.net/file/286064)을 사용합니다.
 
-**Download the animation**, extract it, and place it in the **`res/private_test/motion/`** folder.
+애니메이션을 **다운로드**한 뒤 압축을 해제하고, **`res/private_test/motion/`** 폴더에 배치하세요.
 
 ![vscode-file-structure](@site/docs/get-started/load-and-play-vmd-animation/vscode-file-structure.png) \
-*Motion folder structure example*
+*Motion 폴더 구조 예시*
 
-## Load VMD Animation
+## VMD 애니메이션 로드
 
-Use the **`VmdLoader`** class to load VMD animations.
+VMD 애니메이션은 **`VmdLoader`** 클래스를 사용해 로드합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -67,27 +67,27 @@ export class SceneBuilder implements ISceneBuilder {
     }
 ```
 
-Since both **VMD animations** and **PMX models** are loaded over the network, we can use **`Promise.all`** to load them **in parallel**.
+**VMD 애니메이션**과 **PMX 모델** 모두 네트워크를 통해 로드되므로, **`Promise.all`**을 사용해 **병렬로 로드**할 수 있습니다.
 
-Therefore, we execute the **`vmdLoader.loadAsync`** and **`LoadAssetContainerAsync`** asynchronous operations together.
+따라서 **`vmdLoader.loadAsync`**와 **`LoadAssetContainerAsync`** 비동기 연산을 함께 실행합니다.
 
-### loadAsync Method
+### loadAsync 메서드
 
-The **first argument** of the **`loadAsync`** method is the **animation name**. This name is used internally for identification later.
+**`loadAsync`** 메서드의 **첫 번째 인수**는 **애니메이션 이름**입니다. 이 이름은 이후 내부 식별용으로 사용됩니다.
 
-The **second argument** is either an **array of VMD file URLs** or a **single URL** to load. If you specify **multiple VMD files**, they are **merged into one animation** in the specified order.
+**두 번째 인수**는 로드할 **VMD 파일 URL 배열** 또는 **단일 URL**입니다. **여러 개의 VMD 파일**을 지정하면 순서대로 **하나의 애니메이션으로 병합**됩니다.
 
 :::info
-This example **merges camera motion and dance motion** into a single animation. This is possible because MMD animations manage **model motion data** and **camera motion data** separately.
+이 예제는 **카메라 모션과 댄스 모션**을 하나의 애니메이션으로 병합합니다. 이는 MMD 애니메이션이 **모델 모션 데이터**와 **카메라 모션 데이터**를 별도로 관리하기 때문에 가능합니다.
 
-If you want to play animations with **N people dancing**, you need to create **separate animations** for each model.
+**N명의 인원이 춤추는 애니메이션**을 재생하려면 모델마다 **개별 애니메이션**을 만들어야 합니다.
 :::
 
-## Create MMD Runtime
+## MMD 런타임 생성
 
-To play animations loaded with **`VmdLoader`**, you need **`MmdModel`** or **`MmdCamera`** controlled by an **`MmdRuntime`** instance.
+**`VmdLoader`**로 로드한 애니메이션을 재생하려면 **`MmdRuntime`** 인스턴스가 제어하는 **`MmdModel`** 또는 **`MmdCamera`**가 필요합니다.
 
-Therefore, first create an **`MmdRuntime`** instance.
+따라서 먼저 **`MmdRuntime`** 인스턴스를 생성합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -109,13 +109,13 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-**`MmdRuntime`** manages **MMD models and cameras** and handles **animation playback**. Call the **`register`** method to register update logic to the scene, and call the **`playAnimation`** method to start animation playback.
+**`MmdRuntime`**은 **MMD 모델과 카메라**를 관리하고 **애니메이션 재생**을 담당합니다. **`register`** 메서드를 호출해 씬에 업데이트 로직을 등록하고, **`playAnimation`** 메서드를 호출해 애니메이션 재생을 시작합니다.
 
-It's possible to play even **without any data**, and in this case, you can **dynamically add resources** during animation playback.
+데이터가 전혀 없어도 재생이 가능하며, 이때는 애니메이션 재생 중에 **리소스를 동적으로 추가**할 수 있습니다.
 
-## Bind Animation
+## 애니메이션 바인딩
 
-After creating the **`MmdRuntime`** instance, use the **`createRuntimeAnimation`** method to apply animations to **`MmdModel`** and **`MmdCamera`**.
+**`MmdRuntime`** 인스턴스를 만든 후 **`createRuntimeAnimation`** 메서드를 사용해 애니메이션을 **`MmdModel`**과 **`MmdCamera`**에 적용합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -146,11 +146,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-You can **bind `MmdAnimation`** to cameras or models using the **`createRuntimeAnimation`** method.
+**`createRuntimeAnimation`** 메서드를 사용하면 카메라나 모델에 **`MmdAnimation`**을 바인딩할 수 있습니다.
 
-### Import Required Side Effects
+### 필요한 사이드 이펙트 임포트
 
-Import the **side effects** needed to play animations.
+애니메이션 재생에 필요한 **사이드 이펙트**를 임포트합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -161,20 +161,20 @@ import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 //...
 ```
 
-**babylon-mmd** provides various implementations for applying animations to **MMD models and cameras**.
+**babylon-mmd**는 **MMD 모델과 카메라**에 애니메이션을 적용하는 다양한 구현을 제공합니다.
 
-**`mmdRuntimeCameraAnimation`** and **`mmdRuntimeModelAnimation`** are the **most commonly used** camera and model animation implementations.
+**`mmdRuntimeCameraAnimation`**과 **`mmdRuntimeModelAnimation`**은 가장 널리 사용되는 카메라 및 모델 애니메이션 구현입니다.
 
-If you don't import these **side effects**, the **`createRuntimeAnimation`** method will cause a **runtime error**.
+이러한 **사이드 이펙트**를 임포트하지 않으면 **`createRuntimeAnimation`** 메서드에서 **런타임 오류**가 발생합니다.
 
-## Result
+## 결과
 
-Now when you run the scene, you can see the **animation playing**.
+씬을 실행하면 **애니메이션이 재생되는 모습**을 확인할 수 있습니다.
 
 ![result](@site/docs/get-started/load-and-play-vmd-animation/result.png)
 
 <details>
-<summary>Full code</summary>
+<summary>전체 코드</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";

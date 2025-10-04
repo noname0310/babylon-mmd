@@ -1,22 +1,22 @@
 ---
 sidebar_position: 6
-sidebar_label: Scene Details
+sidebar_label: 씬 세부 설정
 ---
 
-# Scene Details
+# 씬 세부 설정
 
-Finally, we'll configure the **detailed scene settings**. In this step, we perform the following tasks:
+마지막으로 **씬의 세부 설정**을 구성하겠습니다. 이 단계에서는 다음 작업을 수행합니다:
 
-- **Show Loading Screen**: Display a loading screen while models and animations are loading.
-- **Add SDEF (Spherical Deformation) Support**: Add shader support to the engine for models that use SDEF.
-- **Register BMP Texture Loader**: Register a BMP texture loader to properly load BMP textures from MMD models.
-- **Show Player Control**: Display a player control UI to control animation playback.
+- **로딩 스크린 표시**: 모델과 애니메이션이 로드되는 동안 로딩 스크린을 표시합니다.
+- **SDEF (Spherical Deformation) 지원 추가**: SDEF를 사용하는 모델을 위해 엔진에 셰이더 지원을 추가합니다.
+- **BMP 텍스처 로더 등록**: MMD 모델의 BMP 텍스처를 올바르게 로드하기 위해 BMP 텍스처 로더를 등록합니다.
+- **플레이어 컨트롤 표시**: 애니메이션 재생을 제어할 수 있는 플레이어 컨트롤 UI를 표시합니다.
 
-## Show Loading Screen
+## 로딩 스크린 표시
 
-Let's look at how to **display a loading screen** while the scene is loading and **update the loading status**.
+씬이 로드되는 동안 **로딩 스크린을 표시**하고 **로딩 상태를 업데이트**하는 방법을 살펴보겠습니다.
 
-First, import **`"@babylonjs/core/Loading/loadingScreen"`** to enable loading screen functionality.
+먼저 로딩 스크린 기능을 활성화하기 위해 **`"@babylonjs/core/Loading/loadingScreen"`**을 임포트합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -24,9 +24,9 @@ import "@babylonjs/core/Loading/loadingScreen";
 //...
 ```
 
-To **display the loading screen**, call **`engine.displayLoadingUI()`**, and when loading is complete, call **`engine.hideLoadingUI()`**.
+**로딩 스크린을 표시**하려면 **`engine.displayLoadingUI()`**를 호출하고, 로딩이 완료되면 **`engine.hideLoadingUI()`**를 호출합니다.
 
-It's best to set the timing to **hide the loading screen** after the scene's **first rendering is complete** using **`scene.onAfterRenderObservable`**.
+**로딩 스크린을 숨기는** 타이밍은 **`scene.onAfterRenderObservable`**을 사용하여 씬의 **첫 렌더링이 완료된 후**로 설정하는 것이 가장 좋습니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -50,15 +50,15 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-### Loading Status Update
+### 로딩 상태 업데이트
 
-The **`loadAsync`** method of vmdLoader and the **`LoadAssetContainerAsync`** function support an **`onProgress`** callback that provides **loading progress information**.
+vmdLoader의 **`loadAsync`** 메서드와 **`LoadAssetContainerAsync`** 함수는 **로딩 진행 정보**를 제공하는 **`onProgress`** 콜백을 지원합니다.
 
-You can use this to **update the loading status**.
+이를 사용하여 **로딩 상태를 업데이트**할 수 있습니다.
 
-However, since the **WebAssembly-implemented MMD physics engine** initialization has no way to track progress, we only update the status at **loading start and completion** points.
+하지만 **WebAssembly로 구현된 MMD 물리 엔진** 초기화는 진행 상황을 추적할 방법이 없으므로, **로딩 시작과 완료** 시점에만 상태를 업데이트합니다.
 
-We'll use **`engine.loadingUIText`** to show the loading status.
+로딩 상태를 표시하기 위해 **`engine.loadingUIText`**를 사용하겠습니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -126,11 +126,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Add SDEF Support
+## SDEF 지원 추가
 
-**SDEF (Spherical Deformation)** is one of the **skinning methods** used in MMD models. To properly render models that use SDEF, **shader support for SDEF** is required.
+**SDEF (Spherical Deformation)**는 MMD 모델에서 사용되는 **스키닝 메서드** 중 하나입니다. SDEF를 사용하는 모델을 올바르게 렌더링하려면 **SDEF에 대한 셰이더 지원**이 필요합니다.
 
-**babylon-mmd** provides the **`SdefInjector`** utility that adds SDEF support by **overriding shader compilation functions**. This is a **very tricky method**, but it's necessary to ensure **MMD behavior is properly reproduced**.
+**babylon-mmd**는 **셰이더 컴파일 함수를 오버라이드**하여 SDEF 지원을 추가하는 **`SdefInjector`** 유틸리티를 제공합니다. 이는 **매우 까다로운 메서드**이지만 **MMD 동작을 올바르게 재현**하기 위해 필요합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -146,11 +146,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Register BMP Texture Loader
+## BMP 텍스처 로더 등록
 
-Due to **differences in BMP texture loader implementations** between MMD and browsers, you need to **register a separate BMP texture loader** to properly load BMP textures from MMD models in Babylon.js.
+MMD와 브라우저 간의 **BMP 텍스처 로더 구현 차이**로 인해 Babylon.js에서 MMD 모델의 BMP 텍스처를 올바르게 로드하려면 **별도의 BMP 텍스처 로더를 등록**해야 합니다.
 
-The **"YYB Hatsune Miku_10th"** model currently used in this example **doesn't use BMP textures**, so you can skip this step and the model will still display correctly. However, when loading **models that use BMP textures**, textures may not display correctly if you don't perform this step.
+이 예제에서 현재 사용 중인 **"YYB Hatsune Miku_10th"** 모델은 **BMP 텍스처를 사용하지 않으므로** 이 단계를 건너뛰어도 모델이 올바르게 표시됩니다. 하지만 **BMP 텍스처를 사용하는 모델**을 로드할 때는 이 단계를 수행하지 않으면 텍스처가 올바르게 표시되지 않을 수 있습니다.
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -167,9 +167,9 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Show Player Control
+## 플레이어 컨트롤 표시
 
-**babylon-mmd** provides the **`MmdPlayerControl`** utility for **controlling MMD animation playback**. You can use this utility to display a **control UI similar to a video player**.
+**babylon-mmd**는 **MMD 애니메이션 재생을 제어**하기 위한 **`MmdPlayerControl`** 유틸리티를 제공합니다. 이 유틸리티를 사용하여 **비디오 플레이어와 유사한 컨트롤 UI**를 표시할 수 있습니다.
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -187,18 +187,18 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-**`MmdPlayerControl`** is **not a production-ready UI component** and is provided simply for **testing MMD animation playback**. Therefore, it's recommended to **implement your own UI** for production environments.
+**`MmdPlayerControl`**은 **프로덕션 수준의 UI 컴포넌트가 아니며** 단순히 **MMD 애니메이션 재생을 테스트**하기 위해 제공됩니다. 따라서 프로덕션 환경에서는 **자체 UI를 구현**하는 것이 권장됩니다.
 
-## Result
+## 결과
 
 import ResultVideo from "@site/docs/get-started/scene-details/2025-10-02 21-18-26.mp4";
 
 <video src={ResultVideo} controls width="100%"></video>
 
-Now a **loading screen is displayed** while the scene loads, and the **player control UI** appears.
+이제 씬이 로드되는 동안 **로딩 스크린이 표시**되고 **플레이어 컨트롤 UI**가 나타납니다.
 
 <details>
-<summary>Full code</summary>
+<summary>전체 코드</summary>
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
 import "@babylonjs/core/Loading/loadingScreen";
@@ -363,6 +363,6 @@ export class SceneBuilder implements ISceneBuilder {
 ```
 </details>
 
-## What's Next?
+## 다음 단계는?
 
-You've now learned all the **basic usage of babylon-mmd**! Next, take a look at the [**Reference**](../../reference/) section. This section provides detailed explanations of **various options and advanced features**.
+이제 **babylon-mmd의 기본 사용법**을 모두 배웠습니다! 다음으로 [**레퍼런스**](../../reference/) 섹션을 살펴보세요. 이 섹션에서는 **다양한 옵션과 고급 기능**에 대한 자세한 설명을 제공합니다.

@@ -8,11 +8,11 @@
     "description": "The alt text of navbar logo"
   },
   "item.label.Docs": {
-    "message": "Docs",
+    "message": "도큐먼트",
     "description": "Navbar item with label Docs"
   },
   "item.label.Blog": {
-    "message": "Blog",
+    "message": "블로그",
     "description": "Navbar item with label Blog"
   },
   "item.label.GitHub": {
