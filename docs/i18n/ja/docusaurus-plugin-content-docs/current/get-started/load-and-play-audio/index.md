@@ -1,26 +1,26 @@
 ---
 sidebar_position: 4
-sidebar_label: Load and Play Audio
+sidebar_label: オーディオの読み込みと再生
 ---
 
-# Load and Play Audio
+# オーディオの読み込みと再生
 
-We'll play **audio synchronized** with the animation.
+アニメーションと**同期したオーディオ**を再生します。
 
-## Download MP3 Audio File
+## MP3 オーディオファイルのダウンロード
 
-First, we need an **audio file**. The audio for the animation we're using is [**higma - メランコリ・ナイト / melancholy night feat.初音ミク**](https://www.youtube.com/watch?v=y__uZETTuL8).
+まず、**オーディオファイル**が必要です。使用しているアニメーションのオーディオは [**higma - メランコリ・ナイト / melancholy night feat.初音ミク**](https://www.youtube.com/watch?v=y__uZETTuL8) です。
 
-You can **download it as an MP3 file** using a YouTube to MP3 converter or similar tool.
+YouTube to MP3 コンバーターなどのツールを使用して、**MP3 ファイルとしてダウンロード**できます。
 
-Place the **downloaded MP3 file** in the **"res/private_test/motion/メランコリ・ナイト/"** folder.
+**ダウンロードした MP3 ファイル**を **"res/private_test/motion/メランコリ・ナイト/"** フォルダーに配置します。
 
 ![vscode-file-structure](@site/docs/get-started/load-and-play-audio/vscode-file-structure.png) \
-*Folder structure example*
+*フォルダー構造の例*
 
-## Create Stream Audio Player
+## ストリームオーディオプレイヤーの作成
 
-Create a **Stream Audio Player**. This player uses **HTMLAudioElement** to play audio in a **streaming manner**.
+**ストリームオーディオプレイヤー**を作成します。このプレイヤーは **HTMLAudioElement** を使用して**ストリーミング方式**でオーディオを再生します。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -38,7 +38,7 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-Then **set the audio player** in the runtime.
+次に、**オーディオプレイヤー**をランタイムに**設定**します。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -58,12 +58,12 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-The audio must be set **before calling `playAnimation`** for the animation to play smoothly.
+アニメーションがスムーズに再生されるためには、オーディオを **`playAnimation` を呼び出す前に**設定する必要があります。
 
-If you set the audio player **after animation playback starts**, there may be a **brief glitch** while synchronizing with the audio.
+**アニメーション再生開始後**にオーディオプレイヤーを設定すると、オーディオと同期する際に**短い不具合**が発生する可能性があります。
 
 <details>
-<summary>Full code</summary>
+<summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";

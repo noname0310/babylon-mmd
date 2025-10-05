@@ -1,17 +1,17 @@
 ---
 sidebar_position: 5
-sidebar_label: Add Physics
+sidebar_label: 物理演算の追加
 ---
 
-# Add Physics
+# 物理演算の追加
 
-Now let's **add physics simulation**.
+ここでは**物理シミュレーションを追加**します。
 
-## Prepare MMD WASM Instance
+## MMD WASM インスタンスの準備
 
-First, we need an **MMD WASM instance** that includes the **physics engine implementation** for physics simulation.
+まず、物理シミュレーションのために**物理エンジン実装**を含む **MMD WASM インスタンス**が必要です。
 
-This object is a **WebAssembly module** that provides **MMD runtime** and **Bullet Physics** engine bindings. In this example, we only use the **physics engine functionality**.
+このオブジェクトは、**MMD ランタイム**と **Bullet Physics** エンジンのバインディングを提供する **WebAssembly モジュール**です。この例では、**物理エンジン機能**のみを使用します。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -29,9 +29,9 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Create and Register MultiPhysicsRuntime
+## MultiPhysicsRuntime の作成と登録
 
-Use the **MMD WASM instance** to create a **MultiPhysicsRuntime** object. This object is a **simulation runtime** that handles **multiple Physics Worlds** simultaneously and internally uses **Bullet Physics**.
+**MMD WASM インスタンス**を使用して **MultiPhysicsRuntime** オブジェクトを作成します。このオブジェクトは、**複数の物理ワールド**を同時に処理し、内部で **Bullet Physics** を使用する**シミュレーションランタイム**です。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -50,13 +50,13 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-Here we use the **`setGravity`** method to set the **gravity vector**. Gravity is set to **-98**, which is **10 times the actual gravitational acceleration**. This is because **MMD programs are configured this way**. (The default gravity for MultiPhysicsRuntime is (0, -9.8, 0).)
+ここでは **`setGravity`** メソッドを使用して**重力ベクトル**を設定します。重力は **-98** に設定されており、これは**実際の重力加速度の 10 倍**です。これは **MMD プログラムがこのように設定されている**ためです。(MultiPhysicsRuntime のデフォルト重力は (0, -9.8, 0) です。)
 
-Call **`physicsRuntime.register(scene);`** to integrate the **physics simulation** into the scene's **rendering loop**.
+**`physicsRuntime.register(scene);`** を呼び出して、**物理シミュレーション**をシーンの**レンダリングループ**に統合します。
 
-## Pass Physics Engine When Creating MmdRuntime
+## MmdRuntime 作成時に物理エンジンを渡す
 
-Now you can use **`MultiPhysicsRuntime`** to create **simulation instances** for MMD models. When creating an **`MmdRuntime`** object, pass an **`MmdBulletPhysics`** object to the constructor. This object provides the logic to handle **physics simulation** for MMD models using **`MultiPhysicsRuntime`**.
+これで **`MultiPhysicsRuntime`** を使用して MMD モデルの**シミュレーションインスタンス**を作成できます。**`MmdRuntime`** オブジェクトを作成する際に、**`MmdBulletPhysics`** オブジェクトをコンストラクターに渡します。このオブジェクトは、**`MultiPhysicsRuntime`** を使用して MMD モデルの**物理シミュレーション**を処理するロジックを提供します。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -77,9 +77,9 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Include WASM Instance Creation in Promise.all
+## WASM インスタンス作成を Promise.all に含める
 
-Since **`GetMmdWasmInstance`** is an **asynchronous function**, we'll include it in **`Promise.all`** to process it **in parallel** with other asynchronous operations.
+**`GetMmdWasmInstance`** は**非同期関数**なので、**`Promise.all`** に含めて他の非同期オペレーションと**並列に処理**します。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -110,11 +110,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Add Ground Collider
+## グラウンドコライダーの追加
 
-Finally, let's **add a ground collider** so the MMD model can **collide with the ground**.
+最後に、MMD モデルが**地面と衝突できる**ように**グラウンドコライダーを追加**しましょう。
 
-To do this, we create a **`PhysicsStaticPlaneShape`** object that defines an **infinite plane**, and use it to create a **`RigidBody`** object. This **`RigidBody`** object will serve as the **ground** in the physics simulation.
+これを行うために、**無限平面**を定義する **`PhysicsStaticPlaneShape`** オブジェクトを作成し、それを使用して **`RigidBody`** オブジェクトを作成します。この **`RigidBody`** オブジェクトが物理シミュレーション内の**地面**として機能します。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -139,14 +139,14 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Result
+## 結果
 
 ![result](@site/docs/get-started/add-physics/result.png)
 
-**Physics simulation** has now been added. You can see the MMD model's **hair and clothing** moving **naturally**.
+**物理シミュレーション**が追加されました。MMD モデルの**髪や衣服**が**自然に動いている**ことが確認できます。
 
 <details>
-<summary>Full code</summary>
+<summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "babylon-mmd/esm/Loader/pmxLoader";

@@ -1,22 +1,22 @@
 ---
 sidebar_position: 1
-sidebar_label: Create Basic Scene
+sidebar_label: 基本的なシーンの作成
 ---
 
-# Create Basic Scene
+# 基本的なシーンの作成
 
-Now let's create a **basic scene**. We will add the following elements:
+ここでは**基本的なシーン**を作成します。以下の要素を追加します:
 
-- **Create Camera**: Provides a viewpoint to see the scene.
-- **Set Background and Ambient Color**: Configure the scene's **ClearColor** and **AmbientColor**.
-- **Add Lighting**: Illuminate the scene so models are clearly visible.
-- **Create Ground**: Create a floor for models to stand on.
+- **カメラの作成**: シーンを見るためのビューポイントを提供します。
+- **背景とアンビエントカラーの設定**: シーンの **ClearColor** と **AmbientColor** を設定します。
+- **ライティングの追加**: モデルがはっきりと見えるようにシーンを照らします。
+- **グラウンドの作成**: モデルが立つための床を作成します。
 
-## Create Camera
+## カメラの作成
 
-First, let's **create a camera**.
+まず、**カメラを作成**しましょう。
 
-The renderer needs a camera to be set as the **activeCamera** to function properly.
+レンダラーが正しく機能するためには、**activeCamera** として設定されたカメラが必要です。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -37,13 +37,13 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-We use the **`MmdCamera`** provided by the **`babylon-mmd`** package.
+**`babylon-mmd`** パッケージが提供する **`MmdCamera`** を使用します。
 
-This camera **reproduces the camera behavior** of MMD software.
+このカメラは、MMD ソフトウェアの**カメラの動作を再現**します。
 
-## Set Background and Ambient Color
+## 背景とアンビエントカラーの設定
 
-Set the **background color** and **ambient lighting**. The background color can be set with **`ClearColor`**, and ambient lighting with **`AmbientColor`**.
+**背景色**と**アンビエントライティング**を設定します。背景色は **`ClearColor`** で、アンビエントライティングは **`AmbientColor`** で設定できます。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -67,17 +67,17 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-Here, **`scene.ambientColor`** affects the **`ambientColor`** property of all materials.
+ここで、**`scene.ambientColor`** はすべてのマーテリアルの **`ambientColor`** プロパティに影響します。
 
-For **MMD models**, a **0.5 scaling** must be applied to ambientColor to properly reproduce shading, so this **(0.5, 0.5, 0.5)** value is **intentional**, not arbitrary.
+**MMD モデル**の場合、シェーディングを適切に再現するために ambientColor に **0.5 のスケーリング**を適用する必要があるため、この **(0.5, 0.5, 0.5)** の値は**意図的**なものであり、任意ではありません。
 
-## Create Light
+## ライトの作成
 
-**MMD's lighting model** is defined by a **single Directional Light**.
+**MMD のライティングモデル**は、**単一のディレクショナルライト**によって定義されます。
 
-Therefore, other lighting setups may not render properly. For example, using **Hemispheric Light** together can produce **different shading results** than MMD software.
+したがって、他のライティング設定では正しくレンダリングされない場合があります。たとえば、**ヘミスフェリックライト**を一緒に使用すると、MMD ソフトウェアとは**異なるシェーディング結果**が生成される可能性があります。
 
-Create a **`DirectionalLight`** and also create a **`ShadowGenerator`** to render shadows.
+**`DirectionalLight`** を作成し、シャドウをレンダリングするために **`ShadowGenerator`** も作成します。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -114,11 +114,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-The **`ShadowGenerator`** settings are **arbitrary values** and can be **adjusted as needed**.
+**`ShadowGenerator`** の設定は**任意の値**であり、**必要に応じて調整**できます。
 
-## Create Ground
+## グラウンドの作成
 
-Create a **ground plane**. This helps **visually understand the scene** and is **not required**.
+**グラウンドプレーン**を作成します。これは**シーンを視覚的に理解するのに役立ちます**が、**必須ではありません**。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -146,14 +146,14 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Result
+## 結果
 
-Now when you run the scene, there will be **no more errors** and you should see a **white screen** like the following:
+シーンを実行すると、**エラーが発生しなくなり**、次のような**白い画面**が表示されるはずです:
 
 ![result](@site/docs/get-started/create-basic-scene/result.png)
 
 <details>
-<summary>Full code</summary>
+<summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";

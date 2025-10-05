@@ -1,32 +1,32 @@
 ---
 sidebar_position: 0
-sidebar_label: Get Started
+sidebar_label: はじめに
 ---
 
-# Get Started
+# はじめに
 
-**babylon-mmd** is a **Babylon.js-based MMD loader and runtime** that helps you easily load MMD models and play animations on the web.
+**babylon-mmd** は **Babylon.js ベースの MMD ローダーおよびランタイム**で、Web 上で MMD モデルを簡単に読み込み、アニメーションを再生できるようにします。
 
-In this section, we introduce the basic usage of **babylon-mmd** through a simple example that loads a **PMX model** from a server, plays **VMD animations**, and synchronizes **MP3 audio**.
+このセクションでは、サーバーから **PMX モデル**を読み込み、**VMD アニメーション**を再生し、**MP3 オーディオ**と同期する簡単な例を通じて、**babylon-mmd** の基本的な使い方を紹介します。
 
-## Introduction
+## イントロダクション
 
-**babylon-mmd** provides many options for loading MMD models and playing animations.
+**babylon-mmd** は、MMD モデルの読み込みとアニメーションの再生に多くのオプションを提供します。
 
-This tutorial introduces the **most robust method** among various approaches. While this method works well in almost all environments, it may not be the **most performant** option.
+このチュートリアルでは、さまざまなアプローチの中で**最も堅牢なメソッド**を紹介します。このメソッドはほぼすべての環境で問題なく動作しますが、**最もパフォーマンスの高い**オプションではない可能性があります。
 
-For other methods not covered in this tutorial, please refer to the [**Reference**](../reference/) section.
+このチュートリアルでカバーされていない他のメソッドについては、[**リファレンス**](../reference/) セクションを参照してください。
 
-## Table of Contents
+## 目次
 
-This tutorial consists of the following steps:
+このチュートリアルは以下のステップで構成されています:
 
-- [**Project Setup**](./project-setup): Set up an SPA project to use babylon-mmd.
-- [**Create Basic Scene**](./create-basic-scene): Configure a basic scene.
-- [**Load MMD Model**](./load-mmd-model): Load an MMD model.
-- [**Load and Play VMD Animation**](./load-and-play-vmd-animation): Load and play VMD animations.
-- [**Load and Play Audio**](./load-and-play-audio): Load and play audio.
-- [**Add Physics**](./add-physics): Add physics simulation.
-- [**Scene Details**](./scene-details): Configure detailed scene settings.
+- [**プロジェクトのセットアップ**](./project-setup): babylon-mmd を使用するための SPA プロジェクトをセットアップします。
+- [**基本的なシーンの作成**](./create-basic-scene): 基本的なシーンを構成します。
+- [**MMD モデルの読み込み**](./load-mmd-model): MMD モデルを読み込みます。
+- [**VMD アニメーションの読み込みと再生**](./load-and-play-vmd-animation): VMD アニメーションを読み込んで再生します。
+- [**オーディオの読み込みと再生**](./load-and-play-audio): オーディオを読み込んで再生します。
+- [**物理演算の追加**](./add-physics): 物理シミュレーションを追加します。
+- [**シーンの詳細設定**](./scene-details): シーンの詳細設定を構成します。
 
-Let's get started!
+さあ、始めましょう！

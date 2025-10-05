@@ -1,26 +1,26 @@
 ---
 sidebar_position: 2
-sidebar_label: Load MMD Model
+sidebar_label: MMD モデルの読み込み
 ---
 
-# Load MMD Model
+# MMD モデルの読み込み
 
-Now we'll **load an MMD model** into the Scene and **add shadows**.
+ここでは**MMD モデル**をシーンに**読み込み**、**シャドウを追加**します。
 
-## Download PMX Model
+## PMX モデルのダウンロード
 
-First, we need a **PMX model** to load.
+まず、読み込むための **PMX モデル**が必要です。
 
-This example uses the [**YYB Hatsune Miku 10th Anniversary**](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716) model.
+この例では [**YYB Hatsune Miku 10th Anniversary**](https://www.deviantart.com/sanmuyyb/art/YYB-Hatsune-Miku-10th-DL-702119716) モデルを使用します。
 
-**Download the model**, extract it, and place it in the **`res/private_test/model/`** folder.
+**モデルをダウンロード**し、解凍して **`res/private_test/model/`** フォルダーに配置します。
 
 ![vscode-file-structure](@site/docs/get-started/load-mmd-model/vscode-file-structure.png) \
-*Model folder structure example*
+*モデルフォルダー構造の例*
 
-## Import Required Side-Effects
+## 必要なサイドエフェクトのインポート
 
-First, import the **side-effects** needed to load the model.
+まず、モデルを読み込むために必要な**サイドエフェクト**をインポートします。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -31,15 +31,15 @@ import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
 //...
 ```
 
-**babylon-mmd** extends **Babylon.js's SceneLoader** to enable loading **PMX/PMD models**.
+**babylon-mmd** は **Babylon.js の SceneLoader** を拡張して **PMX/PMD モデル**の読み込みを可能にします。
 
-To load **PMD models**, import **`babylon-mmd/esm/Loader/pmdLoader`** and use the same method as loading PMX models described below.
+**PMD モデル**を読み込むには、**`babylon-mmd/esm/Loader/pmdLoader`** をインポートし、以下で説明する PMX モデルの読み込みと同じメソッドを使用します。
 
-**`mmdOutlineRenderer`** provides functionality to **draw outlines** for MMD models. If **outline rendering is not needed**, you don't need to import it.
+**`mmdOutlineRenderer`** は、MMD モデルの**アウトラインを描画する**機能を提供します。**アウトラインのレンダリングが不要**な場合は、インポートする必要はありません。
 
-## Load PMX Model
+## PMX モデルの読み込み
 
-Use the **`LoadAssetContainerAsync`** function to load the model. You can specify the **`mmdmodel`** option in **`pluginOptions`** to pass necessary settings to the MMD model loader.
+**`LoadAssetContainerAsync`** ファンクションを使用してモデルを読み込みます。**`pluginOptions`** 内の **`mmdmodel`** オプションを指定することで、MMD モデルローダーに必要な設定を渡すことができます。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -81,16 +81,16 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-The settings passed to the **`pluginOptions.mmdmodel`** option when loading the model are as follows:
-- **`loggingEnabled`**: Whether to output logs during the loading process. **Useful for debugging**.
-- **`materialBuilder`**: Specifies the implementation for creating MMD model materials. **`MmdStandardMaterialBuilder`** is the default implementation for creating basic MMD materials. If you want to use **custom materials**, you can implement the **`IMmdMaterialBuilder`** interface and pass it.
+モデルの読み込み時に **`pluginOptions.mmdmodel`** オプションに渡す設定は以下の通りです:
+- **`loggingEnabled`**: 読み込みプロセス中にログを出力するかどうか。**デバッグに便利**です。
+- **`materialBuilder`**: MMD モデルのマーテリアルを作成するための実装を指定します。**`MmdStandardMaterialBuilder`** は、基本的な MMD マーテリアルを作成するためのデフォルト実装です。**カスタムマーテリアル**を使用したい場合は、**`IMmdMaterialBuilder`** インターフェースを実装して渡すことができます。
 
-When the model is loaded, an **`AssetContainer`** is returned. Call the **`addAllToScene`** method to add the model to the scene.
-The model's **root node** can be accessed as the **first element** of the **`rootNodes`** array. For **MMD models**, the first root node always satisfies **`MmdMesh`**.
+モデルが読み込まれると、**`AssetContainer`** が返されます。**`addAllToScene`** メソッドを呼び出してモデルをシーンに追加します。
+モデルの**ルートノード**は、**`rootNodes`** 配列の**最初の要素**としてアクセスできます。**MMD モデル**の場合、最初のルートノードは常に **`MmdMesh`** を満たします。
 
-## Add Shadows to Model
+## モデルへのシャドウの追加
 
-To **add shadows** to the model, add the model to the **`ShadowGenerator`** we created earlier.
+モデルに**シャドウを追加**するには、先ほど作成した **`ShadowGenerator`** にモデルを追加します。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -107,16 +107,16 @@ export class SceneBuilder implements ISceneBuilder {
 //...
 ```
 
-**MMD models** consist of **multiple meshes** divided by material. Therefore, we iterate through the **`modelMesh.metadata.meshes`** array and configure each mesh to **receive shadows**.
+**MMD モデル**は、マーテリアルによって分割された**複数のメッシュ**で構成されています。そのため、**`modelMesh.metadata.meshes`** 配列を反復処理し、各メッシュが**シャドウを受け取る**ように設定します。
 
-## Result
+## 結果
 
-Now when you check the browser, you can see that the **model has been loaded**.
+ブラウザで確認すると、**モデルが読み込まれている**ことが確認できます。
 
 ![result](@site/docs/get-started/load-mmd-model/result.png)
 
 <details>
-<summary>Full code</summary>
+<summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 // highlight-start

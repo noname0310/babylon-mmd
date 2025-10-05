@@ -1,22 +1,22 @@
 ---
 sidebar_position: 6
-sidebar_label: Scene Details
+sidebar_label: シーンの詳細設定
 ---
 
-# Scene Details
+# シーンの詳細設定
 
-Finally, we'll configure the **detailed scene settings**. In this step, we perform the following tasks:
+最後に、**シーンの詳細設定**を構成します。このステップでは、以下のタスクを実行します:
 
-- **Show Loading Screen**: Display a loading screen while models and animations are loading.
-- **Add SDEF (Spherical Deformation) Support**: Add shader support to the engine for models that use SDEF.
-- **Register BMP Texture Loader**: Register a BMP texture loader to properly load BMP textures from MMD models.
-- **Show Player Control**: Display a player control UI to control animation playback.
+- **ローディングスクリーンの表示**: モデルとアニメーションの読み込み中にローディングスクリーンを表示します。
+- **SDEF (球面変形) サポートの追加**: SDEF を使用するモデルのためにエンジンにシェーダーサポートを追加します。
+- **BMP テクスチャローダーの登録**: MMD モデルから BMP テクスチャを正しく読み込むために BMP テクスチャローダーを登録します。
+- **プレイヤーコントロールの表示**: アニメーション再生を制御するためのプレイヤーコントロール UI を表示します。
 
-## Show Loading Screen
+## ローディングスクリーンの表示
 
-Let's look at how to **display a loading screen** while the scene is loading and **update the loading status**.
+シーンの読み込み中に**ローディングスクリーンを表示**し、**読み込みステータスを更新**する方法を見てみましょう。
 
-First, import **`"@babylonjs/core/Loading/loadingScreen"`** to enable loading screen functionality.
+まず、**`"@babylonjs/core/Loading/loadingScreen"`** をインポートしてローディングスクリーン機能を有効にします。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -24,9 +24,9 @@ import "@babylonjs/core/Loading/loadingScreen";
 //...
 ```
 
-To **display the loading screen**, call **`engine.displayLoadingUI()`**, and when loading is complete, call **`engine.hideLoadingUI()`**.
+**ローディングスクリーンを表示**するには **`engine.displayLoadingUI()`** を呼び出し、読み込みが完了したら **`engine.hideLoadingUI()`** を呼び出します。
 
-It's best to set the timing to **hide the loading screen** after the scene's **first rendering is complete** using **`scene.onAfterRenderObservable`**.
+**ローディングスクリーンを非表示にするタイミング**は、**`scene.onAfterRenderObservable`** を使用してシーンの**最初のレンダリングが完了した後**に設定するのが最適です。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -50,15 +50,15 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-### Loading Status Update
+### ローディングステータスの更新
 
-The **`loadAsync`** method of vmdLoader and the **`LoadAssetContainerAsync`** function support an **`onProgress`** callback that provides **loading progress information**.
+vmdLoader の **`loadAsync`** メソッドと **`LoadAssetContainerAsync`** 関数は、**読み込み進捗情報**を提供する **`onProgress`** コールバックをサポートしています。
 
-You can use this to **update the loading status**.
+これを使用して**ローディングステータスを更新**できます。
 
-However, since the **WebAssembly-implemented MMD physics engine** initialization has no way to track progress, we only update the status at **loading start and completion** points.
+ただし、**WebAssembly 実装の MMD 物理エンジン**の初期化には進捗を追跡する方法がないため、**読み込み開始と完了**のポイントでのみステータスを更新します。
 
-We'll use **`engine.loadingUIText`** to show the loading status.
+ローディングステータスを表示するために **`engine.loadingUIText`** を使用します。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
@@ -126,11 +126,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Add SDEF Support
+## SDEF サポートの追加
 
-**SDEF (Spherical Deformation)** is one of the **skinning methods** used in MMD models. To properly render models that use SDEF, **shader support for SDEF** is required.
+**SDEF (球面変形)** は、MMD モデルで使用される**スキニングメソッド**の 1 つです。SDEF を使用するモデルを適切にレンダリングするには、**SDEF のシェーダーサポート**が必要です。
 
-**babylon-mmd** provides the **`SdefInjector`** utility that adds SDEF support by **overriding shader compilation functions**. This is a **very tricky method**, but it's necessary to ensure **MMD behavior is properly reproduced**.
+**babylon-mmd** は、**シェーダーコンパイル関数をオーバーライド**することで SDEF サポートを追加する **`SdefInjector`** ユーティリティを提供しています。これは**非常にトリッキーな方法**ですが、**MMD の動作を適切に再現**するために必要です。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -146,11 +146,11 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Register BMP Texture Loader
+## BMP テクスチャローダーの登録
 
-Due to **differences in BMP texture loader implementations** between MMD and browsers, you need to **register a separate BMP texture loader** to properly load BMP textures from MMD models in Babylon.js.
+MMD とブラウザ間の **BMP テクスチャローダー実装の違い**のため、Babylon.js で MMD モデルから BMP テクスチャを正しく読み込むには、**個別の BMP テクスチャローダーを登録**する必要があります。
 
-The **"YYB Hatsune Miku_10th"** model currently used in this example **doesn't use BMP textures**, so you can skip this step and the model will still display correctly. However, when loading **models that use BMP textures**, textures may not display correctly if you don't perform this step.
+この例で現在使用している **"YYB Hatsune Miku_10th"** モデルは **BMP テクスチャを使用していない**ため、このステップをスキップしてもモデルは正しく表示されます。しかし、**BMP テクスチャを使用するモデル**を読み込む場合、このステップを実行しないとテクスチャが正しく表示されない可能性があります。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -167,9 +167,9 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-## Show Player Control
+## プレイヤーコントロールの表示
 
-**babylon-mmd** provides the **`MmdPlayerControl`** utility for **controlling MMD animation playback**. You can use this utility to display a **control UI similar to a video player**.
+**babylon-mmd** は、**MMD アニメーションの再生を制御**するための **`MmdPlayerControl`** ユーティリティを提供しています。このユーティリティを使用して、**ビデオプレイヤーに似たコントロール UI** を表示できます。
 
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
@@ -187,18 +187,18 @@ export class SceneBuilder implements ISceneBuilder {
 }
 ```
 
-**`MmdPlayerControl`** is **not a production-ready UI component** and is provided simply for **testing MMD animation playback**. Therefore, it's recommended to **implement your own UI** for production environments.
+**`MmdPlayerControl`** は**プロダクション対応の UI コンポーネントではなく**、単に **MMD アニメーションの再生をテストするため**に提供されています。そのため、プロダクション環境では**独自の UI を実装**することをお勧めします。
 
-## Result
+## 結果
 
 import ResultVideo from "@site/docs/get-started/scene-details/2025-10-02 21-18-26.mp4";
 
 <video src={ResultVideo} controls width="100%"></video>
 
-Now a **loading screen is displayed** while the scene loads, and the **player control UI** appears.
+シーンの読み込み中に**ローディングスクリーンが表示され**、**プレイヤーコントロール UI** が表示されるようになりました。
 
 <details>
-<summary>Full code</summary>
+<summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 // highlight-next-line
 import "@babylonjs/core/Loading/loadingScreen";
@@ -363,6 +363,6 @@ export class SceneBuilder implements ISceneBuilder {
 ```
 </details>
 
-## What's Next?
+## 次のステップ
 
-You've now learned all the **basic usage of babylon-mmd**! Next, take a look at the [**Reference**](../../reference/) section. This section provides detailed explanations of **various options and advanced features**.
+**babylon-mmd の基本的な使い方**をすべて学習しました！次に、[**リファレンス**](../../reference/) セクションをご覧ください。このセクションでは、**さまざまなオプションや高度な機能**の詳細な説明が提供されています。

@@ -1,68 +1,68 @@
 ---
 sidebar_position: 0
-sidebar_label: Project Setup
+sidebar_label: プロジェクトのセットアップ
 ---
 
-# Project Setup
+# プロジェクトのセットアップ
 
-First, we need to set up an **SPA project** to use **babylon-mmd**. This tutorial uses a [**webpack**](https://webpack.js.org/)-based project template.
+まず、**babylon-mmd** を使用するための **SPA プロジェクト**をセットアップする必要があります。このチュートリアルでは [**webpack**](https://webpack.js.org/) ベースのプロジェクトテンプレートを使用します。
 
-Start by cloning the project with the following command:
+次のコマンドでプロジェクトをクローンすることから始めます:
 
 ```bash
 git clone https://github.com/noname0310/babylon-mmd-template
 ```
 
-This project includes configurations for using **TypeScript**, **Webpack**, **ESLint**, **Babylon.js**, and **babylon-mmd**.
+このプロジェクトには、**TypeScript**、**Webpack**、**ESLint**、**Babylon.js**、および **babylon-mmd** を使用するための設定が含まれています。
 
-The specific build and development environment configurations are as follows:
+具体的なビルドおよび開発環境の設定は以下の通りです:
 
 - **TypeScript** (tsconfig.json)
-  - **"@/" alias** for referencing the src folder
-  - **Strict mode** enabled with other strict type checking
+  - src フォルダーを参照するための **"@/" エイリアス**
+  - その他の厳密な型チェックとともに **Strict モード**が有効
 
 - **Webpack** (webpack.config.ts)
-  - **Dev server** configuration (https, localhost:20310)
-  - **SharedArrayBuffer** enabled (cross-origin-isolated)
-  - All resources in the **res folder** can be loaded via fetch (CopyWebpackPlugin)
-  - **ESLint auto fix** on save
-  - **Shader code chunk splitting**
-  - **SourceMap** enabled (dev mode)
+  - **Dev サーバー**の設定 (https, localhost:20310)
+  - **SharedArrayBuffer** が有効 (cross-origin-isolated)
+  - **res フォルダー**内のすべてのリソースを fetch 経由で読み込み可能 (CopyWebpackPlugin)
+  - 保存時に **ESLint auto fix**
+  - **シェーダーコードのチャンク分割**
+  - **SourceMap** が有効 (dev モード)
 
 - **ESLint** (eslint.config.mjs)
-  - Configuration aligned with **Babylon.js coding style guide**
+  - **Babylon.js コーディングスタイルガイド**に準拠した設定
 
-The source structure of this project is as follows:
+このプロジェクトのソース構造は以下の通りです:
 
 ```
 / (root)
-├── /res: Folder containing PMX models, VMD animations, MP3 audio, etc.
-├── /src: Folder containing the project's source code
-│   ├── /baseRuntime.ts: Babylon.js engine creation and rendering loop setup code
-│   ├── /index.html: HTML template
-│   ├── /index.ts: Entry point, creates scene using scene builder and starts rendering loop
-│   └── /sceneBuilder.ts: Code that configures the Scene
+├── /res: PMX モデル、VMD アニメーション、MP3 オーディオなどを含むフォルダー
+├── /src: プロジェクトのソースコードを含むフォルダー
+│   ├── /baseRuntime.ts: Babylon.js エンジンの作成とレンダリングループのセットアップコード
+│   ├── /index.html: HTML テンプレート
+│   ├── /index.ts: エントリーポイント、シーンビルダーを使用してシーンを作成し、レンダリングループを開始
+│   └── /sceneBuilder.ts: シーンを構成するコード
 ```
 
-We will only modify the **sceneBuilder.ts** file to configure the **MMD scene**.
+**MMD シーン**を構成するために、**sceneBuilder.ts** ファイルのみを変更します。
 
-First, install the project dependencies and start the development server:
+まず、プロジェクトの依存関係をインストールし、開発サーバーを起動します:
 
 ```bash
 npm install
 npm start
 ```
 
-When you open [https://localhost:20310](https://localhost:20310) in your browser, you'll see the following error:
+ブラウザで [https://localhost:20310](https://localhost:20310) を開くと、次のエラーが表示されます:
 
 ![first run](@site/docs/get-started/project-setup/first_run.png)
 
-The **sceneBuilder.ts** file contains a **babylon-mmd example using WebXR** by default.
-However, an error occurs because there are **no MMD models and animations** to load.
+**sceneBuilder.ts** ファイルには、デフォルトで **WebXR を使用した babylon-mmd の例**が含まれています。
+しかし、読み込むべき **MMD モデルとアニメーションがない**ため、エラーが発生します。
 
-We will **completely rewrite** the sceneBuilder.ts file to configure the MMD scene.
+MMD シーンを構成するために、sceneBuilder.ts ファイルを**完全に書き直します**。
 
-Start with an **empty `build` method** as follows:
+次のように**空の `build` メソッド**から始めます:
 
 ```typescript title="src/sceneBuilder.ts"
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
