@@ -1,6 +1,7 @@
 import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";
 import "@babylonjs/core/Physics/v1/physicsEngineComponent";
 
+import type { VertexBuffer } from "@babylonjs/core";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { IMeshDataOptions } from "@babylonjs/core/Meshes/abstractMesh";
@@ -82,6 +83,10 @@ class MmdPhysicsMesh extends AbstractMesh {
     }
 
     public override get geometry(): Nullable<Geometry> {
+        return null;
+    }
+
+    public override getVertexBuffer(_kind: string, _bypassInstanceData?: boolean): Nullable<VertexBuffer> {
         return null;
     }
 }
