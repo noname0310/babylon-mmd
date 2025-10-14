@@ -82,7 +82,7 @@ export interface IMmdPluginMaterial {
 // spherical environment mapping reference:
 // https://learn.microsoft.com/en-us/windows/win32/direct3d9/spherical-environment-mapping
 
-export class MmdPluginMererialDefines extends MaterialDefines {
+export class MmdPluginMaterialDefines extends MaterialDefines {
     public SPHERE_TEXTURE = false;
     public SPHERE_TEXTURE_BLEND_MODE_MULTIPLY = false;
     public SPHERE_TEXTURE_BLEND_MODE_ADD = false;
@@ -254,7 +254,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
         enable = false,
         resolveIncludes = false
     ) {
-        super(material, "MmdMaterial", 100, new MmdPluginMererialDefines(), addtoPluginList, enable, resolveIncludes);
+        super(material, "MmdMaterial", 100, new MmdPluginMaterialDefines(), addtoPluginList, enable, resolveIncludes);
 
         this._internalMarkAllSubMeshesAsTexturesDirty = material._dirtyCallbacks[Constants.MATERIAL_TextureDirtyFlag];
     }
@@ -274,7 +274,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
     public override bindForSubMesh(uniformBuffer: UniformBuffer, scene: Scene, _engine: AbstractEngine, subMesh: SubMesh): void {
         if (!this._isEnabled) return;
 
-        const defines = subMesh!.materialDefines as StandardMaterialDefines & MmdPluginMererialDefines;
+        const defines = subMesh!.materialDefines as StandardMaterialDefines & MmdPluginMaterialDefines;
         const isFrozen = this._material.isFrozen;
 
         if (!uniformBuffer.useUbo || !isFrozen || !uniformBuffer.isSync) {
@@ -314,7 +314,7 @@ export abstract class MmdPluginMaterial extends MaterialPluginBase {
 
     public abstract override getCustomCode(shaderType: string, shaderLanguage?: ShaderLanguage): Nullable<{ [pointName: string]: string; }>;
 
-    public override prepareDefines(defines: MmdPluginMererialDefines, scene: Scene, mesh: Mesh): void {
+    public override prepareDefines(defines: MmdPluginMaterialDefines, scene: Scene, mesh: Mesh): void {
         if (this._isEnabled) {
             const texturesEnabled = scene.texturesEnabled;
             defines.SPHERE_TEXTURE = this._sphereTexture !== null && texturesEnabled;
