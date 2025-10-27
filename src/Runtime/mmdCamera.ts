@@ -265,7 +265,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
         );
         const targetVector = Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, MmdCamera._TargetVector)
             .addInPlace(cameraEyePosition);
-        const upVector = Vector3.TransformNormalFromFloatsToRef(0, 1, 0, rotationMatrix, MmdCamera._UpVector);
+        const upVector = Vector3.TransformNormalToRef(this.upVector, rotationMatrix, MmdCamera._UpVector);
 
         if (this.ignoreParentScaling) {
             if (this.parent) {
