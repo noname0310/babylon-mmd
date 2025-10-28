@@ -46,8 +46,6 @@ export class MmdCamera extends Camera implements IMmdCamera {
     public distance = -45;
 
     private readonly _viewMatrix = Matrix.Zero();
-    private readonly _tmpUpVector = Vector3.Zero();
-    private readonly _tmpTargetVector = Vector3.Zero();
 
     /**
      * Observable triggered when the current animation is changed
@@ -272,19 +270,17 @@ export class MmdCamera extends Camera implements IMmdCamera {
             if (this.parent) {
                 const parentWorldMatrix = this.parent.getWorldMatrix();
                 Vector3.TransformCoordinatesToRef(cameraEyePosition, parentWorldMatrix, this._globalPosition);
-                Vector3.TransformCoordinatesToRef(targetVector, parentWorldMatrix, this._tmpTargetVector);
-                Vector3.TransformNormalToRef(upVector, parentWorldMatrix, this._tmpUpVector);
+                Vector3.TransformCoordinatesToRef(targetVector, parentWorldMatrix, targetVector);
+                Vector3.TransformNormalToRef(upVector, parentWorldMatrix, upVector);
                 this._markSyncedWithParent();
             } else {
                 this._globalPosition.copyFrom(cameraEyePosition);
-                this._tmpTargetVector.copyFrom(targetVector);
-                this._tmpUpVector.copyFrom(upVector);
             }
 
             if (this.getScene().useRightHandedSystem) {
-                Matrix.LookAtRHToRef(this._globalPosition, this._tmpTargetVector, this._tmpUpVector, this._viewMatrix);
+                Matrix.LookAtRHToRef(this._globalPosition, targetVector, upVector, this._viewMatrix);
             } else {
-                Matrix.LookAtLHToRef(this._globalPosition, this._tmpTargetVector, this._tmpUpVector, this._viewMatrix);
+                Matrix.LookAtLHToRef(this._globalPosition, targetVector, upVector, this._viewMatrix);
             }
             return this._viewMatrix;
         }
