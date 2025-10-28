@@ -2,6 +2,7 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { serialize, serializeAsVector3 } from "@babylonjs/core/Misc/decorators";
 import { Observable } from "@babylonjs/core/Misc/observable";
+import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import { Node } from "@babylonjs/core/node";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
@@ -316,3 +317,6 @@ export class MmdCamera extends Camera implements IMmdCamera {
         return "MmdCamera";
     }
 }
+
+// Register Class Name
+RegisterClass("BABYLON.MmdCamera", MmdCamera);

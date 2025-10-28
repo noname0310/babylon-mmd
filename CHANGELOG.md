@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 (scheduled)
+
+- MmdCamera up vector can now be customized via `MmdCamera.upVector` property
+- Register MmdCamera class to type store
+
 ## 1.0.0 (2025-10-08)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
