@@ -48,7 +48,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
         const camera = this._camera;
 
         if (cameraTrack.frameNumbers.length === 0) {
-            camera.position.set(0, 10, 0);
+            camera.target.set(0, 10, 0);
             camera.rotation.set(0, 0, 0);
             camera.distance = -45;
             camera.fov = 30 * (Math.PI / 180);
@@ -64,7 +64,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
 
         if (frameNumberB === undefined || frameNumberA + 1 === frameNumberB) {
             const positions = cameraTrack.positions;
-            camera.position.set(
+            camera.target.set(
                 positions[upperBoundIndexMinusOne * 3],
                 positions[upperBoundIndexMinusOne * 3 + 1],
                 positions[upperBoundIndexMinusOne * 3 + 2]
@@ -118,7 +118,7 @@ export class MmdRuntimeCameraAnimation extends MmdRuntimeAnimation<MmdCameraAnim
                 gradient
             );
 
-            camera.position.set(
+            camera.target.set(
                 positionA.x + (positionB.x - positionA.x) * xWeight,
                 positionA.y + (positionB.y - positionA.y) * yWeight,
                 positionA.z + (positionB.z - positionA.z) * zWeight

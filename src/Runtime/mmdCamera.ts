@@ -34,6 +34,12 @@ export class MmdCamera extends Camera implements IMmdCamera {
     public ignoreParentScaling = false;
 
     /**
+     * Define the current target of the camera (default: (0, 10, 0))
+     */
+    @serializeAsVector3()
+    public target = new Vector3(0, 10, 0);
+
+    /**
      * Define the current rotation of the camera
      */
     @serializeAsVector3()
@@ -60,20 +66,65 @@ export class MmdCamera extends Camera implements IMmdCamera {
     /**
      * Creates a new MMD camera
      * @param name Defines the name of the camera in the scene
-     * @param position Defines the position of the camera
+     * @param target Defines the target of the camera
      * @param scene Defines the scene the camera belongs too
      * @param setActiveOnSceneIfNoneActive Defines if the camera should be set as active after creation if no other camera have been defined in the scene
      */
-    public constructor(name: string, position: Vector3 = new Vector3(0, 10, 0), scene?: Scene, setActiveOnSceneIfNoneActive = true) {
-        super(name, position, scene, setActiveOnSceneIfNoneActive);
+    public constructor(name: string, target: Vector3 = new Vector3(0, 10, 0), scene?: Scene, setActiveOnSceneIfNoneActive = true) {
+        super(name, Vector3.Zero(), scene, setActiveOnSceneIfNoneActive);
+
+        this.target = target;
 
         // mmd default fov
         this.fov = 30 * (Math.PI / 180);
+
+        // update position from target and distance (rotation can be ignored here since it is zero at this point)
+        this._position.z = this.distance;
+        this._position.addInPlace(this.target);
 
         this.onAnimationDurationChangedObservable = new Observable<number>();
         this._animationHandleMap = new Map();
 
         this._currentAnimation = null;
+    }
+
+    /**
+     * Define the current local position of the camera in the scene
+     */
+    public override get position(): Vector3 {
+        return this._position;
+    }
+
+    public override set position(value: Vector3) {
+        if (this._position.equals(value)) {
+            return;
+        }
+        this._position.copyFrom(value);
+
+        // update distance and rotation from position and target
+        const toPosition = this._position.subtractToRef(this.target, MmdCamera._TargetVector);
+        this.distance = -toPosition.length();
+
+        toPosition.normalize();
+
+        this.rotation.x = Math.asin(-toPosition.y);
+        this.rotation.y = Math.atan2(toPosition.x, -toPosition.z);
+    }
+
+    /**
+     * Update the position of the camera based on the target, distance, and rotation values
+     *
+     * position is automatically updated when view matrix is computed, so you usually don't need to call this method
+     */
+    public updatePosition(): void {
+        const rotationMatrix = Matrix.RotationYawPitchRollToRef(
+            -this.rotation.y, -this.rotation.x, -this.rotation.z,
+            MmdCamera._RotationMatrix
+        );
+        this.target.addToRef(
+            Vector3.TransformCoordinatesFromFloatsToRef(0, 0, this.distance, rotationMatrix, this._position),
+            this._position
+        );
     }
 
     /**
@@ -181,16 +232,16 @@ export class MmdCamera extends Camera implements IMmdCamera {
         this._currentAnimation.animate(frameTime);
     }
 
-    private _storedPosition: Vector3 = null!;
+    private _storedTarget: Vector3 = null!;
     private _storedRotation: Vector3 = null!;
     private _storedDistance = 0;
 
     /**
-     * Store current camera state of the camera (fov, position, rotation, etc..)
+     * Store current camera state of the camera (fov, target, rotation, etc..)
      * @returns the camera
      */
     public override storeState(): Camera {
-        this._storedPosition = this.position.clone();
+        this._storedTarget = this.target.clone();
         this._storedRotation = this.rotation.clone();
         this._storedDistance = this.distance;
 
@@ -207,7 +258,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
             return false;
         }
 
-        this.position = this._storedPosition.clone();
+        this.target = this._storedTarget.clone();
         this.rotation = this._storedRotation.clone();
 
         this.distance = this._storedDistance;
@@ -248,7 +299,6 @@ export class MmdCamera extends Camera implements IMmdCamera {
     }
 
     private static readonly _RotationMatrix = new Matrix();
-    private static readonly _CameraEyePosition = new Vector3();
     private static readonly _UpVector = new Vector3();
     private static readonly _TargetVector = new Vector3();
 
@@ -258,9 +308,9 @@ export class MmdCamera extends Camera implements IMmdCamera {
             -this.rotation.y, -this.rotation.x, -this.rotation.z,
             MmdCamera._RotationMatrix
         );
-        const cameraEyePosition = this.position.addToRef(
-            Vector3.TransformCoordinatesFromFloatsToRef(0, 0, this.distance, rotationMatrix, MmdCamera._CameraEyePosition),
-            MmdCamera._CameraEyePosition
+        const cameraEyePosition = this.target.addToRef(
+            Vector3.TransformCoordinatesFromFloatsToRef(0, 0, this.distance, rotationMatrix, this._position),
+            this._position
         );
         const targetVector = Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, MmdCamera._TargetVector)
             .addInPlace(cameraEyePosition);

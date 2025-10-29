@@ -31,7 +31,7 @@ export interface IMmdCamera extends IMmdRuntimeAnimatable {
      *
      * This is the position that the camera orbits around
      */
-    position: Vector3;
+    target: Vector3;
 
     /**
      * Rotation of the camera in radians

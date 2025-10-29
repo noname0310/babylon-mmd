@@ -56,7 +56,6 @@ export class MmdCameraAutoFocus2 {
         const defaultPipeline = this._pipeline;
         const rotationMatrix = new Matrix();
         const cameraNormal = new Vector3();
-        const cameraEyePosition = new Vector3();
         const skeletonWorldMatrix = this._skeletonWorldMatrix;
         const boneWorldMatrix = new Matrix();
         const closestHeadPosition = new Vector3();
@@ -75,16 +74,10 @@ export class MmdCameraAutoFocus2 {
 
             Vector3.TransformNormalFromFloatsToRef(0, 0, 1, rotationMatrix, cameraNormal);
 
-            camera.position.addToRef(
-                Vector3.TransformCoordinatesFromFloatsToRef(0, 0, camera.distance, rotationMatrix, cameraEyePosition),
-                cameraEyePosition
-            );
-
             if (camera.parent !== null) {
                 camera.parent.computeWorldMatrix();
                 const cameraParentWorldMatrix = camera.parent.getWorldMatrix();
 
-                Vector3.TransformCoordinatesToRef(cameraEyePosition, cameraParentWorldMatrix, cameraEyePosition);
                 Vector3.TransformNormalToRef(cameraNormal, cameraParentWorldMatrix, cameraNormal);
                 cameraNormal.normalize();
             }
@@ -99,7 +92,7 @@ export class MmdCameraAutoFocus2 {
                 }
 
                 boneWorldMatrix.getTranslationToRef(headRelativePosition)
-                    .subtractToRef(cameraEyePosition, headRelativePosition);
+                    .subtractToRef(camera.globalPosition, headRelativePosition);
 
                 const distance = headRelativePosition.lengthSquared();
                 if (distance < closestDistanceSq) {
@@ -113,7 +106,7 @@ export class MmdCameraAutoFocus2 {
             cameraFocusTarget.y += (closestHeadPosition.y - cameraFocusTarget.y) * alpha;
             cameraFocusTarget.z += (closestHeadPosition.z - cameraFocusTarget.z) * alpha;
 
-            cameraFocusTarget.subtractToRef(cameraEyePosition, headRelativePosition);
+            cameraFocusTarget.subtractToRef(camera.globalPosition, headRelativePosition);
 
             defaultPipeline.depthOfField.focusDistance = (Vector3.Dot(headRelativePosition, cameraNormal) / Vector3.Dot(cameraNormal, cameraNormal)) * 1000;
         };

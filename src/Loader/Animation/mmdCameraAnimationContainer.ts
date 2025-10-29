@@ -140,7 +140,7 @@ export class MmdCameraAnimationContainerHermiteBuilder implements IMmdCameraAnim
      * @returns babylon.js animation
      */
     public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+        const animation = new Animation(rootName + "_camera_target", "target", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const positions = mmdAnimationTrack.positions;
@@ -325,7 +325,7 @@ export class MmdCameraAnimationContainerSampleBuilder implements IMmdCameraAnima
      * @returns babylon.js animation
      */
     public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new Animation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+        const animation = new Animation(rootName + "_camera_target", "target", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const positions = mmdAnimationTrack.positions;
@@ -556,7 +556,7 @@ export class MmdCameraAnimationContainerBezierBuilder implements IMmdCameraAnima
      * @returns babylon.js animation
      */
     public createPositionAnimation(rootName: string, mmdAnimationTrack: MmdCameraAnimationTrack): Animation {
-        const animation = new BezierAnimation(rootName + "_camera_position", "position", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
+        const animation = new BezierAnimation(rootName + "_camera_target", "target", 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
 
         const frameNumbers = mmdAnimationTrack.frameNumbers;
         const positions = mmdAnimationTrack.positions;

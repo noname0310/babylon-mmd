@@ -113,13 +113,13 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
             runtimeAnimation.animate(frameTimeInSpan);
             const weight = span.getEasedWeight(frameTimeInSpan) * normalizer;
 
-            camera.position.scaleAndAddToRef(weight, position);
+            camera.target.scaleAndAddToRef(weight, position);
             camera.rotation.scaleAndAddToRef(weight, rotation);
             distance += camera.distance * weight;
             fov += camera.fov * weight;
         }
 
-        camera.position.copyFrom(position);
+        camera.target.copyFrom(position);
         camera.rotation.copyFrom(rotation);
         camera.distance = distance;
         camera.fov = fov;

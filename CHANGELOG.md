@@ -3,7 +3,14 @@
 ## 1.0.1 (scheduled)
 
 - MmdCamera up vector can now be customized via `MmdCamera.upVector` property
+
 - Register MmdCamera class to type store
+
+- Replace the `MmdCamera.position` property with `MmdCamera.target`
+  - `MmdCamera.target` is now a `Vector3` representing the point the camera is looking at
+  - `MmdCamera.position` is now refers to the camera's location in 3D space
+    - position is a computed property based on `MmdCamera.target`, `MmdCamera.distance`, and `MmdCamera.rotation`
+    - setting `MmdCamera.position` will update `MmdCamera.distance`, and `MmdCamera.rotation` accordingly
 
 ## 1.0.0 (2025-10-08)
 

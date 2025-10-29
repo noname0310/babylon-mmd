@@ -46,7 +46,7 @@ export class MmdRuntimeCameraAnimationContainer implements IMmdRuntimeCameraAnim
     public animate(frameTime: number): void {
         const animation = this.animation;
         const camera = this._camera;
-        camera.position.copyFrom(animation.positionAnimation._interpolate(frameTime, this._positionAnimationState));
+        camera.target.copyFrom(animation.positionAnimation._interpolate(frameTime, this._positionAnimationState));
         camera.rotation.copyFrom(animation.rotationAnimation._interpolate(frameTime, this._rotationAnimationState));
         camera.distance = animation.distanceAnimation._interpolate(frameTime, this._distanceAnimationState);
         camera.fov = animation.fovAnimation._interpolate(frameTime, this._fovAnimationState);
