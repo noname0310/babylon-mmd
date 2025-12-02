@@ -269,6 +269,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
     /** @internal */
     public override _initCache(): void {
         super._initCache();
+        this._cache.target = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
         this._cache.rotation = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
         this._cache.distance = Number.MAX_VALUE;
     }
@@ -281,6 +282,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
             super._updateCache();
         }
 
+        this._cache.target.copyFrom(this.target);
         this._cache.rotation.copyFrom(this.rotation);
         this._cache.distance = this.distance;
     }
@@ -293,6 +295,7 @@ export class MmdCamera extends Camera implements IMmdCamera {
         }
 
         return (
+            this._cache.target.equals(this.target) &&
             this._cache.rotation.equals(this.rotation) &&
             this._cache.distance === this.distance
         );
