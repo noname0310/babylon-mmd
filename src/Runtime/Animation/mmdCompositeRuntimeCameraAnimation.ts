@@ -78,7 +78,7 @@ export class MmdCompositeRuntimeCameraAnimation implements IMmdRuntimeCameraAnim
 
         if (totalWeight === 0) { // avoid divide by zero
             // camera does not have rest pose
-            // camera.position.setAll(0);
+            // camera.target.setAll(0);
             // camera.rotation.setAll(0);
             // camera.distance = 0;
             // camera.fov = 0;

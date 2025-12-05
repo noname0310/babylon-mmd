@@ -25,7 +25,7 @@ export class MmdCameraAnimationContainer implements IMmdAnimation {
     public readonly name: string;
 
     /**
-     * Position animation track for `MmdCamera.position`
+     * Position animation track for `MmdCamera.target`
      */
     public readonly positionAnimation: Animation;
 
