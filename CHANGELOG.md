@@ -12,6 +12,8 @@
     - position is a computed property based on `MmdCamera.target`, `MmdCamera.distance`, and `MmdCamera.rotation`
     - setting `MmdCamera.position` will update `MmdCamera.distance`, and `MmdCamera.rotation` accordingly
 
+- Fix `MmdOutlineRenderer` shader compilation error when using WebGPU with ALPHA_TEST material
+
 ## 1.0.0 (2025-10-08)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`
