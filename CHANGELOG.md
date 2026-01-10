@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 (scheduled)
+## 1.1.0 (2026-01-10)
 
 - MmdCamera up vector can now be customized via `MmdCamera.upVector` property
 

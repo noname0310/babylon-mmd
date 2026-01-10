@@ -1,6 +1,6 @@
 {
     "name": "babylon-mmd",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "babylon.js mmd loader and runtime",
     "main": "esm/index.js",
     "scripts": {
