@@ -617,7 +617,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
             if (this._audioPlayer !== null && !this._audioPlayer.paused) { // sync animation time with audio time
                 const audioPlayerCurrentTime = this._audioPlayer.currentTime;
 
-                const timeDiff = audioPlayerCurrentTime - this._currentFrameTime / 30;
+                const timeDiff = audioPlayerCurrentTime - this._currentFrameTime / 30 / this._animationTimeScale;
                 const timeDiffAbs = Math.abs(timeDiff);
                 if (timeDiffAbs < 0.05) { // synced
                     this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale;
@@ -640,7 +640,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
                         }
                     }
 
-                    this._currentFrameTime = audioPlayerCurrentTime * 30;
+                    this._currentFrameTime = audioPlayerCurrentTime * 30 * this._animationTimeScale;
                 }
             } else { // only use delta time to calculate animation time
                 this._currentFrameTime += deltaTime / 1000 * 30 * this._animationTimeScale;
