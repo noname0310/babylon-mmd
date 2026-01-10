@@ -14,6 +14,8 @@
 
 - Fix `MmdOutlineRenderer` shader compilation error when using WebGPU with ALPHA_TEST material
 
+- Fix `MmdWasmModel` rigidbody state not reset when animation is changed
+
 ## 1.0.0 (2025-10-08)
 
 - rename `MmdXXXAnimationGroup` to `MmdXXXAnimationContainer`

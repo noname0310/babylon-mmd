@@ -478,6 +478,7 @@ export class MmdWasmModel implements IMmdModel {
                 this._needStateReset = false;
 
                 this.ikSolverStates.fill(1);
+                this.rigidBodyStates.fill(1);
                 this.morph.resetMorphWeights();
             }
 
