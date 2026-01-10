@@ -180,6 +180,18 @@ class MmdTextureData {
         onError: Nullable<(message?: string, exception?: any) => void>,
         forcedExtension?: string
     ): void {
+        // KTX2 magic byte detection for compressed texture support
+        // KTX2 magic: 0xAB 0x4B 0x54 0x58 0x20 0x32 0x30 0xBB 0x0D 0x0A 0x1A 0x0A
+        let detectedExtension = forcedExtension;
+        if (detectedExtension === undefined && buffer.byteLength >= 12) {
+            const view = new Uint8Array(buffer);
+            if (view[0] === 0xAB && view[1] === 0x4B && view[2] === 0x54 && view[3] === 0x58 &&
+                view[4] === 0x20 && view[5] === 0x32 && view[6] === 0x30 && view[7] === 0xBB &&
+                view[8] === 0x0D && view[9] === 0x0A && view[10] === 0x1A && view[11] === 0x0A) {
+                detectedExtension = ".ktx2";
+            }
+        }
+
         scene._blockEntityCollection = !!assetContainer;
         const textureCreationOptions: ITextureCreationOptions = {
             noMipmap: options.noMipmap,
@@ -197,7 +209,7 @@ class MmdTextureData {
             deleteBuffer: options.deleteBuffer,
             format: options.format,
             mimeType: options.mimeType,
-            forcedExtension: forcedExtension
+            forcedExtension: detectedExtension
         };
         const texture = this._texture = new Texture(
             "data:" + textureName,
