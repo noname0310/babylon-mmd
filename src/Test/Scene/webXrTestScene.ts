@@ -206,7 +206,9 @@ export class SceneBuilder implements ISceneBuilder {
                 rotationThreshold: 0.7,
                 movementSpeed: 1,
                 rotationSpeed: 0.2,
-                xrInput: xr.input
+                xrInput: xr.input,
+                movementOrientationFollowsController: undefined!,
+                movementOrientationFollowsViewerPose: undefined!
             });
 
             xr.baseExperience.sessionManager.onXRFrameObservable.addOnce(() => {
