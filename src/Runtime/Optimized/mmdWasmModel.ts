@@ -157,6 +157,13 @@ export class MmdWasmModel implements IMmdModel {
     private _needStateReset: boolean;
 
     /**
+     * When true, IK solver states are preserved when switching animations.
+     * Useful for timeline clip playback where IK override mode should persist across animation changes.
+     * @default false
+     */
+    public preserveIkStatesOnAnimationChange = false;
+
+    /**
      * Create a MmdWasmModel
      *
      * IMPORTANT: when wasm runtime using buffered evaluation, this constructor must be called before waiting for the WasmMmdRuntime.lock
@@ -477,7 +484,9 @@ export class MmdWasmModel implements IMmdModel {
             if (this._needStateReset) {
                 this._needStateReset = false;
 
-                this.ikSolverStates.fill(1);
+                if (!this.preserveIkStatesOnAnimationChange) {
+                    this.ikSolverStates.fill(1);
+                }
                 this.morph.resetMorphWeights();
             }
 
