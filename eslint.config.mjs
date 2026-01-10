@@ -195,12 +195,12 @@ export default defineConfig({
         "@stylistic/space-before-blocks": ["error"],
 
         "@stylistic/type-annotation-spacing": ["error", {
-            before: false,
+            before: true,
             after: true,
 
             overrides: {
-                arrow: {
-                    before: true,
+                colon: {
+                    before: false,
                     after: true
                 }
             }
