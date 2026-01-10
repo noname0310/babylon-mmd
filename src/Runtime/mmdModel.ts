@@ -119,6 +119,13 @@ export class MmdModel implements IMmdModel {
     private _needStateReset: boolean;
 
     /**
+     * When true, IK solver states are preserved when switching animations.
+     * Useful for timeline clip playback where IK override mode should persist across animation changes.
+     * @default false
+     */
+    public preserveIkStatesOnAnimationChange = false;
+
+    /**
      * Create a MmdModel
      * @param mmdSkinnedMesh Mesh that able to instantiate `MmdModel`
      * @param skeleton The virtualized bone container of the mesh
@@ -372,8 +379,10 @@ export class MmdModel implements IMmdModel {
                 this._needStateReset = false;
 
                 this.morph.resetMorphWeights();
-                this.ikSolverStates.fill(1);
-                this.rigidBodyStates.fill(1);
+                if (!this.preserveIkStatesOnAnimationChange) {
+                    this.ikSolverStates.fill(1);
+                    this.rigidBodyStates.fill(1);
+                }
             }
 
             if (this._currentAnimation !== null) {
