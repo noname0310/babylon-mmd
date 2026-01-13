@@ -274,7 +274,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
                 mesh = new (boneSdefC !== null ? SdefMesh : Mesh)(geometryInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.setParent(rootMesh);
+                mesh.parent = rootMesh;
             }
             if (geometryInfo.indices === undefined) mesh.isUnIndexed = true;
             meshes.push(mesh);

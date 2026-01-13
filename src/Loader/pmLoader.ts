@@ -493,7 +493,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 const mesh = new (state.useSdef && hasSdef ? SdefMesh : Mesh)(materialInfo.name, scene);
                 mesh._parentContainer = assetContainer;
                 scene._blockEntityCollection = false;
-                mesh.setParent(rootMesh);
+                mesh.parent = rootMesh;
                 meshes.push(mesh);
 
                 scene._blockEntityCollection = !!assetContainer;

@@ -156,7 +156,7 @@ export class SceneBuilder implements ISceneBuilder {
                 const originalMesh = originalMeshes[j];
                 const mesh = new Mesh(originalMesh.name, scene);
                 originalMesh.geometry?.applyToMesh(mesh);
-                mesh.setParent(clonedRootMesh);
+                mesh.parent = clonedRootMesh;
                 if (mesh.subMeshes !== undefined) {
                     for (let k = 0; k < mesh.subMeshes.length; ++k) {
                         mesh.subMeshes[k].setBoundingInfo(originalMesh.getBoundingInfo());

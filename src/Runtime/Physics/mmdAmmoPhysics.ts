@@ -816,7 +816,7 @@ export class MmdAmmoPhysics implements IMmdPhysics {
 
             impostor.setDeltaPosition(new Vector3(0, 0, 0));
 
-            node.setParent(rootMesh);
+            node.parent = rootMesh;
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-imports
             const body = impostor.physicsBody as import("ammojs-typed").default.btRigidBody;

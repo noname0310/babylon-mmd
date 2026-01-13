@@ -693,7 +693,7 @@ export class MmdPhysics implements IMmdPhysics {
             if (bone !== undefined) {
                 node.computeBodyOffsetMatrix(bone.linkedBone.getAbsoluteInverseBindMatrix());
             }
-            node.setParent(rootMesh);
+            node.parent = rootMesh;
 
             const motionType = rigidBody.physicsMode === PmxObject.RigidBody.PhysicsMode.FollowBone
                 ? PhysicsMotionType.ANIMATED
