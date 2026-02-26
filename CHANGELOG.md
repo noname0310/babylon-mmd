@@ -4,6 +4,8 @@
 
 - use `TransformNode.parent` property instead of `TransformNode.setParent` method to set parent node without updating local transform
 
+- Fix load model from `ArrayBufferView` not working
+
 ## 1.1.0 (2026-01-10)
 
 - MmdCamera up vector can now be customized via `MmdCamera.upVector` property

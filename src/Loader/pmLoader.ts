@@ -128,13 +128,13 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
 
     public loadFile(
         scene: Scene,
-        fileOrUrl: string | File,
+        fileOrUrl: string | File | ArrayBufferView,
         _rootUrl: string,
         onSuccess: (data: IPmLoadState, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
         onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
-    ): IFileRequest {
+    ): Nullable<IFileRequest> {
         const materialBuilder = this.materialBuilder;
         const useSdef = this.useSdef;
         const buildSkeleton = this.buildSkeleton;
@@ -145,6 +145,25 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
         const referenceFiles = this.referenceFiles;
         const optimizeSubmeshes = this.optimizeSubmeshes;
         const optimizeSingleMaterialModel = this.optimizeSingleMaterialModel;
+
+        if (ArrayBuffer.isView(fileOrUrl)) {
+            const loadState: IPmLoadState = {
+                arrayBuffer: fileOrUrl.buffer,
+                pmFileId: ObjectUniqueIdProvider.GetId(fileOrUrl).toString(),
+                materialBuilder,
+                useSdef,
+                buildSkeleton,
+                buildMorph,
+                boundingBoxMargin,
+                alwaysSetSubMeshesBoundingInfo,
+                preserveSerializationData,
+                referenceFiles,
+                optimizeSubmeshes,
+                optimizeSingleMaterialModel
+            };
+            onSuccess(loadState);
+            return null;
+        }
 
         const request = scene._loadFile(
             fileOrUrl,

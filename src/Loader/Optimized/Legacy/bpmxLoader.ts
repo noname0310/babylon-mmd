@@ -17,7 +17,7 @@ export class BpmxLoader extends OriginalBpmxLoader {
         return new BpmxLoader(options.mmdmodel, this);
     }
 
-    protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<BpmxObject> {
+    protected override async _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<BpmxObject> {
         return await BpmxReader.ParseAsync(arrayBuffer, this)
             .catch((e: any) => {
                 return Promise.reject(e);

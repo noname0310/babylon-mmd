@@ -87,13 +87,13 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
 
     public loadFile(
         scene: Scene,
-        fileOrUrl: string | File,
+        fileOrUrl: string | File | ArrayBufferView,
         _rootUrl: string,
         onSuccess: (data: IBpmxLoadState, responseURL?: string | undefined) => void,
         onProgress?: ((ev: ISceneLoaderProgressEvent) => void) | undefined,
         useArrayBuffer?: boolean | undefined,
         onError?: ((request?: WebRequest | undefined, exception?: LoadFileError | undefined) => void) | undefined
-    ): IFileRequest {
+    ): Nullable<IFileRequest> {
         const materialBuilder = this.materialBuilder;
         const useSdef = this.useSdef;
         const buildSkeleton = this.buildSkeleton;
@@ -102,6 +102,23 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         const alwaysSetSubMeshesBoundingInfo = this.alwaysSetSubMeshesBoundingInfo;
         const preserveSerializationData = this.preserveSerializationData;
         const useSingleMeshForSingleGeometryModel = this.useSingleMeshForSingleGeometryModel;
+
+        if (ArrayBuffer.isView(fileOrUrl)) {
+            const loadState: IBpmxLoadState = {
+                arrayBuffer: fileOrUrl.buffer,
+                pmFileId: ObjectUniqueIdProvider.GetId(fileOrUrl).toString(),
+                materialBuilder,
+                useSdef,
+                buildSkeleton,
+                buildMorph,
+                boundingBoxMargin,
+                alwaysSetSubMeshesBoundingInfo,
+                preserveSerializationData,
+                useSingleMeshForSingleGeometryModel
+            };
+            onSuccess(loadState);
+            return null;
+        }
 
         const request = scene._loadFile(
             fileOrUrl,
@@ -132,7 +149,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
         return new BpmxLoader(options.mmdmodel, this);
     }
 
-    protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<BpmxObject> {
+    protected override async _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<BpmxObject> {
         return await BpmxReader.ParseAsync(arrayBuffer, this)
             .catch((e: any) => {
                 return Promise.reject(e);

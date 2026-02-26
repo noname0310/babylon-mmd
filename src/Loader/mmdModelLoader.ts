@@ -108,7 +108,7 @@ export interface IMmdModelLoaderOptions {
 
 /** @internal */
 export interface IMmdModelLoadState {
-    readonly arrayBuffer: ArrayBuffer;
+    readonly arrayBuffer: ArrayBufferLike;
     readonly pmFileId: string;
     readonly materialBuilder: Nullable<IMmdMaterialBuilder>;
     readonly useSdef: boolean;
@@ -399,7 +399,7 @@ export abstract class MmdModelLoader<
         };
     }
 
-    protected abstract _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<ModelObject>;
+    protected abstract _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<ModelObject>;
 
     protected _getProgressTaskCosts(state: LoadState, modelObject: ModelObject): IProgressTask[] {
         return [

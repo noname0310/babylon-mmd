@@ -22,7 +22,7 @@ import type { ISceneBuilder } from "../baseRuntime";
 
 class MigrationBpmxLoader extends BpmxLoader {
     public lastBpmxObject: Nullable<BpmxObject> = null;
-    protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<BpmxObject> {
+    protected override async _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<BpmxObject> {
         this.lastBpmxObject = await super._parseFileAsync(arrayBuffer);
         return this.lastBpmxObject;
     }

@@ -33,7 +33,7 @@ export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILog
         return new PmxLoader(options.mmdmodel, this);
     }
 
-    protected override async _parseFileAsync(arrayBuffer: ArrayBuffer): Promise<PmxObject> {
+    protected override async _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<PmxObject> {
         return await PmxReader.ParseAsync(arrayBuffer, this)
             .catch((e: any) => {
                 return Promise.reject(e);
