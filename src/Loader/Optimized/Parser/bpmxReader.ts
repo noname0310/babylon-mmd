@@ -166,6 +166,8 @@ export class BpmxReader {
             leftHeaderBytes -= 4;
         }
 
+        leftHeaderBytes;
+
         let modelName = "";
         let englishModelName = "";
         let comment = "";
