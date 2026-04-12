@@ -1,3 +1,4 @@
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -41,8 +42,7 @@ export class MmdPlayerControl {
     private _speedSlider: HTMLInputElement;
     private _fullscreenButton: HTMLButtonElement;
 
-    private readonly _bindedDispose: () => void;
-    private readonly _scene: Scene;
+    private _disposeObserver: Nullable<Observer<Scene>>;
 
     /**
      * Create a MMD player control
@@ -83,9 +83,7 @@ export class MmdPlayerControl {
         mmdRuntime.onAnimationTickObservable.add(this._onAnimationTick);
         audioPlayer?.onMuteStateChangedObservable.add(this._onMuteStateChanged);
 
-        this._bindedDispose = this.dispose.bind(this);
-        this._scene = scene;
-        scene.onDisposeObservable.add(this._bindedDispose);
+        this._disposeObserver = scene.onDisposeObservable.add(this.dispose, undefined, undefined, this);
     }
 
     private _createCanvasContainer(parentControl: HTMLElement): HTMLElement {
@@ -440,6 +438,9 @@ export class MmdPlayerControl {
         this._mmdRuntime.onAnimationTickObservable.removeCallback(this._onAnimationTick);
         this._audioPlayer?.onMuteStateChangedObservable.removeCallback(this._onMuteStateChanged);
 
-        this._scene.onDisposeObservable.removeCallback(this._bindedDispose);
+        if (this._disposeObserver !== null) {
+            this._disposeObserver.remove();
+            this._disposeObserver = null;
+        }
     }
 }

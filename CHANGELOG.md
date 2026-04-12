@@ -10,6 +10,15 @@
 
 - Fix `MmdWasmModel` bone flag sanity check not working properly
 
+- Refactor Disposable pattern for better resource management
+  - following classes now use `Observer.remove()` instead of `Observable.removeCallback()` for unsubscribe observable
+    - `MmdAsyncTextureLoader`
+    - `MmdRuntime`
+    - `MmdWasmRuntime`
+    - `MmdWasmAnimation`
+    - `StreamAudioPlayer`
+    - `MmdPlayerControl`
+
 - minimum required version of Babylon.js is now 9.2.0
 
 ## 1.1.0 (2026-01-10)

@@ -1,13 +1,13 @@
 import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Logger } from "@babylonjs/core/Misc/logger";
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdRuntimeModelAnimation } from "../Animation/IMmdRuntimeAnimation";
 import type { IPlayer } from "../Audio/IAudioPlayer";
-import type { IDisposeObservable } from "../IDisposeObserable";
 import type { IMmdMaterialProxyConstructor } from "../IMmdMaterialProxy";
 import type { IMmdRuntime } from "../IMmdRuntime";
 import type { IMmdRuntimeAnimatable } from "../IMmdRuntimeAnimatable";
@@ -150,8 +150,7 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
     private _beforePhysicsBinded: Nullable<() => void>;
     private readonly _afterPhysicsBinded: () => void;
 
-    private readonly _bindedDispose: Nullable<(scene: Scene) => void>;
-    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+    private _disposeObserver: Nullable<Observer<Scene>>;
 
     /**
      * Creates a new MMD web assembly runtime
@@ -217,14 +216,14 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this._afterPhysicsBinded = this.afterPhysics.bind(this);
 
         if (scene !== null) {
-            this._bindedDispose = (): void => this.dispose(scene);
-            this._disposeObservableObject = scene;
-            if (this._disposeObservableObject !== null) {
-                this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
-            }
+            this._disposeObserver = scene.onDisposeObservable.add(
+                this.dispose,
+                undefined,
+                undefined,
+                this
+            );
         } else {
-            this._bindedDispose = null;
-            this._disposeObservableObject = null;
+            this._disposeObserver = null;
         }
     }
 
@@ -256,8 +255,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.unregister(scene);
         this.wasmInternal.free();
 
-        if (this._disposeObservableObject !== null && this._bindedDispose !== null) {
-            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
+        if (this._disposeObserver !== null) {
+            this._disposeObserver.remove();
+            this._disposeObserver = null;
         }
     }
 

@@ -1,3 +1,4 @@
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
@@ -160,8 +161,7 @@ export class StreamAudioPlayer implements IAudioPlayer {
     private _virtualPauseCurrentTime: number;
     private _metadataLoaded: boolean;
 
-    private readonly _bindedDispose: () => void;
-    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+    private _disposeObserver: Nullable<Observer<IDisposeObservable>>;
 
     /**
      * Create a stream audio player
@@ -210,10 +210,15 @@ export class StreamAudioPlayer implements IAudioPlayer {
         audio.onpause = this._onPause;
         audio.onseeked = this._onSeek;
 
-        this._bindedDispose = this.dispose.bind(this);
-        this._disposeObservableObject = disposeObservable;
-        if (this._disposeObservableObject !== null) {
-            this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
+        if (disposeObservable !== null) {
+            this._disposeObserver = disposeObservable?.onDisposeObservable.add(
+                this.dispose,
+                undefined,
+                undefined,
+                this
+            );
+        } else {
+            this._disposeObserver = null;
         }
     }
 
@@ -616,8 +621,9 @@ export class StreamAudioPlayer implements IAudioPlayer {
         this.onPauseObservable.clear();
         this.onSeekObservable.clear();
 
-        if (this._disposeObservableObject !== null) {
-            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
+        if (this._disposeObserver !== null) {
+            this._disposeObserver.remove();
+            this._disposeObserver = null;
         }
 
         this._audio = null;

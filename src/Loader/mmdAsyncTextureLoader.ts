@@ -1,7 +1,9 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Constants } from "@babylonjs/core/Engines/constants";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import type { ITextureCreationOptions } from "@babylonjs/core/Materials/Textures/texture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import { Observable } from "@babylonjs/core/Misc/observable";
 import { TimingTools } from "@babylonjs/core/Misc/timingTools";
 import type { Scene } from "@babylonjs/core/scene";
@@ -153,21 +155,19 @@ class MmdTextureData {
         );
     }
 
-    private _onDisposeCallback: Nullable<() => void> = null;
+    private _disposeObserver: Nullable<Observer<BaseTexture>> = null;
 
     public registerOnDisposeCallback(callback: () => void): void {
         // dead code. for optimization we don't need to check this
         // if (this._onDisposeCallback !== null) throw new Error("On dispose callback is already registered");
-        this._onDisposeCallback = callback;
-        this._texture!.onDisposeObservable.addOnce(callback);
+        this._disposeObserver = this._texture!.onDisposeObservable.addOnce(callback);
     }
 
-    public unregisterOnDisposeCallback(): Nullable<() => void> {
-        const callback = this._onDisposeCallback;
-        if (callback === null) return null;
-        this._onDisposeCallback = null;
-        this._texture!.onDisposeObservable.removeCallback(callback);
-        return callback;
+    public unregisterOnDisposeCallback(): void {
+        const observer = this._disposeObserver;
+        if (observer === null) return;
+        this._disposeObserver = null;
+        observer.remove();
     }
 
     private _createTexture(
