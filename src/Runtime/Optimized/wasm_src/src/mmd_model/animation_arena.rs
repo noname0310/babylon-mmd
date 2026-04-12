@@ -44,42 +44,42 @@ impl AnimationArena {
     }
 
     #[inline]
-    pub(crate) fn bone_arena(&self) -> UncheckedSlice<AnimatedBoneData> {
+    pub(crate) fn bone_arena(&self) -> UncheckedSlice<'_, AnimatedBoneData> {
         UncheckedSlice::new(&self.bone_arena)
     }
     
     #[inline]
-    pub(crate) fn bone_arena_mut(&mut self) -> UncheckedSliceMut<AnimatedBoneData> {
+    pub(crate) fn bone_arena_mut(&mut self) -> UncheckedSliceMut<'_, AnimatedBoneData> {
         UncheckedSliceMut::new(&mut self.bone_arena)
     }
 
     #[inline]
-    pub(crate) fn iksolver_state_arena(&self) -> UncheckedSlice<u8> {
+    pub(crate) fn iksolver_state_arena(&self) -> UncheckedSlice<'_, u8> {
         UncheckedSlice::new(&self.iksolver_state_arena)
     }
 
     #[inline]
-    pub(crate) fn iksolver_state_arena_mut(&mut self) -> UncheckedSliceMut<u8> {
+    pub(crate) fn iksolver_state_arena_mut(&mut self) -> UncheckedSliceMut<'_, u8> {
         UncheckedSliceMut::new(&mut self.iksolver_state_arena)
     }
 
     #[inline]
-    pub(crate) fn rigidbody_state_arena(&self) -> UncheckedSlice<u8> {
+    pub(crate) fn rigidbody_state_arena(&self) -> UncheckedSlice<'_, u8> {
         UncheckedSlice::new(&self.rigidbody_state_arena)
     }
 
     #[inline]
-    pub(crate) fn rigidbody_state_arena_mut(&mut self) -> UncheckedSliceMut<u8> {
+    pub(crate) fn rigidbody_state_arena_mut(&mut self) -> UncheckedSliceMut<'_, u8> {
         UncheckedSliceMut::new(&mut self.rigidbody_state_arena)
     }
 
     #[inline]
-    pub(crate) fn morph_arena(&self) -> UncheckedSlice<f32> {
+    pub(crate) fn morph_arena(&self) -> UncheckedSlice<'_, f32> {
         UncheckedSlice::new(&self.morph_arena)
     }
 
     #[inline]
-    pub(crate) fn morph_arena_mut(&mut self) -> UncheckedSliceMut<f32> {
+    pub(crate) fn morph_arena_mut(&mut self) -> UncheckedSliceMut<'_, f32> {
         UncheckedSliceMut::new(&mut self.morph_arena)
     }
 

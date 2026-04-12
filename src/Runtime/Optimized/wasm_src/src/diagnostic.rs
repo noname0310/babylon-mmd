@@ -80,7 +80,7 @@ impl Diagnostic {
         self.locked.store(0, atomic::Ordering::Release);
     }
     
-    pub(crate) fn writer(&mut self) -> DiagnosticWriter {
+    pub(crate) fn writer(&mut self) -> DiagnosticWriter<'_> {
         DiagnosticWriter::new(self)
     }
     

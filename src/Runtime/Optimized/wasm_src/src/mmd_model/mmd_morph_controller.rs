@@ -19,19 +19,19 @@ impl MmdMorphController {
         }
     }
 
-    fn morphs(&self) -> UncheckedSlice<MorphMetadata> {
+    fn morphs(&self) -> UncheckedSlice<'_, MorphMetadata> {
         UncheckedSlice::new(&self.morphs)
     }
 
-    fn active_morphs(&self) -> UncheckedSlice<bool> {
+    fn active_morphs(&self) -> UncheckedSlice<'_, bool> {
         UncheckedSlice::new(&self.active_morphs)
     }
 
-    fn active_morphs_mut(&mut self) -> UncheckedSliceMut<bool> {
+    fn active_morphs_mut(&mut self) -> UncheckedSliceMut<'_, bool> {
         UncheckedSliceMut::new(&mut self.active_morphs)
     }
 
-    pub(super) fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: UncheckedSlice<f32>) {
+    pub(super) fn update(&mut self, bone_arena: &mut MmdRuntimeBoneArena, morph_weights: UncheckedSlice<'_, f32>) {
         for i in 0..self.active_morphs().len() as u32 {
             if self.active_morphs()[i] {
                 self.reset_morph(i, bone_arena);

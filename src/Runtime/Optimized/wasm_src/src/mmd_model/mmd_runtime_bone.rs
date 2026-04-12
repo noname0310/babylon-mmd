@@ -21,12 +21,12 @@ impl MmdRuntimeBoneArena {
     }
     
     #[inline]
-    pub(crate) fn arena(&self) -> UncheckedSlice<MmdRuntimeBone> {
+    pub(crate) fn arena(&self) -> UncheckedSlice<'_, MmdRuntimeBone> {
         UncheckedSlice::new(&self.arena)
     }
 
     #[inline]
-    pub(crate) fn arena_mut(&mut self) -> UncheckedSliceMut<MmdRuntimeBone> {
+    pub(crate) fn arena_mut(&mut self) -> UncheckedSliceMut<'_, MmdRuntimeBone> {
         UncheckedSliceMut::new(&mut self.arena)
     }
 
@@ -47,12 +47,12 @@ impl MmdRuntimeBoneArena {
     }
 
     #[inline]
-    pub(crate) fn world_matrices(&self) -> UncheckedSlice<Mat4> {
+    pub(crate) fn world_matrices(&self) -> UncheckedSlice<'_, Mat4> {
         UncheckedSlice::new(&self.world_matrix_arena)
     }
 
     #[inline]
-    pub(crate) fn world_matrices_mut(&mut self) -> UncheckedSliceMut<Mat4> {
+    pub(crate) fn world_matrices_mut(&mut self) -> UncheckedSliceMut<'_, Mat4> {
         UncheckedSliceMut::new(&mut self.world_matrix_arena)
     }
 

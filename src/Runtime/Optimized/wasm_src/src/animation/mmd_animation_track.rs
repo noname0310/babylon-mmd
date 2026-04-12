@@ -58,32 +58,32 @@ impl MmdBoneAnimationTrack {
     }
 
     #[inline]
-    pub(super) fn rotations(&self) -> UncheckedSlice<Quat> {
+    pub(super) fn rotations(&self) -> UncheckedSlice<'_, Quat> {
         UncheckedSlice::new(&self.rotations)
     }
 
     #[inline]
-    pub(super) fn rotations_mut(&mut self) -> UncheckedSliceMut<Quat> {
+    pub(super) fn rotations_mut(&mut self) -> UncheckedSliceMut<'_, Quat> {
         UncheckedSliceMut::new(&mut self.rotations)
     }
 
     #[inline]
-    pub(super) fn rotation_interpolations(&self) -> UncheckedSlice<InterpolationScalar> {
+    pub(super) fn rotation_interpolations(&self) -> UncheckedSlice<'_, InterpolationScalar> {
         UncheckedSlice::new(&self.rotation_interpolations)
     }
 
     #[inline]
-    pub(super) fn rotation_interpolations_mut(&mut self) -> UncheckedSliceMut<InterpolationScalar> {
+    pub(super) fn rotation_interpolations_mut(&mut self) -> UncheckedSliceMut<'_, InterpolationScalar> {
         UncheckedSliceMut::new(&mut self.rotation_interpolations)
     }
 
     #[inline]
-    pub(super) fn physics_toggles(&self) -> UncheckedSlice<u8> {
+    pub(super) fn physics_toggles(&self) -> UncheckedSlice<'_, u8> {
         UncheckedSlice::new(&self.physics_toggles)
     }
 
     #[inline]
-    pub(super) fn physics_toggles_mut(&mut self) -> UncheckedSliceMut<u8> {
+    pub(super) fn physics_toggles_mut(&mut self) -> UncheckedSliceMut<'_, u8> {
         UncheckedSliceMut::new(&mut self.physics_toggles)
     }
 
@@ -120,52 +120,52 @@ impl MmdMovableBoneAnimationTrack {
     }
 
     #[inline]
-    pub(super) fn positions(&self) -> UncheckedSlice<Vec3> {
+    pub(super) fn positions(&self) -> UncheckedSlice<'_, Vec3> {
         UncheckedSlice::new(&self.positions)
     }
 
     #[inline]
-    pub(super) fn positions_mut(&mut self) -> UncheckedSliceMut<Vec3> {
+    pub(super) fn positions_mut(&mut self) -> UncheckedSliceMut<'_, Vec3> {
         UncheckedSliceMut::new(&mut self.positions)
     }
 
     #[inline]
-    pub(super) fn position_interpolations(&self) -> UncheckedSlice<InterpolationVector3> {
+    pub(super) fn position_interpolations(&self) -> UncheckedSlice<'_, InterpolationVector3> {
         UncheckedSlice::new(&self.position_interpolations)
     }
 
     #[inline]
-    pub(super) fn position_interpolations_mut(&mut self) -> UncheckedSliceMut<InterpolationVector3> {
+    pub(super) fn position_interpolations_mut(&mut self) -> UncheckedSliceMut<'_, InterpolationVector3> {
         UncheckedSliceMut::new(&mut self.position_interpolations)
     }
 
     #[inline]
-    pub(super) fn rotations(&self) -> UncheckedSlice<Quat> {
+    pub(super) fn rotations(&self) -> UncheckedSlice<'_, Quat> {
         UncheckedSlice::new(&self.rotations)
     }
 
     #[inline]
-    pub(super) fn rotations_mut(&mut self) -> UncheckedSliceMut<Quat> {
+    pub(super) fn rotations_mut(&mut self) -> UncheckedSliceMut<'_, Quat> {
         UncheckedSliceMut::new(&mut self.rotations)
     }
 
     #[inline]
-    pub(super) fn rotation_interpolations(&self) -> UncheckedSlice<InterpolationScalar> {
+    pub(super) fn rotation_interpolations(&self) -> UncheckedSlice<'_, InterpolationScalar> {
         UncheckedSlice::new(&self.rotation_interpolations)
     }
 
     #[inline]
-    pub(super) fn rotation_interpolations_mut(&mut self) -> UncheckedSliceMut<InterpolationScalar> {
+    pub(super) fn rotation_interpolations_mut(&mut self) -> UncheckedSliceMut<'_, InterpolationScalar> {
         UncheckedSliceMut::new(&mut self.rotation_interpolations)
     }
 
     #[inline]
-    pub(super) fn physics_toggles(&self) -> UncheckedSlice<u8> {
+    pub(super) fn physics_toggles(&self) -> UncheckedSlice<'_, u8> {
         UncheckedSlice::new(&self.physics_toggles)
     }
 
     #[inline]
-    pub(super) fn physics_toggles_mut(&mut self) -> UncheckedSliceMut<u8> {
+    pub(super) fn physics_toggles_mut(&mut self) -> UncheckedSliceMut<'_, u8> {
         UncheckedSliceMut::new(&mut self.physics_toggles)
     }
 
@@ -194,12 +194,12 @@ impl MmdMorphAnimationTrack {
     }
 
     #[inline]
-    pub(super) fn weights(&self) -> UncheckedSlice<f32> {
+    pub(super) fn weights(&self) -> UncheckedSlice<'_, f32> {
         UncheckedSlice::new(&self.weights)
     }
 
     #[inline]
-    pub(super) fn weights_mut(&mut self) -> UncheckedSliceMut<f32> {
+    pub(super) fn weights_mut(&mut self) -> UncheckedSliceMut<'_, f32> {
         UncheckedSliceMut::new(&mut self.weights)
     }
 
@@ -233,12 +233,12 @@ impl MmdPropertyAnimationTrack {
     }
 
     #[inline]
-    pub(super) fn ik_states(&self, ik_index: usize) -> UncheckedSlice<u8> {
+    pub(super) fn ik_states(&self, ik_index: usize) -> UncheckedSlice<'_, u8> {
         UncheckedSlice::new(&self.ik_states[ik_index])
     }
 
     #[inline]
-    pub(super) fn ik_states_mut(&mut self, ik_index: usize) -> UncheckedSliceMut<u8> {
+    pub(super) fn ik_states_mut(&mut self, ik_index: usize) -> UncheckedSliceMut<'_, u8> {
         UncheckedSliceMut::new(&mut self.ik_states[ik_index])
     }
 

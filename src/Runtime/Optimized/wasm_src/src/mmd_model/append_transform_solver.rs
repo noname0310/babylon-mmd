@@ -18,12 +18,12 @@ impl AppendTransformSolverArena {
     }
 
     #[inline]
-    pub(super) fn arena(&self) -> UncheckedSlice<AppendTransformSolver> {
+    pub(super) fn arena(&self) -> UncheckedSlice<'_, AppendTransformSolver> {
         UncheckedSlice::new(&self.arena)
     }
 
     #[inline]
-    pub(super) fn arena_mut(&mut self) -> UncheckedSliceMut<AppendTransformSolver> {
+    pub(super) fn arena_mut(&mut self) -> UncheckedSliceMut<'_, AppendTransformSolver> {
         UncheckedSliceMut::new(&mut self.arena)
     }
 

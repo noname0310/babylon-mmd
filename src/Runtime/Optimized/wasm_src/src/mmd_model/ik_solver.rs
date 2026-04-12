@@ -19,7 +19,7 @@ impl IkSolverArena {
     }
 
     #[inline]
-    pub(super) fn arena(&self) -> UncheckedSlice<IkSolver> {
+    pub(super) fn arena(&self) -> UncheckedSlice<'_, IkSolver> {
         UncheckedSlice::new(&self.arena)
     }
 }

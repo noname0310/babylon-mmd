@@ -1,4 +1,4 @@
-#![feature(c_variadic)]
+#![cfg_attr(all(debug_assertions, feature = "physics"), feature(c_variadic))]
 
 mod animation;
 mod mmd_model;
