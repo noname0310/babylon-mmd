@@ -1,3 +1,4 @@
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";
@@ -37,8 +38,7 @@ export class MmdWasmAnimation extends MmdAnimationBase<
     public readonly _poolWrapper: AnimationPoolWrapper;
 
     private _disposed: boolean;
-    private readonly _bindedDispose: () => void;
-    private readonly _disposeObservableObject: Nullable<IDisposeObservable>;
+    private _disposeObserver: Nullable<Observer<IDisposeObservable>>;
 
     /**
      * Create a MmdWasmAnimation instance
@@ -238,10 +238,15 @@ export class MmdWasmAnimation extends MmdAnimationBase<
         this._poolWrapper = animationPoolWrapper;
 
         this._disposed = false;
-        this._bindedDispose = this.dispose.bind(this);
-        this._disposeObservableObject = disposeObservable;
-        if (this._disposeObservableObject !== null) {
-            this._disposeObservableObject.onDisposeObservable.add(this._bindedDispose);
+        if (disposeObservable !== null) {
+            this._disposeObserver = disposeObservable.onDisposeObservable.add(
+                this.dispose,
+                undefined,
+                undefined,
+                this
+            );
+        } else {
+            this._disposeObserver = null;
         }
     }
 
@@ -264,8 +269,9 @@ export class MmdWasmAnimation extends MmdAnimationBase<
         (this.propertyTrack as IMmdPropertyAnimationTrack) = new MmdPropertyAnimationTrack(0, []);
         (this.cameraTrack as MmdCameraAnimationTrack) = new MmdCameraAnimationTrack(0);
 
-        if (this._disposeObservableObject !== null) {
-            this._disposeObservableObject.onDisposeObservable.removeCallback(this._bindedDispose);
+        if (this._disposeObserver !== null) {
+            this._disposeObserver.remove();
+            this._disposeObserver = null;
         }
     }
 
