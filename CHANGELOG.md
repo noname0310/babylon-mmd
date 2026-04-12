@@ -8,6 +8,8 @@
 
 - Fix transparency mode not parsed correctly when loading BPMX model with no texture (extrime edge case)
 
+- Fix `MmdWasmModel` bone flag sanity check not working properly
+
 - minimum required version of Babylon.js is now 9.2.0
 
 ## 1.1.0 (2026-01-10)

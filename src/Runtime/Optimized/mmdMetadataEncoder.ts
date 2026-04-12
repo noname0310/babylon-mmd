@@ -320,7 +320,7 @@ export class MmdMetadataEncoder {
             serializer.setFloat32Array(linkedBone.getAbsoluteInverseBindMatrix().m); // absoluteInverseBindMatrix
             serializer.setInt32(bone.parentBoneIndex); // parentBoneIndex
             serializer.setInt32(bone.transformOrder); // transformOrder
-            serializer.setUint16(bone.flag); // flag
+            serializer.setUint16(flag); // flag
             serializer.offset += 2; // padding
 
             if (bone.appendTransform) {
