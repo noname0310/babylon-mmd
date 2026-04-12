@@ -213,7 +213,7 @@ export class PBRMaterialBuilder extends MaterialBuilderBase<PBRMaterial> {
                     etAlphaEvaluateResult = 0; // fallback to opaque
                 }
 
-                material.transparencyMode = Material.MATERIAL_OPAQUE;
+                material.transparencyMode = etAlphaEvaluateResult;
             }
         }
     }

@@ -6,6 +6,10 @@
 
 - Fix load model from `ArrayBufferView` not working
 
+- Fix transparency mode not parsed correctly when loading BPMX model with no texture (extrime edge case)
+
+- minimum required version of Babylon.js is now 9.2.0
+
 ## 1.1.0 (2026-01-10)
 
 - MmdCamera up vector can now be customized via `MmdCamera.upVector` property

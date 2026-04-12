@@ -205,7 +205,7 @@ export abstract class StandardMaterialBuilderBase<TMaterial extends StandardMate
                     etAlphaEvaluateResult = 0; // fallback to opaque
                 }
 
-                material.transparencyMode = Material.MATERIAL_OPAQUE;
+                material.transparencyMode = etAlphaEvaluateResult;
             }
         }
     }
