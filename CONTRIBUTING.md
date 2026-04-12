@@ -65,20 +65,20 @@ sudo n stable
 <summary>for aarch64:</summary>
 
 ```bash
-wget https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.3/clang+llvm-19.1.3-aarch64-linux-gnu.tar.xz
-tar -xf clang+llvm-19.1.3-aarch64-linux-gnu.tar.xz
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.2/LLVM-22.1.2-Linux-ARM64.tar.xz
+tar -xf LLVM-22.1.2-Linux-ARM64.tar.xz
 ```
 
 update PATH temporarily:
 
 ```bash
-export PATH=$PWD/clang+llvm-19.1.3-aarch64-linux-gnu/bin:$PATH
+export PATH=$PWD/LLVM-22.1.2-Linux-ARM64/bin:$PATH
 ```
 
 update PATH permanently:
 
 ```bash
-echo "export PATH=$PWD/clang+llvm-19.1.3-aarch64-linux-gnu/bin:\$PATH" >> ~/.bashrc
+echo "export PATH=$PWD/LLVM-22.1.2-Linux-ARM64/bin:\$PATH" >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -88,20 +88,20 @@ source ~/.bashrc
 <summary>for x86_64:</summary>
 
 ```bash
-wget https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.3/LLVM-19.1.3-Linux-X64.tar.xz
-tar -xf LLVM-19.1.3-Linux-X64.tar.xz
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.2/LLVM-22.1.2-Linux-X64.tar.xz
+tar -xf LLVM-22.1.2-Linux-X64.tar.xz
 ```
 
 update PATH temporarily:
 
 ```bash
-export PATH=$PWD/LLVM-19.1.3-Linux-X64/bin:$PATH
+export PATH=$PWD/LLVM-22.1.2-Linux-X64/bin:$PATH
 ```
 
 update PATH permanently:
 
 ```bash
-echo "export PATH=$PWD/LLVM-19.1.3-Linux-X64/bin:\$PATH" >> ~/.bashrc
+echo "export PATH=$PWD/LLVM-22.1.2-Linux-X64/bin:\$PATH" >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -125,12 +125,12 @@ you can install the dependencies using the following links:
 
 - [nodejs and npm](https://nodejs.org/en/)
 - [rust](https://www.rust-lang.org/)
-- [clang and llvm](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.3) (add bin path to system path)
+- [clang and llvm](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.2) (add bin path to system path)
 - scache (install using cargo)
 
 #### clang and llvm installation details
 
-Download `clang+llvm-19.1.3-x86_64-pc-windows-msvc.tar.xz` from the link above and extract it.
+Download `clang+llvm-22.1.2-x86_64-pc-windows-msvc.tar.xz` from the link above and extract it.
 
 Add the extracted `bin` folder to the system path.
 
