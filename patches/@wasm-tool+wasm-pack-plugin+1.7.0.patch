@@ -1,0 +1,16 @@
+diff --git a/node_modules/@wasm-tool/wasm-pack-plugin/plugin.js b/node_modules/@wasm-tool/wasm-pack-plugin/plugin.js
+index 37c4678..f8e7ffa 100644
+--- a/node_modules/@wasm-tool/wasm-pack-plugin/plugin.js
++++ b/node_modules/@wasm-tool/wasm-pack-plugin/plugin.js
+@@ -237,7 +237,10 @@ function spawnWasmPack({ outDir, outName, isDebug, cwd, args, extraArgs }) {
+ 
+ function runProcess(bin, args, options) {
+     return new Promise((resolve, reject) => {
+-        const p = spawn(bin, args, options)
++        const shouldUseCmdShim = process.platform === 'win32' && /\.(cmd|bat)$/i.test(bin)
++        const command = shouldUseCmdShim ? (process.env.comspec || process.env.ComSpec || 'cmd.exe') : bin
++        const commandArgs = shouldUseCmdShim ? ['/d', '/s', '/c', bin, ...args] : args
++        const p = spawn(command, commandArgs, options)
+ 
+         p.on('close', (code) => {
+             if (code === 0) {
