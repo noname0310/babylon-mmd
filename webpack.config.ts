@@ -12,7 +12,7 @@ import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev
 export default (env: any): webpack.Configuration & { devServer?: WebpackDevServerConfiguration } => ({
     entry: "./src/Test/index.ts",
     output: {
-        path: path.join(__dirname, "/test_dist"),
+        path: path.join(import.meta.dirname, "/test_dist"),
         filename: "[name].bundle.js",
         clean: true
     },
@@ -81,7 +81,7 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
     resolve: {
         alias: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            "@": path.resolve(__dirname, "src")
+            "@": path.resolve(import.meta.dirname, "src")
         },
         modules: ["src", "node_modules"],
         extensions: [".js", ".jsx", ".ts", ".tsx"],
@@ -114,8 +114,8 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
         })
     ] as webpack.Configuration["plugins"])!.concat(env.wasmInstance !== "js" ? [
         new wasmPackPlugin({
-            crateDirectory: path.resolve(__dirname, "src/Runtime/Optimized/wasm_src"),
-            outDir: path.resolve(__dirname, "src/Runtime/Optimized/wasm/" + env.wasmInstance),
+            crateDirectory: path.resolve(import.meta.dirname, "src/Runtime/Optimized/wasm_src"),
+            outDir: path.resolve(import.meta.dirname, "src/Runtime/Optimized/wasm/" + env.wasmInstance),
             outName: "index",
             extraArgs: "--target web",
             forceMode: "development"

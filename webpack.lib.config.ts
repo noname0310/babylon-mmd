@@ -7,7 +7,7 @@ export default (env: any): webpack.Configuration => ({
     entry: "./src/index.ts",
     devtool: "source-map",
     output: {
-        path: path.resolve(__dirname, "dist/umd"),
+        path: path.resolve(import.meta.dirname, "dist/umd"),
         filename: `babylon.mmd${env.production ? ".min" : ""}.js`,
         library: {
             name: {
@@ -51,7 +51,7 @@ export default (env: any): webpack.Configuration => ({
     resolve: {
         alias: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            "@": path.resolve(__dirname, "src")
+            "@": path.resolve(import.meta.dirname, "src")
         },
         modules: ["src", "node_modules"],
         extensions: [".js", ".jsx", ".ts", ".tsx"]

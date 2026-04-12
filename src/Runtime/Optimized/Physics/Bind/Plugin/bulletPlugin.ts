@@ -1157,10 +1157,10 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
         if (pluginData) {
             if (pluginData instanceof PluginConstructionInfo) {
                 pluginData.commandsOnCreation.push((body) => {
-                    body.applyTorque(angularImpulse);
+                    body.applyTorqueImpulse(angularImpulse);
                 });
             } else if (pluginData instanceof PluginBody) {
-                pluginData.applyTorque(angularImpulse);
+                pluginData.applyTorqueImpulse(angularImpulse);
             }
         }
 
@@ -1171,12 +1171,12 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
             if (pluginDataInstances instanceof PluginConstructionInfoList) {
                 pluginDataInstances.commandsOnCreation.push((bundle) => {
                     for (let i = start; i < end; ++i) {
-                        bundle.applyTorque(i, angularImpulse);
+                        bundle.applyTorqueImpulse(i, angularImpulse);
                     }
                 });
             } else if (pluginDataInstances instanceof PluginBodyBundle) {
                 for (let i = start; i < end; ++i) {
-                    pluginDataInstances.applyTorque(i, angularImpulse);
+                    pluginDataInstances.applyTorqueImpulse(i, angularImpulse);
                 }
             }
         }
@@ -1217,6 +1217,45 @@ export class BulletPlugin implements IPhysicsEnginePluginV2 {
             } else if (pluginDataInstances instanceof PluginBodyBundle) {
                 for (let i = start; i < end; ++i) {
                     pluginDataInstances.applyForce(i, force, location);
+                }
+            }
+        }
+    }
+
+    /**
+     * Applies a torque to a physics body.
+     * @param body - The physics body to apply the torque to.
+     * @param torque - The torque vector.
+     * @param instanceIndex - The index of the instance to apply the torque to. If not specified, the torque will be applied to all instances.
+     *
+     * This method is useful for applying a torque to a physics body.
+     * This can be used to simulate rotational forces such as motors, angular momentum, and rotational dynamics.
+     */
+    public applyTorque(body: PhysicsBody, torque: Vector3, instanceIndex?: number): void {
+        const pluginData = body._pluginData;
+        if (pluginData) {
+            if (pluginData instanceof PluginConstructionInfo) {
+                pluginData.commandsOnCreation.push((body) => {
+                    body.applyTorque(torque);
+                });
+            } else if (pluginData instanceof PluginBody) {
+                pluginData.applyTorque(torque);
+            }
+        }
+
+        const pluginDataInstances = body._pluginDataInstances as any;
+        if (!Array.isArray(pluginDataInstances)) {
+            const start = instanceIndex ?? 0;
+            const end = instanceIndex !== undefined ? instanceIndex + 1 : pluginDataInstances.length;
+            if (pluginDataInstances instanceof PluginConstructionInfoList) {
+                pluginDataInstances.commandsOnCreation.push((bundle) => {
+                    for (let i = start; i < end; ++i) {
+                        bundle.applyTorque(i, torque);
+                    }
+                });
+            } else if (pluginDataInstances instanceof PluginBodyBundle) {
+                for (let i = start; i < end; ++i) {
+                    pluginDataInstances.applyTorque(i, torque);
                 }
             }
         }
