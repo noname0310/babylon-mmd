@@ -4,7 +4,7 @@ mod bullet;
 pub(crate) mod mmd;
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn __wasm_call_ctors();
 }
 

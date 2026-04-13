@@ -3,7 +3,7 @@ use glam::{Vec3, Mat4};
 use super::rigidbody::RigidBody;
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn bw_create_generic6dofconstraint(body_a: *const std::ffi::c_void, body_b: *const std::ffi::c_void, frame_a: *const f32, frame_b: *const f32, use_linear_reference_frame_a: u8) -> *mut std::ffi::c_void;
 
     fn bw_destroy_generic6dofconstraint(constraint: *mut std::ffi::c_void);

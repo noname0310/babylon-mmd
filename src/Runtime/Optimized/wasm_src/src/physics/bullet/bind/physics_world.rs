@@ -1,7 +1,7 @@
 use super::rigidbody::{RigidBody, RigidBodyShadow};
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn bw_create_world() -> *mut std::ffi::c_void;
 
     fn bw_destroy_world(world: *mut std::ffi::c_void);
