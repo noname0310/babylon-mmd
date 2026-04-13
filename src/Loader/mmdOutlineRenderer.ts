@@ -359,7 +359,7 @@ export class MmdOutlineRenderer implements ISceneComponent {
                 "color",
                 "logarithmicDepthConstant",
                 "morphTargetInfluences",
-                "boneTextureWidth",
+                "boneTextureInfo",
                 "morphTargetCount",
                 "morphTargetTextureInfo",
                 "morphTargetTextureIndices",

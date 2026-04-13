@@ -19,10 +19,12 @@
     - `StreamAudioPlayer`
     - `MmdPlayerControl`
 
-- rust edition updated to 2024 edition
+- Rust edition updated to 2024 edition
   - LLVM version updated to 22 from 18
 
-- minimum required version of Babylon.js is now 9.2.0
+- Outline renderer Support Babylon.js 9.2.0 skinning shader changes
+
+- Minimum required version of Babylon.js is now 9.2.0
 
 ## 1.1.0 (2026-01-10)
 
