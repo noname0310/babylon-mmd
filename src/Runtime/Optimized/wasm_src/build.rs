@@ -21,6 +21,7 @@ fn main() {
             .flag("-Wno-deprecated-declarations")
             .flag("-Wno-#pragma-messages")
             .flag("-fno-exceptions")
+            .flag("-fno-rtti")
 
             // for use simd instructions
             .define("_WIN32", None)
