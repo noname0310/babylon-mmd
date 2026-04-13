@@ -2,6 +2,7 @@
     "name": "babylon-mmd",
     "version": "1.2.0",
     "description": "babylon.js mmd loader and runtime",
+    "type":"module",
     "main": "esm/index.js",
     "scripts": {
         "postinstall": "ts-node postInstallScript.ts && patch-package",
