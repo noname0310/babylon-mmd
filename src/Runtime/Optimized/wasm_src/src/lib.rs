@@ -41,7 +41,9 @@ pub fn allocate_buffer(size: usize) -> *mut u8 {
 #[wasm_bindgen(js_name = "deallocateBuffer")]
 pub unsafe fn deallocate_buffer(ptr: *mut u8, size: usize) {
     let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-    std::alloc::dealloc(ptr, layout);
+    unsafe {
+        std::alloc::dealloc(ptr, layout);
+    }
 }
 
 #[wasm_bindgen(js_name = "createMmdRuntime")]

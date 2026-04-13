@@ -1,7 +1,7 @@
 use glam::Vec3;
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn bw_create_boxshape(x: f32, y: f32, z: f32) -> *mut std::ffi::c_void;
 
     fn bw_destroy_boxshape(shape: *mut std::ffi::c_void);

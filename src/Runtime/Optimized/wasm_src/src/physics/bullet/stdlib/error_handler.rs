@@ -1,10 +1,10 @@
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn __cxa_pure_virtual() {
     panic!("pure virtual function call");
 }
 
 #[cfg(debug_assertions)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn bw_error(message: *const std::ffi::c_char, args: std::ffi::VaList) -> i32 {
     let mut str = String::new();
     let bytes_written  = unsafe {

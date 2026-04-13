@@ -1,7 +1,7 @@
 use glam::{Mat4, Vec3, Vec3A, Vec4};
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn bw_create_motion_state(transform_buffer: *const f32) -> *mut std::ffi::c_void;
 
     fn bw_destroy_motion_state(motion_state: *mut std::ffi::c_void);

@@ -4,7 +4,7 @@ use super::motion_state::MotionState;
 use super::super::runtime;
 
 #[link(name = "bullet")]
-extern "C" {
+unsafe extern "C" {
     fn bw_create_rigidbody(info: *const std::ffi::c_void) -> *mut std::ffi::c_void;
 
     fn bw_destroy_rigidbody(body: *mut std::ffi::c_void);
