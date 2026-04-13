@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0
+## 1.2.0 (2026-04-13)
 
 - use `TransformNode.parent` property instead of `TransformNode.setParent` method to set parent node without updating local transform
 
