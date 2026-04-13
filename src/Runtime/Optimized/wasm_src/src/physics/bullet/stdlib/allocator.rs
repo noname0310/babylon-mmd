@@ -22,8 +22,8 @@ unsafe extern "C" fn bw_malloc(size: CSizeT) -> *mut u8 {
     }
     unsafe {
         *(ptr as *mut CSizeT) = size;
+        ptr.add(MAX_ALIGN)
     }
-    ptr.add(MAX_ALIGN)
 }
 
 /// Rust implementation of C library function `free`
