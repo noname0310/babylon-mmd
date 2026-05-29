@@ -377,7 +377,7 @@ export class SceneBuilder implements ISceneBuilder {
             blendSlider.value = "0";
             blendSlider.style.flexGrow = "1";
             blendSliderDiv.appendChild(blendSlider);
-            const emptyEvent = new Event("input");
+            const emptyEvent = new InputEvent("input");
             blendSlider.oninput = (): void => {
                 const value = Number(blendSlider.value);
                 motion1Slider.value = String(1 - value);
