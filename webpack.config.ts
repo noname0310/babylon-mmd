@@ -133,7 +133,12 @@ export default (env: any): webpack.Configuration & { devServer?: WebpackDevServe
             logging: "none"
         },
         hot: true,
-        watchFiles: ["src/**/*"],
+        watchFiles: {
+            paths: ["src/**/*"],
+            options: {
+                cwd: import.meta.dirname
+            }
+        },
         server: "https",
         headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
