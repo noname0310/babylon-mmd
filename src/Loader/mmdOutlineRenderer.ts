@@ -1,16 +1,16 @@
-import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer.pure";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { AddClipPlaneUniforms, BindClipPlane, PrepareStringDefinesForClipPlanes } from "@babylonjs/core/Materials/clipPlaneMaterialHelper";
 import { DrawWrapper } from "@babylonjs/core/Materials/drawWrapper";
-import { type IEffectCreationOptions } from "@babylonjs/core/Materials/effect";
+import { type IEffectCreationOptions } from "@babylonjs/core/Materials/effect.pure";
 import { EffectFallbacks } from "@babylonjs/core/Materials/effectFallbacks";
 import { BindBonesParameters, BindMorphTargetParameters, PrepareDefinesAndAttributesForMorphTargets, PushAttributesForInstances } from "@babylonjs/core/Materials/materialHelper.functions";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
-import { Scene } from "@babylonjs/core/scene";
+import { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import type { _InstancesBatch, Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 import type { ISceneComponent} from "@babylonjs/core/sceneComponent";
 import { SceneComponentConstants } from "@babylonjs/core/sceneComponent";
 import type { Nullable } from "@babylonjs/core/types";
@@ -19,7 +19,7 @@ import { MmdBufferKind } from "./mmdBufferKind";
 import type { MmdStandardMaterial } from "./mmdStandardMaterial";
 import { SdefInjector } from "./sdefInjector";
 
-declare module "@babylonjs/core/scene" {
+declare module "@babylonjs/core/scene.pure" {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Scene {
         /** @internal */

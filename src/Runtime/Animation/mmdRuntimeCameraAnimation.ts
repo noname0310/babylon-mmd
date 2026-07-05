@@ -1,4 +1,4 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 
 import { MmdAnimationBase } from "@/Loader/Animation/mmdAnimationBase";
 import type { MmdCameraAnimationTrack } from "@/Loader/Animation/mmdAnimationTrack";

@@ -1,12 +1,12 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import type { ITextureCreationOptions } from "@babylonjs/core/Materials/Textures/texture";
-import { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import type { Observer } from "@babylonjs/core/Misc/observable";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import type { ITextureCreationOptions } from "@babylonjs/core/Materials/Textures/texture.pure";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
+import type { Observer } from "@babylonjs/core/Misc/observable.pure";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import { TimingTools } from "@babylonjs/core/Misc/timingTools";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import { SharedToonTextures } from "./sharedToonTextures";

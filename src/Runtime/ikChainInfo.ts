@@ -1,4 +1,4 @@
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 
 /**
  * Ik chain information for solving IK

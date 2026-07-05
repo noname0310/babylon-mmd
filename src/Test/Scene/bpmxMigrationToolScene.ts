@@ -3,13 +3,13 @@ import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 import "@babylonjs/core/Misc/dumpTools";
 import "@/Loader/mmdOutlineRenderer";
 
-import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.pure";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { LoadFileError } from "@babylonjs/core/Misc/fileTools.pure";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
-import { Scene } from "@babylonjs/core/scene";
+import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdModelLoadState } from "@/Loader/mmdModelLoader";

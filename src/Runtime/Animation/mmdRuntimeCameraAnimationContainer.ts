@@ -1,4 +1,4 @@
-import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
+import type { _IAnimationState } from "@babylonjs/core/Animations/animation.pure";
 
 import { MmdCameraAnimationContainer } from "@/Loader/Animation/mmdCameraAnimationContainer";
 

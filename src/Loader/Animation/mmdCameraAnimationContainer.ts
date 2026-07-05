@@ -1,8 +1,8 @@
-import { Animation } from "@babylonjs/core/Animations/animation";
-import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { Animation } from "@babylonjs/core/Animations/animation.pure";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup.pure";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
-import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
 import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";

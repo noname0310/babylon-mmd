@@ -1,4 +1,4 @@
-import { Quaternion } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector.pure";
 
 import type { IRuntimeMorph } from "./mmdMorphControllerBase";
 import { MmdMorphControllerBase } from "./mmdMorphControllerBase";

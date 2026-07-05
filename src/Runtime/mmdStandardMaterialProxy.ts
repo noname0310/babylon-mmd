@@ -1,4 +1,4 @@
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 
 import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
 import type { Vec4 } from "@/Loader/Parser/mmdTypes";

@@ -1,5 +1,5 @@
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 
 import type { Vec3, Vec4 } from "@/Loader/Parser/mmdTypes";
 

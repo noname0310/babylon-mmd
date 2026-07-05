@@ -2,13 +2,13 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
 import "@/Loader/Optimized/bpmxLoader";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { Scene } from "@babylonjs/core/scene";
-import { Inspector } from "@babylonjs/inspector";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
+import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { PBRMaterialBuilder } from "@/Loader/pbrMaterialBuilder";
@@ -194,7 +194,7 @@ export class SceneBuilder implements ISceneBuilder {
             createGround: false
         });
 
-        Inspector.Show(scene, { enablePopup: false });
+        ShowInspector(scene, { });
 
         return scene;
     }

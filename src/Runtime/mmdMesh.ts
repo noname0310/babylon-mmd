@@ -1,6 +1,6 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 

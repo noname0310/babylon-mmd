@@ -1,6 +1,6 @@
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Scene } from "@babylonjs/core/scene";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export function CreateDefaultArcRotateCamera(scene: Scene): ArcRotateCamera {
     const camera = new ArcRotateCamera("arcRotateCamera", 0, 0, 45, new Vector3(0, 10, 0), scene);

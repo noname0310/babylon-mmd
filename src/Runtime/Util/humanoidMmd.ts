@@ -1,11 +1,11 @@
-import type { Bone } from "@babylonjs/core/Bones/bone";
+import type { Bone } from "@babylonjs/core/Bones/bone.pure";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-// import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
+// import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial.pure";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";

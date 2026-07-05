@@ -1,15 +1,15 @@
-import { Material } from "@babylonjs/core/Materials/material";
+import { Material } from "@babylonjs/core/Materials/material.pure";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
-import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial.pure";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
+import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh.pure";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh.pure";
 import { serialize, serializeAsColor3 } from "@babylonjs/core/Misc/decorators";
 import { SerializationHelper } from "@babylonjs/core/Misc/decorators.serialization";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdPluginMaterial } from "./mmdPluginMaterial";

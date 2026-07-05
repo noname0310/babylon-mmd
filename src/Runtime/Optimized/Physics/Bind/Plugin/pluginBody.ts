@@ -1,4 +1,4 @@
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
+import type { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IPhysicsRuntime } from "../Impl/IPhysicsRuntime";

@@ -1,8 +1,8 @@
-import { StandardMaterial } from "@babylonjs/core/Materials";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Scene } from "@babylonjs/core/scene";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial.pure";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export interface ICreateDefaultGroundOptions {
     useLogarithmicDepth?: boolean;

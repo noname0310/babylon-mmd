@@ -1,10 +1,10 @@
-import { Camera } from "@babylonjs/core/Cameras/camera";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Camera } from "@babylonjs/core/Cameras/camera.pure";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { serialize, serializeAsVector3 } from "@babylonjs/core/Misc/decorators";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import { Node } from "@babylonjs/core/node";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";

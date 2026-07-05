@@ -1,5 +1,5 @@
-import { Animation } from "@babylonjs/core/Animations/animation";
-import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { Animation } from "@babylonjs/core/Animations/animation.pure";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup.pure";
 
 /**
  * Deep copy animation data

@@ -1,16 +1,16 @@
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { Material } from "@babylonjs/core/Materials/material";
+import { Material } from "@babylonjs/core/Materials/material.pure";
 import { ShaderLanguage } from "@babylonjs/core/Materials/shaderLanguage";
-import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
-import type { Scene } from "@babylonjs/core/scene";
+import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture.pure";
+import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
-declare module "@babylonjs/core/scene" {
+declare module "@babylonjs/core/scene.pure" {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface Scene {
         /** @internal */
@@ -18,7 +18,7 @@ declare module "@babylonjs/core/scene" {
     }
 }
 
-declare module "@babylonjs/core/Materials/Textures/renderTargetTexture" {
+declare module "@babylonjs/core/Materials/Textures/renderTargetTexture.pure" {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface RenderTargetTexture {
         /**

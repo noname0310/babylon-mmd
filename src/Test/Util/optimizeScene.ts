@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export interface IOptimizeSceneOptions {
     clearCachedVertexData?: boolean;

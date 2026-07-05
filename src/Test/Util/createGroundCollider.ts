@@ -1,8 +1,8 @@
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { PhysicsMotionType, PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
 import { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export function CreateGroundCollider(scene: Scene): void {
     const transformNode = new TransformNode("ground", scene);

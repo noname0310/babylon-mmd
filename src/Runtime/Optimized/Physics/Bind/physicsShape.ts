@@ -1,4 +1,4 @@
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 
 import type { IBulletWasmInstance } from "./bulletWasmInstance";
 import type { IPhysicsRuntime } from "./Impl/IPhysicsRuntime";

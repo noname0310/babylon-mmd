@@ -1,6 +1,6 @@
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 

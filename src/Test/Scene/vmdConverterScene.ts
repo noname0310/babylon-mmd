@@ -1,7 +1,7 @@
-import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Scene } from "@babylonjs/core/scene";
+import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.pure";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 
 import { BvmdConverter } from "@/Loader/Optimized/bvmdConverter";
 import { VmdLoader } from "@/Loader/vmdLoader";

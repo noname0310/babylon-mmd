@@ -1,5 +1,5 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";

@@ -1,9 +1,9 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdTextureLoadOptions } from "./mmdAsyncTextureLoader";

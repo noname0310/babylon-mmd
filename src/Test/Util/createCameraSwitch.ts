@@ -1,5 +1,5 @@
-import type { Camera } from "@babylonjs/core/Cameras/camera";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Camera } from "@babylonjs/core/Cameras/camera.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export function CreateCameraSwitch(scene: Scene, canvas: HTMLCanvasElement, camera1: Camera, camera2: Camera): void {
     let lastClickTime = -Infinity;

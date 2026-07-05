@@ -3,12 +3,12 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Scene } from "@babylonjs/core/scene";
-import { Inspector } from "@babylonjs/inspector";
+import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
+import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
@@ -100,7 +100,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         TextureAlphaChecker.DisposeShader(scene);
 
-        Inspector.Show(scene, { });
+        ShowInspector(scene, { });
 
         return scene;
     }

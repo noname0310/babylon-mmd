@@ -1,5 +1,5 @@
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
-import type { Scene } from "@babylonjs/core/scene";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export interface ISceneBuilder {
     buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Scene | Promise<Scene>;

@@ -8,17 +8,17 @@ import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
 
 // import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
+import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
-import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
-import { Scene } from "@babylonjs/core/scene";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 // import havokPhysics from "@babylonjs/havok";
@@ -80,6 +80,7 @@ export class SceneBuilder implements ISceneBuilder {
         const audioPlayer = new StreamAudioPlayer(scene);
         audioPlayer.preservesPitch = false;
         audioPlayer.source = "res/private_test/motion/patchwork_staccato/pv_912.mp3";
+        audioPlayer.volume = 0.0;
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         // materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };

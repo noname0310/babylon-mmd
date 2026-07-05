@@ -1,5 +1,5 @@
-import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import { Animation } from "@babylonjs/core/Animations/animation";
+import type { _IAnimationState } from "@babylonjs/core/Animations/animation.pure";
+import { Animation } from "@babylonjs/core/Animations/animation.pure";
 
 /**
  * Creates a new animation state

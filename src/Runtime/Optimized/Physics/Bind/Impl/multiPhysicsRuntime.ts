@@ -1,6 +1,6 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Observable } from "@babylonjs/core/Misc/observable";
-import { Scene } from "@babylonjs/core/scene";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { WasmSpinlock } from "@/Runtime/Optimized/Misc/wasmSpinlock";

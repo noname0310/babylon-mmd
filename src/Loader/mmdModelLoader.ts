@@ -1,17 +1,17 @@
 import { AssetContainer } from "@babylonjs/core/assetContainer";
-import { Bone } from "@babylonjs/core/Bones/bone";
+import { Bone } from "@babylonjs/core/Bones/bone.pure";
 import { Skeleton } from "@babylonjs/core/Bones/skeleton";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
 import type { ISceneLoaderAsyncResult, ISceneLoaderPluginAsync, ISceneLoaderPluginExtensions, ISceneLoaderPluginFactory, ISceneLoaderProgressEvent, SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdMaterialBuilder } from "./IMmdMaterialBuilder";

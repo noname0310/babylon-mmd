@@ -1,5 +1,5 @@
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import type { DeepImmutable } from "@babylonjs/core/types";
 
 import type { IWasmSpinLock } from "../Misc/IWasmSpinLock";

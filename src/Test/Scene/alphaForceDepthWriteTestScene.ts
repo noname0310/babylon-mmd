@@ -4,15 +4,15 @@ import "@/Loader/pmxLoader";
 import "@/Loader/pmdLoader";
 import "@/Loader/mmdOutlineRenderer";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Material } from "@babylonjs/core/Materials/material";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { Scene } from "@babylonjs/core/scene";
-import { Inspector } from "@babylonjs/inspector";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
+import { Material } from "@babylonjs/core/Materials/material.pure";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
+import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -92,7 +92,7 @@ export class SceneBuilder implements ISceneBuilder {
             shadowGenerator.addShadowCaster(mesh, false);
         }
 
-        Inspector.Show(scene, { });
+        ShowInspector(scene, { });
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;

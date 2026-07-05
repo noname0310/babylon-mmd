@@ -1,6 +1,6 @@
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import type { Scene } from "@babylonjs/core/scene";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdModel } from "@/Runtime/IMmdModel";

@@ -3,7 +3,7 @@
  * https://github.com/benikabocha/saba/blob/master/src/Saba/Model/MMD/MMDIkSolver.cpp
  */
 
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { PmxObject } from "@/Loader/Parser/pmxObject";

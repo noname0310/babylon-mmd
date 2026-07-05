@@ -1,11 +1,11 @@
 import type { BoundingBox } from "@babylonjs/core/Culling/boundingBox";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Quaternion } from "@babylonjs/core/Maths/math.vector";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector.pure";
+import { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { Logger } from "@babylonjs/core/Misc/logger";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import type { IRaycastQuery, PhysicsRaycastResult } from "@babylonjs/core/Physics/physicsRaycastResult";
 import type { PhysicsConstraintAxisLimitMode, PhysicsConstraintMotorType, PhysicsShapeParameters} from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { type ConstrainedBodyPair, type IBasePhysicsCollisionEvent, type IPhysicsCollisionEvent, type IPhysicsEnginePluginV2, type PhysicsConstraintAxis, type PhysicsMassProperties, PhysicsMotionType, PhysicsPrestepType, PhysicsShapeType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";

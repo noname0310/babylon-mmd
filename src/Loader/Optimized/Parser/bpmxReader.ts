@@ -1,4 +1,4 @@
-import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+import { LoadFileError } from "@babylonjs/core/Misc/fileTools.pure";
 
 import type { Vec3 } from "@/Loader/Parser/mmdTypes";
 import { PmxObject } from "@/Loader/Parser/pmxObject";

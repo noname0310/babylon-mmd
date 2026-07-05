@@ -1,4 +1,4 @@
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 
 import type { IPhysicsClock } from "./IPhysicsClock";
 

@@ -2,15 +2,15 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
+import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
-import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { Scene } from "@babylonjs/core/scene";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";

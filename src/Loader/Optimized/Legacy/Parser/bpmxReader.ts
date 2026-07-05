@@ -1,4 +1,4 @@
-import { LoadFileError } from "@babylonjs/core/Misc/fileTools";
+import { LoadFileError } from "@babylonjs/core/Misc/fileTools.pure";
 
 import type { ILogger } from "@/Loader/Parser/ILogger";
 import { ConsoleLogger } from "@/Loader/Parser/ILogger";

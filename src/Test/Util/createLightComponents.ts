@@ -1,12 +1,12 @@
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight.pure";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight.pure";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Scene } from "@babylonjs/core/scene";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 export interface ICreateLightComponentOptions {
     worldScale?: number;

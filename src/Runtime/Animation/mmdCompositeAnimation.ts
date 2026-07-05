@@ -1,5 +1,5 @@
 import type { IEasingFunction } from "@babylonjs/core/Animations/easing";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdAnimation } from "@/Loader/Animation/IMmdAnimation";

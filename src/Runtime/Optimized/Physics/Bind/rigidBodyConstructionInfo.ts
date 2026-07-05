@@ -1,5 +1,5 @@
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";

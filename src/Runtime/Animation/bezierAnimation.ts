@@ -1,9 +1,9 @@
-import type { _IAnimationState } from "@babylonjs/core/Animations/animation";
-import { _StaticOffsetValueColor3, _StaticOffsetValueColor4, _StaticOffsetValueQuaternion, _StaticOffsetValueSize, _StaticOffsetValueVector2, _StaticOffsetValueVector3, Animation } from "@babylonjs/core/Animations/animation";
+import type { _IAnimationState } from "@babylonjs/core/Animations/animation.pure";
+import { _StaticOffsetValueColor3, _StaticOffsetValueColor4, _StaticOffsetValueQuaternion, _StaticOffsetValueSize, _StaticOffsetValueVector2, _StaticOffsetValueVector3, Animation } from "@babylonjs/core/Animations/animation.pure";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 
 import { BezierInterpolate } from "./bezierInterpolate";

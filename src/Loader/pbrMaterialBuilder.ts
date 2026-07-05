@@ -1,13 +1,13 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { Material } from "@babylonjs/core/Materials/material";
-import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
+import { Material } from "@babylonjs/core/Materials/material.pure";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
 import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MaterialInfo, ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";

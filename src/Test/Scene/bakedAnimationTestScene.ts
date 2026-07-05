@@ -7,18 +7,18 @@ import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { MirrorTexture } from "@babylonjs/core/Materials/Textures/mirrorTexture";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial.pure";
+import { MirrorTexture } from "@babylonjs/core/Materials/Textures/mirrorTexture.pure";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Plane } from "@babylonjs/core/Maths/math.plane";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
-import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { Scene } from "@babylonjs/core/scene";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";

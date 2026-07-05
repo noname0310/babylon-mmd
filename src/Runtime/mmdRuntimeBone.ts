@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";

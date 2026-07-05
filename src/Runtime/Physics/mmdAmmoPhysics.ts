@@ -1,15 +1,15 @@
 import "@babylonjs/core/Physics/joinedPhysicsEngineComponent";
 import "@babylonjs/core/Physics/v1/physicsEngineComponent";
 
-import type { VertexBuffer } from "@babylonjs/core";
+import type { VertexBuffer } from "@babylonjs/core/Buffers/buffer.pure";
 import { BoundingInfo } from "@babylonjs/core/Culling/boundingInfo";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { IMeshDataOptions } from "@babylonjs/core/Meshes/abstractMesh";
-import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { IMeshDataOptions } from "@babylonjs/core/Meshes/abstractMesh.pure";
+import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh.pure";
 import type { Geometry } from "@babylonjs/core/Meshes/geometry";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { PhysicsImpostor, type PhysicsImpostorParameters } from "@babylonjs/core/Physics/v1/physicsImpostor";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { PhysicsImpostor, type PhysicsImpostorParameters } from "@babylonjs/core/Physics/v1/physicsImpostor.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { PmxObject } from "@/Loader/Parser/pmxObject";

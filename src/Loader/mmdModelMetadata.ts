@@ -1,7 +1,7 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { Nullable } from "@babylonjs/core/types";
 

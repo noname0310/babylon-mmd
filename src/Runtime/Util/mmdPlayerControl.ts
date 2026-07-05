@@ -1,5 +1,5 @@
-import type { Observer } from "@babylonjs/core/Misc/observable";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Observer } from "@babylonjs/core/Misc/observable.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IAudioPlayer } from "../Audio/IAudioPlayer";

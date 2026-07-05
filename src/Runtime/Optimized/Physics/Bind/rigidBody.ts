@@ -1,4 +1,4 @@
-import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import type { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { DeepImmutable, Nullable, Tuple } from "@babylonjs/core/types";
 
 import type { IWasmTypedArray } from "@/Runtime/Optimized/Misc/IWasmTypedArray";

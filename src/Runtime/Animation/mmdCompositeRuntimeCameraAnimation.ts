@@ -1,4 +1,4 @@
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdCamera } from "../IMmdCamera";

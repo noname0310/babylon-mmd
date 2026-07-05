@@ -5,19 +5,19 @@ import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration";
-import { Material } from "@babylonjs/core/Materials/material";
-import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
-import { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
+import { Material } from "@babylonjs/core/Materials/material.pure";
+import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial.pure";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
-import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
-import { Scene } from "@babylonjs/core/scene";
+import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
-import { Inspector } from "@babylonjs/inspector";
+import { ShowInspector } from "@babylonjs/inspector";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
@@ -220,7 +220,7 @@ export class SceneBuilder implements ISceneBuilder {
         URL.revokeObjectURL(url);
         a.remove();
 
-        Inspector.Show(scene, { embedMode: true });
+        ShowInspector(scene, { });
 
         const defaultPipeline = new DefaultRenderingPipeline("default", true, scene);
         defaultPipeline.samples = 4;

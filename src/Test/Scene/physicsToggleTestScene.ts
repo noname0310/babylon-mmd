@@ -6,19 +6,19 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
 import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
-import { Scene } from "@babylonjs/core/scene";
+import { Scene } from "@babylonjs/core/scene.pure";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
 // import ammo from "@/Runtime/Physics/External/ammo.wasm";
 // import havok from "@babylonjs/havok";
-import { Inspector } from "@babylonjs/inspector";
+import { ShowInspector } from "@babylonjs/inspector";
 
 // import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -140,7 +140,7 @@ export class SceneBuilder implements ISceneBuilder {
             }
         }
 
-        Inspector.Show(scene, { });
+        ShowInspector(scene, { });
 
         return scene;
     }

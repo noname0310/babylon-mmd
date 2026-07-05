@@ -1,9 +1,9 @@
-import type { Bone } from "@babylonjs/core/Bones/bone";
-import type { Material } from "@babylonjs/core/Materials/material";
+import type { Bone } from "@babylonjs/core/Bones/bone.pure";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
 import { Space } from "@babylonjs/core/Maths/math.axis";
-import { Matrix } from "@babylonjs/core/Maths/math.vector";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Observable } from "@babylonjs/core/Misc/observable";
+import { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { Nullable } from "@babylonjs/core/types";
 

@@ -1,10 +1,10 @@
-import { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
-import type { Bone } from "@babylonjs/core/Bones/bone";
+import { Animation } from "@babylonjs/core/Animations/animation.pure";
+import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup.pure";
+import type { Bone } from "@babylonjs/core/Bones/bone.pure";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Quaternion } from "@babylonjs/core/Maths/math.vector";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 
 import type { ILogger } from "../Parser/ILogger";
 

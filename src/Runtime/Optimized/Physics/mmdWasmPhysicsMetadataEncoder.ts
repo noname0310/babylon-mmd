@@ -1,4 +1,4 @@
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";

@@ -1,5 +1,5 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
+import type { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 /**

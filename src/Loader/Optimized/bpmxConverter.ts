@@ -268,15 +268,15 @@
  *  springRotation: float32[3]
  * }[jointCount]
  */
-import type { Bone } from "@babylonjs/core/Bones/bone";
-import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
-import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
-import type { Texture } from "@babylonjs/core/Materials/Textures/texture";
-import type { Matrix } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Bone } from "@babylonjs/core/Bones/bone.pure";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer.pure";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial.pure";
+import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial.pure";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
+import type { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
+import type { Matrix } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import type { DeepImmutable, FloatArray, Nullable } from "@babylonjs/core/types";
 

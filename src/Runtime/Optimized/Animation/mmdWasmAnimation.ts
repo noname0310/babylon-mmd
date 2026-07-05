@@ -1,4 +1,4 @@
-import type { Observer } from "@babylonjs/core/Misc/observable";
+import type { Observer } from "@babylonjs/core/Misc/observable.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdPropertyAnimationTrack } from "@/Loader/Animation/IMmdAnimationTrack";

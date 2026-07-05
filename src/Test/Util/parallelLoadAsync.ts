@@ -1,5 +1,5 @@
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 
 type TaskFunction<R> = (updateProgress: (progress: ISceneLoaderProgressEvent) => void) => Promise<R>;
 type Task<R> = readonly [string, TaskFunction<R>];

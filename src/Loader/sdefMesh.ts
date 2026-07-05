@@ -1,15 +1,15 @@
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
-import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
-import type { Material } from "@babylonjs/core/Materials/material";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { MeshCloneOptions, MeshCreationOptions } from "@babylonjs/core/Meshes/mesh";
-import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { VertexBuffer } from "@babylonjs/core/Buffers/buffer.pure";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { MeshCloneOptions, MeshCreationOptions } from "@babylonjs/core/Meshes/mesh.pure";
+import { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { MeshLODLevel } from "@babylonjs/core/Meshes/meshLODLevel";
-import type { SubMesh } from "@babylonjs/core/Meshes/subMesh";
-import type { Observable, Observer } from "@babylonjs/core/Misc/observable";
+import type { SubMesh } from "@babylonjs/core/Meshes/subMesh.pure";
+import type { Observable, Observer } from "@babylonjs/core/Misc/observable.pure";
 import { RegisterClass } from "@babylonjs/core/Misc/typeStore";
 import type { Node } from "@babylonjs/core/node";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { FloatArray, Nullable } from "@babylonjs/core/types";
 
 import { MmdBufferKind } from "./mmdBufferKind";

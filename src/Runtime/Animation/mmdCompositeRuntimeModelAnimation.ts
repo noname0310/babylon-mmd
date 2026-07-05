@@ -1,6 +1,6 @@
-import { Quaternion } from "@babylonjs/core/Maths/math.vector";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Quaternion } from "@babylonjs/core/Maths/math.vector.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import type { ILogger } from "../ILogger";

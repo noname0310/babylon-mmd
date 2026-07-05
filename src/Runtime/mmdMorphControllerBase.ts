@@ -1,5 +1,5 @@
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { MorphTargetManager } from "@babylonjs/core/Morph/morphTargetManager";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";

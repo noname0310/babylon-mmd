@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { PhysicsImpostorJoint } from "@babylonjs/core/Physics/v1/IPhysicsEnginePlugin";
 import { PhysicsJoint, type PhysicsJointData } from "@babylonjs/core/Physics/v1/physicsJoint";
 import { AmmoJSPlugin } from "@babylonjs/core/Physics/v1/Plugins/ammoJSPlugin";

@@ -1,6 +1,6 @@
 import type { Space } from "@babylonjs/core/Maths/math.axis";
-import type { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 
 /**
  * Interface for duck typing Bone in Babylon.js

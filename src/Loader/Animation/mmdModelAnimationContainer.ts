@@ -1,9 +1,9 @@
-import { Animation } from "@babylonjs/core/Animations/animation";
-import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { Animation } from "@babylonjs/core/Animations/animation.pure";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup.pure";
 import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
-import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";

@@ -1,4 +1,4 @@
-import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { InternalTexture } from "@babylonjs/core/Materials/Textures/internalTexture";
 import type { IInternalTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/internalTextureLoader";

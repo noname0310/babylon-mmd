@@ -1,4 +1,4 @@
-import type { Observable } from "@babylonjs/core/Misc/observable";
+import type { Observable } from "@babylonjs/core/Misc/observable.pure";
 
 /**
  * Abstract player interface

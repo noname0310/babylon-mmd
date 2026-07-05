@@ -1,6 +1,6 @@
-import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Observable } from "@babylonjs/core/Misc/observable";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Observable } from "@babylonjs/core/Misc/observable.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";

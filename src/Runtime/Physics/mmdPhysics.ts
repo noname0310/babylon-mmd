@@ -1,8 +1,8 @@
 import "@babylonjs/core/Physics/v2/physicsEngineComponent";
 
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { PhysicsActivationControl, PhysicsConstraintAxis, PhysicsMotionType } from "@babylonjs/core/Physics/v2/IPhysicsEnginePlugin";
 import { PhysicsBody } from "@babylonjs/core/Physics/v2/physicsBody";
 import type { Physics6DoFLimit, PhysicsConstraint } from "@babylonjs/core/Physics/v2/physicsConstraint";
@@ -10,7 +10,7 @@ import { Physics6DoFConstraint } from "@babylonjs/core/Physics/v2/physicsConstra
 import type { PhysicsShape } from "@babylonjs/core/Physics/v2/physicsShape";
 import { PhysicsShapeBox, PhysicsShapeCapsule, PhysicsShapeSphere } from "@babylonjs/core/Physics/v2/physicsShape";
 import type { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { PmxObject } from "@/Loader/Parser/pmxObject";

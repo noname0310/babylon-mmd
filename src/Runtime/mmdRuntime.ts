@@ -1,9 +1,9 @@
-import type { Material } from "@babylonjs/core/Materials/material";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { Material } from "@babylonjs/core/Materials/material.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import { Logger } from "@babylonjs/core/Misc/logger";
-import type { Observer } from "@babylonjs/core/Misc/observable";
-import { Observable } from "@babylonjs/core/Misc/observable";
-import type { Scene } from "@babylonjs/core/scene";
+import type { Observer } from "@babylonjs/core/Misc/observable.pure";
+import { Observable } from "@babylonjs/core/Misc/observable.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { IPlayer } from "./Audio/IAudioPlayer";

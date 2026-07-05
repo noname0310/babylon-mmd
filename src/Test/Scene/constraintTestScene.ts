@@ -2,16 +2,16 @@ import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
+import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
-import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { Scene } from "@babylonjs/core/scene";
-import { Inspector } from "@babylonjs/inspector";
+import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
+import { Scene } from "@babylonjs/core/scene.pure";
+import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
@@ -98,7 +98,7 @@ export class SceneBuilder implements ISceneBuilder {
         mmdRuntime.createMmdModel(mmdMesh, { buildPhysics: { disableOffsetForConstraintFrame: true } });
         mmdRuntime.createMmdModel(mmdMesh2, { buildPhysics: { disableOffsetForConstraintFrame: true } });
 
-        Inspector.Show(scene, { });
+        ShowInspector(scene, { });
 
         {
             const physicsViewer = new PhysicsViewer(scene);

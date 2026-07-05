@@ -1,8 +1,8 @@
 import "@babylonjs/core/Physics/v2/physicsEngineComponent";
 
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Scene } from "@babylonjs/core/scene";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import type { Scene } from "@babylonjs/core/scene.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
 import { PmxObject } from "@/Loader/Parser/pmxObject";
