@@ -441,6 +441,7 @@ export default defineConfig({
         "comma-dangle": ["error", "never"],
         "comma-spacing": ["error"],
         "eol-last": ["error", "always"],
+        "eqeqeq": ["error", "always"],
         "indent": ["error", 4],
         "linebreak-style": ["error", "unix"],
         "keyword-spacing": ["error"],
