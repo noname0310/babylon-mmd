@@ -1,9 +1,8 @@
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-
 // import { DirectionalLightFrustumViewer } from "@babylonjs/core/Debug/directionalLightFrustumViewer";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight.pure";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight.pure";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { RegisterRenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture.pure";
 import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Scene } from "@babylonjs/core/scene.pure";
@@ -59,6 +58,7 @@ export function CreateLightComponents(scene: Scene, options: ICreateLightCompone
     // const directionalLightFrustumViewer = new DirectionalLightFrustumViewer(directionalLight, scene.cameras[0]);
     // scene.onBeforeRenderObservable.add(() => directionalLightFrustumViewer.update());
 
+    RegisterRenderTargetTexture(); // needs render target texture side-effects for shadow generator to work properly
     const shadowGenerator = new ShadowGenerator(1024, directionalLight, true);
     shadowGenerator.usePercentageCloserFiltering = true;
     shadowGenerator.forceBackFacesOnly = false;

@@ -1,4 +1,3 @@
-import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/pmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
@@ -7,6 +6,7 @@ import "@/Loader/mmdOutlineRenderer";
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 // import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
@@ -14,6 +14,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 // import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor.pure";
@@ -49,6 +50,8 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

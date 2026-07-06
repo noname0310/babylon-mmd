@@ -1,12 +1,13 @@
-import "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
-import "@babylonjs/core/Misc/dumpTools";
 import "@/Loader/mmdOutlineRenderer";
 
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { _DDSTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
+import { registerTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
+import { _TGATextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { RegisterDumpTools } from "@babylonjs/core/Misc/dumpTools.pure";
 import type { LoadFileError } from "@babylonjs/core/Misc/fileTools.pure";
 import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import { Scene } from "@babylonjs/core/scene.pure";
@@ -30,6 +31,9 @@ class MigrationBpmxLoader extends BpmxLoader {
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        registerTextureLoader(".dds", () => new _DDSTextureLoader());
+        registerTextureLoader(".tga", () => new _TGATextureLoader());
+        RegisterDumpTools();
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);

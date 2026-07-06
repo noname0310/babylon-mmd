@@ -1,15 +1,15 @@
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@/Loader/pmxLoader";
 import "@/Loader/pmdLoader";
 import "@/Loader/mmdOutlineRenderer";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Material } from "@babylonjs/core/Materials/material.pure";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import { ShowInspector } from "@babylonjs/inspector";
@@ -25,6 +25,8 @@ import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

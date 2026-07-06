@@ -1,19 +1,20 @@
-import "@babylonjs/core/Animations/animatable";
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
-import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup.pure";
+import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
+import { AnimationGroupParse } from "@babylonjs/core/Animations/animationGroup.pure";
+import { Bone } from "@babylonjs/core/Bones/bone.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { Tools } from "@babylonjs/core/Misc/tools.pure";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
@@ -36,6 +37,10 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
+        AddAnimationExtensions(Scene, Bone);
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
@@ -82,7 +87,7 @@ export class SceneBuilder implements ISceneBuilder {
         {
             const animationJson = await Tools.LoadFileAsync("res/motion/walk_in_circle.babylonanim", false)
                 .then((data) => JSON.parse(data as string));
-            const animation = AnimationGroup.Parse(animationJson, scene);
+            const animation = AnimationGroupParse(animationJson, scene);
             animation.play(true);
         }
 

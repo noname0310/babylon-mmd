@@ -1,8 +1,3 @@
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-import "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
-import "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
-import "@babylonjs/core/Misc/dumpTools";
 import "@/Loader/mmdOutlineRenderer";
 import "@/Loader/pmdLoader";
 import "@/Loader/pmxLoader";
@@ -12,13 +7,20 @@ import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight.pure";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight.pure";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Material } from "@babylonjs/core/Materials/material.pure";
 import type { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial.pure";
+import { _DDSTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
+import { registerTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
+import { _TGATextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader";
+import { RegisterRenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture.pure";
 import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterDumpTools } from "@babylonjs/core/Misc/dumpTools.pure";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
@@ -75,6 +77,11 @@ async function EntriesToFiles(entries: FileSystemEntry[]): Promise<File[]> {
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
+        registerTextureLoader(".dds", () => new _DDSTextureLoader());
+        registerTextureLoader(".tga", () => new _TGATextureLoader());
+        RegisterDumpTools();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const materialBuilder = new MmdStandardMaterialBuilder();
@@ -109,6 +116,7 @@ export class SceneBuilder implements ISceneBuilder {
         directionalLight.orthoRight = 10 * 3;
         directionalLight.shadowOrthoScale = 0;
 
+        RegisterRenderTargetTexture(); // needs render target texture side-effects for shadow generator to work properly
         const shadowGenerator = new ShadowGenerator(1024, directionalLight, true, camera);
         shadowGenerator.transparencyShadow = true;
         shadowGenerator.usePercentageCloserFiltering = true;

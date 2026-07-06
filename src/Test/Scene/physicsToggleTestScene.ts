@@ -1,4 +1,3 @@
-import "@babylonjs/core/Loading/loadingScreen";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
@@ -8,11 +7,13 @@ import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
 
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene.pure";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -45,6 +46,8 @@ import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

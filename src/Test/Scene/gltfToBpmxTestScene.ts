@@ -1,11 +1,9 @@
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Material } from "@babylonjs/core/Materials/material.pure";
@@ -13,11 +11,13 @@ import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial.pure
 import { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 import { ShowInspector } from "@babylonjs/inspector";
+import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
@@ -30,6 +30,9 @@ import { CreateLightComponents } from "../Util/createLightComponents";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
+        RegisterGLTF2Loader();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;

@@ -1,24 +1,25 @@
-import "@babylonjs/core/Animations/animatable";
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
+import { Bone } from "@babylonjs/core/Bones/bone.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import havokPhysics from "@babylonjs/havok";
+import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
 
 // import { ShowInspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -41,6 +42,10 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
+        AddAnimationExtensions(Scene, Bone);
+        RegisterGLTF2Loader();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

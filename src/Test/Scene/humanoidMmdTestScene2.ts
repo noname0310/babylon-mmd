@@ -1,8 +1,3 @@
-import "@babylonjs/core/Loading/loadingScreen";
-import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
-import "@babylonjs/core/Rendering/depthRendererSceneComponent";
-import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
-import "@babylonjs/loaders/glTF/2.0/glTFLoader";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
@@ -10,16 +5,19 @@ import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial.pure";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
+import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
+import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
@@ -44,6 +42,9 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
+        SetMissingSideEffectWarningsEnabled(true);
+        RegisterLoadingScreen();
+        RegisterGLTF2Loader();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
@@ -251,6 +252,9 @@ export class SceneBuilder implements ISceneBuilder {
         ssr.roughnessFactor = 0.1;
         ssr.reflectivityThreshold = 0.9;
         ssr.samples = 4;
+        scene.onBeforeCameraRenderObservable.add(camera => {
+            (ssr as unknown as { _thinSSRRenderingPipeline: { camera: unknown } })._thinSSRRenderingPipeline.camera = camera;
+        });
 
         setTimeout(() => {
             let frameSum = 0;

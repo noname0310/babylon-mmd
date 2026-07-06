@@ -1,5 +1,3 @@
-import "@babylonjs/core/Physics/v2/physicsEngineComponent";
-
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
