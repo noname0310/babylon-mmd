@@ -12,6 +12,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 // import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 // import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor.pure";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
@@ -50,6 +51,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

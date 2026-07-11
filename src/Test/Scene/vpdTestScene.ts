@@ -9,6 +9,7 @@ import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
@@ -34,6 +35,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
         engine.snapshotRendering = true;
@@ -126,6 +128,9 @@ export class SceneBuilder implements ISceneBuilder {
             }
 
             scene.onAfterRenderObservable.removeCallback(delayedDispose);
+
+            // this pose lock method is broken since destroyMmdModel() supports pose initialization.
+            // see https://github.com/noname0310/babylon-mmd/commit/97a4f3282b83a5fcc82960a18c88a4436188ff7f#diff-29368de6b03e01926d5ca3cf2818fe88f7fd825e331fbf8c9ad61da4d1504a82
             mmdRuntime.destroyMmdModel(mmdModel);
 
             scene.physicsEnabled = false;

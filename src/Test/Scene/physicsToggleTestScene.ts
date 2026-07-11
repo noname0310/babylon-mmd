@@ -14,6 +14,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { Scene } from "@babylonjs/core/scene.pure";
 // import { MmdWasmRuntime, MmdWasmRuntimeAnimationEvaluationType } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -21,6 +22,7 @@ import { Scene } from "@babylonjs/core/scene.pure";
 // import havok from "@babylonjs/havok";
 import { ShowInspector } from "@babylonjs/inspector";
 
+import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 // import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
@@ -48,6 +50,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);
@@ -67,6 +70,7 @@ export class SceneBuilder implements ISceneBuilder {
             {
                 pluginOptions: {
                     mmdmodel: {
+                        materialBuilder: new MmdStandardMaterialBuilder(),
                         loggingEnabled: true
                     }
                 }

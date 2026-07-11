@@ -74,7 +74,7 @@ export class SceneBuilder implements ISceneBuilder {
 
         const materialBuilder = new MmdStandardMaterialBuilder();
         materialBuilder.loadOutlineRenderingProperties = (): void => { /* do nothing */ };
-        const originalLoadToonTexture = materialBuilder.loadToonTexture;
+        const originalLoadToonTexture = materialBuilder.loadToonTexture.bind(materialBuilder);
         materialBuilder.loadToonTexture = (
             uniqueId: number,
             material: MmdStandardMaterial,

@@ -15,11 +15,13 @@ import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import havokPhysics from "@babylonjs/havok";
 import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
+import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.pure";
 
 // import { ShowInspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
@@ -45,7 +47,9 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         AddAnimationExtensions(Scene, Bone);
+        RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

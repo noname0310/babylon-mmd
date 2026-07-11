@@ -1,9 +1,11 @@
 import "@/Loader/pmxLoader";
 import "@/Loader/mmdOutlineRenderer";
 
+import { RegisterCamera } from "@babylonjs/core/Cameras/camera.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { RegisterTexture } from "@babylonjs/core/Materials/Textures/texture.pure";
 import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
@@ -29,6 +31,8 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterCamera();
+        RegisterTexture();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

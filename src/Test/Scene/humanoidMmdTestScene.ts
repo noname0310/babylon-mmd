@@ -18,6 +18,7 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
 import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
+import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.pure";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
@@ -44,6 +45,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);

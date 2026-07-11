@@ -18,6 +18,7 @@ import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 import { ShowInspector } from "@babylonjs/inspector";
 import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
+import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.pure";
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
@@ -32,6 +33,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);

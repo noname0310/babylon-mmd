@@ -1,11 +1,8 @@
-import "@babylonjs/core/Meshes/thinInstanceMesh";
-import "@babylonjs/core/Helpers/sceneHelpers";
-import "@babylonjs/core/Materials/Node/Blocks";
-import "@babylonjs/core/XR/features/WebXRControllerMovement";
 import "@/Loader/Optimized/bpmxLoader";
 import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
 import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 
+import { RegisterRay } from "@babylonjs/core/Culling/ray.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -14,12 +11,20 @@ import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
+import { RegisterWebXRControllerMovement } from "@babylonjs/core/XR/features/WebXRControllerMovement.pure";
+import { RegisterWebXRControllerPointerSelection } from "@babylonjs/core/XR/features/WebXRControllerPointerSelection.pure";
+import { RegisterWebXRHandTracking } from "@babylonjs/core/XR/features/WebXRHandTracking.pure";
+import { RegisterWebXRNearInteraction } from "@babylonjs/core/XR/features/WebXRNearInteraction.pure";
+import { WebXRDefaultExperience } from "@babylonjs/core/XR/webXRDefaultExperience.js";
 import { WebXRFeatureName } from "@babylonjs/core/XR/webXRFeaturesManager";
 import havokPhysics from "@babylonjs/havok";
+import { RegisterGLTF2Loader } from "@babylonjs/loaders/glTF/2.0/glTFLoader.pure";
+import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.pure";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
@@ -46,6 +51,14 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
+        RegisterRay(); // for WebXR controller ray selection
+        RegisterGLTFFileLoader(); // for WebXR controller model loading
+        RegisterGLTF2Loader();
+        RegisterWebXRControllerMovement(); // for WebXR controller movement
+        RegisterWebXRControllerPointerSelection(); // WebXRDefaultExperience default features
+        RegisterWebXRHandTracking();
+        RegisterWebXRNearInteraction();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 
@@ -188,7 +201,7 @@ export class SceneBuilder implements ISceneBuilder {
         defaultPipeline.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0);
         defaultPipeline.imageProcessing.vignetteEnabled = false;
 
-        const xr = await scene.createDefaultXRExperienceAsync({
+        const xr = await WebXRDefaultExperience.CreateAsync(scene, {
             outputCanvasOptions: {
                 canvasOptions: {
                     framebufferScaleFactor: 1

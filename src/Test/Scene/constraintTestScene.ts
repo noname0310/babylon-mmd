@@ -13,8 +13,8 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
-
 import { ShowInspector } from "@babylonjs/inspector";
+
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
