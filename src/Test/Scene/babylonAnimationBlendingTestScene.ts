@@ -14,6 +14,7 @@ import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 import { DepthOfFieldEffectBlurLevel } from "@babylonjs/core/PostProcesses/depthOfFieldEffect";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
@@ -47,6 +48,7 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         AddAnimationExtensions(Scene, Bone);
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

@@ -9,6 +9,7 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import { Material } from "@babylonjs/core/Materials/material.pure";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color.pure";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
+import { RegisterInstancedMesh } from "@babylonjs/core/Meshes/instancedMesh.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
@@ -27,6 +28,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterInstancedMesh();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

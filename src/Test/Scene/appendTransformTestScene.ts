@@ -16,6 +16,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 // import { HavokPlugin } from "@babylonjs/core/Physics/v2/Plugins/havokPlugin";
 // import { PhysicsImpostor } from "@babylonjs/core/Physics/v1/physicsImpostor.pure";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline.pure";
@@ -52,6 +53,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

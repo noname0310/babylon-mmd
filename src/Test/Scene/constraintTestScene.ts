@@ -11,9 +11,10 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode.pure";
 import { SetMissingSideEffectWarningsEnabled } from "@babylonjs/core/Misc/devTools";
+import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/joinedPhysicsEngineComponent.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
-import { ShowInspector } from "@babylonjs/inspector";
 
+import { ShowInspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
@@ -32,6 +33,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterJoinedPhysicsEngineComponent();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         // materialBuilder.alphaEvaluationResolution = 2048;
