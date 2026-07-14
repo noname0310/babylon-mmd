@@ -1,10 +1,3 @@
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.alpha";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.multiRender";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.rawTexture";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.readTexture";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget";
-import "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture";
-
 import { BaseRuntime } from "./baseRuntime";
 import { SceneBuilder } from "./Scene/wasmPhysicsTestScene";
 
@@ -18,7 +11,7 @@ let Engine;
 
 const UseWebGPU = false;
 if (UseWebGPU) {
-    Engine = new (await import("@babylonjs/core/Engines/webgpuEngine")).WebGPUEngine(Canvas, {
+    Engine = new (await import("@babylonjs/core/Engines/webgpuEngine.pure")).WebGPUEngine(Canvas, {
         stencil: false,
         antialias: true,
         doNotHandleTouchAction: true,
@@ -35,7 +28,12 @@ if (UseWebGPU) {
     });
     await Engine.initAsync();
 } else {
-    Engine = new (await import("@babylonjs/core/Engines/engine")).Engine(Canvas, false, {
+    const [ engineModule, registerEngineExtensionsModule ] = await Promise.all([
+        import("@babylonjs/core/Engines/engine.pure"),
+        import("./Util/registerEngineExtensions")
+    ]);
+    registerEngineExtensionsModule.RegisterEngineExtensions();
+    Engine = new engineModule.Engine(Canvas, false, {
         preserveDrawingBuffer: false,
         stencil: false,
         antialias: true,
