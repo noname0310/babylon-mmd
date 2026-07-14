@@ -1,7 +1,6 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture.pure";
-import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
 import type { Texture } from "@babylonjs/core/Materials/Textures/texture.pure";
 import { Color3 } from "@babylonjs/core/Maths/math.color.pure";
 import { Scene } from "@babylonjs/core/scene.pure";
