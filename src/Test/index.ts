@@ -11,7 +11,12 @@ let Engine;
 
 const UseWebGPU = false;
 if (UseWebGPU) {
-    Engine = new (await import("@babylonjs/core/Engines/webgpuEngine.pure")).WebGPUEngine(Canvas, {
+    const [ engineModule, registerEngineExtensionsModule ] = await Promise.all([
+        import("@babylonjs/core/Engines/webgpuEngine.pure"),
+        import("./Util/registerEngineWebGPUExtensions")
+    ]);
+    registerEngineExtensionsModule.RegisterEngineWebGPUExtensions();
+    Engine = new engineModule.WebGPUEngine(Canvas, {
         stencil: false,
         antialias: true,
         doNotHandleTouchAction: true,
