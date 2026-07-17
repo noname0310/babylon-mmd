@@ -13,8 +13,8 @@ export const SdefVertex = /* wgsl */`
         let transformMatrix0: mat4x4f = readMatrixFromRawSampler(boneSampler, vertexInputs.matricesIndices[0]);
         let transformMatrix1: mat4x4f = readMatrixFromRawSampler(boneSampler, vertexInputs.matricesIndices[1]);
     #else
-        let transformMatrix0: mat4x4f = uniforms.mBones[int(vertexInputs.matricesIndices[0])];
-        let transformMatrix1: mat4x4f = uniforms.mBones[int(vertexInputs.matricesIndices[1])];
+        let transformMatrix0: mat4x4f = uniforms.mBones[i32(vertexInputs.matricesIndices[0])];
+        let transformMatrix1: mat4x4f = uniforms.mBones[i32(vertexInputs.matricesIndices[1])];
     #endif
 
     let slerpedRotationMatrix: mat3x3f = quaternionToRotationMatrix(slerp(

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 (Scheduled)
+
+- Babylon.js Pure Barrel support (see https://github.com/BabylonJS/Babylon.js/pull/18441)
+
+- Fix crash when use SDEF model with uniform buffer bone matrix in WebGPU
+
+- Minimum required version of Babylon.js is now 9.15.0
+
 ## 1.2.0 (2026-04-13)
 
 - use `TransformNode.parent` property instead of `TransformNode.setParent` method to set parent node without updating local transform
