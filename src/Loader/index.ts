@@ -5,13 +5,13 @@ import { RegisterDxBmpTextureLoader } from "./registerDxBmpTextureLoader";
 export * from "./Animation/index";
 
 // Optimized
-export * from "./Optimized";
+export * from "./Optimized/index";
 
 // Parser
-export * from "./Parser";
+export * from "./Parser/index";
 
 // Util
-export * from "./Util";
+export * from "./Util/index";
 
 // ./
 export * from "./dxBmpTextureLoader";

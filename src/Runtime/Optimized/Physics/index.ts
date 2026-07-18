@@ -1,5 +1,5 @@
 // Bind
-export * from "./Bind";
+export * from "./Bind/index";
 
 // ./
 export * from "./IMmdWasmPhysicsRuntime";

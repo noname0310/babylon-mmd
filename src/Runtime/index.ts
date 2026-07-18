@@ -1,20 +1,20 @@
 // Animation
-export * from "./Animation";
+export * from "./Animation/index";
 
 // Audio
-export * from "./Audio";
+export * from "./Audio/index";
 
 // Common
-export * from "./Common";
+export * from "./Common/index";
 
 // Optimized
-export * from "./Optimized";
+export * from "./Optimized/index";
 
 // Physics
-export * from "./Physics";
+export * from "./Physics/index";
 
 // Util
-export * from "./Util";
+export * from "./Util/index";
 
 // ./
 export * from "./appendTransformSolver";

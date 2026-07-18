@@ -1,8 +1,8 @@
 // Impl
-export * from "./Impl";
+export * from "./Impl/index";
 
 // Plugin
-export * from "./Plugin";
+export * from "./Plugin/index";
 
 // ./
 export * from "./bulletWasmInstance";
