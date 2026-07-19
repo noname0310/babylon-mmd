@@ -1,9 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import { BezierCurveEase } from "@babylonjs/core/Animations/easing";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
@@ -22,11 +16,16 @@ import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
+import { RegisterMmdCompositeRuntimeCameraAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeCameraAnimation.pure";
+import { RegisterMmdCompositeRuntimeModelAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation.pure";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -47,6 +46,12 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdCompositeRuntimeCameraAnimation();
+        RegisterMmdCompositeRuntimeModelAnimation();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

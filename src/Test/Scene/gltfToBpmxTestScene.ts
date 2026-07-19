@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -22,7 +18,10 @@ import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.p
 
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 
 import type { ISceneBuilder } from "../baseRuntime";
 import { CreateDefaultArcRotateCamera } from "../Util/createDefaultArcRotateCamera";
@@ -35,6 +34,9 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;

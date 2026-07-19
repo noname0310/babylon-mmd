@@ -5,9 +5,9 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdBindableCameraAnimation } from "./Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeCameraAnimation } from "./Animation/IMmdRuntimeAnimation";
-import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation";
-import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation";
-import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer";
+import type { MmdCompositeRuntimeCameraAnimation } from "./Animation/mmdCompositeRuntimeCameraAnimation.pure";
+import type { MmdRuntimeCameraAnimation } from "./Animation/mmdRuntimeCameraAnimation.pure";
+import type { MmdRuntimeCameraAnimationContainer } from "./Animation/mmdRuntimeCameraAnimationContainer.pure";
 import type { IMmdRuntimeAnimatable } from "./IMmdRuntimeAnimatable";
 import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 

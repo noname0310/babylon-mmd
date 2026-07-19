@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
-
 import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
 import { Bone } from "@babylonjs/core/Bones/bone.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
@@ -25,10 +21,13 @@ import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdCameraAnimationContainer, MmdCameraAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdCameraAnimationContainer";
 import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimationContainer } from "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer.pure";
+import { RegisterMmdRuntimeModelAnimationContainer } from "@/Runtime/Animation/mmdRuntimeModelAnimationContainer.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -48,6 +47,10 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         AddAnimationExtensions(Scene, Bone);
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimationContainer();
+        RegisterMmdRuntimeModelAnimationContainer();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

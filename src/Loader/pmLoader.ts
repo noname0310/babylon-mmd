@@ -19,14 +19,14 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh, TextureInfo } from "./IMmdMaterialBuilder";
 import { MmdBufferKind } from "./mmdBufferKind";
-import type { IBuildMaterialResult, IBuildMorphResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions, IMmdModelLoadState } from "./mmdModelLoader";
-import { MmdModelLoader } from "./mmdModelLoader";
+import type { IBuildMaterialResult, IBuildMorphResult, IMmdModelBuildGeometryResult, IMmdModelLoaderOptions, IMmdModelLoadState } from "./mmdModelLoader.pure";
+import { MmdModelLoader } from "./mmdModelLoader.pure";
 import type { MmdModelMetadata } from "./mmdModelMetadata";
 import { ObjectUniqueIdProvider } from "./objectUniqueIdProvider";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { IProgressTask, Progress } from "./progress";
-import { SdefMesh } from "./sdefMesh";
+import { SdefMesh } from "./sdefMesh.pure";
 
 /**
  * Options for loading PMX / PMD model
@@ -826,7 +826,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
     ): Promise<IBuildMaterialResult> {
         const materialBuilder = state.materialBuilder;
         if (materialBuilder === null) {
-            this.warn("No material builder available. If you want to build materials, try passing an IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.default.ts\" to register the default MmdStandardMaterialBuilder.");
+            this.warn("No material builder available. If you want to build materials, try passing an IMmdMaterialBuilder implementation (e.g. MmdStandardMaterialBuilder) to mmdModel loaderOptions or import \"babylon-mmd/esm/Loader/mmdModelLoader.ts\" to register the default MmdStandardMaterialBuilder.");
             progress.endTask("Build Material");
             progress.endTask("Texture Load");
             return { materials: [], multiMaterials: [], textureLoadPromise: Promise.resolve() };

@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -20,14 +16,17 @@ import type { Nullable } from "@babylonjs/core/types";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import type { MaterialInfo, TextureInfo } from "@/Loader/IMmdMaterialBuilder";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import type { ILogger } from "@/Loader/Parser/ILogger";
 import type { ReferenceFileResolver } from "@/Loader/referenceFileResolver";
 import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
@@ -47,6 +46,10 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;

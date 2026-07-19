@@ -1,7 +1,3 @@
-import "@/Loader/pmxLoader";
-import "@/Loader/pmdLoader";
-import "@/Loader/mmdOutlineRenderer";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -15,7 +11,10 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { Scene } from "@babylonjs/core/scene.pure";
 import { ShowInspector } from "@babylonjs/inspector";
 
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterPmdLoader } from "@/Loader/pmdLoader.pure";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
@@ -29,6 +28,9 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterInstancedMesh();
+        RegisterPmxLoader();
+        RegisterPmdLoader();
+        RegisterMmdOutlineRenderer();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

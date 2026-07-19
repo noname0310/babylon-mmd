@@ -1,44 +1,5 @@
-import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
-import { type ISceneLoaderPluginAsync, RegisterSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
+import { RegisterPmxLoader } from "./pmxLoader.pure";
 
-import type { ILogger } from "./Parser/ILogger";
-import type { PmxObject } from "./Parser/pmxObject";
-import { PmxReader } from "./Parser/pmxReader";
-import type { IPmLoaderOptions } from "./pmLoader";
-import { PmLoader } from "./pmLoader";
-import { PmxLoaderMetadata } from "./pmxLoader.metadata";
+export * from "./pmxLoader.pure";
 
-/**
- * PmxLoader is a loader that loads the model in the PMX format
- *
- * PMX is a binary file format that contains all the data except the texture of the model
- */
-export class PmxLoader extends PmLoader implements ISceneLoaderPluginAsync, ILogger {
-    /**
-     * Create a new PmdLoader
-     *
-     * @param options babylon.js scene loader options
-     * @param loaderOptions Overriding options, typically pass global PmxLoader instance as loaderOptions
-     */
-    public constructor(options?: Partial<IPmLoaderOptions>, loaderOptions?: IPmLoaderOptions) {
-        super(
-            PmxLoaderMetadata.name,
-            PmxLoaderMetadata.extensions,
-            options,
-            loaderOptions
-        );
-    }
-
-    public createPlugin(options: SceneLoaderPluginOptions): ISceneLoaderPluginAsync {
-        return new PmxLoader(options.mmdmodel, this);
-    }
-
-    protected override async _parseFileAsync(arrayBuffer: ArrayBufferLike): Promise<PmxObject> {
-        return await PmxReader.ParseAsync(arrayBuffer, this)
-            .catch((e: any) => {
-                return Promise.reject(e);
-            });
-    }
-}
-
-RegisterSceneLoaderPlugin(new PmxLoader());
+RegisterPmxLoader();

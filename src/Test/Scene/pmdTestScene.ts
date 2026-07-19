@@ -1,7 +1,3 @@
-import "@/Loader/pmdLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
@@ -24,9 +20,12 @@ import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
+import { RegisterPmdLoader } from "@/Loader/pmdLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -48,6 +47,10 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
         registerTextureLoader(".tga", () => new _TGATextureLoader());
+        RegisterPmdLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

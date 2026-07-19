@@ -1,7 +1,7 @@
 import type { SceneLoaderPluginOptions } from "@babylonjs/core/Loading/sceneLoader";
 import { type ISceneLoaderPluginAsync, RegisterSceneLoaderPlugin } from "@babylonjs/core/Loading/sceneLoader";
 
-import { BpmxLoader as OriginalBpmxLoader } from "../bpmxLoader";
+import { BpmxLoader as OriginalBpmxLoader } from "../bpmxLoader.pure";
 import type { BpmxObject } from "../Parser/bpmxObject";
 import { BpmxReader } from "./Parser/bpmxReader";
 

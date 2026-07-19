@@ -1,8 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Loader/mmdOutlineRenderer";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -19,11 +14,15 @@ import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPi
 import { Scene } from "@babylonjs/core/scene.pure";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -41,6 +40,11 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterBpmxLoader();
+        RegisterMmdOutlineRenderer();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

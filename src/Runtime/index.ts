@@ -39,7 +39,6 @@ export * from "./mmdMorphControllerBase";
 export * from "./mmdRuntime";
 export type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 export * from "./mmdRuntimeBone";
-export * from "./mmdRuntimeShared";
-export * from "./mmdRuntimeShared.default"; // default material proxy override sideeffect
+export * from "./mmdRuntimeShared"; // default material proxy registration sideeffect
 export * from "./mmdStandardMaterialProxy";
 export * from "./standardMaterialProxy";

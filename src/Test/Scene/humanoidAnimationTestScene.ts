@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { Bone } from "@babylonjs/core/Bones/bone.pure";
@@ -25,9 +21,12 @@ import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.p
 
 // import { ShowInspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { AnimationRetargeter } from "@/Loader/Util/animationRetargeter";
 import { MixamoMmdHumanoidBoneMap, MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdAnimationConverter } from "@/Loader/Util/mmdAnimationConverter";
@@ -50,6 +49,9 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

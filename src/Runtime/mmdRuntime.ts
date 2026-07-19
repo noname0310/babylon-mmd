@@ -14,7 +14,7 @@ import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { MmdSkinnedMesh } from "./mmdMesh";
 import { MmdMesh } from "./mmdMesh";
 import { MmdModel } from "./mmdModel";
-import { MmdRuntimeShared } from "./mmdRuntimeShared";
+import { MmdRuntimeShared } from "./mmdRuntimeShared.pure";
 import type { IMmdPhysics } from "./Physics/IMmdPhysics";
 
 /**

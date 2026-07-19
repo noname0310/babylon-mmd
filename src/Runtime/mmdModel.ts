@@ -12,9 +12,9 @@ import { PmxObject } from "@/Loader/Parser/pmxObject";
 
 import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
 import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
-import type { MmdCompositeRuntimeModelAnimation } from "./Animation/mmdCompositeRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation";
-import type { MmdRuntimeModelAnimationContainer } from "./Animation/mmdRuntimeModelAnimationContainer";
+import type { MmdCompositeRuntimeModelAnimation } from "./Animation/mmdCompositeRuntimeModelAnimation.pure";
+import type { MmdRuntimeModelAnimation } from "./Animation/mmdRuntimeModelAnimation.pure";
+import type { MmdRuntimeModelAnimationContainer } from "./Animation/mmdRuntimeModelAnimationContainer.pure";
 import { AppendTransformSolver } from "./appendTransformSolver";
 import { IkSolver } from "./ikSolver";
 import type { ILogger } from "./ILogger";

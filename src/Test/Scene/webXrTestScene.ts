@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import { RegisterRay } from "@babylonjs/core/Culling/ray.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
@@ -28,12 +24,15 @@ import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.p
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -59,6 +58,10 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterWebXRControllerPointerSelection(); // WebXRDefaultExperience default features
         RegisterWebXRHandTracking();
         RegisterWebXRNearInteraction();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

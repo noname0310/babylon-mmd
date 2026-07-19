@@ -5,7 +5,7 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";
-import type { MmdCamera } from "@/Runtime/mmdCamera";
+import type { MmdCamera } from "@/Runtime/mmdCamera.pure";
 
 export class MmdCameraAutoFocus {
     private readonly _camera: MmdCamera;

@@ -1,6 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -17,8 +14,10 @@ import havokPhysics from "@babylonjs/havok";
 
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VpdLoader } from "@/Loader/vpdLoader";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -36,6 +35,8 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeModelAnimation();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
         engine.snapshotRendering = true;

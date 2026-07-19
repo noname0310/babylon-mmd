@@ -1,8 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Loader/mmdOutlineRenderer";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
-
 // import "@/Runtime/Animation/mmdRuntimeModelAnimation";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -21,15 +16,19 @@ import type { Nullable } from "@babylonjs/core/types";
 
 // import havokPhysics from "@babylonjs/havok";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 // import type { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdPhysics } from "@/Runtime/mmdPhysics";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
+import { RegisterMmdWasmRuntimeModelAnimation } from "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation.pure";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import type { IMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
@@ -62,6 +61,11 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterBpmxLoader();
+        RegisterMmdOutlineRenderer();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdWasmRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

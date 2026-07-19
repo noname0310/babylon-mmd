@@ -284,7 +284,7 @@ import { MmdMesh } from "@/Runtime/mmdMesh";
 
 import { MmdBufferKind } from "../mmdBufferKind";
 import { MmdModelMetadata } from "../mmdModelMetadata";
-import type { MmdStandardMaterial } from "../mmdStandardMaterial";
+import type { MmdStandardMaterial } from "../mmdStandardMaterial.pure";
 import type { ILogger } from "../Parser/ILogger";
 import type { Vec3, Vec4 } from "../Parser/mmdTypes";
 import { PmxObject } from "../Parser/pmxObject";

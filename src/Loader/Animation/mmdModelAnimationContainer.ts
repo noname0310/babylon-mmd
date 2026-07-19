@@ -6,7 +6,7 @@ import { Quaternion, Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector.
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 import type { DeepImmutable, Nullable } from "@babylonjs/core/types";
 
-import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
+import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation.pure";
 import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { IMmdModel } from "@/Runtime/IMmdModel";
 import type { IMmdRuntimeBone } from "@/Runtime/IMmdRuntimeBone";

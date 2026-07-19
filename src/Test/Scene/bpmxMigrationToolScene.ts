@@ -1,5 +1,3 @@
-import "@/Loader/mmdOutlineRenderer";
-
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { _DDSTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader";
@@ -13,7 +11,8 @@ import type { WebRequest } from "@babylonjs/core/Misc/webRequest";
 import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { IMmdModelLoadState } from "@/Loader/mmdModelLoader";
+import type { IMmdModelLoadState } from "@/Loader/mmdModelLoader.pure";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
 import { BpmxLoader } from "@/Loader/Optimized/Legacy/bpmxLoader";
@@ -34,6 +33,7 @@ export class SceneBuilder implements ISceneBuilder {
         registerTextureLoader(".dds", () => new _DDSTextureLoader());
         registerTextureLoader(".tga", () => new _TGATextureLoader());
         RegisterDumpTools();
+        RegisterMmdOutlineRenderer();
         engine.setHardwareScalingLevel(1000);
         const scene = new Scene(engine);
         new FreeCamera("camera1", new Vector3(0, 5, -10), scene);

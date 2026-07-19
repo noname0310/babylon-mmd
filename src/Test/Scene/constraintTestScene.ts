@@ -1,6 +1,3 @@
-import "@/Loader/pmxLoader";
-import "@/Loader/mmdOutlineRenderer";
-
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
@@ -15,7 +12,9 @@ import { RegisterJoinedPhysicsEngineComponent } from "@babylonjs/core/Physics/jo
 import { Scene } from "@babylonjs/core/scene.pure";
 import { ShowInspector } from "@babylonjs/inspector";
 
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
@@ -34,6 +33,8 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterPmxLoader();
+        RegisterMmdOutlineRenderer();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         // materialBuilder.alphaEvaluationResolution = 2048;

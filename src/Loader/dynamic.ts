@@ -15,7 +15,7 @@ export function RegisterMmdModelLoaders(): void {
         ...PmxLoaderMetadata,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
-            const { PmxLoader: pmxLoader } = await import("./pmxLoader");
+            const { PmxLoader: pmxLoader } = await import("./pmxLoader.pure");
             return new pmxLoader(options.mmdmodel);
         }
     } satisfies ISceneLoaderPluginFactory);
@@ -25,7 +25,7 @@ export function RegisterMmdModelLoaders(): void {
         ...PmdLoaderMetadata,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
-            const { PmdLoader: pmdLoader } = await import("./pmdLoader");
+            const { PmdLoader: pmdLoader } = await import("./pmdLoader.pure");
             return new pmdLoader(options.mmdmodel);
         }
     } satisfies ISceneLoaderPluginFactory);
@@ -35,7 +35,7 @@ export function RegisterMmdModelLoaders(): void {
         ...BpmxLoaderMetadata,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         createPlugin: async(options: SceneLoaderPluginOptions): Promise<ISceneLoaderPluginAsync> => {
-            const { BpmxLoader: bpmxLoader } = await import("./Optimized/bpmxLoader");
+            const { BpmxLoader: bpmxLoader } = await import("./Optimized/bpmxLoader.pure");
             return new bpmxLoader(options.mmdmodel);
         }
     } satisfies ISceneLoaderPluginFactory);

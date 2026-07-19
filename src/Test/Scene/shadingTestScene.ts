@@ -1,6 +1,3 @@
-import "@/Loader/pmxLoader";
-import "@/Loader/Optimized/bpmxLoader";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
@@ -12,7 +9,9 @@ import { Scene } from "@babylonjs/core/scene.pure";
 import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { PBRMaterialBuilder } from "@/Loader/pbrMaterialBuilder";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { StandardMaterialBuilder } from "@/Loader/standardMaterialBuilder";
 
@@ -25,6 +24,8 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterPmxLoader();
+        RegisterBpmxLoader();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

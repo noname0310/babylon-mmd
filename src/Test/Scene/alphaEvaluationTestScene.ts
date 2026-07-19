@@ -1,5 +1,3 @@
-import "@/Loader/pmxLoader";
-
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -10,6 +8,7 @@ import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { RegisterDxBmpTextureLoader } from "@/Loader/registerDxBmpTextureLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
@@ -24,6 +23,7 @@ export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
+        RegisterPmxLoader();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         RegisterDxBmpTextureLoader();

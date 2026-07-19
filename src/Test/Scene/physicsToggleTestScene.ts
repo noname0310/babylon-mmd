@@ -1,10 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Loader/mmdOutlineRenderer";
-import "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimationContainer";
-import "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
-
 import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
@@ -22,13 +15,19 @@ import { Scene } from "@babylonjs/core/scene.pure";
 // import havok from "@babylonjs/havok";
 import { ShowInspector } from "@babylonjs/inspector";
 
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 // import { MmdModelAnimationContainer, MmdModelAnimationContainerBezierBuilder } from "@/Loader/Animation/mmdModelAnimationContainer";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
+import { RegisterMmdCompositeRuntimeModelAnimation } from "@/Runtime/Animation/mmdCompositeRuntimeModelAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+import { RegisterMmdRuntimeModelAnimationContainer } from "@/Runtime/Animation/mmdRuntimeModelAnimationContainer.pure";
 // import { MmdAnimationSpan, MmdCompositeAnimation } from "@/Runtime/Animation/mmdCompositeAnimation";
 // import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdWasmAnimation } from "@/Runtime/Optimized/Animation/mmdWasmAnimation";
+import { RegisterMmdWasmRuntimeModelAnimation } from "@/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation.pure";
 import { MmdWasmInstanceTypeMPD } from "@/Runtime/Optimized/InstanceType/multiPhysicsDebug";
 import { GetMmdWasmInstance } from "@/Runtime/Optimized/mmdWasmInstance";
 import { MmdWasmRuntime } from "@/Runtime/Optimized/mmdWasmRuntime";
@@ -51,6 +50,12 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdOutlineRenderer();
+        RegisterMmdCompositeRuntimeModelAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdRuntimeModelAnimationContainer();
+        RegisterMmdWasmRuntimeModelAnimation();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

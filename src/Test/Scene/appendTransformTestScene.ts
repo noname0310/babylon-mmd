@@ -1,8 +1,3 @@
-import "@/Loader/pmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-import "@/Loader/mmdOutlineRenderer";
-
 import type { Skeleton } from "@babylonjs/core/Bones/skeleton";
 // import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
@@ -26,13 +21,17 @@ import { Scene } from "@babylonjs/core/scene.pure";
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import type { MmdModelMetadata } from "@/Loader/mmdModelMetadata";
-import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
+import { MmdStandardMaterial, RegisterMmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { VmdLoader } from "@/Loader/vmdLoader";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import ammo from "@/Runtime/Physics/External/ammo.wasm";
@@ -54,6 +53,12 @@ export class SceneBuilder implements ISceneBuilder {
         SetMissingSideEffectWarningsEnabled(true);
         RegisterLoadingScreen();
         RegisterJoinedPhysicsEngineComponent();
+        RegisterPmxLoader();
+        RegisterMmdOutlineRenderer();
+        RegisterMmdStandardMaterial();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

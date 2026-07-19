@@ -1,7 +1,3 @@
-import "@/Loader/mmdOutlineRenderer";
-import "@/Loader/pmdLoader";
-import "@/Loader/pmxLoader";
-
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight.pure";
@@ -27,9 +23,12 @@ import type { Nullable } from "@babylonjs/core/types";
 
 import type { ReferencedMesh } from "@/Loader/IMmdMaterialBuilder";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
 import { BpmxConverter } from "@/Loader/Optimized/bpmxConverter";
+import { RegisterPmdLoader } from "@/Loader/pmdLoader.pure";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
@@ -82,6 +81,9 @@ export class SceneBuilder implements ISceneBuilder {
         registerTextureLoader(".dds", () => new _DDSTextureLoader());
         registerTextureLoader(".tga", () => new _TGATextureLoader());
         RegisterDumpTools();
+        RegisterMmdOutlineRenderer();
+        RegisterPmdLoader();
+        RegisterPmxLoader();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const materialBuilder = new MmdStandardMaterialBuilder();

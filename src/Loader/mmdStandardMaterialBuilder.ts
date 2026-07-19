@@ -7,7 +7,7 @@ import { Scene } from "@babylonjs/core/scene.pure";
 import type { Nullable } from "@babylonjs/core/types";
 
 import type { MaterialInfo, TextureInfo } from "./IMmdMaterialBuilder";
-import { MmdStandardMaterial } from "./mmdStandardMaterial";
+import { MmdStandardMaterial } from "./mmdStandardMaterial.pure";
 import type { ILogger } from "./Parser/ILogger";
 import { PmxObject } from "./Parser/pmxObject";
 import type { ReferenceFileResolver } from "./referenceFileResolver";

@@ -1,6 +1,3 @@
-import "@/Loader/pmxLoader";
-import "@/Loader/mmdOutlineRenderer";
-
 import { RegisterCamera } from "@babylonjs/core/Cameras/camera.pure";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
@@ -13,13 +10,15 @@ import { Scene } from "@babylonjs/core/scene.pure";
 import { ShowInspector } from "@babylonjs/inspector";
 
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
-import { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import { RegisterMmdOutlineRenderer } from "@/Loader/mmdOutlineRenderer.pure";
+import { MmdStandardMaterial, RegisterMmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterPmxLoader } from "@/Loader/pmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
-import { SdefMesh } from "@/Loader/sdefMesh";
+import { RegisterSdefMesh, SdefMesh } from "@/Loader/sdefMesh.pure";
 import { TextureAlphaChecker } from "@/Loader/textureAlphaChecker";
-import { BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { BezierAnimation, RegisterBezierAnimation } from "@/Runtime/Animation/bezierAnimation.pure";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "../baseRuntime";
@@ -33,6 +32,12 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         RegisterCamera();
         RegisterTexture();
+        RegisterPmxLoader();
+        RegisterMmdOutlineRenderer();
+        RegisterMmdStandardMaterial();
+        RegisterSdefMesh();
+        RegisterBezierAnimation();
+        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
 import { AnimationGroupParse } from "@babylonjs/core/Animations/animationGroup.pure";
 import { Bone } from "@babylonjs/core/Bones/bone.pure";
@@ -22,7 +18,10 @@ import havokPhysics from "@babylonjs/havok";
 
 // import { ShowInspector } from "@babylonjs/inspector";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { SdefInjector } from "@/Loader/sdefInjector";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -41,6 +40,9 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         AddAnimationExtensions(Scene, Bone);
         RegisterJoinedPhysicsEngineComponent();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

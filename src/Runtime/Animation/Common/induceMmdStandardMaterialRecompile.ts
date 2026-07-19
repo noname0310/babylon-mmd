@@ -1,7 +1,7 @@
 import type { MorphTarget } from "@babylonjs/core/Morph/morphTarget";
 import type { Nullable } from "@babylonjs/core/types";
 
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import { PmxObject } from "@/Loader/Parser/pmxObject";
 import type { ILogger } from "@/Runtime/ILogger";
 import type { IReadonlyRuntimeMorph, MmdMorphControllerBase } from "@/Runtime/mmdMorphControllerBase";

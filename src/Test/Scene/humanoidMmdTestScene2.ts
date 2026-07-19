@@ -1,7 +1,3 @@
-import "@/Loader/Optimized/bpmxLoader";
-import "@/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "@/Runtime/Animation/mmdRuntimeModelAnimation";
-
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
@@ -23,10 +19,13 @@ import { RegisterGLTFFileLoader } from "@babylonjs/loaders/glTF/glTFFileLoader.p
 import type { MmdAnimation } from "@/Loader/Animation/mmdAnimation";
 import { MmdMaterialRenderMethod } from "@/Loader/materialBuilderBase";
 import { MmdStandardMaterialBuilder } from "@/Loader/mmdStandardMaterialBuilder";
+import { RegisterBpmxLoader } from "@/Loader/Optimized/bpmxLoader.pure";
 import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
+import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera } from "@/Runtime/mmdCamera";
+import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
 import { MmdPlayerControl } from "@/Runtime/Util/mmdPlayerControl";
@@ -47,6 +46,10 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterLoadingScreen();
         RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
+        RegisterBpmxLoader();
+        RegisterMmdRuntimeCameraAnimation();
+        RegisterMmdRuntimeModelAnimation();
+        RegisterMmdCamera();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;

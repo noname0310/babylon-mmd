@@ -4,7 +4,7 @@ import type { IAnimationKey } from "@babylonjs/core/Animations/animationKey";
 import { AnimationKeyInterpolation } from "@babylonjs/core/Animations/animationKey";
 import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector.pure";
 
-import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation";
+import { AnimationKeyInterpolationBezier, BezierAnimation } from "@/Runtime/Animation/bezierAnimation.pure";
 import { BezierInterpolate } from "@/Runtime/Animation/bezierInterpolate";
 import type { IMmdCamera } from "@/Runtime/IMmdCamera";
 

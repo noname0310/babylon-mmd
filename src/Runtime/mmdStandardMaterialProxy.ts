@@ -1,6 +1,6 @@
 import type { Mesh } from "@babylonjs/core/Meshes/mesh.pure";
 
-import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial";
+import type { MmdStandardMaterial } from "@/Loader/mmdStandardMaterial.pure";
 import type { Vec4 } from "@/Loader/Parser/mmdTypes";
 
 import type { IMmdMaterialProxy, IMmdMaterialProxyConstructor } from "./IMmdMaterialProxy";
