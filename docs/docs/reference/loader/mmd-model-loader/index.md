@@ -19,31 +19,36 @@ These are integrated with the **Babylon.js SceneLoader API**.
 
 So before using them, you must first **register `PmxLoader` or `PmdLoader` with the Babylon.js SceneLoader**.
 
-This can be done by importing **"babylon-mmd/esm/Loader/pmxLoader"** or **"babylon-mmd/esm/Loader/pmdLoader"**.
+Call **`RegisterPmxLoader()`** or **`RegisterPmdLoader()`** from the corresponding individual `.pure` module.
 
 ```typescript
 // Registers a `PmxLoader` instance to the global SceneLoader state for loading .pmx files.
-import "babylon-mmd/esm/Loader/pmxLoader"; 
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
 // Registers a `PmdLoader` instance to the global SceneLoader state for loading .pmd files.
-import "babylon-mmd/esm/Loader/pmdLoader"; 
+import { RegisterPmdLoader } from "babylon-mmd/esm/Loader/pmdLoader.pure";
+
+RegisterPmxLoader();
+RegisterPmdLoader();
 ```
 
-This implicitly executes the following code:
+These functions perform the following registration:
 
 ```typescript
-RegisterSceneLoaderPlugin(new PmxLoader()); // When importing "babylon-mmd/esm/Loader/pmxLoader"
-RegisterSceneLoaderPlugin(new PmdLoader()); // When importing "babylon-mmd/esm/Loader/pmdLoader"
+RegisterSceneLoaderPlugin(new PmxLoader()); // When RegisterPmxLoader() is called
+RegisterSceneLoaderPlugin(new PmdLoader()); // When RegisterPmdLoader() is called
 ```
 
 :::info
-If you are using the **UMD package**, these side effects are automatically applied when the script is loaded. Therefore, you don't need to import them separately.
+If you are using the **UMD package**, this registration is performed automatically when the script is loaded. Therefore, you don't need to call these functions separately.
 :::
 
 :::info
-If you import symbols from the root like **`import "babylon-mmd";`**, all side effects are automatically applied. Therefore, you don't need to import them separately.
+Importing from the root, such as **`import "babylon-mmd";`**, uses the convenience side-effect entry point and registers every available component.
 
-However, in this case **Tree Shaking is not applied**, so it's not recommended for production environments.
+The root pure barrel, **`babylon-mmd/esm/pure`**, does not apply automatic registrations and can be tree-shaken correctly. Even so, importing from individual full module paths remains the safest approach because it makes each dependency explicit.
+
+This root pure barrel mirrors the pure-import and pure-barrel design used by Babylon.js, so both packages follow the same import model. For details about the pattern and tree shaking, see [Babylon.js: Tree-Shaking with Pure Imports](https://doc.babylonjs.com/setup/frameworkPackages/es6Support/treeShaking/).
 :::
 
 ## Loading MMD Models

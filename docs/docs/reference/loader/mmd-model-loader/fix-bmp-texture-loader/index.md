@@ -35,9 +35,9 @@ RegisterDxBmpTextureLoader();
 The **`RegisterDxBmpTextureLoader` function registers babylon-mmd's BMP texture loader** to Babylon.js's texture loader. This function **only affects the first call**.
 
 :::info
-This function is a **side-effect that runs when importing the index**. e.g. `import { MmdRuntime } from "babylon-mmd";`
+The root `babylon-mmd` entry point calls this function as part of its convenience side effects. For example, `import { MmdRuntime } from "babylon-mmd";` registers it automatically.
 
-Therefore, if you **import babylon-mmd's index even once**, the `DxBmpTextureLoader` will already be registered.
+When using individual full module paths instead, call `RegisterDxBmpTextureLoader()` explicitly if BMP textures with alpha channels must be supported.
 :::
 
 ![Example of correctly loaded BMP texture](2025-08-14-212535.png)

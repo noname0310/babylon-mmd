@@ -111,11 +111,14 @@ compositeAnimation.addSpan(animationSpan);
 
 ## MMD 컴포지트 런타임 애니메이션
 
-`MmdCompositeAnimation`도 다른 MMD 애니메이션 컨테이너와 마찬가지로 **`MmdCamera`나 `MmdModel`에 바인딩**하여 사용할 수 있습니다. 바인딩을 위해서는 애니메이션 평가 및 바인딩을 담당하는 **런타임을 가져와야** 합니다.
+`MmdCompositeAnimation`도 다른 MMD 애니메이션 컨테이너와 마찬가지로 **`MmdCamera`나 `MmdModel`에 바인딩**하여 사용할 수 있습니다. 바인딩을 위해서는 필요한 등록 함수를 개별 `.pure` 모듈에서 임포트하고 호출해야 합니다.
 
 ```typescript
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
+import { RegisterMmdCompositeRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation.pure";
+import { RegisterMmdCompositeRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation.pure";
+
+RegisterMmdCompositeRuntimeCameraAnimation();
+RegisterMmdCompositeRuntimeModelAnimation();
 ```
 
 그 후 `MmdCamera`나 `MmdModel`의 `createRuntimeAnimation` 메서드를 사용하여 `MmdCompositeAnimation`을 **바인딩**할 수 있습니다.

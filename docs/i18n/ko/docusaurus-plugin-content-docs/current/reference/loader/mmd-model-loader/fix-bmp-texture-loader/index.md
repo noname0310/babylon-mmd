@@ -35,9 +35,9 @@ RegisterDxBmpTextureLoader();
 **`RegisterDxBmpTextureLoader` 함수는 babylon-mmd의 BMP 텍스처 로더**를 Babylon.js의 텍스처 로더에 등록합니다. 이 함수는 **첫 번째 호출에만 영향**을 미칩니다.
 
 :::info
-이 함수는 **인덱스를 임포트할 때 실행되는 사이드 이펙트**입니다. 예: `import { MmdRuntime } from "babylon-mmd";`
+루트 `babylon-mmd` 엔트리 포인트는 편의용 사이드 이펙트의 일부로 이 함수를 호출합니다. 예를 들어 `import { MmdRuntime } from "babylon-mmd";`를 사용하면 자동으로 등록됩니다.
 
-따라서 **babylon-mmd의 인덱스를 한 번이라도 임포트**하면 `DxBmpTextureLoader`가 이미 등록됩니다.
+개별 전체 모듈 경로를 사용하는 경우에는 알파 채널이 있는 BMP 텍스처를 지원하려면 `RegisterDxBmpTextureLoader()`를 명시적으로 호출하세요.
 :::
 
 ![올바르게 로드된 BMP 텍스처 예시](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-212535.png)

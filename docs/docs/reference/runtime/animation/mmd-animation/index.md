@@ -20,15 +20,18 @@ There are several types of runtimes, and you can use the following two runtime i
 
 The reason camera and model animation runtimes are provided separately is for **efficient tree-shaking**.
 
-If you only need MMD model animations, you can import just `MmdRuntimeModelAnimation`, and if you only need camera animations, you can import just `MmdRuntimeCameraAnimation`.
+If you only need MMD model animations, call only `RegisterMmdRuntimeModelAnimation()`. If you only need camera animations, call only `RegisterMmdRuntimeCameraAnimation()`.
 
-Animation runtimes basically operate by **executing side-effects** that add binding methods to the animation container's (`MmdAnimation`) prototype.
+Animation runtimes add binding methods to the animation container's (`MmdAnimation`) prototype through **explicit registration**.
 
-Therefore, to use a runtime, you must **import the runtime** to execute its side-effects.
+Therefore, import the required registration functions from their individual `.pure` modules and call them before creating runtime animations.
 
 ```ts
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 ```
 
 ## Create Runtime Animation
@@ -108,10 +111,12 @@ If you're using `MmdWasmRuntime`, you can also play MMD animations using MMD ani
 
 In this case, **all animation calculations except setting Morph Target weights** are processed in WASM, so you can expect **high performance**.
 
-To use MMD WASM animation, you need to import the `MmdWasmRuntimeModelAnimation` runtime to execute its side-effects.
+To use MMD WASM animation, import the pure module and explicitly register the `MmdWasmRuntimeModelAnimation` runtime.
 
 ```ts
-import "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import { RegisterMmdWasmRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation.pure";
+
+RegisterMmdWasmRuntimeModelAnimation();
 ``` 
 
 :::info

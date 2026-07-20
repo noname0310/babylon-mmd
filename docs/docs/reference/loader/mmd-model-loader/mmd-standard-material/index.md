@@ -672,10 +672,12 @@ As a result, when rendering outlines, **additional draw calls** occur equal to t
 
 ### Usage
 
-When importing **"babylon-mmd/esm/Loader/mmdOutlineRenderer"**, an **`MmdOutlineRenderer`** is added to the `Scene` using prototype extension.
+Call **`RegisterMmdOutlineRenderer()`** from **`babylon-mmd/esm/Loader/mmdOutlineRenderer.pure`** to add an **`MmdOutlineRenderer`** to the `Scene` through prototype extension.
 
 ```typescript
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
+
+RegisterMmdOutlineRenderer();
 ```
 
 After that, if the material has the following **four properties**, outlines will be rendered. (**`MmdStandardMaterial`** has these properties by default.)
@@ -713,7 +715,7 @@ This implements **Lazy Loading** by registering the `MmdOutlineRenderer` to the 
 ### Applied to MmdStandardMaterial
 
 For **`MmdStandardMaterial`**, settings are automatically configured by the **`MmdStandardMaterialBuilder`**,
-and you only need to add `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";` to your code for it to work.
+and you only need to call `RegisterMmdOutlineRenderer()` for it to work.
 
 ![outline](./outline.png)
 *Result with outline applied.*

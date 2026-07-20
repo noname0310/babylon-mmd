@@ -22,17 +22,21 @@ This example shows how to load MMD models, set up camera and lighting, and play 
 
 :::info
 
-To keep the example concise, import statements except for side effects have been omitted.
+To keep the example concise, imports other than the registration functions have been omitted.
 
 :::
 
 ```typescript showLineNumbers
-// side effects that register the loader
-import "babylon-mmd/esm/Loader/pmxLoader";
+// Register the loader
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
-// side effects that register the animation runtime
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+// Register the animation runtimes
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterPmxLoader();
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const scene = new Scene(engine);
@@ -89,54 +93,61 @@ You can try it in Babylon.js Playground. https://www.babylonjs-playground.com/#S
 
 Let's examine the functionality provided by each element.
 
-- [**Line 1-6**](#side-effects-line-1-6): Register side effects required for scene loading.
+- [**Lines 1-10**](#registration-lines-1-10): Register the components required for scene loading.
 
-- [**Line 9-17**](#scene-creation-line-9-17): Create a scene and set up camera and lighting.
+- [**Lines 13-21**](#scene-creation-lines-13-21): Create a scene and set up camera and lighting.
 
-- [**Line 19-34**](#mmd-runtime-creation-line-19-34): Create MMD runtime and set up physics engine. Also configure audio player to synchronize animations with audio.
+- [**Lines 23-38**](#mmd-runtime-creation-lines-23-38): Create MMD runtime and set up physics engine. Also configure audio player to synchronize animations with audio.
 
-- [**Line 36-37**](#mmd-player-control-creation-line-36-37): Create MMD player control.
+- [**Lines 40-41**](#mmd-player-control-creation-lines-40-41): Create MMD player control.
 
-- [**Line 39-44**](#vmd-loader-line-39-44): Use VMD loader to load camera animation and set runtime animation on the camera.
+- [**Lines 43-48**](#vmd-loader-lines-43-48): Use VMD loader to load camera animation and set runtime animation on the camera.
 
-- [**Line 46-53**](#pmx-loader-line-46-53): Use PMX loader to load MMD model and VMD loader to load model animations. Then set up runtime animation.
+- [**Lines 50-57**](#pmx-loader-lines-50-57): Use PMX loader to load MMD model and VMD loader to load model animations. Then set up runtime animation.
 
-## Side Effects (Line 1-6)
+## Registration (Lines 1-10)
 
 ```typescript
-// side effects that register the loader
-import "babylon-mmd/esm/Loader/pmxLoader";
+// Register the loader
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
-// side effects that register the animation runtime
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+// Register the animation runtimes
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterPmxLoader();
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 ```
 
-This code registers babylon-mmd's PMX loader and animation runtime with Babylon.js SceneLoader. This enables loading PMX files and playing camera and model animations.
+This code explicitly registers babylon-mmd's PMX loader and animation runtimes with Babylon.js. This enables loading PMX files and playing camera and model animations.
 
 Not only PMX loader but also other MMD model loaders can be used in the same way. For example, to use the PMD loader, you can add the following:
 
 ```typescript
-import "babylon-mmd/esm/Loader/pmdLoader";
+import { RegisterPmdLoader } from "babylon-mmd/esm/Loader/pmdLoader.pure";
+
+RegisterPmdLoader();
 ```
 
 Or to use the BPMX loader, you can add the following:
 ```typescript
-import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { RegisterBpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader.pure";
+
+RegisterBpmxLoader();
 ```
 
 :::warning
 
-If even one symbol is imported from the "babylon-mmd" path, all possible side effects will be applied.
+Importing from the "babylon-mmd" root uses the side-effect entry point and registers every available component.
 
-This follows Babylon.js conventions.
-Therefore, for tree shaking to work properly, all imports must be written with full paths.
+For tree-shakable ESM builds, import symbols from their individual full module paths. For components that require registration, import the matching `.pure` module and call its `Register…()` function.
 
-To perform tree shaking properly, refer to [this Babylon.js documentation](https://doc.babylonjs.com/setup/frameworkPackages/es6Support#side-effects).
+The `babylon-mmd/esm/pure` root barrel mirrors Babylon.js's pure-import and pure-barrel design. For details about this model and tree shaking, see [Babylon.js: Tree-Shaking with Pure Imports](https://doc.babylonjs.com/setup/frameworkPackages/es6Support/treeShaking/).
 
 :::
 
-## Scene Creation (Line 9-17)
+## Scene Creation (Lines 13-21)
 
 ```typescript
 const scene = new Scene(engine);
@@ -156,7 +167,7 @@ Here, the scene's ambientColor is set to rgb(0.5, 0.5, 0.5). **This is not an ar
 
 The reason for using directionalLight is also to reproduce MMD material's Lighting Model and is not an arbitrary setting.
 
-## MMD Runtime Creation (Line 19-34)
+## MMD Runtime Creation (Lines 23-38)
 
 ```typescript
 const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeSPR());
@@ -236,7 +247,7 @@ Since loading 3D models and animations takes time, you can call `MmdRuntime.play
 
 You can dynamically add models, cameras, and animations to `MmdRuntime` while animations are playing.
 
-## MMD Player Control Creation (Line 36-37)
+## MMD Player Control Creation (Lines 40-41)
 
 ```typescript
 // create a youtube-like player control
@@ -247,7 +258,7 @@ This code creates an MMD player control. This control provides a UI for playing,
 
 This code is provided for quick testing purposes, and it's recommended to implement your own for production use.
 
-## VMD Loader (Line 39-44)
+## VMD Loader (Lines 43-48)
 
 ```typescript
 const vmdLoader = new VmdLoader(scene);
@@ -274,7 +285,7 @@ const cameraRuntimeAnimationHandle = camera.createRuntimeAnimation(cameraAnimati
 
 Bound animations are called `MmdRuntimeAnimation`. These objects are generally not recommended for direct access, so `MmdCamera.createRuntimeAnimation` returns a handle to access them.
 
-## PMX Loader (Line 46-53)
+## PMX Loader (Lines 50-57)
 
 ```typescript
 const assetContainer = await LoadAssetContainerAsync("path/to/your_file.pmx", scene);
@@ -301,7 +312,7 @@ const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 
 This code loads a PMX file using Babylon.js's SceneLoader.
 
-Since we previously registered the PMX loader with `import "babylon-mmd/esm/Loader/pmxLoader";`, the `LoadAssetContainerAsync` function can correctly load PMX files.
+Since we previously called `RegisterPmxLoader()`, the `LoadAssetContainerAsync` function can correctly load PMX files.
 
 We then cast the first mesh from the loaded meshes in assetContainer to `MmdMesh` type for use.
 

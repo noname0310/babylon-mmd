@@ -20,15 +20,18 @@ sidebar_label: MMD 애니메이션
 
 카메라와 모델 애니메이션 런타임이 별도로 제공되는 이유는 **효율적인 트리 셰이킹**을 위해서입니다.
 
-MMD 모델 애니메이션만 필요한 경우 `MmdRuntimeModelAnimation`만 가져올 수 있고, 카메라 애니메이션만 필요한 경우 `MmdRuntimeCameraAnimation`만 가져올 수 있습니다.
+MMD 모델 애니메이션만 필요한 경우 `RegisterMmdRuntimeModelAnimation()`만 호출하면 되고, 카메라 애니메이션만 필요한 경우 `RegisterMmdRuntimeCameraAnimation()`만 호출하면 됩니다.
 
-애니메이션 런타임은 기본적으로 애니메이션 컨테이너(`MmdAnimation`)의 프로토타입에 바인딩 메서드를 추가하는 **사이드 이펙트를 실행**하여 작동합니다.
+애니메이션 런타임은 **명시적 등록**을 통해 애니메이션 컨테이너(`MmdAnimation`)의 프로토타입에 바인딩 메서드를 추가합니다.
 
-따라서 런타임을 사용하려면 해당 사이드 이펙트를 실행하기 위해 **런타임을 가져와야** 합니다.
+따라서 런타임을 사용하려면 필요한 등록 함수를 개별 `.pure` 모듈에서 임포트하고 런타임 애니메이션을 만들기 전에 호출해야 합니다.
 
 ```ts
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 ```
 
 ## 런타임 애니메이션 생성
@@ -108,10 +111,12 @@ model.setRuntimeAnimation(null);
 
 이 경우 **모프 타겟 가중치 설정을 제외한 모든 애니메이션 계산**이 WASM에서 처리되므로 **높은 성능**을 기대할 수 있습니다.
 
-MMD WASM 애니메이션을 사용하려면 `MmdWasmRuntimeModelAnimation` 런타임을 가져와서 해당 사이드 이펙트를 실행해야 합니다.
+MMD WASM 애니메이션을 사용하려면 pure 모듈에서 `MmdWasmRuntimeModelAnimation` 런타임을 가져오고 명시적으로 등록해야 합니다.
 
 ```ts
-import "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import { RegisterMmdWasmRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation.pure";
+
+RegisterMmdWasmRuntimeModelAnimation();
 ``` 
 
 :::info

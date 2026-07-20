@@ -19,31 +19,36 @@ MMD 모델은 **`PmxLoader`** 또는 **`PmdLoader`** 를 사용하여 로드할 
 
 따라서 사용하기 전에 먼저 **`PmxLoader` 또는 `PmdLoader`를 Babylon.js SceneLoader에 등록**해야 합니다.
 
-이는 **"babylon-mmd/esm/Loader/pmxLoader"** 또는 **"babylon-mmd/esm/Loader/pmdLoader"** 를 가져옴으로써 수행할 수 있습니다.
+각 개별 `.pure` 모듈에서 **`RegisterPmxLoader()`** 또는 **`RegisterPmdLoader()`** 를 호출하면 됩니다.
 
 ```typescript
 // .pmx 파일을 로드하기 위해 글로벌 SceneLoader 상태에 `PmxLoader` 인스턴스를 등록합니다.
-import "babylon-mmd/esm/Loader/pmxLoader"; 
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
 // .pmd 파일을 로드하기 위해 글로벌 SceneLoader 상태에 `PmdLoader` 인스턴스를 등록합니다.
-import "babylon-mmd/esm/Loader/pmdLoader"; 
+import { RegisterPmdLoader } from "babylon-mmd/esm/Loader/pmdLoader.pure";
+
+RegisterPmxLoader();
+RegisterPmdLoader();
 ```
 
-이는 암시적으로 다음 코드를 실행합니다:
+이 함수들은 다음 등록을 수행합니다:
 
 ```typescript
-RegisterSceneLoaderPlugin(new PmxLoader()); // "babylon-mmd/esm/Loader/pmxLoader"를 가져올 때
-RegisterSceneLoaderPlugin(new PmdLoader()); // "babylon-mmd/esm/Loader/pmdLoader"를 가져올 때
+RegisterSceneLoaderPlugin(new PmxLoader()); // RegisterPmxLoader()를 호출할 때
+RegisterSceneLoaderPlugin(new PmdLoader()); // RegisterPmdLoader()를 호출할 때
 ```
 
 :::info
-**UMD 패키지**를 사용하는 경우, 스크립트가 로드될 때 이러한 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
+**UMD 패키지**를 사용하는 경우, 스크립트가 로드될 때 이 등록이 자동으로 수행됩니다. 따라서 이 함수를 별도로 호출할 필요가 없습니다.
 :::
 
 :::info
-**`import "babylon-mmd";`** 와 같이 루트에서 심볼을 가져오면 모든 사이드 이펙트가 자동으로 적용됩니다. 따라서 별도로 가져올 필요가 없습니다.
+**`import "babylon-mmd";`** 와 같이 루트에서 임포트하면 편의용 사이드 이펙트 엔트리 포인트가 사용되어 사용 가능한 모든 구성 요소가 등록됩니다.
 
-그러나 이 경우 **트리 셰이킹이 적용되지 않으므로** 프로덕션 환경에서는 권장하지 않습니다.
+루트 pure barrel인 **`babylon-mmd/esm/pure`** 는 자동 등록을 수행하지 않으며 트리 셰이킹도 정상적으로 동작합니다. 그래도 각 의존성을 명확히 드러내므로 개별 전체 모듈 경로를 사용하는 방식이 가장 안전합니다.
+
+이 루트 pure barrel은 Babylon.js에서 사용하는 pure import 및 pure barrel 설계에 맞춘 것으로, 두 패키지가 같은 임포트 모델을 따르도록 합니다. 이 패턴과 트리 셰이킹에 관한 자세한 내용은 [Babylon.js의 Tree-Shaking with Pure Imports 문서](https://doc.babylonjs.com/setup/frameworkPackages/es6Support/treeShaking/)를 참고하세요.
 :::
 
 ## MMD 모델 로드하기

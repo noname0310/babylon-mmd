@@ -13,13 +13,15 @@ To load **BPMX** files, we use the **`BpmxLoader`**. This loader works in almost
 
 ## Registering with SceneLoader
 
-First, we need to register the **`BpmxLoader`** with the **Babylon.js SceneLoader**. This is done by importing it for its side effect.
+First, register the **`BpmxLoader`** with the **Babylon.js SceneLoader** by calling **`RegisterBpmxLoader()`** from its individual `.pure` module.
 
 ```typescript
-import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { RegisterBpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader.pure";
+
+RegisterBpmxLoader();
 ```
 
-This import statement implicitly performs the following side effect:
+This call performs the following registration:
 
 ```typescript
 RegisterSceneLoaderPlugin(new BpmxLoader());

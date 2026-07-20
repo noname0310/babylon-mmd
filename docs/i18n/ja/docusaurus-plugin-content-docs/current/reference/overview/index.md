@@ -22,17 +22,21 @@ babylon-mmdはTypeScriptで書かれたライブラリで、Babylon.jsにMikuMik
 
 :::info
 
-例を簡潔にするため、サイドエフェクト以外のインポート文は省略されています。
+例を簡潔にするため、登録関数以外のインポート文は省略されています。
 
 :::
 
 ```typescript showLineNumbers
-// ローダーを登録するサイドエフェクト
-import "babylon-mmd/esm/Loader/pmxLoader";
+// ローダーを登録
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
-// アニメーションランタイムを登録するサイドエフェクト
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+// アニメーションランタイムを登録
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterPmxLoader();
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 
 async function build(canvas: HTMLCanvasElement, engine: Engine): Scene {
     const scene = new Scene(engine);
@@ -89,54 +93,61 @@ Babylon.js Playgroundで試すことができます。https://www.babylonjs-play
 
 それぞれの要素が提供する機能を見ていきましょう。
 
-- [**1-6行目**](#サイドエフェクト-1-6行目): シーンのロードに必要なサイドエフェクトを登録します。
+- [**1-10行目**](#登録-1-10行目): シーンの読み込みに必要なコンポーネントを登録します。
 
-- [**9-17行目**](#シーン作成-9-17行目): シーンを作成し、カメラとライティングをセットアップします。
+- [**13-21行目**](#シーン作成-13-21行目): シーンを作成し、カメラとライティングをセットアップします。
 
-- [**19-34行目**](#mmdランタイム作成-19-34行目): MMDランタイムを作成し、物理エンジンをセットアップします。また、オーディオとアニメーションを同期させるためのオーディオプレーヤーも設定します。
+- [**23-38行目**](#mmdランタイム作成-23-38行目): MMDランタイムを作成し、物理エンジンをセットアップします。また、オーディオとアニメーションを同期させるためのオーディオプレーヤーも設定します。
 
-- [**36-37行目**](#mmdプレイヤーコントロールの作成-36-37行目): MMDプレイヤーコントロールを作成します。
+- [**40-41行目**](#mmdプレイヤーコントロールの作成-40-41行目): MMDプレイヤーコントロールを作成します。
 
-- [**39-44行目**](#vmdローダー-39-44行目): VMDローダーを使用してカメラアニメーションをロードし、カメラにランタイムアニメーションを設定します。
+- [**43-48行目**](#vmdローダー-43-48行目): VMDローダーを使用してカメラアニメーションをロードし、カメラにランタイムアニメーションを設定します。
 
-- [**46-53行目**](#pmxローダー-46-53行目): PMXローダーを使用してMMDモデルをロードし、VMDローダーでモデルアニメーションをロードします。そしてランタイムアニメーションをセットアップします。
+- [**50-57行目**](#pmxローダー-50-57行目): PMXローダーを使用してMMDモデルをロードし、VMDローダーでモデルアニメーションをロードします。そしてランタイムアニメーションをセットアップします。
 
-## サイドエフェクト (1-6行目)
+## 登録 (1-10行目)
 
 ```typescript
-// ローダーを登録するサイドエフェクト
-import "babylon-mmd/esm/Loader/pmxLoader";
+// ローダーを登録
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
-// アニメーションランタイムを登録するサイドエフェクト
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+// アニメーションランタイムを登録
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterPmxLoader();
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 ```
 
-このコードはbabylon-mmdのPMXローダーとアニメーションランタイムをBabylon.jsのシーンローダーに登録します。これによりPMXファイルのロードとカメラやモデルのアニメーション再生が可能になります。
+このコードはbabylon-mmdのPMXローダーとアニメーションランタイムをBabylon.jsに明示的に登録します。これによりPMXファイルのロードとカメラやモデルのアニメーション再生が可能になります。
 
 PMXローダーだけでなく、他のMMDモデルローダーも同じ方法で使用できます。例えば、PMDローダーを使用するには、以下のように追加します：
 
 ```typescript
-import "babylon-mmd/esm/Loader/pmdLoader";
+import { RegisterPmdLoader } from "babylon-mmd/esm/Loader/pmdLoader.pure";
+
+RegisterPmdLoader();
 ```
 
 あるいは、BPMXローダーを使用するには、以下のように追加します：
 ```typescript
-import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { RegisterBpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader.pure";
+
+RegisterBpmxLoader();
 ```
 
 :::warning
 
-"babylon-mmd"パスから1つのシンボルがインポートされるだけでも、可能なすべてのサイドエフェクトが適用されます。
+"babylon-mmd" ルートからインポートすると、サイドエフェクトのエントリーポイントが使用され、利用可能なすべてのコンポーネントが登録されます。
 
-これはBabylon.jsの規約に従っています。
-したがって、ツリーシェイキングが正しく機能するためには、すべてのインポートが完全なパスで記述される必要があります。
+ツリーシェイキング可能な ESM ビルドでは、各シンボルを個別の完全なモジュールパスからインポートしてください。登録が必要なコンポーネントでは、対応する `.pure` モジュールから `Register…()` 関数をインポートして呼び出します。
 
-ツリーシェイキングを適切に行うには、[このBabylon.jsドキュメント](https://doc.babylonjs.com/setup/frameworkPackages/es6Support#side-effects)を参照してください。
+`babylon-mmd/esm/pure` のルート barrel は Babylon.js の pure import および pure barrel 設計に合わせたものです。このモデルとツリーシェイキングの詳細は、[Babylon.js の Tree-Shaking with Pure Imports ドキュメント](https://doc.babylonjs.com/setup/frameworkPackages/es6Support/treeShaking/)を参照してください。
 
 :::
 
-## シーン作成 (9-17行目)
+## シーン作成 (13-21行目)
 
 ```typescript
 const scene = new Scene(engine);
@@ -156,7 +167,7 @@ CreateGround("ground1", { width: 60, height: 60, subdivisions: 2, updatable: fal
 
 ディレクショナルライトを使用する理由も、MMDマテリアルのライティングモデルを再現するためであり、任意の設定ではありません。
 
-## MMDランタイム作成 (19-34行目)
+## MMDランタイム作成 (23-38行目)
 
 ```typescript
 const mmdWasmInstance = await GetMmdWasmInstance(new MmdWasmInstanceTypeSPR());
@@ -236,7 +247,7 @@ mmdRuntime.playAnimation();
 
 アニメーション再生中にモデル、カメラ、アニメーションを`MmdRuntime`に動的に追加することができます。
 
-## MMDプレイヤーコントロールの作成 (36-37行目)
+## MMDプレイヤーコントロールの作成 (40-41行目)
 
 ```typescript
 // YouTubeのようなプレイヤーコントロールを作成
@@ -247,7 +258,7 @@ new MmdPlayerControl(scene, mmdRuntime, audioPlayer);
 
 このコードはクイックテスト目的で提供されており、本番環境では独自のものを実装することをお勧めします。
 
-## VMDローダー (39-44行目)
+## VMDローダー (43-48行目)
 
 ```typescript
 const vmdLoader = new VmdLoader(scene);
@@ -274,7 +285,7 @@ const cameraRuntimeAnimationHandle = camera.createRuntimeAnimation(cameraAnimati
 
 バインドされたアニメーションは`MmdRuntimeAnimation`と呼ばれます。これらのオブジェクトは一般的に直接アクセスすることは推奨されないため、`MmdCamera.createRuntimeAnimation`はそれらにアクセスするためのハンドルを返します。
 
-## PMXローダー (46-53行目)
+## PMXローダー (50-57行目)
 
 ```typescript
 const assetContainer = await LoadAssetContainerAsync("path/to/your_file.pmx", scene);
@@ -301,7 +312,7 @@ const mmdMesh = assetContainer.meshes[0] as MmdMesh;
 
 このコードはBabylon.jsのシーンローダーを使用してPMXファイルをロードします。
 
-前に`import "babylon-mmd/esm/Loader/pmxLoader";`でPMXローダーを登録したため、`LoadAssetContainerAsync`関数は正しくPMXファイルをロードできます。
+前に `RegisterPmxLoader()` を呼び出したため、`LoadAssetContainerAsync` 関数は正しく PMX ファイルをロードできます。
 
 次に、使用するためにassetContainerのロードされたメッシュの最初のものを`MmdMesh`タイプにキャストします。
 

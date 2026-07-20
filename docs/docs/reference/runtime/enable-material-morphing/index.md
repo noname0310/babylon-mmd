@@ -9,7 +9,7 @@ MMD models support **material morphing**, a feature that allows controlling mate
 
 This feature is typically used to turn parts of the MMD model on and off through animation.
 
-This feature is **disabled by default** in babylon-mmd, but can be activated by passing a material proxy implementation when creating an `MmdModel` object.
+When using individual full module paths, this feature is **disabled by default**, but can be activated by passing a material proxy implementation when creating an `MmdModel` object.
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
@@ -18,9 +18,17 @@ const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
 ```
 
 :::info
-If you import the "babylon-mmd" package root, material morphing will be **automatically enabled** through side-effects.
+The `babylon-mmd` package root automatically calls `RegisterMmdRuntimeSharedDefaultMaterialProxy()`, which makes `MmdStandardMaterialProxy` the global default and enables material morphing for compatible models.
 
-While this is a convenience feature for ease of use, it's **recommended to explicitly enable** it by passing a material proxy as shown above.
+When using individual full module paths and you want the same global default, call it explicitly:
+
+```typescript
+import { RegisterMmdRuntimeSharedDefaultMaterialProxy } from "babylon-mmd/esm/Runtime/mmdRuntimeShared.pure";
+
+RegisterMmdRuntimeSharedDefaultMaterialProxy();
+```
+
+For explicit per-model behavior, it is still **recommended to pass a material proxy** as shown above.
 :::
 
 ## Material Proxy

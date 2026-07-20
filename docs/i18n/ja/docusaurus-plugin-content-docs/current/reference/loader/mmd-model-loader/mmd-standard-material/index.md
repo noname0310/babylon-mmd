@@ -672,10 +672,12 @@ babylon-mmdは、MMDのレンダリング方式を実装するための**`MmdOut
 
 ### 使用方法
 
-**"babylon-mmd/esm/Loader/mmdOutlineRenderer"**をインポートすると、プロトタイプ拡張を使用して**`MmdOutlineRenderer`** が`Scene`に追加されます。
+**`babylon-mmd/esm/Loader/mmdOutlineRenderer.pure`** から **`RegisterMmdOutlineRenderer()`** を呼び出すと、プロトタイプ拡張によって **`MmdOutlineRenderer`** が `Scene` に追加されます。
 
 ```typescript
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
+
+RegisterMmdOutlineRenderer();
 ```
 
 その後、マテリアルに以下の**4つのプロパティ**がある場合、アウトラインがレンダリングされます。（**`MmdStandardMaterial`** はデフォルトでこれらのプロパティを持っています）
@@ -713,7 +715,7 @@ class OutlinePBRMaterial extends PBRMaterial {
 ### MmdStandardMaterialへの適用
 
 **`MmdStandardMaterial`** の場合、**`MmdStandardMaterialBuilder`** によって設定が自動的に構成され、
-動作させるためにはコードに`import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`を追加するだけで済みます。
+動作させるには `RegisterMmdOutlineRenderer()` を呼び出すだけで済みます。
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)
 *アウトラインが適用された結果。*

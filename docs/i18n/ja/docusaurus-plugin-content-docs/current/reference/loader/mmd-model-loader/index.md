@@ -19,31 +19,36 @@ MMD モデルは **`PmxLoader`** または **`PmdLoader`** を使用して読み
 
 したがって、使用する前に、まず **`PmxLoader` または `PmdLoader` を Babylon.js SceneLoader に登録**する必要があります。
 
-これは、**"babylon-mmd/esm/Loader/pmxLoader"** または **"babylon-mmd/esm/Loader/pmdLoader"** をインポートすることで実行できます。
+対応する個別の `.pure` モジュールから **`RegisterPmxLoader()`** または **`RegisterPmdLoader()`** を呼び出します。
 
 ```typescript
 // .pmx ファイルを読み込むために、`PmxLoader` インスタンスをグローバル SceneLoader 状態に登録します。
-import "babylon-mmd/esm/Loader/pmxLoader"; 
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
 
 // .pmd ファイルを読み込むために、`PmdLoader` インスタンスをグローバル SceneLoader 状態に登録します。
-import "babylon-mmd/esm/Loader/pmdLoader"; 
+import { RegisterPmdLoader } from "babylon-mmd/esm/Loader/pmdLoader.pure";
+
+RegisterPmxLoader();
+RegisterPmdLoader();
 ```
 
-これは暗黙的に以下のコードを実行します：
+これらの関数は次の登録を行います：
 
 ```typescript
-RegisterSceneLoaderPlugin(new PmxLoader()); // "babylon-mmd/esm/Loader/pmxLoader" をインポートする場合
-RegisterSceneLoaderPlugin(new PmdLoader()); // "babylon-mmd/esm/Loader/pmdLoader" をインポートする場合
+RegisterSceneLoaderPlugin(new PmxLoader()); // RegisterPmxLoader() を呼び出す場合
+RegisterSceneLoaderPlugin(new PmdLoader()); // RegisterPmdLoader() を呼び出す場合
 ```
 
 :::info
-**UMD パッケージ**を使用している場合、これらのサイドエフェクトはスクリプトがロードされるときに自動的に適用されます。したがって、それらを個別にインポートする必要はありません。
+**UMD パッケージ**を使用している場合、スクリプトがロードされるときにこの登録が自動的に行われます。したがって、これらの関数を個別に呼び出す必要はありません。
 :::
 
 :::info
-**`import "babylon-mmd";`** のようにルートからシンボルをインポートすると、すべてのサイドエフェクトが自動的に適用されます。したがって、それらを個別にインポートする必要はありません。
+**`import "babylon-mmd";`** のようにルートからインポートすると、利便性のためのサイドエフェクトエントリーポイントが使用され、利用可能なすべてのコンポーネントが登録されます。
 
-ただし、この場合、**ツリーシェイキングが適用されない**ため、プロダクション環境では推奨されません。
+ルート pure barrel である **`babylon-mmd/esm/pure`** は自動登録を行わず、ツリーシェイキングも正しく機能します。それでも、各依存関係を明確にできるため、個別の完全なモジュールパスからインポートする方法が最も安全です。
+
+このルート pure barrel は Babylon.js の pure import および pure barrel 設計に合わせたもので、両パッケージが同じインポートモデルに従えるようにしています。このパターンとツリーシェイキングの詳細は、[Babylon.js の Tree-Shaking with Pure Imports ドキュメント](https://doc.babylonjs.com/setup/frameworkPackages/es6Support/treeShaking/)を参照してください。
 :::
 
 ## MMD モデルの読み込み

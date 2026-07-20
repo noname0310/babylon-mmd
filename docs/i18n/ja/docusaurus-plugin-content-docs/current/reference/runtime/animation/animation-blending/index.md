@@ -111,11 +111,14 @@ compositeAnimation.addSpan(animationSpan);
 
 ## MMD Composite Runtime Animation
 
-`MmdCompositeAnimation`も、他のMMDアニメーションコンテナと同様に`MmdCamera`や`MmdModel`に**バインディング**して使用できます。バインディングのために、アニメーション評価とバインディングを担当する**ランタイムをインポート**する必要があります。
+`MmdCompositeAnimation`も、他のMMDアニメーションコンテナと同様に`MmdCamera`や`MmdModel`に**バインディング**して使用できます。バインディングには、必要な登録関数を個別の `.pure` モジュールからインポートして呼び出します。
 
 ```typescript
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
+import { RegisterMmdCompositeRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation.pure";
+import { RegisterMmdCompositeRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation.pure";
+
+RegisterMmdCompositeRuntimeCameraAnimation();
+RegisterMmdCompositeRuntimeModelAnimation();
 ```
 
 その後、`MmdCamera`や`MmdModel`の`createRuntimeAnimation`メソッドを使用して`MmdCompositeAnimation`を**バインディング**できます。

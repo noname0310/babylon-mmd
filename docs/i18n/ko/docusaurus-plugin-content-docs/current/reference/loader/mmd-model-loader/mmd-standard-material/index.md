@@ -672,10 +672,12 @@ babylon-mmd는 MMD의 렌더링 방식을 구현하기 위해 **`MmdOutlineRende
 
 ### 사용법
 
-**"babylon-mmd/esm/Loader/mmdOutlineRenderer"** 를 임포트하면, 프로토타입 확장을 사용하여 **`MmdOutlineRenderer`** 가 `Scene`에 추가됩니다.
+**`babylon-mmd/esm/Loader/mmdOutlineRenderer.pure`** 에서 **`RegisterMmdOutlineRenderer()`** 를 호출하면 프로토타입 확장을 통해 **`MmdOutlineRenderer`** 가 `Scene`에 추가됩니다.
 
 ```typescript
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
+
+RegisterMmdOutlineRenderer();
 ```
 
 그 후, 머티리얼이 다음 **네 가지 속성**을 가지고 있다면 외곽선이 렌더링됩니다. (**`MmdStandardMaterial`** 은 기본적으로 이러한 속성을 가집니다.)
@@ -713,7 +715,7 @@ class OutlinePBRMaterial extends PBRMaterial {
 ### MmdStandardMaterial에 적용
 
 **`MmdStandardMaterial`** 의 경우, 설정은 **`MmdStandardMaterialBuilder`** 에 의해 자동으로 구성되며,
-작동하기 위해서는 코드에 `import "babylon-mmd/esm/Loader/mmdOutlineRenderer";`만 추가하면 됩니다.
+작동하려면 `RegisterMmdOutlineRenderer()`만 호출하면 됩니다.
 
 ![outline](@site/docs/reference/loader/mmd-model-loader/mmd-standard-material/outline.png)
 *외곽선이 적용된 결과.*

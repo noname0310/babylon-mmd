@@ -18,24 +18,27 @@ This example uses the [**YYB Hatsune Miku 10th Anniversary**](https://www.devian
 ![vscode-file-structure](vscode-file-structure.png) \
 *Model folder structure example*
 
-## Import Required Side-Effects
+## Register Required Components
 
-First, import the **side-effects** needed to load the model.
+First, register the components needed to load the model.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
 // highlight-start
-import "babylon-mmd/esm/Loader/pmxLoader";
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
+
+RegisterPmxLoader();
+RegisterMmdOutlineRenderer();
 // highlight-end
 //...
 ```
 
 **babylon-mmd** extends **Babylon.js's SceneLoader** to enable loading **PMX/PMD models**.
 
-To load **PMD models**, import **`babylon-mmd/esm/Loader/pmdLoader`** and use the same method as loading PMX models described below.
+To load **PMD models**, call **`RegisterPmdLoader()`** from **`babylon-mmd/esm/Loader/pmdLoader.pure`** and use the same method as loading PMX models described below.
 
-**`mmdOutlineRenderer`** provides functionality to **draw outlines** for MMD models. If **outline rendering is not needed**, you don't need to import it.
+**`mmdOutlineRenderer`** provides functionality to **draw outlines** for MMD models. If **outline rendering is not needed**, you don't need to call **`RegisterMmdOutlineRenderer()`**.
 
 ## Load PMX Model
 
@@ -120,8 +123,8 @@ Now when you check the browser, you can see that the **model has been loaded**.
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 // highlight-start
-import "babylon-mmd/esm/Loader/pmxLoader";
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
 // highlight-end
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -135,11 +138,14 @@ import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { Scene } from "@babylonjs/core/scene";
 // highlight-next-line
 import { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
-import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera.pure";
 // highlight-next-line
 import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "./baseRuntime";
+
+RegisterPmxLoader();
+RegisterMmdOutlineRenderer();
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

@@ -20,15 +20,18 @@ sidebar_label: MMD アニメーション
 
 カメラとモデル アニメーション ランタイムが別々に提供される理由は、**効率的なツリーシェイキング** のためです。
 
-MMD モデル アニメーションのみが必要な場合は `MmdRuntimeModelAnimation` のみをインポートでき、カメラ アニメーションのみが必要な場合は `MmdRuntimeCameraAnimation` のみをインポートできます。
+MMD モデル アニメーションのみが必要な場合は `RegisterMmdRuntimeModelAnimation()` のみを呼び出し、カメラ アニメーションのみが必要な場合は `RegisterMmdRuntimeCameraAnimation()` のみを呼び出します。
 
-アニメーション ランタイムは基本的に、アニメーション コンテナー（`MmdAnimation`）のプロトタイプにバインド メソッドを追加する **サイドエフェクトを実行** することで動作します。
+アニメーション ランタイムは、**明示的な登録**によってアニメーション コンテナー（`MmdAnimation`）のプロトタイプにバインド メソッドを追加します。
 
-したがって、ランタイムを使用するには、そのサイドエフェクトを実行するために **ランタイムをインポート** する必要があります。
+したがって、ランタイムを使用するには、必要な登録関数を個別の `.pure` モジュールからインポートし、ランタイム アニメーションを作成する前に呼び出す必要があります。
 
 ```ts
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 ```
 
 ## ランタイム アニメーションの作成
@@ -108,10 +111,12 @@ model.setRuntimeAnimation(null);
 
 この場合、**モーフ ターゲット ウェイトの設定以外のすべてのアニメーション計算** が WASM で処理されるため、**高いパフォーマンス** を期待できます。
 
-MMD WASM アニメーションを使用するには、`MmdWasmRuntimeModelAnimation` ランタイムをインポートしてそのサイドエフェクトを実行する必要があります。
+MMD WASM アニメーションを使用するには、pure モジュールから `MmdWasmRuntimeModelAnimation` ランタイムをインポートし、明示的に登録する必要があります。
 
 ```ts
-import "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation";
+import { RegisterMmdWasmRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Optimized/Animation/mmdWasmRuntimeModelAnimation.pure";
+
+RegisterMmdWasmRuntimeModelAnimation();
 ``` 
 
 :::info

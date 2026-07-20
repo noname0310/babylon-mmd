@@ -35,9 +35,9 @@ RegisterDxBmpTextureLoader();
 **`RegisterDxBmpTextureLoader`関数は、babylon-mmdのBMPテクスチャローダー**をBabylon.jsのテクスチャローダーに登録します。この関数は**最初の呼び出し時にのみ有効**です。
 
 :::info
-この関数は、**インデックスをインポートすると実行されるサイドエフェクト**です。例：`import { MmdRuntime } from "babylon-mmd";`
+ルートの `babylon-mmd` エントリーポイントは、利便性のためのサイドエフェクトの一部としてこの関数を呼び出します。たとえば `import { MmdRuntime } from "babylon-mmd";` を使用すると自動的に登録されます。
 
-したがって、**babylon-mmdのインデックスを一度でもインポートする**と、`DxBmpTextureLoader`はすでに登録されています。
+個別の完全なモジュールパスを使用する場合、アルファチャンネルを持つ BMP テクスチャをサポートするには `RegisterDxBmpTextureLoader()` を明示的に呼び出してください。
 :::
 
 ![正しく読み込まれたBMPテクスチャの例](@site/docs/reference/loader/mmd-model-loader/fix-bmp-texture-loader/2025-08-14-212535.png)

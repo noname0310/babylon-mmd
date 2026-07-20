@@ -148,15 +148,17 @@ export class SceneBuilder implements ISceneBuilder {
 
 **`createRuntimeAnimation`** メソッドを使用して、**`MmdAnimation`** をカメラやモデルに**バインド**できます。
 
-### 必要なサイドエフェクトのインポート
+### 必要なランタイムコンポーネントの登録
 
-アニメーションを再生するために必要な**サイドエフェクト**をインポートします。
+アニメーションを再生するために必要な登録関数を呼び出します。
 
 ```typescript title="src/sceneBuilder.ts"
 //...
 // highlight-start
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 // highlight-end
 //...
 ```
@@ -165,7 +167,7 @@ import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 
 **`mmdRuntimeCameraAnimation`** と **`mmdRuntimeModelAnimation`** は、**最もよく使われる**カメラとモデルのアニメーション実装です。
 
-これらの**サイドエフェクト**をインポートしないと、**`createRuntimeAnimation`** メソッドが**ランタイムエラー**を引き起こします。
+これらの登録関数を呼び出さないと、**`createRuntimeAnimation`** メソッドが**ランタイムエラー**を引き起こします。
 
 ## 結果
 
@@ -177,11 +179,11 @@ import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
 <summary>完全なコード</summary>
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-import "babylon-mmd/esm/Loader/pmxLoader";
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
 // highlight-start
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation";
+import { RegisterMmdRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
+import { RegisterMmdRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 // highlight-end
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -195,12 +197,17 @@ import { Scene } from "@babylonjs/core/scene";
 import { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
 // highlight-next-line
 import { VmdLoader } from "babylon-mmd/esm/Loader/vmdLoader";
-import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 // highlight-next-line
 import { MmdRuntime } from "babylon-mmd/esm/Runtime/mmdRuntime";
 
 import type { ISceneBuilder } from "./baseRuntime";
+
+RegisterPmxLoader();
+RegisterMmdOutlineRenderer();
+RegisterMmdRuntimeCameraAnimation();
+RegisterMmdRuntimeModelAnimation();
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

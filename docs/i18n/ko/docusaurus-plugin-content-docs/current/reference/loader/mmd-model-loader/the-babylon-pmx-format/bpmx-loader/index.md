@@ -13,13 +13,15 @@ sidebar_label: BPMX 로더
 
 ## SceneLoader에 등록하기
 
-먼저, **`BpmxLoader`** 를 **Babylon.js SceneLoader**에 등록해야 합니다. 이는 사이드 이펙트를 위한 임포트를 통해 수행됩니다.
+먼저 개별 `.pure` 모듈에서 **`RegisterBpmxLoader()`** 를 호출하여 **`BpmxLoader`** 를 **Babylon.js SceneLoader**에 등록해야 합니다.
 
 ```typescript
-import "babylon-mmd/esm/Loader/Optimized/bpmxLoader";
+import { RegisterBpmxLoader } from "babylon-mmd/esm/Loader/Optimized/bpmxLoader.pure";
+
+RegisterBpmxLoader();
 ```
 
-이 임포트 구문은 암묵적으로 다음과 같은 사이드 이펙트를 수행합니다:
+이 호출은 다음 등록을 수행합니다:
 
 ```typescript
 RegisterSceneLoaderPlugin(new BpmxLoader());

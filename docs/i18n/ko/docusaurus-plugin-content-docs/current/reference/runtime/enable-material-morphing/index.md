@@ -11,7 +11,7 @@ MMD 모델은 **머티리얼 모핑**을 지원하며, 이는 애니메이션을
 
 이 기능은 일반적으로 애니메이션을 통해 MMD 모델의 특정 부분을 켜거나 끄는 데 사용됩니다.
 
-이 기능은 babylon-mmd에서 **기본적으로 비활성화**되어 있지만, `MmdModel` 객체를 생성할 때 머티리얼 프록시 구현을 전달하여 활성화할 수 있습니다.
+개별 전체 모듈 경로를 사용할 때 이 기능은 **기본적으로 비활성화**되어 있지만, `MmdModel` 객체를 생성할 때 머티리얼 프록시 구현을 전달하여 활성화할 수 있습니다.
 
 ```typescript
 const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
@@ -20,9 +20,17 @@ const mmdModel = mmdRuntime.createMmdModel(mmdMesh, {
 ```
 
 :::info
-"babylon-mmd" 패키지 루트를 가져오면 사이드 이펙트를 통해 머티리얼 모핑이 **자동으로 활성화**됩니다.
+`babylon-mmd` 패키지 루트는 `RegisterMmdRuntimeSharedDefaultMaterialProxy()`를 자동으로 호출합니다. 이 함수는 `MmdStandardMaterialProxy`를 전역 기본값으로 설정하여 호환되는 모델의 머티리얼 모핑을 활성화합니다.
 
-이는 사용 편의성을 위한 기능이지만, 위와 같이 머티리얼 프록시를 전달하여 **명시적으로 활성화**하는 것이 권장됩니다.
+개별 전체 모듈 경로를 사용하면서 같은 전역 기본값을 사용하려면 다음과 같이 명시적으로 호출합니다:
+
+```typescript
+import { RegisterMmdRuntimeSharedDefaultMaterialProxy } from "babylon-mmd/esm/Runtime/mmdRuntimeShared.pure";
+
+RegisterMmdRuntimeSharedDefaultMaterialProxy();
+```
+
+모델별 동작을 명확히 하려면 위와 같이 머티리얼 프록시를 전달하는 방식을 계속 **권장합니다**.
 :::
 
 ## 머티리얼 프록시

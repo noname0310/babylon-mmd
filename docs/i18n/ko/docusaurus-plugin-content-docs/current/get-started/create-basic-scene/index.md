@@ -21,7 +21,7 @@ sidebar_label: 기본 씬 만들기
 ```typescript title="src/sceneBuilder.ts"
 //...
 // highlight-next-line
-import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera.pure";
 
 import type { ISceneBuilder } from "./baseRuntime";
 
@@ -168,7 +168,7 @@ import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 // highlight-end
 import { Scene } from "@babylonjs/core/scene";
 // highlight-next-line
-import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera.pure";
 
 import type { ISceneBuilder } from "./baseRuntime";
 

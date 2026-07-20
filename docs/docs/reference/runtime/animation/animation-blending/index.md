@@ -111,11 +111,14 @@ compositeAnimation.addSpan(animationSpan);
 
 ## MMD Composite Runtime Animation
 
-`MmdCompositeAnimation` can also be used by **binding to** `MmdCamera` or `MmdModel` like other MMD animation containers. For binding, you need to **import the runtime** responsible for Animation Evaluation and Binding.
+`MmdCompositeAnimation` can also be used by **binding to** `MmdCamera` or `MmdModel` like other MMD animation containers. For binding, import the required registration functions from their individual `.pure` modules and call them.
 
 ```typescript
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation";
-import "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation";
+import { RegisterMmdCompositeRuntimeCameraAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeCameraAnimation.pure";
+import { RegisterMmdCompositeRuntimeModelAnimation } from "babylon-mmd/esm/Runtime/Animation/mmdCompositeRuntimeModelAnimation.pure";
+
+RegisterMmdCompositeRuntimeCameraAnimation();
+RegisterMmdCompositeRuntimeModelAnimation();
 ```
 
 After that, you can **bind** `MmdCompositeAnimation` using the `createRuntimeAnimation` method of `MmdCamera` or `MmdModel`.

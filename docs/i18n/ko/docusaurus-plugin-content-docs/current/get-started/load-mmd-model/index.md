@@ -18,24 +18,26 @@ sidebar_label: MMD 모델 로드
 ![vscode-file-structure](@site/docs/get-started/load-mmd-model/vscode-file-structure.png) \
 *모델 폴더 구조 예시*
 
-## 사이드 이펙트 임포트
+## 필요한 구성 요소 등록
 
-먼저 모델을 로드하는 데 필요한 **사이드 이펙트**를 임포트합니다.
+먼저 모델을 로드하는 데 필요한 구성 요소를 등록합니다.
 
 ```typescript title="src/sceneBuilder.ts"
 //...
 // highlight-start
-import "babylon-mmd/esm/Loader/pmxLoader";
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
+RegisterPmxLoader();
+RegisterMmdOutlineRenderer();
 // highlight-end
 //...
 ```
 
 **babylon-mmd**는 **Babylon.js의 SceneLoader**를 확장하여 **PMX/PMD 모델**을 로드할 수 있게 합니다.
 
-**PMD 모델**을 로드하려면 **`babylon-mmd/esm/Loader/pmdLoader`**를 임포트하고 아래에서 설명하는 PMX 모델 로드 방식과 동일하게 사용하면 됩니다.
+**PMD 모델**을 로드하려면 **`babylon-mmd/esm/Loader/pmdLoader.pure`**에서 **`RegisterPmdLoader()`**를 호출하고 아래에서 설명하는 PMX 모델 로드 방식과 동일하게 사용하면 됩니다.
 
-**`mmdOutlineRenderer`**는 MMD 모델의 **아웃라인을 그리는 기능**을 제공합니다. **아웃라인 렌더링이 필요 없다면** 임포트하지 않아도 됩니다.
+**`mmdOutlineRenderer`**는 MMD 모델의 **아웃라인을 그리는 기능**을 제공합니다. **아웃라인 렌더링이 필요 없다면** **`RegisterMmdOutlineRenderer()`**를 호출하지 않아도 됩니다.
 
 ## PMX 모델 로드
 
@@ -119,8 +121,8 @@ export class SceneBuilder implements ISceneBuilder {
 ```typescript title="src/sceneBuilder.ts"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 // highlight-start
-import "babylon-mmd/esm/Loader/pmxLoader";
-import "babylon-mmd/esm/Loader/mmdOutlineRenderer";
+import { RegisterPmxLoader } from "babylon-mmd/esm/Loader/pmxLoader.pure";
+import { RegisterMmdOutlineRenderer } from "babylon-mmd/esm/Loader/mmdOutlineRenderer.pure";
 // highlight-end
 
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
@@ -134,11 +136,14 @@ import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { Scene } from "@babylonjs/core/scene";
 // highlight-next-line
 import { MmdStandardMaterialBuilder } from "babylon-mmd/esm/Loader/mmdStandardMaterialBuilder";
-import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera";
+import { MmdCamera } from "babylon-mmd/esm/Runtime/mmdCamera.pure";
 // highlight-next-line
 import type { MmdMesh } from "babylon-mmd/esm/Runtime/mmdMesh";
 
 import type { ISceneBuilder } from "./baseRuntime";
+
+RegisterPmxLoader();
+RegisterMmdOutlineRenderer();
 
 export class SceneBuilder implements ISceneBuilder {
     public async build(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {

@@ -140,11 +140,14 @@ Hermite 보간은 inTangent와 outTangent를 사용하여 **Cubic Spline 보간*
 
 babylon-mmd는 `MmdModelAnimationContainer`와 `MmdCameraAnimationContainer`를 **직접 바인딩**하는 런타임 구현을 제공합니다.
 
-이는 `"babylon-mmd/esm//Runtime/Animation/mmdRuntimeCameraAnimationContainer"`와 `"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer"` 모듈을 가져옴으로써 사용할 수 있습니다.
+아래의 개별 `.pure` 모듈을 사용하고 등록 함수를 호출하면 됩니다.
 
 ```typescript
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer";
+import { RegisterMmdRuntimeCameraAnimationContainer } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer.pure";
+import { RegisterMmdRuntimeModelAnimationContainer } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer.pure";
+
+RegisterMmdRuntimeCameraAnimationContainer();
+RegisterMmdRuntimeModelAnimationContainer();
 ```
 
 이를 통해 `MmdAnimation`을 바인딩하는 것과 **동일한 방법**으로 `MmdCamera`와 `MmdModel` 객체의 `createRuntimeAnimation` 메서드를 사용하여 `Mmd(Camera/Model)AnimationContainer`를 바인딩할 수 있습니다.

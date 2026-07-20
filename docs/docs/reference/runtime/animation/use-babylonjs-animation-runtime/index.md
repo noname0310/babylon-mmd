@@ -140,11 +140,14 @@ The created `MmdModelAnimationContainer` and `MmdCameraAnimationContainer` can b
 
 babylon-mmd provides runtime implementations that **directly bind** `MmdModelAnimationContainer` and `MmdCameraAnimationContainer`.
 
-This can be used by importing the `"babylon-mmd/esm//Runtime/Animation/mmdRuntimeCameraAnimationContainer"` and `"babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer"` modules.
+Use the individual `.pure` modules below and call their registration functions.
 
 ```typescript
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer";
-import "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer";
+import { RegisterMmdRuntimeCameraAnimationContainer } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeCameraAnimationContainer.pure";
+import { RegisterMmdRuntimeModelAnimationContainer } from "babylon-mmd/esm/Runtime/Animation/mmdRuntimeModelAnimationContainer.pure";
+
+RegisterMmdRuntimeCameraAnimationContainer();
+RegisterMmdRuntimeModelAnimationContainer();
 ```
 
 This allows you to bind `Mmd(Camera/Model)AnimationContainer` using the `createRuntimeAnimation` method on `MmdCamera` and `MmdModel` objects in the **same way** as binding `MmdAnimation`.
