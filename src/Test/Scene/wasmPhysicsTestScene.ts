@@ -22,7 +22,7 @@ import { BvmdLoader } from "@/Loader/Optimized/bvmdLoader";
 import { SdefInjector } from "@/Loader/sdefInjector";
 import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
+import { MmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 // import type { MmdRuntime } from "@/Runtime/mmdRuntime";
 // import { MmdPhysics } from "@/Runtime/mmdPhysics";
@@ -63,7 +63,6 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterMmdOutlineRenderer();
         RegisterMmdRuntimeCameraAnimation();
         RegisterMmdWasmRuntimeModelAnimation();
-        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
         engine.compatibilityMode = false;
 

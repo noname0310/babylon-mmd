@@ -25,7 +25,7 @@ import { SdefInjector } from "@/Loader/sdefInjector";
 import { RegisterMmdRuntimeCameraAnimationContainer } from "@/Runtime/Animation/mmdRuntimeCameraAnimationContainer.pure";
 import { RegisterMmdRuntimeModelAnimationContainer } from "@/Runtime/Animation/mmdRuntimeModelAnimationContainer.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
+import { MmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { MmdPhysics } from "@/Runtime/Physics/mmdPhysics";
@@ -47,7 +47,6 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterBpmxLoader();
         RegisterMmdRuntimeCameraAnimationContainer();
         RegisterMmdRuntimeModelAnimationContainer();
-        RegisterMmdCamera();
         SdefInjector.OverrideEngineCreateEffect(engine);
 
         const scene = new Scene(engine);

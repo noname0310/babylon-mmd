@@ -25,7 +25,7 @@ import { MmdHumanoidMapper } from "@/Loader/Util/mmdHumanoidMapper";
 import { RegisterMmdRuntimeCameraAnimation } from "@/Runtime/Animation/mmdRuntimeCameraAnimation.pure";
 import { RegisterMmdRuntimeModelAnimation } from "@/Runtime/Animation/mmdRuntimeModelAnimation.pure";
 import { StreamAudioPlayer } from "@/Runtime/Audio/streamAudioPlayer";
-import { MmdCamera, RegisterMmdCamera } from "@/Runtime/mmdCamera.pure";
+import { MmdCamera } from "@/Runtime/mmdCamera.pure";
 import type { MmdMesh } from "@/Runtime/mmdMesh";
 import { MmdRuntime } from "@/Runtime/mmdRuntime";
 import { HumanoidMmd } from "@/Runtime/Util/humanoidMmd";
@@ -47,7 +47,6 @@ export class SceneBuilder implements ISceneBuilder {
         RegisterBpmxLoader();
         RegisterMmdRuntimeCameraAnimation();
         RegisterMmdRuntimeModelAnimation();
-        RegisterMmdCamera();
         const scene = new Scene(engine);
         scene.clearColor = new Color4(0.95, 0.95, 0.95, 1.0);
         scene.autoClear = false;
