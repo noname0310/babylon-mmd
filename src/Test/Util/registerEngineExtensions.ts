@@ -1,4 +1,5 @@
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterAbstractEngineLoadingScreen } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.loadingScreen.pure";
 import { RegisterAbstractEngineStates } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.states.pure";
 import { RegisterAbstractEngineStencil } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.stencil.pure";
 import { RegisterAbstractEngineTexture } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.texture.pure";
@@ -11,6 +12,7 @@ import { RegisterEngineUniformBuffer } from "@babylonjs/core/Engines/Extensions/
 import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
 
 export function RegisterEngineExtensions(): void {
+    RegisterAbstractEngineLoadingScreen();
     RegisterAbstractEngineStates();
     RegisterAbstractEngineStencil();
     RegisterAbstractEngineTexture();

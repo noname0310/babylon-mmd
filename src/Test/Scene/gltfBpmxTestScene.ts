@@ -1,7 +1,6 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { Constants } from "@babylonjs/core/Engines/constants";
-import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imageProcessingConfiguration.pure";
 import { Color4 } from "@babylonjs/core/Maths/math.color.pure";
@@ -45,7 +44,6 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
-        RegisterLoadingScreen();
         RegisterBpmxLoader();
         RegisterMmdRuntimeCameraAnimation();
         RegisterMmdRuntimeModelAnimation();

@@ -1,3 +1,4 @@
+import { RegisterLoadingScreen } from "@babylonjs/core/Loading/loadingScreen.pure";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
 import type { Scene } from "@babylonjs/core/scene.pure";
 
@@ -11,6 +12,7 @@ export async function ParallelLoadAsync<const T extends Task<any>[]>(
     scene: Scene,
     tasks: [...T]
 ): Promise<LoadResult<T>> {
+    RegisterLoadingScreen();
     const engine = scene.getEngine();
 
     engine.displayLoadingUI();

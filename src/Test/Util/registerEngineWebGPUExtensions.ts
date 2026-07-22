@@ -1,5 +1,6 @@
 import { RegisterBufferAlign } from "@babylonjs/core/Buffers/buffer.align.pure";
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
+import { RegisterAbstractEngineLoadingScreen } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.loadingScreen.pure";
 import { RegisterAbstractEngineStates } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.states.pure";
 import { RegisterAbstractEngineStencil } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.stencil.pure";
 import { RegisterAbstractEngineTexture } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.texture.pure";
@@ -13,6 +14,7 @@ import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/
 
 export function RegisterEngineWebGPUExtensions(): void {
     RegisterBufferAlign();
+    RegisterAbstractEngineLoadingScreen();
     RegisterAbstractEngineStates();
     RegisterAbstractEngineStencil();
     RegisterAbstractEngineTexture();
