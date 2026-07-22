@@ -1,6 +1,5 @@
-import { AddAnimationExtensions } from "@babylonjs/core/Animations/animatable.core";
+import { RegisterAnimatable } from "@babylonjs/core/Animations/animatable.pure";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
-import { Bone } from "@babylonjs/core/Bones/bone.pure";
 import { SkeletonViewer } from "@babylonjs/core/Debug/skeletonViewer";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -43,7 +42,7 @@ import { ParallelLoadAsync } from "../Util/parallelLoadAsync";
 export class SceneBuilder implements ISceneBuilder {
     public async buildAsync(_canvas: HTMLCanvasElement, engine: AbstractEngine): Promise<Scene> {
         SetMissingSideEffectWarningsEnabled(true);
-        AddAnimationExtensions(Scene, Bone);
+        RegisterAnimatable();
         RegisterGLTFFileLoader();
         RegisterGLTF2Loader();
         RegisterJoinedPhysicsEngineComponent();
