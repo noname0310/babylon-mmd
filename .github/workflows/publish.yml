@@ -137,9 +137,25 @@ jobs:
           CXX: sccache clang++
           CARGO_INCREMENTAL: "0"
 
+      - name: Package release asset
+        id: asset
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          asset_file="$RUNNER_TEMP/babylon-mmd@${{ steps.metadata.outputs.version }}.zip"
+          test -f dist/package.json
+
+          cd dist
+          zip -r -q "$asset_file" *
+          test -s "$asset_file"
+
+          echo "asset_file=${asset_file}" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         run: |
           gh release create "${{ steps.metadata.outputs.tag }}" \
+            "${{ steps.asset.outputs.asset_file }}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "${{ steps.metadata.outputs.target }}" \
             --title "${{ steps.metadata.outputs.tag }}" \
