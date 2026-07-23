@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0 (Scheduled)
+## 1.3.0 (2026-07-23)
 
 - Babylon.js Pure Barrel support (see https://github.com/BabylonJS/Babylon.js/pull/18441)
 
