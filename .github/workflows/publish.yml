@@ -1,0 +1,147 @@
+name: Publish library and create release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SCCACHE_GHA_ENABLED: "true"
+
+    steps:
+      - name: Require main branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "This workflow must be dispatched for the main branch." >&2
+          exit 1
+
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Setup LLVM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          llvm_version=22.1.2
+          llvm_archive="$RUNNER_TEMP/llvm.tar.xz"
+          llvm_directory="$RUNNER_TEMP/LLVM-${llvm_version}-Linux-X64"
+
+          curl -fsSL \
+            "https://github.com/llvm/llvm-project/releases/download/llvmorg-${llvm_version}/LLVM-${llvm_version}-Linux-X64.tar.xz" \
+            -o "$llvm_archive"
+          tar -xJf "$llvm_archive" -C "$RUNNER_TEMP"
+          echo "$llvm_directory/bin" >> "$GITHUB_PATH"
+
+      - name: Setup Rust toolchain
+        shell: bash
+        run: |
+          rustup toolchain install nightly-2026-04-11 \
+            --profile minimal \
+            --component rust-src \
+            --target wasm32-unknown-unknown
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+        with:
+          version: v0.15.0
+
+      - name: Validate release metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="$(node -p "require('./package.json').version")"
+          package_name="$(node -p "require('./package.json').name")"
+          tag="v${version}"
+
+          first_heading="$(awk '/^## / { print; exit }' CHANGELOG.md)"
+          first_version="${first_heading#\#\# }"
+          first_version="${first_version%% *}"
+
+          if [[ "$first_version" != "$version" ]]; then
+            echo "The first CHANGELOG version ($first_version) does not match package.json ($version)." >&2
+            exit 1
+          fi
+
+          if [[ "$first_heading" == *"(Scheduled)"* ]]; then
+            echo "The first CHANGELOG entry is still scheduled: $first_heading" >&2
+            exit 1
+          fi
+
+          npm_view_output=""
+          if npm_view_output="$(npm view "${package_name}@${version}" version --registry=https://registry.npmjs.org 2>&1)"; then
+            echo "${package_name}@${version} is already published: ${npm_view_output}" >&2
+            exit 1
+          elif ! grep -Eq 'E404|404 Not Found' <<< "$npm_view_output"; then
+            echo "Could not verify whether ${package_name}@${version} is published." >&2
+            echo "$npm_view_output" >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Git tag ${tag} already exists." >&2
+            exit 1
+          fi
+
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          {
+            echo "## Changes"
+            awk '
+              /^## / {
+                if (started) exit
+                started = 1
+                next
+              }
+              started { print }
+            ' CHANGELOG.md
+          } > "$notes_file"
+
+          {
+            echo "version=${version}"
+            echo "tag=${tag}"
+            echo "target=$(git rev-parse HEAD)"
+            echo "notes_file=${notes_file}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish npm package
+        run: npm run publish-lib
+        env:
+          RUSTC_WRAPPER: sccache
+          CC: sccache clang
+          CXX: sccache clang++
+          CARGO_INCREMENTAL: "0"
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ steps.metadata.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "${{ steps.metadata.outputs.target }}" \
+            --title "${{ steps.metadata.outputs.tag }}" \
+            --notes-file "${{ steps.metadata.outputs.notes_file }}" \
+            --latest
