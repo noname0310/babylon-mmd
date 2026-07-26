@@ -1,4 +1,5 @@
 import { RegisterBufferAlign } from "@babylonjs/core/Buffers/buffer.align.pure";
+import { EngineFunctionContext } from "@babylonjs/core/Engines/abstractEngine.functions";
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterAbstractEngineLoadingScreen } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.loadingScreen.pure";
 import { RegisterAbstractEngineStates } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.states.pure";
@@ -11,6 +12,7 @@ import { RegisterEnginesWebGPUExtensionsEngineReadTexture } from "@babylonjs/cor
 import { RegisterEnginesWebGPUExtensionsEngineRenderTarget } from "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTarget.pure";
 import { RegisterEnginesWebGPUExtensionsEngineRenderTargetTexture } from "@babylonjs/core/Engines/WebGPU/Extensions/engine.renderTargetTexture.pure";
 import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
+import { LoadFile, LoadImage } from "@babylonjs/core/Misc/fileTools.pure";
 
 export function RegisterEngineWebGPUExtensions(): void {
     RegisterBufferAlign();
@@ -25,4 +27,9 @@ export function RegisterEngineWebGPUExtensions(): void {
     RegisterEnginesWebGPUExtensionsEngineRenderTarget();
     RegisterEnginesWebGPUExtensionsEngineRenderTargetTexture();
     AbstractEngine.GetCompatibleTextureLoader = _GetCompatibleTextureLoader; // core/Engines/AbstractEngine/abstractEngine.textureLoaders.ts
+
+    // core/Misc/fileTools.pure.ts
+    // instead of using RegisterFileTools() to register the functions, we directly assign them to EngineFunctionContext
+    EngineFunctionContext.loadFile = LoadFile;
+    EngineFunctionContext.loadImage = LoadImage;
 }

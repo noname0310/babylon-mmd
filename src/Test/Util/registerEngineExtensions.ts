@@ -1,3 +1,4 @@
+import { EngineFunctionContext } from "@babylonjs/core/Engines/abstractEngine.functions";
 import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.pure";
 import { RegisterAbstractEngineLoadingScreen } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.loadingScreen.pure";
 import { RegisterAbstractEngineStates } from "@babylonjs/core/Engines/AbstractEngine/abstractEngine.states.pure";
@@ -10,6 +11,7 @@ import { RegisterEnginesExtensionsEngineRenderTarget } from "@babylonjs/core/Eng
 import { RegisterEnginesExtensionsEngineRenderTargetTexture } from "@babylonjs/core/Engines/Extensions/engine.renderTargetTexture.pure";
 import { RegisterEngineUniformBuffer } from "@babylonjs/core/Engines/Extensions/engine.uniformBuffer.pure";
 import { _GetCompatibleTextureLoader } from "@babylonjs/core/Materials/Textures/Loaders/textureLoaderManager";
+import { LoadFile, LoadImage } from "@babylonjs/core/Misc/fileTools.pure";
 
 export function RegisterEngineExtensions(): void {
     RegisterAbstractEngineLoadingScreen();
@@ -23,4 +25,9 @@ export function RegisterEngineExtensions(): void {
     RegisterEnginesExtensionsEngineRenderTargetTexture();
     RegisterEngineUniformBuffer();
     AbstractEngine.GetCompatibleTextureLoader = _GetCompatibleTextureLoader; // core/Engines/AbstractEngine/abstractEngine.textureLoaders.ts
+
+    // core/Misc/fileTools.pure.ts
+    // instead of using RegisterFileTools() to register the functions, we directly assign them to EngineFunctionContext
+    EngineFunctionContext.loadFile = LoadFile;
+    EngineFunctionContext.loadImage = LoadImage;
 }
