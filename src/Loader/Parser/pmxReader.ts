@@ -161,7 +161,13 @@ export class PmxReader {
         const globalsCount = dataDeserializer.getUint8();
 
         const encoding = dataDeserializer.getUint8();
-        dataDeserializer.initializeTextDecoder(encoding === PmxObject.Header.Encoding.Utf8 ? "utf-8" : "utf-16le");
+        if (encoding === PmxObject.Header.Encoding.Utf8) {
+            dataDeserializer.initializeTextDecoder("utf-8");
+        } else if (encoding === PmxObject.Header.Encoding.ShiftJis) {
+            dataDeserializer.initializeTextDecoder("shift-jis");
+        } else {
+            dataDeserializer.initializeTextDecoder("utf-16le");
+        }
 
         const additionalVec4Count = dataDeserializer.getUint8();
         const vertexIndexSize = dataDeserializer.getUint8();
