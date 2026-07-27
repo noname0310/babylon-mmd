@@ -1,9 +1,14 @@
+import type { Nullable } from "@babylonjs/core/types";
+
 import type { IIkStateContainer } from "./IIkStateContainer";
 import type { IMmdRuntimeBone } from "./IMmdRuntimeBone";
 import type { IMmdLinkedBoneContainer } from "./IMmdRuntimeLinkedBone";
 import type { IRigidBodyStateContainer } from "./IRIgidBodyStateContainer";
 import type { MmdSkinnedMesh, TrimmedMmdSkinnedMesh } from "./mmdMesh";
 import type { MmdMorphControllerBase } from "./mmdMorphControllerBase";
+import type { IMmdBindableModelAnimation } from "./Animation/IMmdBindableAnimation";
+import type { IMmdRuntimeModelAnimation } from "./Animation/IMmdRuntimeAnimation";
+import type { MmdRuntimeAnimationHandle } from "./mmdRuntimeAnimationHandle";
 
 /**
  * IMmdModel is a model that can bind animation.
@@ -58,4 +63,27 @@ export interface IMmdModel extends IIkStateContainer, IRigidBodyStateContainer {
      * The `MmdMorphControllerBase` not only wrapper of `MorphTargetManager` but also controls the CPU bound morphs (bone, material, group)
      */
     readonly morph: MmdMorphControllerBase;
+
+    /**
+     * Create a runtime animation from the given animation
+     *
+     * @param animation MMD animation or MMD model animation group to add
+     * @param retargetingMap Animation bone name to model bone name map
+     * @returns A handle to the runtime animation
+     */
+    createRuntimeAnimation(animation: IMmdBindableModelAnimation, retargetingMap?: { [key: string]: string }): MmdRuntimeAnimationHandle;
+
+    /**
+     * Set the current animation of this model
+     *
+     * If handle is null, the current animation will be cleared
+     * @param handle The handle of the animation to set as current
+     * @param updateMorphTarget Whether to update morph target manager numMaxInfluencers (default: true)
+     */
+    setRuntimeAnimation(handle: Nullable<MmdRuntimeAnimationHandle>, updateMorphTarget?: boolean): void;
+
+    /**
+     * Get the current animation of this model
+     */
+    readonly currentAnimation: Nullable<IMmdRuntimeModelAnimation>;
 }
