@@ -56,6 +56,23 @@ export interface IMmdRuntime<TMmdModel extends IMmdModel = IMmdModel> extends IL
     readonly onAnimationTickObservable: Observable<void>;
 
     /**
+     * This observable is notified before the physics stage
+     *
+     * At this point animation has been evaluated and physics is about to run.
+     * This is the ideal point to apply final adjustments (e.g., gaze direction)
+     * before physics constraints resolve them.
+     */
+    readonly onBeforePhysicsObservable: Observable<void>;
+
+    /**
+     * This observable is notified after the physics stage
+     *
+     * At this point physics has run and results are being applied to models.
+     * This is the ideal point to read final bone transforms.
+     */
+    readonly onAfterPhysicsObservable: Observable<void>;
+
+    /**
      * Dispose MMD runtime
      *
      * Destroy all MMD models and unregister this runtime from scene

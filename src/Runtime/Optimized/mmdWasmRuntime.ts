@@ -137,6 +137,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
      */
     public readonly onAnimationTickObservable: Observable<void>;
 
+    /**
+     * This observable is notified before the physics stage
+     */
+    public readonly onBeforePhysicsObservable: Observable<void>;
+
+    /**
+     * This observable is notified after the physics stage
+     */
+    public readonly onAfterPhysicsObservable: Observable<void>;
+
     private _evaluationType: MmdWasmRuntimeAnimationEvaluationType;
     private _currentFrameTime: number;
     private _animationTimeScale: number;
@@ -202,6 +212,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.onSeekAnimationObservable = new Observable<void>();
         this.onAnimationTickObservable = new Observable<void>();
 
+        this.onBeforePhysicsObservable = new Observable<void>();
+        this.onAfterPhysicsObservable = new Observable<void>();
+
         this._evaluationType = MmdWasmRuntimeAnimationEvaluationType.Immediate;
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
@@ -248,6 +261,9 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         this.onPauseAnimationObservable.clear();
         this.onSeekAnimationObservable.clear();
         this.onAnimationTickObservable.clear();
+
+        this.onBeforePhysicsObservable.clear();
+        this.onAfterPhysicsObservable.clear();
 
         this._needToInitializePhysicsModels.clear();
         this._needToInitializePhysicsModelsBuffer.clear();
@@ -841,12 +857,16 @@ export class MmdWasmRuntime implements IMmdRuntime<MmdWasmModel> {
         if (elapsedFrameTime !== null) {
             this.onAnimationTickObservable.notifyObservers();
         }
+
+        this.onBeforePhysicsObservable.notifyObservers();
     }
 
     /**
      * After the physics stage, update physics and run MMD runtime solvers
      */
     public afterPhysics(): void {
+        this.onAfterPhysicsObservable.notifyObservers();
+
         const models = this._models;
         if (this._usingWasmBackBuffer) {
             for (let i = 0; i < models.length; ++i) {

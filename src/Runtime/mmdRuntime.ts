@@ -145,6 +145,16 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      */
     public readonly onAnimationTickObservable: Observable<void>;
 
+    /**
+     * This observable is notified before the physics stage
+     */
+    public readonly onBeforePhysicsObservable: Observable<void>;
+
+    /**
+     * This observable is notified after the physics stage
+     */
+    public readonly onAfterPhysicsObservable: Observable<void>;
+
     private _currentFrameTime: number;
     private _animationTimeScale: number;
     private _animationPaused: boolean;
@@ -184,6 +194,8 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         this.onPauseAnimationObservable = new Observable<void>();
         this.onSeekAnimationObservable = new Observable<void>();
         this.onAnimationTickObservable = new Observable<void>();
+        this.onBeforePhysicsObservable = new Observable<void>();
+        this.onAfterPhysicsObservable = new Observable<void>();
 
         this._currentFrameTime = 0;
         this._animationTimeScale = 1;
@@ -225,6 +237,8 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
         this.onPauseAnimationObservable.clear();
         this.onSeekAnimationObservable.clear();
         this.onAnimationTickObservable.clear();
+        this.onBeforePhysicsObservable.clear();
+        this.onAfterPhysicsObservable.clear();
 
         this._needToInitializePhysicsModels.clear();
 
@@ -548,6 +562,7 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
             }
 
             this.onAnimationTickObservable.notifyObservers();
+            this.onBeforePhysicsObservable.notifyObservers();
         } else {
             const models = this._models;
             for (let i = 0; i < models.length; ++i) {
@@ -566,6 +581,8 @@ export class MmdRuntime implements IMmdRuntime<MmdModel> {
      * After the physics stage, update physics and run MMD runtime solvers
      */
     public afterPhysics(): void {
+        this.onAfterPhysicsObservable.notifyObservers();
+
         const models = this._models;
         for (let i = 0; i < models.length; ++i) {
             models[i].afterPhysics();
