@@ -296,10 +296,7 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
             if (geometryInfo.indices === undefined) mesh.isUnIndexed = true;
             meshes.push(mesh);
 
-            scene._blockEntityCollection = !!assetContainer;
-            const geometry = new Geometry(geometryInfo.name, scene, vertexData, false);
-            geometry._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
+            const geometry = new Geometry(geometryInfo.name, scene, vertexData, false, null);
             if (state.preserveSerializationData && geometryInfo.additionalUvs !== undefined) {
                 const uvKinds = [MmdBufferKind.AdditionalUV1Kind, MmdBufferKind.AdditionalUV2Kind, MmdBufferKind.AdditionalUV3Kind, MmdBufferKind.AdditionalUV4Kind];
                 for (let j = 0; j < geometryInfo.additionalUvs.length; ++j) {
@@ -316,7 +313,10 @@ export class BpmxLoader extends MmdModelLoader<IBpmxLoadState, BpmxObject, IBpmx
             if (state.preserveSerializationData && geometryInfo.edgeScale !== undefined) {
                 geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, geometryInfo.edgeScale, false, 1);
             }
-            geometry.applyToMesh(mesh);
+            scene._blockEntityCollection = !!assetContainer;
+            geometry.applyToMesh(mesh); // will trigger `_scene.pushGeometry` internally
+            geometry._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
             geometries.push(geometry);
 
             processedPositionCount += geometryInfo.positions.length;

@@ -515,10 +515,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 mesh.parent = rootMesh;
                 meshes.push(mesh);
 
-                scene._blockEntityCollection = !!assetContainer;
-                const geometry = new Geometry(materialInfo.name, scene, vertexData, false);
-                geometry._parentContainer = assetContainer;
-                scene._blockEntityCollection = false;
+                const geometry = new Geometry(materialInfo.name, scene, vertexData, false, null);
                 if (state.preserveSerializationData) {
                     if (1 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV1Kind, additionalUvs[0], false, 4);
                     if (2 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV2Kind, additionalUvs[1], false, 4);
@@ -535,7 +532,10 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
                 if (state.preserveSerializationData) {
                     geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, edgeScale!, false, 1);
                 }
-                geometry.applyToMesh(mesh);
+                scene._blockEntityCollection = !!assetContainer;
+                geometry.applyToMesh(mesh); // will trigger `_scene.pushGeometry` internally
+                geometry._parentContainer = assetContainer;
+                scene._blockEntityCollection = false;
                 geometries.push(geometry);
 
                 indexToSubmeshIndexMaps.push({
@@ -763,10 +763,7 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             scene._blockEntityCollection = false;
             rootMesh.setEnabled(false);
 
-            scene._blockEntityCollection = !!assetContainer;
-            const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false);
-            geometry._parentContainer = assetContainer;
-            scene._blockEntityCollection = false;
+            const geometry = new Geometry(modelObject.header.modelName, scene, vertexData, false, null);
             if (state.preserveSerializationData) {
                 if (1 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV1Kind, additionalUvs[0], false, 4);
                 if (2 <= additionalUvs.length) geometry.setVerticesData(MmdBufferKind.AdditionalUV2Kind, additionalUvs[1], false, 4);
@@ -783,7 +780,10 @@ export abstract class PmLoader extends MmdModelLoader<IPmLoadState, PmxObject, I
             if (state.preserveSerializationData) {
                 geometry.setVerticesData(MmdBufferKind.EdgeScaleKind, edgeScale!, false, 1);
             }
-            geometry.applyToMesh(rootMesh);
+            scene._blockEntityCollection = !!assetContainer;
+            geometry.applyToMesh(rootMesh); // will trigger `_scene.pushGeometry` internally
+            geometry._parentContainer = assetContainer;
+            scene._blockEntityCollection = false;
             geometries.push(geometry);
             meshes.push(rootMesh);
 
