@@ -209,6 +209,10 @@ class MmdTextureData {
         assetContainer?.textures.push(texture);
 
         texture.name = textureName;
+
+        if (texture.delayLoadState === Constants.DELAYLOADSTATE_NOTLOADED) {
+            texture.delayLoad(); // handle scene.useDelayedTextureLoading
+        }
     }
 
     public get texture(): Nullable<Texture> {

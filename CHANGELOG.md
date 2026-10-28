@@ -4,6 +4,8 @@
 
 - Fixed handling of Geometry's `_parentContainer` and `_blockEntityCollection` when loading MMD models with `LoadAssetContainerAsync`
 
+- Support for delayed texture loading mode even when `scene.useDelayedTextureLoading = true`
+
 ## 1.3.0 (2026-07-23)
 
 - Babylon.js Pure Barrel support (see https://github.com/BabylonJS/Babylon.js/pull/18441)
