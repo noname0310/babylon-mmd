@@ -1,9 +1,8 @@
-import "@babylonjs/core/Shaders/ShadersInclude/clipPlaneFragmentDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/logDepthDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/clipPlaneFragment";
-import "@babylonjs/core/Shaders/ShadersInclude/logDepthFragment";
-
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
+import { clipPlaneFragment } from "@babylonjs/core/Shaders/ShadersInclude/clipPlaneFragment";
+import { clipPlaneFragmentDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/clipPlaneFragmentDeclaration";
+import { logDepthDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/logDepthDeclaration";
+import { logDepthFragment } from "@babylonjs/core/Shaders/ShadersInclude/logDepthFragment";
 
 const Name = "mmdOutlinePixelShader";
 const Shader = /* glsl */`
@@ -39,6 +38,14 @@ void main(void) {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[Name] = Shader;
+if (!ShaderStore.ShadersStore[Name]) {
+    ShaderStore.ShadersStore[Name] = Shader;
+}
+const Includes = [clipPlaneFragmentDeclaration, logDepthDeclaration, clipPlaneFragment, logDepthFragment];
+for (const inc of Includes) {
+    if (!ShaderStore.IncludesShadersStore[inc.name]) {
+        ShaderStore.IncludesShadersStore[inc.name] = inc.shader;
+    }
+}
 /** @internal */
 export const MmdOutlinePixelShader = { name: Name, shader: Shader };

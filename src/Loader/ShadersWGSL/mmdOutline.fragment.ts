@@ -1,9 +1,8 @@
-import "@babylonjs/core/ShadersWGSL/ShadersInclude/clipPlaneFragmentDeclaration";
-import "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthDeclaration";
-import "@babylonjs/core/ShadersWGSL/ShadersInclude/clipPlaneFragment";
-import "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthFragment";
-
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
+import { clipPlaneFragmentWGSL } from "@babylonjs/core/ShadersWGSL/ShadersInclude/clipPlaneFragment";
+import { clipPlaneFragmentDeclarationWGSL } from "@babylonjs/core/ShadersWGSL/ShadersInclude/clipPlaneFragmentDeclaration";
+import { logDepthDeclarationWGSL } from "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthDeclaration";
+import { logDepthFragmentWGSL } from "@babylonjs/core/ShadersWGSL/ShadersInclude/logDepthFragment";
 
 const Name = "mmdOutlinePixelShader";
 const Shader = /* wgsl */`
@@ -39,6 +38,14 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[Name] = Shader;
+if (!ShaderStore.ShadersStoreWGSL[Name]) {
+    ShaderStore.ShadersStoreWGSL[Name] = Shader;
+}
+const Includes = [clipPlaneFragmentDeclarationWGSL, logDepthDeclarationWGSL, clipPlaneFragmentWGSL, logDepthFragmentWGSL];
+for (const inc of Includes) {
+    if (!ShaderStore.IncludesShadersStoreWGSL[inc.name]) {
+        ShaderStore.IncludesShadersStoreWGSL[inc.name] = inc.shader;
+    }
+}
 /** @internal */
-export const MmdOutlinePixelShader = { name: Name, shader: Shader };
+export const MmdOutlinePixelShaderWGSL = { name: Name, shader: Shader };

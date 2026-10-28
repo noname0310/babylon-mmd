@@ -16,6 +16,8 @@ fn main(input: VertexInputs) -> FragmentInputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[Name] = Shader;
+if (!ShaderStore.ShadersStoreWGSL[Name]) {
+    ShaderStore.ShadersStoreWGSL[Name] = Shader;
+}
 /** @internal */
-export const TextureAlphaCheckerVertexShader = { name: Name, shader: Shader };
+export const TextureAlphaCheckerVertexShaderWGSL = { name: Name, shader: Shader };

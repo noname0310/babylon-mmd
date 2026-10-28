@@ -12,6 +12,8 @@ void main() {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[Name] = Shader;
+if (!ShaderStore.ShadersStore[Name]) {
+    ShaderStore.ShadersStore[Name] = Shader;
+}
 /** @internal */
 export const TextureAlphaCheckerVertexShader = { name: Name, shader: Shader };

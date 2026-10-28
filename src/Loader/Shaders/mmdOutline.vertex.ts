@@ -1,19 +1,18 @@
-import "@babylonjs/core/Shaders/ShadersInclude/bonesDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/bakedVertexAnimationDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobalDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/clipPlaneVertexDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/logDepthDeclaration";
-import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobal";
-import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertex";
-import "@babylonjs/core/Shaders/ShadersInclude/instancesVertex";
-import "@babylonjs/core/Shaders/ShadersInclude/bonesVertex";
-import "@babylonjs/core/Shaders/ShadersInclude/bakedVertexAnimation";
-import "@babylonjs/core/Shaders/ShadersInclude/clipPlaneVertex";
-import "@babylonjs/core/Shaders/ShadersInclude/logDepthVertex";
-
 import { ShaderStore } from "@babylonjs/core/Engines/shaderStore";
+import { bakedVertexAnimation } from "@babylonjs/core/Shaders/ShadersInclude/bakedVertexAnimation";
+import { bakedVertexAnimationDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/bakedVertexAnimationDeclaration";
+import { bonesDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/bonesDeclaration";
+import { bonesVertex } from "@babylonjs/core/Shaders/ShadersInclude/bonesVertex";
+import { clipPlaneVertex } from "@babylonjs/core/Shaders/ShadersInclude/clipPlaneVertex";
+import { clipPlaneVertexDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/clipPlaneVertexDeclaration";
+import { instancesDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration";
+import { instancesVertex } from "@babylonjs/core/Shaders/ShadersInclude/instancesVertex";
+import { logDepthDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/logDepthDeclaration";
+import { logDepthVertex } from "@babylonjs/core/Shaders/ShadersInclude/logDepthVertex";
+import { morphTargetsVertex } from "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertex";
+import { morphTargetsVertexDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexDeclaration";
+import { morphTargetsVertexGlobal } from "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobal";
+import { morphTargetsVertexGlobalDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobalDeclaration";
 
 const Name = "mmdOutlineVertexShader";
 const Shader = /* glsl */`
@@ -96,6 +95,29 @@ void main(void)
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[Name] = Shader;
+if (!ShaderStore.ShadersStore[Name]) {
+    ShaderStore.ShadersStore[Name] = Shader;
+}
+const Includes = [
+    bonesDeclaration,
+    bakedVertexAnimationDeclaration,
+    morphTargetsVertexGlobalDeclaration,
+    morphTargetsVertexDeclaration,
+    clipPlaneVertexDeclaration,
+    instancesDeclaration,
+    logDepthDeclaration,
+    morphTargetsVertexGlobal,
+    morphTargetsVertex,
+    instancesVertex,
+    bonesVertex,
+    bakedVertexAnimation,
+    clipPlaneVertex,
+    logDepthVertex
+];
+for (const inc of Includes) {
+    if (!ShaderStore.IncludesShadersStore[inc.name]) {
+        ShaderStore.IncludesShadersStore[inc.name] = inc.shader;
+    }
+}
 /** @internal */
 export const MmdOutlineVertexShader = { name: Name, shader: Shader };

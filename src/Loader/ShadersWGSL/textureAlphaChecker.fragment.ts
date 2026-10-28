@@ -15,6 +15,8 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStoreWGSL[Name] = Shader;
+if (!ShaderStore.ShadersStoreWGSL[Name]) {
+    ShaderStore.ShadersStoreWGSL[Name] = Shader;
+}
 /** @internal */
-export const TextureAlphaCheckerPixelShader = { name: Name, shader: Shader };
+export const TextureAlphaCheckerPixelShaderWGSL = { name: Name, shader: Shader };

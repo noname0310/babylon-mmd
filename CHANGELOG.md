@@ -6,6 +6,8 @@
 
 - Support for delayed texture loading mode even when `scene.useDelayedTextureLoading = true`
 
+- Updated shader registration to use named include imports
+
 ## 1.3.0 (2026-07-23)
 
 - Babylon.js Pure Barrel support (see https://github.com/BabylonJS/Babylon.js/pull/18441)

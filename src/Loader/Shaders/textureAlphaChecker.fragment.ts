@@ -11,6 +11,8 @@ void main() {
 }
 `;
 // Sideeffect
-ShaderStore.ShadersStore[Name] = Shader;
+if (!ShaderStore.ShadersStore[Name]) {
+    ShaderStore.ShadersStore[Name] = Shader;
+}
 /** @internal */
 export const TextureAlphaCheckerPixelShader = { name: Name, shader: Shader };
